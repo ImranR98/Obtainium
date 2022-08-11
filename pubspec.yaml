@@ -42,6 +42,9 @@ dependencies:
   path_provider: ^2.0.11
   flutter_downloader: ^1.8.1
   app_installer: ^1.1.0
+  flutter_fgbg: ^0.2.0
+  flutter_local_notifications: ^9.7.0
+  provider: ^6.0.3
 
 dev_dependencies:
   flutter_test:

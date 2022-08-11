@@ -1,72 +1,19 @@
-import 'dart:io';
-import 'dart:isolate';
-import 'dart:math';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:install_plugin_v2/install_plugin_v2.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:app_installer/app_installer.dart';
-
-// Port for FlutterDownloader background/foreground communication
-ReceivePort _port = ReceivePort();
+import 'package:obtainium/services/apk_service.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
-  await initializeDownloader();
-  runApp(const MyApp());
-}
-
-// Setup the FlutterDownloader plugin
-Future<void> initializeDownloader() async {
-  // Make sure FlutterDownloader can be used
+  ;
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterDownloader.initialize();
-  // Set up the status update callback for FlutterDownloader
-  FlutterDownloader.registerCallback(downloadCallbackBackground);
-  // The actual callback is in the background isolate
-  // So setup a port to pass the data to a foreground callback
-  IsolateNameServer.registerPortWithName(
-      _port.sendPort, 'downloader_send_port');
-  _port.listen((dynamic data) {
-    String id = data[0];
-    DownloadTaskStatus status = data[1];
-    int progress = data[2];
-    downloadCallbackForeground(id, status, progress);
-  });
-}
-
-// Callback that receives FlutterDownloader status and forwards to a foreground function
-@pragma('vm:entry-point')
-void downloadCallbackBackground(
-    String id, DownloadTaskStatus status, int progress) {
-  final SendPort? send =
-      IsolateNameServer.lookupPortByName('downloader_send_port');
-  send!.send([id, status, progress]);
-}
-
-// Foreground function to act on FlutterDownloader status updates (install then delete downloaded APK)
-void downloadCallbackForeground(
-    String id, DownloadTaskStatus status, int progress) async {
-  if (status == DownloadTaskStatus.complete) {
-    FlutterDownloader.open(taskId: id);
-  }
-}
-
-// Given a URL (assumed valid), initiate an APK download (will trigger install callback when complete)
-void downloadAPK(String url, String appId) async {
-  var apkDir = Directory(
-      "${(await getExternalStorageDirectory())?.path as String}/$appId");
-  if (apkDir.existsSync()) apkDir.deleteSync(recursive: true);
-  apkDir.createSync();
-  await FlutterDownloader.enqueue(
-    url: url,
-    savedDir: apkDir.path,
-    showNotification: true,
-    openFileFromNotification: true,
-  );
+  runApp(MultiProvider(
+    providers: [
+      Provider(
+        create: (context) => APKService(),
+        dispose: (context, apkInstallService) => apkInstallService.dispose(),
+      ),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 // Extract a GitHub project name and author account name from a GitHub URL (can be any sub-URL of the project)
@@ -82,14 +29,6 @@ Map<String, String>? getAppNamesFromGitHubURL(String url) {
   }
   return null;
 }
-
-// Future<Directory> getAPKDir() async {
-//   var apkDir = Directory("${(await getExternalStorageDirectory())!.path}/apks");
-//   if (!apkDir.existsSync()) {
-//     apkDir.createSync();
-//   }
-//   return apkDir;
-// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -144,7 +83,9 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () {
           var names = getAppNamesFromGitHubURL(urls[ind]);
           if (names != null) {
-            downloadAPK(urls[ind], "${names["author"]!}_${names["appName"]!}");
+            Provider.of<APKService>(context, listen: false)
+                .downloadAndInstallAPK(
+                    urls[ind], "${names["author"]!}_${names["appName"]!}");
             setState(() {
               ind = ind == (urls.length - 1) ? 0 : ind + 1;
             });
@@ -158,8 +99,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    // Remove the FlutterDownloader communication port
-    IsolateNameServer.removePortNameMapping('downloader_send_port');
     super.dispose();
   }
 }

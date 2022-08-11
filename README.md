@@ -1,16 +1,11 @@
-# obtainium
+# Obtainium
 
-A new Flutter project.
+Get Android App Updates Directly From the Source.
 
-## Getting Started
+Obtainium allows you to install and update Open-Source Apps directly from their GitHub or GitLab releases.
 
-This project is a starting point for a Flutter application.
+***Work In Progress - Currently Unusable***
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Limitations
+- App installs are assumed to have succeeded; failures and cancelled installs cannot be detected.
+- Apps that are already installed are not indicated as such, since GitHub and GitLab do not provide App IDs (like `org.example.app`) to allow for comparisons.
