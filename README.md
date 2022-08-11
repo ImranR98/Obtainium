@@ -4,7 +4,9 @@ Get Android App Updates Directly From the Source.
 
 Obtainium allows you to install and update Open-Source Apps directly from their GitHub or GitLab releases.
 
-***Work In Progress - Currently Unusable***
+Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
+
+***Work In Progress - Currently Unusable.***
 
 ## Limitations
 - App installs are assumed to have succeeded; failures and cancelled installs cannot be detected.
