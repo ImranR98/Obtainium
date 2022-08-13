@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/services/apk_service.dart';
+import 'package:obtainium/services/app_service.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
-  ;
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MultiProvider(
     providers: [
@@ -12,7 +12,9 @@ void main() async {
         create: (context) => APKService(),
         dispose: (context, apkInstallService) => apkInstallService.dispose(),
       ),
-      Provider(create: (context) => SourceService())
+      Provider(create: (context) => SourceService()),
+      Provider(
+          create: (context) => AppService(Provider.of<SourceService>(context)))
     ],
     child: const MyApp(),
   ));
@@ -59,9 +61,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int ind = 0;
   var urls = [
-    "https://github.com/Ashinch/ReadYou/releases/download/0.8.0/ReadYou-0.8.0-eec397e.apk",
-    "https://github.com/Ashinch/ReadYou/releases/download/0.8.1/ReadYou-0.8.1-c741f19.apk",
-    "https://github.com/Ashinch/ReadYou/releases/download/0.8.3/ReadYou-0.8.3-7a47329.apk"
+    "https://github.com/Ashinch/ReadYou/releases/download", // Should work
+    "http://github.com/syncthing/syncthing-android/releases/tag/1.20.4", // Should work
+    "https://github.com/videolan/vlc" // Should not
   ];
 
   @override
@@ -83,16 +85,14 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          var source = Provider.of<SourceService>(context).getSource(urls[ind]);
-
-          var standardURL = Provider.of<SourceService>(context)
-              .standardizeURL(urls[ind], source.standardURLRegEx);
-          var names =
-              Provider.of<SourceService>(context).getAppNames(standardURL);
-          Provider.of<APKService>(context, listen: false).downloadAndInstallAPK(
-              urls[ind], "${names.author}_${names.name}");
-          setState(() {
-            ind = ind == (urls.length - 1) ? 0 : ind + 1;
+          Provider.of<AppService>(context).getApp(urls[ind]).then((app) {
+            Provider.of<APKService>(context, listen: false)
+                .downloadAndInstallAPK(app.apkUrl, app.id);
+            setState(() {
+              ind = ind == (urls.length - 1) ? 0 : ind + 1;
+            });
+          }).catchError((err) {
+            print(err);
           });
         },
         tooltip: 'Increment',
