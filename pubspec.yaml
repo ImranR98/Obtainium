@@ -41,6 +41,9 @@ dependencies:
   flutter_fgbg: ^0.2.0
   flutter_local_notifications: ^9.7.0
   provider: ^6.0.3
+  http: ^0.13.5
+  markdown: ^6.0.0
+  html: ^0.15.0
 
 dev_dependencies:
   flutter_test:

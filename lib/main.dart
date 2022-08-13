@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/services/apk_service.dart';
+import 'package:obtainium/services/source_service.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -11,6 +12,7 @@ void main() async {
         create: (context) => APKService(),
         dispose: (context, apkInstallService) => apkInstallService.dispose(),
       ),
+      Provider(create: (context) => SourceService())
     ],
     child: const MyApp(),
   ));
@@ -81,15 +83,17 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          var names = getAppNamesFromGitHubURL(urls[ind]);
-          if (names != null) {
-            Provider.of<APKService>(context, listen: false)
-                .downloadAndInstallAPK(
-                    urls[ind], "${names["author"]!}_${names["appName"]!}");
-            setState(() {
-              ind = ind == (urls.length - 1) ? 0 : ind + 1;
-            });
-          }
+          var source = Provider.of<SourceService>(context).getSource(urls[ind]);
+
+          var standardURL = Provider.of<SourceService>(context)
+              .standardizeURL(urls[ind], source.standardURLRegEx);
+          var names =
+              Provider.of<SourceService>(context).getAppNames(standardURL);
+          Provider.of<APKService>(context, listen: false).downloadAndInstallAPK(
+              urls[ind], "${names.author}_${names.name}");
+          setState(() {
+            ind = ind == (urls.length - 1) ? 0 : ind + 1;
+          });
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
