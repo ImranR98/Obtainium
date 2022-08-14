@@ -1,3 +1,6 @@
+// Exposes functions related to interacting with App sources and retrieving App info
+// Stateless, but used as a Provider as it must be a singleton (must only initialize once, be in scope at all times)
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
@@ -18,7 +21,7 @@ class APKService {
       FlutterLocalNotificationsPlugin();
 
   // Port for FlutterDownloader background/foreground communication
-  ReceivePort _port = ReceivePort();
+  final ReceivePort _port = ReceivePort();
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
@@ -92,9 +95,9 @@ class APKService {
   }
 
   // Given a URL (assumed valid), initiate an APK download (will trigger install callback when complete)
-  void downloadAndInstallAPK(String url, String appId) async {
+  Future<void> backgroundDownloadAndInstallAPK(String url, String appId) async {
     var apkDir = Directory(
-        "${(await getExternalStorageDirectory())?.path as String}/$appId");
+        '${(await getExternalStorageDirectory())?.path as String}/$appId');
     if (apkDir.existsSync()) apkDir.deleteSync(recursive: true);
     apkDir.createSync();
     await FlutterDownloader.enqueue(

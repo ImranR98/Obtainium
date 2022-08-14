@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/services/apk_service.dart';
-import 'package:obtainium/services/app_service.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:provider/provider.dart';
 
@@ -11,10 +10,7 @@ void main() async {
       Provider(
         create: (context) => APKService(),
         dispose: (context, apkInstallService) => apkInstallService.dispose(),
-      ),
-      Provider(create: (context) => SourceService()),
-      Provider(
-          create: (context) => AppService(Provider.of<SourceService>(context)))
+      )
     ],
     child: const MyApp(),
   ));
@@ -22,14 +18,14 @@ void main() async {
 
 // Extract a GitHub project name and author account name from a GitHub URL (can be any sub-URL of the project)
 Map<String, String>? getAppNamesFromGitHubURL(String url) {
-  RegExp regex = RegExp(r"://github.com/[^/]*/[^/]*");
+  RegExp regex = RegExp(r'://github.com/[^/]*/[^/]*');
   var match = regex.firstMatch(url.toLowerCase());
   if (match != null) {
     var uri = url.substring(match.start + 14, match.end);
-    var slashIndex = uri.indexOf("/");
+    var slashIndex = uri.indexOf('/');
     var author = uri.substring(0, slashIndex);
     var appName = uri.substring(slashIndex + 1);
-    return {"author": author, "appName": appName};
+    return {'author': author, 'appName': appName};
   }
   return null;
 }
@@ -61,9 +57,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int ind = 0;
   var urls = [
-    "https://github.com/Ashinch/ReadYou/releases/download", // Should work
-    "http://github.com/syncthing/syncthing-android/releases/tag/1.20.4", // Should work
-    "https://github.com/videolan/vlc" // Should not
+    'https://github.com/Ashinch/ReadYou/releases/download', // Should work
+    'http://github.com/syncthing/syncthing-android/releases/tag/1.20.4', // Should work
+    'https://github.com/videolan/vlc' // Should not
   ];
 
   @override
@@ -77,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              urls[ind] + ind.toString(),
+              urls[ind],
               style: Theme.of(context).textTheme.headline4,
             ),
           ],
@@ -85,9 +81,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Provider.of<AppService>(context).getApp(urls[ind]).then((app) {
+          SourceService().getApp(urls[ind]).then((app) {
             Provider.of<APKService>(context, listen: false)
-                .downloadAndInstallAPK(app.apkUrl, app.id);
+                .backgroundDownloadAndInstallAPK(app.apkUrl, app.id);
             setState(() {
               ind = ind == (urls.length - 1) ? 0 : ind + 1;
             });
