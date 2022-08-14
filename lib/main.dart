@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/services/apk_service.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:provider/provider.dart';
+import 'package:toast/toast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    ToastContext().init(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -88,7 +90,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ind = ind == (urls.length - 1) ? 0 : ind + 1;
             });
           }).catchError((err) {
-            print(err);
+            if (err is! String) {
+              err = "Unknown Error";
+            }
+            Toast.show(err);
           });
         },
         tooltip: 'Increment',

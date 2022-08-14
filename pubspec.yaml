@@ -42,6 +42,7 @@ dependencies:
   flutter_local_notifications: ^9.7.0
   provider: ^6.0.3
   http: ^0.13.5
+  toast: ^0.3.0
 
 dev_dependencies:
   flutter_test:
