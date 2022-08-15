@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:obtainium/services/apk_service.dart';
-import 'package:obtainium/services/source_service.dart';
+import 'package:obtainium/services/apps_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:toast/toast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MultiProvider(
-    providers: [
-      Provider(
-        create: (context) => APKService(),
-        dispose: (context, apkInstallService) => apkInstallService.dispose(),
-      )
-    ],
+    providers: [ChangeNotifierProvider(create: (context) => AppsProvider())],
     child: const MyApp(),
   ));
 }
@@ -83,9 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          SourceService().getApp(urls[ind]).then((app) {
-            Provider.of<APKService>(context, listen: false)
-                .backgroundDownloadAndInstallAPK(app.apkUrl, app.id);
+          context.read<AppsProvider>().installApp(urls[ind]).then((_) {
             setState(() {
               ind = ind == (urls.length - 1) ? 0 : ind + 1;
             });

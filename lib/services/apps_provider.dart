@@ -1,19 +1,24 @@
-// Exposes functions related to interacting with App sources and retrieving App info
-// Stateless, but used as a Provider as it must be a singleton (must only initialize once, be in scope at all times)
+// Provider that manages App-related state and provides functions to retrieve App info download/install Apps
 
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:obtainium/services/source_service.dart';
 
-class APKService {
-  APKService() {
+class AppsProvider with ChangeNotifier {
+  // In memory App state (should always be kept in sync with local storage versions)
+  Map<String, App> apps = {};
+
+  AppsProvider() {
     initializeDownloader();
+    loadApps();
   }
 
   // Notifications plugin for downloads
@@ -27,7 +32,7 @@ class APKService {
   bool isForeground = true;
   StreamSubscription<FGBGType>? foregroundSubscription;
 
-  // Setup the FlutterDownloader plugin (call in main())
+  // Setup the FlutterDownloader plugin (call only once)
   Future<void> initializeDownloader() async {
     // Make sure FlutterDownloader can be used
     await FlutterDownloader.initialize();
@@ -50,12 +55,6 @@ class APKService {
     foregroundSubscription = FGBGEvents.stream.listen((event) async {
       isForeground = event == FGBGType.foreground;
     });
-  }
-
-  // Clean up after initializeDownloader() (call in dispose())
-  void dispose() {
-    IsolateNameServer.removePortNameMapping('downloader_send_port');
-    foregroundSubscription?.cancel();
   }
 
   // Callback that receives FlutterDownloader status and forwards to a foreground function
@@ -106,5 +105,61 @@ class APKService {
       showNotification: true,
       openFileFromNotification: false,
     );
+  }
+
+  void loadApps() {
+    // TODO: Load Apps JSON and fill the array
+    notifyListeners();
+  }
+
+  void saveApp(App app) {
+    // TODO: Save/update an App JSON and update the array
+    notifyListeners();
+  }
+
+  bool checkUpdate(App app) {
+    // TODO: Check the given App against the existing version in the array (if it does not exist, throw an error)
+    return false;
+  }
+
+  Future<void> installApp(String url) async {
+    var app = await SourceService().getApp(url);
+    await backgroundDownloadAndInstallAPK(app.apkUrl, app.id);
+    // TODO: Apps array should notify consumers about download progress (will need to change FlutterDownloader callbacks)
+    saveApp(app);
+  }
+
+  Future<List<App>> checkUpdates() async {
+    List<App> updates = [];
+    var appIds = apps.keys.toList();
+    for (var i = 0; i < appIds.length; i++) {
+      var currentApp = apps[appIds[i]];
+      var newApp = await SourceService().getApp(currentApp!.url);
+      if (newApp.latestVersion != currentApp.latestVersion) {
+        newApp.installedVersion = currentApp.installedVersion;
+        updates.add(newApp);
+        saveApp(newApp);
+      }
+    }
+    return updates;
+  }
+
+  Future<void> installUpdates() async {
+    var appIds = apps.keys.toList();
+    for (var i = 0; i < appIds.length; i++) {
+      var app = apps[appIds[i]];
+      if (app != null) {
+        if (app.installedVersion != app.latestVersion) {
+          await installApp(app.apkUrl);
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    IsolateNameServer.removePortNameMapping('downloader_send_port');
+    foregroundSubscription?.cancel();
+    super.dispose();
   }
 }
