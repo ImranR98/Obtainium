@@ -36,13 +36,30 @@ class App {
   String? installedVersion;
   late String latestVersion;
   late String apkUrl;
-  App(this.id, this.url, this.installedVersion, this.latestVersion,
-      this.apkUrl);
+  String? currentDownloadId;
+  App(this.id, this.url, this.installedVersion, this.latestVersion, this.apkUrl,
+      this.currentDownloadId);
 
   @override
   String toString() {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrl';
   }
+
+  factory App.fromJson(Map<String, dynamic> json) => _appFromJson(json);
+}
+
+App _appFromJson(Map<String, dynamic> json) {
+  return App(
+      json['id'] as String,
+      json['url'] as String,
+      json['installedVersion'] == null
+          ? null
+          : json['installedVersion'] as String,
+      json['latestVersion'] as String,
+      json['apkUrl'] as String,
+      json['currentDownloadId'] == null
+          ? null
+          : json['currentDownloadId'] as String);
 }
 
 // Specific App Source classes
@@ -51,7 +68,7 @@ class GitHub implements AppSource {
   @override
   String standardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp(r'^https?://github.com/[^/]*/[^/]*');
-    var match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw 'Not a valid URL';
     }
@@ -69,8 +86,8 @@ class GitHub implements AppSource {
     Response res = await get(Uri.parse(
         '${convertURL(standardUrl, 'api.github.com/repos')}/releases/latest'));
     if (res.statusCode == 200) {
-      var release = jsonDecode(res.body);
-      for (var i = 0; i < release['assets'].length; i++) {
+      dynamic release = jsonDecode(res.body);
+      for (int i = 0; i < release['assets'].length; i++) {
         if (release['assets'][i]['name']
             .toString()
             .toLowerCase()
@@ -95,7 +112,7 @@ class GitHub implements AppSource {
 
 class SourceService {
   // Add more source classes here so they are available via the service
-  var github = GitHub();
+  AppSource github = GitHub();
   AppSource getSource(String url) {
     if (url.toLowerCase().contains('://github.com')) {
       return github;
@@ -109,6 +126,6 @@ class SourceService {
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source.getLatestAPKUrl(standardUrl);
     return App('${names.author}_${names.name}', standardUrl, null, apk.version,
-        apk.downloadUrl);
+        apk.downloadUrl, null);
   }
 }

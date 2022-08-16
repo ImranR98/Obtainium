@@ -1,6 +1,7 @@
 // Provider that manages App-related state and provides functions to retrieve App info download/install Apps
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
@@ -15,6 +16,7 @@ import 'package:obtainium/services/source_service.dart';
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, App> apps = {};
+  bool loadingApps = false;
 
   AppsProvider() {
     initializeDownloader();
@@ -88,70 +90,107 @@ class AppsProvider with ChangeNotifier {
           break;
         }
       }
+      // Change App status to no longer downloading
+      App? foundApp;
+      apps.forEach((id, app) {
+        if (app.currentDownloadId == id) {
+          foundApp = apps[app.id];
+        }
+      });
+      foundApp!.currentDownloadId = null;
+      saveApp(foundApp!);
+      // Install the App (and remove warning notification if any)
       FlutterDownloader.open(taskId: id);
       downloaderNotifications.cancel(1);
     }
   }
 
   // Given a URL (assumed valid), initiate an APK download (will trigger install callback when complete)
-  Future<void> backgroundDownloadAndInstallAPK(String url, String appId) async {
-    var apkDir = Directory(
-        '${(await getExternalStorageDirectory())?.path as String}/$appId');
+  Future<void> backgroundDownloadAndInstallApp(App app) async {
+    Directory apkDir = Directory(
+        '${(await getExternalStorageDirectory())?.path as String}/apks/${app.id}');
     if (apkDir.existsSync()) apkDir.deleteSync(recursive: true);
-    apkDir.createSync();
-    await FlutterDownloader.enqueue(
-      url: url,
+    apkDir.createSync(recursive: true);
+    String? downloadId = await FlutterDownloader.enqueue(
+      url: app.url,
       savedDir: apkDir.path,
       showNotification: true,
       openFileFromNotification: false,
     );
+    if (downloadId != null) {
+      app.currentDownloadId = downloadId;
+      saveApp(app);
+    } else {
+      throw "Could not start download";
+    }
   }
 
-  void loadApps() {
-    // TODO: Load Apps JSON and fill the array
+  Future<Directory> getAppsDir() async {
+    Directory appsDir = Directory(
+        '${(await getExternalStorageDirectory())?.path as String}/apps');
+    if (!appsDir.existsSync()) {
+      appsDir.createSync();
+    }
+    return appsDir;
+  }
+
+  Future<void> loadApps() async {
+    loadingApps = true;
+    notifyListeners();
+    List<FileSystemEntity> appFiles = (await getAppsDir())
+        .listSync()
+        .where((item) => item.path.toLowerCase().endsWith('.json'))
+        .toList();
+    apps.clear();
+    for (int i = 0; i < appFiles.length; i++) {
+      App app =
+          App.fromJson(jsonDecode(File(appFiles[i].path).readAsStringSync()));
+      apps.putIfAbsent(app.id, () => app);
+    }
+    loadingApps = false;
     notifyListeners();
   }
 
-  void saveApp(App app) {
-    // TODO: Save/update an App JSON and update the array
+  Future<void> saveApp(App app) async {
+    File('${(await getAppsDir()).path}/${app.id}.json')
+        .writeAsStringSync(jsonEncode(app));
+    apps.update(app.id, (value) => app, ifAbsent: () => app);
     notifyListeners();
   }
 
   bool checkUpdate(App app) {
-    // TODO: Check the given App against the existing version in the array (if it does not exist, throw an error)
-    return false;
+    if (!apps.containsKey(app.id)) {
+      throw 'App not found';
+    }
+    return app.latestVersion != apps[app.id]?.installedVersion;
   }
 
   Future<void> installApp(String url) async {
-    var app = await SourceService().getApp(url);
-    await backgroundDownloadAndInstallAPK(app.apkUrl, app.id);
-    // TODO: Apps array should notify consumers about download progress (will need to change FlutterDownloader callbacks)
-    saveApp(app);
+    App app = await SourceService().getApp(url);
+    await backgroundDownloadAndInstallApp(app);
   }
 
   Future<List<App>> checkUpdates() async {
     List<App> updates = [];
-    var appIds = apps.keys.toList();
-    for (var i = 0; i < appIds.length; i++) {
-      var currentApp = apps[appIds[i]];
-      var newApp = await SourceService().getApp(currentApp!.url);
+    List<String> appIds = apps.keys.toList();
+    for (int i = 0; i < appIds.length; i++) {
+      App? currentApp = apps[appIds[i]];
+      App newApp = await SourceService().getApp(currentApp!.url);
       if (newApp.latestVersion != currentApp.latestVersion) {
         newApp.installedVersion = currentApp.installedVersion;
         updates.add(newApp);
-        saveApp(newApp);
+        await saveApp(newApp);
       }
     }
     return updates;
   }
 
   Future<void> installUpdates() async {
-    var appIds = apps.keys.toList();
-    for (var i = 0; i < appIds.length; i++) {
-      var app = apps[appIds[i]];
-      if (app != null) {
-        if (app.installedVersion != app.latestVersion) {
-          await installApp(app.apkUrl);
-        }
+    List<String> appIds = apps.keys.toList();
+    for (int i = 0; i < appIds.length; i++) {
+      App? app = apps[appIds[i]];
+      if (app!.installedVersion != app.latestVersion) {
+        await installApp(app.apkUrl);
       }
     }
   }

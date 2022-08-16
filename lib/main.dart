@@ -14,12 +14,12 @@ void main() async {
 // Extract a GitHub project name and author account name from a GitHub URL (can be any sub-URL of the project)
 Map<String, String>? getAppNamesFromGitHubURL(String url) {
   RegExp regex = RegExp(r'://github.com/[^/]*/[^/]*');
-  var match = regex.firstMatch(url.toLowerCase());
+  RegExpMatch? match = regex.firstMatch(url.toLowerCase());
   if (match != null) {
-    var uri = url.substring(match.start + 14, match.end);
-    var slashIndex = uri.indexOf('/');
-    var author = uri.substring(0, slashIndex);
-    var appName = uri.substring(slashIndex + 1);
+    String uri = url.substring(match.start + 14, match.end);
+    int slashIndex = uri.indexOf('/');
+    String author = uri.substring(0, slashIndex);
+    String appName = uri.substring(slashIndex + 1);
     return {'author': author, 'appName': appName};
   }
   return null;
@@ -51,7 +51,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int ind = 0;
-  var urls = [
+  List<String> urls = [
     'https://github.com/Ashinch/ReadYou/releases/download', // Should work
     'http://github.com/syncthing/syncthing-android/releases/tag/1.20.4', // Should work
     'https://github.com/videolan/vlc' // Should not
