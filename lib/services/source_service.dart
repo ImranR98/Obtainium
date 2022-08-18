@@ -33,25 +33,25 @@ abstract class AppSource {
 class App {
   late String id;
   late String url;
+  late String author;
+  late String name;
   String? installedVersion;
   late String latestVersion;
   late String apkUrl;
   String? currentDownloadId;
-  App(this.id, this.url, this.installedVersion, this.latestVersion, this.apkUrl,
-      this.currentDownloadId);
+  App(this.id, this.url, this.author, this.name, this.installedVersion,
+      this.latestVersion, this.apkUrl, this.currentDownloadId);
 
   @override
   String toString() {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrl';
   }
 
-  factory App.fromJson(Map<String, dynamic> json) => _appFromJson(json);
-}
-
-App _appFromJson(Map<String, dynamic> json) {
-  return App(
+  factory App.fromJson(Map<String, dynamic> json) => App(
       json['id'] as String,
       json['url'] as String,
+      json['author'] as String,
+      json['name'] as String,
       json['installedVersion'] == null
           ? null
           : json['installedVersion'] as String,
@@ -60,6 +60,17 @@ App _appFromJson(Map<String, dynamic> json) {
       json['currentDownloadId'] == null
           ? null
           : json['currentDownloadId'] as String);
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'url': url,
+        'author': author,
+        'name': name,
+        'installedVersion': installedVersion,
+        'latestVersion': latestVersion,
+        'apkUrl': apkUrl,
+        'currentDownloadId': currentDownloadId
+      };
 }
 
 // Specific App Source classes
@@ -121,11 +132,22 @@ class SourceService {
   }
 
   Future<App> getApp(String url) async {
+    if (url.toLowerCase().indexOf('http://') != 0 &&
+        url.toLowerCase().indexOf('https://') != 0) {
+      url = 'https://$url';
+    }
     AppSource source = getSource(url);
     String standardUrl = source.standardizeURL(url);
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source.getLatestAPKUrl(standardUrl);
-    return App('${names.author}_${names.name}', standardUrl, null, apk.version,
-        apk.downloadUrl, null);
+    return App(
+        '${names.author}_${names.name}',
+        standardUrl,
+        names.author[0].toUpperCase() + names.author.substring(1),
+        names.name[0].toUpperCase() + names.name.substring(1),
+        null,
+        apk.version,
+        apk.downloadUrl,
+        null);
   }
 }

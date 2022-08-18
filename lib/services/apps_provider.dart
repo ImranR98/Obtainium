@@ -105,7 +105,7 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  // Given a URL (assumed valid), initiate an APK download (will trigger install callback when complete)
+  // Given a App (assumed valid), initiate an APK download (will trigger install callback when complete)
   Future<void> backgroundDownloadAndInstallApp(App app) async {
     Directory apkDir = Directory(
         '${(await getExternalStorageDirectory())?.path as String}/apks/${app.id}');
@@ -153,7 +153,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<void> saveApp(App app) async {
     File('${(await getAppsDir()).path}/${app.id}.json')
-        .writeAsStringSync(jsonEncode(app));
+        .writeAsStringSync(jsonEncode(app.toJson()));
     apps.update(app.id, (value) => app, ifAbsent: () => app);
     notifyListeners();
   }
@@ -163,11 +163,6 @@ class AppsProvider with ChangeNotifier {
       throw 'App not found';
     }
     return app.latestVersion != apps[app.id]?.installedVersion;
-  }
-
-  Future<void> installApp(String url) async {
-    App app = await SourceService().getApp(url);
-    await backgroundDownloadAndInstallApp(app);
   }
 
   Future<List<App>> checkUpdates() async {
@@ -190,7 +185,7 @@ class AppsProvider with ChangeNotifier {
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]];
       if (app!.installedVersion != app.latestVersion) {
-        await installApp(app.apkUrl);
+        await backgroundDownloadAndInstallApp(app);
       }
     }
   }
