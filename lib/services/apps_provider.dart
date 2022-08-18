@@ -92,9 +92,9 @@ class AppsProvider with ChangeNotifier {
       }
       // Change App status to no longer downloading
       App? foundApp;
-      apps.forEach((id, app) {
+      apps.forEach((appId, app) {
         if (app.currentDownloadId == id) {
-          foundApp = apps[app.id];
+          foundApp = apps[appId];
         }
       });
       foundApp!.currentDownloadId = null;
@@ -112,7 +112,7 @@ class AppsProvider with ChangeNotifier {
     if (apkDir.existsSync()) apkDir.deleteSync(recursive: true);
     apkDir.createSync(recursive: true);
     String? downloadId = await FlutterDownloader.enqueue(
-      url: app.url,
+      url: app.apkUrl,
       savedDir: apkDir.path,
       showNotification: true,
       openFileFromNotification: false,
@@ -158,23 +158,42 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool checkUpdate(App app) {
+  Future<void> removeApp(String appId) async {
+    File file = File('${(await getAppsDir()).path}/$appId.json');
+    if (file.existsSync()) {
+      file.deleteSync();
+    }
+    if (apps.containsKey(appId)) {
+      apps.remove(appId);
+    }
+    notifyListeners();
+  }
+
+  bool checkAppObjectForUpdate(App app) {
     if (!apps.containsKey(app.id)) {
       throw 'App not found';
     }
     return app.latestVersion != apps[app.id]?.installedVersion;
   }
 
-  Future<List<App>> checkUpdates() async {
+  Future<App?> getUpdate(String appId) async {
+    App? currentApp = apps[appId];
+    App newApp = await SourceService().getApp(currentApp!.url);
+    if (newApp.latestVersion != currentApp.latestVersion) {
+      newApp.installedVersion = currentApp.installedVersion;
+      await saveApp(newApp);
+      return newApp;
+    }
+    return null;
+  }
+
+  Future<List<App>> getUpdates() async {
     List<App> updates = [];
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
-      App? currentApp = apps[appIds[i]];
-      App newApp = await SourceService().getApp(currentApp!.url);
-      if (newApp.latestVersion != currentApp.latestVersion) {
-        newApp.installedVersion = currentApp.installedVersion;
+      App? newApp = await getUpdate(appIds[i]);
+      if (newApp != null) {
         updates.add(newApp);
-        await saveApp(newApp);
       }
     }
     return updates;

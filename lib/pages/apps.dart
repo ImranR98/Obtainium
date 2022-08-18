@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/pages/add_app.dart';
+import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/services/apps_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -13,24 +14,39 @@ class AppsPage extends StatefulWidget {
 class _AppsPageState extends State<AppsPage> {
   @override
   Widget build(BuildContext context) {
+    var appsProvider = context.watch<AppsProvider>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Obtainium - Apps'),
+        title: const Text('Obtainium'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: () {
-            var appsProvider = context.watch<AppsProvider>();
-            if (appsProvider.loadingApps) {
-              return [const Text('Loading Apps...')];
-            } else if (appsProvider.apps.isEmpty) {
-              return [const Text('No Apps Yet.')];
-            } else {
-              return appsProvider.apps.values.map((e) => Text(e.id)).toList();
-            }
-          }(),
-        ),
+        child: appsProvider.loadingApps
+            ? const CircularProgressIndicator()
+            : appsProvider.apps.isEmpty
+                ? Text(
+                    'No Apps',
+                    style: Theme.of(context).textTheme.headline4,
+                  )
+                : ListView(
+                    children: appsProvider.apps.values
+                        .map(
+                          (e) => ListTile(
+                            title: Text(e.name),
+                            subtitle: Text(e.author),
+                            trailing:
+                                Text(e.installedVersion ?? 'Not Installed'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AppPage(appId: e.id)),
+                              );
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

@@ -14,6 +14,7 @@ class AddAppPage extends StatefulWidget {
 class _AddAppPageState extends State<AddAppPage> {
   final _formKey = GlobalKey<FormState>();
   final urlInputController = TextEditingController();
+  bool gettingAppInfo = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,45 +26,67 @@ class _AddAppPageState extends State<AddAppPage> {
           child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextFormField(
-              controller: urlInputController,
-              validator: (value) {
-                if (value == null ||
-                    value.isEmpty ||
-                    Uri.tryParse(value) == null) {
-                  return 'Please enter a supported source URL';
-                }
-                return null;
-              },
-            ),
+            const Spacer(),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'https://github.com/Author/Project',
+                      helperText: 'Enter the App source URL'),
+                  controller: urlInputController,
+                  validator: (value) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        Uri.tryParse(value) == null) {
+                      return 'Please enter a supported source URL';
+                    }
+                    return null;
+                  },
+                )),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
               child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    SourceService()
-                        .getApp(urlInputController.value.text)
-                        .then((app) {
-                      var appsProvider = context.read<AppsProvider>();
-                      appsProvider.saveApp(app).then((_) {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AppPage(appId: app.id)));
-                      });
-                    }).catchError((e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
-                      );
-                    });
-                  }
-                },
+                onPressed: gettingAppInfo
+                    ? null
+                    : () {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            gettingAppInfo = true;
+                          });
+                          SourceService()
+                              .getApp(urlInputController.value.text)
+                              .then((app) {
+                            var appsProvider = context.read<AppsProvider>();
+                            if (appsProvider.apps.containsKey(app.id)) {
+                              throw 'App already added';
+                            }
+                            appsProvider.saveApp(app).then((_) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          AppPage(appId: app.id)));
+                            });
+                          }).catchError((e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString())),
+                            );
+                          }).whenComplete(() {
+                            setState(() {
+                              gettingAppInfo = false;
+                            });
+                          });
+                        }
+                      },
                 child: const Text('Add'),
               ),
             ),
+            const Spacer(),
+            if (gettingAppInfo) const LinearProgressIndicator(),
           ],
         ),
       )),
