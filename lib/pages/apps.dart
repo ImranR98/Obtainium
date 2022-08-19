@@ -15,6 +15,7 @@ class _AppsPageState extends State<AppsPage> {
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
+    appsProvider.getUpdates();
 
     return Scaffold(
       appBar: AppBar(
@@ -28,35 +29,70 @@ class _AppsPageState extends State<AppsPage> {
                     'No Apps',
                     style: Theme.of(context).textTheme.headline4,
                   )
-                : ListView(
-                    children: appsProvider.apps.values
-                        .map(
-                          (e) => ListTile(
-                            title: Text(e.name),
-                            subtitle: Text(e.author),
-                            trailing:
-                                Text(e.installedVersion ?? 'Not Installed'),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AppPage(appId: e.id)),
-                              );
-                            },
-                          ),
-                        )
-                        .toList(),
+                : RefreshIndicator(
+                    onRefresh: appsProvider.getUpdates,
+                    child: ListView(
+                      children: appsProvider.apps.values
+                          .map(
+                            (e) => ListTile(
+                              title: Text('${e.author}/${e.name}'),
+                              subtitle:
+                                  Text(e.installedVersion ?? 'Not Installed'),
+                              trailing: e.installedVersion != null &&
+                                      e.installedVersion != e.latestVersion
+                                  ? const Text('Update Available')
+                                  : null,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          AppPage(appId: e.id)),
+                                );
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddAppPage()),
-          );
-        },
-        tooltip: 'Add App',
-        child: const Icon(Icons.add),
+      bottomSheet: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                        child: appsProvider.apps.values.toList().where((e) {
+                      return (e.installedVersion != null &&
+                          e.installedVersion != e.latestVersion);
+                    }).isNotEmpty
+                            ? OutlinedButton(
+                                onPressed: () {
+                                  appsProvider.installUpdates().catchError((e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  });
+                                },
+                                child: const Text('Update All'))
+                            : Container()),
+                    const SizedBox(width: 16.0),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const AddAppPage()),
+                        );
+                      },
+                      child: const Text('Add App'),
+                    ),
+                  ])),
+        ],
       ),
     );
   }

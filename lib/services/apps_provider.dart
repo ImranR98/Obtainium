@@ -17,6 +17,7 @@ class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, App> apps = {};
   bool loadingApps = false;
+  bool gettingUpdates = false;
 
   AppsProvider() {
     initializeDownloader();
@@ -213,12 +214,17 @@ class AppsProvider with ChangeNotifier {
 
   Future<List<App>> getUpdates() async {
     List<App> updates = [];
-    List<String> appIds = apps.keys.toList();
-    for (int i = 0; i < appIds.length; i++) {
-      App? newApp = await getUpdate(appIds[i]);
-      if (newApp != null) {
-        updates.add(newApp);
+    if (!gettingUpdates) {
+      gettingUpdates = true;
+
+      List<String> appIds = apps.keys.toList();
+      for (int i = 0; i < appIds.length; i++) {
+        App? newApp = await getUpdate(appIds[i]);
+        if (newApp != null) {
+          updates.add(newApp);
+        }
       }
+      gettingUpdates = false;
     }
     return updates;
   }
