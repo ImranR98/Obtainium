@@ -19,11 +19,14 @@ class AppsProvider with ChangeNotifier {
   bool loadingApps = false;
   bool gettingUpdates = false;
 
-  AppsProvider() {
-    initializeDownloader();
+  AppsProvider({bool bg = false}) {
+    initializeNotifs();
     loadApps().then((_) {
       clearDownloadStates();
     });
+    if (!bg) {
+      initializeDownloader();
+    }
   }
 
   // Notifications plugin for downloads
@@ -53,13 +56,17 @@ class AppsProvider with ChangeNotifier {
       int progress = data[2];
       downloadCallbackForeground(id, status, progress);
     });
-    // Initialize the notifications service
-    await downloaderNotifications.initialize(const InitializationSettings(
-        android: AndroidInitializationSettings('ic_launcher')));
     // Subscribe to changes in the app foreground status
     foregroundSubscription = FGBGEvents.stream.listen((event) async {
       isForeground = event == FGBGType.foreground;
+      if (isForeground) await loadApps();
     });
+  }
+
+  Future<void> initializeNotifs() async {
+    // Initialize the notifications service
+    await downloaderNotifications.initialize(const InitializationSettings(
+        android: AndroidInitializationSettings('ic_launcher')));
   }
 
   // Callback that receives FlutterDownloader status and forwards to a foreground function
@@ -71,24 +78,33 @@ class AppsProvider with ChangeNotifier {
     send!.send([id, status, progress]);
   }
 
+  Future<void> notify(int id, String title, String message, String channelCode,
+      String channelName, String channelDescription) {
+    return downloaderNotifications.show(
+        id,
+        title,
+        message,
+        NotificationDetails(
+            android: AndroidNotificationDetails(channelCode, channelName,
+                channelDescription: channelDescription,
+                importance: Importance.max,
+                priority: Priority.max,
+                groupKey: 'dev.imranr.obtainium.$channelCode')));
+  }
+
   // Foreground function to act on FlutterDownloader status updates (install downloaded APK)
   void downloadCallbackForeground(
       String id, DownloadTaskStatus status, int progress) async {
     if (status == DownloadTaskStatus.complete) {
       // Wait for app to come to the foreground if not already, and notify the user
       while (!isForeground) {
-        await downloaderNotifications.show(
+        await notify(
             1,
             'Complete App Installation',
             'Obtainium must be open to install Apps',
-            const NotificationDetails(
-                android: AndroidNotificationDetails(
-                    'COMPLETE_INSTALL', 'Complete App Installation',
-                    channelDescription:
-                        'Ask the user to return to Obtanium to finish installing an App',
-                    importance: Importance.max,
-                    priority: Priority.max,
-                    groupKey: 'dev.imranr.obtainium.COMPLETE_INSTALL')));
+            'COMPLETE_INSTALL',
+            'Complete App Installation',
+            'Asks the user to return to Obtanium to finish installing an App');
         if (await FGBGEvents.stream.first == FGBGType.foreground) {
           break;
         }

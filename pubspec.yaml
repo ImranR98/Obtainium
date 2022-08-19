@@ -44,6 +44,7 @@ dependencies:
   http: ^0.13.5
   toast: ^0.3.0
   webview_flutter: ^3.0.4
+  workmanager: ^0.5.0
 
 dev_dependencies:
   flutter_test:
