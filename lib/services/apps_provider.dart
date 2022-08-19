@@ -20,7 +20,9 @@ class AppsProvider with ChangeNotifier {
 
   AppsProvider() {
     initializeDownloader();
-    loadApps();
+    loadApps().then((_) {
+      clearDownloadStates();
+    });
   }
 
   // Notifications plugin for downloads
@@ -90,7 +92,14 @@ class AppsProvider with ChangeNotifier {
           break;
         }
       }
-      // Change App status to no longer downloading
+      // Install the App (and remove warning notification if any)
+      FlutterDownloader.open(taskId: id);
+      downloaderNotifications.cancel(1);
+    }
+    // Change App status based on result (we assume user accepts install - no way to tell programatically)
+    if (status == DownloadTaskStatus.complete ||
+        status == DownloadTaskStatus.failed ||
+        status == DownloadTaskStatus.canceled) {
       App? foundApp;
       apps.forEach((appId, app) {
         if (app.currentDownloadId == id) {
@@ -98,10 +107,10 @@ class AppsProvider with ChangeNotifier {
         }
       });
       foundApp!.currentDownloadId = null;
+      if (status == DownloadTaskStatus.complete) {
+        foundApp!.installedVersion = foundApp!.latestVersion;
+      }
       saveApp(foundApp!);
-      // Install the App (and remove warning notification if any)
-      FlutterDownloader.open(taskId: id);
-      downloaderNotifications.cancel(1);
     }
   }
 
@@ -156,6 +165,21 @@ class AppsProvider with ChangeNotifier {
         .writeAsStringSync(jsonEncode(app.toJson()));
     apps.update(app.id, (value) => app, ifAbsent: () => app);
     notifyListeners();
+  }
+
+  Future<void> clearDownloadStates() async {
+    var appList = apps.values.toList();
+    int count = 0;
+    for (int i = 0; i < appList.length; i++) {
+      if (appList[i].currentDownloadId != null) {
+        apps[appList[i].id]?.currentDownloadId = null;
+        await saveApp(apps[appList[i].id]!);
+        count++;
+      }
+    }
+    if (count > 0) {
+      notifyListeners();
+    }
   }
 
   Future<void> removeApp(String appId) async {

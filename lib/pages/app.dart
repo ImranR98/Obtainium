@@ -28,58 +28,70 @@ class _AppPageState extends State<AppPage> {
       body: WebView(
         initialUrl: app?.url,
       ),
-      bottomSheet: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            Expanded(
-                child: OutlinedButton(
-                    onPressed: (app?.installedVersion == null ||
-                                appsProvider.checkAppObjectForUpdate(app!)) &&
-                            app?.currentDownloadId == null
-                        ? () {
-                            appsProvider.backgroundDownloadAndInstallApp(app!);
-                          }
-                        : null,
-                    child: Text(
-                        app?.installedVersion == null ? 'Install' : 'Update'))),
-            const SizedBox(width: 16.0),
-            OutlinedButton(
-              onPressed: app?.currentDownloadId != null
-                  ? null
-                  : () {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext ctx) {
-                            return AlertDialog(
-                              title: const Text('Remove App?'),
-                              content: Text(
-                                  'This will remove \'${app?.name}\' from Obtainium.${app?.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () {
-                                      appsProvider.removeApp(app!.id).then((_) {
-                                        int count = 0;
-                                        Navigator.of(context)
-                                            .popUntil((_) => count++ >= 2);
-                                      });
-                                    },
-                                    child: const Text('Remove')),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Cancel'))
-                              ],
-                            );
-                          });
-                    },
-              style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).errorColor),
-              child: const Text('Remove'),
-            )
-            // TODO: Add progress bar when app?.currentDownloadId != null
-          ])),
+      bottomSheet: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                        child: OutlinedButton(
+                            onPressed: (app?.installedVersion == null ||
+                                        appsProvider
+                                            .checkAppObjectForUpdate(app!)) &&
+                                    app?.currentDownloadId == null
+                                ? () {
+                                    appsProvider
+                                        .backgroundDownloadAndInstallApp(app!);
+                                  }
+                                : null,
+                            child: Text(app?.installedVersion == null
+                                ? 'Install'
+                                : 'Update'))),
+                    const SizedBox(width: 16.0),
+                    OutlinedButton(
+                      onPressed: app?.currentDownloadId != null
+                          ? null
+                          : () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return AlertDialog(
+                                      title: const Text('Remove App?'),
+                                      content: Text(
+                                          'This will remove \'${app?.name}\' from Obtainium.${app?.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () {
+                                              appsProvider
+                                                  .removeApp(app!.id)
+                                                  .then((_) {
+                                                int count = 0;
+                                                Navigator.of(context).popUntil(
+                                                    (_) => count++ >= 2);
+                                              });
+                                            },
+                                            child: const Text('Remove')),
+                                        TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('Cancel'))
+                                      ],
+                                    );
+                                  });
+                            },
+                      style: TextButton.styleFrom(
+                          foregroundColor: Theme.of(context).errorColor),
+                      child: const Text('Remove'),
+                    ),
+                  ])),
+          if (app?.currentDownloadId != null) const LinearProgressIndicator()
+        ],
+      ),
     );
   }
 }
