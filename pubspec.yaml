@@ -45,10 +45,13 @@ dependencies:
   toast: ^0.3.0
   webview_flutter: ^3.0.4
   workmanager: ^0.5.0
+  dynamic_color: ^1.5.3
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.10.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +59,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+
+flutter_icons:
+  android: true
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#282828"
+  adaptive_icon_foreground: "assets/icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -98,3 +107,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+  fonts:
+      - family: Metropolis
+        fonts:
+          - asset: assets/fonts/Metropolis-Regular.otf

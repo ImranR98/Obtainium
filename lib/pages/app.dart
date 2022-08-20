@@ -38,7 +38,7 @@ class _AppPageState extends State<AppPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Expanded(
-                        child: OutlinedButton(
+                        child: ElevatedButton(
                             onPressed: (app?.installedVersion == null ||
                                         appsProvider
                                             .checkAppObjectForUpdate(app!)) &&
@@ -52,7 +52,7 @@ class _AppPageState extends State<AppPage> {
                                 ? 'Install'
                                 : 'Update'))),
                     const SizedBox(width: 16.0),
-                    OutlinedButton(
+                    ElevatedButton(
                       onPressed: app?.currentDownloadId != null
                           ? null
                           : () {
@@ -85,7 +85,8 @@ class _AppPageState extends State<AppPage> {
                                   });
                             },
                       style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).errorColor),
+                          foregroundColor: Theme.of(context).errorColor,
+                          surfaceTintColor: Theme.of(context).errorColor),
                       child: const Text('Remove'),
                     ),
                   ])),

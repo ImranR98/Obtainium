@@ -17,83 +17,39 @@ class _AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     appsProvider.getUpdates();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Obtainium'),
-      ),
-      body: Center(
-        child: appsProvider.loadingApps
-            ? const CircularProgressIndicator()
-            : appsProvider.apps.isEmpty
-                ? Text(
-                    'No Apps',
-                    style: Theme.of(context).textTheme.headline4,
-                  )
-                : RefreshIndicator(
-                    onRefresh: appsProvider.getUpdates,
-                    child: ListView(
-                      children: appsProvider.apps.values
-                          .map(
-                            (e) => ListTile(
-                              title: Text('${e.author}/${e.name}'),
-                              subtitle:
-                                  Text(e.installedVersion ?? 'Not Installed'),
-                              trailing: e.installedVersion != null &&
-                                      e.installedVersion != e.latestVersion
-                                  ? const Text('Update Available')
-                                  : null,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          AppPage(appId: e.id)),
-                                );
-                              },
-                            ),
-                          )
-                          .toList(),
-                    ),
+    return Center(
+      child: appsProvider.loadingApps
+          ? const CircularProgressIndicator()
+          : appsProvider.apps.isEmpty
+              ? Text(
+                  'No Apps',
+                  style: Theme.of(context).textTheme.headline4,
+                )
+              : RefreshIndicator(
+                  onRefresh: appsProvider.getUpdates,
+                  child: ListView(
+                    children: appsProvider.apps.values
+                        .map(
+                          (e) => ListTile(
+                            title: Text('${e.author}/${e.name}'),
+                            subtitle:
+                                Text(e.installedVersion ?? 'Not Installed'),
+                            trailing: e.installedVersion != null &&
+                                    e.installedVersion != e.latestVersion
+                                ? const Text('Update Available')
+                                : null,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AppPage(appId: e.id)),
+                              );
+                            },
+                          ),
+                        )
+                        .toList(),
                   ),
-      ),
-      bottomSheet: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                        child: appsProvider.apps.values.toList().where((e) {
-                      return (e.installedVersion != null &&
-                          e.installedVersion != e.latestVersion);
-                    }).isNotEmpty
-                            ? OutlinedButton(
-                                onPressed: () {
-                                  appsProvider.installUpdates().catchError((e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(e.toString())),
-                                    );
-                                  });
-                                },
-                                child: const Text('Update All'))
-                            : Container()),
-                    const SizedBox(width: 16.0),
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const AddAppPage()),
-                        );
-                      },
-                      child: const Text('Add App'),
-                    ),
-                  ])),
-        ],
-      ),
+                ),
     );
   }
 }
