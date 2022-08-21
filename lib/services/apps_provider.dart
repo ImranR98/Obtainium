@@ -66,7 +66,7 @@ class AppsProvider with ChangeNotifier {
   Future<void> initializeNotifs() async {
     // Initialize the notifications service
     await downloaderNotifications.initialize(const InitializationSettings(
-        android: AndroidInitializationSettings('ic_launcher')));
+        android: AndroidInitializationSettings('ic_notification')));
   }
 
   // Callback that receives FlutterDownloader status and forwards to a foreground function
