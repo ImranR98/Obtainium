@@ -17,16 +17,16 @@ class _AppPageState extends State<AppPage> {
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
-    App? app = appsProvider.apps[widget.appId];
-    if (app?.installedVersion != null) {
-      appsProvider.getUpdate(app!.id);
+    AppInMemory? app = appsProvider.apps[widget.appId];
+    if (app?.app.installedVersion != null) {
+      appsProvider.getUpdate(app!.app.id);
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text('${app?.author}/${app?.name}'),
+        title: Text('${app!.app.author}/${app.app.name}'),
       ),
       body: WebView(
-        initialUrl: app?.url,
+        initialUrl: app.app.url,
       ),
       bottomSheet: Column(
         mainAxisSize: MainAxisSize.min,
@@ -39,21 +39,21 @@ class _AppPageState extends State<AppPage> {
                   children: [
                     Expanded(
                         child: ElevatedButton(
-                            onPressed: (app?.installedVersion == null ||
-                                        appsProvider
-                                            .checkAppObjectForUpdate(app!)) &&
-                                    app?.currentDownloadId == null
+                            onPressed: (app.app.installedVersion == null ||
+                                        appsProvider.checkAppObjectForUpdate(
+                                            app.app)) &&
+                                    app.downloadProgress == null
                                 ? () {
-                                    appsProvider
-                                        .backgroundDownloadAndInstallApp(app!);
+                                    appsProvider.downloadAndInstallLatestApp(
+                                        app.app.id);
                                   }
                                 : null,
-                            child: Text(app?.installedVersion == null
+                            child: Text(app.app.installedVersion == null
                                 ? 'Install'
                                 : 'Update'))),
                     const SizedBox(width: 16.0),
                     ElevatedButton(
-                      onPressed: app?.currentDownloadId != null
+                      onPressed: app.downloadProgress != null
                           ? null
                           : () {
                               showDialog(
@@ -62,12 +62,12 @@ class _AppPageState extends State<AppPage> {
                                     return AlertDialog(
                                       title: const Text('Remove App?'),
                                       content: Text(
-                                          'This will remove \'${app?.name}\' from Obtainium.${app?.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
+                                          'This will remove \'${app.app.name}\' from Obtainium.${app.app.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
                                       actions: [
                                         TextButton(
                                             onPressed: () {
                                               appsProvider
-                                                  .removeApp(app!.id)
+                                                  .removeApp(app.app.id)
                                                   .then((_) {
                                                 int count = 0;
                                                 Navigator.of(context).popUntil(
@@ -90,7 +90,8 @@ class _AppPageState extends State<AppPage> {
                       child: const Text('Remove'),
                     ),
                   ])),
-          if (app?.currentDownloadId != null) const LinearProgressIndicator()
+          if (app.downloadProgress != null)
+            LinearProgressIndicator(value: app.downloadProgress)
         ],
       ),
     );

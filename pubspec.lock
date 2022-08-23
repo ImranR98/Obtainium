@@ -71,6 +71,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.2"
+  csslib:
+    dependency: transitive
+    description:
+      name: csslib
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.17.2"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -118,13 +125,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_downloader:
-    dependency: "direct main"
-    description:
-      name: flutter_downloader
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.8.1"
   flutter_fgbg:
     dependency: "direct main"
     description:
@@ -172,11 +172,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_web_plugins:
-    dependency: transitive
-    description: flutter
-    source: sdk
-    version: "0.0.0"
+  html:
+    dependency: "direct main"
+    description:
+      name: html
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.15.0"
   http:
     dependency: "direct main"
     description:
@@ -198,13 +200,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.2.0"
-  js:
-    dependency: transitive
+  install_plugin_v2:
+    dependency: "direct main"
     description:
-      name: js
+      name: install_plugin_v2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.4"
+    version: "1.0.0"
   json_annotation:
     dependency: transitive
     description:
@@ -392,13 +394,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.0"
-  toast:
-    dependency: "direct main"
-    description:
-      name: toast
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.0"
   typed_data:
     dependency: transitive
     description:

@@ -3,79 +3,51 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/services/source_service.dart';
+import 'package:http/http.dart';
+import 'package:install_plugin_v2/install_plugin_v2.dart';
+
+class AppInMemory {
+  late App app;
+  double? downloadProgress;
+
+  AppInMemory(this.app, this.downloadProgress);
+}
 
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
-  Map<String, App> apps = {};
+  Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
   bool gettingUpdates = false;
-
-  AppsProvider({bool bg = false}) {
-    initializeNotifs();
-    loadApps().then((_) {
-      clearDownloadStates();
-    });
-    if (!bg) {
-      initializeDownloader();
-    }
-  }
 
   // Notifications plugin for downloads
   FlutterLocalNotificationsPlugin downloaderNotifications =
       FlutterLocalNotificationsPlugin();
 
-  // Port for FlutterDownloader background/foreground communication
-  final ReceivePort _port = ReceivePort();
-
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   StreamSubscription<FGBGType>? foregroundSubscription;
 
-  // Setup the FlutterDownloader plugin (call only once)
-  Future<void> initializeDownloader() async {
-    // Make sure FlutterDownloader can be used
-    await FlutterDownloader.initialize();
-    // Set up the status update callback for FlutterDownloader
-    FlutterDownloader.registerCallback(downloadCallbackBackground);
-    // The actual callback is in the background isolate
-    // So setup a port to pass the data to a foreground callback
-    IsolateNameServer.registerPortWithName(
-        _port.sendPort, 'downloader_send_port');
-    _port.listen((dynamic data) {
-      String id = data[0];
-      DownloadTaskStatus status = data[1];
-      int progress = data[2];
-      downloadCallbackForeground(id, status, progress);
-    });
+  AppsProvider({bool bg = false}) {
+    initializeNotifs();
     // Subscribe to changes in the app foreground status
     foregroundSubscription = FGBGEvents.stream.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) await loadApps();
     });
+    loadApps();
   }
 
   Future<void> initializeNotifs() async {
     // Initialize the notifications service
     await downloaderNotifications.initialize(const InitializationSettings(
         android: AndroidInitializationSettings('ic_notification')));
-  }
-
-  // Callback that receives FlutterDownloader status and forwards to a foreground function
-  @pragma('vm:entry-point')
-  static void downloadCallbackBackground(
-      String id, DownloadTaskStatus status, int progress) {
-    final SendPort? send =
-        IsolateNameServer.lookupPortByName('downloader_send_port');
-    send!.send([id, status, progress]);
   }
 
   Future<void> notify(int id, String title, String message, String channelCode,
@@ -92,63 +64,44 @@ class AppsProvider with ChangeNotifier {
                 groupKey: 'dev.imranr.obtainium.$channelCode')));
   }
 
-  // Foreground function to act on FlutterDownloader status updates (install downloaded APK)
-  void downloadCallbackForeground(
-      String id, DownloadTaskStatus status, int progress) async {
-    if (status == DownloadTaskStatus.complete) {
-      // Wait for app to come to the foreground if not already, and notify the user
-      while (!isForeground) {
-        await notify(
-            1,
-            'Complete App Installation',
-            'Obtainium must be open to install Apps',
-            'COMPLETE_INSTALL',
-            'Complete App Installation',
-            'Asks the user to return to Obtanium to finish installing an App');
-        if (await FGBGEvents.stream.first == FGBGType.foreground) {
-          break;
-        }
-      }
-      // Install the App (and remove warning notification if any)
-      FlutterDownloader.open(taskId: id);
-      downloaderNotifications.cancel(1);
-    }
-    // Change App status based on result (we assume user accepts install - no way to tell programatically)
-    if (status == DownloadTaskStatus.complete ||
-        status == DownloadTaskStatus.failed ||
-        status == DownloadTaskStatus.canceled) {
-      App? foundApp;
-      apps.forEach((appId, app) {
-        if (app.currentDownloadId == id) {
-          foundApp = apps[appId];
-        }
-      });
-      foundApp!.currentDownloadId = null;
-      if (status == DownloadTaskStatus.complete) {
-        foundApp!.installedVersion = foundApp!.latestVersion;
-      }
-      saveApp(foundApp!);
-    }
-  }
-
   // Given a App (assumed valid), initiate an APK download (will trigger install callback when complete)
-  Future<void> backgroundDownloadAndInstallApp(App app) async {
-    Directory apkDir = Directory(
-        '${(await getExternalStorageDirectory())?.path as String}/apks/${app.id}');
-    if (apkDir.existsSync()) apkDir.deleteSync(recursive: true);
-    apkDir.createSync(recursive: true);
-    String? downloadId = await FlutterDownloader.enqueue(
-      url: app.apkUrl,
-      savedDir: apkDir.path,
-      showNotification: true,
-      openFileFromNotification: false,
-    );
-    if (downloadId != null) {
-      app.currentDownloadId = downloadId;
-      saveApp(app);
-    } else {
-      throw "Could not start download";
+  Future<void> downloadAndInstallLatestApp(String appId) async {
+    if (apps[appId] == null) {
+      throw 'App not found';
     }
+    StreamedResponse response =
+        await Client().send(Request('GET', Uri.parse(apps[appId]!.app.apkUrl)));
+    File downloadFile =
+        File('${(await getTemporaryDirectory()).path}/$appId.apk');
+    var length = response.contentLength;
+    var received = 0;
+    var sink = downloadFile.openWrite();
+
+    await response.stream.map((s) {
+      received += s.length;
+      apps[appId]!.downloadProgress =
+          (length != null ? received / length * 100 : 30);
+      notifyListeners();
+      return s;
+    }).pipe(sink);
+
+    await sink.close();
+    apps[appId]!.downloadProgress = null;
+    notifyListeners();
+
+    if (response.statusCode != 200) {
+      downloadFile.deleteSync();
+      throw response.reasonPhrase ?? 'Unknown Error';
+    }
+
+    var res = await InstallPlugin.installApk(
+        downloadFile.path, 'dev.imranr.obtainium');
+    print(res);
+
+    apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;
+    saveApp(apps[appId]!.app);
+
+    downloadFile.deleteSync();
   }
 
   Future<Directory> getAppsDir() async {
@@ -171,7 +124,7 @@ class AppsProvider with ChangeNotifier {
     for (int i = 0; i < appFiles.length; i++) {
       App app =
           App.fromJson(jsonDecode(File(appFiles[i].path).readAsStringSync()));
-      apps.putIfAbsent(app.id, () => app);
+      apps.putIfAbsent(app.id, () => AppInMemory(app, null));
     }
     loadingApps = false;
     notifyListeners();
@@ -180,23 +133,9 @@ class AppsProvider with ChangeNotifier {
   Future<void> saveApp(App app) async {
     File('${(await getAppsDir()).path}/${app.id}.json')
         .writeAsStringSync(jsonEncode(app.toJson()));
-    apps.update(app.id, (value) => app, ifAbsent: () => app);
+    apps.update(app.id, (value) => AppInMemory(app, value.downloadProgress),
+        ifAbsent: () => AppInMemory(app, null));
     notifyListeners();
-  }
-
-  Future<void> clearDownloadStates() async {
-    var appList = apps.values.toList();
-    int count = 0;
-    for (int i = 0; i < appList.length; i++) {
-      if (appList[i].currentDownloadId != null) {
-        apps[appList[i].id]?.currentDownloadId = null;
-        await saveApp(apps[appList[i].id]!);
-        count++;
-      }
-    }
-    if (count > 0) {
-      notifyListeners();
-    }
   }
 
   Future<void> removeApp(String appId) async {
@@ -214,11 +153,11 @@ class AppsProvider with ChangeNotifier {
     if (!apps.containsKey(app.id)) {
       throw 'App not found';
     }
-    return app.latestVersion != apps[app.id]?.installedVersion;
+    return app.latestVersion != apps[app.id]?.app.installedVersion;
   }
 
   Future<App?> getUpdate(String appId) async {
-    App? currentApp = apps[appId];
+    App? currentApp = apps[appId]!.app;
     App newApp = await SourceService().getApp(currentApp!.url);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
@@ -248,9 +187,9 @@ class AppsProvider with ChangeNotifier {
   Future<void> installUpdates() async {
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
-      App? app = apps[appIds[i]];
+      App? app = apps[appIds[i]]!.app;
       if (app!.installedVersion != app.latestVersion) {
-        await backgroundDownloadAndInstallApp(app);
+        await downloadAndInstallLatestApp(app.id);
       }
     }
   }

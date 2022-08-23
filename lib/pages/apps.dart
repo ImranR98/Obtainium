@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/services/apps_provider.dart';
 import 'package:provider/provider.dart';
@@ -31,18 +30,23 @@ class _AppsPageState extends State<AppsPage> {
                     children: appsProvider.apps.values
                         .map(
                           (e) => ListTile(
-                            title: Text('${e.author}/${e.name}'),
+                            title: Text('${e.app.author}/${e.app.name}'),
                             subtitle:
-                                Text(e.installedVersion ?? 'Not Installed'),
-                            trailing: e.installedVersion != null &&
-                                    e.installedVersion != e.latestVersion
-                                ? const Text('Update Available')
-                                : null,
+                                Text(e.app.installedVersion ?? 'Not Installed'),
+                            trailing: e.downloadProgress != null
+                                ? Text(
+                                    'Downloading - ${e.downloadProgress!.toInt()}%')
+                                : (e.app.installedVersion != null &&
+                                        e.app.installedVersion !=
+                                            e.app.latestVersion
+                                    ? const Text('Update Available')
+                                    : null),
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => AppPage(appId: e.id)),
+                                    builder: (context) =>
+                                        AppPage(appId: e.app.id)),
                               );
                             },
                           ),

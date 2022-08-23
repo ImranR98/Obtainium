@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 import 'package:http/http.dart';
+import 'package:html/parser.dart';
 
 // Sub-classes used in App Source
 
@@ -28,6 +29,12 @@ abstract class AppSource {
   AppNames getAppNames(String standardUrl);
 }
 
+escapeRegEx(String s) {
+  return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
+    return "\\${x[0]}";
+  });
+}
+
 // App class
 
 class App {
@@ -38,9 +45,8 @@ class App {
   String? installedVersion;
   late String latestVersion;
   late String apkUrl;
-  String? currentDownloadId;
   App(this.id, this.url, this.author, this.name, this.installedVersion,
-      this.latestVersion, this.apkUrl, this.currentDownloadId);
+      this.latestVersion, this.apkUrl);
 
   @override
   String toString() {
@@ -56,10 +62,7 @@ class App {
           ? null
           : json['installedVersion'] as String,
       json['latestVersion'] as String,
-      json['apkUrl'] as String,
-      json['currentDownloadId'] == null
-          ? null
-          : json['currentDownloadId'] as String);
+      json['apkUrl'] as String);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -69,7 +72,6 @@ class App {
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
         'apkUrl': apkUrl,
-        'currentDownloadId': currentDownloadId
       };
 }
 
@@ -94,20 +96,22 @@ class GitHub implements AppSource {
 
   @override
   Future<APKDetails> getLatestAPKUrl(String standardUrl) async {
-    Response res = await get(Uri.parse(
-        '${convertURL(standardUrl, 'api.github.com/repos')}/releases/latest'));
+    Response res = await get(Uri.parse('$standardUrl/releases/latest'));
     if (res.statusCode == 200) {
-      dynamic release = jsonDecode(res.body);
-      for (int i = 0; i < release['assets'].length; i++) {
-        if (release['assets'][i]['name']
-            .toString()
-            .toLowerCase()
-            .endsWith('.apk')) {
-          return APKDetails(release['tag_name'],
-              release['assets'][i]['browser_download_url']);
-        }
+      var standardUri = Uri.parse(standardUrl);
+      var parsedHtml = parse(res.body);
+      var apkUrlList = parsedHtml.querySelectorAll('a').where((element) {
+        return RegExp(
+                '^${escapeRegEx(standardUri.path)}/releases/download/*/(?!/).*.apk\$',
+                caseSensitive: false)
+            .hasMatch(element.attributes['href']!);
+      }).toList();
+      String? version = parsedHtml.querySelector('h1')?.innerHtml;
+      if (apkUrlList.isEmpty || version == null) {
+        throw 'No APK found';
       }
-      throw 'No APK found';
+      return APKDetails(
+          version, '${standardUri.origin}${apkUrlList[0].attributes['href']!}');
     } else {
       throw 'Unable to fetch release info';
     }
@@ -147,7 +151,6 @@ class SourceService {
         names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,
-        apk.downloadUrl,
-        null);
+        apk.downloadUrl);
   }
 }

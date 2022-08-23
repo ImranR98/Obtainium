@@ -37,15 +37,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   path_provider: ^2.0.11
-  flutter_downloader: ^1.8.1
   flutter_fgbg: ^0.2.0
   flutter_local_notifications: ^9.7.0
   provider: ^6.0.3
   http: ^0.13.5
-  toast: ^0.3.0
   webview_flutter: ^3.0.4
   workmanager: ^0.5.0
   dynamic_color: ^1.5.3
+  install_plugin_v2: ^1.0.0
+  html: ^0.15.0
 
 
 dev_dependencies:
