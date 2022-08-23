@@ -50,7 +50,7 @@ void main() async {
   ));
 }
 
-var defaultThemeColour = const Color(0xFF69F0AE);
+var defaultThemeColour = Colors.deepPurple;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

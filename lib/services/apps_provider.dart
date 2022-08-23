@@ -160,7 +160,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<App?> getUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
-    App newApp = await SourceService().getApp(currentApp!.url);
+    App newApp = await SourceService().getApp(currentApp.url);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
       await saveApp(newApp);
@@ -190,7 +190,7 @@ class AppsProvider with ChangeNotifier {
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
-      if (app!.installedVersion != app.latestVersion) {
+      if (app.installedVersion != app.latestVersion) {
         await downloadAndInstallLatestApp(app.id);
       }
     }
