@@ -95,7 +95,10 @@ class _AppPageState extends State<AppPage> {
                         ),
                       ])),
               if (app?.downloadProgress != null)
-                LinearProgressIndicator(value: app!.downloadProgress! / 100)
+                Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+                    child: LinearProgressIndicator(
+                        value: app!.downloadProgress! / 100))
             ],
           )),
     );
