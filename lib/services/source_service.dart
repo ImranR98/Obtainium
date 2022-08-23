@@ -1,7 +1,6 @@
 // Exposes functions related to interacting with App sources and retrieving App info
 // Stateless - not a provider
 
-import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:html/parser.dart';
 
@@ -25,7 +24,7 @@ class APKDetails {
 
 abstract class AppSource {
   String standardizeURL(String url);
-  Future<APKDetails> getLatestAPKUrl(String standardUrl);
+  Future<APKDetails> getLatestAPKDetails(String standardUrl);
   AppNames getAppNames(String standardUrl);
 }
 
@@ -95,7 +94,7 @@ class GitHub implements AppSource {
   }
 
   @override
-  Future<APKDetails> getLatestAPKUrl(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
     Response res = await get(Uri.parse('$standardUrl/releases/latest'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
@@ -106,7 +105,11 @@ class GitHub implements AppSource {
                 caseSensitive: false)
             .hasMatch(element.attributes['href']!);
       }).toList();
-      String? version = parsedHtml.querySelector('h1')?.innerHtml;
+      String? version = parsedHtml
+          .querySelector('.octicon-tag')
+          ?.nextElementSibling
+          ?.innerHtml
+          .trim();
       if (apkUrlList.isEmpty || version == null) {
         throw 'No APK found';
       }
@@ -143,7 +146,7 @@ class SourceService {
     AppSource source = getSource(url);
     String standardUrl = source.standardizeURL(url);
     AppNames names = source.getAppNames(standardUrl);
-    APKDetails apk = await source.getLatestAPKUrl(standardUrl);
+    APKDetails apk = await source.getLatestAPKDetails(standardUrl);
     return App(
         '${names.author}_${names.name}',
         standardUrl,

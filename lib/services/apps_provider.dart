@@ -97,6 +97,19 @@ class AppsProvider with ChangeNotifier {
       throw response.reasonPhrase ?? 'Unknown Error';
     }
 
+    if (!isForeground) {
+      await notify(
+          1,
+          'Complete App Installation',
+          'Obtainium must be open to install Apps',
+          'COMPLETE_INSTALL',
+          'Complete App Installation',
+          'Asks the user to return to Obtanium to finish installing an App');
+      while (await FGBGEvents.stream.first != FGBGType.foreground) {
+        // We need to wait for the App to come to the foreground since the APK installer doesn't work otherwise
+      }
+    }
+
     // Unfortunately this 'await' does not actually wait for the APK to finish installing
     // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
     // This also does not use the 'session-based' installer API, so background/silent updates are impossible
