@@ -60,6 +60,7 @@ class _AddAppPageState extends State<AddAppPage> {
                             throw 'App already added';
                           }
                           appsProvider.saveApp(app).then((_) {
+                            urlInputController.clear();
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
