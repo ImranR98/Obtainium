@@ -72,7 +72,7 @@ class AppsProvider with ChangeNotifier {
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(apps[appId]!.app.apkUrl)));
     File downloadFile =
-        File('${(await getExternalStorageDirectory())!.path}/apks/$appId.apk');
+        File('${(await getExternalStorageDirectory())!.path}/$appId.apk');
     if (downloadFile.existsSync()) {
       downloadFile.deleteSync();
     }
@@ -108,7 +108,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<Directory> getAppsDir() async {
     Directory appsDir = Directory(
-        '${(await getExternalStorageDirectory())?.path as String}/apps');
+        '${(await getExternalStorageDirectory())?.path as String}/app_data');
     if (!appsDir.existsSync()) {
       appsDir.createSync();
     }
