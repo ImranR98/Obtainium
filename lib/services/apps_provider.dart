@@ -106,7 +106,9 @@ class AppsProvider with ChangeNotifier {
           'Complete App Installation',
           'Asks the user to return to Obtanium to finish installing an App');
       while (await FGBGEvents.stream.first != FGBGType.foreground) {
-        // We need to wait for the App to come to the foreground since the APK installer doesn't work otherwise
+        // We need to wait for the App to come to the foreground to install it
+        // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
+        // https://github.com/flutter/flutter/issues/13937
       }
     }
 
