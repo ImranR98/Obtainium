@@ -72,7 +72,10 @@ class AppsProvider with ChangeNotifier {
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(apps[appId]!.app.apkUrl)));
     File downloadFile =
-        File('${(await getTemporaryDirectory()).path}/$appId.apk');
+        File('${(await getExternalStorageDirectory())!.path}/apks/$appId.apk');
+    if (downloadFile.existsSync()) {
+      downloadFile.deleteSync();
+    }
     var length = response.contentLength;
     var received = 0;
     var sink = downloadFile.openWrite();
@@ -94,14 +97,13 @@ class AppsProvider with ChangeNotifier {
       throw response.reasonPhrase ?? 'Unknown Error';
     }
 
-    var res = await InstallPlugin.installApk(
-        downloadFile.path, 'dev.imranr.obtainium');
-    print(res);
+    // Unfortunately this 'await' does not actually wait for the APK to finish installing
+    // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
+    // This also does not use the 'session-based' installer API, so background/silent updates are impossible
+    await InstallPlugin.installApk(downloadFile.path, 'dev.imranr.obtainium');
 
     apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;
     saveApp(apps[appId]!.app);
-
-    downloadFile.deleteSync();
   }
 
   Future<Directory> getAppsDir() async {

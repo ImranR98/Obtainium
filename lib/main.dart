@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/services/apps_provider.dart';
 import 'package:obtainium/services/source_service.dart';
@@ -30,6 +31,10 @@ void backgroundUpdateCheck() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
+  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   Workmanager().initialize(
     backgroundUpdateCheck,
   );

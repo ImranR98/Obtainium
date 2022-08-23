@@ -21,21 +21,21 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Obtainium')),
-        body: pages.elementAt(selectedIndex),
-        bottomNavigationBar: NavigationBar(
-          destinations: const [
-            NavigationDestination(
-                icon: Icon(Icons.settings), label: 'Settings'),
-            NavigationDestination(icon: Icon(Icons.apps), label: 'Apps'),
-            NavigationDestination(icon: Icon(Icons.add), label: 'Add App'),
-          ],
-          onDestinationSelected: (int index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-          selectedIndex: selectedIndex,
-        ));
+      appBar: AppBar(title: const Text('Obtainium')),
+      body: pages.elementAt(selectedIndex),
+      bottomNavigationBar: NavigationBar(
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.apps), label: 'Apps'),
+          NavigationDestination(icon: Icon(Icons.add), label: 'Add App'),
+        ],
+        onDestinationSelected: (int index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+        selectedIndex: selectedIndex,
+      ),
+    );
   }
 }
