@@ -51,7 +51,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> notify(int id, String title, String message, String channelCode,
-      String channelName, String channelDescription) {
+      String channelName, String channelDescription,
+      {bool important = true}) {
     return downloaderNotifications.show(
         id,
         title,
@@ -59,8 +60,8 @@ class AppsProvider with ChangeNotifier {
         NotificationDetails(
             android: AndroidNotificationDetails(channelCode, channelName,
                 channelDescription: channelDescription,
-                importance: Importance.max,
-                priority: Priority.max,
+                importance: important ? Importance.max : Importance.min,
+                priority: important ? Priority.max : Priority.min,
                 groupKey: 'dev.imranr.obtainium.$channelCode')));
   }
 
@@ -98,6 +99,7 @@ class AppsProvider with ChangeNotifier {
     }
 
     if (!isForeground) {
+      await downloaderNotifications.cancel(1);
       await notify(
           1,
           'Complete App Installation',

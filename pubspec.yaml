@@ -37,15 +37,17 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   path_provider: ^2.0.11
-  flutter_fgbg: ^0.2.0
+  flutter_fgbg: ^0.2.0 # Try removing reliance on this
   flutter_local_notifications: ^9.7.0
   provider: ^6.0.3
   http: ^0.13.5
   webview_flutter: ^3.0.4
   workmanager: ^0.5.0
   dynamic_color: ^1.5.3
-  install_plugin_v2: ^1.0.0
+  install_plugin_v2: ^1.0.0 # Try replacing this
   html: ^0.15.0
+  shared_preferences: ^2.0.15
+  url_launcher: ^6.1.5
 
 
 dev_dependencies:

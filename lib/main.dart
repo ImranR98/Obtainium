@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/services/apps_provider.dart';
+import 'package:obtainium/services/settings_provider.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
@@ -16,8 +17,8 @@ void backgroundUpdateCheck() {
       String message = updates.length == 1
           ? '${updates[0].name} has an update.'
           : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
-      appsProvider.downloaderNotifications.cancel(2);
-      appsProvider.notify(
+      await appsProvider.downloaderNotifications.cancel(2);
+      await appsProvider.notify(
           2,
           'Updates Available',
           message,
@@ -45,7 +46,10 @@ void main() async {
       initialDelay: const Duration(minutes: 15),
       constraints: Constraints(networkType: NetworkType.connected));
   runApp(MultiProvider(
-    providers: [ChangeNotifierProvider(create: (context) => AppsProvider())],
+    providers: [
+      ChangeNotifierProvider(create: (context) => AppsProvider()),
+      ChangeNotifierProvider(create: (context) => SettingsProvider())
+    ],
     child: const MyApp(),
   ));
 }
@@ -59,9 +63,34 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+      // Initialize the settings provider (if needed) and perform first-run actions if needed
+      SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+      if (settingsProvider.prefs == null) {
+        settingsProvider.initializeSettings().then((_) {
+          bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
+          if (isFirstRun) {
+            AppsProvider appsProvider = context.read<AppsProvider>();
+            appsProvider
+                .notify(
+                    3,
+                    'Permission Notification',
+                    'This is a transient notification used to trigger the Android 13 notification permission prompt',
+                    'PERMISSION_NOTIFICATION',
+                    'Permission Notifications',
+                    'A transient notification used to trigger the Android 13 notification permission prompt',
+                    important: false)
+                .whenComplete(() {
+              appsProvider.downloaderNotifications.cancel(3);
+            });
+          }
+        });
+      }
+
       ColorScheme lightColorScheme;
       ColorScheme darkColorScheme;
-      if (lightDynamic != null && darkDynamic != null) {
+      if (lightDynamic != null &&
+          darkDynamic != null &&
+          settingsProvider.colour == ColourSettings.materialYou) {
         lightColorScheme = lightDynamic.harmonized();
         darkColorScheme = darkDynamic.harmonized();
       } else {
@@ -74,10 +103,15 @@ class MyApp extends StatelessWidget {
           title: 'Obtainium',
           theme: ThemeData(
               useMaterial3: true,
-              colorScheme: lightColorScheme,
+              colorScheme: settingsProvider.theme == ThemeSettings.dark
+                  ? darkColorScheme
+                  : lightColorScheme,
               fontFamily: 'Metropolis'),
-          darkTheme:
-              ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+          darkTheme: ThemeData(
+              useMaterial3: true,
+              colorScheme: settingsProvider.theme == ThemeSettings.light
+                  ? lightColorScheme
+                  : darkColorScheme),
           home: const HomePage());
     });
   }
