@@ -132,6 +132,15 @@ class AppsProvider with ChangeNotifier {
     return appsDir;
   }
 
+  Future<void> deleteSavedAPKs() async {
+    (await getExternalStorageDirectory())
+        ?.listSync()
+        .where((element) => element.path.endsWith('.apk'))
+        .forEach((element) {
+      element.deleteSync();
+    });
+  }
+
   Future<void> loadApps() async {
     loadingApps = true;
     notifyListeners();
@@ -186,7 +195,7 @@ class AppsProvider with ChangeNotifier {
     return null;
   }
 
-  Future<List<App>> getUpdates() async {
+  Future<List<App>> checkUpdates() async {
     List<App> updates = [];
     if (!gettingUpdates) {
       gettingUpdates = true;
@@ -203,14 +212,16 @@ class AppsProvider with ChangeNotifier {
     return updates;
   }
 
-  Future<void> installUpdates() async {
+  List<String> getExistingUpdates() {
+    List<String> updateAppIds = [];
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
       if (app.installedVersion != app.latestVersion) {
-        await downloadAndInstallLatestApp(app.id);
+        updateAppIds.add(app.id);
       }
     }
+    return updateAppIds;
   }
 
   @override

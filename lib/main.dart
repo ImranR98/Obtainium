@@ -22,7 +22,7 @@ void backgroundUpdateCheck() {
         important: false);
     try {
       await appsProvider.loadApps();
-      List<App> updates = await appsProvider.getUpdates();
+      List<App> updates = await appsProvider.checkUpdates();
       if (updates.isNotEmpty) {
         String message = updates.length == 1
             ? '${updates[0].name} has an update.'
@@ -87,13 +87,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+      AppsProvider appsProvider = context.read<AppsProvider>();
+      appsProvider.deleteSavedAPKs();
       // Initialize the settings provider (if needed) and perform first-run actions if needed
       SettingsProvider settingsProvider = context.watch<SettingsProvider>();
       if (settingsProvider.prefs == null) {
         settingsProvider.initializeSettings().then((_) {
           bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
           if (isFirstRun) {
-            AppsProvider appsProvider = context.read<AppsProvider>();
             appsProvider
                 .notify(
                     3,
@@ -106,6 +107,14 @@ class MyApp extends StatelessWidget {
                 .whenComplete(() {
               appsProvider.downloaderNotifications.cancel(3);
             });
+            appsProvider.saveApp(App(
+                'imranr98_obtainium_github',
+                'https://github.com/ImranR98/Obtainium',
+                'ImranR98',
+                'Obtainium',
+                'v0.1.0-beta', // KEEP THIS IN SYNC WITH GITHUB RELEASES
+                'v0.1.0-beta',
+                ''));
           }
         });
       }
