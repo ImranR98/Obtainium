@@ -147,6 +147,9 @@ class SourceService {
         url.toLowerCase().indexOf('https://') != 0) {
       url = 'https://$url';
     }
+    if (url.toLowerCase().indexOf('https://www.') == 0) {
+      url = 'https://${url.substring(12)}';
+    }
     AppSource source = getSource(url);
     String standardUrl = source.standardizeURL(url);
     AppNames names = source.getAppNames(standardUrl);
