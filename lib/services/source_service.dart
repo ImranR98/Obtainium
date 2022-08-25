@@ -23,6 +23,7 @@ class APKDetails {
 // App Source abstract class (diff. implementations for GitHub, GitLab, etc.)
 
 abstract class AppSource {
+  late String sourceId;
   String standardizeURL(String url);
   Future<APKDetails> getLatestAPKDetails(String standardUrl);
   AppNames getAppNames(String standardUrl);
@@ -77,6 +78,9 @@ class App {
 // Specific App Source classes
 
 class GitHub implements AppSource {
+  @override
+  String sourceId = 'github';
+
   @override
   String standardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp(r'^https?://github.com/[^/]*/[^/]*');
@@ -148,7 +152,7 @@ class SourceService {
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source.getLatestAPKDetails(standardUrl);
     return App(
-        '${names.author}_${names.name}',
+        '${names.author}_${names.name}_${source.sourceId}',
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
         names.name[0].toUpperCase() + names.name.substring(1),
