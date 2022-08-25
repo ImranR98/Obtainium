@@ -8,25 +8,49 @@ import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
+@pragma('vm:entry-point')
 void backgroundUpdateCheck() {
   Workmanager().executeTask((task, inputData) async {
     var appsProvider = AppsProvider(bg: true);
-    await appsProvider.loadApps();
-    List<App> updates = await appsProvider.getUpdates();
-    if (updates.isNotEmpty) {
-      String message = updates.length == 1
-          ? '${updates[0].name} has an update.'
-          : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
-      await appsProvider.downloaderNotifications.cancel(2);
+    await appsProvider.notify(
+        4,
+        'Checking for Updates',
+        '',
+        'BG_UPDATE_CHECK',
+        'Checking for Updates',
+        'Transient notification that appears when checking for updates',
+        important: false);
+    try {
+      await appsProvider.loadApps();
+      List<App> updates = await appsProvider.getUpdates();
+      if (updates.isNotEmpty) {
+        String message = updates.length == 1
+            ? '${updates[0].name} has an update.'
+            : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
+        await appsProvider.downloaderNotifications.cancel(2);
+        await appsProvider.notify(
+            2,
+            'Updates Available',
+            message,
+            'UPDATES_AVAILABLE',
+            'Updates Available',
+            'Notifies the user that updates are available for one or more Apps tracked by Obtainium');
+      }
+      return Future.value(true);
+    } catch (e) {
+      await appsProvider.downloaderNotifications.cancel(5);
       await appsProvider.notify(
-          2,
-          'Updates Available',
-          message,
-          'UPDATES_AVAILABLE',
-          'Updates Available',
-          'Notifies the user that updates are available for one or more Apps tracked by Obtainium');
+          5,
+          'Error Checking for Updates',
+          e.toString(),
+          'BG_UPDATE_CHECK_ERROR',
+          'Error Checking for Updates',
+          'A notification that shows when background update checking fails',
+          important: false);
+      return Future.value(false);
+    } finally {
+      await appsProvider.downloaderNotifications.cancel(4);
     }
-    return Future.value(true);
   });
 }
 
