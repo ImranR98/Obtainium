@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/services/apps_provider.dart';
 import 'package:obtainium/services/settings_provider.dart';
@@ -95,18 +96,10 @@ class MyApp extends StatelessWidget {
         settingsProvider.initializeSettings().then((_) {
           bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
           if (isFirstRun) {
-            appsProvider
-                .notify(
-                    3,
-                    'Permission Notification',
-                    'This is a transient notification used to trigger the Android 13 notification permission prompt',
-                    'PERMISSION_NOTIFICATION',
-                    'Permission Notifications',
-                    'A transient notification used to trigger the Android 13 notification permission prompt',
-                    important: false)
-                .whenComplete(() {
-              appsProvider.downloaderNotifications.cancel(3);
-            });
+            appsProvider.downloaderNotifications
+                .resolvePlatformSpecificImplementation<
+                    AndroidFlutterLocalNotificationsPlugin>()!
+                .requestPermission();
             appsProvider.saveApp(App(
                 'imranr98_obtainium_github',
                 'https://github.com/ImranR98/Obtainium',
