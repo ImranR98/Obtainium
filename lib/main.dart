@@ -112,8 +112,8 @@ class MyApp extends StatelessWidget {
                 'https://github.com/ImranR98/Obtainium',
                 'ImranR98',
                 'Obtainium',
-                'v0.1.0-beta', // KEEP THIS IN SYNC WITH GITHUB RELEASES
-                'v0.1.0-beta',
+                'v0.1.1-beta', // KEEP THIS IN SYNC WITH GITHUB RELEASES
+                'v0.1.1-beta',
                 ''));
           }
         });
