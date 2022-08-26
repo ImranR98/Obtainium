@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:obtainium/services/apps_provider.dart';
 import 'package:obtainium/services/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -13,6 +16,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
+    AppsProvider appsProvider = context.read<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
@@ -104,17 +108,129 @@ class _SettingsPageState extends State<SettingsPage> {
                           settingsProvider.updateInterval = value;
                         }
                       }),
+                  const SizedBox(
+                    height: 32,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ElevatedButton(
+                          onPressed: appsProvider.apps.isEmpty
+                              ? null
+                              : () {
+                                  appsProvider.exportApps().then((String path) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text('Exported to $path')),
+                                    );
+                                  });
+                                },
+                          child: const Text('Export Apps')),
+                      ElevatedButton(
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext ctx) {
+                                  final formKey = GlobalKey<FormState>();
+                                  final jsonInputController =
+                                      TextEditingController();
+
+                                  return AlertDialog(
+                                    scrollable: true,
+                                    title: const Text('Import Apps'),
+                                    content: Column(children: [
+                                      const Text(
+                                          'Copy the contents of the Obtainium export file and paste them into the field below:'),
+                                      Form(
+                                        key: formKey,
+                                        child: TextFormField(
+                                          minLines: 7,
+                                          maxLines: 7,
+                                          decoration: const InputDecoration(
+                                              helperText:
+                                                  'Obtainium export data'),
+                                          controller: jsonInputController,
+                                          validator: (value) {
+                                            if (value == null ||
+                                                value.isEmpty) {
+                                              return 'Please enter your Obtainium export data';
+                                            }
+                                            bool isJSON = true;
+                                            try {
+                                              jsonDecode(value);
+                                            } catch (e) {
+                                              isJSON = false;
+                                            }
+                                            if (!isJSON) {
+                                              return 'Invalid input';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      )
+                                    ]),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () {
+                                            if (formKey.currentState!
+                                                .validate()) {
+                                              appsProvider
+                                                  .importApps(
+                                                      jsonInputController
+                                                          .value.text)
+                                                  .then((value) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                      content: Text(
+                                                          '$value Apps Imported')),
+                                                );
+                                              }).catchError((e) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                      content:
+                                                          Text(e.toString())),
+                                                );
+                                              }).whenComplete(() {
+                                                Navigator.of(context).pop();
+                                              });
+                                            }
+                                          },
+                                          child: const Text('Import')),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel'))
+                                    ],
+                                  );
+                                });
+                          },
+                          child: const Text('Import Apps'))
+                    ],
+                  ),
                   const Spacer(),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton.icon(
+                      TextButton.icon(
+                        style: ButtonStyle(
+                          foregroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                                  (Set<MaterialState> states) {
+                            return Colors.grey;
+                          }),
+                        ),
                         onPressed: () {
                           launchUrlString(settingsProvider.sourceUrl,
                               mode: LaunchMode.externalApplication);
                         },
                         icon: const Icon(Icons.code),
-                        label: const Text('Source'),
+                        label: Text(
+                          'Source',
+                          style: Theme.of(context).textTheme.caption,
+                        ),
                       )
                     ],
                   ),

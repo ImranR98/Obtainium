@@ -132,7 +132,7 @@ class AppsProvider with ChangeNotifier {
     await InstallPlugin.installApk(downloadFile.path, 'dev.imranr.obtainium');
 
     apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;
-    saveApp(apps[appId]!.app);
+    await saveApp(apps[appId]!.app);
   }
 
   Future<Directory> getAppsDir() async {
@@ -234,6 +234,40 @@ class AppsProvider with ChangeNotifier {
       }
     }
     return updateAppIds;
+  }
+
+  Future<String> exportApps() async {
+    Directory? exportDir = Directory('/storage/emulated/0/Download');
+    String path = 'Downloads';
+    if (!exportDir.existsSync()) {
+      exportDir = await getExternalStorageDirectory();
+      path = exportDir!.path;
+    }
+    File export = File(
+        '${exportDir!.path}/obtainium-export-${DateTime.now().millisecondsSinceEpoch}.json');
+    export.writeAsStringSync(
+        jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
+    return path;
+  }
+
+  Future<int> importApps(String appsJSON) async {
+    // FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    // if (result != null) {
+    // String appsJSON = File(result.files.single.path!).readAsStringSync();
+    List<App> importedApps = (jsonDecode(appsJSON) as List<dynamic>)
+        .map((e) => App.fromJson(e))
+        .toList();
+    for (App a in importedApps) {
+      a.installedVersion =
+          apps.containsKey(a.id) ? apps[a]?.app.installedVersion : null;
+      await saveApp(a);
+    }
+    notifyListeners();
+    return importedApps.length;
+    // } else {
+    // User canceled the picker
+    // }
   }
 
   @override
