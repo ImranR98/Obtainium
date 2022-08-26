@@ -14,7 +14,6 @@ class _AppsPageState extends State<AppsPage> {
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
-    appsProvider.checkUpdates();
     var existingUpdateAppIds = appsProvider.getExistingUpdates();
 
     return Scaffold(

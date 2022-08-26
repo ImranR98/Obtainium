@@ -37,6 +37,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  int get updateInterval {
+    return prefs?.getInt('updateInterval') ?? 1440;
+  }
+
+  set updateInterval(int min) {
+    prefs?.setInt('updateInterval', min < 15 ? 15 : min);
+    notifyListeners();
+  }
+
   checkAndFlipFirstRun() {
     bool result = prefs?.getBool('firstRun') ?? true;
     if (result) {

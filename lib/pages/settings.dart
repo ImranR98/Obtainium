@@ -66,6 +66,44 @@ class _SettingsPageState extends State<SettingsPage> {
                           settingsProvider.colour = value;
                         }
                       }),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  DropdownButtonFormField(
+                      decoration: const InputDecoration(
+                          labelText: 'Background Update Checking Interval'),
+                      value: settingsProvider.updateInterval,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 15,
+                          child: Text('15 Minutes'),
+                        ),
+                        DropdownMenuItem(
+                          value: 30,
+                          child: Text('30 Minutes'),
+                        ),
+                        DropdownMenuItem(
+                          value: 60,
+                          child: Text('1 Hour'),
+                        ),
+                        DropdownMenuItem(
+                          value: 360,
+                          child: Text('6 Hours'),
+                        ),
+                        DropdownMenuItem(
+                          value: 720,
+                          child: Text('12 Hours'),
+                        ),
+                        DropdownMenuItem(
+                          value: 1440,
+                          child: Text('1 Day'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          settingsProvider.updateInterval = value;
+                        }
+                      }),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
