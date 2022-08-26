@@ -91,21 +91,17 @@ class GitHub implements AppSource {
     return url.substring(0, match.end);
   }
 
-  String convertURL(String url, String replaceText) {
-    int tempInd1 = url.indexOf('://') + 3;
-    int tempInd2 = url.substring(tempInd1).indexOf('/') + tempInd1;
-    return '${url.substring(0, tempInd1)}$replaceText${url.substring(tempInd2)}';
-  }
-
   @override
   Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+    // The GitHub RSS feed does not contain asset download details, so we use web scraping (avoid API due to rate limits)
     Response res = await get(Uri.parse('$standardUrl/releases/latest'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
       var parsedHtml = parse(res.body);
       var apkUrlList = parsedHtml.querySelectorAll('a').where((element) {
+        if (element.attributes['href'] == null) return false;
         return RegExp(
-                '^${escapeRegEx(standardUri.path)}/releases/download/*/(?!/).*.apk\$',
+                '^${escapeRegEx(standardUri.path)}/releases/download/[^/]+/[^/]+\\.apk\$',
                 caseSensitive: false)
             .hasMatch(element.attributes['href']!);
       }).toList();
@@ -132,12 +128,64 @@ class GitHub implements AppSource {
   }
 }
 
+class GitLab implements AppSource {
+  @override
+  String sourceId = 'gitlab';
+
+  @override
+  String standardizeURL(String url) {
+    RegExp standardUrlRegEx = RegExp(r'^https?://gitlab.com/[^/]*/[^/]*');
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    if (match == null) {
+      throw 'Not a valid URL';
+    }
+    return url.substring(0, match.end);
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+    // GitLab provides an RSS feed with all the details we need
+    Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
+    if (res.statusCode == 200) {
+      var standardUri = Uri.parse(standardUrl);
+      var parsedHtml = parse(res.body);
+      var entry = parsedHtml.querySelector('entry');
+      var entryContent =
+          parse(parseFragment(entry!.querySelector('content')!.innerHtml).text);
+      var apkUrlList = entryContent.querySelectorAll('a').where((element) {
+        if (element.attributes['href'] == null) return false;
+        return RegExp(
+                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
+                caseSensitive: false)
+            .hasMatch(element.attributes['href']!);
+      }).toList();
+      var entryId = entry.querySelector('id')?.innerHtml;
+      var version =
+          entryId == null ? null : Uri.parse(entryId).pathSegments.last;
+      if (apkUrlList.isEmpty || version == null) {
+        throw 'No APK found';
+      }
+      return APKDetails(
+          version, '${standardUri.origin}${apkUrlList[0].attributes['href']!}');
+    } else {
+      throw 'Unable to fetch release info';
+    }
+  }
+
+  @override
+  AppNames getAppNames(String standardUrl) {
+    // Same as GitHub
+    return GitHub().getAppNames(standardUrl);
+  }
+}
+
 class SourceService {
   // Add more source classes here so they are available via the service
-  AppSource github = GitHub();
   AppSource getSource(String url) {
     if (url.toLowerCase().contains('://github.com')) {
-      return github;
+      return GitHub();
+    } else if (url.toLowerCase().contains('://gitlab.com')) {
+      return GitLab();
     }
     throw 'URL does not match a known source';
   }
