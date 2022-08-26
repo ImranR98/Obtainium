@@ -12,6 +12,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:http/http.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AppInMemory {
   late App app;
@@ -117,6 +119,16 @@ class AppsProvider with ChangeNotifier {
     // Unfortunately this 'await' does not actually wait for the APK to finish installing
     // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
     // This also does not use the 'session-based' installer API, so background/silent updates are impossible
+    while (!(await Permission.requestInstallPackages.isGranted)) {
+      // Explicit request as InstallPlugin request sometimes bugged
+      Fluttertoast.showToast(
+          msg: 'Please allow Obtainium to install Apps',
+          toastLength: Toast.LENGTH_LONG);
+      if ((await Permission.requestInstallPackages.request()) ==
+          PermissionStatus.granted) {
+        break;
+      }
+    }
     await InstallPlugin.installApk(downloadFile.path, 'dev.imranr.obtainium');
 
     apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;

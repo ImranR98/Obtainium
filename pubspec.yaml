@@ -48,6 +48,8 @@ dependencies:
   html: ^0.15.0
   shared_preferences: ^2.0.15
   url_launcher: ^6.1.5
+  permission_handler: ^10.0.0
+  fluttertoast: ^8.0.9
 
 
 dev_dependencies:
