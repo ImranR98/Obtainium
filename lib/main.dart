@@ -10,7 +10,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 const String CURRENT_RELEASE_TAG =
-    'v0.1.2-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.1.3-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 @pragma('vm:entry-point')
 void bgTaskCallback() {
