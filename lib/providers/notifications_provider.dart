@@ -1,5 +1,8 @@
+// Exposes functions that can be used to send notifications to the user
+// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:obtainium/services/source_service.dart';
+import 'package:obtainium/providers/source_provider.dart';
 
 class ObtainiumNotification {
   late int id;

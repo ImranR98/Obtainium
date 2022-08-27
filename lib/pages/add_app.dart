@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/pages/app.dart';
-import 'package:obtainium/services/apps_provider.dart';
-import 'package:obtainium/services/source_service.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 
 class AddAppPage extends StatefulWidget {
@@ -52,20 +53,24 @@ class _AddAppPageState extends State<AddAppPage> {
                         setState(() {
                           gettingAppInfo = true;
                         });
-                        SourceService()
+                        sourceProvider()
                             .getApp(urlInputController.value.text)
                             .then((app) {
                           var appsProvider = context.read<AppsProvider>();
+                          var settingsProvider =
+                              context.read<SettingsProvider>();
                           if (appsProvider.apps.containsKey(app.id)) {
                             throw 'App already added';
                           }
-                          appsProvider.saveApp(app).then((_) {
-                            urlInputController.clear();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        AppPage(appId: app.id)));
+                          settingsProvider.getInstallPermission().then((_) {
+                            appsProvider.saveApp(app).then((_) {
+                              urlInputController.clear();
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          AppPage(appId: app.id)));
+                            });
                           });
                         }).catchError((e) {
                           ScaffoldMessenger.of(context).showSnackBar(

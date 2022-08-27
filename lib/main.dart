@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
-import 'package:obtainium/services/apps_provider.dart';
-import 'package:obtainium/services/notifications_provider.dart';
-import 'package:obtainium/services/settings_provider.dart';
-import 'package:obtainium/services/source_service.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
@@ -15,6 +15,7 @@ const String currentReleaseTag =
 
 @pragma('vm:entry-point')
 void bgTaskCallback() {
+  // Background update checking process
   Workmanager().executeTask((task, taskName) async {
     var appsProvider = AppsProvider(bg: true);
     var notificationsProvider = NotificationsProvider();
@@ -66,9 +67,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     AppsProvider appsProvider = context.read<AppsProvider>();
+
     if (settingsProvider.prefs == null) {
-      settingsProvider.initializeSettings();
+      settingsProvider.initializeSettings().then((value) {
+        // Delete past downloads and check for updates every time the app is launched
+        // Only runs once as the settings are only initialized once (so not on every build)
+        appsProvider.deleteSavedAPKs();
+        appsProvider.checkUpdates();
+      });
     } else {
+      // Register the background update task according to the user's setting
       Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
           frequency: Duration(minutes: settingsProvider.updateInterval),
           initialDelay: Duration(minutes: settingsProvider.updateInterval),
@@ -76,6 +84,7 @@ class MyApp extends StatelessWidget {
           existingWorkPolicy: ExistingWorkPolicy.replace);
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
+        // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         appsProvider.saveApp(App(
             'imranr98_obtainium_github',
@@ -85,12 +94,11 @@ class MyApp extends StatelessWidget {
             currentReleaseTag,
             currentReleaseTag, []));
       }
-      appsProvider.deleteSavedAPKs();
-      appsProvider.checkUpdates();
     }
 
     return DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+      // Decide on a colour/brightness scheme based on OS and user settings
       ColorScheme lightColorScheme;
       ColorScheme darkColorScheme;
       if (lightDynamic != null &&

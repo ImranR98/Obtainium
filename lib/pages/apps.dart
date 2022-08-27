@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/pages/app.dart';
-import 'package:obtainium/services/apps_provider.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class AppsPage extends StatefulWidget {
@@ -25,9 +26,15 @@ class _AppsPageState extends State<AppsPage> {
                         .isNotEmpty
                     ? null
                     : () {
-                        for (var e in existingUpdateAppIds) {
-                          appsProvider.downloadAndInstallLatestApp(e, context);
-                        }
+                        context
+                            .read<SettingsProvider>()
+                            .getInstallPermission()
+                            .then((_) {
+                          for (var e in existingUpdateAppIds) {
+                            appsProvider.downloadAndInstallLatestApp(
+                                e, context);
+                          }
+                        });
                       },
                 icon: const Icon(Icons.update),
                 label: const Text('Update All')),

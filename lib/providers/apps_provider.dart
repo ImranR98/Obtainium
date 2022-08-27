@@ -1,20 +1,18 @@
-// Provider that manages App-related state and provides functions to retrieve App info download/install Apps
+// Manages state related to the list of Apps tracked by Obtainium,
+// Exposes related functions such as those used to add, remove, download, and install Apps.
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:obtainium/services/notifications_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:obtainium/services/source_service.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class AppInMemory {
   late App app;
@@ -31,18 +29,22 @@ class AppsProvider with ChangeNotifier {
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
-  StreamSubscription<FGBGType>? foregroundSubscription;
+  late Stream<FGBGType> foregroundStream;
+  late StreamSubscription<FGBGType> foregroundSubscription;
 
   AppsProvider({bool bg = false}) {
     // Subscribe to changes in the app foreground status
-    foregroundSubscription = FGBGEvents.stream.listen((event) async {
+    foregroundStream = FGBGEvents.stream.asBroadcastStream();
+    foregroundSubscription = foregroundStream.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) await loadApps();
     });
     loadApps();
   }
 
-  // Given a App (assumed valid), initiate an APK download (will trigger install callback when complete)
+  // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
+  // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
+  // Returns upon successful download, regardless of installation result
   Future<void> downloadAndInstallLatestApp(
       String appId, BuildContext context) async {
     var notificationsProvider = context.read<NotificationsProvider>();
@@ -107,10 +109,12 @@ class AppsProvider with ChangeNotifier {
       throw response.reasonPhrase ?? 'Unknown Error';
     }
 
-    if (!isForeground) {
+    while (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      while (await FGBGEvents.stream.first != FGBGType.foreground) {
+      if (await FGBGEvents.stream.first == FGBGType.foreground ||
+          isForeground) {
+        break;
         // We need to wait for the App to come to the foreground to install it
         // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
         // https://github.com/flutter/flutter/issues/13937
@@ -120,16 +124,6 @@ class AppsProvider with ChangeNotifier {
     // Unfortunately this 'await' does not actually wait for the APK to finish installing
     // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
     // This also does not use the 'session-based' installer API, so background/silent updates are impossible
-    while (!(await Permission.requestInstallPackages.isGranted)) {
-      // Explicit request as InstallPlugin request sometimes bugged
-      Fluttertoast.showToast(
-          msg: 'Please allow Obtainium to install Apps',
-          toastLength: Toast.LENGTH_LONG);
-      if ((await Permission.requestInstallPackages.request()) ==
-          PermissionStatus.granted) {
-        break;
-      }
-    }
     await InstallPlugin.installApk(downloadFile.path, 'dev.imranr.obtainium');
 
     apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;
@@ -199,7 +193,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<App?> getUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
-    App newApp = await SourceService().getApp(currentApp.url);
+    App newApp = await sourceProvider().getApp(currentApp.url);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
       await saveApp(newApp);
@@ -252,10 +246,7 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<int> importApps(String appsJSON) async {
-    // FilePickerResult? result = await FilePicker.platform.pickFiles(); // Does not work on Android 13
-
-    // if (result != null) {
-    // String appsJSON = File(result.files.single.path!).readAsStringSync();
+    // File picker does not work in android 13, so the user must paste the JSON directly into Obtainium to import Apps
     List<App> importedApps = (jsonDecode(appsJSON) as List<dynamic>)
         .map((e) => App.fromJson(e))
         .toList();
@@ -266,15 +257,11 @@ class AppsProvider with ChangeNotifier {
     }
     notifyListeners();
     return importedApps.length;
-    // } else {
-    // User canceled the picker
-    // }
   }
 
   @override
   void dispose() {
-    IsolateNameServer.removePortNameMapping('downloader_send_port');
-    foregroundSubscription?.cancel();
+    foregroundSubscription.cancel();
     super.dispose();
   }
 }

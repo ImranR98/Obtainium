@@ -1,4 +1,8 @@
+// Exposes functions used to save/load app settings
+
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum ThemeSettings { system, light, dark }
@@ -22,7 +26,6 @@ class SettingsProvider with ChangeNotifier {
   }
 
   set theme(ThemeSettings t) {
-    print(t);
     prefs?.setInt('theme', t.index);
     notifyListeners();
   }
@@ -46,11 +49,24 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  checkAndFlipFirstRun() {
+  bool checkAndFlipFirstRun() {
     bool result = prefs?.getBool('firstRun') ?? true;
     if (result) {
       prefs?.setBool('firstRun', false);
     }
     return result;
+  }
+
+  Future<void> getInstallPermission() async {
+    while (!(await Permission.requestInstallPackages.isGranted)) {
+      // Explicit request as InstallPlugin request sometimes bugged
+      Fluttertoast.showToast(
+          msg: 'Please allow Obtainium to install Apps',
+          toastLength: Toast.LENGTH_LONG);
+      if ((await Permission.requestInstallPackages.request()) ==
+          PermissionStatus.granted) {
+        break;
+      }
+    }
   }
 }

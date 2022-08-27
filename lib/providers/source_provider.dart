@@ -1,13 +1,11 @@
-// Exposes functions related to interacting with App sources and retrieving App info
-// Stateless - not a provider
+// Defines App sources and provides functions used to interact with them
+// AppSource is an abstract class with a concrete implementation for each source
 
 import 'dart:convert';
 
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:html/parser.dart';
-
-// Sub-classes used in App Source
 
 class AppNames {
   late String author;
@@ -22,34 +20,6 @@ class APKDetails {
 
   APKDetails(this.version, this.apkUrls);
 }
-
-// App Source abstract class (diff. implementations for GitHub, GitLab, etc.)
-
-abstract class AppSource {
-  late String sourceId;
-  String standardizeURL(String url);
-  Future<APKDetails> getLatestAPKDetails(String standardUrl);
-  AppNames getAppNames(String standardUrl);
-}
-
-escapeRegEx(String s) {
-  return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
-    return "\\${x[0]}";
-  });
-}
-
-List<String> getLinksFromParsedHTML(
-        Document dom, RegExp hrefPattern, String prependToLinks) =>
-    dom
-        .querySelectorAll('a')
-        .where((element) {
-          if (element.attributes['href'] == null) return false;
-          return hrefPattern.hasMatch(element.attributes['href']!);
-        })
-        .map((e) => '$prependToLinks${e.attributes['href']!}')
-        .toList();
-
-// App class
 
 class App {
   late String id;
@@ -89,7 +59,29 @@ class App {
       };
 }
 
-// Specific App Source classes
+escapeRegEx(String s) {
+  return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
+    return "\\${x[0]}";
+  });
+}
+
+List<String> getLinksFromParsedHTML(
+        Document dom, RegExp hrefPattern, String prependToLinks) =>
+    dom
+        .querySelectorAll('a')
+        .where((element) {
+          if (element.attributes['href'] == null) return false;
+          return hrefPattern.hasMatch(element.attributes['href']!);
+        })
+        .map((e) => '$prependToLinks${e.attributes['href']!}')
+        .toList();
+
+abstract class AppSource {
+  late String sourceId;
+  String standardizeURL(String url);
+  Future<APKDetails> getLatestAPKDetails(String standardUrl);
+  AppNames getAppNames(String standardUrl);
+}
 
 class GitHub implements AppSource {
   @override
@@ -203,7 +195,7 @@ class GitLab implements AppSource {
   }
 }
 
-class SourceService {
+class sourceProvider {
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
     if (url.toLowerCase().contains('://github.com')) {

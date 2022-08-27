@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obtainium/services/apps_provider.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +26,7 @@ class _AppPageState extends State<AppPage> {
       ),
       body: WebView(
         initialUrl: app?.app.url,
+        javascriptMode: JavascriptMode.unrestricted,
       ),
       bottomSheet: Padding(
           padding: EdgeInsets.fromLTRB(
