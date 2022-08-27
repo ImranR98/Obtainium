@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
@@ -47,6 +48,7 @@ class _AppPageState extends State<AppPage> {
                                                     app!.app)) &&
                                         app?.downloadProgress == null
                                     ? () {
+                                        HapticFeedback.heavyImpact();
                                         appsProvider
                                             .downloadAndInstallLatestApp(
                                                 [app!.app.id],
@@ -65,6 +67,7 @@ class _AppPageState extends State<AppPage> {
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
+                                  HapticFeedback.lightImpact();
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext ctx) {
@@ -75,6 +78,7 @@ class _AppPageState extends State<AppPage> {
                                           actions: [
                                             TextButton(
                                                 onPressed: () {
+                                                  HapticFeedback.heavyImpact();
                                                   appsProvider
                                                       .removeApp(app!.app.id)
                                                       .then((_) {
@@ -87,6 +91,7 @@ class _AppPageState extends State<AppPage> {
                                                 child: const Text('Remove')),
                                             TextButton(
                                                 onPressed: () {
+                                                  HapticFeedback.lightImpact();
                                                   Navigator.of(context).pop();
                                                 },
                                                 child: const Text('Cancel'))

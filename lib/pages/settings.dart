@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
@@ -118,6 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           onPressed: appsProvider.apps.isEmpty
                               ? null
                               : () {
+                                  HapticFeedback.lightImpact();
                                   appsProvider.exportApps().then((String path) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -128,6 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: const Text('Export Apps')),
                       ElevatedButton(
                           onPressed: () {
+                            HapticFeedback.lightImpact();
                             showDialog(
                                 context: context,
                                 builder: (BuildContext ctx) {
@@ -172,11 +175,13 @@ class _SettingsPageState extends State<SettingsPage> {
                                     actions: [
                                       TextButton(
                                           onPressed: () {
+                                            HapticFeedback.lightImpact();
                                             Navigator.of(context).pop();
                                           },
                                           child: const Text('Cancel')),
                                       TextButton(
                                           onPressed: () {
+                                            HapticFeedback.heavyImpact();
                                             if (formKey.currentState!
                                                 .validate()) {
                                               appsProvider
@@ -223,6 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           }),
                         ),
                         onPressed: () {
+                          HapticFeedback.lightImpact();
                           launchUrlString(settingsProvider.sourceUrl,
                               mode: LaunchMode.externalApplication);
                         },

@@ -195,7 +195,7 @@ class GitLab implements AppSource {
   }
 }
 
-class sourceProvider {
+class SourceProvider {
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
     if (url.toLowerCase().contains('://github.com')) {
@@ -227,4 +227,6 @@ class sourceProvider {
         apk.version,
         apk.apkUrls);
   }
+
+  List<String> getSourceHosts() => ['github.com', 'gitlab.com'];
 }

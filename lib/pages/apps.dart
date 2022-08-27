@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -26,6 +27,7 @@ class _AppsPageState extends State<AppsPage> {
                         .isNotEmpty
                     ? null
                     : () {
+                        HapticFeedback.heavyImpact();
                         context
                             .read<SettingsProvider>()
                             .getInstallPermission()
@@ -45,7 +47,10 @@ class _AppsPageState extends State<AppsPage> {
                       style: Theme.of(context).textTheme.headline4,
                     )
                   : RefreshIndicator(
-                      onRefresh: appsProvider.checkUpdates,
+                      onRefresh: () {
+                        HapticFeedback.lightImpact();
+                        return appsProvider.checkUpdates();
+                      },
                       child: ListView(
                         children: appsProvider.apps.values
                             .map(

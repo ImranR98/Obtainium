@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -191,7 +192,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<App?> getUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
-    App newApp = await sourceProvider().getApp(currentApp.url);
+    App newApp = await SourceProvider().getApp(currentApp.url);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
       await saveApp(newApp);
@@ -299,11 +300,13 @@ class _APKPickerState extends State<APKPicker> {
       actions: [
         TextButton(
             onPressed: () {
+              HapticFeedback.lightImpact();
               Navigator.of(context).pop(null);
             },
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.of(context).pop(apkUrl);
             },
             child: const Text('Continue'))
