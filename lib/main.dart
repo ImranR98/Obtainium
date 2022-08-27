@@ -21,6 +21,8 @@ void bgTaskCallback() {
     var notificationsProvider = NotificationsProvider();
     await notificationsProvider.notify(checkingUpdatesNotification);
     try {
+      await notificationsProvider
+          .cancel(ErrorCheckingUpdatesNotification('').id);
       await appsProvider.loadApps();
       List<App> updates = await appsProvider.checkUpdates();
       if (updates.isNotEmpty) {
