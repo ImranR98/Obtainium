@@ -298,7 +298,8 @@ class _APKPickerState extends State<APKPicker> {
       scrollable: true,
       title: const Text('Pick an APK'),
       content: Column(children: [
-        Text('${widget.app.name} has more than one package.'),
+        Text('${widget.app.name} has more than one package:'),
+        const SizedBox(height: 16),
         ...widget.app.apkUrls.map((u) => RadioListTile<String>(
             title: Text(Uri.parse(u).pathSegments.last),
             value: u,
