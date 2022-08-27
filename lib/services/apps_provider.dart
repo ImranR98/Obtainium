@@ -73,8 +73,38 @@ class AppsProvider with ChangeNotifier {
     if (apps[appId] == null) {
       throw 'App not found';
     }
-    StreamedResponse response = await Client()
-        .send(Request('GET', Uri.parse(apps[appId]!.app.apkUrls[0])));
+    String apkUrl = apps[appId]!.app.apkUrls.last;
+    if (apps[appId]!.app.apkUrls.length > 1) {
+      await showDialog(
+          context: context,
+          builder: (BuildContext ctx) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text('Pick an APK'),
+              content: Column(children: [
+                Text(
+                    '${apps[appId]!.app.name} has more than one package - pick one.'),
+                ...apps[appId]!.app.apkUrls.map((u) => ListTile(
+                    title: Text(Uri.parse(u).pathSegments.last),
+                    leading: Radio<String>(
+                        value: u,
+                        groupValue: apkUrl,
+                        onChanged: (String? val) {
+                          apkUrl = val!;
+                        })))
+              ]),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Continue'))
+              ],
+            );
+          });
+    }
+    StreamedResponse response =
+        await Client().send(Request('GET', Uri.parse(apkUrl)));
     File downloadFile =
         File('${(await getExternalStorageDirectory())!.path}/$appId.apk');
     if (downloadFile.existsSync()) {
