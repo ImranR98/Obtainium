@@ -77,7 +77,7 @@ List<String> getLinksFromParsedHTML(
         .toList();
 
 abstract class AppSource {
-  late String sourceId;
+  late String host;
   String standardizeURL(String url);
   Future<APKDetails> getLatestAPKDetails(String standardUrl);
   AppNames getAppNames(String standardUrl);
@@ -85,11 +85,11 @@ abstract class AppSource {
 
 class GitHub implements AppSource {
   @override
-  String sourceId = 'github';
+  late String host = 'github.com';
 
   @override
   String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp(r'^https?://github.com/[^/]*/[^/]*');
+    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]*/[^/]*');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw 'Not a valid URL';
@@ -144,11 +144,11 @@ class GitHub implements AppSource {
 
 class GitLab implements AppSource {
   @override
-  String sourceId = 'gitlab';
+  late String host = 'gitlab.com';
 
   @override
   String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp(r'^https?://gitlab.com/[^/]*/[^/]*');
+    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]*/[^/]*');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw 'Not a valid URL';
@@ -197,17 +197,17 @@ class GitLab implements AppSource {
 
 class Signal implements AppSource {
   @override
-  String sourceId = 'signal';
+  late String host = 'signal.org';
 
   @override
   String standardizeURL(String url) {
-    return 'https://signal.org';
+    return 'https://$host';
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
     Response res =
-        await get(Uri.parse('https://updates.signal.org/android/latest.json'));
+        await get(Uri.parse('https://updates.$host/android/latest.json'));
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];
@@ -229,16 +229,21 @@ class Signal implements AppSource {
 }
 
 class SourceProvider {
+  List<AppSource> sources = [GitHub(), GitLab(), Signal()];
+
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
-    if (url.toLowerCase().contains('://github.com')) {
-      return GitHub();
-    } else if (url.toLowerCase().contains('://gitlab.com')) {
-      return GitLab();
-    } else if (url.toLowerCase().contains('://signal.org')) {
-      return Signal();
+    AppSource? source;
+    for (var s in sources) {
+      if (url.toLowerCase().contains('://${s.host}')) {
+        source = s;
+        break;
+      }
     }
-    throw 'URL does not match a known source';
+    if (source == null) {
+      throw 'URL does not match a known source';
+    }
+    return source;
   }
 
   Future<App> getApp(String url) async {
@@ -254,7 +259,7 @@ class SourceProvider {
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source.getLatestAPKDetails(standardUrl);
     return App(
-        '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.sourceId}',
+        '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}',
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
         names.name[0].toUpperCase() + names.name.substring(1),
@@ -263,5 +268,5 @@ class SourceProvider {
         apk.apkUrls);
   }
 
-  List<String> getSourceHosts() => ['github.com', 'gitlab.com', 'signal.org'];
+  List<String> getSourceHosts() => sources.map((e) => e.host).toList();
 }
