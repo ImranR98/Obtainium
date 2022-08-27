@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
@@ -20,22 +21,34 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Obtainium')),
-      body: pages.elementAt(selectedIndex),
-      bottomNavigationBar: NavigationBar(
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-          NavigationDestination(icon: Icon(Icons.apps), label: 'Apps'),
-          NavigationDestination(icon: Icon(Icons.add), label: 'Add App'),
-        ],
-        onDestinationSelected: (int index) {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
-        selectedIndex: selectedIndex,
-      ),
-    );
+    return WillPopScope(
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Obtainium')),
+          body: pages.elementAt(selectedIndex),
+          bottomNavigationBar: NavigationBar(
+            destinations: const [
+              NavigationDestination(
+                  icon: Icon(Icons.settings), label: 'Settings'),
+              NavigationDestination(icon: Icon(Icons.apps), label: 'Apps'),
+              NavigationDestination(icon: Icon(Icons.add), label: 'Add App'),
+            ],
+            onDestinationSelected: (int index) {
+              HapticFeedback.lightImpact();
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+            selectedIndex: selectedIndex,
+          ),
+        ),
+        onWillPop: () async {
+          if (selectedIndex != 1) {
+            setState(() {
+              selectedIndex = 1;
+            });
+            return false;
+          }
+          return true;
+        });
   }
 }
