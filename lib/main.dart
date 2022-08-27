@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/services/apps_provider.dart';
+import 'package:obtainium/services/notifications_provider.dart';
 import 'package:obtainium/services/settings_provider.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,44 +17,23 @@ const String currentReleaseTag =
 void bgTaskCallback() {
   Workmanager().executeTask((task, taskName) async {
     var appsProvider = AppsProvider(bg: true);
-    await appsProvider.notify(
-        4,
-        'Checking for Updates',
-        '',
-        'BG_UPDATE_CHECK',
-        'Checking for Updates',
-        'Transient notification that appears when checking for updates',
-        important: false);
+    var notificationsProvider = NotificationsProvider();
+    await notificationsProvider.notify(checkingUpdatesNotification);
     try {
       await appsProvider.loadApps();
       List<App> updates = await appsProvider.checkUpdates();
       if (updates.isNotEmpty) {
-        String message = updates.length == 1
-            ? '${updates[0].name} has an update.'
-            : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
-        await appsProvider.downloaderNotifications.cancel(2);
-        await appsProvider.notify(
-            2,
-            'Updates Available',
-            message,
-            'UPDATES_AVAILABLE',
-            'Updates Available',
-            'Notifies the user that updates are available for one or more Apps tracked by Obtainium');
+        notificationsProvider.notify(UpdateNotification(updates),
+            cancelExisting: true);
       }
       return Future.value(true);
     } catch (e) {
-      await appsProvider.downloaderNotifications.cancel(5);
-      await appsProvider.notify(
-          5,
-          'Error Checking for Updates',
-          e.toString(),
-          'BG_UPDATE_CHECK_ERROR',
-          'Error Checking for Updates',
-          'A notification that shows when background update checking fails',
-          important: false);
+      notificationsProvider.notify(
+          ErrorCheckingUpdatesNotification(e.toString()),
+          cancelExisting: true);
       return Future.value(false);
     } finally {
-      await appsProvider.downloaderNotifications.cancel(4);
+      await notificationsProvider.cancel(checkingUpdatesNotification.id);
     }
   });
 }
@@ -70,7 +50,8 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
-      ChangeNotifierProvider(create: (context) => SettingsProvider())
+      ChangeNotifierProvider(create: (context) => SettingsProvider()),
+      Provider(create: (context) => NotificationsProvider())
     ],
     child: const MyApp(),
   ));

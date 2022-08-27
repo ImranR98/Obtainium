@@ -6,9 +6,10 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:obtainium/services/notifications_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/services/source_service.dart';
 import 'package:http/http.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
@@ -28,16 +29,11 @@ class AppsProvider with ChangeNotifier {
   bool loadingApps = false;
   bool gettingUpdates = false;
 
-  // Notifications plugin for downloads
-  FlutterLocalNotificationsPlugin downloaderNotifications =
-      FlutterLocalNotificationsPlugin();
-
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   StreamSubscription<FGBGType>? foregroundSubscription;
 
   AppsProvider({bool bg = false}) {
-    initializeNotifs();
     // Subscribe to changes in the app foreground status
     foregroundSubscription = FGBGEvents.stream.listen((event) async {
       isForeground = event == FGBGType.foreground;
@@ -46,30 +42,10 @@ class AppsProvider with ChangeNotifier {
     loadApps();
   }
 
-  Future<void> initializeNotifs() async {
-    // Initialize the notifications service
-    await downloaderNotifications.initialize(const InitializationSettings(
-        android: AndroidInitializationSettings('ic_notification')));
-  }
-
-  Future<void> notify(int id, String title, String message, String channelCode,
-      String channelName, String channelDescription,
-      {bool important = true}) {
-    return downloaderNotifications.show(
-        id,
-        title,
-        message,
-        NotificationDetails(
-            android: AndroidNotificationDetails(channelCode, channelName,
-                channelDescription: channelDescription,
-                importance: important ? Importance.max : Importance.min,
-                priority: important ? Priority.max : Priority.min,
-                groupKey: 'dev.imranr.obtainium.$channelCode')));
-  }
-
   // Given a App (assumed valid), initiate an APK download (will trigger install callback when complete)
   Future<void> downloadAndInstallLatestApp(
       String appId, BuildContext context) async {
+    var notificationsProvider = context.read<NotificationsProvider>();
     if (apps[appId] == null) {
       throw 'App not found';
     }
@@ -132,14 +108,8 @@ class AppsProvider with ChangeNotifier {
     }
 
     if (!isForeground) {
-      await downloaderNotifications.cancel(1);
-      await notify(
-          1,
-          'Complete App Installation',
-          'Obtainium must be open to install Apps',
-          'COMPLETE_INSTALL',
-          'Complete App Installation',
-          'Asks the user to return to Obtanium to finish installing an App');
+      await notificationsProvider.notify(completeInstallationNotification,
+          cancelExisting: true);
       while (await FGBGEvents.stream.first != FGBGType.foreground) {
         // We need to wait for the App to come to the foreground to install it
         // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
