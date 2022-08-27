@@ -46,14 +46,14 @@ class _AppPageState extends State<AppPage> {
                                             appsProvider
                                                 .checkAppObjectForUpdate(
                                                     app!.app)) &&
-                                        app?.downloadProgress == null
+                                        !appsProvider.areDownloadsRunning()
                                     ? () {
                                         HapticFeedback.heavyImpact();
                                         appsProvider
                                             .downloadAndInstallLatestApp(
                                                 [app!.app.id],
                                                 context).then((res) {
-                                          if (res) {
+                                          if (res && mounted) {
                                             Navigator.of(context).pop();
                                           }
                                         });

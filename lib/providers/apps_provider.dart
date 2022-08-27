@@ -80,6 +80,10 @@ class AppsProvider with ChangeNotifier {
     return ApkFile(appId, downloadFile);
   }
 
+  bool areDownloadsRunning() => apps.values
+      .where((element) => element.downloadProgress != null)
+      .isNotEmpty;
+
   // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
   // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
   // Returns upon successful download, regardless of installation result
@@ -112,6 +116,7 @@ class AppsProvider with ChangeNotifier {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
       await FGBGEvents.stream.first == FGBGType.foreground;
+      await notificationsProvider.cancel(completeInstallationNotification.id);
       // We need to wait for the App to come to the foreground to install it
       // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
       // https://github.com/flutter/flutter/issues/13937

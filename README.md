@@ -1,4 +1,4 @@
-# ![](./android/app/src/main/res/drawable/ic_notification.png) Obtainium
+# ![Obtainium Icon](./android/app/src/main/res/drawable/ic_notification.png) Obtainium
 
 Get Android App Updates Directly From the Source.
 
@@ -13,6 +13,7 @@ Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to 
 ## Limitations
 - App installs are assumed to have succeeded; failures and cancelled installs cannot be detected.
 - Auto (unattended) updates are unsupported due to a lack of any capable Flutter plugin.
+- For GitHub, data is gathered using Web scraping and can easily break due to changes in website design. More reliable methods are either insufficient (GitHub RSS) or subject to rate limits (GitHub API). This may also apply to new sources added in the future.
 
 ## Screenshots
 

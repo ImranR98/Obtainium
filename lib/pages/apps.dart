@@ -22,9 +22,7 @@ class _AppsPageState extends State<AppsPage> {
         floatingActionButton: existingUpdateAppIds.isEmpty
             ? null
             : ElevatedButton.icon(
-                onPressed: appsProvider.apps.values
-                        .where((element) => element.downloadProgress != null)
-                        .isNotEmpty
+                onPressed: appsProvider.areDownloadsRunning()
                     ? null
                     : () {
                         HapticFeedback.heavyImpact();
@@ -60,7 +58,7 @@ class _AppsPageState extends State<AppsPage> {
                                     e.app.installedVersion ?? 'Not Installed'),
                                 trailing: e.downloadProgress != null
                                     ? Text(
-                                        'Downloading - ${e.downloadProgress!.toInt()}%')
+                                        'Downloading - ${e.downloadProgress?.toInt()}%')
                                     : (e.app.installedVersion != null &&
                                             e.app.installedVersion !=
                                                 e.app.latestVersion

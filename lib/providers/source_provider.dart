@@ -165,7 +165,7 @@ class GitLab implements AppSource {
       var parsedHtml = parse(res.body);
       var entry = parsedHtml.querySelector('entry');
       var entryContent =
-          parse(parseFragment(entry!.querySelector('content')!.innerHtml).text);
+          parse(parseFragment(entry?.querySelector('content')!.innerHtml).text);
       var apkUrlList = getLinksFromParsedHTML(
           entryContent,
           RegExp(
@@ -176,7 +176,7 @@ class GitLab implements AppSource {
         throw 'No APK found';
       }
 
-      var entryId = entry.querySelector('id')?.innerHtml;
+      var entryId = entry?.querySelector('id')?.innerHtml;
       var version =
           entryId == null ? null : Uri.parse(entryId).pathSegments.last;
       if (version == null) {
@@ -195,6 +195,39 @@ class GitLab implements AppSource {
   }
 }
 
+class Signal implements AppSource {
+  @override
+  String sourceId = 'signal';
+
+  @override
+  String standardizeURL(String url) {
+    return 'https://signal.org';
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+    Response res =
+        await get(Uri.parse('https://updates.signal.org/android/latest.json'));
+    if (res.statusCode == 200) {
+      var json = jsonDecode(res.body);
+      String? apkUrl = json['url'];
+      if (apkUrl == null) {
+        throw 'No APK found';
+      }
+      String? version = json['versionName'];
+      if (version == null) {
+        throw 'Could not determine latest release version';
+      }
+      return APKDetails(version, [apkUrl]);
+    } else {
+      throw 'Unable to fetch release info';
+    }
+  }
+
+  @override
+  AppNames getAppNames(String standardUrl) => AppNames('signal', 'signal');
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
@@ -202,6 +235,8 @@ class SourceProvider {
       return GitHub();
     } else if (url.toLowerCase().contains('://gitlab.com')) {
       return GitLab();
+    } else if (url.toLowerCase().contains('://signal.org')) {
+      return Signal();
     }
     throw 'URL does not match a known source';
   }
@@ -228,5 +263,5 @@ class SourceProvider {
         apk.apkUrls);
   }
 
-  List<String> getSourceHosts() => ['github.com', 'gitlab.com'];
+  List<String> getSourceHosts() => ['github.com', 'gitlab.com', 'signal.org'];
 }
