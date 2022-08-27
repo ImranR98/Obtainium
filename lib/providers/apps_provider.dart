@@ -21,6 +21,12 @@ class AppInMemory {
   AppInMemory(this.app, this.downloadProgress);
 }
 
+class ApkFile {
+  String appId;
+  File file;
+  ApkFile(this.appId, this.file);
+}
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -42,45 +48,7 @@ class AppsProvider with ChangeNotifier {
     loadApps();
   }
 
-  // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
-  // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
-  // Returns upon successful download, regardless of installation result
-  Future<void> downloadAndInstallLatestApp(
-      String appId, BuildContext context) async {
-    var notificationsProvider = context.read<NotificationsProvider>();
-    if (apps[appId] == null) {
-      throw 'App not found';
-    }
-    String apkUrl = apps[appId]!.app.apkUrls.last;
-    if (apps[appId]!.app.apkUrls.length > 1) {
-      await showDialog(
-          context: context,
-          builder: (BuildContext ctx) {
-            return AlertDialog(
-              scrollable: true,
-              title: const Text('Pick an APK'),
-              content: Column(children: [
-                Text(
-                    '${apps[appId]!.app.name} has more than one package - pick one.'),
-                ...apps[appId]!.app.apkUrls.map((u) => ListTile(
-                    title: Text(Uri.parse(u).pathSegments.last),
-                    leading: Radio<String>(
-                        value: u,
-                        groupValue: apkUrl,
-                        onChanged: (String? val) {
-                          apkUrl = val!;
-                        })))
-              ]),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Continue'))
-              ],
-            );
-          });
-    }
+  Future<ApkFile> downloadApp(String apkUrl, String appId) async {
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(apkUrl)));
     File downloadFile =
@@ -108,26 +76,74 @@ class AppsProvider with ChangeNotifier {
       downloadFile.deleteSync();
       throw response.reasonPhrase ?? 'Unknown Error';
     }
+    return ApkFile(appId, downloadFile);
+  }
 
-    while (!isForeground) {
+  // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
+  // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
+  // Returns upon successful download, regardless of installation result
+  Future<void> downloadAndInstallLatestApp(
+      List<String> appIds, BuildContext context) async {
+    NotificationsProvider notificationsProvider =
+        context.read<NotificationsProvider>();
+    Map<String, String> appsToInstall = {};
+    for (var id in appIds) {
+      if (apps[id] == null) {
+        throw 'App not found';
+      }
+      String apkUrl = apps[id]!.app.apkUrls.last;
+      if (apps[id]!.app.apkUrls.length > 1) {
+        await showDialog(
+            context: context,
+            builder: (BuildContext ctx) {
+              return AlertDialog(
+                scrollable: true,
+                title: const Text('Pick an APK'),
+                content: Column(children: [
+                  Text(
+                      '${apps[id]!.app.name} has more than one package - pick one.'),
+                  ...apps[id]!.app.apkUrls.map((u) => ListTile(
+                      title: Text(Uri.parse(u).pathSegments.last),
+                      leading: Radio<String>(
+                          value: u,
+                          groupValue: apkUrl,
+                          onChanged: (String? val) {
+                            apkUrl = val!;
+                          })))
+                ]),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Continue'))
+                ],
+              );
+            });
+      }
+      appsToInstall.putIfAbsent(id, () => apkUrl);
+    }
+
+    List<ApkFile> downloadedFiles = await Future.wait(appsToInstall.entries
+        .map((entry) => downloadApp(entry.value, entry.key)));
+
+    if (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      if (await FGBGEvents.stream.first == FGBGType.foreground ||
-          isForeground) {
-        break;
-        // We need to wait for the App to come to the foreground to install it
-        // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
-        // https://github.com/flutter/flutter/issues/13937
-      }
+      await FGBGEvents.stream.first == FGBGType.foreground;
+      // We need to wait for the App to come to the foreground to install it
+      // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
+      // https://github.com/flutter/flutter/issues/13937
     }
 
     // Unfortunately this 'await' does not actually wait for the APK to finish installing
     // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
     // This also does not use the 'session-based' installer API, so background/silent updates are impossible
-    await InstallPlugin.installApk(downloadFile.path, 'dev.imranr.obtainium');
-
-    apps[appId]!.app.installedVersion = apps[appId]!.app.latestVersion;
-    await saveApp(apps[appId]!.app);
+    for (var f in downloadedFiles) {
+      await InstallPlugin.installApk(f.file.path, 'dev.imranr.obtainium');
+      apps[f.appId]!.app.installedVersion = apps[f.appId]!.app.latestVersion;
+      await saveApp(apps[f.appId]!.app);
+    }
   }
 
   Future<Directory> getAppsDir() async {

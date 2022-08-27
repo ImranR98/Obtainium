@@ -30,10 +30,8 @@ class _AppsPageState extends State<AppsPage> {
                             .read<SettingsProvider>()
                             .getInstallPermission()
                             .then((_) {
-                          for (var e in existingUpdateAppIds) {
-                            appsProvider.downloadAndInstallLatestApp(
-                                e, context);
-                          }
+                          appsProvider.downloadAndInstallLatestApp(
+                              existingUpdateAppIds, context);
                         });
                       },
                 icon: const Icon(Icons.update),
