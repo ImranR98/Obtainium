@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
-const String CURRENT_RELEASE_TAG =
+const String currentReleaseTag =
     'v0.1.3-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 @pragma('vm:entry-point')
@@ -101,9 +101,8 @@ class MyApp extends StatelessWidget {
             'https://github.com/ImranR98/Obtainium',
             'ImranR98',
             'Obtainium',
-            CURRENT_RELEASE_TAG,
-            CURRENT_RELEASE_TAG,
-            ''));
+            currentReleaseTag,
+            currentReleaseTag, []));
       }
       appsProvider.deleteSavedAPKs();
       appsProvider.checkUpdates();

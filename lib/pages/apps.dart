@@ -26,7 +26,7 @@ class _AppsPageState extends State<AppsPage> {
                     ? null
                     : () {
                         for (var e in existingUpdateAppIds) {
-                          appsProvider.downloadAndInstallLatestApp(e);
+                          appsProvider.downloadAndInstallLatestApp(e, context);
                         }
                       },
                 icon: const Icon(Icons.update),

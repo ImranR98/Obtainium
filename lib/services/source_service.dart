@@ -1,6 +1,9 @@
 // Exposes functions related to interacting with App sources and retrieving App info
 // Stateless - not a provider
 
+import 'dart:convert';
+
+import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:html/parser.dart';
 
@@ -15,9 +18,9 @@ class AppNames {
 
 class APKDetails {
   late String version;
-  late String downloadUrl;
+  late List<String> apkUrls;
 
-  APKDetails(this.version, this.downloadUrl);
+  APKDetails(this.version, this.apkUrls);
 }
 
 // App Source abstract class (diff. implementations for GitHub, GitLab, etc.)
@@ -35,6 +38,17 @@ escapeRegEx(String s) {
   });
 }
 
+List<String> getLinksFromParsedHTML(
+        Document dom, RegExp hrefPattern, String prependToLinks) =>
+    dom
+        .querySelectorAll('a')
+        .where((element) {
+          if (element.attributes['href'] == null) return false;
+          return hrefPattern.hasMatch(element.attributes['href']!);
+        })
+        .map((e) => '$prependToLinks${e.attributes['href']!}')
+        .toList();
+
 // App class
 
 class App {
@@ -44,13 +58,13 @@ class App {
   late String name;
   String? installedVersion;
   late String latestVersion;
-  late String apkUrl;
+  List<String> apkUrls = [];
   App(this.id, this.url, this.author, this.name, this.installedVersion,
-      this.latestVersion, this.apkUrl);
+      this.latestVersion, this.apkUrls);
 
   @override
   String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrl';
+    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls';
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
@@ -62,7 +76,7 @@ class App {
           ? null
           : json['installedVersion'] as String,
       json['latestVersion'] as String,
-      json['apkUrl'] as String);
+      List<String>.from(jsonDecode(json['apkUrls'])));
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -71,7 +85,7 @@ class App {
         'name': name,
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
-        'apkUrl': apkUrl,
+        'apkUrls': jsonEncode(apkUrls),
       };
 }
 
@@ -98,23 +112,31 @@ class GitHub implements AppSource {
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
       var parsedHtml = parse(res.body);
-      var apkUrlList = parsedHtml.querySelectorAll('a').where((element) {
-        if (element.attributes['href'] == null) return false;
-        return RegExp(
-                '^${escapeRegEx(standardUri.path)}/releases/download/[^/]+/[^/]+\\.apk\$',
-                caseSensitive: false)
-            .hasMatch(element.attributes['href']!);
-      }).toList();
+      var apkUrlList = getLinksFromParsedHTML(
+          parsedHtml,
+          RegExp(
+              '^${escapeRegEx(standardUri.path)}/releases/download/[^/]+/[^/]+\\.apk\$',
+              caseSensitive: false),
+          standardUri.origin);
+      if (apkUrlList.isEmpty) {
+        throw 'No APK found';
+      }
+      String getTag(String url) {
+        List<String> parts = url.split('/');
+        return parts[parts.length - 2];
+      }
+
+      String latestTag = getTag(apkUrlList[0]);
       String? version = parsedHtml
           .querySelector('.octicon-tag')
           ?.nextElementSibling
           ?.innerHtml
           .trim();
-      if (apkUrlList.isEmpty || version == null) {
-        throw 'No APK found';
+      if (version == null) {
+        throw 'Could not determine latest release version';
       }
-      return APKDetails(
-          version, '${standardUri.origin}${apkUrlList[0].attributes['href']!}');
+      return APKDetails(version,
+          apkUrlList.where((element) => getTag(element) == latestTag).toList());
     } else {
       throw 'Unable to fetch release info';
     }
@@ -152,21 +174,23 @@ class GitLab implements AppSource {
       var entry = parsedHtml.querySelector('entry');
       var entryContent =
           parse(parseFragment(entry!.querySelector('content')!.innerHtml).text);
-      var apkUrlList = entryContent.querySelectorAll('a').where((element) {
-        if (element.attributes['href'] == null) return false;
-        return RegExp(
-                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
-                caseSensitive: false)
-            .hasMatch(element.attributes['href']!);
-      }).toList();
+      var apkUrlList = getLinksFromParsedHTML(
+          entryContent,
+          RegExp(
+              '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
+              caseSensitive: false),
+          standardUri.origin);
+      if (apkUrlList.isEmpty) {
+        throw 'No APK found';
+      }
+
       var entryId = entry.querySelector('id')?.innerHtml;
       var version =
           entryId == null ? null : Uri.parse(entryId).pathSegments.last;
-      if (apkUrlList.isEmpty || version == null) {
-        throw 'No APK found';
+      if (version == null) {
+        throw 'Could not determine latest release version';
       }
-      return APKDetails(
-          version, '${standardUri.origin}${apkUrlList[0].attributes['href']!}');
+      return APKDetails(version, apkUrlList);
     } else {
       throw 'Unable to fetch release info';
     }
@@ -203,12 +227,12 @@ class SourceService {
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source.getLatestAPKDetails(standardUrl);
     return App(
-        '${names.author}_${names.name}_${source.sourceId}',
+        '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.sourceId}',
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
         names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,
-        apk.downloadUrl);
+        apk.apkUrls);
   }
 }

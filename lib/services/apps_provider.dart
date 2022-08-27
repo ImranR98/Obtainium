@@ -68,12 +68,13 @@ class AppsProvider with ChangeNotifier {
   }
 
   // Given a App (assumed valid), initiate an APK download (will trigger install callback when complete)
-  Future<void> downloadAndInstallLatestApp(String appId) async {
+  Future<void> downloadAndInstallLatestApp(
+      String appId, BuildContext context) async {
     if (apps[appId] == null) {
       throw 'App not found';
     }
-    StreamedResponse response =
-        await Client().send(Request('GET', Uri.parse(apps[appId]!.app.apkUrl)));
+    StreamedResponse response = await Client()
+        .send(Request('GET', Uri.parse(apps[appId]!.app.apkUrls[0])));
     File downloadFile =
         File('${(await getExternalStorageDirectory())!.path}/$appId.apk');
     if (downloadFile.existsSync()) {
@@ -244,14 +245,14 @@ class AppsProvider with ChangeNotifier {
       path = exportDir!.path;
     }
     File export = File(
-        '${exportDir!.path}/obtainium-export-${DateTime.now().millisecondsSinceEpoch}.json');
+        '${exportDir.path}/obtainium-export-${DateTime.now().millisecondsSinceEpoch}.json');
     export.writeAsStringSync(
         jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
     return path;
   }
 
   Future<int> importApps(String appsJSON) async {
-    // FilePickerResult? result = await FilePicker.platform.pickFiles();
+    // FilePickerResult? result = await FilePicker.platform.pickFiles(); // Does not work on Android 13
 
     // if (result != null) {
     // String appsJSON = File(result.files.single.path!).readAsStringSync();
