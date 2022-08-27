@@ -96,7 +96,7 @@ class AppsProvider with ChangeNotifier {
       if (apps[id] == null) {
         throw 'App not found';
       }
-      String? apkUrl = apps[id]!.app.apkUrls.last;
+      String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
       if (apps[id]!.app.apkUrls.length > 1) {
         apkUrl = await showDialog(
             context: context,
@@ -105,6 +105,11 @@ class AppsProvider with ChangeNotifier {
             });
       }
       if (apkUrl != null) {
+        int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
+        if (urlInd != apps[id]!.app.preferredApkIndex) {
+          apps[id]!.app.preferredApkIndex = urlInd;
+          await saveApp(apps[id]!.app);
+        }
         appsToInstall.putIfAbsent(id, () => apkUrl!);
       }
     }
@@ -200,6 +205,9 @@ class AppsProvider with ChangeNotifier {
     App newApp = await SourceProvider().getApp(currentApp.url);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
+      if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
+        newApp.preferredApkIndex = currentApp.preferredApkIndex;
+      }
       await saveApp(newApp);
       return newApp;
     }
@@ -290,17 +298,16 @@ class _APKPickerState extends State<APKPicker> {
       scrollable: true,
       title: const Text('Pick an APK'),
       content: Column(children: [
-        Text('${widget.app.name} has more than one package - pick one.'),
-        ...widget.app.apkUrls.map((u) => ListTile(
+        Text('${widget.app.name} has more than one package.'),
+        ...widget.app.apkUrls.map((u) => RadioListTile<String>(
             title: Text(Uri.parse(u).pathSegments.last),
-            leading: Radio<String>(
-                value: u,
-                groupValue: apkUrl,
-                onChanged: (String? val) {
-                  setState(() {
-                    apkUrl = val;
-                  });
-                })))
+            value: u,
+            groupValue: apkUrl,
+            onChanged: (String? val) {
+              setState(() {
+                apkUrl = val;
+              });
+            }))
       ]),
       actions: [
         TextButton(

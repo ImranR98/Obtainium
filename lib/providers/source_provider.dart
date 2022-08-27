@@ -29,8 +29,9 @@ class App {
   String? installedVersion;
   late String latestVersion;
   List<String> apkUrls = [];
+  late int preferredApkIndex;
   App(this.id, this.url, this.author, this.name, this.installedVersion,
-      this.latestVersion, this.apkUrls);
+      this.latestVersion, this.apkUrls, this.preferredApkIndex);
 
   @override
   String toString() {
@@ -38,15 +39,19 @@ class App {
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      json['latestVersion'] as String,
-      List<String>.from(jsonDecode(json['apkUrls'])));
+        json['id'] as String,
+        json['url'] as String,
+        json['author'] as String,
+        json['name'] as String,
+        json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        json['latestVersion'] as String,
+        List<String>.from(jsonDecode(json['apkUrls'])),
+        json['preferredApkIndex'] == null
+            ? 0
+            : json['preferredApkIndex'] as int,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -56,6 +61,7 @@ class App {
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
         'apkUrls': jsonEncode(apkUrls),
+        'preferredApkIndex': preferredApkIndex
       };
 }
 
@@ -265,7 +271,8 @@ class SourceProvider {
         names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,
-        apk.apkUrls);
+        apk.apkUrls,
+        apk.apkUrls.length - 1);
   }
 
   List<String> getSourceHosts() => sources.map((e) => e.host).toList();
