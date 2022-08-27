@@ -50,8 +50,10 @@ class _AppPageState extends State<AppPage> {
                                         appsProvider
                                             .downloadAndInstallLatestApp(
                                                 [app!.app.id],
-                                                context).then((_) {
-                                          Navigator.of(context).pop();
+                                                context).then((res) {
+                                          if (res) {
+                                            Navigator.of(context).pop();
+                                          }
                                         });
                                       }
                                     : null,

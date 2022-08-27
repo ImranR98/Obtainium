@@ -82,7 +82,7 @@ class AppsProvider with ChangeNotifier {
   // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
   // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
   // Returns upon successful download, regardless of installation result
-  Future<void> downloadAndInstallLatestApp(
+  Future<bool> downloadAndInstallLatestApp(
       List<String> appIds, BuildContext context) async {
     NotificationsProvider notificationsProvider =
         context.read<NotificationsProvider>();
@@ -91,37 +91,17 @@ class AppsProvider with ChangeNotifier {
       if (apps[id] == null) {
         throw 'App not found';
       }
-      String apkUrl = apps[id]!.app.apkUrls.last;
+      String? apkUrl = apps[id]!.app.apkUrls.last;
       if (apps[id]!.app.apkUrls.length > 1) {
-        await showDialog(
+        apkUrl = await showDialog(
             context: context,
             builder: (BuildContext ctx) {
-              return AlertDialog(
-                scrollable: true,
-                title: const Text('Pick an APK'),
-                content: Column(children: [
-                  Text(
-                      '${apps[id]!.app.name} has more than one package - pick one.'),
-                  ...apps[id]!.app.apkUrls.map((u) => ListTile(
-                      title: Text(Uri.parse(u).pathSegments.last),
-                      leading: Radio<String>(
-                          value: u,
-                          groupValue: apkUrl,
-                          onChanged: (String? val) {
-                            apkUrl = val!;
-                          })))
-                ]),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Continue'))
-                ],
-              );
+              return APKPicker(app: apps[id]!.app, initVal: apkUrl);
             });
       }
-      appsToInstall.putIfAbsent(id, () => apkUrl);
+      if (apkUrl != null) {
+        appsToInstall.putIfAbsent(id, () => apkUrl!);
+      }
     }
 
     List<ApkFile> downloadedFiles = await Future.wait(appsToInstall.entries
@@ -144,6 +124,8 @@ class AppsProvider with ChangeNotifier {
       apps[f.appId]!.app.installedVersion = apps[f.appId]!.app.latestVersion;
       await saveApp(apps[f.appId]!.app);
     }
+
+    return downloadedFiles.isNotEmpty;
   }
 
   Future<Directory> getAppsDir() async {
@@ -279,5 +261,53 @@ class AppsProvider with ChangeNotifier {
   void dispose() {
     foregroundSubscription.cancel();
     super.dispose();
+  }
+}
+
+class APKPicker extends StatefulWidget {
+  const APKPicker({super.key, required this.app, this.initVal});
+
+  final App app;
+  final String? initVal;
+
+  @override
+  State<APKPicker> createState() => _APKPickerState();
+}
+
+class _APKPickerState extends State<APKPicker> {
+  String? apkUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    apkUrl ??= widget.initVal;
+    return AlertDialog(
+      scrollable: true,
+      title: const Text('Pick an APK'),
+      content: Column(children: [
+        Text('${widget.app.name} has more than one package - pick one.'),
+        ...widget.app.apkUrls.map((u) => ListTile(
+            title: Text(Uri.parse(u).pathSegments.last),
+            leading: Radio<String>(
+                value: u,
+                groupValue: apkUrl,
+                onChanged: (String? val) {
+                  setState(() {
+                    apkUrl = val;
+                  });
+                })))
+      ]),
+      actions: [
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(null);
+            },
+            child: const Text('Cancel')),
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(apkUrl);
+            },
+            child: const Text('Continue'))
+      ],
+    );
   }
 }

@@ -172,6 +172,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                     actions: [
                                       TextButton(
                                           onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel')),
+                                      TextButton(
+                                          onPressed: () {
                                             if (formKey.currentState!
                                                 .validate()) {
                                               appsProvider
@@ -198,11 +203,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                             }
                                           },
                                           child: const Text('Import')),
-                                      TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: const Text('Cancel'))
                                     ],
                                   );
                                 });
