@@ -11,7 +11,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 const String currentReleaseTag =
-    'v0.1.3-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.1.4-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 @pragma('vm:entry-point')
 void bgTaskCallback() {
@@ -123,7 +123,8 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
-                  : darkColorScheme),
+                  : darkColorScheme,
+              fontFamily: 'Metropolis'),
           home: const HomePage());
     });
   }
