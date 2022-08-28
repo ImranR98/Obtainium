@@ -95,7 +95,7 @@ class GitHub implements AppSource {
 
   @override
   String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]*/[^/]*');
+    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw 'Not a valid URL';
@@ -105,7 +105,6 @@ class GitHub implements AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    // The GitHub RSS feed does not contain asset download details, so we use web scraping (avoid API due to rate limits)
     Response res = await get(Uri.parse('$standardUrl/releases/latest'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
@@ -154,7 +153,7 @@ class GitLab implements AppSource {
 
   @override
   String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]*/[^/]*');
+    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw 'Not a valid URL';
@@ -164,7 +163,6 @@ class GitLab implements AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    // GitLab provides an RSS feed with all the details we need
     Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
@@ -231,11 +229,98 @@ class Signal implements AppSource {
   }
 
   @override
-  AppNames getAppNames(String standardUrl) => AppNames('signal', 'signal');
+  AppNames getAppNames(String standardUrl) => AppNames('Signal', 'Signal');
+}
+
+class FDroid implements AppSource {
+  @override
+  late String host = 'f-droid.org';
+
+  @override
+  String standardizeURL(String url) {
+    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/packages/[^/]+');
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    if (match == null) {
+      throw 'Not a valid URL';
+    }
+    return url.substring(0, match.end);
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+    Response res = await get(Uri.parse(standardUrl));
+    if (res.statusCode == 200) {
+      var latestReleaseDiv =
+          parse(res.body).querySelector('#latest.package-version');
+      var apkUrl = latestReleaseDiv
+          ?.querySelector('.package-version-download a')
+          ?.attributes['href'];
+      if (apkUrl == null) {
+        throw 'No APK found';
+      }
+      var version = latestReleaseDiv
+          ?.querySelector('.package-version-header b')
+          ?.innerHtml
+          .split(' ')
+          .last;
+      if (version == null) {
+        throw 'Could not determine latest release version';
+      }
+      return APKDetails(version, [apkUrl]);
+    } else {
+      throw 'Unable to fetch release info';
+    }
+  }
+
+  @override
+  AppNames getAppNames(String standardUrl) {
+    var name = Uri.parse(standardUrl).pathSegments.last;
+    return AppNames(name, name);
+  }
+}
+
+class Mullvad implements AppSource {
+  @override
+  late String host = 'mullvad.net';
+
+  @override
+  String standardizeURL(String url) {
+    RegExp standardUrlRegEx = RegExp('^https?://$host');
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    if (match == null) {
+      throw 'Not a valid URL';
+    }
+    return url.substring(0, match.end);
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+    Response res = await get(Uri.parse('$standardUrl/en/download/android'));
+    if (res.statusCode == 200) {
+      var version = parse(res.body)
+          .querySelector('p.subtitle.is-6')
+          ?.querySelector('a')
+          ?.attributes['href']
+          ?.split('/')
+          .last;
+      if (version == null) {
+        throw 'Could not determine the latest release version';
+      }
+      return APKDetails(
+          version, ['https://mullvad.net/download/app/apk/latest']);
+    } else {
+      throw 'Unable to fetch release info';
+    }
+  }
+
+  @override
+  AppNames getAppNames(String standardUrl) {
+    return AppNames('Mullvad-VPN', 'Mullvad-VPN');
+  }
 }
 
 class SourceProvider {
-  List<AppSource> sources = [GitHub(), GitLab(), Signal()];
+  List<AppSource> sources = [GitHub(), GitLab(), FDroid(), Mullvad(), Signal()];
 
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
