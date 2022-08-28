@@ -17,10 +17,10 @@ const String currentReleaseTag =
 void bgTaskCallback() {
   // Background update checking process
   Workmanager().executeTask((task, taskName) async {
-    var appsProvider = AppsProvider(bg: true);
     var notificationsProvider = NotificationsProvider();
     await notificationsProvider.notify(checkingUpdatesNotification);
     try {
+      var appsProvider = AppsProvider();
       await notificationsProvider
           .cancel(ErrorCheckingUpdatesNotification('').id);
       await appsProvider.loadApps();
@@ -52,7 +52,11 @@ void main() async {
   );
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (context) => AppsProvider()),
+      ChangeNotifierProvider(
+          create: (context) => AppsProvider(
+              shouldLoadApps: true,
+              shouldCheckUpdatesAfterLoad: true,
+              shouldDeleteAPKs: true)),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())
     ],
@@ -71,12 +75,7 @@ class MyApp extends StatelessWidget {
     AppsProvider appsProvider = context.read<AppsProvider>();
 
     if (settingsProvider.prefs == null) {
-      settingsProvider.initializeSettings().then((value) {
-        // Delete past downloads and check for updates every time the app is launched
-        // Only runs once as the settings are only initialized once (so not on every build)
-        appsProvider.deleteSavedAPKs();
-        appsProvider.checkUpdates();
-      });
+      settingsProvider.initializeSettings();
     } else {
       // Register the background update task according to the user's setting
       Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',

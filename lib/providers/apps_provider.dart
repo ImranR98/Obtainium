@@ -39,14 +39,26 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType> foregroundStream;
   late StreamSubscription<FGBGType> foregroundSubscription;
 
-  AppsProvider({bool bg = false}) {
+  AppsProvider(
+      {bool shouldLoadApps = false,
+      bool shouldCheckUpdatesAfterLoad = false,
+      bool shouldDeleteAPKs = false}) {
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) await loadApps();
     });
-    loadApps();
+    if (shouldDeleteAPKs) {
+      deleteSavedAPKs();
+    }
+    if (shouldLoadApps) {
+      loadApps().then((_) {
+        if (shouldCheckUpdatesAfterLoad) {
+          checkUpdates();
+        }
+      });
+    }
   }
 
   Future<ApkFile> downloadApp(String apkUrl, String appId) async {
