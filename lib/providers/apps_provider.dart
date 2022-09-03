@@ -108,6 +108,7 @@ class AppsProvider with ChangeNotifier {
       if (apps[id] == null) {
         throw 'App not found';
       }
+      // If the App has more than one APK, the user should pick one
       String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
       if (apps[id]!.app.apkUrls.length > 1) {
         apkUrl = await showDialog(
@@ -115,6 +116,19 @@ class AppsProvider with ChangeNotifier {
             builder: (BuildContext ctx) {
               return APKPicker(app: apps[id]!.app, initVal: apkUrl);
             });
+      }
+      // If the picked APK comes from an origin different from the source, get user confirmation
+      if (apkUrl != null &&
+          !apkUrl.toLowerCase().startsWith(apps[id]!.app.url.toLowerCase())) {
+        if (await showDialog(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return APKOriginWarningDialog(
+                      sourceUrl: apps[id]!.app.url, apkUrl: apkUrl!);
+                }) !=
+            true) {
+          apkUrl = null;
+        }
       }
       if (apkUrl != null) {
         int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
@@ -331,8 +345,45 @@ class _APKPickerState extends State<APKPicker> {
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
-              HapticFeedback.mediumImpact();
+              HapticFeedback.heavyImpact();
               Navigator.of(context).pop(apkUrl);
+            },
+            child: const Text('Continue'))
+      ],
+    );
+  }
+}
+
+class APKOriginWarningDialog extends StatefulWidget {
+  const APKOriginWarningDialog(
+      {super.key, required this.sourceUrl, required this.apkUrl});
+
+  final String sourceUrl;
+  final String apkUrl;
+
+  @override
+  State<APKOriginWarningDialog> createState() => _APKOriginWarningDialogState();
+}
+
+class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: const Text('Warning'),
+      content: Text(
+          'The App source is \'${Uri.parse(widget.sourceUrl).host}\' but the release package comes from \'${Uri.parse(widget.apkUrl).host}\'. Continue?'),
+      actions: [
+        TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.of(context).pop(null);
+            },
+            child: const Text('Cancel')),
+        TextButton(
+            onPressed: () {
+              HapticFeedback.heavyImpact();
+              Navigator.of(context).pop(true);
             },
             child: const Text('Continue'))
       ],

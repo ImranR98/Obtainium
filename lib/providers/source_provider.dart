@@ -170,12 +170,19 @@ class GitLab implements AppSource {
       var entry = parsedHtml.querySelector('entry');
       var entryContent =
           parse(parseFragment(entry?.querySelector('content')!.innerHtml).text);
-      var apkUrlList = getLinksFromParsedHTML(
-          entryContent,
-          RegExp(
-              '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
-              caseSensitive: false),
-          standardUri.origin);
+      var apkUrlList = [
+        ...getLinksFromParsedHTML(
+            entryContent,
+            RegExp(
+                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
+                caseSensitive: false),
+            standardUri.origin),
+        // GitLab releases may contain links to externally hosted APKs
+        ...getLinksFromParsedHTML(entryContent,
+                RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
+            .where((element) => Uri.parse(element).host != '')
+            .toList()
+      ];
       if (apkUrlList.isEmpty) {
         throw 'No APK found';
       }
