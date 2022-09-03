@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
     'v0.1.7-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
@@ -43,10 +44,12 @@ void bgTaskCallback() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
-  );
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt! >= 29) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
+    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
   Workmanager().initialize(
     bgTaskCallback,
   );
