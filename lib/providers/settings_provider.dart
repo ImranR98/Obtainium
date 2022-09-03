@@ -69,4 +69,13 @@ class SettingsProvider with ChangeNotifier {
       }
     }
   }
+
+  bool get showAppWebpage {
+    return prefs?.getBool('showAppWebpage') ?? true;
+  }
+
+  set showAppWebpage(bool show) {
+    prefs?.setBool('showAppWebpage', show);
+    notifyListeners();
+  }
 }

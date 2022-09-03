@@ -110,6 +110,20 @@ class _SettingsPageState extends State<SettingsPage> {
                         }
                       }),
                   const SizedBox(
+                    height: 16,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Show Source Webpage in App View'),
+                      Switch(
+                          value: settingsProvider.showAppWebpage,
+                          onChanged: (value) {
+                            settingsProvider.showAppWebpage = value;
+                          })
+                    ],
+                  ),
+                  const SizedBox(
                     height: 32,
                   ),
                   Row(
@@ -127,7 +141,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     );
                                   });
                                 },
-                          child: const Text('Export Apps')),
+                          child: const Text('Export App List')),
                       ElevatedButton(
                           onPressed: () {
                             HapticFeedback.lightImpact();
@@ -140,7 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                                   return AlertDialog(
                                     scrollable: true,
-                                    title: const Text('Import Apps'),
+                                    title: const Text('Import App List'),
                                     content: Column(children: [
                                       const Text(
                                           'Copy the contents of the Obtainium export file and paste them into the field below:'),
@@ -193,7 +207,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                                     .showSnackBar(
                                                   SnackBar(
                                                       content: Text(
-                                                          '$value Apps Imported')),
+                                                          '$value App${value == 1 ? '' : 's'} Imported')),
                                                 );
                                               }).catchError((e) {
                                                 ScaffoldMessenger.of(context)
@@ -212,7 +226,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   );
                                 });
                           },
-                          child: const Text('Import Apps'))
+                          child: const Text('Import App List'))
                     ],
                   ),
                   const Spacer(),

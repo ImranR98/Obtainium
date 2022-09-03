@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +19,7 @@ class _AppPageState extends State<AppPage> {
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
+    var settingsProvider = context.watch<SettingsProvider>();
     AppInMemory? app = appsProvider.apps[widget.appId];
     if (app?.app.installedVersion != null) {
       appsProvider.getUpdate(app!.app.id);
@@ -25,10 +28,58 @@ class _AppPageState extends State<AppPage> {
       appBar: AppBar(
         title: Text('${app?.app.author}/${app?.app.name}'),
       ),
-      body: WebView(
-        initialUrl: app?.app.url,
-        javascriptMode: JavascriptMode.unrestricted,
-      ),
+      body: settingsProvider.showAppWebpage
+          ? WebView(
+              initialUrl: app?.app.url,
+              javascriptMode: JavascriptMode.unrestricted,
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  app?.app.name ?? 'App',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headline1,
+                ),
+                Text(
+                  'By ${app?.app.author ?? 'Unknown'}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headline4,
+                ),
+                const SizedBox(
+                  height: 32,
+                ),
+                GestureDetector(
+                    onTap: () {
+                      if (app?.app.url != null) {
+                        launchUrlString(app?.app.url ?? '',
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Text(
+                      app?.app.url ?? '',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          decoration: TextDecoration.underline,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12),
+                    )),
+                const SizedBox(
+                  height: 32,
+                ),
+                Text(
+                  'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                Text(
+                  'Installed Version: ${app?.app.installedVersion ?? 'None'}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
       bottomSheet: Padding(
           padding: EdgeInsets.fromLTRB(
               0, 0, 0, MediaQuery.of(context).padding.bottom),
