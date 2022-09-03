@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.7+8 # When changing this, update the tag in main() accordingly
+version: 0.1.8+9 # When changing this, update the tag in main() accordingly
 
 environment:
   sdk: '>=2.19.0-79.0.dev <3.0.0'
@@ -35,15 +35,15 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
+  cupertino_icons: ^1.0.5
   path_provider: ^2.0.11
   flutter_fgbg: ^0.2.0 # Try removing reliance on this
-  flutter_local_notifications: ^9.8.0+1
+  flutter_local_notifications: ^9.9.1
   provider: ^6.0.3
   http: ^0.13.5
   webview_flutter: ^3.0.4
   workmanager: ^0.5.0
-  dynamic_color: ^1.5.3
+  dynamic_color: ^1.5.4
   install_plugin_v2: ^1.0.0 # Try replacing this
   html: ^0.15.0
   shared_preferences: ^2.0.15
@@ -63,7 +63,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^2.0.1
 
 flutter_icons:
   android: true

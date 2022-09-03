@@ -40,12 +40,12 @@ class _AppPageState extends State<AppPage> {
                 Text(
                   app?.app.name ?? 'App',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headline1,
+                  style: Theme.of(context).textTheme.displayLarge,
                 ),
                 Text(
                   'By ${app?.app.author ?? 'Unknown'}',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headline4,
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(
                   height: 32,
@@ -151,8 +151,10 @@ class _AppPageState extends State<AppPage> {
                                       });
                                 },
                           style: TextButton.styleFrom(
-                              foregroundColor: Theme.of(context).errorColor,
-                              surfaceTintColor: Theme.of(context).errorColor),
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              surfaceTintColor:
+                                  Theme.of(context).colorScheme.error),
                           child: const Text('Remove'),
                         ),
                       ])),

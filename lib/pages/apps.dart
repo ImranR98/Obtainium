@@ -42,7 +42,7 @@ class _AppsPageState extends State<AppsPage> {
               : appsProvider.apps.isEmpty
                   ? Text(
                       'No Apps',
-                      style: Theme.of(context).textTheme.headline4,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     )
                   : RefreshIndicator(
                       onRefresh: () {

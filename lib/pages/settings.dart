@@ -124,7 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                   const SizedBox(
-                    height: 32,
+                    height: 16,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -249,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: const Icon(Icons.code),
                         label: Text(
                           'Source',
-                          style: Theme.of(context).textTheme.caption,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       )
                     ],
