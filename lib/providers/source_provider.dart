@@ -71,6 +71,12 @@ escapeRegEx(String s) {
   });
 }
 
+const String couldNotFindReleases = 'Unable to fetch release info';
+const String couldNotFindLatestVersion =
+    'Could not determine latest release version';
+const String notValidURL = 'Not a valid URL';
+const String noAPKFound = 'No APK found';
+
 List<String> getLinksFromParsedHTML(
         Document dom, RegExp hrefPattern, String prependToLinks) =>
     dom
@@ -98,44 +104,53 @@ class GitHub implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw 'Not a valid URL';
+      throw notValidURL;
     }
     return url.substring(0, match.end);
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse('$standardUrl/releases/latest'));
+    Response res = await get(Uri.parse(
+        'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
-      var standardUri = Uri.parse(standardUrl);
-      var parsedHtml = parse(res.body);
-      var apkUrlList = getLinksFromParsedHTML(
-          parsedHtml,
-          RegExp(
-              '^${escapeRegEx(standardUri.path)}/releases/download/[^/]+/[^/]+\\.apk\$',
-              caseSensitive: false),
-          standardUri.origin);
-      if (apkUrlList.isEmpty) {
-        throw 'No APK found';
+      var releases = jsonDecode(res.body) as List<dynamic>;
+      // Right now, the latest non-prerelease version is picked
+      // If none exists, the latest prerelease version is picked
+      // In the future, the user could be given a choice
+      var nonPrereleaseReleases =
+          releases.where((element) => element['prerelease'] != true).toList();
+      var latestRelease = nonPrereleaseReleases.isNotEmpty
+          ? nonPrereleaseReleases[0]
+          : releases.isNotEmpty
+              ? releases[0]
+              : null;
+      if (latestRelease == null) {
+        throw couldNotFindReleases;
       }
-      String getTag(String url) {
-        List<String> parts = url.split('/');
-        return parts[parts.length - 2];
+      List<dynamic>? assets = latestRelease['assets'];
+      List<String>? apkUrlList = assets
+          ?.map((e) {
+            return e['browser_download_url'] != null
+                ? e['browser_download_url'] as String
+                : '';
+          })
+          .where((element) => element.toLowerCase().endsWith('.apk'))
+          .toList();
+      if (apkUrlList == null || apkUrlList.isEmpty) {
+        throw noAPKFound;
+      }
+      String? version = latestRelease['tag_name'];
+      if (version == null) {
+        throw couldNotFindLatestVersion;
+      }
+      return APKDetails(version, apkUrlList);
+    } else {
+      if (res.headers['x-ratelimit-remaining'] == '0') {
+        throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
       }
 
-      String latestTag = getTag(apkUrlList[0]);
-      String? version = parsedHtml
-          .querySelector('.octicon-tag')
-          ?.nextElementSibling
-          ?.innerHtml
-          .trim();
-      if (version == null) {
-        throw 'Could not determine latest release version';
-      }
-      return APKDetails(version,
-          apkUrlList.where((element) => getTag(element) == latestTag).toList());
-    } else {
-      throw 'Unable to fetch release info';
+      throw couldNotFindReleases;
     }
   }
 
@@ -156,7 +171,7 @@ class GitLab implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw 'Not a valid URL';
+      throw notValidURL;
     }
     return url.substring(0, match.end);
   }
@@ -184,18 +199,18 @@ class GitLab implements AppSource {
             .toList()
       ];
       if (apkUrlList.isEmpty) {
-        throw 'No APK found';
+        throw noAPKFound;
       }
 
       var entryId = entry?.querySelector('id')?.innerHtml;
       var version =
           entryId == null ? null : Uri.parse(entryId).pathSegments.last;
       if (version == null) {
-        throw 'Could not determine latest release version';
+        throw couldNotFindLatestVersion;
       }
       return APKDetails(version, apkUrlList);
     } else {
-      throw 'Unable to fetch release info';
+      throw couldNotFindReleases;
     }
   }
 
@@ -223,15 +238,15 @@ class Signal implements AppSource {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];
       if (apkUrl == null) {
-        throw 'No APK found';
+        throw noAPKFound;
       }
       String? version = json['versionName'];
       if (version == null) {
-        throw 'Could not determine latest release version';
+        throw couldNotFindLatestVersion;
       }
       return APKDetails(version, [apkUrl]);
     } else {
-      throw 'Unable to fetch release info';
+      throw couldNotFindReleases;
     }
   }
 
@@ -248,7 +263,7 @@ class FDroid implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/packages/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw 'Not a valid URL';
+      throw notValidURL;
     }
     return url.substring(0, match.end);
   }
@@ -263,7 +278,7 @@ class FDroid implements AppSource {
           ?.querySelector('.package-version-download a')
           ?.attributes['href'];
       if (apkUrl == null) {
-        throw 'No APK found';
+        throw noAPKFound;
       }
       var version = latestReleaseDiv
           ?.querySelector('.package-version-header b')
@@ -271,11 +286,11 @@ class FDroid implements AppSource {
           .split(' ')
           .last;
       if (version == null) {
-        throw 'Could not determine latest release version';
+        throw couldNotFindLatestVersion;
       }
       return APKDetails(version, [apkUrl]);
     } else {
-      throw 'Unable to fetch release info';
+      throw couldNotFindReleases;
     }
   }
 
@@ -295,7 +310,7 @@ class Mullvad implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw 'Not a valid URL';
+      throw notValidURL;
     }
     return url.substring(0, match.end);
   }
@@ -311,12 +326,12 @@ class Mullvad implements AppSource {
           ?.split('/')
           .last;
       if (version == null) {
-        throw 'Could not determine the latest release version';
+        throw couldNotFindLatestVersion;
       }
       return APKDetails(
           version, ['https://mullvad.net/download/app/apk/latest']);
     } else {
-      throw 'Unable to fetch release info';
+      throw couldNotFindReleases;
     }
   }
 

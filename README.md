@@ -16,7 +16,7 @@ Currently supported App sources:
 ## Limitations
 - App installs are assumed to have succeeded; failures and cancelled installs cannot be detected.
 - Auto (unattended) updates are unsupported due to a lack of any capable Flutter plugin.
-- For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods are either unavailable (e.g. Mullvad), insufficient (e.g. GitHub RSS) or subject to rate limits (e.g. GitHub API).
+- For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
 ## Screenshots
 
