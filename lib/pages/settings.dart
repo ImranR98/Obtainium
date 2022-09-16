@@ -103,6 +103,10 @@ class _SettingsPageState extends State<SettingsPage> {
                           value: 1440,
                           child: Text('1 Day'),
                         ),
+                        DropdownMenuItem(
+                          value: 0,
+                          child: Text('Never - Manual Only'),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {

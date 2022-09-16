@@ -81,11 +81,15 @@ class MyApp extends StatelessWidget {
       settingsProvider.initializeSettings();
     } else {
       // Register the background update task according to the user's setting
-      Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
-          frequency: Duration(minutes: settingsProvider.updateInterval),
-          initialDelay: Duration(minutes: settingsProvider.updateInterval),
-          constraints: Constraints(networkType: NetworkType.connected),
-          existingWorkPolicy: ExistingWorkPolicy.replace);
+      if (settingsProvider.updateInterval > 0) {
+        Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
+            frequency: Duration(minutes: settingsProvider.updateInterval),
+            initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            constraints: Constraints(networkType: NetworkType.connected),
+            existingWorkPolicy: ExistingWorkPolicy.replace);
+      } else {
+        Workmanager().cancelByUniqueName('bg-update-check');
+      }
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list

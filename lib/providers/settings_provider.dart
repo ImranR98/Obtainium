@@ -45,7 +45,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   set updateInterval(int min) {
-    prefs?.setInt('updateInterval', min < 15 ? 15 : min);
+    prefs?.setInt('updateInterval', (min < 15 && min != 0) ? 15 : min);
     notifyListeners();
   }
 
