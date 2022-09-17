@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:html/parser.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
 
 class AppNames {
   late String author;

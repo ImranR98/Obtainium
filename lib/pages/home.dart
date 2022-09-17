@@ -51,7 +51,6 @@ class _HomePageState extends State<HomePage> {
                   }
                   selectedIndexHistory.add(index);
                 }
-                print(selectedIndexHistory);
               });
             },
             selectedIndex:
