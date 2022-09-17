@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/add_app.dart';
@@ -36,10 +37,25 @@ class _HomePageState extends State<HomePage> {
     return WillPopScope(
         child: Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          body: pages
-              .elementAt(
-                  selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last)
-              .widget,
+          body: PageTransitionSwitcher(
+            transitionBuilder: (
+              Widget child,
+              Animation<double> animation,
+              Animation<double> secondaryAnimation,
+            ) {
+              return SharedAxisTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                transitionType: SharedAxisTransitionType.horizontal,
+                child: child,
+              );
+            },
+            child: pages
+                .elementAt(selectedIndexHistory.isEmpty
+                    ? 0
+                    : selectedIndexHistory.last)
+                .widget,
+          ),
           bottomNavigationBar: NavigationBar(
             destinations: pages
                 .map((e) =>
