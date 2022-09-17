@@ -21,7 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
-          const CustomAppBar(title: 'Add App'),
+          const CustomAppBar(title: 'Settings'),
           SliverFillRemaining(
               hasScrollBody: true,
               child: Padding(
