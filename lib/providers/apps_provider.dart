@@ -119,7 +119,7 @@ class AppsProvider with ChangeNotifier {
       }
       // If the picked APK comes from an origin different from the source, get user confirmation
       if (apkUrl != null &&
-          !apkUrl.toLowerCase().startsWith(apps[id]!.app.url.toLowerCase())) {
+          Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin) {
         if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
