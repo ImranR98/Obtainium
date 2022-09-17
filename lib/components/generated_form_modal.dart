@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 class GeneratedFormItem {
   late String message;
   late bool required;
+  late int lines;
 
-  GeneratedFormItem(this.message, this.required);
+  GeneratedFormItem(this.message, this.required, this.lines);
 }
 
 class GeneratedFormModal extends StatefulWidget {
@@ -33,6 +34,8 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
         TextFormField(
           decoration: InputDecoration(helperText: e.message),
           controller: controller,
+          minLines: e.lines <= 1 ? null : e.lines,
+          maxLines: e.lines <= 1 ? 1 : e.lines,
           validator: e.required
               ? (value) {
                   if (value == null || value.isEmpty) {

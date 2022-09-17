@@ -73,76 +73,32 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   showDialog(
                       context: context,
                       builder: (BuildContext ctx) {
-                        final formKey = GlobalKey<FormState>();
-                        final jsonInputController = TextEditingController();
-
-                        return AlertDialog(
-                          scrollable: true,
-                          title: const Text('Import App List'),
-                          content: Column(children: [
-                            const Text(
-                                'Copy the contents of the Obtainium export file and paste them into the field below:'),
-                            Form(
-                              key: formKey,
-                              child: TextFormField(
-                                minLines: 7,
-                                maxLines: 7,
-                                decoration: const InputDecoration(
-                                    helperText: 'Obtainium export data'),
-                                controller: jsonInputController,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your Obtainium export data';
-                                  }
-                                  bool isJSON = true;
-                                  try {
-                                    jsonDecode(value);
-                                  } catch (e) {
-                                    isJSON = false;
-                                  }
-                                  if (!isJSON) {
-                                    return 'Invalid input';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            )
-                          ]),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text('Cancel')),
-                            TextButton(
-                                onPressed: () {
-                                  HapticFeedback.heavyImpact();
-                                  if (formKey.currentState!.validate()) {
-                                    appsProvider
-                                        .importApps(
-                                            jsonInputController.value.text)
-                                        .then((value) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                '$value App${value == 1 ? '' : 's'} Imported')),
-                                      );
-                                    }).catchError((e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(content: Text(e.toString())),
-                                      );
-                                    }).whenComplete(() {
-                                      Navigator.of(context).pop();
-                                    });
-                                  }
-                                },
-                                child: const Text('Import')),
-                          ],
+                        return GeneratedFormModal(
+                            title: 'Obtainium Import',
+                            items: [
+                              GeneratedFormItem(
+                                  'Obtainium Export JSON Data', true, 7)
+                            ]);
+                      }).then((values) {
+                    if (values != null) {
+                      try {
+                        jsonDecode(values[0]);
+                      } catch (e) {
+                        throw 'Invalid input';
+                      }
+                      appsProvider.importApps(values[0]).then((value) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  '$value App${value == 1 ? '' : 's'} Imported')),
                         );
                       });
+                    }
+                  }).catchError((e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  });
                 },
                 child: const Text('Obtainium Import')),
             const Divider(
@@ -157,7 +113,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                             return GeneratedFormModal(
                                 title: 'Import ${source.name}',
                                 items: source.requiredArgs
-                                    .map((e) => GeneratedFormItem(e, true))
+                                    .map((e) => GeneratedFormItem(e, true, 1))
                                     .toList());
                           }).then((values) {
                         if (values != null) {
