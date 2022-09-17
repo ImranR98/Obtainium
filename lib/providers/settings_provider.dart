@@ -9,6 +9,10 @@ enum ThemeSettings { system, light, dark }
 
 enum ColourSettings { basic, materialYou }
 
+enum SortColumnSettings { added, nameAuthor, authorName }
+
+enum SortOrderSettings { ascending, descending }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
 
@@ -46,6 +50,26 @@ class SettingsProvider with ChangeNotifier {
 
   set updateInterval(int min) {
     prefs?.setInt('updateInterval', (min < 15 && min != 0) ? 15 : min);
+    notifyListeners();
+  }
+
+  SortColumnSettings get sortColumn {
+    return SortColumnSettings
+        .values[prefs?.getInt('sortColumn') ?? SortColumnSettings.added.index];
+  }
+
+  set sortColumn(SortColumnSettings s) {
+    prefs?.setInt('sortColumn', s.index);
+    notifyListeners();
+  }
+
+  SortOrderSettings get sortOrder {
+    return SortOrderSettings.values[
+        prefs?.getInt('sortOrder') ?? SortOrderSettings.descending.index];
+  }
+
+  set sortOrder(SortOrderSettings s) {
+    prefs?.setInt('sortOrder', s.index);
     notifyListeners();
   }
 

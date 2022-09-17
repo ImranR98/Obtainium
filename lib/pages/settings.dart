@@ -112,6 +112,54 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(
                     height: 16,
                   ),
+                  DropdownButtonFormField(
+                      decoration:
+                          const InputDecoration(labelText: 'App Sort By'),
+                      value: settingsProvider.sortColumn,
+                      items: const [
+                        DropdownMenuItem(
+                          value: SortColumnSettings.authorName,
+                          child: Text('Author/Name'),
+                        ),
+                        DropdownMenuItem(
+                          value: SortColumnSettings.nameAuthor,
+                          child: Text('Name/Author'),
+                        ),
+                        DropdownMenuItem(
+                          value: SortColumnSettings.added,
+                          child: Text('As Added'),
+                        )
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          settingsProvider.sortColumn = value;
+                        }
+                      }),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  DropdownButtonFormField(
+                      decoration:
+                          const InputDecoration(labelText: 'App Sort Order'),
+                      value: settingsProvider.sortOrder,
+                      items: const [
+                        DropdownMenuItem(
+                          value: SortOrderSettings.ascending,
+                          child: Text('Ascending'),
+                        ),
+                        DropdownMenuItem(
+                          value: SortOrderSettings.descending,
+                          child: Text('Descending'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          settingsProvider.sortOrder = value;
+                        }
+                      }),
+                  const SizedBox(
+                    height: 16,
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

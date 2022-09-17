@@ -16,7 +16,23 @@ class _AppsPageState extends State<AppsPage> {
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
+    var settingsProvider = context.watch<SettingsProvider>();
     var existingUpdateAppIds = appsProvider.getExistingUpdates();
+    var sortedApps = appsProvider.apps.values.toList();
+    sortedApps.sort((a, b) {
+      int result = 0;
+      if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
+        result =
+            (a.app.author + a.app.name).compareTo(b.app.author + b.app.name);
+      } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
+        result =
+            (a.app.name + a.app.author).compareTo(b.app.name + b.app.author);
+      }
+      return result;
+    });
+    if (settingsProvider.sortOrder == SortOrderSettings.ascending) {
+      sortedApps = sortedApps.reversed.toList();
+    }
 
     return Scaffold(
         floatingActionButton: existingUpdateAppIds.isEmpty
@@ -26,10 +42,7 @@ class _AppsPageState extends State<AppsPage> {
                     ? null
                     : () {
                         HapticFeedback.heavyImpact();
-                        context
-                            .read<SettingsProvider>()
-                            .getInstallPermission()
-                            .then((_) {
+                        settingsProvider.getInstallPermission().then((_) {
                           appsProvider.downloadAndInstallLatestApp(
                               existingUpdateAppIds, context);
                         });
@@ -50,7 +63,7 @@ class _AppsPageState extends State<AppsPage> {
                         return appsProvider.checkUpdates();
                       },
                       child: ListView(
-                        children: appsProvider.apps.values
+                        children: sortedApps
                             .map(
                               (e) => ListTile(
                                 title: Text('${e.app.author}/${e.app.name}'),
