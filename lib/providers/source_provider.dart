@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:html/parser.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 
 class AppNames {
   late String author;
@@ -404,6 +405,8 @@ class SourceProvider {
     IzzyOnDroid()
   ];
 
+  List<MassAppSource> massSources = [GitHubStars()];
+
   // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
     AppSource? source;
@@ -442,5 +445,54 @@ class SourceProvider {
         apk.apkUrls.length - 1);
   }
 
+  /// Returns a length 2 list, where the first element is a list of Apps and
+  /// the second is a Map<String, dynamic> of URLs and errors
+  Future<List<dynamic>> getApps(List<String> urls) async {
+    List<App> apps = [];
+    Map<String, dynamic> errors = {};
+    for (var url in urls) {
+      try {
+        apps.add(await getApp(url));
+      } catch (e) {
+        errors.addAll(<String, dynamic>{url: e});
+      }
+    }
+    return [apps, errors];
+  }
+
   List<String> getSourceHosts() => sources.map((e) => e.host).toList();
+}
+
+abstract class MassAppSource {
+  late String name;
+  late List<String> requiredArgs;
+  Future<List<String>> getUrls(List<String> args);
+}
+
+class GitHubStars implements MassAppSource {
+  @override
+  late String name = 'GitHub Starred Repos';
+
+  @override
+  late List<String> requiredArgs = ['Username'];
+
+  @override
+  Future<List<String>> getUrls(List<String> args) async {
+    if (args.length != requiredArgs.length) {
+      throw 'Wrong number of arguments provided';
+    }
+    Response res =
+        await get(Uri.parse('https://api.github.com/users/${args[0]}/starred'));
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List<dynamic>)
+          .map((e) => e['html_url'] as String)
+          .toList();
+    } else {
+      if (res.headers['x-ratelimit-remaining'] == '0') {
+        throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
+      }
+
+      throw 'Unable to find user\'s starred repos';
+    }
+  }
 }

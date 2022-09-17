@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
+import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,11 +13,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedIndex = 1;
+  List<int> selectedIndexHistory = [];
   List<Widget> pages = [
-    const SettingsPage(),
     const AppsPage(),
-    const AddAppPage()
+    const AddAppPage(),
+    const ImportExportPage(),
+    const SettingsPage()
   ];
 
   @override
@@ -24,27 +26,42 @@ class _HomePageState extends State<HomePage> {
     return WillPopScope(
         child: Scaffold(
           appBar: AppBar(title: const Text('Obtainium')),
-          body: pages.elementAt(selectedIndex),
+          body: pages.elementAt(
+              selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last),
           bottomNavigationBar: NavigationBar(
             destinations: const [
-              NavigationDestination(
-                  icon: Icon(Icons.settings), label: 'Settings'),
               NavigationDestination(icon: Icon(Icons.apps), label: 'Apps'),
               NavigationDestination(icon: Icon(Icons.add), label: 'Add App'),
+              NavigationDestination(
+                  icon: Icon(Icons.import_export), label: 'Import/Export'),
+              NavigationDestination(
+                  icon: Icon(Icons.settings), label: 'Settings'),
             ],
             onDestinationSelected: (int index) {
               HapticFeedback.lightImpact();
               setState(() {
-                selectedIndex = index;
+                if (index == 0) {
+                  selectedIndexHistory.clear();
+                } else if (selectedIndexHistory.isEmpty ||
+                    (selectedIndexHistory.isNotEmpty &&
+                        selectedIndexHistory.last != index)) {
+                  int existingInd = selectedIndexHistory.indexOf(index);
+                  if (existingInd >= 0) {
+                    selectedIndexHistory.removeAt(existingInd);
+                  }
+                  selectedIndexHistory.add(index);
+                }
+                print(selectedIndexHistory);
               });
             },
-            selectedIndex: selectedIndex,
+            selectedIndex:
+                selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,
           ),
         ),
         onWillPop: () async {
-          if (selectedIndex != 1) {
+          if (selectedIndexHistory.isNotEmpty) {
             setState(() {
-              selectedIndex = 1;
+              selectedIndexHistory.removeLast();
             });
             return false;
           }
