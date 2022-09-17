@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ImportExportPage extends StatefulWidget {
   const ImportExportPage({super.key});
@@ -16,7 +18,7 @@ class ImportExportPage extends StatefulWidget {
 }
 
 class _ImportExportPageState extends State<ImportExportPage> {
-  bool gettingAppInfo = false;
+  bool importInProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +49,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ElevatedButton(
-                onPressed: appsProvider.apps.isEmpty || gettingAppInfo
+                onPressed: appsProvider.apps.isEmpty || importInProgress
                     ? null
                     : () {
                         HapticFeedback.lightImpact();
@@ -62,42 +64,44 @@ class _ImportExportPageState extends State<ImportExportPage> {
               height: 8,
             ),
             ElevatedButton(
-                onPressed: gettingAppInfo
+                onPressed: importInProgress
                     ? null
                     : () {
                         HapticFeedback.lightImpact();
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext ctx) {
-                              return GeneratedFormModal(
-                                  title: 'Obtainium Import',
-                                  items: [
-                                    GeneratedFormItem(
-                                        'Obtainium Export JSON Data', true, 7)
-                                  ]);
-                            }).then((values) {
-                          if (values != null) {
+                        FilePicker.platform.pickFiles().then((result) {
+                          setState(() {
+                            importInProgress = true;
+                          });
+                          if (result != null) {
+                            String data = File(result.files.single.path!)
+                                .readAsStringSync();
                             try {
-                              jsonDecode(values[0]);
+                              jsonDecode(data);
                             } catch (e) {
                               throw 'Invalid input';
                             }
-                            appsProvider.importApps(values[0]).then((value) {
+                            appsProvider.importApps(data).then((value) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content: Text(
                                         '$value App${value == 1 ? '' : 's'} Imported')),
                               );
                             });
+                          } else {
+                            // User canceled the picker
                           }
                         }).catchError((e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(e.toString())),
                           );
+                        }).whenComplete(() {
+                          setState(() {
+                            importInProgress = false;
+                          });
                         });
                       },
                 child: const Text('Obtainium Import')),
-            if (gettingAppInfo)
+            if (importInProgress)
               Column(
                 children: const [
                   SizedBox(
@@ -114,7 +118,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 height: 32,
               ),
             TextButton(
-                onPressed: gettingAppInfo
+                onPressed: importInProgress
                     ? null
                     : () {
                         showDialog(
@@ -130,7 +134,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           if (values != null) {
                             var urls = (values[0] as String).split('\n');
                             setState(() {
-                              gettingAppInfo = true;
+                              importInProgress = true;
                             });
                             addApps(urls).then((errors) {
                               if (errors.isEmpty) {
@@ -154,7 +158,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               );
                             }).whenComplete(() {
                               setState(() {
-                                gettingAppInfo = false;
+                                importInProgress = false;
                               });
                             });
                           }
@@ -167,7 +171,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                         children: [
                           const SizedBox(height: 8),
                           TextButton(
-                              onPressed: gettingAppInfo
+                              onPressed: importInProgress
                                   ? null
                                   : () {
                                       showDialog(
@@ -184,7 +188,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         if (values != null) {
                                           source.getUrls(values).then((urls) {
                                             setState(() {
-                                              gettingAppInfo = true;
+                                              importInProgress = true;
                                             });
                                             addApps(urls).then((errors) {
                                               if (errors.isEmpty) {
@@ -207,7 +211,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               }
                                             }).whenComplete(() {
                                               setState(() {
-                                                gettingAppInfo = false;
+                                                importInProgress = false;
                                               });
                                             });
                                           }).catchError((e) {
