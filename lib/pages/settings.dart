@@ -192,7 +192,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                 }),
                               ),
                               onPressed: () {
-                                HapticFeedback.lightImpact();
                                 launchUrlString(settingsProvider.sourceUrl,
                                     mode: LaunchMode.externalApplication);
                               },

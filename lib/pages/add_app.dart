@@ -60,7 +60,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               onPressed: gettingAppInfo
                                   ? null
                                   : () {
-                                      HapticFeedback.mediumImpact();
+                                      HapticFeedback.selectionClick();
                                       if (_formKey.currentState!.validate()) {
                                         setState(() {
                                           gettingAppInfo = true;

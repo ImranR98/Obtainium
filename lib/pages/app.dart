@@ -111,6 +111,7 @@ class _AppPageState extends State<AppPage> {
                                               child: const Text('No')),
                                           TextButton(
                                               onPressed: () {
+                                                HapticFeedback.selectionClick();
                                                 var updatedApp = app?.app;
                                                 if (updatedApp != null) {
                                                   updatedApp.installedVersion =
@@ -157,7 +158,6 @@ class _AppPageState extends State<AppPage> {
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
-                                  HapticFeedback.lightImpact();
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext ctx) {
@@ -168,7 +168,8 @@ class _AppPageState extends State<AppPage> {
                                           actions: [
                                             TextButton(
                                                 onPressed: () {
-                                                  HapticFeedback.heavyImpact();
+                                                  HapticFeedback
+                                                      .selectionClick();
                                                   appsProvider
                                                       .removeApp(app!.app.id)
                                                       .then((_) {
@@ -181,7 +182,6 @@ class _AppPageState extends State<AppPage> {
                                                 child: const Text('Remove')),
                                             TextButton(
                                                 onPressed: () {
-                                                  HapticFeedback.lightImpact();
                                                   Navigator.of(context).pop();
                                                 },
                                                 child: const Text('Cancel'))

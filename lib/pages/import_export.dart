@@ -57,7 +57,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                       onPressed: appsProvider.apps.isEmpty || importInProgress
                           ? null
                           : () {
-                              HapticFeedback.lightImpact();
+                              HapticFeedback.selectionClick();
                               appsProvider.exportApps().then((String path) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Exported to $path')),
@@ -72,7 +72,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                       onPressed: importInProgress
                           ? null
                           : () {
-                              HapticFeedback.lightImpact();
+                              HapticFeedback.selectionClick();
                               FilePicker.platform.pickFiles().then((result) {
                                 setState(() {
                                   importInProgress = true;
@@ -291,7 +291,6 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
       actions: [
         TextButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
               Navigator.of(context).pop(null);
             },
             child: const Text('Okay'))

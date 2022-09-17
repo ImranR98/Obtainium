@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
                     NavigationDestination(icon: Icon(e.icon), label: e.title))
                 .toList(),
             onDestinationSelected: (int index) {
-              HapticFeedback.lightImpact();
+              HapticFeedback.selectionClick();
               setState(() {
                 if (index == 0) {
                   selectedIndexHistory.clear();
