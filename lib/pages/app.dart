@@ -129,9 +129,42 @@ class _AppPageState extends State<AppPage> {
                                     });
                               },
                               tooltip: 'Mark as Installed',
-                              icon: const Icon(Icons.done)),
-                        if (app?.app.installedVersion == null)
-                          const SizedBox(width: 16.0),
+                              icon: const Icon(Icons.done))
+                        else
+                          IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext ctx) {
+                                      return AlertDialog(
+                                        title: const Text('App Not Installed?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('No')),
+                                          TextButton(
+                                              onPressed: () {
+                                                HapticFeedback.selectionClick();
+                                                var updatedApp = app?.app;
+                                                if (updatedApp != null) {
+                                                  updatedApp.installedVersion =
+                                                      null;
+                                                  appsProvider
+                                                      .saveApp(updatedApp);
+                                                }
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text(
+                                                  'Yes, Mark as Not Installed'))
+                                        ],
+                                      );
+                                    });
+                              },
+                              tooltip: 'Mark as Not Installed',
+                              icon: const Icon(Icons.no_cell_outlined)),
+                        const SizedBox(width: 16.0),
                         Expanded(
                             child: ElevatedButton(
                                 onPressed: (app?.app.installedVersion == null ||
