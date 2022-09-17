@@ -10,6 +10,7 @@ Currently supported App sources:
 - [GitHub](https://github.com/)
 - [GitLab](https://gitlab.com/)
 - [F-Droid](https://f-droid.org/)
+- [IzzyOnDroid](https://android.izzysoft.de/)
 - [Mullvad](https://mullvad.net/en/)
 - [Signal](https://signal.org/)
 
