@@ -26,6 +26,16 @@ class _ImportExportPageState extends State<ImportExportPage> {
     SourceProvider sourceProvider = SourceProvider();
     var settingsProvider = context.read<SettingsProvider>();
     var appsProvider = context.read<AppsProvider>();
+    var outlineButtonStyle = ButtonStyle(
+      shape: MaterialStateProperty.all(
+        StadiumBorder(
+          side: BorderSide(
+            width: 1,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
+    );
 
     Future<List<List<String>>> addApps(List<String> urls) async {
       await settingsProvider.getInstallPermission();
@@ -53,59 +63,80 @@ class _ImportExportPageState extends State<ImportExportPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ElevatedButton(
-                      onPressed: appsProvider.apps.isEmpty || importInProgress
-                          ? null
-                          : () {
-                              HapticFeedback.selectionClick();
-                              appsProvider.exportApps().then((String path) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Exported to $path')),
-                                );
-                              });
-                            },
-                      child: const Text('Obtainium Export')),
-                  const SizedBox(
-                    height: 8,
+                  Row(
+                    children: [
+                      Expanded(
+                          child: TextButton(
+                              style: outlineButtonStyle,
+                              onPressed: appsProvider.apps.isEmpty ||
+                                      importInProgress
+                                  ? null
+                                  : () {
+                                      HapticFeedback.selectionClick();
+                                      appsProvider
+                                          .exportApps()
+                                          .then((String path) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content:
+                                                  Text('Exported to $path')),
+                                        );
+                                      });
+                                    },
+                              child: const Text('Obtainium Export'))),
+                      const SizedBox(
+                        width: 16,
+                      ),
+                      Expanded(
+                          child: TextButton(
+                              style: outlineButtonStyle,
+                              onPressed: importInProgress
+                                  ? null
+                                  : () {
+                                      HapticFeedback.selectionClick();
+                                      FilePicker.platform
+                                          .pickFiles()
+                                          .then((result) {
+                                        setState(() {
+                                          importInProgress = true;
+                                        });
+                                        if (result != null) {
+                                          String data =
+                                              File(result.files.single.path!)
+                                                  .readAsStringSync();
+                                          try {
+                                            jsonDecode(data);
+                                          } catch (e) {
+                                            throw 'Invalid input';
+                                          }
+                                          appsProvider
+                                              .importApps(data)
+                                              .then((value) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      '$value App${value == 1 ? '' : 's'} Imported')),
+                                            );
+                                          });
+                                        } else {
+                                          // User canceled the picker
+                                        }
+                                      }).catchError((e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(content: Text(e.toString())),
+                                        );
+                                      }).whenComplete(() {
+                                        setState(() {
+                                          importInProgress = false;
+                                        });
+                                      });
+                                    },
+                              child: const Text('Obtainium Import')))
+                    ],
                   ),
-                  ElevatedButton(
-                      onPressed: importInProgress
-                          ? null
-                          : () {
-                              HapticFeedback.selectionClick();
-                              FilePicker.platform.pickFiles().then((result) {
-                                setState(() {
-                                  importInProgress = true;
-                                });
-                                if (result != null) {
-                                  String data = File(result.files.single.path!)
-                                      .readAsStringSync();
-                                  try {
-                                    jsonDecode(data);
-                                  } catch (e) {
-                                    throw 'Invalid input';
-                                  }
-                                  appsProvider.importApps(data).then((value) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              '$value App${value == 1 ? '' : 's'} Imported')),
-                                    );
-                                  });
-                                } else {
-                                  // User canceled the picker
-                                }
-                              }).catchError((e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.toString())),
-                                );
-                              }).whenComplete(() {
-                                setState(() {
-                                  importInProgress = false;
-                                });
-                              });
-                            },
-                      child: const Text('Obtainium Import')),
                   if (importInProgress)
                     Column(
                       children: const [
@@ -171,7 +202,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 }
                               });
                             },
-                      child: const Text('Import from URL List')),
+                      child: const Text(
+                        'Import from URL List',
+                      )),
                   ...sourceProvider.massSources
                       .map((source) => Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
