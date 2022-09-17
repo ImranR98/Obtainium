@@ -26,6 +26,7 @@ class _AppPageState extends State<AppPage> {
       appsProvider.getUpdate(app!.app.id);
     }
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(slivers: <Widget>[
         CustomAppBar(title: '${app?.app.name}'),
         SliverFillRemaining(

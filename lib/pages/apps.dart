@@ -36,6 +36,7 @@ class _AppsPageState extends State<AppsPage> {
     }
 
     return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         floatingActionButton: existingUpdateAppIds.isEmpty
             ? null
             : ElevatedButton.icon(
@@ -59,12 +60,14 @@ class _AppsPageState extends State<AppsPage> {
               const CustomAppBar(title: 'Apps'),
               if (appsProvider.loadingApps || appsProvider.apps.isEmpty)
                 SliverFillRemaining(
-                    child: appsProvider.loadingApps
-                        ? const CircularProgressIndicator()
-                        : Text(
-                            'No Apps',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          )),
+                    child: Center(
+                        child: appsProvider.loadingApps
+                            ? const CircularProgressIndicator()
+                            : Text(
+                                'No Apps',
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
+                              ))),
               SliverList(
                   delegate: SliverChildBuilderDelegate(
                       (BuildContext context, int index) {

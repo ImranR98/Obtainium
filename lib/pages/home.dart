@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return WillPopScope(
         child: Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: pages
               .elementAt(
                   selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last)
