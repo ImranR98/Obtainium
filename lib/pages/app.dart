@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -25,61 +26,64 @@ class _AppPageState extends State<AppPage> {
       appsProvider.getUpdate(app!.app.id);
     }
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${app?.app.author}/${app?.app.name}'),
-      ),
-      body: settingsProvider.showAppWebpage
-          ? WebView(
-              initialUrl: app?.app.url,
-              javascriptMode: JavascriptMode.unrestricted,
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  app?.app.name ?? 'App',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                Text(
-                  'By ${app?.app.author ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                GestureDetector(
-                    onTap: () {
-                      if (app?.app.url != null) {
-                        launchUrlString(app?.app.url ?? '',
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: Text(
-                      app?.app.url ?? '',
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: CustomScrollView(slivers: <Widget>[
+        CustomAppBar(title: '${app?.app.name}'),
+        SliverFillRemaining(
+          child: settingsProvider.showAppWebpage
+              ? WebView(
+                  initialUrl: app?.app.url,
+                  javascriptMode: JavascriptMode.unrestricted,
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      app?.app.name ?? 'App',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          decoration: TextDecoration.underline,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 12),
-                    )),
-                const SizedBox(
-                  height: 32,
+                      style: Theme.of(context).textTheme.displayLarge,
+                    ),
+                    Text(
+                      'By ${app?.app.author ?? 'Unknown'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(
+                      height: 32,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          if (app?.app.url != null) {
+                            launchUrlString(app?.app.url ?? '',
+                                mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        child: Text(
+                          app?.app.url ?? '',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline,
+                              fontStyle: FontStyle.italic,
+                              fontSize: 12),
+                        )),
+                    const SizedBox(
+                      height: 32,
+                    ),
+                    Text(
+                      'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    Text(
+                      'Installed Version: ${app?.app.installedVersion ?? 'None'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
                 ),
-                Text(
-                  'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                Text(
-                  'Installed Version: ${app?.app.installedVersion ?? 'None'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
-            ),
+        ),
+      ]),
       bottomSheet: Padding(
           padding: EdgeInsets.fromLTRB(
               0, 0, 0, MediaQuery.of(context).padding.bottom),
@@ -91,15 +95,15 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.installedVersion == null)
+                        if (app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: () {
                                 showDialog(
                                     context: context,
                                     builder: (BuildContext ctx) {
                                       return AlertDialog(
-                                        title: const Text(
-                                            'App Already Installed?'),
+                                        title: Text(
+                                            'App Already ${app?.app.installedVersion == null ? 'Installed' : 'Updated'}?'),
                                         actions: [
                                           TextButton(
                                               onPressed: () {
@@ -108,6 +112,7 @@ class _AppPageState extends State<AppPage> {
                                               child: const Text('No')),
                                           TextButton(
                                               onPressed: () {
+                                                HapticFeedback.selectionClick();
                                                 var updatedApp = app?.app;
                                                 if (updatedApp != null) {
                                                   updatedApp.installedVersion =
@@ -124,9 +129,42 @@ class _AppPageState extends State<AppPage> {
                                     });
                               },
                               tooltip: 'Mark as Installed',
-                              icon: const Icon(Icons.done)),
-                        if (app?.app.installedVersion == null)
-                          const SizedBox(width: 16.0),
+                              icon: const Icon(Icons.done))
+                        else
+                          IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext ctx) {
+                                      return AlertDialog(
+                                        title: const Text('App Not Installed?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('No')),
+                                          TextButton(
+                                              onPressed: () {
+                                                HapticFeedback.selectionClick();
+                                                var updatedApp = app?.app;
+                                                if (updatedApp != null) {
+                                                  updatedApp.installedVersion =
+                                                      null;
+                                                  appsProvider
+                                                      .saveApp(updatedApp);
+                                                }
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text(
+                                                  'Yes, Mark as Not Installed'))
+                                        ],
+                                      );
+                                    });
+                              },
+                              tooltip: 'Mark as Not Installed',
+                              icon: const Icon(Icons.no_cell_outlined)),
+                        const SizedBox(width: 16.0),
                         Expanded(
                             child: ElevatedButton(
                                 onPressed: (app?.app.installedVersion == null ||
@@ -154,7 +192,6 @@ class _AppPageState extends State<AppPage> {
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
-                                  HapticFeedback.lightImpact();
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext ctx) {
@@ -165,7 +202,8 @@ class _AppPageState extends State<AppPage> {
                                           actions: [
                                             TextButton(
                                                 onPressed: () {
-                                                  HapticFeedback.heavyImpact();
+                                                  HapticFeedback
+                                                      .selectionClick();
                                                   appsProvider
                                                       .removeApp(app!.app.id)
                                                       .then((_) {
@@ -178,7 +216,6 @@ class _AppPageState extends State<AppPage> {
                                                 child: const Text('Remove')),
                                             TextButton(
                                                 onPressed: () {
-                                                  HapticFeedback.lightImpact();
                                                   Navigator.of(context).pop();
                                                 },
                                                 child: const Text('Cancel'))

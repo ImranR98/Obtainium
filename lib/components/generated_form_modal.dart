@@ -59,14 +59,13 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
       actions: [
         TextButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
               Navigator.of(context).pop(null);
             },
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
               if (_formKey.currentState?.validate() == true) {
-                HapticFeedback.heavyImpact();
+                HapticFeedback.selectionClick();
                 Navigator.of(context).pop(formInputs
                     .map((e) => (e[0] as TextEditingController).value.text)
                     .toList());

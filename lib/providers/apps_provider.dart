@@ -339,13 +339,12 @@ class _APKPickerState extends State<APKPicker> {
       actions: [
         TextButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
               Navigator.of(context).pop(null);
             },
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
-              HapticFeedback.heavyImpact();
+              HapticFeedback.selectionClick();
               Navigator.of(context).pop(apkUrl);
             },
             child: const Text('Continue'))
@@ -376,13 +375,12 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
       actions: [
         TextButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
               Navigator.of(context).pop(null);
             },
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
-              HapticFeedback.heavyImpact();
+              HapticFeedback.selectionClick();
               Navigator.of(context).pop(true);
             },
             child: const Text('Continue'))

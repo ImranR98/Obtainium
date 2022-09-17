@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -35,6 +36,7 @@ class _AppsPageState extends State<AppsPage> {
     }
 
     return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         floatingActionButton: existingUpdateAppIds.isEmpty
             ? null
             : ElevatedButton.icon(
@@ -47,49 +49,51 @@ class _AppsPageState extends State<AppsPage> {
                               existingUpdateAppIds, context);
                         });
                       },
-                icon: const Icon(Icons.update),
-                label: const Text('Update All')),
-        body: Center(
-          child: appsProvider.loadingApps
-              ? const CircularProgressIndicator()
-              : appsProvider.apps.isEmpty
-                  ? Text(
-                      'No Apps',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () {
-                        HapticFeedback.lightImpact();
-                        return appsProvider.checkUpdates();
-                      },
-                      child: ListView(
-                        children: sortedApps
-                            .map(
-                              (e) => ListTile(
-                                title: Text('${e.app.author}/${e.app.name}'),
-                                subtitle: Text(
-                                    e.app.installedVersion ?? 'Not Installed'),
-                                trailing: e.downloadProgress != null
-                                    ? Text(
-                                        'Downloading - ${e.downloadProgress?.toInt()}%')
-                                    : (e.app.installedVersion != null &&
-                                            e.app.installedVersion !=
-                                                e.app.latestVersion
-                                        ? const Text('Update Available')
-                                        : null),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            AppPage(appId: e.app.id)),
-                                  );
-                                },
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-        ));
+                icon: const Icon(Icons.install_mobile_outlined),
+                label: const Text('Install All')),
+        body: RefreshIndicator(
+            onRefresh: () {
+              HapticFeedback.lightImpact();
+              return appsProvider.checkUpdates();
+            },
+            child: CustomScrollView(slivers: <Widget>[
+              const CustomAppBar(title: 'Apps'),
+              if (appsProvider.loadingApps || appsProvider.apps.isEmpty)
+                SliverFillRemaining(
+                    child: Center(
+                        child: appsProvider.loadingApps
+                            ? const CircularProgressIndicator()
+                            : Text(
+                                'No Apps',
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
+                              ))),
+              SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                return ListTile(
+                  title: Text(
+                      '${sortedApps[index].app.author}/${sortedApps[index].app.name}'),
+                  subtitle: Text(sortedApps[index].app.installedVersion ??
+                      'Not Installed'),
+                  trailing: sortedApps[index].downloadProgress != null
+                      ? Text(
+                          'Downloading - ${sortedApps[index].downloadProgress?.toInt()}%')
+                      : (sortedApps[index].app.installedVersion != null &&
+                              sortedApps[index].app.installedVersion !=
+                                  sortedApps[index].app.latestVersion
+                          ? const Text('Update Available')
+                          : null),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              AppPage(appId: sortedApps[index].app.id)),
+                    );
+                  },
+                );
+              }, childCount: sortedApps.length))
+            ])));
   }
 }

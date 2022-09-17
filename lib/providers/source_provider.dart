@@ -399,9 +399,9 @@ class SourceProvider {
     GitHub(),
     GitLab(),
     FDroid(),
+    IzzyOnDroid(),
     Mullvad(),
-    Signal(),
-    IzzyOnDroid()
+    Signal()
   ];
 
   List<MassAppSource> massSources = [GitHubStars()];
