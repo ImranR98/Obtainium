@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -47,34 +48,17 @@ class _AppsPageState extends State<AppsPage> {
                               existingUpdateAppIds, context);
                         });
                       },
-                icon: const Icon(Icons.update),
-                label: const Text('Update All')),
+                icon: const Icon(Icons.install_mobile_outlined),
+                label: const Text('Install All')),
         body: RefreshIndicator(
             onRefresh: () {
               HapticFeedback.lightImpact();
               return appsProvider.checkUpdates();
             },
             child: CustomScrollView(slivers: <Widget>[
-              SliverAppBar(
-                pinned: true,
-                snap: false,
-                floating: false,
-                expandedHeight: 100,
-                backgroundColor: MaterialStateColor.resolveWith(
-                  (states) => states.contains(MaterialState.scrolledUnder)
-                      ? Theme.of(context).colorScheme.surface
-                      : Theme.of(context).canvasColor,
-                ),
-                flexibleSpace: const FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(bottom: 16.0, left: 20.0),
-                  title: Text(
-                    'Apps',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                ),
-              ),
+              const CustomAppBar(title: 'Apps'),
               if (appsProvider.loadingApps || appsProvider.apps.isEmpty)
-                SliverToBoxAdapter(
+                SliverFillRemaining(
                     child: appsProvider.loadingApps
                         ? const CircularProgressIndicator()
                         : Text(

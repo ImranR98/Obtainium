@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -25,61 +26,63 @@ class _AppPageState extends State<AppPage> {
       appsProvider.getUpdate(app!.app.id);
     }
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${app?.app.author}/${app?.app.name}'),
-      ),
-      body: settingsProvider.showAppWebpage
-          ? WebView(
-              initialUrl: app?.app.url,
-              javascriptMode: JavascriptMode.unrestricted,
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  app?.app.name ?? 'App',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                Text(
-                  'By ${app?.app.author ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                GestureDetector(
-                    onTap: () {
-                      if (app?.app.url != null) {
-                        launchUrlString(app?.app.url ?? '',
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: Text(
-                      app?.app.url ?? '',
+      body: CustomScrollView(slivers: <Widget>[
+        CustomAppBar(title: '${app?.app.name}'),
+        SliverFillRemaining(
+          child: settingsProvider.showAppWebpage
+              ? WebView(
+                  initialUrl: app?.app.url,
+                  javascriptMode: JavascriptMode.unrestricted,
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      app?.app.name ?? 'App',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          decoration: TextDecoration.underline,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 12),
-                    )),
-                const SizedBox(
-                  height: 32,
+                      style: Theme.of(context).textTheme.displayLarge,
+                    ),
+                    Text(
+                      'By ${app?.app.author ?? 'Unknown'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(
+                      height: 32,
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          if (app?.app.url != null) {
+                            launchUrlString(app?.app.url ?? '',
+                                mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        child: Text(
+                          app?.app.url ?? '',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline,
+                              fontStyle: FontStyle.italic,
+                              fontSize: 12),
+                        )),
+                    const SizedBox(
+                      height: 32,
+                    ),
+                    Text(
+                      'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    Text(
+                      'Installed Version: ${app?.app.installedVersion ?? 'None'}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
                 ),
-                Text(
-                  'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                Text(
-                  'Installed Version: ${app?.app.installedVersion ?? 'None'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
-            ),
+        ),
+      ]),
       bottomSheet: Padding(
           padding: EdgeInsets.fromLTRB(
               0, 0, 0, MediaQuery.of(context).padding.bottom),

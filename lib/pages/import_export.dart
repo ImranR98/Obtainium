@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -43,192 +44,204 @@ class _ImportExportPageState extends State<ImportExportPage> {
       return errors;
     }
 
-    return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ElevatedButton(
-                onPressed: appsProvider.apps.isEmpty || importInProgress
-                    ? null
-                    : () {
-                        HapticFeedback.lightImpact();
-                        appsProvider.exportApps().then((String path) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Exported to $path')),
-                          );
-                        });
-                      },
-                child: const Text('Obtainium Export')),
-            const SizedBox(
-              height: 8,
-            ),
-            ElevatedButton(
-                onPressed: importInProgress
-                    ? null
-                    : () {
-                        HapticFeedback.lightImpact();
-                        FilePicker.platform.pickFiles().then((result) {
-                          setState(() {
-                            importInProgress = true;
-                          });
-                          if (result != null) {
-                            String data = File(result.files.single.path!)
-                                .readAsStringSync();
-                            try {
-                              jsonDecode(data);
-                            } catch (e) {
-                              throw 'Invalid input';
-                            }
-                            appsProvider.importApps(data).then((value) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        '$value App${value == 1 ? '' : 's'} Imported')),
-                              );
-                            });
-                          } else {
-                            // User canceled the picker
-                          }
-                        }).catchError((e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.toString())),
-                          );
-                        }).whenComplete(() {
-                          setState(() {
-                            importInProgress = false;
-                          });
-                        });
-                      },
-                child: const Text('Obtainium Import')),
-            if (importInProgress)
-              Column(
-                children: const [
-                  SizedBox(
-                    height: 14,
-                  ),
-                  LinearProgressIndicator(),
-                  SizedBox(
-                    height: 14,
-                  ),
-                ],
-              )
-            else
-              const Divider(
-                height: 32,
-              ),
-            TextButton(
-                onPressed: importInProgress
-                    ? null
-                    : () {
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext ctx) {
-                              return GeneratedFormModal(
-                                title: 'Import from URL List',
-                                items: [
-                                  GeneratedFormItem('App URL List', true, 7)
-                                ],
-                              );
-                            }).then((values) {
-                          if (values != null) {
-                            var urls = (values[0] as String).split('\n');
-                            setState(() {
-                              importInProgress = true;
-                            });
-                            addApps(urls).then((errors) {
-                              if (errors.isEmpty) {
+    return CustomScrollView(slivers: <Widget>[
+      const CustomAppBar(title: 'Import/Export'),
+      SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ElevatedButton(
+                      onPressed: appsProvider.apps.isEmpty || importInProgress
+                          ? null
+                          : () {
+                              HapticFeedback.lightImpact();
+                              appsProvider.exportApps().then((String path) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content:
-                                          Text('Imported ${urls.length} Apps')),
+                                  SnackBar(content: Text('Exported to $path')),
                                 );
-                              } else {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext ctx) {
-                                      return ImportErrorDialog(
-                                          urlsLength: urls.length,
-                                          errors: errors);
-                                    });
-                              }
-                            }).catchError((e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            }).whenComplete(() {
-                              setState(() {
-                                importInProgress = false;
                               });
-                            });
-                          }
-                        });
-                      },
-                child: const Text('Import from URL List')),
-            ...sourceProvider.massSources
-                .map((source) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 8),
-                          TextButton(
-                              onPressed: importInProgress
-                                  ? null
-                                  : () {
+                            },
+                      child: const Text('Obtainium Export')),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  ElevatedButton(
+                      onPressed: importInProgress
+                          ? null
+                          : () {
+                              HapticFeedback.lightImpact();
+                              FilePicker.platform.pickFiles().then((result) {
+                                setState(() {
+                                  importInProgress = true;
+                                });
+                                if (result != null) {
+                                  String data = File(result.files.single.path!)
+                                      .readAsStringSync();
+                                  try {
+                                    jsonDecode(data);
+                                  } catch (e) {
+                                    throw 'Invalid input';
+                                  }
+                                  appsProvider.importApps(data).then((value) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              '$value App${value == 1 ? '' : 's'} Imported')),
+                                    );
+                                  });
+                                } else {
+                                  // User canceled the picker
+                                }
+                              }).catchError((e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }).whenComplete(() {
+                                setState(() {
+                                  importInProgress = false;
+                                });
+                              });
+                            },
+                      child: const Text('Obtainium Import')),
+                  if (importInProgress)
+                    Column(
+                      children: const [
+                        SizedBox(
+                          height: 14,
+                        ),
+                        LinearProgressIndicator(),
+                        SizedBox(
+                          height: 14,
+                        ),
+                      ],
+                    )
+                  else
+                    const Divider(
+                      height: 32,
+                    ),
+                  TextButton(
+                      onPressed: importInProgress
+                          ? null
+                          : () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return GeneratedFormModal(
+                                      title: 'Import from URL List',
+                                      items: [
+                                        GeneratedFormItem(
+                                            'App URL List', true, 7)
+                                      ],
+                                    );
+                                  }).then((values) {
+                                if (values != null) {
+                                  var urls = (values[0] as String).split('\n');
+                                  setState(() {
+                                    importInProgress = true;
+                                  });
+                                  addApps(urls).then((errors) {
+                                    if (errors.isEmpty) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                'Imported ${urls.length} Apps')),
+                                      );
+                                    } else {
                                       showDialog(
                                           context: context,
                                           builder: (BuildContext ctx) {
-                                            return GeneratedFormModal(
-                                                title: 'Import ${source.name}',
-                                                items: source.requiredArgs
-                                                    .map((e) =>
-                                                        GeneratedFormItem(
-                                                            e, true, 1))
-                                                    .toList());
-                                          }).then((values) {
-                                        if (values != null) {
-                                          source.getUrls(values).then((urls) {
-                                            setState(() {
-                                              importInProgress = true;
-                                            });
-                                            addApps(urls).then((errors) {
-                                              if (errors.isEmpty) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                      content: Text(
-                                                          'Imported ${urls.length} Apps')),
-                                                );
-                                              } else {
-                                                showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext ctx) {
-                                                      return ImportErrorDialog(
-                                                          urlsLength:
-                                                              urls.length,
-                                                          errors: errors);
-                                                    });
-                                              }
-                                            }).whenComplete(() {
-                                              setState(() {
-                                                importInProgress = false;
-                                              });
-                                            });
-                                          }).catchError((e) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(e.toString())),
-                                            );
+                                            return ImportErrorDialog(
+                                                urlsLength: urls.length,
+                                                errors: errors);
                                           });
-                                        }
-                                      });
-                                    },
-                              child: Text('Import ${source.name}'))
-                        ]))
-                .toList()
-          ],
-        ));
+                                    }
+                                  }).catchError((e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }).whenComplete(() {
+                                    setState(() {
+                                      importInProgress = false;
+                                    });
+                                  });
+                                }
+                              });
+                            },
+                      child: const Text('Import from URL List')),
+                  ...sourceProvider.massSources
+                      .map((source) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: 8),
+                                TextButton(
+                                    onPressed: importInProgress
+                                        ? null
+                                        : () {
+                                            showDialog(
+                                                context: context,
+                                                builder: (BuildContext ctx) {
+                                                  return GeneratedFormModal(
+                                                      title:
+                                                          'Import ${source.name}',
+                                                      items: source.requiredArgs
+                                                          .map((e) =>
+                                                              GeneratedFormItem(
+                                                                  e, true, 1))
+                                                          .toList());
+                                                }).then((values) {
+                                              if (values != null) {
+                                                source
+                                                    .getUrls(values)
+                                                    .then((urls) {
+                                                  setState(() {
+                                                    importInProgress = true;
+                                                  });
+                                                  addApps(urls).then((errors) {
+                                                    if (errors.isEmpty) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                            content: Text(
+                                                                'Imported ${urls.length} Apps')),
+                                                      );
+                                                    } else {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              ctx) {
+                                                            return ImportErrorDialog(
+                                                                urlsLength:
+                                                                    urls.length,
+                                                                errors: errors);
+                                                          });
+                                                    }
+                                                  }).whenComplete(() {
+                                                    setState(() {
+                                                      importInProgress = false;
+                                                    });
+                                                  });
+                                                }).catchError((e) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content:
+                                                            Text(e.toString())),
+                                                  );
+                                                });
+                                              }
+                                            });
+                                          },
+                                    child: Text('Import ${source.name}'))
+                              ]))
+                      .toList()
+                ],
+              )))
+    ]);
   }
 }
 
