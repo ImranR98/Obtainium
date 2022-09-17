@@ -91,6 +91,42 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
+                        if (app?.app.installedVersion == null)
+                          IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext ctx) {
+                                      return AlertDialog(
+                                        title: const Text(
+                                            'App Already Installed?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('No')),
+                                          TextButton(
+                                              onPressed: () {
+                                                var updatedApp = app?.app;
+                                                if (updatedApp != null) {
+                                                  updatedApp.installedVersion =
+                                                      updatedApp.latestVersion;
+                                                  appsProvider
+                                                      .saveApp(updatedApp);
+                                                }
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text(
+                                                  'Yes, Mark as Installed'))
+                                        ],
+                                      );
+                                    });
+                              },
+                              tooltip: 'Mark as Installed',
+                              icon: const Icon(Icons.done)),
+                        if (app?.app.installedVersion == null)
+                          const SizedBox(width: 16.0),
                         Expanded(
                             child: ElevatedButton(
                                 onPressed: (app?.app.installedVersion == null ||
