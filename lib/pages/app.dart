@@ -95,15 +95,15 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.installedVersion == null)
+                        if (app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: () {
                                 showDialog(
                                     context: context,
                                     builder: (BuildContext ctx) {
                                       return AlertDialog(
-                                        title: const Text(
-                                            'App Already Installed?'),
+                                        title: Text(
+                                            'App Already ${app?.app.installedVersion == null ? 'Installed' : 'Updated'}?'),
                                         actions: [
                                           TextButton(
                                               onPressed: () {
