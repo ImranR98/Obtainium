@@ -4,8 +4,13 @@
 import 'dart:convert';
 
 import 'package:html/dom.dart';
-import 'package:http/http.dart';
-import 'package:html/parser.dart';
+import 'package:obtainium/app_sources/fdroid.dart';
+import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/app_sources/gitlab.dart';
+import 'package:obtainium/app_sources/izzyondroid.dart';
+import 'package:obtainium/app_sources/mullvad.dart';
+import 'package:obtainium/app_sources/signal.dart';
+import 'package:obtainium/mass_app_sources/githubstars.dart';
 
 class AppNames {
   late String author;
@@ -95,306 +100,14 @@ abstract class AppSource {
   AppNames getAppNames(String standardUrl);
 }
 
-class GitHub implements AppSource {
-  @override
-  late String host = 'github.com';
-
-  @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw notValidURL;
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse(
-        'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
-    if (res.statusCode == 200) {
-      var releases = jsonDecode(res.body) as List<dynamic>;
-      // Right now, the latest non-prerelease version is picked
-      // If none exists, the latest prerelease version is picked
-      // In the future, the user could be given a choice
-      var nonPrereleaseReleases =
-          releases.where((element) => element['prerelease'] != true).toList();
-      var latestRelease = nonPrereleaseReleases.isNotEmpty
-          ? nonPrereleaseReleases[0]
-          : releases.isNotEmpty
-              ? releases[0]
-              : null;
-      if (latestRelease == null) {
-        throw couldNotFindReleases;
-      }
-      List<dynamic>? assets = latestRelease['assets'];
-      List<String>? apkUrlList = assets
-          ?.map((e) {
-            return e['browser_download_url'] != null
-                ? e['browser_download_url'] as String
-                : '';
-          })
-          .where((element) => element.toLowerCase().endsWith('.apk'))
-          .toList();
-      if (apkUrlList == null || apkUrlList.isEmpty) {
-        throw noAPKFound;
-      }
-      String? version = latestRelease['tag_name'];
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(version, apkUrlList);
-    } else {
-      if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
-      }
-
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
-    return AppNames(names[0], names[1]);
-  }
-}
-
-class GitLab implements AppSource {
-  @override
-  late String host = 'gitlab.com';
-
-  @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw notValidURL;
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
-    if (res.statusCode == 200) {
-      var standardUri = Uri.parse(standardUrl);
-      var parsedHtml = parse(res.body);
-      var entry = parsedHtml.querySelector('entry');
-      var entryContent =
-          parse(parseFragment(entry?.querySelector('content')!.innerHtml).text);
-      var apkUrlList = [
-        ...getLinksFromParsedHTML(
-            entryContent,
-            RegExp(
-                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
-                caseSensitive: false),
-            standardUri.origin),
-        // GitLab releases may contain links to externally hosted APKs
-        ...getLinksFromParsedHTML(entryContent,
-                RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
-            .where((element) => Uri.parse(element).host != '')
-            .toList()
-      ];
-      if (apkUrlList.isEmpty) {
-        throw noAPKFound;
-      }
-
-      var entryId = entry?.querySelector('id')?.innerHtml;
-      var version =
-          entryId == null ? null : Uri.parse(entryId).pathSegments.last;
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(version, apkUrlList);
-    } else {
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    // Same as GitHub
-    return GitHub().getAppNames(standardUrl);
-  }
-}
-
-class Signal implements AppSource {
-  @override
-  late String host = 'signal.org';
-
-  @override
-  String standardizeURL(String url) {
-    return 'https://$host';
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res =
-        await get(Uri.parse('https://updates.$host/android/latest.json'));
-    if (res.statusCode == 200) {
-      var json = jsonDecode(res.body);
-      String? apkUrl = json['url'];
-      if (apkUrl == null) {
-        throw noAPKFound;
-      }
-      String? version = json['versionName'];
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(version, [apkUrl]);
-    } else {
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) => AppNames('Signal', 'Signal');
-}
-
-class FDroid implements AppSource {
-  @override
-  late String host = 'f-droid.org';
-
-  @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/packages/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw notValidURL;
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse(standardUrl));
-    if (res.statusCode == 200) {
-      var latestReleaseDiv =
-          parse(res.body).querySelector('#latest.package-version');
-      var apkUrl = latestReleaseDiv
-          ?.querySelector('.package-version-download a')
-          ?.attributes['href'];
-      if (apkUrl == null) {
-        throw noAPKFound;
-      }
-      var version = latestReleaseDiv
-          ?.querySelector('.package-version-header b')
-          ?.innerHtml
-          .split(' ')
-          .last;
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(version, [apkUrl]);
-    } else {
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames('F-Droid', Uri.parse(standardUrl).pathSegments.last);
-  }
-}
-
-class Mullvad implements AppSource {
-  @override
-  late String host = 'mullvad.net';
-
-  @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw notValidURL;
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse('$standardUrl/en/download/android'));
-    if (res.statusCode == 200) {
-      var version = parse(res.body)
-          .querySelector('p.subtitle.is-6')
-          ?.querySelector('a')
-          ?.attributes['href']
-          ?.split('/')
-          .last;
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(
-          version, ['https://mullvad.net/download/app/apk/latest']);
-    } else {
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames('Mullvad-VPN', 'Mullvad-VPN');
-  }
-}
-
-class IzzyOnDroid implements AppSource {
-  @override
-  late String host = 'android.izzysoft.de';
-
-  @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw notValidURL;
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
-    Response res = await get(Uri.parse(standardUrl));
-    if (res.statusCode == 200) {
-      var parsedHtml = parse(res.body);
-      var multipleVersionApkUrls = parsedHtml
-          .querySelectorAll('a')
-          .where((element) =>
-              element.attributes['href']?.toLowerCase().endsWith('.apk') ??
-              false)
-          .map((e) => 'https://$host${e.attributes['href'] ?? ''}')
-          .toList();
-      if (multipleVersionApkUrls.isEmpty) {
-        throw noAPKFound;
-      }
-      var version = parsedHtml
-          .querySelector('#keydata')
-          ?.querySelectorAll('b')
-          .where(
-              (element) => element.innerHtml.toLowerCase().contains('version'))
-          .toList()[0]
-          .parentNode
-          ?.parentNode
-          ?.children[1]
-          .innerHtml;
-      if (version == null) {
-        throw couldNotFindLatestVersion;
-      }
-      return APKDetails(version, [multipleVersionApkUrls[0]]);
-    } else {
-      throw couldNotFindReleases;
-    }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames('IzzyOnDroid', Uri.parse(standardUrl).pathSegments.last);
-  }
+abstract class MassAppSource {
+  late String name;
+  late List<String> requiredArgs;
+  Future<List<String>> getUrls(List<String> args);
 }
 
 class SourceProvider {
+  // Add more source classes here so they are available via the service
   List<AppSource> sources = [
     GitHub(),
     GitLab(),
@@ -404,9 +117,9 @@ class SourceProvider {
     Signal()
   ];
 
+  // Add more mass source classes here so they are available via the service
   List<MassAppSource> massSources = [GitHubStars()];
 
-  // Add more source classes here so they are available via the service
   AppSource getSource(String url) {
     AppSource? source;
     for (var s in sources) {
@@ -460,38 +173,4 @@ class SourceProvider {
   }
 
   List<String> getSourceHosts() => sources.map((e) => e.host).toList();
-}
-
-abstract class MassAppSource {
-  late String name;
-  late List<String> requiredArgs;
-  Future<List<String>> getUrls(List<String> args);
-}
-
-class GitHubStars implements MassAppSource {
-  @override
-  late String name = 'GitHub Starred Repos';
-
-  @override
-  late List<String> requiredArgs = ['Username'];
-
-  @override
-  Future<List<String>> getUrls(List<String> args) async {
-    if (args.length != requiredArgs.length) {
-      throw 'Wrong number of arguments provided';
-    }
-    Response res =
-        await get(Uri.parse('https://api.github.com/users/${args[0]}/starred'));
-    if (res.statusCode == 200) {
-      return (jsonDecode(res.body) as List<dynamic>)
-          .map((e) => e['html_url'] as String)
-          .toList();
-    } else {
-      if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
-      }
-
-      throw 'Unable to find user\'s starred repos';
-    }
-  }
 }
