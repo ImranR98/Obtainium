@@ -9,12 +9,14 @@ class GeneratedFormItem {
   late FormItemType type;
   late bool required;
   late int max;
+  late List<String? Function(String? value)> additionalValidators;
 
   GeneratedFormItem(
       {this.label = "Input",
       this.type = FormItemType.string,
       this.required = true,
-      this.max = 1});
+      this.max = 1,
+      this.additionalValidators = const []});
 }
 
 class GeneratedForm extends StatefulWidget {
@@ -91,8 +93,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
             minLines: e.value.max <= 1 ? null : e.value.max,
             maxLines: e.value.max <= 1 ? 1 : e.value.max,
             validator: (value) {
-              if (value == null || value.isEmpty) {
+              if (value == null || value.trim().isEmpty) {
                 return '${e.value.label} (required)';
+              }
+              for (var validator in e.value.additionalValidators) {
+                String? result = validator(value);
+                if (result != null) {
+                  return result;
+                }
               }
               return null;
             },

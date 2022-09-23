@@ -170,7 +170,29 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           items: [
                                             [
                                               GeneratedFormItem(
-                                                  label: 'App URL List', max: 7)
+                                                  label: 'App URL List',
+                                                  max: 7,
+                                                  additionalValidators: [
+                                                    (String? value) {
+                                                      if (value != null &&
+                                                          value.isNotEmpty) {
+                                                        var lines = value
+                                                            .trim()
+                                                            .split('\n');
+                                                        for (int i = 0;
+                                                            i < lines.length;
+                                                            i++) {
+                                                          try {
+                                                            sourceProvider
+                                                                .getSource(
+                                                                    lines[i]);
+                                                          } catch (e) {
+                                                            return 'Line ${i + 1}: $e';
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  ])
                                             ]
                                           ],
                                           defaultValues: const [],
