@@ -55,11 +55,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
     // If any value changes, call this to update the parent with value and validity
     void someValueChanged() {
       List<String?> returnValues = [];
-      for (var row in values) {
-        for (var element in row) {
-          returnValues.add(element);
-        }
-      }
       var valid = true;
       for (int r = 0; r < values.length; r++) {
         for (int i = 0; i < values[r].length; i++) {
