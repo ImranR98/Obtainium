@@ -9,7 +9,7 @@ class TestPage extends StatefulWidget {
 }
 
 class _TestPageState extends State<TestPage> {
-  List<List<String?>>? sourceSpecificData;
+  List<String?>? sourceSpecificData;
   bool valid = false;
 
   List<List<GeneratedFormItem>> sourceSpecificInputs = [
@@ -21,16 +21,13 @@ class _TestPageState extends State<TestPage> {
     [GeneratedFormItem(label: 'Test Item 4', type: FormItemType.bool)]
   ];
 
+  List<String> defaultInputValues = ["ABC"];
+
   void onSourceSpecificDataChanges(
-      List<List<String?>> valuesFromForm, bool formValid) {
+      List<String?> valuesFromForm, bool formValid) {
     setState(() {
       sourceSpecificData = valuesFromForm;
       valid = formValid;
-      sourceSpecificData?.forEach((row) {
-        for (var element in row) {
-          print(element);
-        }
-      });
     });
   }
 
@@ -40,11 +37,17 @@ class _TestPageState extends State<TestPage> {
         appBar: AppBar(title: const Text('Test Page')),
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GeneratedForm(
-            items: sourceSpecificInputs,
-            onValueChanges: onSourceSpecificDataChanges,
-          ),
-        ));
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(children: [
+              GeneratedForm(
+                items: sourceSpecificInputs,
+                onValueChanges: onSourceSpecificDataChanges,
+                defaultValues: defaultInputValues,
+              ),
+              ...(sourceSpecificData != null
+                  ? (sourceSpecificData as List<String?>)
+                      .map((e) => Text(e ?? ""))
+                  : [Container()])
+            ])));
   }
 }

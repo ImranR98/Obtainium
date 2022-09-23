@@ -70,9 +70,14 @@ class _AddAppPageState extends State<AddAppPage> {
                                             setState(() {
                                               gettingAppInfo = true;
                                             });
-                                            sourceProvider
-                                                .getApp(urlInputController
-                                                    .value.text)
+                                            AppSource source = sourceProvider
+                                                .getSource(urlInputController
+                                                    .value.text);
+                                            sourceProvider.getApp(
+                                                    source,
+                                                    urlInputController
+                                                        .value.text,
+                                                    []) // TODO: From form if any
                                                 .then((app) {
                                               var appsProvider =
                                                   context.read<AppsProvider>();

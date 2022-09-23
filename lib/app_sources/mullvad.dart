@@ -1,5 +1,6 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Mullvad implements AppSource {
@@ -17,7 +18,8 @@ class Mullvad implements AppSource {
   }
 
   @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String>? additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/en/download/android'));
     if (res.statusCode == 200) {
       var version = parse(res.body)
@@ -40,4 +42,10 @@ class Mullvad implements AppSource {
   AppNames getAppNames(String standardUrl) {
     return AppNames('Mullvad-VPN', 'Mullvad-VPN');
   }
+
+  @override
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+
+  @override
+  List<String> additionalDataDefaults = [];
 }

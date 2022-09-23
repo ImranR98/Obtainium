@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub implements AppSource {
@@ -17,7 +18,8 @@ class GitHub implements AppSource {
   }
 
   @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String>? additionalData) async {
     Response res = await get(Uri.parse(
         'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
@@ -67,4 +69,18 @@ class GitHub implements AppSource {
     List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
     return AppNames(names[0], names[1]);
   }
+
+  @override
+  List<List<GeneratedFormItem>> additionalDataFormItems = [
+    [GeneratedFormItem(label: "Include Prereleases", type: FormItemType.bool)],
+    [
+      GeneratedFormItem(
+          label: "Filter APKs by Regular Expression",
+          type: FormItemType.string,
+          required: false)
+    ]
+  ];
+
+  @override
+  List<String> additionalDataDefaults = ["", ""];
 }

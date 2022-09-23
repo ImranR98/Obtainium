@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitLab implements AppSource {
@@ -18,7 +19,8 @@ class GitLab implements AppSource {
   }
 
   @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String>? additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
@@ -60,4 +62,10 @@ class GitLab implements AppSource {
     // Same as GitHub
     return GitHub().getAppNames(standardUrl);
   }
+
+  @override
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+
+  @override
+  List<String> additionalDataDefaults = [];
 }

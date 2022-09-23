@@ -10,6 +10,7 @@ import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
 
 class AppNames {
@@ -35,8 +36,17 @@ class App {
   late String latestVersion;
   List<String> apkUrls = [];
   late int preferredApkIndex;
-  App(this.id, this.url, this.author, this.name, this.installedVersion,
-      this.latestVersion, this.apkUrls, this.preferredApkIndex);
+  late List<String> additionalData;
+  App(
+      this.id,
+      this.url,
+      this.author,
+      this.name,
+      this.installedVersion,
+      this.latestVersion,
+      this.apkUrls,
+      this.preferredApkIndex,
+      this.additionalData);
 
   @override
   String toString() {
@@ -44,19 +54,21 @@ class App {
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
-        json['id'] as String,
-        json['url'] as String,
-        json['author'] as String,
-        json['name'] as String,
-        json['installedVersion'] == null
-            ? null
-            : json['installedVersion'] as String,
-        json['latestVersion'] as String,
-        List<String>.from(jsonDecode(json['apkUrls'])),
-        json['preferredApkIndex'] == null
-            ? 0
-            : json['preferredApkIndex'] as int,
-      );
+      json['id'] as String,
+      json['url'] as String,
+      json['author'] as String,
+      json['name'] as String,
+      json['installedVersion'] == null
+          ? null
+          : json['installedVersion'] as String,
+      json['latestVersion'] as String,
+      json['apkUrls'] == null
+          ? []
+          : List<String>.from(jsonDecode(json['apkUrls'])),
+      json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
+      json['additionalData'] == null
+          ? []
+          : List<String>.from(jsonDecode(json['additionalData'])));
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -66,7 +78,8 @@ class App {
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
         'apkUrls': jsonEncode(apkUrls),
-        'preferredApkIndex': preferredApkIndex
+        'preferredApkIndex': preferredApkIndex,
+        'additionalData': jsonEncode(additionalData)
       };
 }
 
@@ -74,6 +87,17 @@ escapeRegEx(String s) {
   return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
     return "\\${x[0]}";
   });
+}
+
+makeUrlHttps(String url) {
+  if (url.toLowerCase().indexOf('http://') != 0 &&
+      url.toLowerCase().indexOf('https://') != 0) {
+    url = 'https://$url';
+  }
+  if (url.toLowerCase().indexOf('https://www.') == 0) {
+    url = 'https://${url.substring(12)}';
+  }
+  return url;
 }
 
 const String couldNotFindReleases = 'Unable to fetch release info';
@@ -96,8 +120,12 @@ List<String> getLinksFromParsedHTML(
 abstract class AppSource {
   late String host;
   String standardizeURL(String url);
-  Future<APKDetails> getLatestAPKDetails(String standardUrl);
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String>? additionalData);
   AppNames getAppNames(String standardUrl);
+  late List<List<GeneratedFormItem>> additionalDataFormItems;
+  late List<String>
+      additionalDataDefaults; // TODO: Make these integrate into generated form
 }
 
 abstract class MassAppSource {
@@ -121,6 +149,7 @@ class SourceProvider {
   List<MassAppSource> massSources = [GitHubStars()];
 
   AppSource getSource(String url) {
+    url = makeUrlHttps(url);
     AppSource? source;
     for (var s in sources) {
       if (url.toLowerCase().contains('://${s.host}')) {
@@ -134,18 +163,12 @@ class SourceProvider {
     return source;
   }
 
-  Future<App> getApp(String url) async {
-    if (url.toLowerCase().indexOf('http://') != 0 &&
-        url.toLowerCase().indexOf('https://') != 0) {
-      url = 'https://$url';
-    }
-    if (url.toLowerCase().indexOf('https://www.') == 0) {
-      url = 'https://${url.substring(12)}';
-    }
-    AppSource source = getSource(url);
-    String standardUrl = source.standardizeURL(url);
+  Future<App> getApp(
+      AppSource source, String url, List<String> additionalData) async {
+    String standardUrl = source.standardizeURL(makeUrlHttps(url));
     AppNames names = source.getAppNames(standardUrl);
-    APKDetails apk = await source.getLatestAPKDetails(standardUrl);
+    APKDetails apk =
+        await source.getLatestAPKDetails(standardUrl, additionalData);
     return App(
         '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}',
         standardUrl,
@@ -154,7 +177,8 @@ class SourceProvider {
         null,
         apk.version,
         apk.apkUrls,
-        apk.apkUrls.length - 1);
+        apk.apkUrls.length - 1,
+        additionalData);
   }
 
   /// Returns a length 2 list, where the first element is a list of Apps and
@@ -164,7 +188,8 @@ class SourceProvider {
     Map<String, dynamic> errors = {};
     for (var url in urls) {
       try {
-        apps.add(await getApp(url));
+        apps.add(await getApp(getSource(url), url,
+            [])); // TODO: additionalData should have defaults;
       } catch (e) {
         errors.addAll(<String, dynamic>{url: e});
       }
