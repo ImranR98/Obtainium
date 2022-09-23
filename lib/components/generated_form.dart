@@ -40,7 +40,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
     // Initialize form values as all empty
     values = widget.items.map((row) => row.map((e) => "").toList()).toList();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     // If any value changes, call this to update the parent with value and validity
     void someValueChanged() {
       widget.onValueChanges(values, _formKey.currentState?.validate() ?? false);
@@ -50,43 +53,45 @@ class _GeneratedFormState extends State<GeneratedForm> {
     formInputs = widget.items.asMap().entries.map((row) {
       return row.value.asMap().entries.map((e) {
         if (e.value.type == FormItemType.string) {
-          final controller =
-              TextEditingController(text: values[row.key][e.key]);
-          controller.addListener(() {
-            // Each time an input value changes, update the results and send to parent
-            values[row.key][e.key] = controller.value.text;
-            someValueChanged();
-          });
           return TextFormField(
-              decoration: InputDecoration(
-                  helperText: e.value.label + (e.value.required ? " *" : "")),
-              controller: controller,
-              minLines: e.value.max <= 1 ? null : e.value.max,
-              maxLines: e.value.max <= 1 ? 1 : e.value.max,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '${e.value.label} (required)';
-                }
-                return null;
+            initialValue: values[row.key][e.key],
+            onChanged: (value) {
+              setState(() {
+                values[row.key][e.key] = value;
+                someValueChanged();
+              });
+            },
+            decoration: InputDecoration(
+                helperText: e.value.label + (e.value.required ? " *" : "")),
+            minLines: e.value.max <= 1 ? null : e.value.max,
+            maxLines: e.value.max <= 1 ? 1 : e.value.max,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return '${e.value.label} (required)';
               }
-              // : null,
-              );
+              return null;
+            },
+          );
         } else {
           return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(e.value.label),
-                Switch(
-                    value: values[row.key][e.key]?.isEmpty ?? false,
-                    onChanged: (value) {
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(e.value.label),
+              Switch(
+                  value: values[row.key][e.key] != "",
+                  onChanged: (value) {
+                    setState(() {
                       values[row.key][e.key] = value ? "true" : "";
                       someValueChanged();
-                    })
-              ]);
+                    });
+                  })
+            ],
+          );
         }
       }).toList();
     }).toList();
 
+    rows.clear();
     formInputs.asMap().entries.forEach((rowInputs) {
       if (rowInputs.key > 0) {
         rows.add([
@@ -108,10 +113,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       });
       rows.add(rowItems);
     });
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Form(
         key: _formKey,
         child: Column(
