@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum FormItemType { string, bool }
 
-typedef OnValueChanges = void Function(List<String?> values, bool valid);
+typedef OnValueChanges = void Function(List<String> values, bool valid);
 
 class GeneratedFormItem {
   late String label;
@@ -54,7 +54,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
     // If any value changes, call this to update the parent with value and validity
     void someValueChanged() {
-      List<String?> returnValues = [];
+      List<String> returnValues = [];
       var valid = true;
       for (int r = 0; r < values.length; r++) {
         for (int i = 0; i < values[r].length; i++) {

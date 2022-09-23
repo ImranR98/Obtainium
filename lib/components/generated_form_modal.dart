@@ -1,59 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-class GeneratedFormModalItem {
-  late String label;
-  late bool required;
-  late int max;
-
-  GeneratedFormModalItem(this.label, this.required, this.max);
-}
+import 'package:obtainium/components/generated_form.dart';
 
 class GeneratedFormModal extends StatefulWidget {
   const GeneratedFormModal(
-      {super.key, required this.title, required this.items});
+      {super.key,
+      required this.title,
+      required this.items,
+      required this.defaultValues});
 
   final String title;
-  final List<GeneratedFormModalItem> items;
+  final List<List<GeneratedFormItem>> items;
+  final List<String> defaultValues;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
 }
 
 class _GeneratedFormModalState extends State<GeneratedFormModal> {
-  final _formKey = GlobalKey<FormState>();
+  List<String> values = [];
+  bool valid = false;
 
   @override
   Widget build(BuildContext context) {
-    final formInputs = widget.items.map((e) {
-      final controller = TextEditingController();
-      return [
-        controller,
-        TextFormField(
-          decoration: InputDecoration(helperText: e.label),
-          controller: controller,
-          minLines: e.max <= 1 ? null : e.max,
-          maxLines: e.max <= 1 ? 1 : e.max,
-          validator: e.required
-              ? (value) {
-                  if (value == null || value.isEmpty) {
-                    return '${e.label} (required)';
-                  }
-                  return null;
-                }
-              : null,
-        )
-      ];
-    }).toList();
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title),
-      content: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [...formInputs.map((e) => e[1] as Widget)],
-          )),
+      content: GeneratedForm(
+          items: widget.items,
+          onValueChanges: (values, valid) {
+            setState(() {
+              this.values = values;
+              this.valid = valid;
+            });
+          },
+          defaultValues: widget.defaultValues),
       actions: [
         TextButton(
             onPressed: () {
@@ -61,14 +42,14 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
             },
             child: const Text('Cancel')),
         TextButton(
-            onPressed: () {
-              if (_formKey.currentState?.validate() == true) {
-                HapticFeedback.selectionClick();
-                Navigator.of(context).pop(formInputs
-                    .map((e) => (e[0] as TextEditingController).value.text)
-                    .toList());
-              }
-            },
+            onPressed: !valid
+                ? null
+                : () {
+                    if (valid) {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop(values);
+                    }
+                  },
             child: const Text('Continue'))
       ],
     );

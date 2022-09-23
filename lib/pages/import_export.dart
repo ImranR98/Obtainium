@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -167,9 +168,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         return GeneratedFormModal(
                                           title: 'Import from URL List',
                                           items: [
-                                            GeneratedFormModalItem(
-                                                'App URL List', true, 7)
+                                            [
+                                              GeneratedFormItem(
+                                                  label: 'App URL List', max: 7)
+                                            ]
                                           ],
+                                          defaultValues: const [],
                                         );
                                       }).then((values) {
                                     if (values != null) {
@@ -226,16 +230,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     builder:
                                                         (BuildContext ctx) {
                                                       return GeneratedFormModal(
-                                                          title:
-                                                              'Import ${source.name}',
-                                                          items: source
-                                                              .requiredArgs
-                                                              .map((e) =>
-                                                                  GeneratedFormModalItem(
-                                                                      e,
-                                                                      true,
-                                                                      1))
-                                                              .toList());
+                                                        title:
+                                                            'Import ${source.name}',
+                                                        items: source
+                                                            .requiredArgs
+                                                            .map((e) => [
+                                                                  GeneratedFormItem(
+                                                                      label: e)
+                                                                ])
+                                                            .toList(),
+                                                        defaultValues: const [],
+                                                      );
                                                     }).then((values) {
                                                   if (values != null) {
                                                     source
