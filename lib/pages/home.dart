@@ -5,6 +5,7 @@ import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
+import 'package:obtainium/pages/test_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
 
   List<NavigationPageItem> pages = [
-    NavigationPageItem('Apps', Icons.apps, const AppsPage()),
+    NavigationPageItem('Apps', Icons.apps, const TestPage()),
     NavigationPageItem('Add App', Icons.add, const AddAppPage()),
     NavigationPageItem(
         'Import/Export', Icons.import_export, const ImportExportPage()),

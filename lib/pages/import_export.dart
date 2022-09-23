@@ -167,7 +167,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         return GeneratedFormModal(
                                           title: 'Import from URL List',
                                           items: [
-                                            GeneratedFormItem(
+                                            GeneratedFormModalItem(
                                                 'App URL List', true, 7)
                                           ],
                                         );
@@ -231,7 +231,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                           items: source
                                                               .requiredArgs
                                                               .map((e) =>
-                                                                  GeneratedFormItem(
+                                                                  GeneratedFormModalItem(
                                                                       e,
                                                                       true,
                                                                       1))

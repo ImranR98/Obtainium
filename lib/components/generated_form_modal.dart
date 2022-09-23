@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class GeneratedFormItem {
-  late String message;
+class GeneratedFormModalItem {
+  late String label;
   late bool required;
-  late int lines;
+  late int max;
 
-  GeneratedFormItem(this.message, this.required, this.lines);
+  GeneratedFormModalItem(this.label, this.required, this.max);
 }
 
 class GeneratedFormModal extends StatefulWidget {
@@ -14,7 +14,7 @@ class GeneratedFormModal extends StatefulWidget {
       {super.key, required this.title, required this.items});
 
   final String title;
-  final List<GeneratedFormItem> items;
+  final List<GeneratedFormModalItem> items;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
@@ -23,8 +23,6 @@ class GeneratedFormModal extends StatefulWidget {
 class _GeneratedFormModalState extends State<GeneratedFormModal> {
   final _formKey = GlobalKey<FormState>();
 
-  final urlInputController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     final formInputs = widget.items.map((e) {
@@ -32,14 +30,14 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
       return [
         controller,
         TextFormField(
-          decoration: InputDecoration(helperText: e.message),
+          decoration: InputDecoration(helperText: e.label),
           controller: controller,
-          minLines: e.lines <= 1 ? null : e.lines,
-          maxLines: e.lines <= 1 ? 1 : e.lines,
+          minLines: e.max <= 1 ? null : e.max,
+          maxLines: e.max <= 1 ? 1 : e.max,
           validator: e.required
               ? (value) {
                   if (value == null || value.isEmpty) {
-                    return '${e.message} (required)';
+                    return '${e.label} (required)';
                   }
                   return null;
                 }
