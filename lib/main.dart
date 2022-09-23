@@ -59,7 +59,7 @@ void main() async {
       ChangeNotifierProvider(
           create: (context) => AppsProvider(
               shouldLoadApps: true,
-              shouldCheckUpdatesAfterLoad: true,
+              shouldCheckUpdatesAfterLoad: false,
               shouldDeleteAPKs: true)),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())

@@ -5,12 +5,16 @@ enum FormItemType { string, bool }
 typedef OnValueChanges = void Function(List<List<String?>> values, bool valid);
 
 class GeneratedFormItem {
-  late String label = "Input";
-  late FormItemType type = FormItemType.string;
-  late bool required = true;
-  late int max = 1;
+  late String label;
+  late FormItemType type;
+  late bool required;
+  late int max;
 
-  GeneratedFormItem(this.label, this.type, this.required, this.max);
+  GeneratedFormItem(
+      {this.label = "Input",
+      this.type = FormItemType.string,
+      this.required = true,
+      this.max = 1});
 }
 
 class GeneratedForm extends StatefulWidget {
@@ -54,15 +58,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
             someValueChanged();
           });
           return TextFormField(
-              decoration: InputDecoration(helperText: e.value.label),
+              decoration: InputDecoration(
+                  helperText: e.value.label + (e.value.required ? " *" : "")),
               controller: controller,
               minLines: e.value.max <= 1 ? null : e.value.max,
               maxLines: e.value.max <= 1 ? 1 : e.value.max,
               validator: (value) {
-                // print(value);
-                // print(value?.isEmpty);
-                // print(value?.length);
-                // print(value == null);
                 if (value == null || value.isEmpty) {
                   return '${e.value.label} (required)';
                 }
@@ -71,32 +72,39 @@ class _GeneratedFormState extends State<GeneratedForm> {
               // : null,
               );
         } else {
-          return Switch(
-              value: values[row.key][e.key]?.isEmpty ?? false,
-              onChanged: (value) {
-                values[row.key][e.key] = value ? "true" : "";
-                someValueChanged();
-              });
+          return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(e.value.label),
+                Switch(
+                    value: values[row.key][e.key]?.isEmpty ?? false,
+                    onChanged: (value) {
+                      values[row.key][e.key] = value ? "true" : "";
+                      someValueChanged();
+                    })
+              ]);
         }
       }).toList();
     }).toList();
 
     formInputs.asMap().entries.forEach((rowInputs) {
-      if (rowInputs.key > 0 && rowInputs.key < formInputs.length - 1) {
+      if (rowInputs.key > 0) {
         rows.add([
-          const SizedBox(
-            height: 8,
+          SizedBox(
+            height: widget.items[rowInputs.key][0].type == FormItemType.bool
+                ? 25
+                : 4,
           )
         ]);
       }
       List<Widget> rowItems = [];
       rowInputs.value.asMap().entries.forEach((rowInput) {
-        if (rowInput.key > 0 && rowInput.key < rowInputs.value.length) {
+        if (rowInput.key > 0) {
           rowItems.add(const SizedBox(
-            width: 8,
+            width: 20,
           ));
         }
-        rowItems.add(rowInput.value);
+        rowItems.add(Expanded(child: rowInput.value));
       });
       rows.add(rowItems);
     });
@@ -109,7 +117,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
         child: Column(
           children: [
             ...rows.map((row) => Row(
-                  children: [...row.map((e) => Expanded(child: e))],
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [...row.map((e) => e)],
                 ))
           ],
         ));

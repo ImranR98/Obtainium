@@ -13,7 +13,12 @@ class _TestPageState extends State<TestPage> {
   bool valid = false;
 
   List<List<GeneratedFormItem>> sourceSpecificInputs = [
-    [GeneratedFormItem('Test Item', FormItemType.string, true, 1)]
+    [GeneratedFormItem(label: 'Test Item 1')],
+    [
+      GeneratedFormItem(label: 'Test Item 2', required: false),
+      GeneratedFormItem(label: 'Test Item 3')
+    ],
+    [GeneratedFormItem(label: 'Test Item 4', type: FormItemType.bool)]
   ];
 
   void onSourceSpecificDataChanges(
@@ -21,7 +26,11 @@ class _TestPageState extends State<TestPage> {
     setState(() {
       sourceSpecificData = valuesFromForm;
       valid = formValid;
-      print(sourceSpecificData?[0][0]);
+      sourceSpecificData?.forEach((row) {
+        for (var element in row) {
+          print(element);
+        }
+      });
     });
   }
 
