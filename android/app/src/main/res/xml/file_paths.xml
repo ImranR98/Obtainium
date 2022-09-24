@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path path="Android/data/dev.imranr.obtainium/" name="files_root" />
+    <external-path path="." name="external_storage_root" />
+</paths>

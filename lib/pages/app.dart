@@ -25,8 +25,12 @@ class _AppPageState extends State<AppPage> {
     var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId];
     var source = app != null ? sourceProvider.getSource(app.app.url) : null;
-    if (app?.app.installedVersion != null) {
-      appsProvider.getUpdate(app!.app.id);
+    if (!appsProvider.areDownloadsRunning()) {
+      appsProvider.getUpdate(app!.app.id).catchError((e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      });
     }
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
@@ -96,104 +100,112 @@ class _AppPageState extends State<AppPage> {
                       children: [
                         if (app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext ctx) {
-                                      return AlertDialog(
-                                        title: Text(
-                                            'App Already ${app?.app.installedVersion == null ? 'Installed' : 'Updated'}?'),
-                                        actions: [
-                                          TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('No')),
-                                          TextButton(
-                                              onPressed: () {
-                                                HapticFeedback.selectionClick();
-                                                var updatedApp = app?.app;
-                                                if (updatedApp != null) {
-                                                  updatedApp.installedVersion =
-                                                      updatedApp.latestVersion;
-                                                  appsProvider
-                                                      .saveApp(updatedApp);
-                                                }
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text(
-                                                  'Yes, Mark as Installed'))
-                                        ],
-                                      );
-                                    });
-                              },
+                              onPressed: app?.downloadProgress != null
+                                  ? null
+                                  : () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext ctx) {
+                                            return AlertDialog(
+                                              title: Text(
+                                                  'App Already ${app?.app.installedVersion == null ? 'Installed' : 'Updated'}?'),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text('No')),
+                                                TextButton(
+                                                    onPressed: () {
+                                                      HapticFeedback
+                                                          .selectionClick();
+                                                      var updatedApp = app?.app;
+                                                      if (updatedApp != null) {
+                                                        updatedApp
+                                                                .installedVersion =
+                                                            updatedApp
+                                                                .latestVersion;
+                                                        appsProvider.saveApp(
+                                                            updatedApp);
+                                                      }
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text(
+                                                        'Yes, Mark as Installed'))
+                                              ],
+                                            );
+                                          });
+                                    },
                               tooltip: 'Mark as Installed',
                               icon: const Icon(Icons.done))
                         else
                           IconButton(
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext ctx) {
-                                      return AlertDialog(
-                                        title: const Text('App Not Installed?'),
-                                        actions: [
-                                          TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('No')),
-                                          TextButton(
-                                              onPressed: () {
-                                                HapticFeedback.selectionClick();
-                                                var updatedApp = app?.app;
-                                                if (updatedApp != null) {
-                                                  updatedApp.installedVersion =
-                                                      null;
-                                                  appsProvider
-                                                      .saveApp(updatedApp);
-                                                }
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text(
-                                                  'Yes, Mark as Not Installed'))
-                                        ],
-                                      );
-                                    });
-                              },
+                              onPressed: app?.downloadProgress != null
+                                  ? null
+                                  : () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext ctx) {
+                                            return AlertDialog(
+                                              title: const Text(
+                                                  'App Not Installed?'),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text('No')),
+                                                TextButton(
+                                                    onPressed: () {
+                                                      HapticFeedback
+                                                          .selectionClick();
+                                                      var updatedApp = app?.app;
+                                                      if (updatedApp != null) {
+                                                        updatedApp
+                                                                .installedVersion =
+                                                            null;
+                                                        appsProvider.saveApp(
+                                                            updatedApp);
+                                                      }
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text(
+                                                        'Yes, Mark as Not Installed'))
+                                              ],
+                                            );
+                                          });
+                                    },
                               tooltip: 'Mark as Not Installed',
                               icon: const Icon(Icons.no_cell_outlined)),
                         if (source != null &&
                             source.additionalDataFormItems.isNotEmpty)
                           IconButton(
-                              onPressed: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext ctx) {
-                                      return GeneratedFormModal(
-                                          title: 'Additional Options',
-                                          items: source.additionalDataFormItems,
-                                          defaultValues: app != null
-                                              ? app.app.additionalData
-                                              : source.additionalDataDefaults);
-                                    }).then((values) {
-                                  if (app != null && values != null) {
-                                    var changedApp = app.app;
-                                    changedApp.additionalData = values;
-                                    sourceProvider
-                                        .getApp(source, changedApp.url,
-                                            changedApp.additionalData)
-                                        .then((finalChangedApp) {
-                                      appsProvider.saveApp(finalChangedApp);
-                                    }).catchError((e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(content: Text(e.toString())),
-                                      );
-                                    });
-                                  }
-                                });
-                              },
+                              onPressed: app?.downloadProgress != null
+                                  ? null
+                                  : () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext ctx) {
+                                            return GeneratedFormModal(
+                                                title: 'Additional Options',
+                                                items: source
+                                                    .additionalDataFormItems,
+                                                defaultValues: app != null
+                                                    ? app.app.additionalData
+                                                    : source
+                                                        .additionalDataDefaults);
+                                          }).then((values) {
+                                        if (app != null && values != null) {
+                                          var changedApp = app.app;
+                                          changedApp.additionalData = values;
+                                          appsProvider.saveApp(changedApp);
+                                        }
+                                      });
+                                    },
                               icon: const Icon(Icons.settings)),
                         const SizedBox(width: 16.0),
                         Expanded(

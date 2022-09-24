@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -13,7 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
-import 'package:install_plugin_v2/install_plugin_v2.dart';
+import 'package:flutter_install_app/flutter_install_app.dart';
 
 class AppInMemory {
   late App app;
@@ -96,21 +97,55 @@ class AppsProvider with ChangeNotifier {
       .where((element) => element.downloadProgress != null)
       .isNotEmpty;
 
-  // Given an AppId, uses stored info about the app to download an APK (with user input if needed) and install it
-  // Installs can only be done in the foreground, so a notification is sent to get the user's attention if needed
+  Future<bool> canInstallSilently(App app) async {
+    var osInfo = await DeviceInfoPlugin().androidInfo;
+    return app.installedVersion != null &&
+        osInfo.version.sdkInt! >= 30 &&
+        osInfo.version.release!.compareTo('12') >= 0;
+  }
+
+  Future<void> askUserToReturnToForeground(BuildContext context) async {
+    NotificationsProvider notificationsProvider =
+        context.read<NotificationsProvider>();
+    if (!isForeground) {
+      await notificationsProvider.notify(completeInstallationNotification,
+          cancelExisting: true);
+      await FGBGEvents.stream.first == FGBGType.foreground;
+      await notificationsProvider.cancel(completeInstallationNotification.id);
+      // We need to wait for the App to come to the foreground to install it
+      // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
+      // https://github.com/flutter/flutter/issues/13937
+    }
+  }
+
+  // Unfortunately this 'await' does not actually wait for the APK to finish installing
+  // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
+  // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
+  // But even then, we don't know if it actually succeeded
+  Future<void> installApk(ApkFile file) async {
+    await AppInstaller.installApk(file.file.path, actionRequired: false);
+    apps[file.appId]!.app.installedVersion =
+        apps[file.appId]!.app.latestVersion;
+    await saveApp(apps[file.appId]!.app);
+  }
+
+  // Given a list of AppIds, uses stored info about the apps to download APKs and install them
+  // If the APKs can be installed silently, they are
+  // If user input is needed and the App is in the background, a notification is sent to get the user's attention
   // Returns upon successful download, regardless of installation result
   Future<bool> downloadAndInstallLatestApp(
       List<String> appIds, BuildContext context) async {
-    NotificationsProvider notificationsProvider =
-        context.read<NotificationsProvider>();
     Map<String, String> appsToInstall = {};
     for (var id in appIds) {
       if (apps[id] == null) {
         throw 'App not found';
       }
+
       // If the App has more than one APK, the user should pick one
       String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
       if (apps[id]!.app.apkUrls.length > 1) {
+        // ignore: use_build_context_synchronously
+        await askUserToReturnToForeground(context);
         apkUrl = await showDialog(
             context: context,
             builder: (BuildContext ctx) {
@@ -120,6 +155,8 @@ class AppsProvider with ChangeNotifier {
       // If the picked APK comes from an origin different from the source, get user confirmation
       if (apkUrl != null &&
           Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin) {
+        // ignore: use_build_context_synchronously
+        await askUserToReturnToForeground(context);
         if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -143,23 +180,25 @@ class AppsProvider with ChangeNotifier {
     List<ApkFile> downloadedFiles = await Future.wait(appsToInstall.entries
         .map((entry) => downloadApp(entry.value, entry.key)));
 
-    if (!isForeground) {
-      await notificationsProvider.notify(completeInstallationNotification,
-          cancelExisting: true);
-      await FGBGEvents.stream.first == FGBGType.foreground;
-      await notificationsProvider.cancel(completeInstallationNotification.id);
-      // We need to wait for the App to come to the foreground to install it
-      // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
-      // https://github.com/flutter/flutter/issues/13937
+    List<ApkFile> silentUpdates = [];
+    List<ApkFile> regularInstalls = [];
+    for (var f in downloadedFiles) {
+      bool willBeSilent = await canInstallSilently(apps[f.appId]!.app);
+      if (willBeSilent) {
+        silentUpdates.add(f);
+      } else {
+        regularInstalls.add(f);
+      }
     }
 
-    // Unfortunately this 'await' does not actually wait for the APK to finish installing
-    // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
-    // This also does not use the 'session-based' installer API, so background/silent updates are impossible
-    for (var f in downloadedFiles) {
-      await InstallPlugin.installApk(f.file.path, 'dev.imranr.obtainium');
-      apps[f.appId]!.app.installedVersion = apps[f.appId]!.app.latestVersion;
-      await saveApp(apps[f.appId]!.app);
+    for (var u in silentUpdates) {
+      await installApk(u);
+    }
+
+    for (var i in regularInstalls) {
+      // ignore: use_build_context_synchronously
+      await askUserToReturnToForeground(context);
+      await installApk(i);
     }
 
     return downloadedFiles.isNotEmpty;

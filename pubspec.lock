@@ -188,6 +188,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.0"
+  flutter_install_app:
+    dependency: "direct main"
+    description:
+      name: flutter_install_app
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.3.0"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -275,13 +282,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.2.0"
-  install_plugin_v2:
-    dependency: "direct main"
-    description:
-      name: install_plugin_v2
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   js:
     dependency: transitive
     description:
