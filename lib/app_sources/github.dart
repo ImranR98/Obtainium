@@ -31,11 +31,6 @@ class GitHub implements AppSource {
         'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
-      // TODO: Loop through each release and pick the latest one that matches:
-      //        The regex if any
-      //        The prerelease/not if any
-      //        Only latest if fallback is false
-      //        Will remain w zero or one release
 
       List<String> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
