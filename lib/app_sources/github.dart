@@ -20,41 +20,65 @@ class GitHub implements AppSource {
   @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
-    // TODO: use additionalData
+    var includePrereleases =
+        additionalData.isNotEmpty && additionalData[0] == "true";
+    var fallbackToOlderReleases =
+        additionalData.length >= 2 && additionalData[1] == "true";
+    var regexFilter = additionalData.length >= 3 && additionalData[2].isNotEmpty
+        ? additionalData[2]
+        : null;
     Response res = await get(Uri.parse(
         'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
-      // Right now, the latest non-prerelease version is picked
-      // If none exists, the latest prerelease version is picked
-      // In the future, the user could be given a choice
-      var nonPrereleaseReleases =
-          releases.where((element) => element['prerelease'] != true).toList();
-      var latestRelease = nonPrereleaseReleases.isNotEmpty
-          ? nonPrereleaseReleases[0]
-          : releases.isNotEmpty
-              ? releases[0]
-              : null;
-      if (latestRelease == null) {
+      // TODO: Loop through each release and pick the latest one that matches:
+      //        The regex if any
+      //        The prerelease/not if any
+      //        Only latest if fallback is false
+      //        Will remain w zero or one release
+
+      List<String> getReleaseAPKUrls(dynamic release) =>
+          (release['assets'] as List<dynamic>?)
+              ?.map((e) {
+                return e['browser_download_url'] != null
+                    ? e['browser_download_url'] as String
+                    : '';
+              })
+              .where((element) => element.toLowerCase().endsWith('.apk'))
+              .toList() ??
+          [];
+
+      dynamic targetRelease;
+
+      for (int i = 0; i < releases.length; i++) {
+        if (!fallbackToOlderReleases && i > 0) break;
+        if (!includePrereleases && releases[i]['prerelease'] == true) {
+          continue;
+        }
+        if (regexFilter != null &&
+            !RegExp(regexFilter)
+                .hasMatch((releases[i]['name'] as String).trim())) {
+          continue;
+        }
+        var apkUrls = getReleaseAPKUrls(releases[i]);
+        if (apkUrls.isEmpty) {
+          continue;
+        }
+        targetRelease = releases[i];
+        targetRelease['apkUrls'] = apkUrls;
+        break;
+      }
+      if (targetRelease == null) {
         throw couldNotFindReleases;
       }
-      List<dynamic>? assets = latestRelease['assets'];
-      List<String>? apkUrlList = assets
-          ?.map((e) {
-            return e['browser_download_url'] != null
-                ? e['browser_download_url'] as String
-                : '';
-          })
-          .where((element) => element.toLowerCase().endsWith('.apk'))
-          .toList();
-      if (apkUrlList == null || apkUrlList.isEmpty) {
+      if ((targetRelease['apkUrls'] as List<String>).isEmpty) {
         throw noAPKFound;
       }
-      String? version = latestRelease['tag_name'];
+      String? version = targetRelease['tag_name'];
       if (version == null) {
         throw couldNotFindLatestVersion;
       }
-      return APKDetails(version, apkUrlList);
+      return APKDetails(version, targetRelease['apkUrls']);
     } else {
       if (res.headers['x-ratelimit-remaining'] == '0') {
         throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
@@ -80,12 +104,24 @@ class GitHub implements AppSource {
     ],
     [
       GeneratedFormItem(
-          label: "Filter APKs by Regular Expression",
+          label: "Filter Release Titles by Regular Expression",
           type: FormItemType.string,
-          required: false)
+          required: false,
+          additionalValidators: [
+            (value) {
+              if (value == null || value.isEmpty) {
+                return null;
+              }
+              try {
+                RegExp(value);
+              } catch (e) {
+                return "Invalid regular expression";
+              }
+            }
+          ])
     ]
   ];
 
   @override
-  List<String> additionalDataDefaults = ["", "", ""];
+  List<String> additionalDataDefaults = ["true", "", ""];
 }

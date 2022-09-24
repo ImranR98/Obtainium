@@ -66,9 +66,18 @@ class _AddAppPageState extends State<AddAppPage> {
                                   onValueChanges: (values, valid) {
                                     setState(() {
                                       userInput = values[0];
-                                      pickedSource = valid
+                                      var source = valid
                                           ? sourceProvider.getSource(userInput)
                                           : null;
+                                      if (pickedSource != source) {
+                                        pickedSource = source;
+                                        additionalData = [];
+                                        validAdditionalData = source != null
+                                            ? sourceProvider
+                                                .doesSourceHaveRequiredAdditionalData(
+                                                    source)
+                                            : true;
+                                      }
                                     });
                                   },
                                   defaultValues: const [])),

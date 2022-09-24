@@ -67,7 +67,7 @@ class App {
           : List<String>.from(jsonDecode(json['apkUrls'])),
       json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
       json['additionalData'] == null
-          ? []
+          ? SourceProvider().getSource(json['url']).additionalDataDefaults
           : List<String>.from(jsonDecode(json['additionalData'])));
 
   Map<String, dynamic> toJson() => {
@@ -100,7 +100,7 @@ makeUrlHttps(String url) {
   return url;
 }
 
-const String couldNotFindReleases = 'Unable to fetch release info';
+const String couldNotFindReleases = 'Could not find a suitable release';
 const String couldNotFindLatestVersion =
     'Could not determine latest release version';
 String notValidURL(String sourceName) {
@@ -164,6 +164,17 @@ class SourceProvider {
       throw 'URL does not match a known source';
     }
     return source;
+  }
+
+  bool doesSourceHaveRequiredAdditionalData(AppSource source) {
+    for (var row in source.additionalDataFormItems) {
+      for (var element in row) {
+        if (element.required) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   Future<App> getApp(
