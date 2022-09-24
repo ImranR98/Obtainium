@@ -134,14 +134,14 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: const Text('Add'))
                         ],
                       ),
-                      const Divider(
-                        height: 64,
-                      ),
                       if (pickedSource != null &&
                           (pickedSource!.additionalDataFormItems.isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            const Divider(
+                              height: 64,
+                            ),
                             Text(
                                 'Additional Options for ${pickedSource?.runtimeType}',
                                 style: TextStyle(
