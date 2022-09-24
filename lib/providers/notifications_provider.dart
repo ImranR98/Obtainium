@@ -33,6 +33,22 @@ class UpdateNotification extends ObtainiumNotification {
   }
 }
 
+class SilentUpdateNotification extends ObtainiumNotification {
+  SilentUpdateNotification(List<App> updates)
+      : super(
+            3,
+            'Apps Updated',
+            '',
+            'APPS_UPDATED',
+            'Apps Updated',
+            'Notifies the user that updates to one or more Apps were applied in the background',
+            Importance.defaultImportance) {
+    message = updates.length == 1
+        ? '${updates[0].name} was updated to ${updates[0].latestVersion}.'
+        : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} were updated.';
+  }
+}
+
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
   ErrorCheckingUpdatesNotification(String error)
       : super(

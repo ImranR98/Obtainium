@@ -25,8 +25,8 @@ class _AppPageState extends State<AppPage> {
     var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId];
     var source = app != null ? sourceProvider.getSource(app.app.url) : null;
-    if (!appsProvider.areDownloadsRunning()) {
-      appsProvider.getUpdate(app!.app.id).catchError((e) {
+    if (!appsProvider.areDownloadsRunning() && app != null) {
+      appsProvider.getUpdate(app.app.id).catchError((e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );
@@ -221,7 +221,7 @@ class _AppPageState extends State<AppPage> {
                                             .downloadAndInstallLatestApp(
                                                 [app!.app.id],
                                                 context).then((res) {
-                                          if (res && mounted) {
+                                          if (res.isNotEmpty && mounted) {
                                             Navigator.of(context).pop();
                                           }
                                         });

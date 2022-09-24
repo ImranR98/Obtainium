@@ -26,9 +26,23 @@ void bgTaskCallback() {
       await notificationsProvider
           .cancel(ErrorCheckingUpdatesNotification('').id);
       await appsProvider.loadApps();
-      List<App> updates = await appsProvider.checkUpdates();
-      if (updates.isNotEmpty) {
-        notificationsProvider.notify(UpdateNotification(updates),
+      // List<String> existingUpdateIds = // TODO: Uncomment this and below when it works
+      //     appsProvider.getExistingUpdates(installedOnly: true);
+      List<App> newUpdates = await appsProvider.checkUpdates();
+      // List<String> silentlyUpdated = await appsProvider
+      //     .downloadAndInstallLatestApp(
+      //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
+      // if (silentlyUpdated.isNotEmpty) {
+      //   newUpdates
+      //       .where((element) => !silentlyUpdated.contains(element.id))
+      //       .toList();
+      //   notificationsProvider.notify(
+      //       SilentUpdateNotification(
+      //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
+      //       cancelExisting: true);
+      // }
+      if (newUpdates.isNotEmpty) {
+        notificationsProvider.notify(UpdateNotification(newUpdates),
             cancelExisting: true);
       }
       return Future.value(true);
@@ -85,7 +99,7 @@ class MyApp extends StatelessWidget {
       if (settingsProvider.updateInterval > 0) {
         Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
             frequency: Duration(minutes: settingsProvider.updateInterval),
-            initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            // initialDelay: Duration(minutes: settingsProvider.updateInterval),
             constraints: Constraints(networkType: NetworkType.connected),
             existingWorkPolicy: ExistingWorkPolicy.replace);
       } else {

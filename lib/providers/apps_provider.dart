@@ -98,6 +98,7 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
+    // TODO: This is unreliable - try to get from OS
     var osInfo = await DeviceInfoPlugin().androidInfo;
     return app.installedVersion != null &&
         osInfo.version.sdkInt! >= 30 &&
@@ -131,19 +132,20 @@ class AppsProvider with ChangeNotifier {
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
   // If the APKs can be installed silently, they are
+  // If no BuildContext is provided, apps that require user interaction are ignored
   // If user input is needed and the App is in the background, a notification is sent to get the user's attention
-  // Returns upon successful download, regardless of installation result
-  Future<bool> downloadAndInstallLatestApp(
-      List<String> appIds, BuildContext context) async {
+  // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
+  Future<List<String>> downloadAndInstallLatestApp(
+      List<String> appIds, BuildContext? context) async {
     Map<String, String> appsToInstall = {};
     for (var id in appIds) {
       if (apps[id] == null) {
         throw 'App not found';
       }
 
-      // If the App has more than one APK, the user should pick one
+      // If the App has more than one APK, the user should pick one (if context provided)
       String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
-      if (apps[id]!.app.apkUrls.length > 1) {
+      if (apps[id]!.app.apkUrls.length > 1 && context != null) {
         // ignore: use_build_context_synchronously
         await askUserToReturnToForeground(context);
         apkUrl = await showDialog(
@@ -152,9 +154,10 @@ class AppsProvider with ChangeNotifier {
               return APKPicker(app: apps[id]!.app, initVal: apkUrl);
             });
       }
-      // If the picked APK comes from an origin different from the source, get user confirmation
+      // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
       if (apkUrl != null &&
-          Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin) {
+          Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin &&
+          context != null) {
         // ignore: use_build_context_synchronously
         await askUserToReturnToForeground(context);
         if (await showDialog(
@@ -173,7 +176,11 @@ class AppsProvider with ChangeNotifier {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApp(apps[id]!.app);
         }
-        appsToInstall.putIfAbsent(id, () => apkUrl!);
+        if (context != null ||
+            (await canInstallSilently(apps[id]!.app) &&
+                apps[id]!.app.apkUrls.length == 1)) {
+          appsToInstall.putIfAbsent(id, () => apkUrl!);
+        }
       }
     }
 
@@ -195,13 +202,15 @@ class AppsProvider with ChangeNotifier {
       await installApk(u);
     }
 
-    for (var i in regularInstalls) {
-      // ignore: use_build_context_synchronously
-      await askUserToReturnToForeground(context);
-      await installApk(i);
+    if (context != null) {
+      for (var i in regularInstalls) {
+        // ignore: use_build_context_synchronously
+        await askUserToReturnToForeground(context);
+        await installApk(i);
+      }
     }
 
-    return downloadedFiles.isNotEmpty;
+    return downloadedFiles.map((e) => e.appId).toList();
   }
 
   Future<Directory> getAppsDir() async {
@@ -300,12 +309,13 @@ class AppsProvider with ChangeNotifier {
     return updates;
   }
 
-  List<String> getExistingUpdates() {
+  List<String> getExistingUpdates({bool installedOnly = false}) {
     List<String> updateAppIds = [];
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
-      if (app.installedVersion != app.latestVersion) {
+      if (app.installedVersion != app.latestVersion &&
+          (app.installedVersion != null || !installedOnly)) {
         updateAppIds.add(app.id);
       }
     }
