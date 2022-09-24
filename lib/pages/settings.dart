@@ -27,7 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: settingsProvider.prefs == null
-                      ? Container()
+                      ? const SizedBox()
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

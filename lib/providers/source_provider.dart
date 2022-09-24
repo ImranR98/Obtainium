@@ -127,8 +127,7 @@ abstract class AppSource {
       String standardUrl, List<String> additionalData);
   AppNames getAppNames(String standardUrl);
   late List<List<GeneratedFormItem>> additionalDataFormItems;
-  late List<String>
-      additionalDataDefaults; // TODO: Make these integrate into generated form
+  late List<String> additionalDataDefaults;
 }
 
 abstract class MassAppSource {

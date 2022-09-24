@@ -112,6 +112,7 @@ class GitHub implements AppSource {
               } catch (e) {
                 return "Invalid regular expression";
               }
+              return null;
             }
           ])
     ]
