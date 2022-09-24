@@ -123,5 +123,5 @@ class GitHub implements AppSource {
   ];
 
   @override
-  List<String> additionalDataDefaults = ["true", "", ""];
+  List<String> additionalDataDefaults = ["true", "true", ""];
 }
