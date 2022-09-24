@@ -13,7 +13,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.2.4-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.3.0-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 @pragma('vm:entry-point')
 void bgTaskCallback() {
