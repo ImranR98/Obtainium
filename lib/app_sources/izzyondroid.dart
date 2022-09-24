@@ -12,14 +12,14 @@ class IzzyOnDroid implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL;
+      throw notValidURL(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String>? additionalData) async {
+      String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse(standardUrl));
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);

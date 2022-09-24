@@ -49,7 +49,10 @@ class _AddAppPageState extends State<AddAppPage> {
                                             (value) {
                                               try {
                                                 sourceProvider
-                                                    .getSource(value ?? "");
+                                                    .getSource(value ?? "")
+                                                    .standardizeURL(
+                                                        makeUrlHttps(
+                                                            value ?? ""));
                                               } catch (e) {
                                                 return e is String
                                                     ? e
@@ -84,11 +87,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                       setState(() {
                                         gettingAppInfo = true;
                                       });
-                                      AppSource source =
-                                          sourceProvider.getSource(userInput);
                                       sourceProvider
-                                          .getApp(
-                                              source, userInput, additionalData)
+                                          .getApp(pickedSource!, userInput,
+                                              additionalData)
                                           .then((app) {
                                         var appsProvider =
                                             context.read<AppsProvider>();

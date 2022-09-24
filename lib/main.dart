@@ -104,7 +104,7 @@ class MyApp extends StatelessWidget {
             currentReleaseTag,
             [],
             0,
-            [])); // TODO: Will need prerelease true here
+            ["true"]));
       }
     }
 

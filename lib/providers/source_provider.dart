@@ -103,7 +103,10 @@ makeUrlHttps(String url) {
 const String couldNotFindReleases = 'Unable to fetch release info';
 const String couldNotFindLatestVersion =
     'Could not determine latest release version';
-const String notValidURL = 'Not a valid URL';
+String notValidURL(String sourceName) {
+  return 'Not a valid $sourceName App URL';
+}
+
 const String noAPKFound = 'No APK found';
 
 List<String> getLinksFromParsedHTML(
@@ -121,7 +124,7 @@ abstract class AppSource {
   late String host;
   String standardizeURL(String url);
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String>? additionalData);
+      String standardUrl, List<String> additionalData);
   AppNames getAppNames(String standardUrl);
   late List<List<GeneratedFormItem>> additionalDataFormItems;
   late List<String>
@@ -188,8 +191,8 @@ class SourceProvider {
     Map<String, dynamic> errors = {};
     for (var url in urls) {
       try {
-        apps.add(await getApp(getSource(url), url,
-            [])); // TODO: additionalData should have defaults;
+        var source = getSource(url);
+        apps.add(await getApp(source, url, source.additionalDataDefaults));
       } catch (e) {
         errors.addAll(<String, dynamic>{url: e});
       }

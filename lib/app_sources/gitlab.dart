@@ -13,14 +13,14 @@ class GitLab implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL;
+      throw notValidURL(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String>? additionalData) async {
+      String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
