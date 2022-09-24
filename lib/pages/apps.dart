@@ -148,7 +148,11 @@ class _AppsPageState extends State<AppsPage> {
         body: RefreshIndicator(
             onRefresh: () {
               HapticFeedback.lightImpact();
-              return appsProvider.checkUpdates();
+              return appsProvider.checkUpdates().catchError((e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              });
             },
             child: CustomScrollView(slivers: <Widget>[
               const CustomAppBar(title: 'Apps'),
