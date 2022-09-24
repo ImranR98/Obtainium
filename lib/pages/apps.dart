@@ -168,10 +168,8 @@ class _AppsPageState extends State<AppsPage> {
                   delegate: SliverChildBuilderDelegate(
                       (BuildContext context, int index) {
                 return ListTile(
-                  title: Text(
-                      '${sortedApps[index].app.author}/${sortedApps[index].app.name}'),
-                  subtitle: Text(sortedApps[index].app.installedVersion ??
-                      'Not Installed'),
+                  title: Text(sortedApps[index].app.name),
+                  subtitle: Text('By ${sortedApps[index].app.author}'),
                   trailing: sortedApps[index].downloadProgress != null
                       ? Text(
                           'Downloading - ${sortedApps[index].downloadProgress?.toInt()}%')
@@ -179,7 +177,8 @@ class _AppsPageState extends State<AppsPage> {
                               sortedApps[index].app.installedVersion !=
                                   sortedApps[index].app.latestVersion
                           ? const Text('Update Available')
-                          : null),
+                          : Text(sortedApps[index].app.installedVersion ??
+                              'Not Installed')),
                   onTap: () {
                     Navigator.push(
                       context,
