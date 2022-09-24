@@ -59,7 +59,7 @@ void main() async {
       ChangeNotifierProvider(
           create: (context) => AppsProvider(
               shouldLoadApps: true,
-              shouldCheckUpdatesAfterLoad: true,
+              shouldCheckUpdatesAfterLoad: false,
               shouldDeleteAPKs: true)),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())
@@ -103,7 +103,8 @@ class MyApp extends StatelessWidget {
             currentReleaseTag,
             currentReleaseTag,
             [],
-            0));
+            0,
+            ["true"]));
       }
     }
 

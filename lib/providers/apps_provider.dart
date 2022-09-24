@@ -228,7 +228,11 @@ class AppsProvider with ChangeNotifier {
 
   Future<App?> getUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
-    App newApp = await SourceProvider().getApp(currentApp.url);
+    SourceProvider sourceProvider = SourceProvider();
+    App newApp = await sourceProvider.getApp(
+        sourceProvider.getSource(currentApp.url),
+        currentApp.url,
+        currentApp.additionalData);
     if (newApp.latestVersion != currentApp.latestVersion) {
       newApp.installedVersion = currentApp.installedVersion;
       if (currentApp.preferredApkIndex < newApp.apkUrls.length) {

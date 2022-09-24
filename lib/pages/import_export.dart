@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -167,9 +168,34 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         return GeneratedFormModal(
                                           title: 'Import from URL List',
                                           items: [
-                                            GeneratedFormItem(
-                                                'App URL List', true, 7)
+                                            [
+                                              GeneratedFormItem(
+                                                  label: 'App URL List',
+                                                  max: 7,
+                                                  additionalValidators: [
+                                                    (String? value) {
+                                                      if (value != null &&
+                                                          value.isNotEmpty) {
+                                                        var lines = value
+                                                            .trim()
+                                                            .split('\n');
+                                                        for (int i = 0;
+                                                            i < lines.length;
+                                                            i++) {
+                                                          try {
+                                                            sourceProvider
+                                                                .getSource(
+                                                                    lines[i]);
+                                                          } catch (e) {
+                                                            return 'Line ${i + 1}: $e';
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  ])
+                                            ]
                                           ],
+                                          defaultValues: const [],
                                         );
                                       }).then((values) {
                                     if (values != null) {
@@ -226,16 +252,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     builder:
                                                         (BuildContext ctx) {
                                                       return GeneratedFormModal(
-                                                          title:
-                                                              'Import ${source.name}',
-                                                          items: source
-                                                              .requiredArgs
-                                                              .map((e) =>
+                                                        title:
+                                                            'Import ${source.name}',
+                                                        items: source
+                                                            .requiredArgs
+                                                            .map((e) => [
                                                                   GeneratedFormItem(
-                                                                      e,
-                                                                      true,
-                                                                      1))
-                                                              .toList());
+                                                                      label: e)
+                                                                ])
+                                                            .toList(),
+                                                        defaultValues: const [],
+                                                      );
                                                     }).then((values) {
                                                   if (values != null) {
                                                     source

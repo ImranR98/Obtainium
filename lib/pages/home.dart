@@ -5,6 +5,7 @@ import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
+import 'package:obtainium/pages/test_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

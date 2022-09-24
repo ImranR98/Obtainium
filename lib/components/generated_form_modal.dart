@@ -1,61 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-class GeneratedFormItem {
-  late String message;
-  late bool required;
-  late int lines;
-
-  GeneratedFormItem(this.message, this.required, this.lines);
-}
+import 'package:obtainium/components/generated_form.dart';
 
 class GeneratedFormModal extends StatefulWidget {
   const GeneratedFormModal(
-      {super.key, required this.title, required this.items});
+      {super.key,
+      required this.title,
+      required this.items,
+      required this.defaultValues});
 
   final String title;
-  final List<GeneratedFormItem> items;
+  final List<List<GeneratedFormItem>> items;
+  final List<String> defaultValues;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
 }
 
 class _GeneratedFormModalState extends State<GeneratedFormModal> {
-  final _formKey = GlobalKey<FormState>();
-
-  final urlInputController = TextEditingController();
+  List<String> values = [];
+  bool valid = false;
 
   @override
   Widget build(BuildContext context) {
-    final formInputs = widget.items.map((e) {
-      final controller = TextEditingController();
-      return [
-        controller,
-        TextFormField(
-          decoration: InputDecoration(helperText: e.message),
-          controller: controller,
-          minLines: e.lines <= 1 ? null : e.lines,
-          maxLines: e.lines <= 1 ? 1 : e.lines,
-          validator: e.required
-              ? (value) {
-                  if (value == null || value.isEmpty) {
-                    return '${e.message} (required)';
-                  }
-                  return null;
-                }
-              : null,
-        )
-      ];
-    }).toList();
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title),
-      content: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [...formInputs.map((e) => e[1] as Widget)],
-          )),
+      content: GeneratedForm(
+          items: widget.items,
+          onValueChanges: (values, valid) {
+            setState(() {
+              this.values = values;
+              this.valid = valid;
+            });
+          },
+          defaultValues: widget.defaultValues),
       actions: [
         TextButton(
             onPressed: () {
@@ -63,18 +42,16 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
             },
             child: const Text('Cancel')),
         TextButton(
-            onPressed: () {
-              if (_formKey.currentState?.validate() == true) {
-                HapticFeedback.selectionClick();
-                Navigator.of(context).pop(formInputs
-                    .map((e) => (e[0] as TextEditingController).value.text)
-                    .toList());
-              }
-            },
+            onPressed: !valid
+                ? null
+                : () {
+                    if (valid) {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop(values);
+                    }
+                  },
             child: const Text('Continue'))
       ],
     );
   }
 }
-
-// TODO: Add support for larger textarea so this can be used for text/json imports

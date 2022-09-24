@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +23,9 @@ class _AppPageState extends State<AppPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
+    var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId];
+    var source = app != null ? sourceProvider.getSource(app.app.url) : null;
     if (app?.app.installedVersion != null) {
       appsProvider.getUpdate(app!.app.id);
     }
@@ -159,6 +164,37 @@ class _AppPageState extends State<AppPage> {
                               },
                               tooltip: 'Mark as Not Installed',
                               icon: const Icon(Icons.no_cell_outlined)),
+                        if (source != null &&
+                            source.additionalDataFormItems.isNotEmpty)
+                          IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext ctx) {
+                                      return GeneratedFormModal(
+                                          title: 'Additional Options',
+                                          items: source.additionalDataFormItems,
+                                          defaultValues:
+                                              source.additionalDataDefaults);
+                                    }).then((values) {
+                                  if (app != null && values != null) {
+                                    var changedApp = app.app;
+                                    changedApp.additionalData = values;
+                                    sourceProvider
+                                        .getApp(source, changedApp.url,
+                                            changedApp.additionalData)
+                                        .then((finalChangedApp) {
+                                      appsProvider.saveApp(finalChangedApp);
+                                    }).catchError((e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text(e.toString())),
+                                      );
+                                    });
+                                  }
+                                });
+                              },
+                              icon: const Icon(Icons.settings)),
                         const SizedBox(width: 16.0),
                         Expanded(
                             child: ElevatedButton(

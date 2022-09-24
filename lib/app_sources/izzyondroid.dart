@@ -1,5 +1,6 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class IzzyOnDroid implements AppSource {
@@ -11,13 +12,14 @@ class IzzyOnDroid implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL;
+      throw notValidURL(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
 
   @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse(standardUrl));
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
@@ -54,4 +56,10 @@ class IzzyOnDroid implements AppSource {
   AppNames getAppNames(String standardUrl) {
     return AppNames('IzzyOnDroid', Uri.parse(standardUrl).pathSegments.last);
   }
+
+  @override
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+
+  @override
+  List<String> additionalDataDefaults = [];
 }

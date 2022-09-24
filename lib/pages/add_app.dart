@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -16,9 +17,12 @@ class AddAppPage extends StatefulWidget {
 }
 
 class _AddAppPageState extends State<AddAppPage> {
-  final _formKey = GlobalKey<FormState>();
-  final urlInputController = TextEditingController();
   bool gettingAppInfo = false;
+
+  String userInput = "";
+  AppSource? pickedSource;
+  List<String> additionalData = [];
+  bool validAdditionalData = true;
 
   @override
   Widget build(BuildContext context) {
@@ -28,103 +32,147 @@ class _AddAppPageState extends State<AddAppPage> {
         body: CustomScrollView(slivers: <Widget>[
           const CustomAppBar(title: 'Add App'),
           SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextFormField(
-                                decoration: const InputDecoration(
-                                    hintText:
-                                        'https://github.com/Author/Project',
-                                    helperText: 'Enter the App source URL'),
-                                controller: urlInputController,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.isEmpty ||
-                                      Uri.tryParse(value) == null) {
-                                    return 'Please enter a supported source URL';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16.0),
-                                child: ElevatedButton(
-                                  onPressed: gettingAppInfo
-                                      ? null
-                                      : () {
-                                          HapticFeedback.selectionClick();
-                                          if (_formKey.currentState!
-                                              .validate()) {
-                                            setState(() {
-                                              gettingAppInfo = true;
-                                            });
-                                            sourceProvider
-                                                .getApp(urlInputController
-                                                    .value.text)
-                                                .then((app) {
-                                              var appsProvider =
-                                                  context.read<AppsProvider>();
-                                              var settingsProvider = context
-                                                  .read<SettingsProvider>();
-                                              if (appsProvider.apps
-                                                  .containsKey(app.id)) {
-                                                throw 'App already added';
+            child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                              child: GeneratedForm(
+                                  items: [
+                                    [
+                                      GeneratedFormItem(
+                                          label: "App Source Url",
+                                          additionalValidators: [
+                                            (value) {
+                                              try {
+                                                sourceProvider
+                                                    .getSource(value ?? "")
+                                                    .standardizeURL(
+                                                        makeUrlHttps(
+                                                            value ?? ""));
+                                              } catch (e) {
+                                                return e is String
+                                                    ? e
+                                                    : "Error";
                                               }
-                                              settingsProvider
-                                                  .getInstallPermission()
-                                                  .then((_) {
-                                                appsProvider
-                                                    .saveApp(app)
-                                                    .then((_) {
-                                                  urlInputController.clear();
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              AppPage(
-                                                                  appId:
-                                                                      app.id)));
-                                                });
-                                              });
-                                            }).catchError((e) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content:
-                                                        Text(e.toString())),
-                                              );
-                                            }).whenComplete(() {
-                                              setState(() {
-                                                gettingAppInfo = false;
-                                              });
-                                            });
-                                          }
-                                        },
-                                  child: const Text('Add'),
-                                ),
-                              ),
-                            ],
+                                              return null;
+                                            }
+                                          ])
+                                    ]
+                                  ],
+                                  onValueChanges: (values, valid) {
+                                    setState(() {
+                                      userInput = values[0];
+                                      var source = valid
+                                          ? sourceProvider.getSource(userInput)
+                                          : null;
+                                      if (pickedSource != source) {
+                                        pickedSource = source;
+                                        additionalData = [];
+                                        validAdditionalData = source != null
+                                            ? sourceProvider
+                                                .doesSourceHaveRequiredAdditionalData(
+                                                    source)
+                                            : true;
+                                      }
+                                    });
+                                  },
+                                  defaultValues: const [])),
+                          const SizedBox(
+                            width: 16,
                           ),
-                        ),
+                          ElevatedButton(
+                              onPressed: gettingAppInfo ||
+                                      pickedSource == null ||
+                                      (pickedSource!.additionalDataFormItems
+                                              .isNotEmpty &&
+                                          !validAdditionalData)
+                                  ? null
+                                  : () {
+                                      HapticFeedback.selectionClick();
+                                      setState(() {
+                                        gettingAppInfo = true;
+                                      });
+                                      sourceProvider
+                                          .getApp(pickedSource!, userInput,
+                                              additionalData)
+                                          .then((app) {
+                                        var appsProvider =
+                                            context.read<AppsProvider>();
+                                        var settingsProvider =
+                                            context.read<SettingsProvider>();
+                                        if (appsProvider.apps
+                                            .containsKey(app.id)) {
+                                          throw 'App already added';
+                                        }
+                                        settingsProvider
+                                            .getInstallPermission()
+                                            .then((_) {
+                                          appsProvider.saveApp(app).then((_) {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        AppPage(
+                                                            appId: app.id)));
+                                          });
+                                        });
+                                      }).catchError((e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(content: Text(e.toString())),
+                                        );
+                                      }).whenComplete(() {
+                                        setState(() {
+                                          gettingAppInfo = false;
+                                        });
+                                      });
+                                    },
+                              child: const Text('Add'))
+                        ],
+                      ),
+                      const Divider(
+                        height: 64,
+                      ),
+                      if (pickedSource != null &&
+                          (pickedSource!.additionalDataFormItems.isNotEmpty))
                         Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                                'Additional Options for ${pickedSource?.runtimeType}',
+                                style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.primary)),
+                            const SizedBox(
+                              height: 16,
+                            ),
+                            GeneratedForm(
+                                items: pickedSource!.additionalDataFormItems,
+                                onValueChanges: (values, valid) {
+                                  setState(() {
+                                    additionalData = values;
+                                    validAdditionalData = valid;
+                                  });
+                                },
+                                defaultValues:
+                                    pickedSource!.additionalDataDefaults)
+                          ],
+                        )
+                      else
+                        Expanded(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                              // const SizedBox(
+                              //   height: 48,
+                              // ),
                               const Text(
                                 'Supported Sources:',
-                                // style: TextStyle(fontWeight: FontWeight.bold),
-                                // style: Theme.of(context).textTheme.bodySmall,
                               ),
                               const SizedBox(
                                 height: 8,
@@ -145,14 +193,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                             fontStyle: FontStyle.italic),
                                       )))
                                   .toList()
-                            ]),
-                        if (gettingAppInfo)
-                          const LinearProgressIndicator()
-                        else
-                          Container(),
-                      ],
-                    )),
-              ))
+                            ])),
+                    ])),
+          )
         ]));
   }
 }

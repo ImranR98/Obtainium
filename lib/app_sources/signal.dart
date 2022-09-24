@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Signal implements AppSource {
@@ -12,7 +13,8 @@ class Signal implements AppSource {
   }
 
   @override
-  Future<APKDetails> getLatestAPKDetails(String standardUrl) async {
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String> additionalData) async {
     Response res =
         await get(Uri.parse('https://updates.$host/android/latest.json'));
     if (res.statusCode == 200) {
@@ -33,4 +35,10 @@ class Signal implements AppSource {
 
   @override
   AppNames getAppNames(String standardUrl) => AppNames('Signal', 'Signal');
+
+  @override
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+
+  @override
+  List<String> additionalDataDefaults = [];
 }
