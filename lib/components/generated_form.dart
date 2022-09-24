@@ -140,9 +140,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
       if (rowInputs.key > 0) {
         rows.add([
           SizedBox(
-            height: widget.items[rowInputs.key][0].type == FormItemType.bool
+            height: widget.items[rowInputs.key][0].type == FormItemType.bool &&
+                    widget.items[rowInputs.key - 1][0].type ==
+                        FormItemType.string
                 ? 25
-                : 4,
+                : 8,
           )
         ]);
       }

@@ -72,7 +72,11 @@ class GitHub implements AppSource {
 
   @override
   List<List<GeneratedFormItem>> additionalDataFormItems = [
-    [GeneratedFormItem(label: "Include Prereleases", type: FormItemType.bool)],
+    [GeneratedFormItem(label: "Include prereleases", type: FormItemType.bool)],
+    [
+      GeneratedFormItem(
+          label: "Fallback to older releases", type: FormItemType.bool)
+    ],
     [
       GeneratedFormItem(
           label: "Filter APKs by Regular Expression",

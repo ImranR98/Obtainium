@@ -22,7 +22,7 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = "";
   AppSource? pickedSource;
   List<String> additionalData = [];
-  bool validAdditionalData = false;
+  bool validAdditionalData = true;
 
   @override
   Widget build(BuildContext context) {
@@ -124,14 +124,14 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: const Text('Add'))
                         ],
                       ),
+                      const Divider(
+                        height: 64,
+                      ),
                       if (pickedSource != null &&
                           (pickedSource!.additionalDataFormItems.isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Divider(
-                              height: 64,
-                            ),
                             Text(
                                 'Additional Options for ${pickedSource?.runtimeType}',
                                 style: TextStyle(
@@ -151,35 +151,39 @@ class _AddAppPageState extends State<AddAppPage> {
                                 defaultValues:
                                     pickedSource!.additionalDataDefaults)
                           ],
-                        ),
-                      // const SizedBox(
-                      //   height: 16,
-                      // ),
-                      // Column(
-                      //     crossAxisAlignment: CrossAxisAlignment.center,
-                      //     children: [
-                      //       const Text(
-                      //         'Supported Sources:',
-                      //       ),
-                      //       const SizedBox(
-                      //         height: 8,
-                      //       ),
-                      //       ...sourceProvider
-                      //           .getSourceHosts()
-                      //           .map((e) => GestureDetector(
-                      //               onTap: () {
-                      //                 launchUrlString('https://$e',
-                      //                     mode: LaunchMode.externalApplication);
-                      //               },
-                      //               child: Text(
-                      //                 e,
-                      //                 style: const TextStyle(
-                      //                     decoration: TextDecoration.underline,
-                      //                     fontStyle: FontStyle.italic),
-                      //               )))
-                      //           .toList()
-                      //     ]),
-                      // const Spacer(),
+                        )
+                      else
+                        Expanded(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                              // const SizedBox(
+                              //   height: 48,
+                              // ),
+                              const Text(
+                                'Supported Sources:',
+                              ),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              ...sourceProvider
+                                  .getSourceHosts()
+                                  .map((e) => GestureDetector(
+                                      onTap: () {
+                                        launchUrlString('https://$e',
+                                            mode:
+                                                LaunchMode.externalApplication);
+                                      },
+                                      child: Text(
+                                        e,
+                                        style: const TextStyle(
+                                            decoration:
+                                                TextDecoration.underline,
+                                            fontStyle: FontStyle.italic),
+                                      )))
+                                  .toList()
+                            ])),
                     ])),
           )
         ]));

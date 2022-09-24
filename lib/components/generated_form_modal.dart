@@ -55,5 +55,3 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
     );
   }
 }
-
-// TODO: Add support for larger textarea so this can be used for text/json imports
