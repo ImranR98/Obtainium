@@ -105,14 +105,17 @@ class AppsProvider with ChangeNotifier {
         osInfo.version.release!.compareTo('12') >= 0;
   }
 
-  Future<void> askUserToReturnToForeground(BuildContext context) async {
+  Future<void> askUserToReturnToForeground(BuildContext context,
+      {bool waitForFG = false}) async {
     NotificationsProvider notificationsProvider =
         context.read<NotificationsProvider>();
     if (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      await FGBGEvents.stream.first == FGBGType.foreground;
-      await notificationsProvider.cancel(completeInstallationNotification.id);
+      if (waitForFG) {
+        await FGBGEvents.stream.first == FGBGType.foreground;
+        await notificationsProvider.cancel(completeInstallationNotification.id);
+      }
     }
   }
 
@@ -143,8 +146,6 @@ class AppsProvider with ChangeNotifier {
       // If the App has more than one APK, the user should pick one (if context provided)
       String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
       if (apps[id]!.app.apkUrls.length > 1 && context != null) {
-        // ignore: use_build_context_synchronously
-        await askUserToReturnToForeground(context);
         apkUrl = await showDialog(
             context: context,
             builder: (BuildContext ctx) {
@@ -155,8 +156,6 @@ class AppsProvider with ChangeNotifier {
       if (apkUrl != null &&
           Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin &&
           context != null) {
-        // ignore: use_build_context_synchronously
-        await askUserToReturnToForeground(context);
         if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
