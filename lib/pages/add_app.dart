@@ -22,6 +22,7 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   AppSource? pickedSource;
   List<String> additionalData = [];
+  String customName = '';
   bool validAdditionalData = true;
 
   @override
@@ -79,6 +80,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .doesSourceHaveRequiredAdditionalData(
                                                     source)
                                             : true;
+                                        if (source == null) {
+                                          customName = '';
+                                        }
                                       }
                                     });
                                   },
@@ -100,7 +104,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                       });
                                       sourceProvider
                                           .getApp(pickedSource!, userInput,
-                                              additionalData)
+                                              additionalData,
+                                              customName: customName)
                                           .then((app) {
                                         var appsProvider =
                                             context.read<AppsProvider>();
@@ -162,7 +167,30 @@ class _AddAppPageState extends State<AddAppPage> {
                                   });
                                 },
                                 defaultValues:
-                                    pickedSource!.additionalDataDefaults)
+                                    pickedSource!.additionalDataDefaults),
+                            if (pickedSource != null)
+                              Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    const SizedBox(
+                                      height: 8,
+                                    ),
+                                    GeneratedForm(
+                                        items: [
+                                          [
+                                            GeneratedFormItem(
+                                                label: 'Custom App Name',
+                                                required: false)
+                                          ]
+                                        ],
+                                        onValueChanges: (values, valid) {
+                                          setState(() {
+                                            customName = values[0];
+                                          });
+                                        },
+                                        defaultValues: [customName])
+                                  ]),
                           ],
                         )
                       else

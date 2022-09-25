@@ -176,8 +176,8 @@ class SourceProvider {
     return false;
   }
 
-  Future<App> getApp(
-      AppSource source, String url, List<String> additionalData) async {
+  Future<App> getApp(AppSource source, String url, List<String> additionalData,
+      {String customName = ''}) async {
     String standardUrl = source.standardizeURL(makeUrlHttps(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -186,7 +186,9 @@ class SourceProvider {
         '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}',
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
-        names.name[0].toUpperCase() + names.name.substring(1),
+        customName.trim().isNotEmpty
+            ? customName
+            : names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,
         apk.apkUrls,
