@@ -214,6 +214,7 @@ class AppsPageState extends State<AppsPage> {
                                 }
                               });
                             },
+                            tooltip: 'Remove Selected Apps',
                             icon: const Icon(Icons.delete_outline_outlined),
                           ),
                           IconButton(
@@ -301,6 +302,7 @@ class AppsPageState extends State<AppsPage> {
                                         }
                                       });
                                     },
+                              tooltip: 'Install/Update Selected Apps',
                               icon: const Icon(
                                 Icons.file_download_outlined,
                               )),
@@ -315,6 +317,7 @@ class AppsPageState extends State<AppsPage> {
                               Share.share(urls,
                                   subject: 'Selected App URLs from Obtainium');
                             },
+                            tooltip: 'Share Selected App URLs',
                             icon: const Icon(Icons.share),
                           ),
                         ],

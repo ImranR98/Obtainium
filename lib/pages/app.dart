@@ -206,6 +206,7 @@ class _AppPageState extends State<AppPage> {
                                         }
                                       });
                                     },
+                              tooltip: 'Additional Options',
                               icon: const Icon(Icons.settings)),
                         const SizedBox(width: 16.0),
                         Expanded(
