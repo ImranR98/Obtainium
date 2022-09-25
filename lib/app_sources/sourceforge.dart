@@ -1,6 +1,5 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
