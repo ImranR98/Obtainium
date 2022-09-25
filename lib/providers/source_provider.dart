@@ -10,6 +10,7 @@ import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
+import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
 
@@ -144,7 +145,8 @@ class SourceProvider {
     FDroid(),
     IzzyOnDroid(),
     Mullvad(),
-    Signal()
+    Signal(),
+    SourceForge()
   ];
 
   // Add more mass source classes here so they are available via the service

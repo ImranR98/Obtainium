@@ -142,8 +142,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: const Text('Add'))
                         ],
                       ),
-                      if (pickedSource != null &&
-                          (pickedSource!.additionalDataFormItems.isNotEmpty))
+                      if (pickedSource != null)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -158,39 +157,38 @@ class _AddAppPageState extends State<AddAppPage> {
                             const SizedBox(
                               height: 16,
                             ),
-                            GeneratedForm(
-                                items: pickedSource!.additionalDataFormItems,
-                                onValueChanges: (values, valid) {
-                                  setState(() {
-                                    additionalData = values;
-                                    validAdditionalData = valid;
-                                  });
-                                },
-                                defaultValues:
-                                    pickedSource!.additionalDataDefaults),
+                            if (pickedSource!
+                                .additionalDataFormItems.isNotEmpty)
+                              GeneratedForm(
+                                  items: pickedSource!.additionalDataFormItems,
+                                  onValueChanges: (values, valid) {
+                                    setState(() {
+                                      additionalData = values;
+                                      validAdditionalData = valid;
+                                    });
+                                  },
+                                  defaultValues:
+                                      pickedSource!.additionalDataDefaults),
+                            if (pickedSource!
+                                .additionalDataFormItems.isNotEmpty)
+                              const SizedBox(
+                                height: 8,
+                              ),
                             if (pickedSource != null)
-                              Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    const SizedBox(
-                                      height: 8,
-                                    ),
-                                    GeneratedForm(
-                                        items: [
-                                          [
-                                            GeneratedFormItem(
-                                                label: 'Custom App Name',
-                                                required: false)
-                                          ]
-                                        ],
-                                        onValueChanges: (values, valid) {
-                                          setState(() {
-                                            customName = values[0];
-                                          });
-                                        },
-                                        defaultValues: [customName])
-                                  ]),
+                              GeneratedForm(
+                                  items: [
+                                    [
+                                      GeneratedFormItem(
+                                          label: 'Custom App Name',
+                                          required: false)
+                                    ]
+                                  ],
+                                  onValueChanges: (values, valid) {
+                                    setState(() {
+                                      customName = values[0];
+                                    });
+                                  },
+                                  defaultValues: [customName])
                           ],
                         )
                       else
