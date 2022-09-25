@@ -18,6 +18,8 @@ class AppsPage extends StatefulWidget {
 
 class AppsPageState extends State<AppsPage> {
   AppsFilter? filter;
+  var updatesOnlyFilter =
+      AppsFilter(includeUptodate: false, includeNonInstalled: false);
   Set<String> selectedIds = {};
 
   clearSelected() {
@@ -45,10 +47,25 @@ class AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var sortedApps = appsProvider.apps.values.toList();
+    var currentFilterIsUpdatesOnly =
+        filter?.isIdenticalTo(updatesOnlyFilter) ?? false;
 
     selectedIds = selectedIds
         .where((element) => sortedApps.map((e) => e.app.id).contains(element))
         .toSet();
+
+    var existingUpdateIdsAllOrSelected = appsProvider
+        .getExistingUpdates(installedOnly: true)
+        .where((element) => selectedIds.isEmpty
+            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            : selectedIds.contains(element))
+        .toList();
+    var newInstallIdsAllOrSelected = appsProvider
+        .getExistingUpdates(nonInstalledOnly: true)
+        .where((element) => selectedIds.isEmpty
+            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            : selectedIds.contains(element))
+        .toList();
 
     toggleAppSelected(String appId) {
       setState(() {
@@ -133,8 +150,9 @@ class AppsPageState extends State<AppsPage> {
                           : Text(
                               appsProvider.apps.isEmpty
                                   ? 'No Apps'
-                                  : 'No Search Results',
+                                  : 'No Apps for Filter',
                               style: Theme.of(context).textTheme.headlineMedium,
+                              textAlign: TextAlign.center,
                             ))),
             SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -175,154 +193,156 @@ class AppsPageState extends State<AppsPage> {
       persistentFooterButtons: [
         Row(
           children: [
-            TextButton.icon(
+            IconButton(
                 onPressed: () {
                   selectedIds.isEmpty
                       ? selectThese(sortedApps.map((e) => e.app.id).toList())
                       : clearSelected();
                 },
-                icon: Icon(selectedIds.isEmpty
-                    ? Icons.select_all_outlined
-                    : Icons.deselect_outlined),
-                label: Text(selectedIds.isEmpty
+                icon: Icon(
+                  selectedIds.isEmpty
+                      ? Icons.select_all_outlined
+                      : Icons.deselect_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                tooltip: selectedIds.isEmpty
                     ? 'Select All'
-                    : 'Deselect ${selectedIds.length.toString()}')),
+                    : 'Deselect ${selectedIds.length.toString()}'),
             const VerticalDivider(),
             Expanded(
-                child: selectedIds.isEmpty
-                    ? Container()
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () {
-                              showDialog<List<String>?>(
-                                  context: context,
-                                  builder: (BuildContext ctx) {
-                                    return GeneratedFormModal(
-                                      title: 'Remove Selected Apps?',
-                                      items: const [],
-                                      defaultValues: const [],
-                                      initValid: true,
-                                      message:
-                                          '${selectedIds.length} App${selectedIds.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedIds.length == 1 ? 'it' : 'them'} manually.',
-                                    );
-                                  }).then((values) {
-                                if (values != null) {
-                                  appsProvider.removeApps(selectedIds.toList());
-                                }
-                              });
-                            },
-                            tooltip: 'Remove Selected Apps',
-                            icon: const Icon(Icons.delete_outline_outlined),
-                          ),
-                          IconButton(
-                              visualDensity: VisualDensity.compact,
-                              onPressed: appsProvider.areDownloadsRunning() ||
-                                      selectedIds
-                                          .where((id) =>
-                                              appsProvider.apps[id]!.app
-                                                  .installedVersion !=
-                                              appsProvider
-                                                  .apps[id]!.app.latestVersion)
-                                          .isEmpty
-                                  ? null
-                                  : () {
-                                      HapticFeedback.heavyImpact();
-                                      var existingUpdateIdsSelected =
-                                          appsProvider
-                                              .getExistingUpdates(
-                                                  installedOnly: true)
-                                              .where((element) =>
-                                                  selectedIds.contains(element))
-                                              .toList();
-                                      var newInstallIdsSelected = appsProvider
-                                          .getExistingUpdates(
-                                              nonInstalledOnly: true)
-                                          .where((element) =>
-                                              selectedIds.contains(element))
-                                          .toList();
-                                      List<List<GeneratedFormItem>> formInputs =
-                                          [];
-                                      if (existingUpdateIdsSelected
-                                              .isNotEmpty &&
-                                          newInstallIdsSelected.isNotEmpty) {
-                                        formInputs.add([
-                                          GeneratedFormItem(
-                                              label:
-                                                  'Update ${existingUpdateIdsSelected.length} Apps?',
-                                              type: FormItemType.bool)
-                                        ]);
-                                        formInputs.add([
-                                          GeneratedFormItem(
-                                              label:
-                                                  'Install ${newInstallIdsSelected.length} new Apps?',
-                                              type: FormItemType.bool)
-                                        ]);
-                                      }
-                                      showDialog<List<String>?>(
-                                          context: context,
-                                          builder: (BuildContext ctx) {
-                                            return GeneratedFormModal(
-                                              title: 'Install Selected Apps?',
-                                              message:
-                                                  '${existingUpdateIdsSelected.length} update${existingUpdateIdsSelected.length == 1 ? '' : 's'} and ${newInstallIdsSelected.length} new install${newInstallIdsSelected.length == 1 ? '' : 's'}.',
-                                              items: formInputs,
-                                              defaultValues: const [
-                                                'true',
-                                                'true'
-                                              ],
-                                              initValid: true,
-                                            );
-                                          }).then((values) {
-                                        if (values != null) {
-                                          bool shouldInstallUpdates =
-                                              values.length < 2 ||
-                                                  values[0] == 'true';
-                                          bool shouldInstallNew =
-                                              values.length < 2 ||
-                                                  values[1] == 'true';
-                                          settingsProvider
-                                              .getInstallPermission()
-                                              .then((_) {
-                                            List<String> toInstall = [];
-                                            if (shouldInstallUpdates) {
-                                              toInstall.addAll(
-                                                  existingUpdateIdsSelected);
-                                            }
-                                            if (shouldInstallNew) {
-                                              toInstall.addAll(
-                                                  newInstallIdsSelected);
-                                            }
-                                            appsProvider
-                                                .downloadAndInstallLatestApp(
-                                                    toInstall, context);
-                                          });
-                                        }
-                                      });
-                                    },
-                              tooltip: 'Install/Update Selected Apps',
-                              icon: const Icon(
-                                Icons.file_download_outlined,
-                              )),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () {
-                              String urls = '';
-                              for (var id in selectedIds) {
-                                urls += '${appsProvider.apps[id]!.app.url}\n';
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                selectedIds.isEmpty
+                    ? const SizedBox()
+                    : IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          showDialog<List<String>?>(
+                              context: context,
+                              builder: (BuildContext ctx) {
+                                return GeneratedFormModal(
+                                  title: 'Remove Selected Apps?',
+                                  items: const [],
+                                  defaultValues: const [],
+                                  initValid: true,
+                                  message:
+                                      '${selectedIds.length} App${selectedIds.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedIds.length == 1 ? 'it' : 'them'} manually.',
+                                );
+                              }).then((values) {
+                            if (values != null) {
+                              appsProvider.removeApps(selectedIds.toList());
+                            }
+                          });
+                        },
+                        tooltip: 'Remove Selected Apps',
+                        icon: const Icon(Icons.delete_outline_outlined),
+                      ),
+                IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: appsProvider.areDownloadsRunning() ||
+                            (existingUpdateIdsAllOrSelected.isEmpty &&
+                                newInstallIdsAllOrSelected.isEmpty)
+                        ? null
+                        : () {
+                            HapticFeedback.heavyImpact();
+                            List<List<GeneratedFormItem>> formInputs = [];
+                            if (existingUpdateIdsAllOrSelected.isNotEmpty &&
+                                newInstallIdsAllOrSelected.isNotEmpty) {
+                              formInputs.add([
+                                GeneratedFormItem(
+                                    label:
+                                        'Update ${existingUpdateIdsAllOrSelected.length} Apps?',
+                                    type: FormItemType.bool)
+                              ]);
+                              formInputs.add([
+                                GeneratedFormItem(
+                                    label:
+                                        'Install ${newInstallIdsAllOrSelected.length} new Apps?',
+                                    type: FormItemType.bool)
+                              ]);
+                            }
+                            showDialog<List<String>?>(
+                                context: context,
+                                builder: (BuildContext ctx) {
+                                  return GeneratedFormModal(
+                                    title:
+                                        'Install${selectedIds.isEmpty ? ' ' : ' Selected '}Apps?',
+                                    message:
+                                        '${existingUpdateIdsAllOrSelected.length} update${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'} and ${newInstallIdsAllOrSelected.length} new install${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}.',
+                                    items: formInputs,
+                                    defaultValues: const ['true', 'true'],
+                                    initValid: true,
+                                  );
+                                }).then((values) {
+                              if (values != null) {
+                                bool shouldInstallUpdates =
+                                    values.length < 2 || values[0] == 'true';
+                                bool shouldInstallNew =
+                                    values.length < 2 || values[1] == 'true';
+                                settingsProvider
+                                    .getInstallPermission()
+                                    .then((_) {
+                                  List<String> toInstall = [];
+                                  if (shouldInstallUpdates) {
+                                    toInstall
+                                        .addAll(existingUpdateIdsAllOrSelected);
+                                  }
+                                  if (shouldInstallNew) {
+                                    toInstall
+                                        .addAll(newInstallIdsAllOrSelected);
+                                  }
+                                  appsProvider.downloadAndInstallLatestApp(
+                                      toInstall, context);
+                                });
                               }
-                              urls = urls.substring(0, urls.length - 1);
-                              Share.share(urls,
-                                  subject: 'Selected App URLs from Obtainium');
-                            },
-                            tooltip: 'Share Selected App URLs',
-                            icon: const Icon(Icons.share),
-                          ),
-                        ],
-                      )),
+                            });
+                          },
+                    tooltip:
+                        'Install/Update${selectedIds.isEmpty ? ' ' : ' Selected '}Apps',
+                    icon: const Icon(
+                      Icons.file_download_outlined,
+                    )),
+                selectedIds.isEmpty
+                    ? const SizedBox()
+                    : IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          String urls = '';
+                          for (var id in selectedIds) {
+                            urls += '${appsProvider.apps[id]!.app.url}\n';
+                          }
+                          urls = urls.substring(0, urls.length - 1);
+                          Share.share(urls,
+                              subject: 'Selected App URLs from Obtainium');
+                        },
+                        tooltip: 'Share Selected App URLs',
+                        icon: const Icon(Icons.share),
+                      ),
+              ],
+            )),
             const VerticalDivider(),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                setState(() {
+                  if (currentFilterIsUpdatesOnly) {
+                    filter = null;
+                  } else {
+                    filter = updatesOnlyFilter;
+                  }
+                });
+              },
+              tooltip: currentFilterIsUpdatesOnly
+                  ? 'Remove Out-of-Date App Filter'
+                  : 'Show Out-of-Date Apps Only',
+              icon: Icon(
+                currentFilterIsUpdatesOnly
+                    ? Icons.update_disabled_rounded
+                    : Icons.update_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
             appsProvider.apps.isEmpty
                 ? const SizedBox()
                 : TextButton.icon(
@@ -367,10 +387,6 @@ class AppsPageState extends State<AppsPage> {
                             if (AppsFilter().isIdenticalTo(filter!)) {
                               filter = null;
                             }
-                          });
-                        } else {
-                          setState(() {
-                            filter = null;
                           });
                         }
                       });
