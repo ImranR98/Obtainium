@@ -247,13 +247,13 @@ class AppsPageState extends State<AppsPage> {
                                         formInputs.add([
                                           GeneratedFormItem(
                                               label:
-                                                  "Update ${existingUpdateIdsSelected.length} Apps?",
+                                                  'Update ${existingUpdateIdsSelected.length} Apps?',
                                               type: FormItemType.bool)
                                         ]);
                                         formInputs.add([
                                           GeneratedFormItem(
                                               label:
-                                                  "Install ${newInstallIdsSelected.length} new Apps?",
+                                                  'Install ${newInstallIdsSelected.length} new Apps?',
                                               type: FormItemType.bool)
                                         ]);
                                       }
@@ -261,13 +261,13 @@ class AppsPageState extends State<AppsPage> {
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return GeneratedFormModal(
-                                              title: "Install Selected Apps?",
+                                              title: 'Install Selected Apps?',
                                               message:
-                                                  "${existingUpdateIdsSelected.length} update${existingUpdateIdsSelected.length == 1 ? '' : 's'} and ${newInstallIdsSelected.length} new install${newInstallIdsSelected.length == 1 ? '' : 's'}.",
+                                                  '${existingUpdateIdsSelected.length} update${existingUpdateIdsSelected.length == 1 ? '' : 's'} and ${newInstallIdsSelected.length} new install${newInstallIdsSelected.length == 1 ? '' : 's'}.',
                                               items: formInputs,
                                               defaultValues: const [
-                                                "true",
-                                                "true"
+                                                'true',
+                                                'true'
                                               ],
                                               initValid: true,
                                             );
@@ -275,10 +275,10 @@ class AppsPageState extends State<AppsPage> {
                                         if (values != null) {
                                           bool shouldInstallUpdates =
                                               values.length < 2 ||
-                                                  values[0] == "true";
+                                                  values[0] == 'true';
                                           bool shouldInstallNew =
                                               values.length < 2 ||
-                                                  values[1] == "true";
+                                                  values[1] == 'true';
                                           settingsProvider
                                               .getInstallPermission()
                                               .then((_) {
@@ -323,18 +323,18 @@ class AppsPageState extends State<AppsPage> {
                                 items: [
                                   [
                                     GeneratedFormItem(
-                                        label: "App Name", required: false),
+                                        label: 'App Name', required: false),
                                     GeneratedFormItem(
-                                        label: "Author", required: false)
+                                        label: 'Author', required: false)
                                   ],
                                   [
                                     GeneratedFormItem(
-                                        label: "Up to Date Apps",
+                                        label: 'Up to Date Apps',
                                         type: FormItemType.bool)
                                   ],
                                   [
                                     GeneratedFormItem(
-                                        label: "Non-Installed Apps",
+                                        label: 'Non-Installed Apps',
                                         type: FormItemType.bool)
                                   ]
                                 ],
@@ -371,8 +371,8 @@ class AppsFilter {
   late bool includeNonInstalled;
 
   AppsFilter(
-      {this.nameFilter = "",
-      this.authorFilter = "",
+      {this.nameFilter = '',
+      this.authorFilter = '',
       this.includeUptodate = true,
       this.includeNonInstalled = true});
 
@@ -380,16 +380,16 @@ class AppsFilter {
     return [
       nameFilter,
       authorFilter,
-      includeUptodate ? "true" : "",
-      includeNonInstalled ? "true" : ""
+      includeUptodate ? 'true' : '',
+      includeNonInstalled ? 'true' : ''
     ];
   }
 
   AppsFilter.fromValuesArray(List<String> values) {
     nameFilter = values[0];
     authorFilter = values[1];
-    includeUptodate = values[2] == "true";
-    includeNonInstalled = values[3] == "true";
+    includeUptodate = values[2] == 'true';
+    includeNonInstalled = values[3] == 'true';
   }
 
   bool isIdenticalTo(AppsFilter other) =>

@@ -21,9 +21,9 @@ class GitHub implements AppSource {
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     var includePrereleases =
-        additionalData.isNotEmpty && additionalData[0] == "true";
+        additionalData.isNotEmpty && additionalData[0] == 'true';
     var fallbackToOlderReleases =
-        additionalData.length >= 2 && additionalData[1] == "true";
+        additionalData.length >= 2 && additionalData[1] == 'true';
     var regexFilter = additionalData.length >= 3 && additionalData[2].isNotEmpty
         ? additionalData[2]
         : null;
@@ -92,14 +92,14 @@ class GitHub implements AppSource {
 
   @override
   List<List<GeneratedFormItem>> additionalDataFormItems = [
-    [GeneratedFormItem(label: "Include prereleases", type: FormItemType.bool)],
+    [GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)],
     [
       GeneratedFormItem(
-          label: "Fallback to older releases", type: FormItemType.bool)
+          label: 'Fallback to older releases', type: FormItemType.bool)
     ],
     [
       GeneratedFormItem(
-          label: "Filter Release Titles by Regular Expression",
+          label: 'Filter Release Titles by Regular Expression',
           type: FormItemType.string,
           required: false,
           additionalValidators: [
@@ -110,7 +110,7 @@ class GitHub implements AppSource {
               try {
                 RegExp(value);
               } catch (e) {
-                return "Invalid regular expression";
+                return 'Invalid regular expression';
               }
               return null;
             }
@@ -119,5 +119,5 @@ class GitHub implements AppSource {
   ];
 
   @override
-  List<String> additionalDataDefaults = ["true", "true", ""];
+  List<String> additionalDataDefaults = ['true', 'true', ''];
 }

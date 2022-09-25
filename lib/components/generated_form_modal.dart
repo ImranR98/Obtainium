@@ -9,7 +9,7 @@ class GeneratedFormModal extends StatefulWidget {
       required this.items,
       required this.defaultValues,
       this.initValid = false,
-      this.message = ""});
+      this.message = ''});
 
   final String title;
   final String message;
@@ -40,7 +40,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (widget.message.isNotEmpty) Text(widget.message),
         if (widget.message.isNotEmpty)
-          SizedBox(
+          const SizedBox(
             height: 16,
           ),
         GeneratedForm(

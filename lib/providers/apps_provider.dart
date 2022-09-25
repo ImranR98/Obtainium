@@ -113,9 +113,6 @@ class AppsProvider with ChangeNotifier {
           cancelExisting: true);
       await FGBGEvents.stream.first == FGBGType.foreground;
       await notificationsProvider.cancel(completeInstallationNotification.id);
-      // We need to wait for the App to come to the foreground to install it
-      // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
-      // https://github.com/flutter/flutter/issues/13937
     }
   }
 

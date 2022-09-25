@@ -12,7 +12,7 @@ class GeneratedFormItem {
   late List<String? Function(String? value)> additionalValidators;
 
   GeneratedFormItem(
-      {this.label = "Input",
+      {this.label = 'Input',
       this.type = FormItemType.string,
       this.required = true,
       this.max = 1,
@@ -69,7 +69,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         .map((row) => row.map((e) {
               return j < widget.defaultValues.length
                   ? widget.defaultValues[j++]
-                  : "";
+                  : '';
             }).toList())
         .toList();
 
@@ -89,7 +89,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
               });
             },
             decoration: InputDecoration(
-                helperText: e.value.label + (e.value.required ? " *" : "")),
+                helperText: e.value.label + (e.value.required ? ' *' : '')),
             minLines: e.value.max <= 1 ? null : e.value.max,
             maxLines: e.value.max <= 1 ? 1 : e.value.max,
             validator: (value) {
@@ -122,10 +122,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
             children: [
               Text(widget.items[r][e].label),
               Switch(
-                  value: values[r][e] == "true",
+                  value: values[r][e] == 'true',
                   onChanged: (value) {
                     setState(() {
-                      values[r][e] = value ? "true" : "";
+                      values[r][e] = value ? 'true' : '';
                       someValueChanged();
                     });
                   })

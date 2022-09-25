@@ -85,7 +85,7 @@ class App {
 
 escapeRegEx(String s) {
   return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
-    return "\\${x[0]}";
+    return '\\${x[0]}';
   });
 }
 
