@@ -7,6 +7,7 @@ import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AppsPage extends StatefulWidget {
   const AppsPage({super.key});
@@ -194,6 +195,7 @@ class AppsPageState extends State<AppsPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           IconButton(
+                            visualDensity: VisualDensity.compact,
                             onPressed: () {
                               showDialog<List<String>?>(
                                   context: context,
@@ -215,6 +217,7 @@ class AppsPageState extends State<AppsPage> {
                             icon: const Icon(Icons.delete_outline_outlined),
                           ),
                           IconButton(
+                              visualDensity: VisualDensity.compact,
                               onPressed: appsProvider.areDownloadsRunning() ||
                                       selectedIds
                                           .where((id) =>
@@ -301,6 +304,19 @@ class AppsPageState extends State<AppsPage> {
                               icon: const Icon(
                                 Icons.file_download_outlined,
                               )),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () {
+                              String urls = '';
+                              for (var id in selectedIds) {
+                                urls += '${appsProvider.apps[id]!.app.url}\n';
+                              }
+                              urls = urls.substring(0, urls.length - 1);
+                              Share.share(urls,
+                                  subject: 'Selected App URLs from Obtainium');
+                            },
+                            icon: const Icon(Icons.share),
+                          ),
                         ],
                       )),
             const VerticalDivider(),

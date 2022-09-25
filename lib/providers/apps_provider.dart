@@ -124,7 +124,7 @@ class AppsProvider with ChangeNotifier {
     await AppInstaller.installApk(file.file.path, actionRequired: false);
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
-    await saveApp(apps[file.appId]!.app);
+    await saveApps([apps[file.appId]!.app]);
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -171,7 +171,7 @@ class AppsProvider with ChangeNotifier {
         int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
         if (urlInd != apps[id]!.app.preferredApkIndex) {
           apps[id]!.app.preferredApkIndex = urlInd;
-          await saveApp(apps[id]!.app);
+          await saveApps([apps[id]!.app]);
         }
         if (context != null ||
             (await canInstallSilently(apps[id]!.app) &&
@@ -247,11 +247,14 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveApp(App app) async {
-    File('${(await getAppsDir()).path}/${app.id}.json')
-        .writeAsStringSync(jsonEncode(app.toJson()));
-    apps.update(app.id, (value) => AppInMemory(app, value.downloadProgress),
-        ifAbsent: () => AppInMemory(app, null));
+  Future<void> saveApps(List<App> apps) async {
+    for (var app in apps) {
+      File('${(await getAppsDir()).path}/${app.id}.json')
+          .writeAsStringSync(jsonEncode(app.toJson()));
+      this.apps.update(
+          app.id, (value) => AppInMemory(app, value.downloadProgress),
+          ifAbsent: () => AppInMemory(app, null));
+    }
     notifyListeners();
   }
 
@@ -289,7 +292,7 @@ class AppsProvider with ChangeNotifier {
       if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
         newApp.preferredApkIndex = currentApp.preferredApkIndex;
       }
-      await saveApp(newApp);
+      await saveApps([newApp]);
       return newApp;
     }
     return null;
@@ -353,7 +356,7 @@ class AppsProvider with ChangeNotifier {
     for (App a in importedApps) {
       a.installedVersion =
           apps.containsKey(a.id) ? apps[a]?.app.installedVersion : null;
-      await saveApp(a);
+      await saveApps([a]);
     }
     notifyListeners();
     return importedApps.length;

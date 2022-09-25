@@ -109,16 +109,18 @@ class MyApp extends StatelessWidget {
       if (isFirstRun) {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApp(App(
-            'imranr98_obtainium_${GitHub().host}',
-            'https://github.com/ImranR98/Obtainium',
-            'ImranR98',
-            'Obtainium',
-            currentReleaseTag,
-            currentReleaseTag,
-            [],
-            0,
-            ['true']));
+        appsProvider.saveApps([
+          App(
+              'imranr98_obtainium_${GitHub().host}',
+              'https://github.com/ImranR98/Obtainium',
+              'ImranR98',
+              'Obtainium',
+              currentReleaseTag,
+              currentReleaseTag,
+              [],
+              0,
+              ['true'])
+        ]);
       }
     }
 

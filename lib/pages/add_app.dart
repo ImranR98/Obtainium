@@ -113,7 +113,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                         settingsProvider
                                             .getInstallPermission()
                                             .then((_) {
-                                          appsProvider.saveApp(app).then((_) {
+                                          appsProvider
+                                              .saveApps([app]).then((_) {
                                             Navigator.push(
                                                 context,
                                                 MaterialPageRoute(

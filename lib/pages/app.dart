@@ -126,8 +126,8 @@ class _AppPageState extends State<AppPage> {
                                                                 .installedVersion =
                                                             updatedApp
                                                                 .latestVersion;
-                                                        appsProvider.saveApp(
-                                                            updatedApp);
+                                                        appsProvider.saveApps(
+                                                            [updatedApp]);
                                                       }
                                                       Navigator.of(context)
                                                           .pop();
@@ -167,8 +167,8 @@ class _AppPageState extends State<AppPage> {
                                                         updatedApp
                                                                 .installedVersion =
                                                             null;
-                                                        appsProvider.saveApp(
-                                                            updatedApp);
+                                                        appsProvider.saveApps(
+                                                            [updatedApp]);
                                                       }
                                                       Navigator.of(context)
                                                           .pop();
@@ -202,7 +202,7 @@ class _AppPageState extends State<AppPage> {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
                                           changedApp.additionalData = values;
-                                          appsProvider.saveApp(changedApp);
+                                          appsProvider.saveApps([changedApp]);
                                         }
                                       });
                                     },

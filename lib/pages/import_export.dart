@@ -47,7 +47,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
         if (appsProvider.apps.containsKey(app.id)) {
           errorsMap.addAll({app.id: 'App already added'});
         } else {
-          await appsProvider.saveApp(app);
+          await appsProvider.saveApps([app]);
         }
       }
       List<List<String>> errors =
