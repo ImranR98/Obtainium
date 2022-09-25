@@ -54,19 +54,6 @@ class AppsPageState extends State<AppsPage> {
         .where((element) => sortedApps.map((e) => e.app.id).contains(element))
         .toSet();
 
-    var existingUpdateIdsAllOrSelected = appsProvider
-        .getExistingUpdates(installedOnly: true)
-        .where((element) => selectedIds.isEmpty
-            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedIds.contains(element))
-        .toList();
-    var newInstallIdsAllOrSelected = appsProvider
-        .getExistingUpdates(nonInstalledOnly: true)
-        .where((element) => selectedIds.isEmpty
-            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedIds.contains(element))
-        .toList();
-
     toggleAppSelected(String appId) {
       setState(() {
         if (selectedIds.contains(appId)) {
@@ -128,6 +115,19 @@ class AppsPageState extends State<AppsPage> {
     if (settingsProvider.sortOrder == SortOrderSettings.ascending) {
       sortedApps = sortedApps.reversed.toList();
     }
+
+    var existingUpdateIdsAllOrSelected = appsProvider
+        .getExistingUpdates(installedOnly: true)
+        .where((element) => selectedIds.isEmpty
+            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            : selectedIds.contains(element))
+        .toList();
+    var newInstallIdsAllOrSelected = appsProvider
+        .getExistingUpdates(nonInstalledOnly: true)
+        .where((element) => selectedIds.isEmpty
+            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            : selectedIds.contains(element))
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -252,13 +252,13 @@ class AppsPageState extends State<AppsPage> {
                               formInputs.add([
                                 GeneratedFormItem(
                                     label:
-                                        'Update ${existingUpdateIdsAllOrSelected.length} Apps?',
+                                        'Update ${existingUpdateIdsAllOrSelected.length} App${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'}',
                                     type: FormItemType.bool)
                               ]);
                               formInputs.add([
                                 GeneratedFormItem(
                                     label:
-                                        'Install ${newInstallIdsAllOrSelected.length} new Apps?',
+                                        'Install ${newInstallIdsAllOrSelected.length} new App${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}',
                                     type: FormItemType.bool)
                               ]);
                             }
