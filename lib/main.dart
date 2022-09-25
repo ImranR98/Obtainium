@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
       if (settingsProvider.updateInterval > 0) {
         Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
             frequency: Duration(minutes: settingsProvider.updateInterval),
-            // initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            initialDelay: Duration(minutes: settingsProvider.updateInterval),
             constraints: Constraints(networkType: NetworkType.connected),
             existingWorkPolicy: ExistingWorkPolicy.replace);
       } else {
