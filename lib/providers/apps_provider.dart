@@ -98,24 +98,24 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    // TODO: This is unreliable - try to get from OS
+    // TODO: This is unreliable - try to get from OS in the future
     var osInfo = await DeviceInfoPlugin().androidInfo;
     return app.installedVersion != null &&
         osInfo.version.sdkInt! >= 30 &&
         osInfo.version.release!.compareTo('12') >= 0;
   }
 
-  Future<void> askUserToReturnToForeground(BuildContext context) async {
+  Future<void> askUserToReturnToForeground(BuildContext context,
+      {bool waitForFG = false}) async {
     NotificationsProvider notificationsProvider =
         context.read<NotificationsProvider>();
     if (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      await FGBGEvents.stream.first == FGBGType.foreground;
-      await notificationsProvider.cancel(completeInstallationNotification.id);
-      // We need to wait for the App to come to the foreground to install it
-      // Can't try to call install plugin in a background isolate (may not have worked anyways) because of:
-      // https://github.com/flutter/flutter/issues/13937
+      if (waitForFG) {
+        await FGBGEvents.stream.first == FGBGType.foreground;
+        await notificationsProvider.cancel(completeInstallationNotification.id);
+      }
     }
   }
 
@@ -127,7 +127,7 @@ class AppsProvider with ChangeNotifier {
     await AppInstaller.installApk(file.file.path, actionRequired: false);
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
-    await saveApp(apps[file.appId]!.app);
+    await saveApps([apps[file.appId]!.app]);
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -146,8 +146,6 @@ class AppsProvider with ChangeNotifier {
       // If the App has more than one APK, the user should pick one (if context provided)
       String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
       if (apps[id]!.app.apkUrls.length > 1 && context != null) {
-        // ignore: use_build_context_synchronously
-        await askUserToReturnToForeground(context);
         apkUrl = await showDialog(
             context: context,
             builder: (BuildContext ctx) {
@@ -158,8 +156,6 @@ class AppsProvider with ChangeNotifier {
       if (apkUrl != null &&
           Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin &&
           context != null) {
-        // ignore: use_build_context_synchronously
-        await askUserToReturnToForeground(context);
         if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -174,7 +170,7 @@ class AppsProvider with ChangeNotifier {
         int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
         if (urlInd != apps[id]!.app.preferredApkIndex) {
           apps[id]!.app.preferredApkIndex = urlInd;
-          await saveApp(apps[id]!.app);
+          await saveApps([apps[id]!.app]);
         }
         if (context != null ||
             (await canInstallSilently(apps[id]!.app) &&
@@ -203,9 +199,11 @@ class AppsProvider with ChangeNotifier {
     }
 
     if (context != null) {
-      for (var i in regularInstalls) {
+      if (regularInstalls.isNotEmpty) {
         // ignore: use_build_context_synchronously
         await askUserToReturnToForeground(context);
+      }
+      for (var i in regularInstalls) {
         await installApk(i);
       }
     }
@@ -248,23 +246,30 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveApp(App app) async {
-    File('${(await getAppsDir()).path}/${app.id}.json')
-        .writeAsStringSync(jsonEncode(app.toJson()));
-    apps.update(app.id, (value) => AppInMemory(app, value.downloadProgress),
-        ifAbsent: () => AppInMemory(app, null));
+  Future<void> saveApps(List<App> apps) async {
+    for (var app in apps) {
+      File('${(await getAppsDir()).path}/${app.id}.json')
+          .writeAsStringSync(jsonEncode(app.toJson()));
+      this.apps.update(
+          app.id, (value) => AppInMemory(app, value.downloadProgress),
+          ifAbsent: () => AppInMemory(app, null));
+    }
     notifyListeners();
   }
 
-  Future<void> removeApp(String appId) async {
-    File file = File('${(await getAppsDir()).path}/$appId.json');
-    if (file.existsSync()) {
-      file.deleteSync();
+  Future<void> removeApps(List<String> appIds) async {
+    for (var appId in appIds) {
+      File file = File('${(await getAppsDir()).path}/$appId.json');
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      if (apps.containsKey(appId)) {
+        apps.remove(appId);
+      }
     }
-    if (apps.containsKey(appId)) {
-      apps.remove(appId);
+    if (appIds.isNotEmpty) {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   bool checkAppObjectForUpdate(App app) {
@@ -286,7 +291,7 @@ class AppsProvider with ChangeNotifier {
       if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
         newApp.preferredApkIndex = currentApp.preferredApkIndex;
       }
-      await saveApp(newApp);
+      await saveApps([newApp]);
       return newApp;
     }
     return null;
@@ -309,14 +314,20 @@ class AppsProvider with ChangeNotifier {
     return updates;
   }
 
-  List<String> getExistingUpdates({bool installedOnly = false}) {
+  List<String> getExistingUpdates(
+      {bool installedOnly = false, bool nonInstalledOnly = false}) {
     List<String> updateAppIds = [];
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
       if (app.installedVersion != app.latestVersion &&
-          (app.installedVersion != null || !installedOnly)) {
-        updateAppIds.add(app.id);
+          (!installedOnly || !nonInstalledOnly)) {
+        if ((app.installedVersion == null &&
+                (nonInstalledOnly || !installedOnly) ||
+            (app.installedVersion != null &&
+                (installedOnly || !nonInstalledOnly)))) {
+          updateAppIds.add(app.id);
+        }
       }
     }
     return updateAppIds;
@@ -344,7 +355,7 @@ class AppsProvider with ChangeNotifier {
     for (App a in importedApps) {
       a.installedVersion =
           apps.containsKey(a.id) ? apps[a]?.app.installedVersion : null;
-      await saveApp(a);
+      await saveApps([a]);
     }
     notifyListeners();
     return importedApps.length;

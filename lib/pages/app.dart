@@ -126,8 +126,8 @@ class _AppPageState extends State<AppPage> {
                                                                 .installedVersion =
                                                             updatedApp
                                                                 .latestVersion;
-                                                        appsProvider.saveApp(
-                                                            updatedApp);
+                                                        appsProvider.saveApps(
+                                                            [updatedApp]);
                                                       }
                                                       Navigator.of(context)
                                                           .pop();
@@ -167,8 +167,8 @@ class _AppPageState extends State<AppPage> {
                                                         updatedApp
                                                                 .installedVersion =
                                                             null;
-                                                        appsProvider.saveApp(
-                                                            updatedApp);
+                                                        appsProvider.saveApps(
+                                                            [updatedApp]);
                                                       }
                                                       Navigator.of(context)
                                                           .pop();
@@ -202,10 +202,11 @@ class _AppPageState extends State<AppPage> {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
                                           changedApp.additionalData = values;
-                                          appsProvider.saveApp(changedApp);
+                                          appsProvider.saveApps([changedApp]);
                                         }
                                       });
                                     },
+                              tooltip: 'Additional Options',
                               icon: const Icon(Icons.settings)),
                         const SizedBox(width: 16.0),
                         Expanded(
@@ -247,9 +248,8 @@ class _AppPageState extends State<AppPage> {
                                                 onPressed: () {
                                                   HapticFeedback
                                                       .selectionClick();
-                                                  appsProvider
-                                                      .removeApp(app!.app.id)
-                                                      .then((_) {
+                                                  appsProvider.removeApps(
+                                                      [app!.app.id]).then((_) {
                                                     int count = 0;
                                                     Navigator.of(context)
                                                         .popUntil((_) =>

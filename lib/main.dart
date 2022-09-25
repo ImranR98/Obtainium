@@ -13,7 +13,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.3.2-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.4.0-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 @pragma('vm:entry-point')
 void bgTaskCallback() {
@@ -99,7 +99,7 @@ class MyApp extends StatelessWidget {
       if (settingsProvider.updateInterval > 0) {
         Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
             frequency: Duration(minutes: settingsProvider.updateInterval),
-            // initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            initialDelay: Duration(minutes: settingsProvider.updateInterval),
             constraints: Constraints(networkType: NetworkType.connected),
             existingWorkPolicy: ExistingWorkPolicy.replace);
       } else {
@@ -109,16 +109,18 @@ class MyApp extends StatelessWidget {
       if (isFirstRun) {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApp(App(
-            'imranr98_obtainium_${GitHub().host}',
-            'https://github.com/ImranR98/Obtainium',
-            'ImranR98',
-            'Obtainium',
-            currentReleaseTag,
-            currentReleaseTag,
-            [],
-            0,
-            ["true"]));
+        appsProvider.saveApps([
+          App(
+              'imranr98_obtainium_${GitHub().host}',
+              'https://github.com/ImranR98/Obtainium',
+              'ImranR98',
+              'Obtainium',
+              currentReleaseTag,
+              currentReleaseTag,
+              [],
+              0,
+              ['true'])
+        ]);
       }
     }
 

@@ -19,7 +19,7 @@ class AddAppPage extends StatefulWidget {
 class _AddAppPageState extends State<AddAppPage> {
   bool gettingAppInfo = false;
 
-  String userInput = "";
+  String userInput = '';
   AppSource? pickedSource;
   List<String> additionalData = [];
   bool validAdditionalData = true;
@@ -44,19 +44,19 @@ class _AddAppPageState extends State<AddAppPage> {
                                   items: [
                                     [
                                       GeneratedFormItem(
-                                          label: "App Source Url",
+                                          label: 'App Source Url',
                                           additionalValidators: [
                                             (value) {
                                               try {
                                                 sourceProvider
-                                                    .getSource(value ?? "")
+                                                    .getSource(value ?? '')
                                                     .standardizeURL(
                                                         makeUrlHttps(
-                                                            value ?? ""));
+                                                            value ?? ''));
                                               } catch (e) {
                                                 return e is String
                                                     ? e
-                                                    : "Error";
+                                                    : 'Error';
                                               }
                                               return null;
                                             }
@@ -113,7 +113,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                         settingsProvider
                                             .getInstallPermission()
                                             .then((_) {
-                                          appsProvider.saveApp(app).then((_) {
+                                          appsProvider
+                                              .saveApps([app]).then((_) {
                                             Navigator.push(
                                                 context,
                                                 MaterialPageRoute(

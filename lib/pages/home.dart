@@ -25,7 +25,8 @@ class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
 
   List<NavigationPageItem> pages = [
-    NavigationPageItem('Apps', Icons.apps, const AppsPage()),
+    NavigationPageItem(
+        'Apps', Icons.apps, AppsPage(key: GlobalKey<AppsPageState>())),
     NavigationPageItem('Add App', Icons.add, const AddAppPage()),
     NavigationPageItem(
         'Import/Export', Icons.import_export, const ImportExportPage()),
@@ -88,7 +89,10 @@ class _HomePageState extends State<HomePage> {
             });
             return false;
           }
-          return true;
+          return !(pages[0].widget.key as GlobalKey<AppsPageState>)
+              .currentState
+              ?.clearSelected();
+          // return !appsPageKey.currentState?.clearSelected();
         });
   }
 }
