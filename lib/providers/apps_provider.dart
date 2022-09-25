@@ -98,7 +98,7 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    // TODO: This is unreliable - try to get from OS
+    // TODO: This is unreliable - try to get from OS in the future
     var osInfo = await DeviceInfoPlugin().androidInfo;
     return app.installedVersion != null &&
         osInfo.version.sdkInt! >= 30 &&
@@ -203,9 +203,11 @@ class AppsProvider with ChangeNotifier {
     }
 
     if (context != null) {
-      for (var i in regularInstalls) {
+      if (regularInstalls.isNotEmpty) {
         // ignore: use_build_context_synchronously
         await askUserToReturnToForeground(context);
+      }
+      for (var i in regularInstalls) {
         await installApk(i);
       }
     }
@@ -256,15 +258,19 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeApp(String appId) async {
-    File file = File('${(await getAppsDir()).path}/$appId.json');
-    if (file.existsSync()) {
-      file.deleteSync();
+  Future<void> removeApps(List<String> appIds) async {
+    for (var appId in appIds) {
+      File file = File('${(await getAppsDir()).path}/$appId.json');
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      if (apps.containsKey(appId)) {
+        apps.remove(appId);
+      }
     }
-    if (apps.containsKey(appId)) {
-      apps.remove(appId);
+    if (appIds.isNotEmpty) {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   bool checkAppObjectForUpdate(App app) {
@@ -309,14 +315,20 @@ class AppsProvider with ChangeNotifier {
     return updates;
   }
 
-  List<String> getExistingUpdates({bool installedOnly = false}) {
+  List<String> getExistingUpdates(
+      {bool installedOnly = false, bool nonInstalledOnly = false}) {
     List<String> updateAppIds = [];
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
       if (app.installedVersion != app.latestVersion &&
-          (app.installedVersion != null || !installedOnly)) {
-        updateAppIds.add(app.id);
+          (!installedOnly || !nonInstalledOnly)) {
+        if ((app.installedVersion == null &&
+                (nonInstalledOnly || !installedOnly) ||
+            (app.installedVersion != null &&
+                (installedOnly || !nonInstalledOnly)))) {
+          updateAppIds.add(app.id);
+        }
       }
     }
     return updateAppIds;

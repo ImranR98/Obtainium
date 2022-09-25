@@ -247,9 +247,8 @@ class _AppPageState extends State<AppPage> {
                                                 onPressed: () {
                                                   HapticFeedback
                                                       .selectionClick();
-                                                  appsProvider
-                                                      .removeApp(app!.app.id)
-                                                      .then((_) {
+                                                  appsProvider.removeApps(
+                                                      [app!.app.id]).then((_) {
                                                     int count = 0;
                                                     Navigator.of(context)
                                                         .popUntil((_) =>

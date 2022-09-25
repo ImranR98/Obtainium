@@ -43,7 +43,6 @@ class AppsPageState extends State<AppsPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    var existingUpdateAppIds = appsProvider.getExistingUpdates();
     var sortedApps = appsProvider.apps.values.toList();
 
     selectedIds = selectedIds
@@ -63,7 +62,11 @@ class AppsPageState extends State<AppsPage> {
     if (filter != null) {
       sortedApps = sortedApps.where((app) {
         if (app.app.installedVersion == app.app.latestVersion &&
-            filter!.onlyNonLatest) {
+            !(filter!.includeUptodate)) {
+          return false;
+        }
+        if (app.app.installedVersion == null &&
+            !(filter!.includeNonInstalled)) {
           return false;
         }
         if (filter!.nameFilter.isEmpty && filter!.authorFilter.isEmpty) {
@@ -184,38 +187,133 @@ class AppsPageState extends State<AppsPage> {
                     ? 'Select All'
                     : 'Deselect ${selectedIds.length.toString()}')),
             const VerticalDivider(),
-            const Spacer(),
-            selectedIds.isEmpty
-                ? const SizedBox()
-                : IconButton(
-                    onPressed: () {
-                      // TODO: Delete selected Apps after confirming
-                    },
-                    icon: const Icon(Icons.install_mobile_outlined)),
-            selectedIds.isEmpty
-                ? const SizedBox()
-                : IconButton(
-                    onPressed: () {
-                      // TODO: Install selected Apps if they are not up to date after confirming (replace existing button)
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded)),
-            existingUpdateAppIds.isEmpty || filter != null
-                ? const SizedBox()
-                : IconButton(
-                    onPressed: appsProvider.areDownloadsRunning()
-                        ? null
-                        : () {
-                            HapticFeedback.heavyImpact();
-                            settingsProvider.getInstallPermission().then((_) {
-                              appsProvider.downloadAndInstallLatestApp(
-                                  existingUpdateAppIds, context);
-                            });
-                          },
-                    icon: const Icon(Icons.install_mobile_outlined),
-                  ),
+            Expanded(
+                child: selectedIds.isEmpty
+                    ? Container()
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              showDialog<List<String>?>(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return GeneratedFormModal(
+                                      title: 'Remove Selected Apps?',
+                                      items: const [],
+                                      defaultValues: const [],
+                                      initValid: true,
+                                      message:
+                                          '${selectedIds.length} App${selectedIds.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedIds.length == 1 ? 'it' : 'them'} manually.',
+                                    );
+                                  }).then((values) {
+                                if (values != null) {
+                                  appsProvider.removeApps(selectedIds.toList());
+                                }
+                              });
+                            },
+                            icon: const Icon(Icons.delete_outline_outlined),
+                          ),
+                          IconButton(
+                              onPressed: appsProvider.areDownloadsRunning() ||
+                                      selectedIds
+                                          .where((id) =>
+                                              appsProvider.apps[id]!.app
+                                                  .installedVersion !=
+                                              appsProvider
+                                                  .apps[id]!.app.latestVersion)
+                                          .isEmpty
+                                  ? null
+                                  : () {
+                                      HapticFeedback.heavyImpact();
+                                      var existingUpdateIdsSelected =
+                                          appsProvider
+                                              .getExistingUpdates(
+                                                  installedOnly: true)
+                                              .where((element) =>
+                                                  selectedIds.contains(element))
+                                              .toList();
+                                      var newInstallIdsSelected = appsProvider
+                                          .getExistingUpdates(
+                                              nonInstalledOnly: true)
+                                          .where((element) =>
+                                              selectedIds.contains(element))
+                                          .toList();
+                                      List<List<GeneratedFormItem>> formInputs =
+                                          [];
+                                      if (existingUpdateIdsSelected
+                                              .isNotEmpty &&
+                                          newInstallIdsSelected.isNotEmpty) {
+                                        formInputs.add([
+                                          GeneratedFormItem(
+                                              label:
+                                                  "Update ${existingUpdateIdsSelected.length} Apps?",
+                                              type: FormItemType.bool)
+                                        ]);
+                                        formInputs.add([
+                                          GeneratedFormItem(
+                                              label:
+                                                  "Install ${newInstallIdsSelected.length} new Apps?",
+                                              type: FormItemType.bool)
+                                        ]);
+                                      }
+                                      showDialog<List<String>?>(
+                                          context: context,
+                                          builder: (BuildContext ctx) {
+                                            return GeneratedFormModal(
+                                              title: "Install Selected Apps?",
+                                              message:
+                                                  "${existingUpdateIdsSelected.length} update${existingUpdateIdsSelected.length == 1 ? '' : 's'} and ${newInstallIdsSelected.length} new install${newInstallIdsSelected.length == 1 ? '' : 's'}.",
+                                              items: formInputs,
+                                              defaultValues: const [
+                                                "true",
+                                                "true"
+                                              ],
+                                              initValid: true,
+                                            );
+                                          }).then((values) {
+                                        if (values != null) {
+                                          bool shouldInstallUpdates =
+                                              values.length < 2 ||
+                                                  values[0] == "true";
+                                          bool shouldInstallNew =
+                                              values.length < 2 ||
+                                                  values[1] == "true";
+                                          settingsProvider
+                                              .getInstallPermission()
+                                              .then((_) {
+                                            List<String> toInstall = [];
+                                            if (shouldInstallUpdates) {
+                                              toInstall.addAll(
+                                                  existingUpdateIdsSelected);
+                                            }
+                                            if (shouldInstallNew) {
+                                              toInstall.addAll(
+                                                  newInstallIdsSelected);
+                                            }
+                                            appsProvider
+                                                .downloadAndInstallLatestApp(
+                                                    toInstall, context);
+                                          });
+                                        }
+                                      });
+                                    },
+                              icon: const Icon(
+                                Icons.file_download_outlined,
+                              )),
+                        ],
+                      )),
+            const VerticalDivider(),
             appsProvider.apps.isEmpty
                 ? const SizedBox()
-                : IconButton(
+                : TextButton.icon(
+                    label: Text(
+                      filter == null ? 'Filter' : 'Filter *',
+                      style: TextStyle(
+                          fontWeight: filter == null
+                              ? FontWeight.normal
+                              : FontWeight.bold),
+                    ),
                     onPressed: () {
                       showDialog<List<String>?>(
                           context: context,
@@ -231,27 +329,25 @@ class AppsPageState extends State<AppsPage> {
                                   ],
                                   [
                                     GeneratedFormItem(
-                                        label: "Ignore Up-to-Date Apps",
+                                        label: "Up to Date Apps",
+                                        type: FormItemType.bool)
+                                  ],
+                                  [
+                                    GeneratedFormItem(
+                                        label: "Non-Installed Apps",
                                         type: FormItemType.bool)
                                   ]
                                 ],
                                 defaultValues: filter == null
-                                    ? []
-                                    : [
-                                        filter!.nameFilter,
-                                        filter!.authorFilter,
-                                        filter!.onlyNonLatest ? 'true' : ''
-                                      ]);
+                                    ? AppsFilter().toValuesArray()
+                                    : filter!.toValuesArray());
                           }).then((values) {
-                        if (values != null &&
-                            values
-                                .where((element) => element.isNotEmpty)
-                                .isNotEmpty) {
+                        if (values != null) {
                           setState(() {
-                            filter = AppsFilter(
-                                nameFilter: values[0],
-                                authorFilter: values[1],
-                                onlyNonLatest: values[2] == "true");
+                            filter = AppsFilter.fromValuesArray(values);
+                            if (AppsFilter().isIdenticalTo(filter!)) {
+                              filter = null;
+                            }
                           });
                         } else {
                           setState(() {
@@ -260,8 +356,7 @@ class AppsPageState extends State<AppsPage> {
                         }
                       });
                     },
-                    icon: Icon(
-                        filter == null ? Icons.search : Icons.manage_search))
+                    icon: const Icon(Icons.filter_list_rounded))
           ],
         ),
       ],
@@ -272,10 +367,34 @@ class AppsPageState extends State<AppsPage> {
 class AppsFilter {
   late String nameFilter;
   late String authorFilter;
-  late bool onlyNonLatest;
+  late bool includeUptodate;
+  late bool includeNonInstalled;
 
   AppsFilter(
       {this.nameFilter = "",
       this.authorFilter = "",
-      this.onlyNonLatest = false});
+      this.includeUptodate = true,
+      this.includeNonInstalled = true});
+
+  List<String> toValuesArray() {
+    return [
+      nameFilter,
+      authorFilter,
+      includeUptodate ? "true" : "",
+      includeNonInstalled ? "true" : ""
+    ];
+  }
+
+  AppsFilter.fromValuesArray(List<String> values) {
+    nameFilter = values[0];
+    authorFilter = values[1];
+    includeUptodate = values[2] == "true";
+    includeNonInstalled = values[3] == "true";
+  }
+
+  bool isIdenticalTo(AppsFilter other) =>
+      authorFilter.trim() == other.authorFilter.trim() &&
+      nameFilter.trim() == other.nameFilter.trim() &&
+      includeUptodate == other.includeUptodate &&
+      includeNonInstalled == other.includeNonInstalled;
 }
