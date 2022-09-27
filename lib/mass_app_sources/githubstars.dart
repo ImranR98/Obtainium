@@ -15,8 +15,8 @@ class GitHubStars implements MassAppSource {
     if (args.length != requiredArgs.length) {
       throw 'Wrong number of arguments provided';
     }
-    Response res =
-        await get(Uri.parse('https://api.github.com/users/${args[0]}/starred'));
+    Response res = await get(Uri.parse(
+        'https://api.github.com/users/${args[0]}/starred?per_page=100')); //TODO: Make requests for more pages until you run out
     if (res.statusCode == 200) {
       return (jsonDecode(res.body) as List<dynamic>)
           .map((e) => e['html_url'] as String)
