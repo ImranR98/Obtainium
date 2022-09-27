@@ -13,6 +13,16 @@ enum SortColumnSettings { added, nameAuthor, authorName }
 
 enum SortOrderSettings { ascending, descending }
 
+const maxAPIRateLimitMinutes = 30;
+const minUpdateIntervalMinutes = maxAPIRateLimitMinutes + 30;
+const maxUpdateIntervalMinutes = 4320;
+List<int> updateIntervals = [60, 120, 240, 480, 1440, 4320, 0]
+    .where((element) =>
+        (element >= minUpdateIntervalMinutes &&
+            element <= maxUpdateIntervalMinutes) ||
+        element == 0)
+    .toList();
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
 
@@ -45,7 +55,17 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    return prefs?.getInt('updateInterval') ?? 1440;
+    var min = prefs?.getInt('updateInterval') ?? 60;
+    if (!updateIntervals.contains(min)) {
+      var temp = updateIntervals[0];
+      for (var i in updateIntervals) {
+        if (min > i) {
+          temp = i;
+        }
+      }
+      min = temp;
+    }
+    return min;
   }
 
   set updateInterval(int min) {
