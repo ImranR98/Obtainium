@@ -169,41 +169,41 @@ class _SettingsPageState extends State<SettingsPage> {
                                     labelText:
                                         'Background Update Checking Interval'),
                                 value: settingsProvider.updateInterval,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 15,
-                                    child: Text('15 Minutes'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 30,
-                                    child: Text('30 Minutes'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 60,
-                                    child: Text('1 Hour'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 360,
-                                    child: Text('6 Hours'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 720,
-                                    child: Text('12 Hours'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 1440,
-                                    child: Text('1 Day'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 0,
-                                    child: Text('Never - Manual Only'),
-                                  ),
-                                ],
+                                items: updateIntervals.map((e) {
+                                  int displayNum = (e < 60
+                                          ? e
+                                          : e < 1440
+                                              ? e / 60
+                                              : e / 1440)
+                                      .round();
+                                  var displayUnit = (e < 60
+                                      ? 'Minute'
+                                      : e < 1440
+                                          ? 'Hour'
+                                          : 'Day');
+
+                                  String display = e == 0
+                                      ? 'Never - Manual Only'
+                                      : '$displayNum $displayUnit${displayNum == 1 ? '' : 's'}';
+                                  return DropdownMenuItem(
+                                      value: e, child: Text(display));
+                                }).toList(),
                                 onChanged: (value) {
                                   if (value != null) {
                                     settingsProvider.updateInterval = value;
                                   }
                                 }),
+                            const SizedBox(
+                              height: 8,
+                            ),
+                            Text(
+                              'Large App collections may require multiple cycles',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium!
+                                  .merge(const TextStyle(
+                                      fontStyle: FontStyle.italic)),
+                            ),
                             const Spacer(),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,

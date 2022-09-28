@@ -297,12 +297,23 @@ class AppsProvider with ChangeNotifier {
     return null;
   }
 
-  Future<List<App>> checkUpdates() async {
+  Future<List<App>> checkUpdates({DateTime? ignoreAfter}) async {
     List<App> updates = [];
     if (!gettingUpdates) {
       gettingUpdates = true;
 
       List<String> appIds = apps.keys.toList();
+      if (ignoreAfter != null) {
+        appIds = appIds
+            .where((id) =>
+                apps[id]!.app.lastUpdateCheck != null &&
+                apps[id]!.app.lastUpdateCheck!.isBefore(ignoreAfter))
+            .toList();
+      }
+      appIds.sort((a, b) => (apps[a]!.app.lastUpdateCheck ??
+              DateTime.fromMicrosecondsSinceEpoch(0))
+          .compareTo(apps[b]!.app.lastUpdateCheck ??
+              DateTime.fromMicrosecondsSinceEpoch(0)));
       for (int i = 0; i < appIds.length; i++) {
         App? newApp = await getUpdate(appIds[i]);
         if (newApp != null) {

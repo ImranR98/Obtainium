@@ -38,6 +38,7 @@ class App {
   List<String> apkUrls = [];
   late int preferredApkIndex;
   late List<String> additionalData;
+  late DateTime? lastUpdateCheck;
   App(
       this.id,
       this.url,
@@ -47,7 +48,8 @@ class App {
       this.latestVersion,
       this.apkUrls,
       this.preferredApkIndex,
-      this.additionalData);
+      this.additionalData,
+      this.lastUpdateCheck);
 
   @override
   String toString() {
@@ -69,7 +71,10 @@ class App {
       json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
       json['additionalData'] == null
           ? SourceProvider().getSource(json['url']).additionalDataDefaults
-          : List<String>.from(jsonDecode(json['additionalData'])));
+          : List<String>.from(jsonDecode(json['additionalData'])),
+      json['lastUpdateCheck'] == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']));
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -80,7 +85,8 @@ class App {
         'latestVersion': latestVersion,
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
-        'additionalData': jsonEncode(additionalData)
+        'additionalData': jsonEncode(additionalData),
+        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch
       };
 }
 
@@ -195,15 +201,17 @@ class SourceProvider {
         apk.version,
         apk.apkUrls,
         apk.apkUrls.length - 1,
-        additionalData);
+        additionalData,
+        DateTime.now());
   }
 
   /// Returns a length 2 list, where the first element is a list of Apps and
   /// the second is a Map<String, dynamic> of URLs and errors
-  Future<List<dynamic>> getApps(List<String> urls) async {
+  Future<List<dynamic>> getApps(List<String> urls,
+      {List<String> ignoreUrls = const []}) async {
     List<App> apps = [];
     Map<String, dynamic> errors = {};
-    for (var url in urls) {
+    for (var url in urls.where((element) => !ignoreUrls.contains(element))) {
       try {
         var source = getSource(url);
         apps.add(await getApp(source, url, source.additionalDataDefaults));

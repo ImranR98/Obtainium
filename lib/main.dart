@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -15,45 +16,73 @@ import 'package:device_info_plus/device_info_plus.dart';
 const String currentReleaseTag =
     'v0.4.1-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
+const String bgUpdateCheckTaskName = 'bg-update-check';
+
+bgUpdateCheck(int? ignoreAfterMicroseconds) async {
+  DateTime? ignoreAfter = ignoreAfterMicroseconds != null
+      ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
+      : null;
+  var notificationsProvider = NotificationsProvider();
+  await notificationsProvider.notify(checkingUpdatesNotification);
+  try {
+    var appsProvider = AppsProvider();
+    await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
+    await appsProvider.loadApps();
+    // List<String> existingUpdateIds = // TODO: Uncomment this and below when it works
+    //     appsProvider.getExistingUpdates(installedOnly: true);
+    List<String> existingUpdateIds =
+        appsProvider.getExistingUpdates(installedOnly: true);
+    // DateTime nextIgnoreAfter = DateTime.now();
+    try {
+      await appsProvider.checkUpdates(ignoreAfter: ignoreAfter);
+    } catch (e) {
+      if (e is RateLimitError) {
+        // Ignore these (scheduling another task as below does not work)
+        // Workmanager().registerOneOffTask(
+        //     bgUpdateCheckTaskName, bgUpdateCheckTaskName,
+        //     constraints: Constraints(networkType: NetworkType.connected),
+        //     initialDelay: Duration(minutes: e.remainingMinutes),
+        //     inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
+      } else {
+        rethrow;
+      }
+    }
+    List<App> newUpdates = appsProvider
+        .getExistingUpdates(installedOnly: true)
+        .where((id) => !existingUpdateIds.contains(id))
+        .map((e) => appsProvider.apps[e]!.app)
+        .toList();
+    // List<String> silentlyUpdated = await appsProvider
+    //     .downloadAndInstallLatestApp(
+    //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
+    // if (silentlyUpdated.isNotEmpty) {
+    //   newUpdates
+    //       .where((element) => !silentlyUpdated.contains(element.id))
+    //       .toList();
+    //   notificationsProvider.notify(
+    //       SilentUpdateNotification(
+    //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
+    //       cancelExisting: true);
+    // }
+    if (newUpdates.isNotEmpty) {
+      notificationsProvider.notify(UpdateNotification(newUpdates),
+          cancelExisting: true);
+    }
+    return Future.value(true);
+  } catch (e) {
+    notificationsProvider.notify(ErrorCheckingUpdatesNotification(e.toString()),
+        cancelExisting: true);
+    return Future.error(false);
+  } finally {
+    await notificationsProvider.cancel(checkingUpdatesNotification.id);
+  }
+}
+
 @pragma('vm:entry-point')
 void bgTaskCallback() {
-  // Background update checking process
-  Workmanager().executeTask((task, taskName) async {
-    var notificationsProvider = NotificationsProvider();
-    await notificationsProvider.notify(checkingUpdatesNotification);
-    try {
-      var appsProvider = AppsProvider();
-      await notificationsProvider
-          .cancel(ErrorCheckingUpdatesNotification('').id);
-      await appsProvider.loadApps();
-      // List<String> existingUpdateIds = // TODO: Uncomment this and below when it works
-      //     appsProvider.getExistingUpdates(installedOnly: true);
-      List<App> newUpdates = await appsProvider.checkUpdates();
-      // List<String> silentlyUpdated = await appsProvider
-      //     .downloadAndInstallLatestApp(
-      //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
-      // if (silentlyUpdated.isNotEmpty) {
-      //   newUpdates
-      //       .where((element) => !silentlyUpdated.contains(element.id))
-      //       .toList();
-      //   notificationsProvider.notify(
-      //       SilentUpdateNotification(
-      //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
-      //       cancelExisting: true);
-      // }
-      if (newUpdates.isNotEmpty) {
-        notificationsProvider.notify(UpdateNotification(newUpdates),
-            cancelExisting: true);
-      }
-      return Future.value(true);
-    } catch (e) {
-      notificationsProvider.notify(
-          ErrorCheckingUpdatesNotification(e.toString()),
-          cancelExisting: true);
-      return Future.value(false);
-    } finally {
-      await notificationsProvider.cancel(checkingUpdatesNotification.id);
-    }
+  // Background process callback
+  Workmanager().executeTask((task, inputData) async {
+    return await bgUpdateCheck(inputData?['ignoreAfter']);
   });
 }
 
@@ -95,16 +124,6 @@ class MyApp extends StatelessWidget {
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     } else {
-      // Register the background update task according to the user's setting
-      if (settingsProvider.updateInterval > 0) {
-        Workmanager().registerPeriodicTask('bg-update-check', 'bg-update-check',
-            frequency: Duration(minutes: settingsProvider.updateInterval),
-            initialDelay: Duration(minutes: settingsProvider.updateInterval),
-            constraints: Constraints(networkType: NetworkType.connected),
-            existingWorkPolicy: ExistingWorkPolicy.replace);
-      } else {
-        Workmanager().cancelByUniqueName('bg-update-check');
-      }
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
@@ -119,8 +138,23 @@ class MyApp extends StatelessWidget {
               currentReleaseTag,
               [],
               0,
-              ['true'])
+              ['true'],
+              null)
         ]);
+      }
+      // Register the background update task according to the user's setting
+      if (settingsProvider.updateInterval == 0) {
+        Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
+      } else {
+        Workmanager().registerPeriodicTask(
+            bgUpdateCheckTaskName, bgUpdateCheckTaskName,
+            frequency: Duration(minutes: settingsProvider.updateInterval),
+            initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            constraints: Constraints(networkType: NetworkType.connected),
+            existingWorkPolicy: ExistingWorkPolicy.keep,
+            backoffPolicy: BackoffPolicy.linear,
+            backoffPolicyDelay:
+                const Duration(minutes: minUpdateIntervalMinutes));
       }
     }
 

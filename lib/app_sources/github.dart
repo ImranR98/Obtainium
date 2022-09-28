@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub implements AppSource {
@@ -76,7 +77,10 @@ class GitHub implements AppSource {
       return APKDetails(version, targetRelease['apkUrls']);
     } else {
       if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw 'Rate limit reached - try again in ${(int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000).toString()} minutes';
+        throw RateLimitError(
+            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
+                    60000000)
+                .round());
       }
 
       throw couldNotFindReleases;
