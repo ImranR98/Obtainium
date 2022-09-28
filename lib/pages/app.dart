@@ -85,6 +85,15 @@ class _AppPageState extends State<AppPage> {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
+                const SizedBox(
+                  height: 32,
+                ),
+                Text(
+                  'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontStyle: FontStyle.italic, fontSize: 12),
+                )
               ],
             ),
       bottomSheet: Padding(
