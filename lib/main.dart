@@ -114,8 +114,7 @@ void main() async {
 var defaultThemeColour = Colors.deepPurple;
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
-  var existingUpdateInterval = -1;
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -143,23 +142,19 @@ class MyApp extends StatelessWidget {
               null)
         ]);
       }
-      if (existingUpdateInterval != settingsProvider.updateInterval) {
-        existingUpdateInterval = settingsProvider.updateInterval;
-        // Register the background update task according to the user's setting
-        if (existingUpdateInterval == 0) {
-          Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
-        } else {
-          Workmanager().registerPeriodicTask(
-              bgUpdateCheckTaskName, bgUpdateCheckTaskName,
-              frequency: Duration(minutes: existingUpdateInterval),
-              initialDelay: Duration(
-                  minutes: settingsProvider.updateInterval), // TODO: uncomment
-              constraints: Constraints(networkType: NetworkType.connected),
-              existingWorkPolicy: ExistingWorkPolicy.replace,
-              backoffPolicy: BackoffPolicy.linear,
-              backoffPolicyDelay:
-                  const Duration(minutes: minUpdateIntervalMinutes));
-        }
+      // Register the background update task according to the user's setting
+      if (settingsProvider.updateInterval == 0) {
+        Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
+      } else {
+        Workmanager().registerPeriodicTask(
+            bgUpdateCheckTaskName, bgUpdateCheckTaskName,
+            frequency: Duration(minutes: settingsProvider.updateInterval),
+            initialDelay: Duration(minutes: settingsProvider.updateInterval),
+            constraints: Constraints(networkType: NetworkType.connected),
+            existingWorkPolicy: ExistingWorkPolicy.keep,
+            backoffPolicy: BackoffPolicy.linear,
+            backoffPolicyDelay:
+                const Duration(minutes: minUpdateIntervalMinutes));
       }
     }
 
