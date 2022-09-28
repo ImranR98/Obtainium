@@ -22,31 +22,26 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
-  print('Called with $ignoreAfter');
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
-    print('A');
     var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    print('B');
     await appsProvider.loadApps();
     // List<String> existingUpdateIds = // TODO: Uncomment this and below when it works
     //     appsProvider.getExistingUpdates(installedOnly: true);
-
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
-    print('Existing Update length is ${existingUpdateIds.length}');
     DateTime nextIgnoreAfter = DateTime.now();
     try {
       await appsProvider.checkUpdates(ignoreAfter: ignoreAfter);
     } catch (e) {
       if (e is RateLimitError) {
-        print('Got rate limit error of ${e.remainingMinutes}');
+        // Ignore these (scheduling another task as below does not work)
         Workmanager().registerOneOffTask(
             bgUpdateCheckTaskName, bgUpdateCheckTaskName,
             constraints: Constraints(networkType: NetworkType.connected),
-            initialDelay: const Duration(minutes: maxAPIRateLimitMinutes),
+            initialDelay: Duration(minutes: e.remainingMinutes),
             inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
       } else {
         rethrow;
@@ -57,7 +52,6 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
         .where((id) => !existingUpdateIds.contains(id))
         .map((e) => appsProvider.apps[e]!.app)
         .toList();
-    print('New Update length is ${newUpdates.length}');
     // List<String> silentlyUpdated = await appsProvider
     //     .downloadAndInstallLatestApp(
     //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
@@ -113,14 +107,15 @@ void main() async {
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())
     ],
-    child: const MyApp(),
+    child: MyApp(),
   ));
 }
 
 var defaultThemeColour = Colors.deepPurple;
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+  var existingUpdateInterval = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -130,20 +125,6 @@ class MyApp extends StatelessWidget {
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     } else {
-      // Register the background update task according to the user's setting
-      if (settingsProvider.updateInterval > 0) {
-        Workmanager().registerPeriodicTask(
-            bgUpdateCheckTaskName, bgUpdateCheckTaskName,
-            frequency: Duration(minutes: settingsProvider.updateInterval),
-            // initialDelay: Duration(minutes: settingsProvider.updateInterval), // TODO: uncomment
-            constraints: Constraints(networkType: NetworkType.connected),
-            existingWorkPolicy: ExistingWorkPolicy.replace,
-            backoffPolicy: BackoffPolicy.linear,
-            backoffPolicyDelay:
-                const Duration(minutes: minUpdateIntervalMinutes));
-      } else {
-        Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
-      }
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
@@ -161,6 +142,24 @@ class MyApp extends StatelessWidget {
               ['true'],
               null)
         ]);
+      }
+      if (existingUpdateInterval != settingsProvider.updateInterval) {
+        existingUpdateInterval = settingsProvider.updateInterval;
+        // Register the background update task according to the user's setting
+        if (existingUpdateInterval == 0) {
+          Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
+        } else {
+          Workmanager().registerPeriodicTask(
+              bgUpdateCheckTaskName, bgUpdateCheckTaskName,
+              frequency: Duration(minutes: existingUpdateInterval),
+              initialDelay: Duration(
+                  minutes: settingsProvider.updateInterval), // TODO: uncomment
+              constraints: Constraints(networkType: NetworkType.connected),
+              existingWorkPolicy: ExistingWorkPolicy.replace,
+              backoffPolicy: BackoffPolicy.linear,
+              backoffPolicyDelay:
+                  const Duration(minutes: minUpdateIntervalMinutes));
+        }
       }
     }
 
