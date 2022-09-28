@@ -193,6 +193,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                     settingsProvider.updateInterval = value;
                                   }
                                 }),
+                            SizedBox(
+                              height: 8,
+                            ),
+                            Text(
+                              'Note: Large App collections take up multiple cycles',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium!
+                                  .merge(
+                                      TextStyle(fontStyle: FontStyle.italic)),
+                            ),
                             const Spacer(),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
