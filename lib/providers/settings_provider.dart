@@ -16,7 +16,7 @@ enum SortOrderSettings { ascending, descending }
 const maxAPIRateLimitMinutes = 30;
 const minUpdateIntervalMinutes = maxAPIRateLimitMinutes + 30;
 const maxUpdateIntervalMinutes = 4320;
-List<int> updateIntervals = [15, 30, 60, 120, 240, 480, 1440, 4320, 0]
+List<int> updateIntervals = [15, 30, 60, 120, 180, 360, 720, 1440, 4320, 0]
     .where((element) =>
         (element >= minUpdateIntervalMinutes &&
             element <= maxUpdateIntervalMinutes) ||
@@ -55,7 +55,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    var min = prefs?.getInt('updateInterval') ?? 60;
+    var min = prefs?.getInt('updateInterval') ?? 180;
     if (!updateIntervals.contains(min)) {
       var temp = updateIntervals[0];
       for (var i in updateIntervals) {
