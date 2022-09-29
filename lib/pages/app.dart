@@ -35,67 +35,84 @@ class _AppPageState extends State<AppPage> {
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: settingsProvider.showAppWebpage
-          ? WebView(
-              initialUrl: app?.app.url,
-              javascriptMode: JavascriptMode.unrestricted,
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  app?.app.name ?? 'App',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                Text(
-                  'By ${app?.app.author ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                GestureDetector(
-                    onTap: () {
-                      if (app?.app.url != null) {
-                        launchUrlString(app?.app.url ?? '',
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    child: Text(
-                      app?.app.url ?? '',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          decoration: TextDecoration.underline,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 12),
-                    )),
-                const SizedBox(
-                  height: 32,
-                ),
-                Text(
-                  'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                Text(
-                  'Installed Version: ${app?.app.installedVersion ?? 'None'}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(
-                  height: 32,
-                ),
-                Text(
-                  'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontStyle: FontStyle.italic, fontSize: 12),
+      body: RefreshIndicator(
+          child: settingsProvider.showAppWebpage
+              ? WebView(
+                  initialUrl: app?.app.url,
+                  javascriptMode: JavascriptMode.unrestricted,
                 )
-              ],
-            ),
+              : CustomScrollView(
+                  slivers: [
+                    SliverFillRemaining(
+                        child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          app?.app.name ?? 'App',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.displayLarge,
+                        ),
+                        Text(
+                          'By ${app?.app.author ?? 'Unknown'}',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(
+                          height: 32,
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              if (app?.app.url != null) {
+                                launchUrlString(app?.app.url ?? '',
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Text(
+                              app?.app.url ?? '',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  decoration: TextDecoration.underline,
+                                  fontStyle: FontStyle.italic,
+                                  fontSize: 12),
+                            )),
+                        const SizedBox(
+                          height: 32,
+                        ),
+                        Text(
+                          'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        Text(
+                          'Installed Version: ${app?.app.installedVersion ?? 'None'}',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(
+                          height: 32,
+                        ),
+                        Text(
+                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontStyle: FontStyle.italic, fontSize: 12),
+                        )
+                      ],
+                    )),
+                  ],
+                ),
+          onRefresh: () async {
+            if (app != null) {
+              try {
+                await appsProvider.getUpdate(app.app.id);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            }
+          }),
       bottomSheet: Padding(
           padding: EdgeInsets.fromLTRB(
               0, 0, 0, MediaQuery.of(context).padding.bottom),
