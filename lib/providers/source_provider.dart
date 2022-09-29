@@ -96,7 +96,7 @@ escapeRegEx(String s) {
   });
 }
 
-makeUrlHttps(String url) {
+preStandardizeUrl(String url) {
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
@@ -159,7 +159,7 @@ class SourceProvider {
   List<MassAppSource> massSources = [GitHubStars()];
 
   AppSource getSource(String url) {
-    url = makeUrlHttps(url);
+    url = preStandardizeUrl(url);
     AppSource? source;
     for (var s in sources) {
       if (url.toLowerCase().contains('://${s.host}')) {
@@ -186,7 +186,7 @@ class SourceProvider {
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
       {String customName = ''}) async {
-    String standardUrl = source.standardizeURL(makeUrlHttps(url));
+    String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);

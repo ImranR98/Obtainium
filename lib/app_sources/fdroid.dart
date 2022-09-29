@@ -9,8 +9,14 @@ class FDroid implements AppSource {
 
   @override
   String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/packages/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExB =
+        RegExp('^https?://$host/+[^/]+/+packages/+[^/]+');
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    if (match != null) {
+      url = 'https://$host/packages/${Uri.parse(url).pathSegments.last}';
+    }
+    RegExp standardUrlRegExA = RegExp('^https?://$host/+packages/+[^/]+');
+    match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw notValidURL(runtimeType.toString());
     }

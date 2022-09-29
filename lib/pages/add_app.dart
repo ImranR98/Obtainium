@@ -52,7 +52,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 sourceProvider
                                                     .getSource(value ?? '')
                                                     .standardizeURL(
-                                                        makeUrlHttps(
+                                                        preStandardizeUrl(
                                                             value ?? ''));
                                               } catch (e) {
                                                 return e is String
