@@ -4,5 +4,5 @@ class RateLimitError {
 
   @override
   String toString() =>
-      'Rate limit reached - try again in $remainingMinutes minutes';
+      'Too many requests (rate limited) - try again in $remainingMinutes minutes';
 }

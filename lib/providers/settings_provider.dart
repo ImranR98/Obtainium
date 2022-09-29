@@ -115,7 +115,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get showAppWebpage {
-    return prefs?.getBool('showAppWebpage') ?? true;
+    return prefs?.getBool('showAppWebpage') ?? false;
   }
 
   set showAppWebpage(bool show) {
