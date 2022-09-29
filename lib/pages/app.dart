@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -213,20 +214,35 @@ class _AppPageState extends State<AppPage> {
                               onPressed: app?.downloadProgress != null
                                   ? null
                                   : () {
-                                      showDialog(
+                                      showDialog<List<String>>(
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return GeneratedFormModal(
                                                 title: 'Additional Options',
-                                                items: source
-                                                    .additionalDataFormItems,
+                                                items: [
+                                                  ...source
+                                                      .additionalDataFormItems,
+                                                  [
+                                                    GeneratedFormItem(
+                                                        label: 'App Name',
+                                                        required: true)
+                                                  ]
+                                                ],
                                                 defaultValues: app != null
-                                                    ? app.app.additionalData
-                                                    : source
-                                                        .additionalDataDefaults);
+                                                    ? [
+                                                        ...app
+                                                            .app.additionalData,
+                                                        app.app.name
+                                                      ]
+                                                    : [
+                                                        ...source
+                                                            .additionalDataDefaults
+                                                      ]);
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
+                                          var name = values.removeLast();
+                                          changedApp.name = name;
                                           changedApp.additionalData = values;
                                           appsProvider.saveApps([changedApp]);
                                         }
