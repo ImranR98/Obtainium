@@ -32,17 +32,18 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     //     appsProvider.getExistingUpdates(installedOnly: true);
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
-    // DateTime nextIgnoreAfter = DateTime.now();
+    DateTime nextIgnoreAfter = DateTime.now();
     try {
       await appsProvider.checkUpdates(ignoreAfter: ignoreAfter);
     } catch (e) {
       if (e is RateLimitError) {
         // Ignore these (scheduling another task as below does not work)
-        // Workmanager().registerOneOffTask(
-        //     bgUpdateCheckTaskName, bgUpdateCheckTaskName,
-        //     constraints: Constraints(networkType: NetworkType.connected),
-        //     initialDelay: Duration(minutes: e.remainingMinutes),
-        //     inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
+        String nextTaskName =
+            '$bgUpdateCheckTaskName-${nextIgnoreAfter.microsecondsSinceEpoch.toString()}';
+        Workmanager().registerOneOffTask(nextTaskName, nextTaskName,
+            constraints: Constraints(networkType: NetworkType.connected),
+            initialDelay: Duration(minutes: e.remainingMinutes),
+            inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
       } else {
         rethrow;
       }
