@@ -267,42 +267,67 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       );
                                                     }).then((values) {
                                                   if (values != null) {
+                                                    setState(() {
+                                                      importInProgress = true;
+                                                    });
                                                     source
                                                         .getUrls(values)
                                                         .then((urls) {
-                                                      setState(() {
-                                                        importInProgress = true;
-                                                      });
-                                                      addApps(urls)
-                                                          .then((errors) {
-                                                        if (errors.isEmpty) {
-                                                          ScaffoldMessenger.of(
-                                                                  context)
-                                                              .showSnackBar(
-                                                            SnackBar(
-                                                                content: Text(
-                                                                    'Imported ${urls.length} Apps')),
-                                                          );
-                                                        } else {
-                                                          showDialog(
+                                                      showDialog<List<String>?>(
                                                               context: context,
                                                               builder:
                                                                   (BuildContext
                                                                       ctx) {
-                                                                return ImportErrorDialog(
-                                                                    urlsLength: urls
-                                                                        .length,
-                                                                    errors:
-                                                                        errors);
-                                                              });
+                                                                return UrlSelectionModal(
+                                                                    urls: urls);
+                                                              })
+                                                          .then((selectedUrls) {
+                                                        if (selectedUrls !=
+                                                            null) {
+                                                          addApps(selectedUrls)
+                                                              .then((errors) {
+                                                            if (errors
+                                                                .isEmpty) {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                SnackBar(
+                                                                    content: Text(
+                                                                        'Imported ${selectedUrls.length} Apps')),
+                                                              );
+                                                            } else {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          ctx) {
+                                                                    return ImportErrorDialog(
+                                                                        urlsLength:
+                                                                            selectedUrls
+                                                                                .length,
+                                                                        errors:
+                                                                            errors);
+                                                                  });
+                                                            }
+                                                          }).whenComplete(() {
+                                                            setState(() {
+                                                              importInProgress =
+                                                                  false;
+                                                            });
+                                                          });
+                                                        } else {
+                                                          setState(() {
+                                                            importInProgress =
+                                                                false;
+                                                          });
                                                         }
-                                                      }).whenComplete(() {
-                                                        setState(() {
-                                                          importInProgress =
-                                                              false;
-                                                        });
                                                       });
                                                     }).catchError((e) {
+                                                      setState(() {
+                                                        importInProgress =
+                                                            false;
+                                                      });
                                                       ScaffoldMessenger.of(
                                                               context)
                                                           .showSnackBar(
@@ -372,6 +397,70 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
               Navigator.of(context).pop(null);
             },
             child: const Text('Okay'))
+      ],
+    );
+  }
+}
+
+// ignore: must_be_immutable
+class UrlSelectionModal extends StatefulWidget {
+  UrlSelectionModal({super.key, required this.urls});
+
+  List<String> urls;
+
+  @override
+  State<UrlSelectionModal> createState() => _UrlSelectionModalState();
+}
+
+class _UrlSelectionModalState extends State<UrlSelectionModal> {
+  Map<String, bool> urlSelections = {};
+  @override
+  void initState() {
+    super.initState();
+    for (var url in widget.urls) {
+      urlSelections.putIfAbsent(url, () => true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: const Text('Select URLs to Import'),
+      content: Column(children: [
+        ...urlSelections.keys.map((url) {
+          return Row(children: [
+            Checkbox(
+                value: urlSelections[url],
+                onChanged: (value) {
+                  setState(() {
+                    urlSelections[url] = value ?? false;
+                  });
+                }),
+            const SizedBox(
+              width: 8,
+            ),
+            Expanded(
+                child: Text(
+              Uri.parse(url).path.substring(1),
+            ))
+          ]);
+        })
+      ]),
+      actions: [
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel')),
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(urlSelections.keys
+                  .where((url) => urlSelections[url] ?? false)
+                  .toList());
+            },
+            child: Text(
+                'Import ${urlSelections.values.where((b) => b).length} URLs'))
       ],
     );
   }
