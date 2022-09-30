@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub implements AppSource {
   @override
@@ -137,7 +139,7 @@ class GitHub implements AppSource {
   @override
   List<GeneratedFormItem> moreSourceSettingsFormItems = [
     GeneratedFormItem(
-        label: 'GitHub Credentials (Increases Rate Limit)',
+        label: 'GitHub Personal Access Token (Increases Rate Limit)',
         id: 'github-creds',
         required: false,
         additionalValidators: [
@@ -153,6 +155,23 @@ class GitHub implements AppSource {
             }
             return null;
           }
+        ],
+        hint: 'username:token',
+        belowWidgets: [
+          const SizedBox(
+            height: 8,
+          ),
+          GestureDetector(
+              onTap: () {
+                launchUrlString(
+                    'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
+                    mode: LaunchMode.externalApplication);
+              },
+              child: const Text(
+                'About GitHub PATs',
+                style: TextStyle(
+                    decoration: TextDecoration.underline, fontSize: 12),
+              ))
         ])
   ];
 }

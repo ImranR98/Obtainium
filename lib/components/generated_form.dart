@@ -11,6 +11,8 @@ class GeneratedFormItem {
   late int max;
   late List<String? Function(String? value)> additionalValidators;
   late String id;
+  late List<Widget> belowWidgets;
+  late String? hint;
 
   GeneratedFormItem(
       {this.label = 'Input',
@@ -18,7 +20,9 @@ class GeneratedFormItem {
       this.required = true,
       this.max = 1,
       this.additionalValidators = const [],
-      this.id = 'input'});
+      this.id = 'input',
+      this.belowWidgets = const [],
+      this.hint});
 }
 
 class GeneratedForm extends StatefulWidget {
@@ -91,7 +95,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
               });
             },
             decoration: InputDecoration(
-                helperText: e.value.label + (e.value.required ? ' *' : '')),
+                helperText: e.value.label + (e.value.required ? ' *' : ''),
+                hintText: e.value.hint),
             minLines: e.value.max <= 1 ? null : e.value.max,
             maxLines: e.value.max <= 1 ? 1 : e.value.max,
             validator: (value) {
@@ -157,7 +162,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
             width: 20,
           ));
         }
-        rowItems.add(Expanded(child: rowInput.value));
+        rowItems.add(Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+              rowInput.value,
+              ...widget.items[rowInputs.key][rowInput.key].belowWidgets
+            ])));
       });
       rows.add(rowItems);
     });
