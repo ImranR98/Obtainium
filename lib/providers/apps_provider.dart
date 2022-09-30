@@ -293,6 +293,11 @@ class AppsProvider with ChangeNotifier {
       }
       await saveApps([newApp]);
       return newApp;
+    } else if ((newApp.lastUpdateCheck?.microsecondsSinceEpoch ?? 0) -
+            (currentApp.lastUpdateCheck?.microsecondsSinceEpoch ?? 0) >
+        5000000) {
+      currentApp.lastUpdateCheck = newApp.lastUpdateCheck;
+      await saveApps([currentApp]);
     }
     return null;
   }
@@ -306,7 +311,7 @@ class AppsProvider with ChangeNotifier {
       if (ignoreAfter != null) {
         appIds = appIds
             .where((id) =>
-                apps[id]!.app.lastUpdateCheck != null &&
+                apps[id]!.app.lastUpdateCheck == null ||
                 apps[id]!.app.lastUpdateCheck!.isBefore(ignoreAfter))
             .toList();
       }
