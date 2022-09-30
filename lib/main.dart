@@ -37,7 +37,6 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
       await appsProvider.checkUpdates(ignoreAfter: ignoreAfter);
     } catch (e) {
       if (e is RateLimitError) {
-        // Ignore these (scheduling another task as below does not work)
         String nextTaskName =
             '$bgUpdateCheckTaskName-${nextIgnoreAfter.microsecondsSinceEpoch.toString()}';
         Workmanager().registerOneOffTask(nextTaskName, nextTaskName,
