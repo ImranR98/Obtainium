@@ -60,4 +60,7 @@ class FDroid implements AppSource {
 
   @override
   List<String> additionalDataDefaults = [];
+
+  @override
+  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }

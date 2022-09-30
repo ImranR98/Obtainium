@@ -122,4 +122,12 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('showAppWebpage', show);
     notifyListeners();
   }
+
+  String? getSettingString(String settingId) {
+    return prefs?.getString(settingId);
+  }
+
+  void setSettingString(String settingId, String value) {
+    prefs?.setString(settingId, value);
+  }
 }

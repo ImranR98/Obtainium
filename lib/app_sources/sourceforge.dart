@@ -65,4 +65,7 @@ class SourceForge implements AppSource {
 
   @override
   List<String> additionalDataDefaults = [];
+
+  @override
+  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub implements AppSource {
@@ -18,6 +19,14 @@ class GitHub implements AppSource {
     return url.substring(0, match.end);
   }
 
+  Future<String> getCredentialPrefixIfAny() async {
+    SettingsProvider settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
+    String? creds =
+        settingsProvider.getSettingString(moreSourceSettingsFormItems[0].id);
+    return creds != null && creds.isNotEmpty ? '$creds@' : '';
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
@@ -29,7 +38,7 @@ class GitHub implements AppSource {
         ? additionalData[2]
         : null;
     Response res = await get(Uri.parse(
-        'https://api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
+        'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
 
@@ -124,4 +133,26 @@ class GitHub implements AppSource {
 
   @override
   List<String> additionalDataDefaults = ['true', 'true', ''];
+
+  @override
+  List<GeneratedFormItem> moreSourceSettingsFormItems = [
+    GeneratedFormItem(
+        label: 'GitHub Credentials (Increases Rate Limit)',
+        id: 'github-creds',
+        required: false,
+        additionalValidators: [
+          (value) {
+            if (value != null && value.trim().isNotEmpty) {
+              if (value
+                      .split(':')
+                      .where((element) => element.trim().isNotEmpty)
+                      .length !=
+                  2) {
+                return 'PAT must be in this format: username:token';
+              }
+            }
+            return null;
+          }
+        ])
+  ];
 }

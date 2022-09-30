@@ -10,13 +10,15 @@ class GeneratedFormItem {
   late bool required;
   late int max;
   late List<String? Function(String? value)> additionalValidators;
+  late String id;
 
   GeneratedFormItem(
       {this.label = 'Input',
       this.type = FormItemType.string,
       this.required = true,
       this.max = 1,
-      this.additionalValidators = const []});
+      this.additionalValidators = const [],
+      this.id = 'input'});
 }
 
 class GeneratedForm extends StatefulWidget {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -14,7 +15,7 @@ class GitHubStars implements MassAppSource {
   Future<List<String>> getOnePageOfUserStarredUrls(
       String username, int page) async {
     Response res = await get(Uri.parse(
-        'https://api.github.com/users/$username/starred?per_page=100&page=$page'));
+        'https://${await GitHub().getCredentialPrefixIfAny()}api.github.com/users/$username/starred?per_page=100&page=$page'));
     if (res.statusCode == 200) {
       return (jsonDecode(res.body) as List<dynamic>)
           .map((e) => e['html_url'] as String)

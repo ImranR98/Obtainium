@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -15,6 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    SourceProvider sourceProvider = SourceProvider();
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
@@ -22,8 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
           const CustomAppBar(title: 'Settings'),
-          SliverFillRemaining(
-              hasScrollBody: true,
+          SliverToBoxAdapter(
               child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: settingsProvider.prefs == null
@@ -160,7 +162,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               height: 16,
                             ),
                             Text(
-                              'More',
+                              'Updates',
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
@@ -204,33 +206,73 @@ class _SettingsPageState extends State<SettingsPage> {
                                   .merge(const TextStyle(
                                       fontStyle: FontStyle.italic)),
                             ),
-                            const Spacer(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                TextButton.icon(
-                                  style: ButtonStyle(
-                                    foregroundColor:
-                                        MaterialStateProperty.resolveWith<
-                                            Color>((Set<MaterialState> states) {
-                                      return Colors.grey;
-                                    }),
-                                  ),
-                                  onPressed: () {
-                                    launchUrlString(settingsProvider.sourceUrl,
-                                        mode: LaunchMode.externalApplication);
-                                  },
-                                  icon: const Icon(Icons.code),
-                                  label: Text(
-                                    'Source',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                )
-                              ],
+                            const Divider(
+                              height: 48,
                             ),
+                            Text(
+                              'Source-Specific',
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            ...sourceProvider.sources.map((e) {
+                              if (e.moreSourceSettingsFormItems.isNotEmpty) {
+                                return GeneratedForm(
+                                    items: e.moreSourceSettingsFormItems
+                                        .map((e) => [e])
+                                        .toList(),
+                                    onValueChanges: (values, valid) {
+                                      if (valid) {
+                                        for (var i = 0;
+                                            i < values.length;
+                                            i++) {
+                                          settingsProvider.setSettingString(
+                                              e.moreSourceSettingsFormItems[i]
+                                                  .id,
+                                              values[i]);
+                                        }
+                                      }
+                                    },
+                                    defaultValues:
+                                        e.moreSourceSettingsFormItems.map((e) {
+                                      return settingsProvider
+                                              .getSettingString(e.id) ??
+                                          '';
+                                    }).toList());
+                              } else {
+                                return Container();
+                              }
+                            }),
                           ],
-                        )))
+                        ))),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(
+                  height: 16,
+                ),
+                TextButton.icon(
+                  style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                      return Colors.grey;
+                    }),
+                  ),
+                  onPressed: () {
+                    launchUrlString(settingsProvider.sourceUrl,
+                        mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.code),
+                  label: Text(
+                    'Source',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+              ],
+            ),
+          )
         ]));
   }
 }

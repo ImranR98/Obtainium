@@ -135,6 +135,7 @@ abstract class AppSource {
   AppNames getAppNames(String standardUrl);
   late List<List<GeneratedFormItem>> additionalDataFormItems;
   late List<String> additionalDataDefaults;
+  late List<GeneratedFormItem> moreSourceSettingsFormItems;
 }
 
 abstract class MassAppSource {
