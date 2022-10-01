@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -193,6 +194,26 @@ class AppsProvider with ChangeNotifier {
         regularInstalls.add(f);
       }
     }
+
+    // If Obtainium is being installed, it should be the last one
+    List<ApkFile> moveObtainiumToEnd(List<ApkFile> items) {
+      String obtainiumId = 'imranr98_obtainium_${GitHub().host}';
+      ApkFile? temp;
+      items.removeWhere((element) {
+        bool res = element.appId == obtainiumId;
+        if (res) {
+          temp = element;
+        }
+        return res;
+      });
+      if (temp != null) {
+        items.add(temp!);
+      }
+      return items;
+    }
+
+    silentUpdates = moveObtainiumToEnd(silentUpdates);
+    regularInstalls = moveObtainiumToEnd(regularInstalls);
 
     for (var u in silentUpdates) {
       await installApk(u);

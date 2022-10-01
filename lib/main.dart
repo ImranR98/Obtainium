@@ -14,7 +14,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.5.3-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.5.4-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
@@ -28,8 +28,6 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
     await appsProvider.loadApps();
-    // List<String> existingUpdateIds = // TODO: Uncomment this and below when it works
-    //     appsProvider.getExistingUpdates(installedOnly: true);
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
     DateTime nextIgnoreAfter = DateTime.now();
@@ -52,11 +50,13 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
         .where((id) => !existingUpdateIds.contains(id))
         .map((e) => appsProvider.apps[e]!.app)
         .toList();
+
+    // TODO: This silent update code doesn't work yet
     // List<String> silentlyUpdated = await appsProvider
     //     .downloadAndInstallLatestApp(
     //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
     // if (silentlyUpdated.isNotEmpty) {
-    //   newUpdates
+    //   newUpdates = newUpdates
     //       .where((element) => !silentlyUpdated.contains(element.id))
     //       .toList();
     //   notificationsProvider.notify(
@@ -64,6 +64,7 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
     //       cancelExisting: true);
     // }
+
     if (newUpdates.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(newUpdates),
           cancelExisting: true);
