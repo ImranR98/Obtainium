@@ -129,5 +129,6 @@ class SettingsProvider with ChangeNotifier {
 
   void setSettingString(String settingId, String value) {
     prefs?.setString(settingId, value);
+    notifyListeners();
   }
 }

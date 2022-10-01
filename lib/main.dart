@@ -14,7 +14,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.5.2-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.5.3-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
@@ -107,14 +107,21 @@ void main() async {
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())
     ],
-    child: const MyApp(),
+    child: const Obtainium(),
   ));
 }
 
 var defaultThemeColour = Colors.deepPurple;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class Obtainium extends StatefulWidget {
+  const Obtainium({super.key});
+
+  @override
+  State<Obtainium> createState() => _ObtainiumState();
+}
+
+class _ObtainiumState extends State<Obtainium> {
+  var existingUpdateInterval = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -143,18 +150,21 @@ class MyApp extends StatelessWidget {
         ]);
       }
       // Register the background update task according to the user's setting
-      if (settingsProvider.updateInterval == 0) {
-        Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
-      } else {
-        Workmanager().registerPeriodicTask(
-            bgUpdateCheckTaskName, bgUpdateCheckTaskName,
-            frequency: Duration(minutes: settingsProvider.updateInterval),
-            initialDelay: Duration(minutes: settingsProvider.updateInterval),
-            constraints: Constraints(networkType: NetworkType.connected),
-            existingWorkPolicy: ExistingWorkPolicy.keep,
-            backoffPolicy: BackoffPolicy.linear,
-            backoffPolicyDelay:
-                const Duration(minutes: minUpdateIntervalMinutes));
+      if (existingUpdateInterval != settingsProvider.updateInterval) {
+        existingUpdateInterval = settingsProvider.updateInterval;
+        if (existingUpdateInterval == 0) {
+          Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
+        } else {
+          Workmanager().registerPeriodicTask(
+              bgUpdateCheckTaskName, bgUpdateCheckTaskName,
+              frequency: Duration(minutes: existingUpdateInterval),
+              initialDelay: Duration(minutes: existingUpdateInterval),
+              constraints: Constraints(networkType: NetworkType.connected),
+              existingWorkPolicy: ExistingWorkPolicy.replace,
+              backoffPolicy: BackoffPolicy.linear,
+              backoffPolicyDelay:
+                  const Duration(minutes: minUpdateIntervalMinutes));
+        }
       }
     }
 
