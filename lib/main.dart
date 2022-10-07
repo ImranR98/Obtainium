@@ -14,7 +14,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.5.4-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.5.5-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
