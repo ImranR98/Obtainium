@@ -6,8 +6,10 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class AppsPage extends StatefulWidget {
   const AppsPage({super.key});
@@ -172,7 +174,43 @@ class AppsPageState extends State<AppsPage> {
                     : (sortedApps[index].app.installedVersion != null &&
                             sortedApps[index].app.installedVersion !=
                                 sortedApps[index].app.latestVersion
-                        ? const Text('Update Available')
+                        ? Column(
+                            mainAxisAlignment: SourceProvider()
+                                        .getSource(sortedApps[index].app.url)
+                                        .changeLogPageFromStandardUrl(
+                                            sortedApps[index].app.url) ==
+                                    null
+                                ? MainAxisAlignment.center
+                                : MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Update Available'),
+                              SourceProvider()
+                                          .getSource(sortedApps[index].app.url)
+                                          .changeLogPageFromStandardUrl(
+                                              sortedApps[index].app.url) ==
+                                      null
+                                  ? const SizedBox()
+                                  : GestureDetector(
+                                      onTap: () {
+                                        launchUrlString(
+                                            SourceProvider()
+                                                .getSource(
+                                                    sortedApps[index].app.url)
+                                                .changeLogPageFromStandardUrl(
+                                                    sortedApps[index].app.url)!,
+                                            mode:
+                                                LaunchMode.externalApplication);
+                                      },
+                                      child: const Text(
+                                        'See Changes',
+                                        style: TextStyle(
+                                            fontStyle: FontStyle.italic,
+                                            decoration:
+                                                TextDecoration.underline),
+                                      )),
+                            ],
+                          )
                         : Text(sortedApps[index].app.installedVersion ??
                             'Not Installed')),
                 onTap: () {

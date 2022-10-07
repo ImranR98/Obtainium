@@ -136,6 +136,7 @@ abstract class AppSource {
   late List<List<GeneratedFormItem>> additionalDataFormItems;
   late List<String> additionalDataDefaults;
   late List<GeneratedFormItem> moreSourceSettingsFormItems;
+  String? changeLogPageFromStandardUrl(String standardUrl);
 }
 
 abstract class MassAppSource {

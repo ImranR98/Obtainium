@@ -13,6 +13,9 @@ class Signal implements AppSource {
   }
 
   @override
+  String? changeLogPageFromStandardUrl(String standardUrl) => null;
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     Response res =

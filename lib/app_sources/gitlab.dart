@@ -19,6 +19,9 @@ class GitLab implements AppSource {
   }
 
   @override
+  String? changeLogPageFromStandardUrl(String standardUrl) => null;
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));

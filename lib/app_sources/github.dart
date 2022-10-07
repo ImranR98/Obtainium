@@ -30,6 +30,11 @@ class GitHub implements AppSource {
   }
 
   @override
+  String? changeLogPageFromStandardUrl(String standardUrl) {
+    return '$standardUrl/releases';
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     var includePrereleases =
