@@ -307,20 +307,12 @@ class AppsProvider with ChangeNotifier {
         sourceProvider.getSource(currentApp.url),
         currentApp.url,
         currentApp.additionalData);
-    if (newApp.latestVersion != currentApp.latestVersion) {
-      newApp.installedVersion = currentApp.installedVersion;
-      if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
-        newApp.preferredApkIndex = currentApp.preferredApkIndex;
-      }
-      await saveApps([newApp]);
-      return newApp;
-    } else if ((newApp.lastUpdateCheck?.microsecondsSinceEpoch ?? 0) -
-            (currentApp.lastUpdateCheck?.microsecondsSinceEpoch ?? 0) >
-        5000000) {
-      currentApp.lastUpdateCheck = newApp.lastUpdateCheck;
-      await saveApps([currentApp]);
+    newApp.installedVersion = currentApp.installedVersion;
+    if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
+      newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }
-    return null;
+    await saveApps([newApp]);
+    return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
   Future<List<App>> checkUpdates({DateTime? ignoreAfter}) async {

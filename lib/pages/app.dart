@@ -19,19 +19,26 @@ class AppPage extends StatefulWidget {
 }
 
 class _AppPageState extends State<AppPage> {
+  AppInMemory? prevApp;
+
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    var sourceProvider = SourceProvider();
-    AppInMemory? app = appsProvider.apps[widget.appId];
-    var source = app != null ? sourceProvider.getSource(app.app.url) : null;
-    if (!appsProvider.areDownloadsRunning() && app != null) {
-      appsProvider.getUpdate(app.app.id).catchError((e) {
+    getUpdate(String id) {
+      appsProvider.getUpdate(id).catchError((e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );
       });
+    }
+
+    var sourceProvider = SourceProvider();
+    AppInMemory? app = appsProvider.apps[widget.appId];
+    var source = app != null ? sourceProvider.getSource(app.app.url) : null;
+    if (!appsProvider.areDownloadsRunning() && prevApp == null && app != null) {
+      prevApp = app;
+      getUpdate(app.app.id);
     }
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
@@ -105,13 +112,7 @@ class _AppPageState extends State<AppPage> {
                 ),
           onRefresh: () async {
             if (app != null) {
-              try {
-                await appsProvider.getUpdate(app.app.id);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString())),
-                );
-              }
+              getUpdate(app.app.id);
             }
           }),
       bottomSheet: Padding(
@@ -244,7 +245,10 @@ class _AppPageState extends State<AppPage> {
                                           var name = values.removeLast();
                                           changedApp.name = name;
                                           changedApp.additionalData = values;
-                                          appsProvider.saveApps([changedApp]);
+                                          appsProvider.saveApps(
+                                              [changedApp]).then((value) {
+                                            getUpdate(changedApp.id);
+                                          });
                                         }
                                       });
                                     },
