@@ -18,7 +18,8 @@ class Mullvad implements AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
+  String? changeLogPageFromStandardUrl(String standardUrl) =>
+      'https://github.com/mullvad/mullvadvpn-app/blob/master/CHANGELOG.md';
 
   @override
   Future<APKDetails> getLatestAPKDetails(

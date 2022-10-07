@@ -30,9 +30,8 @@ class GitHub implements AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) {
-    return '$standardUrl/releases';
-  }
+  String? changeLogPageFromStandardUrl(String standardUrl) =>
+      '$standardUrl/releases';
 
   @override
   Future<APKDetails> getLatestAPKDetails(

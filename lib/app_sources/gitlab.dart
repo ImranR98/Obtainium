@@ -19,7 +19,8 @@ class GitLab implements AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
+  String? changeLogPageFromStandardUrl(String standardUrl) =>
+      '$standardUrl/-/releases';
 
   @override
   Future<APKDetails> getLatestAPKDetails(
