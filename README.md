@@ -13,6 +13,7 @@ Currently supported App sources:
 - [IzzyOnDroid](https://android.izzysoft.de/)
 - [Mullvad](https://mullvad.net/en/)
 - [Signal](https://signal.org/)
+- [APKMirror](https://apkmirror.com/)
 
 ## Limitations
 - App installs are assumed to have succeeded; failures and cancelled installs cannot be detected.

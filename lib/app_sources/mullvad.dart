@@ -22,6 +22,9 @@ class Mullvad implements AppSource {
       'https://github.com/mullvad/mullvadvpn-app/blob/master/CHANGELOG.md';
 
   @override
+  Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/en/download/android'));

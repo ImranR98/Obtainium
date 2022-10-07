@@ -64,6 +64,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<ApkFile> downloadApp(String apkUrl, String appId) async {
+    apkUrl = await SourceProvider()
+        .getSource(apps[appId]!.app.url)
+        .apkUrlPrefetchModifier(apkUrl);
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(apkUrl)));
     File downloadFile =
@@ -420,7 +423,10 @@ class _APKPickerState extends State<APKPicker> {
         Text('${widget.app.name} has more than one package:'),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map((u) => RadioListTile<String>(
-            title: Text(Uri.parse(u).pathSegments.last),
+            title: Text(Uri.parse(u)
+                .pathSegments
+                .where((element) => element.isNotEmpty)
+                .last),
             value: u,
             groupValue: apkUrl,
             onChanged: (String? val) {

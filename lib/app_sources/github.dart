@@ -34,6 +34,9 @@ class GitHub implements AppSource {
       '$standardUrl/releases';
 
   @override
+  Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     var includePrereleases =

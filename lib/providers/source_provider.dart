@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:html/dom.dart';
+import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
@@ -137,6 +138,7 @@ abstract class AppSource {
   late List<String> additionalDataDefaults;
   late List<GeneratedFormItem> moreSourceSettingsFormItems;
   String? changeLogPageFromStandardUrl(String standardUrl);
+  Future<String> apkUrlPrefetchModifier(String apkUrl);
 }
 
 abstract class MassAppSource {
@@ -154,7 +156,8 @@ class SourceProvider {
     IzzyOnDroid(),
     Mullvad(),
     Signal(),
-    SourceForge()
+    SourceForge(),
+    APKMirror()
   ];
 
   // Add more mass source classes here so they are available via the service
