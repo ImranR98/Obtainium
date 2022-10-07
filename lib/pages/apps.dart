@@ -175,13 +175,7 @@ class AppsPageState extends State<AppsPage> {
                             sortedApps[index].app.installedVersion !=
                                 sortedApps[index].app.latestVersion
                         ? Column(
-                            mainAxisAlignment: SourceProvider()
-                                        .getSource(sortedApps[index].app.url)
-                                        .changeLogPageFromStandardUrl(
-                                            sortedApps[index].app.url) ==
-                                    null
-                                ? MainAxisAlignment.center
-                                : MainAxisAlignment.spaceEvenly,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               const Text('Update Available'),
