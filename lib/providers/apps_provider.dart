@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +16,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
-import 'package:flutter_install_app/flutter_install_app.dart';
 
 class AppInMemory {
   late App app;
@@ -128,7 +128,7 @@ class AppsProvider with ChangeNotifier {
   // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
   // But even then, we don't know if it actually succeeded
   Future<void> installApk(ApkFile file) async {
-    await AppInstaller.installApk(file.file.path, actionRequired: false);
+    await InstallPlugin.installApk(file.file.path, 'dev.imranr.obtainium');
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
     await saveApps([apps[file.appId]!.app]);
@@ -215,17 +215,21 @@ class AppsProvider with ChangeNotifier {
       return items;
     }
 
+    // TODO: Remove below line if silentupdates are ever figured out
+    regularInstalls.addAll(silentUpdates);
+
     silentUpdates = moveObtainiumToEnd(silentUpdates);
     regularInstalls = moveObtainiumToEnd(regularInstalls);
 
-    for (var u in silentUpdates) {
-      await installApk(u);
-    }
+    // TODO: Uncomment below if silentupdates are ever figured out
+    // for (var u in silentUpdates) {
+    //   await installApk(u, silent: true); // Would need to add silent option
+    // }
 
     if (context != null) {
       if (regularInstalls.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        await askUserToReturnToForeground(context);
+        await askUserToReturnToForeground(context, waitForFG: true);
       }
       for (var i in regularInstalls) {
         await installApk(i);
