@@ -392,8 +392,8 @@ class AppsProvider with ChangeNotifier {
     for (App a in importedApps) {
       a.installedVersion =
           apps.containsKey(a.id) ? apps[a]?.app.installedVersion : null;
-      await saveApps([a]);
     }
+    await saveApps(importedApps);
     notifyListeners();
     return importedApps.length;
   }
