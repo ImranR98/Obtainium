@@ -340,16 +340,139 @@ class AppsPageState extends State<AppsPage> {
                     : IconButton(
                         visualDensity: VisualDensity.compact,
                         onPressed: () {
-                          String urls = '';
-                          for (var id in selectedIds) {
-                            urls += '${appsProvider.apps[id]!.app.url}\n';
-                          }
-                          urls = urls.substring(0, urls.length - 1);
-                          Share.share(urls,
-                              subject: 'Selected App URLs from Obtainium');
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext ctx) {
+                                return AlertDialog(
+                                  scrollable: true,
+                                  content: Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          IconButton(
+                                              onPressed:
+                                                  appsProvider
+                                                          .areDownloadsRunning()
+                                                      ? null
+                                                      : () {
+                                                          showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      ctx) {
+                                                                return AlertDialog(
+                                                                  title: Text(
+                                                                      'Mark ${selectedIds.length} Selected Apps as Not Installed?'),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          HapticFeedback
+                                                                              .selectionClick();
+                                                                          appsProvider
+                                                                              .saveApps(selectedIds.map((e) {
+                                                                            var a =
+                                                                                appsProvider.apps[e]!.app;
+                                                                            a.installedVersion =
+                                                                                null;
+                                                                            return a;
+                                                                          }).toList());
+
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'Yes'))
+                                                                  ],
+                                                                );
+                                                              });
+                                                        },
+                                              tooltip:
+                                                  'Mark Selected Apps as Not Installed',
+                                              icon: const Icon(
+                                                  Icons.no_cell_outlined)),
+                                          IconButton(
+                                              onPressed:
+                                                  appsProvider
+                                                          .areDownloadsRunning()
+                                                      ? null
+                                                      : () {
+                                                          showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      ctx) {
+                                                                return AlertDialog(
+                                                                  title: Text(
+                                                                      'Mark ${selectedIds.length} Selected Apps as Installed/Updated?'),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          HapticFeedback
+                                                                              .selectionClick();
+                                                                          appsProvider
+                                                                              .saveApps(selectedIds.map((e) {
+                                                                            var a =
+                                                                                appsProvider.apps[e]!.app;
+                                                                            a.installedVersion =
+                                                                                a.latestVersion;
+                                                                            return a;
+                                                                          }).toList());
+
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'Yes'))
+                                                                  ],
+                                                                );
+                                                              });
+                                                        },
+                                              tooltip:
+                                                  'Mark Selected Apps as Installed/Updated',
+                                              icon: const Icon(Icons.done)),
+                                          IconButton(
+                                            onPressed: () {
+                                              String urls = '';
+                                              for (var id in selectedIds) {
+                                                urls +=
+                                                    '${appsProvider.apps[id]!.app.url}\n';
+                                              }
+                                              urls = urls.substring(
+                                                  0, urls.length - 1);
+                                              Share.share(urls,
+                                                  subject:
+                                                      '${selectedIds.length} Selected App URLs from Obtainium');
+                                            },
+                                            tooltip: 'Share Selected App URLs',
+                                            icon: const Icon(Icons.share),
+                                          ),
+                                        ]),
+                                  ),
+                                );
+                              });
                         },
-                        tooltip: 'Share Selected App URLs',
-                        icon: const Icon(Icons.share),
+                        tooltip: 'More',
+                        icon: const Icon(Icons.more_horiz),
                       ),
               ],
             )),
