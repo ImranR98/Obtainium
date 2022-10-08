@@ -313,7 +313,8 @@ class AppsProvider with ChangeNotifier {
     App newApp = await sourceProvider.getApp(
         sourceProvider.getSource(currentApp.url),
         currentApp.url,
-        currentApp.additionalData);
+        currentApp.additionalData,
+        customName: currentApp.name);
     newApp.installedVersion = currentApp.installedVersion;
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
