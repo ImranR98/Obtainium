@@ -114,7 +114,7 @@ class AppsPageState extends State<AppsPage> {
       return result;
     });
 
-    if (settingsProvider.sortOrder == SortOrderSettings.ascending) {
+    if (settingsProvider.sortOrder == SortOrderSettings.descending) {
       sortedApps = sortedApps.reversed.toList();
     }
 

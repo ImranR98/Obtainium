@@ -74,8 +74,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings
-        .values[prefs?.getInt('sortColumn') ?? SortColumnSettings.added.index];
+    return SortColumnSettings.values[
+        prefs?.getInt('sortColumn') ?? SortColumnSettings.nameAuthor.index];
   }
 
   set sortColumn(SortColumnSettings s) {
@@ -85,7 +85,7 @@ class SettingsProvider with ChangeNotifier {
 
   SortOrderSettings get sortOrder {
     return SortOrderSettings.values[
-        prefs?.getInt('sortOrder') ?? SortOrderSettings.descending.index];
+        prefs?.getInt('sortOrder') ?? SortOrderSettings.ascending.index];
   }
 
   set sortOrder(SortOrderSettings s) {
