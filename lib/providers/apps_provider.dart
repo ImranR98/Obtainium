@@ -325,6 +325,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<List<App>> checkUpdates({DateTime? ignoreAfter}) async {
     List<App> updates = [];
+    Map<String, List<String>> errors = {};
     if (!gettingUpdates) {
       gettingUpdates = true;
 
@@ -340,13 +341,30 @@ class AppsProvider with ChangeNotifier {
               DateTime.fromMicrosecondsSinceEpoch(0))
           .compareTo(apps[b]!.app.lastUpdateCheck ??
               DateTime.fromMicrosecondsSinceEpoch(0)));
+
       for (int i = 0; i < appIds.length; i++) {
-        App? newApp = await getUpdate(appIds[i]);
+        App? newApp;
+        try {
+          newApp = await getUpdate(appIds[i]);
+        } catch (e) {
+          var tempIds = errors.remove(e.toString());
+          tempIds ??= [];
+          tempIds.add(appIds[i]);
+          errors.putIfAbsent(e.toString(), () => tempIds!);
+        }
         if (newApp != null) {
           updates.add(newApp);
         }
       }
       gettingUpdates = false;
+    }
+    if (errors.isNotEmpty) {
+      String finalError = '';
+      for (var e in errors.keys) {
+        finalError +=
+            '$e ${errors[e]!.map((e) => apps[e]!.app.name).toString()}. ';
+      }
+      throw finalError;
     }
     return updates;
   }
