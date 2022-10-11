@@ -14,7 +14,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 const String currentReleaseTag =
-    'v0.5.9-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v0.5.10-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
@@ -31,8 +31,10 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
     DateTime nextIgnoreAfter = DateTime.now();
+    String? err;
     try {
-      await appsProvider.checkUpdates(ignoreAfter: ignoreAfter);
+      await appsProvider.checkUpdates(
+          ignoreAfter: ignoreAfter, immediatelyThrowRateLimitError: true);
     } catch (e) {
       if (e is RateLimitError) {
         String nextTaskName =
@@ -42,7 +44,7 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
             initialDelay: Duration(minutes: e.remainingMinutes),
             inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
       } else {
-        rethrow;
+        err = e.toString();
       }
     }
     List<App> newUpdates = appsProvider
@@ -68,6 +70,9 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     if (newUpdates.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(newUpdates),
           cancelExisting: true);
+    }
+    if (err != null) {
+      throw err;
     }
     return Future.value(true);
   } catch (e) {

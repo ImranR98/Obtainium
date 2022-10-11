@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -323,7 +324,9 @@ class AppsProvider with ChangeNotifier {
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
-  Future<List<App>> checkUpdates({DateTime? ignoreAfter}) async {
+  Future<List<App>> checkUpdates(
+      {DateTime? ignoreAfter,
+      bool immediatelyThrowRateLimitError = false}) async {
     List<App> updates = [];
     Map<String, List<String>> errors = {};
     if (!gettingUpdates) {
@@ -347,6 +350,9 @@ class AppsProvider with ChangeNotifier {
         try {
           newApp = await getUpdate(appIds[i]);
         } catch (e) {
+          if (e is RateLimitError && immediatelyThrowRateLimitError) {
+            rethrow;
+          }
           var tempIds = errors.remove(e.toString());
           tempIds ??= [];
           tempIds.add(appIds[i]);
