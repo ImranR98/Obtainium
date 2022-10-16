@@ -56,11 +56,11 @@ class AppsProvider with ChangeNotifier {
       isForeground = event == FGBGType.foreground;
       if (isForeground) await loadApps();
     });
-    if (shouldDeleteAPKs) {
-      deleteSavedAPKs();
-    }
     if (shouldLoadApps) {
       loadApps().then((_) {
+        if (shouldDeleteAPKs) {
+          deleteSavedAPKs();
+        }
         if (shouldCheckUpdatesAfterLoad) {
           checkUpdates();
         }
@@ -68,38 +68,84 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<ApkFile> downloadApp(String apkUrl, String appId) async {
-    apkUrl = await SourceProvider()
-        .getSource(apps[appId]!.app.url)
-        .apkUrlPrefetchModifier(apkUrl);
+  downloadApk(String apkUrl, String fileName, Function? onProgress,
+      Function? urlModifier,
+      {bool useExistingIfExists = true}) async {
+    var destDir = (await getExternalStorageDirectory())!.path;
+    if (urlModifier != null) {
+      apkUrl = await urlModifier(apkUrl);
+    }
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(apkUrl)));
-    File downloadFile =
-        File('${(await getExternalStorageDirectory())!.path}/$appId.apk');
-    if (downloadFile.existsSync()) {
-      downloadFile.deleteSync();
-    }
-    var length = response.contentLength;
-    var received = 0;
-    var sink = downloadFile.openWrite();
+    File downloadFile = File('$destDir/$fileName.apk');
+    var alreadyExists = downloadFile.existsSync();
+    if (!alreadyExists || !useExistingIfExists) {
+      if (alreadyExists) {
+        downloadFile.deleteSync();
+      }
 
-    await response.stream.map((s) {
-      received += s.length;
-      apps[appId]!.downloadProgress =
-          (length != null ? received / length * 100 : 30);
+      var length = response.contentLength;
+      var received = 0;
+      double? progress;
+      var sink = downloadFile.openWrite();
+
+      await response.stream.map((s) {
+        received += s.length;
+        progress = (length != null ? received / length * 100 : 30);
+        if (onProgress != null) {
+          onProgress(progress);
+        }
+        return s;
+      }).pipe(sink);
+
+      await sink.close();
+      progress = null;
+      if (onProgress != null) {
+        onProgress(progress);
+      }
+
+      if (response.statusCode != 200) {
+        downloadFile.deleteSync();
+        throw response.reasonPhrase ?? 'Unknown Error';
+      }
+    }
+    return downloadFile;
+  }
+
+  // Downloads the App (preferred URL) and returns an ApkFile object
+  // If the app was already saved, updates it's download progress % in memory
+  // But also works for Apps that are not saved
+  Future<ApkFile> downloadApp(App app) async {
+    var fileName = '${app.id}-${app.latestVersion}-${app.preferredApkIndex}';
+    File downloadFile = await downloadApk(app.apkUrls[app.preferredApkIndex],
+        '${app.id}-${app.latestVersion}-${app.preferredApkIndex}',
+        (double? progress) {
+      if (apps[app.id] != null) {
+        apps[app.id]!.downloadProgress = progress;
+      }
       notifyListeners();
-      return s;
-    }).pipe(sink);
-
-    await sink.close();
-    apps[appId]!.downloadProgress = null;
-    notifyListeners();
-
-    if (response.statusCode != 200) {
-      downloadFile.deleteSync();
-      throw response.reasonPhrase ?? 'Unknown Error';
+    }, SourceProvider().getSource(app.url).apkUrlPrefetchModifier);
+    // Delete older versions of the APK if any
+    for (var file in downloadFile.parent.listSync()) {
+      var fn = file.path.split('/').last;
+      if (fn.startsWith('${app.id}-') &&
+          fn.endsWith('.apk') &&
+          fn != '$fileName.apk') {
+        file.delete();
+      }
     }
-    return ApkFile(appId, downloadFile);
+    // If the ID has changed (as it should on first download), replace it
+    var newInfo = await PackageArchiveInfo.fromPath(downloadFile.path);
+    if (app.id != newInfo.packageName) {
+      app.id = newInfo.packageName;
+      downloadFile = downloadFile.renameSync(
+          '${downloadFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
+      if (apps[app.id] != null) {
+        await removeApps([app.id]);
+        await saveApps([app]);
+      }
+    }
+    return ApkFile(app.id, downloadFile);
   }
 
   bool areDownloadsRunning() => apps.values
@@ -152,14 +198,34 @@ class AppsProvider with ChangeNotifier {
     }
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
-    if (apps[file.appId]!.app.id != newInfo.packageName) {
-      App app = apps[file.appId]!.app;
-      app.id = newInfo.packageName;
-      await removeApps([file.appId]);
-      await saveApps([app]);
-    } else {
-      await saveApps([apps[file.appId]!.app]);
+    await saveApps([apps[file.appId]!.app]);
+  }
+
+  Future<String?> selectApkUrl(App app, BuildContext? context) async {
+    // If the App has more than one APK, the user should pick one (if context provided)
+    String? apkUrl = app.apkUrls[app.preferredApkIndex];
+    if (app.apkUrls.length > 1 && context != null) {
+      apkUrl = await showDialog(
+          context: context,
+          builder: (BuildContext ctx) {
+            return APKPicker(app: app, initVal: apkUrl);
+          });
     }
+    // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
+    if (apkUrl != null &&
+        Uri.parse(apkUrl).origin != Uri.parse(app.url).origin &&
+        context != null) {
+      if (await showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return APKOriginWarningDialog(
+                    sourceUrl: app.url, apkUrl: apkUrl!);
+              }) !=
+          true) {
+        apkUrl = null;
+      }
+    }
+    return apkUrl;
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -169,35 +235,14 @@ class AppsProvider with ChangeNotifier {
   // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
   Future<List<String>> downloadAndInstallLatestApps(
       List<String> appIds, BuildContext? context) async {
-    Map<String, String> appsToInstall = {};
+    List<String> appsToInstall = [];
     for (var id in appIds) {
       if (apps[id] == null) {
         throw 'App not found';
       }
 
-      // If the App has more than one APK, the user should pick one (if context provided)
-      String? apkUrl = apps[id]!.app.apkUrls[apps[id]!.app.preferredApkIndex];
-      if (apps[id]!.app.apkUrls.length > 1 && context != null) {
-        apkUrl = await showDialog(
-            context: context,
-            builder: (BuildContext ctx) {
-              return APKPicker(app: apps[id]!.app, initVal: apkUrl);
-            });
-      }
-      // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
-      if (apkUrl != null &&
-          Uri.parse(apkUrl).origin != Uri.parse(apps[id]!.app.url).origin &&
-          context != null) {
-        if (await showDialog(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return APKOriginWarningDialog(
-                      sourceUrl: apps[id]!.app.url, apkUrl: apkUrl!);
-                }) !=
-            true) {
-          apkUrl = null;
-        }
-      }
+      String? apkUrl = await selectApkUrl(apps[id]!.app, context);
+
       if (apkUrl != null) {
         int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
         if (urlInd != apps[id]!.app.preferredApkIndex) {
@@ -207,13 +252,13 @@ class AppsProvider with ChangeNotifier {
         if (context != null ||
             (await canInstallSilently(apps[id]!.app) &&
                 apps[id]!.app.apkUrls.length == 1)) {
-          appsToInstall.putIfAbsent(id, () => apkUrl!);
+          appsToInstall.add(id);
         }
       }
     }
 
-    List<ApkFile> downloadedFiles = await Future.wait(appsToInstall.entries
-        .map((entry) => downloadApp(entry.value, entry.key)));
+    List<ApkFile> downloadedFiles = await Future.wait(
+        appsToInstall.map((id) => downloadApp(apps[id]!.app)));
 
     List<ApkFile> silentUpdates = [];
     List<ApkFile> regularInstalls = [];
@@ -276,13 +321,38 @@ class AppsProvider with ChangeNotifier {
     return appsDir;
   }
 
+  // Delete all stored APKs except those likely to still be needed
   Future<void> deleteSavedAPKs() async {
-    (await getExternalStorageDirectory())
+    List<FileSystemEntity>? apks = (await getExternalStorageDirectory())
         ?.listSync()
         .where((element) => element.path.endsWith('.apk'))
-        .forEach((element) {
-      element.deleteSync();
-    });
+        .toList();
+    if (apks != null && apks.isNotEmpty) {
+      for (var apk in apks) {
+        var shouldDelete = true;
+        var temp = apk.path.split('/').last;
+        temp = temp.substring(0, temp.length - 4);
+        var fn = temp.split('-');
+        if (fn.length == 3) {
+          var possibleId = fn[0];
+          var possibleVersion = fn[1];
+          var possibleApkUrlIndex = fn[2];
+          if (apps[possibleId] != null) {
+            if (apps[possibleId] != null &&
+                apps[possibleId]?.app != null &&
+                apps[possibleId]!.app.installedVersion !=
+                    apps[possibleId]!.app.latestVersion &&
+                apps[possibleId]!.app.latestVersion == possibleVersion &&
+                apps[possibleId]!.app.preferredApkIndex.toString() ==
+                    possibleApkUrlIndex) {
+              shouldDelete = false;
+            }
+          }
+        }
+
+        if (shouldDelete) apk.delete();
+      }
+    }
   }
 
   Future<AppInfo?> getInstalledInfo(String? packageName) async {
@@ -294,6 +364,19 @@ class AppsProvider with ChangeNotifier {
       }
     }
     return null;
+  }
+
+  App? correctInstallStatus(App app, AppInfo? installedInfo) {
+    var modded = false;
+    if (installedInfo == null && app.installedVersion != null) {
+      app.installedVersion = null;
+      modded = true;
+    }
+    if (installedInfo != null && app.installedVersion == null) {
+      app.installedVersion = installedInfo.versionName;
+      modded = true;
+    }
+    return modded ? app : null;
   }
 
   Future<void> loadApps() async {
@@ -315,13 +398,9 @@ class AppsProvider with ChangeNotifier {
     // For any that are not installed (by ID == package name), set to not installed if needed
     List<App> modifiedApps = [];
     for (var app in apps.values) {
-      if (app.installedInfo == null && app.app.installedVersion != null) {
-        app.app.installedVersion = null;
-        modifiedApps.add(app.app);
-      }
-      if (app.installedInfo != null && app.app.installedVersion == null) {
-        app.app.installedVersion = app.installedInfo!.versionName;
-        modifiedApps.add(app.app);
+      var moddedApp = correctInstallStatus(app.app, app.installedInfo);
+      if (moddedApp != null) {
+        modifiedApps.add(moddedApp);
       }
     }
     if (modifiedApps.isNotEmpty) {
