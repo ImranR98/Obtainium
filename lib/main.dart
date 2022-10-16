@@ -13,8 +13,9 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+const String currentVersion = '0.5.10';
 const String currentReleaseTag =
-    'v0.5.10-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
@@ -152,7 +153,9 @@ class _ObtainiumState extends State<Obtainium> {
               [],
               0,
               ['true'],
-              null)
+              null,
+              'dev.imranr.obtainium',
+              currentVersion)
         ]);
       }
       // Register the background update task according to the user's setting

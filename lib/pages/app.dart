@@ -56,6 +56,16 @@ class _AppPageState extends State<AppPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        app?.icon != null
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                    Image.memory(
+                                      app!.icon!,
+                                      scale: 1.5,
+                                    )
+                                  ])
+                            : Container(),
                         Text(
                           app?.app.name ?? 'App',
                           textAlign: TextAlign.center,
@@ -265,12 +275,18 @@ class _AppPageState extends State<AppPage> {
                                     ? () {
                                         HapticFeedback.heavyImpact();
                                         appsProvider
-                                            .downloadAndInstallLatestApp(
+                                            .downloadAndInstallLatestApps(
                                                 [app!.app.id],
                                                 context).then((res) {
                                           if (res.isNotEmpty && mounted) {
                                             Navigator.of(context).pop();
                                           }
+                                        }).catchError((e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(e.toString())),
+                                          );
                                         });
                                       }
                                     : null,

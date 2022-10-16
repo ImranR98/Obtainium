@@ -166,6 +166,9 @@ class AppsPageState extends State<AppsPage> {
                 onLongPress: () {
                   toggleAppSelected(sortedApps[index].app.id);
                 },
+                leading: sortedApps[index].icon != null
+                    ? Image.memory(sortedApps[index].icon!)
+                    : null,
                 title: Text(sortedApps[index].app.name),
                 subtitle: Text('By ${sortedApps[index].app.author}'),
                 trailing: sortedApps[index].downloadProgress != null
@@ -324,8 +327,14 @@ class AppsPageState extends State<AppsPage> {
                                     toInstall
                                         .addAll(newInstallIdsAllOrSelected);
                                   }
-                                  appsProvider.downloadAndInstallLatestApp(
-                                      toInstall, context);
+                                  appsProvider
+                                      .downloadAndInstallLatestApps(
+                                          toInstall, context)
+                                      .catchError((e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  });
                                 });
                               }
                             });

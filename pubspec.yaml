@@ -54,6 +54,8 @@ dependencies:
   animations: ^2.0.4
   install_plugin_v2: ^1.0.0
   share_plus: ^4.4.0
+  installed_apps: ^1.3.1
+  package_archive_info: ^0.1.0
 
 
 dev_dependencies:

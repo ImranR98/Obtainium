@@ -40,6 +40,7 @@ class App {
   late int preferredApkIndex;
   late List<String> additionalData;
   late DateTime? lastUpdateCheck;
+  late String? realId;
   App(
       this.id,
       this.url,
@@ -50,7 +51,8 @@ class App {
       this.apkUrls,
       this.preferredApkIndex,
       this.additionalData,
-      this.lastUpdateCheck);
+      this.lastUpdateCheck,
+      this.realId);
 
   @override
   String toString() {
@@ -75,7 +77,8 @@ class App {
           : List<String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']));
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+      json['realId'] == null ? null : json['realId'] as String);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -87,7 +90,8 @@ class App {
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
         'additionalData': jsonEncode(additionalData),
-        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch
+        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
+        'realId': realId
       };
 }
 
@@ -190,7 +194,7 @@ class SourceProvider {
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String customName = ''}) async {
+      {String customName = '', String? realId}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -207,7 +211,8 @@ class SourceProvider {
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
-        DateTime.now());
+        DateTime.now(),
+        realId);
   }
 
   /// Returns a length 2 list, where the first element is a list of Apps and
