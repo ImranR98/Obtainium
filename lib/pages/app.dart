@@ -56,12 +56,12 @@ class _AppPageState extends State<AppPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        app?.icon != null
+                        app?.installedInfo != null
                             ? Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                     Image.memory(
-                                      app!.icon!,
+                                      app!.installedInfo!.icon!,
                                       scale: 1.5,
                                     )
                                   ])
@@ -136,7 +136,8 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.installedVersion != app?.app.latestVersion)
+                        if (app?.app.installedVersion != null &&
+                            app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null
@@ -145,8 +146,8 @@ class _AppPageState extends State<AppPage> {
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return AlertDialog(
-                                              title: Text(
-                                                  'App Already ${app?.app.installedVersion == null ? 'Installed' : 'Updated'}?'),
+                                              title: const Text(
+                                                  'App Already up to Date?'),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {
@@ -171,54 +172,13 @@ class _AppPageState extends State<AppPage> {
                                                           .pop();
                                                     },
                                                     child: const Text(
-                                                        'Yes, Mark as Installed'))
+                                                        'Yes, Mark as Updated'))
                                               ],
                                             );
                                           });
                                     },
-                              tooltip: 'Mark as Installed',
-                              icon: const Icon(Icons.done))
-                        else
-                          IconButton(
-                              onPressed: app?.downloadProgress != null
-                                  ? null
-                                  : () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext ctx) {
-                                            return AlertDialog(
-                                              title: const Text(
-                                                  'App Not Installed?'),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('No')),
-                                                TextButton(
-                                                    onPressed: () {
-                                                      HapticFeedback
-                                                          .selectionClick();
-                                                      var updatedApp = app?.app;
-                                                      if (updatedApp != null) {
-                                                        updatedApp
-                                                                .installedVersion =
-                                                            null;
-                                                        appsProvider.saveApps(
-                                                            [updatedApp]);
-                                                      }
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text(
-                                                        'Yes, Mark as Not Installed'))
-                                              ],
-                                            );
-                                          });
-                                    },
-                              tooltip: 'Mark as Not Installed',
-                              icon: const Icon(Icons.no_cell_outlined)),
+                              tooltip: 'Mark as Updated',
+                              icon: const Icon(Icons.done)),
                         if (source != null &&
                             source.additionalDataFormItems.isNotEmpty)
                           IconButton(

@@ -166,8 +166,8 @@ class AppsPageState extends State<AppsPage> {
                 onLongPress: () {
                   toggleAppSelected(sortedApps[index].app.id);
                 },
-                leading: sortedApps[index].icon != null
-                    ? Image.memory(sortedApps[index].icon!)
+                leading: sortedApps[index].installedInfo != null
+                    ? Image.memory(sortedApps[index].installedInfo!.icon!)
                     : null,
                 title: Text(sortedApps[index].app.name),
                 subtitle: Text('By ${sortedApps[index].app.author}'),
@@ -358,7 +358,7 @@ class AppsPageState extends State<AppsPage> {
                                     padding: const EdgeInsets.only(top: 6),
                                     child: Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                            MainAxisAlignment.spaceAround,
                                         children: [
                                           IconButton(
                                               onPressed:
@@ -373,7 +373,10 @@ class AppsPageState extends State<AppsPage> {
                                                                       ctx) {
                                                                 return AlertDialog(
                                                                   title: Text(
-                                                                      'Mark ${selectedIds.length} Selected Apps as Not Installed?'),
+                                                                      'Mark ${selectedIds.length} Selected Apps as Updated?'),
+                                                                  content:
+                                                                      const Text(
+                                                                          'Only applies to installed but out of date Apps.'),
                                                                   actions: [
                                                                     TextButton(
                                                                         onPressed:
@@ -392,8 +395,10 @@ class AppsPageState extends State<AppsPage> {
                                                                               .saveApps(selectedIds.map((e) {
                                                                             var a =
                                                                                 appsProvider.apps[e]!.app;
-                                                                            a.installedVersion =
-                                                                                null;
+                                                                            if (a.installedVersion !=
+                                                                                null) {
+                                                                              a.installedVersion = a.latestVersion;
+                                                                            }
                                                                             return a;
                                                                           }).toList());
 
@@ -407,57 +412,7 @@ class AppsPageState extends State<AppsPage> {
                                                               });
                                                         },
                                               tooltip:
-                                                  'Mark Selected Apps as Not Installed',
-                                              icon: const Icon(
-                                                  Icons.no_cell_outlined)),
-                                          IconButton(
-                                              onPressed:
-                                                  appsProvider
-                                                          .areDownloadsRunning()
-                                                      ? null
-                                                      : () {
-                                                          showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      ctx) {
-                                                                return AlertDialog(
-                                                                  title: Text(
-                                                                      'Mark ${selectedIds.length} Selected Apps as Installed/Updated?'),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          HapticFeedback
-                                                                              .selectionClick();
-                                                                          appsProvider
-                                                                              .saveApps(selectedIds.map((e) {
-                                                                            var a =
-                                                                                appsProvider.apps[e]!.app;
-                                                                            a.installedVersion =
-                                                                                a.latestVersion;
-                                                                            return a;
-                                                                          }).toList());
-
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'Yes'))
-                                                                  ],
-                                                                );
-                                                              });
-                                                        },
-                                              tooltip:
-                                                  'Mark Selected Apps as Installed/Updated',
+                                                  'Mark Selected Apps as Updated',
                                               icon: const Icon(Icons.done)),
                                           IconButton(
                                             onPressed: () {

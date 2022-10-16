@@ -40,7 +40,6 @@ class App {
   late int preferredApkIndex;
   late List<String> additionalData;
   late DateTime? lastUpdateCheck;
-  late String? realId;
   App(
       this.id,
       this.url,
@@ -51,8 +50,7 @@ class App {
       this.apkUrls,
       this.preferredApkIndex,
       this.additionalData,
-      this.lastUpdateCheck,
-      this.realId);
+      this.lastUpdateCheck);
 
   @override
   String toString() {
@@ -77,8 +75,7 @@ class App {
           : List<String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['realId'] == null ? null : json['realId'] as String);
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']));
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -90,8 +87,7 @@ class App {
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
         'additionalData': jsonEncode(additionalData),
-        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
-        'realId': realId
+        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch
       };
 }
 
@@ -193,14 +189,17 @@ class SourceProvider {
     return false;
   }
 
+  String generateTempID(AppNames names, AppSource source) =>
+      '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
+
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String customName = '', String? realId}) async {
+      {String customName = '', String? id}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);
     return App(
-        '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}',
+        id ?? generateTempID(names, source),
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
         customName.trim().isNotEmpty
@@ -211,8 +210,7 @@ class SourceProvider {
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
-        DateTime.now(),
-        realId);
+        DateTime.now());
   }
 
   /// Returns a length 2 list, where the first element is a list of Apps and

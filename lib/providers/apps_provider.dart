@@ -9,6 +9,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
+import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -23,9 +24,9 @@ import 'package:http/http.dart';
 class AppInMemory {
   late App app;
   double? downloadProgress;
-  Uint8List? icon; // Also indicates that an App is installed
+  AppInfo? installedInfo; // Also indicates that an App is installed
 
-  AppInMemory(this.app, this.downloadProgress, this.icon);
+  AppInMemory(this.app, this.downloadProgress, this.installedInfo);
 }
 
 class ApkFile {
@@ -134,14 +135,12 @@ class AppsProvider with ChangeNotifier {
   Future<void> installApk(ApkFile file) async {
     var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
     String? realInstalledVersion;
-    if (apps[file.appId]!.app.realId != null) {
-      try {
-        realInstalledVersion =
-            (await InstalledApps.getAppInfo(apps[file.appId]!.app.realId!))
-                .versionName;
-      } catch (e) {
-        // OK
-      }
+    try {
+      realInstalledVersion =
+          (await InstalledApps.getAppInfo(apps[file.appId]!.app.id))
+              .versionName;
+    } catch (e) {
+      // OK
     }
     if (realInstalledVersion != null &&
         newInfo.version.compareTo(realInstalledVersion) < 0) {
@@ -153,8 +152,14 @@ class AppsProvider with ChangeNotifier {
     }
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
-    apps[file.appId]!.app.realId = newInfo.packageName;
-    await saveApps([apps[file.appId]!.app]);
+    if (apps[file.appId]!.app.id != newInfo.packageName) {
+      App app = apps[file.appId]!.app;
+      app.id = newInfo.packageName;
+      await removeApps([file.appId]);
+      await saveApps([app]);
+    } else {
+      await saveApps([apps[file.appId]!.app]);
+    }
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -280,10 +285,10 @@ class AppsProvider with ChangeNotifier {
     });
   }
 
-  Future<Uint8List?> getIconIfExists(String? packageName) async {
+  Future<AppInfo?> getInstalledInfo(String? packageName) async {
     if (packageName != null) {
       try {
-        return (await InstalledApps.getAppInfo(packageName)).icon;
+        return await InstalledApps.getAppInfo(packageName);
       } catch (e) {
         // OK
       }
@@ -302,18 +307,20 @@ class AppsProvider with ChangeNotifier {
     for (int i = 0; i < appFiles.length; i++) {
       App app =
           App.fromJson(jsonDecode(File(appFiles[i].path).readAsStringSync()));
-      var icon = await getIconIfExists(app.realId);
-      apps.putIfAbsent(app.id, () => AppInMemory(app, null, icon));
+      var info = await getInstalledInfo(app.id);
+      apps.putIfAbsent(app.id, () => AppInMemory(app, null, info));
     }
     loadingApps = false;
     notifyListeners();
-    // For any Apps that were previously installed (hence we have their realId) but no longer found, set to not installed
+    // For any that are not installed (by ID == package name), set to not installed if needed
     List<App> modifiedApps = [];
     for (var app in apps.values) {
-      if (app.app.realId != null &&
-          app.icon == null &&
-          app.app.installedVersion != null) {
+      if (app.installedInfo == null && app.app.installedVersion != null) {
         app.app.installedVersion = null;
+        modifiedApps.add(app.app);
+      }
+      if (app.installedInfo != null && app.app.installedVersion == null) {
+        app.app.installedVersion = app.installedInfo!.versionName;
         modifiedApps.add(app.app);
       }
     }
@@ -326,10 +333,10 @@ class AppsProvider with ChangeNotifier {
     for (var app in apps) {
       File('${(await getAppsDir()).path}/${app.id}.json')
           .writeAsStringSync(jsonEncode(app.toJson()));
-      var icon = await getIconIfExists(app.realId);
+      var info = await getInstalledInfo(app.id);
       this.apps.update(
-          app.id, (value) => AppInMemory(app, value.downloadProgress, icon),
-          ifAbsent: () => AppInMemory(app, null, icon));
+          app.id, (value) => AppInMemory(app, value.downloadProgress, info),
+          ifAbsent: () => AppInMemory(app, null, info));
     }
     notifyListeners();
   }
@@ -364,7 +371,7 @@ class AppsProvider with ChangeNotifier {
         currentApp.url,
         currentApp.additionalData,
         customName: currentApp.name,
-        realId: currentApp.realId);
+        id: currentApp.id);
     newApp.installedVersion = currentApp.installedVersion;
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;

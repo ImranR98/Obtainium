@@ -144,7 +144,7 @@ class _ObtainiumState extends State<Obtainium> {
         Permission.notification.request();
         appsProvider.saveApps([
           App(
-              'imranr98_obtainium_${GitHub().host}',
+              'dev.imranr.obtainium',
               'https://github.com/ImranR98/Obtainium',
               'ImranR98',
               'Obtainium',
@@ -153,9 +153,7 @@ class _ObtainiumState extends State<Obtainium> {
               [],
               0,
               ['true'],
-              null,
-              'dev.imranr.obtainium',
-              currentVersion)
+              null)
         ]);
       }
       // Register the background update task according to the user's setting
