@@ -22,7 +22,6 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   AppSource? pickedSource;
   List<String> additionalData = [];
-  String customName = '';
   bool validAdditionalData = true;
 
   @override
@@ -80,9 +79,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .doesSourceHaveRequiredAdditionalData(
                                                     source)
                                             : true;
-                                        if (source == null) {
-                                          customName = '';
-                                        }
                                       }
                                     });
                                   },
@@ -113,8 +109,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 await sourceProvider.getApp(
                                                     pickedSource!,
                                                     userInput,
-                                                    additionalData,
-                                                    customName: customName);
+                                                    additionalData);
                                             await settingsProvider
                                                 .getInstallPermission();
                                             // ignore: use_build_context_synchronously
@@ -191,21 +186,6 @@ class _AddAppPageState extends State<AddAppPage> {
                               const SizedBox(
                                 height: 8,
                               ),
-                            if (pickedSource != null)
-                              GeneratedForm(
-                                  items: [
-                                    [
-                                      GeneratedFormItem(
-                                          label: 'Custom App Name',
-                                          required: false)
-                                    ]
-                                  ],
-                                  onValueChanges: (values, valid) {
-                                    setState(() {
-                                      customName = values[0];
-                                    });
-                                  },
-                                  defaultValues: [customName])
                           ],
                         )
                       else

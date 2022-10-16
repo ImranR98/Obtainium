@@ -67,7 +67,7 @@ class _AppPageState extends State<AppPage> {
                                   ])
                             : Container(),
                         Text(
-                          app?.app.name ?? 'App',
+                          app?.installedInfo?.name ?? app?.app.name ?? 'App',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
@@ -190,30 +190,15 @@ class _AppPageState extends State<AppPage> {
                                           builder: (BuildContext ctx) {
                                             return GeneratedFormModal(
                                                 title: 'Additional Options',
-                                                items: [
-                                                  ...source
-                                                      .additionalDataFormItems,
-                                                  [
-                                                    GeneratedFormItem(
-                                                        label: 'App Name',
-                                                        required: true)
-                                                  ]
-                                                ],
+                                                items: source
+                                                    .additionalDataFormItems,
                                                 defaultValues: app != null
-                                                    ? [
-                                                        ...app
-                                                            .app.additionalData,
-                                                        app.app.name
-                                                      ]
-                                                    : [
-                                                        ...source
-                                                            .additionalDataDefaults
-                                                      ]);
+                                                    ? app.app.additionalData
+                                                    : source
+                                                        .additionalDataDefaults);
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
-                                          var name = values.removeLast();
-                                          changedApp.name = name;
                                           changedApp.additionalData = values;
                                           appsProvider.saveApps(
                                               [changedApp]).then((value) {
@@ -264,7 +249,7 @@ class _AppPageState extends State<AppPage> {
                                         return AlertDialog(
                                           title: const Text('Remove App?'),
                                           content: Text(
-                                              'This will remove \'${app?.app.name}\' from Obtainium.${app?.app.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
+                                              'This will remove \'${app?.installedInfo?.name ?? app?.app.name}\' from Obtainium.${app?.app.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
                                           actions: [
                                             TextButton(
                                                 onPressed: () {

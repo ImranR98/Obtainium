@@ -29,10 +29,10 @@ class AppInMemory {
   AppInMemory(this.app, this.downloadProgress, this.installedInfo);
 }
 
-class ApkFile {
+class DownloadedApp {
   String appId;
   File file;
-  ApkFile(this.appId, this.file);
+  DownloadedApp(this.appId, this.file);
 }
 
 class AppsProvider with ChangeNotifier {
@@ -115,7 +115,7 @@ class AppsProvider with ChangeNotifier {
   // Downloads the App (preferred URL) and returns an ApkFile object
   // If the app was already saved, updates it's download progress % in memory
   // But also works for Apps that are not saved
-  Future<ApkFile> downloadApp(App app) async {
+  Future<DownloadedApp> downloadApp(App app) async {
     var fileName = '${app.id}-${app.latestVersion}-${app.preferredApkIndex}';
     File downloadFile = await downloadApk(app.apkUrls[app.preferredApkIndex],
         '${app.id}-${app.latestVersion}-${app.preferredApkIndex}',
@@ -146,7 +146,7 @@ class AppsProvider with ChangeNotifier {
         await saveApps([app]);
       }
     }
-    return ApkFile(app.id, downloadFile);
+    return DownloadedApp(app.id, downloadFile);
   }
 
   bool areDownloadsRunning() => apps.values
@@ -179,22 +179,20 @@ class AppsProvider with ChangeNotifier {
   // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
   // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
   // But even then, we don't know if it actually succeeded
-  Future<void> installApk(ApkFile file) async {
+  Future<void> installApk(DownloadedApp file) async {
     var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
-    String? realInstalledVersion;
+    AppInfo? appInfo;
     try {
-      realInstalledVersion =
-          (await InstalledApps.getAppInfo(apps[file.appId]!.app.id))
-              .versionName;
+      appInfo = await InstalledApps.getAppInfo(apps[file.appId]!.app.id);
     } catch (e) {
       // OK
     }
-    if (realInstalledVersion != null &&
-        newInfo.version.compareTo(realInstalledVersion) < 0) {
+    if (appInfo != null &&
+        newInfo.version.compareTo(appInfo.versionName!) < 0) {
       throw 'Can\'t install an older version';
     }
-    if (realInstalledVersion == null ||
-        newInfo.version.compareTo(realInstalledVersion) > 0) {
+    if (appInfo == null ||
+        newInfo.version.compareTo(appInfo.versionName!) > 0) {
       await InstallPlugin.installApk(file.file.path, 'dev.imranr.obtainium');
     }
     apps[file.appId]!.app.installedVersion =
@@ -258,11 +256,11 @@ class AppsProvider with ChangeNotifier {
       }
     }
 
-    List<ApkFile> downloadedFiles = await Future.wait(
+    List<DownloadedApp> downloadedFiles = await Future.wait(
         appsToInstall.map((id) => downloadApp(apps[id]!.app)));
 
-    List<ApkFile> silentUpdates = [];
-    List<ApkFile> regularInstalls = [];
+    List<DownloadedApp> silentUpdates = [];
+    List<DownloadedApp> regularInstalls = [];
     for (var f in downloadedFiles) {
       bool willBeSilent = await canInstallSilently(apps[f.appId]!.app);
       if (willBeSilent) {
@@ -273,9 +271,9 @@ class AppsProvider with ChangeNotifier {
     }
 
     // If Obtainium is being installed, it should be the last one
-    List<ApkFile> moveObtainiumToEnd(List<ApkFile> items) {
+    List<DownloadedApp> moveObtainiumToEnd(List<DownloadedApp> items) {
       String obtainiumId = 'imranr98_obtainium_${GitHub().host}';
-      ApkFile? temp;
+      DownloadedApp? temp;
       items.removeWhere((element) {
         bool res = element.appId == obtainiumId;
         if (res) {
@@ -429,6 +427,7 @@ class AppsProvider with ChangeNotifier {
       File('${(await getAppsDir()).path}/${app.id}.json')
           .writeAsStringSync(jsonEncode(app.toJson()));
       var info = await getInstalledInfo(app.id);
+      app.name = info?.name ?? app.name;
       this.apps.update(
           app.id, (value) => AppInMemory(app, value.downloadProgress, info),
           ifAbsent: () => AppInMemory(app, null, info));
@@ -465,7 +464,7 @@ class AppsProvider with ChangeNotifier {
         sourceProvider.getSource(currentApp.url),
         currentApp.url,
         currentApp.additionalData,
-        customName: currentApp.name,
+        name: currentApp.name,
         id: currentApp.id);
     newApp.installedVersion = currentApp.installedVersion;
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {

@@ -89,7 +89,8 @@ class AppsPageState extends State<AppsPage> {
             .toList();
 
         for (var t in nameTokens) {
-          if (!app.app.name.toLowerCase().contains(t.toLowerCase())) {
+          var name = app.installedInfo?.name ?? app.app.name;
+          if (!name.toLowerCase().contains(t.toLowerCase())) {
             return false;
           }
         }
@@ -103,13 +104,13 @@ class AppsPageState extends State<AppsPage> {
     }
 
     sortedApps.sort((a, b) {
+      var nameA = a.installedInfo?.name ?? a.app.name;
+      var nameB = b.installedInfo?.name ?? b.app.name;
       int result = 0;
       if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result =
-            (a.app.author + a.app.name).compareTo(b.app.author + b.app.name);
+        result = (a.app.author + nameA).compareTo(b.app.author + nameB);
       } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result =
-            (a.app.name + a.app.author).compareTo(b.app.name + b.app.author);
+        result = (nameA + a.app.author).compareTo(nameB + b.app.author);
       }
       return result;
     });
@@ -169,7 +170,8 @@ class AppsPageState extends State<AppsPage> {
                 leading: sortedApps[index].installedInfo != null
                     ? Image.memory(sortedApps[index].installedInfo!.icon!)
                     : null,
-                title: Text(sortedApps[index].app.name),
+                title: Text(sortedApps[index].installedInfo?.name ??
+                    sortedApps[index].app.name),
                 subtitle: Text('By ${sortedApps[index].app.author}'),
                 trailing: sortedApps[index].downloadProgress != null
                     ? Text(

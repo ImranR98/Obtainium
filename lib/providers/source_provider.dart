@@ -193,7 +193,7 @@ class SourceProvider {
       '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String customName = '', String? id}) async {
+      {String name = '', String? id}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -202,8 +202,8 @@ class SourceProvider {
         id ?? generateTempID(names, source),
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
-        customName.trim().isNotEmpty
-            ? customName
+        name.trim().isNotEmpty
+            ? name
             : names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,
