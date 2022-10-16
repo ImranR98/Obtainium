@@ -401,11 +401,23 @@ class AppsProvider with ChangeNotifier {
         .where((item) => item.path.toLowerCase().endsWith('.json'))
         .toList();
     apps.clear();
+    var sp = SourceProvider();
+    List<List<String>> errors = [];
     for (int i = 0; i < appFiles.length; i++) {
       App app =
           App.fromJson(jsonDecode(File(appFiles[i].path).readAsStringSync()));
       var info = await getInstalledInfo(app.id);
-      apps.putIfAbsent(app.id, () => AppInMemory(app, null, info));
+      try {
+        sp.getSource(app.url);
+        apps.putIfAbsent(app.id, () => AppInMemory(app, null, info));
+      } catch (e) {
+        errors.add([app.id, app.name, e.toString()]);
+      }
+    }
+    if (errors.isNotEmpty) {
+      removeApps(errors.map((e) => e[0]).toList());
+      NotificationsProvider().notify(
+          AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
     loadingApps = false;
     notifyListeners();

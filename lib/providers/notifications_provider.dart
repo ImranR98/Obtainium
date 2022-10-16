@@ -61,6 +61,24 @@ class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
             Importance.high);
 }
 
+class AppsRemovedNotification extends ObtainiumNotification {
+  AppsRemovedNotification(List<List<String>> namedReasons)
+      : super(
+            6,
+            'Apps Removed',
+            '',
+            'APPS_REMOVED',
+            'Apps Removed',
+            'Notifies the user that one or more Apps were removed due to errors while loading them',
+            Importance.max) {
+    message = '';
+    for (var r in namedReasons) {
+      message += '${r[0]} was removed due to this error: ${r[1]}. \n';
+    }
+    message = message.trim();
+  }
+}
+
 final completeInstallationNotification = ObtainiumNotification(
     1,
     'Complete App Installation',

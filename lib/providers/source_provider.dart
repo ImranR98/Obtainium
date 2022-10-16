@@ -157,7 +157,7 @@ class SourceProvider {
     Mullvad(),
     Signal(),
     SourceForge(),
-    APKMirror()
+    // APKMirror()
   ];
 
   // Add more mass source classes here so they are available via the service
