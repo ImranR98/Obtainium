@@ -137,11 +137,12 @@ class AppsProvider with ChangeNotifier {
     // If the ID has changed (as it should on first download), replace it
     var newInfo = await PackageArchiveInfo.fromPath(downloadFile.path);
     if (app.id != newInfo.packageName) {
+      var originalAppId = app.id;
       app.id = newInfo.packageName;
       downloadFile = downloadFile.renameSync(
           '${downloadFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
-      if (apps[app.id] != null) {
-        await removeApps([app.id]);
+      if (apps[originalAppId] != null) {
+        await removeApps([originalAppId]);
         await saveApps([app]);
       }
     }
@@ -298,15 +299,30 @@ class AppsProvider with ChangeNotifier {
     // for (var u in silentUpdates) {
     //   await installApk(u, silent: true); // Would need to add silent option
     // }
-
+    Map<String, List<String>> errors = {};
     if (context != null) {
       if (regularInstalls.isNotEmpty) {
         // ignore: use_build_context_synchronously
         await askUserToReturnToForeground(context, waitForFG: true);
       }
       for (var i in regularInstalls) {
-        await installApk(i);
+        try {
+          await installApk(i);
+        } catch (e) {
+          var tempIds = errors.remove(e.toString());
+          tempIds ??= [];
+          tempIds.add(i.appId);
+          errors.putIfAbsent(e.toString(), () => tempIds!);
+        }
       }
+    }
+    if (errors.isNotEmpty) {
+      String finalError = '';
+      for (var e in errors.keys) {
+        finalError +=
+            '$e ${errors[e]!.map((e) => apps[e]!.app.name).toString()}. ';
+      }
+      throw finalError;
     }
 
     return downloadedFiles.map((e) => e.appId).toList();
