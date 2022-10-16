@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -13,7 +12,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-const String currentVersion = '0.5.10';
+const String currentVersion = '0.6.0';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -144,7 +143,7 @@ class _ObtainiumState extends State<Obtainium> {
         Permission.notification.request();
         appsProvider.saveApps([
           App(
-              'imranr98_obtainium_${GitHub().host}',
+              'dev.imranr.obtainium',
               'https://github.com/ImranR98/Obtainium',
               'ImranR98',
               'Obtainium',
@@ -153,9 +152,7 @@ class _ObtainiumState extends State<Obtainium> {
               [],
               0,
               ['true'],
-              null,
-              'dev.imranr.obtainium',
-              currentVersion)
+              null)
         ]);
       }
       // Register the background update task according to the user's setting
