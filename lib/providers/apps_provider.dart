@@ -188,11 +188,11 @@ class AppsProvider with ChangeNotifier {
       // OK
     }
     if (appInfo != null &&
-        newInfo.version.compareTo(appInfo.versionName!) < 0) {
+        int.parse(newInfo.buildNumber) < appInfo.versionCode!) {
       throw 'Can\'t install an older version';
     }
     if (appInfo == null ||
-        newInfo.version.compareTo(appInfo.versionName!) > 0) {
+        int.parse(newInfo.buildNumber) > appInfo.versionCode!) {
       await InstallPlugin.installApk(file.file.path, 'dev.imranr.obtainium');
     }
     apps[file.appId]!.app.installedVersion =
@@ -380,6 +380,16 @@ class AppsProvider with ChangeNotifier {
     return null;
   }
 
+  String standardizeVersionString(String versionString) {
+    return versionString.characters
+        .where((p0) => ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+            .contains(p0))
+        .join('');
+  }
+
+  // If the App says it is installed by installedInfo is null, set it to not installed
+  // If the App says is is not installed but installedInfo exists, try to set it to installed as latest version...
+  // ...if the latestVersion seems to match the version in installedInfo (not guaranteed)
   App? correctInstallStatus(App app, AppInfo? installedInfo) {
     var modded = false;
     if (installedInfo == null && app.installedVersion != null) {
@@ -387,7 +397,12 @@ class AppsProvider with ChangeNotifier {
       modded = true;
     }
     if (installedInfo != null && app.installedVersion == null) {
-      app.installedVersion = installedInfo.versionName;
+      if (standardizeVersionString(app.latestVersion) ==
+          installedInfo.versionName) {
+        app.installedVersion = app.latestVersion;
+      } else {
+        app.installedVersion = installedInfo.versionName;
+      }
       modded = true;
     }
     return modded ? app : null;
@@ -422,9 +437,15 @@ class AppsProvider with ChangeNotifier {
     loadingApps = false;
     notifyListeners();
     // For any that are not installed (by ID == package name), set to not installed if needed
+    refreshInstalledAppInfo();
+  }
+
+  refreshInstalledAppInfo({List<String>? appIds}) {
     List<App> modifiedApps = [];
-    for (var app in apps.values) {
-      var moddedApp = correctInstallStatus(app.app, app.installedInfo);
+    appIds ??= apps.values.map((e) => e.app.id).toList();
+    for (var id in appIds) {
+      var moddedApp =
+          correctInstallStatus(apps[id]!.app, apps[id]!.installedInfo);
       if (moddedApp != null) {
         modifiedApps.add(moddedApp);
       }
@@ -440,6 +461,7 @@ class AppsProvider with ChangeNotifier {
           .writeAsStringSync(jsonEncode(app.toJson()));
       var info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
+      app = correctInstallStatus(app, info) ?? app;
       this.apps.update(
           app.id, (value) => AppInMemory(app, value.downloadProgress, info),
           ifAbsent: () => AppInMemory(app, null, info));
