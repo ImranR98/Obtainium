@@ -197,7 +197,7 @@ class AppsProvider with ChangeNotifier {
     }
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
-    await saveApps([apps[file.appId]!.app]);
+    await saveApps([apps[file.appId]!.app], dontCorrectInstallStatus: true);
   }
 
   Future<String?> selectApkUrl(App app, BuildContext? context) async {
@@ -455,13 +455,16 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<void> saveApps(List<App> apps) async {
+  Future<void> saveApps(List<App> apps,
+      {bool dontCorrectInstallStatus = false}) async {
     for (var app in apps) {
       File('${(await getAppsDir()).path}/${app.id}.json')
           .writeAsStringSync(jsonEncode(app.toJson()));
       var info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
-      app = correctInstallStatus(app, info) ?? app;
+      if (!dontCorrectInstallStatus) {
+        app = correctInstallStatus(app, info) ?? app;
+      }
       this.apps.update(
           app.id, (value) => AppInMemory(app, value.downloadProgress, info),
           ifAbsent: () => AppInMemory(app, null, info));
