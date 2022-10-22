@@ -601,9 +601,11 @@ class AppsProvider with ChangeNotifier {
     List<App> importedApps = (jsonDecode(appsJSON) as List<dynamic>)
         .map((e) => App.fromJson(e))
         .toList();
+    while (loadingApps) {
+      await Future.delayed(const Duration(microseconds: 1));
+    }
     for (App a in importedApps) {
-      a.installedVersion =
-          apps.containsKey(a.id) ? apps[a]?.app.installedVersion : null;
+      a.installedVersion = apps[a.id]?.app.installedVersion;
     }
     await saveApps(importedApps);
     notifyListeners();
