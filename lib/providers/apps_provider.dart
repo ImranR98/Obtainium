@@ -438,10 +438,10 @@ class AppsProvider with ChangeNotifier {
     loadingApps = false;
     notifyListeners();
     // For any that are not installed (by ID == package name), set to not installed if needed
-    refreshInstalledAppInfo();
+    await refreshInstalledAppInfo();
   }
 
-  refreshInstalledAppInfo({List<String>? appIds}) {
+  refreshInstalledAppInfo({List<String>? appIds}) async {
     List<App> modifiedApps = [];
     appIds ??= apps.values.map((e) => e.app.id).toList();
     for (var id in appIds) {
@@ -452,7 +452,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (modifiedApps.isNotEmpty) {
-      saveApps(modifiedApps, dontCorrectInstallStatus: true);
+      await saveApps(modifiedApps, dontCorrectInstallStatus: true);
     }
   }
 
