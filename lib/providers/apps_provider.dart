@@ -197,6 +197,7 @@ class AppsProvider with ChangeNotifier {
     }
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
+    // Don't correct install status as installation may not be done yet
     await saveApps([apps[file.appId]!.app], dontCorrectInstallStatus: true);
   }
 
@@ -451,20 +452,20 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (modifiedApps.isNotEmpty) {
-      saveApps(modifiedApps);
+      saveApps(modifiedApps, dontCorrectInstallStatus: true);
     }
   }
 
   Future<void> saveApps(List<App> apps,
       {bool dontCorrectInstallStatus = false}) async {
     for (var app in apps) {
-      File('${(await getAppsDir()).path}/${app.id}.json')
-          .writeAsStringSync(jsonEncode(app.toJson()));
       var info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
       if (!dontCorrectInstallStatus) {
         app = correctInstallStatus(app, info) ?? app;
       }
+      File('${(await getAppsDir()).path}/${app.id}.json')
+          .writeAsStringSync(jsonEncode(app.toJson()));
       this.apps.update(
           app.id, (value) => AppInMemory(app, value.downloadProgress, info),
           ifAbsent: () => AppInMemory(app, null, info));
