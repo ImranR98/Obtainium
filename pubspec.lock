@@ -125,50 +125,18 @@ packages:
     dependency: "direct main"
     description:
       name: device_info_plus
-      sha256: "717a1d782b01ecbd0890b9a8994cb018ae2a9a617dddf681217567189008915c"
+      sha256: "8d99246809e63d93e4e68fade79495d81f445ad735bde2b129b19c0adddcaf1a"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.0"
-  device_info_plus_linux:
-    dependency: transitive
-    description:
-      name: device_info_plus_linux
-      sha256: ebefd15fa43df3a8b222d6a120f23771c18b62b8306b07f72f546927475b2bd6
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.0.0"
-  device_info_plus_macos:
-    dependency: transitive
-    description:
-      name: device_info_plus_macos
-      sha256: "9e540a74d7f307e640db2caa059d4b55676ffe7f2bc5cf3d103f6e7fdb6ac153"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.0.0"
+    version: "7.0.1"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
       name: device_info_plus_platform_interface
-      sha256: adac28cb9101434260279bf36adeac8cafac8d120d0d942dabb2c6bd9a03b4c7
+      sha256: "8b8b65e598b84fdb82c26cf9b3f05a6c4978636e99b0c070bae5905a24728199"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.0"
-  device_info_plus_web:
-    dependency: transitive
-    description:
-      name: device_info_plus_web
-      sha256: de7e651339a77b003af7cd77d83afbbd4f4848fd8892dbc80910278a8cf45f7b
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.0.0"
-  device_info_plus_windows:
-    dependency: transitive
-    description:
-      name: device_info_plus_windows
-      sha256: "803371e6c0ed01b7cda9ae7c8628ea1a6646a6f2b8fb8e1c9376fda19fa123b3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.0.0"
+    version: "6.0.1"
   dynamic_color:
     dependency: "direct main"
     description:
@@ -564,26 +532,10 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: f582d5741930f3ad1bf0211d358eddc0508cc346e5b4b248bd1e569c995ebb7a
+      sha256: "75d2b5489ee248d2791f7aaf1f3b316219a0110ae34d17f6163622dab3242eef"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.3"
-  share_plus_linux:
-    dependency: transitive
-    description:
-      name: share_plus_linux
-      sha256: dc32bf9f1151b9864bb86a997c61a487967a08f2e0b4feaa9a10538712224da4
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
-  share_plus_macos:
-    dependency: transitive
-    description:
-      name: share_plus_macos
-      sha256: "44daa946f2845045ecd7abb3569b61cd9a55ae9cc4cbec9895b2067b270697ae"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
+    version: "6.0.1"
   share_plus_platform_interface:
     dependency: transitive
     description:
@@ -592,22 +544,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-  share_plus_web:
-    dependency: transitive
-    description:
-      name: share_plus_web
-      sha256: eaef05fa8548b372253e772837dd1fbe4ce3aca30ea330765c945d7d4f7c9935
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
-  share_plus_windows:
-    dependency: transitive
-    description:
-      name: share_plus_windows
-      sha256: "3a21515ae7d46988d42130cd53294849e280a5de6ace24bae6912a1bffd757d4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
   shared_preferences:
     dependency: "direct main"
     description:

@@ -157,8 +157,8 @@ class AppsProvider with ChangeNotifier {
     // TODO: This is unreliable - try to get from OS in the future
     var osInfo = await DeviceInfoPlugin().androidInfo;
     return app.installedVersion != null &&
-        osInfo.version.sdkInt! >= 30 &&
-        osInfo.version.release!.compareTo('12') >= 0;
+        osInfo.version.sdkInt >= 30 &&
+        osInfo.version.release.compareTo('12') >= 0;
   }
 
   Future<void> askUserToReturnToForeground(BuildContext context,

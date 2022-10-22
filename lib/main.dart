@@ -94,7 +94,7 @@ void bgTaskCallback() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt! >= 29) {
+  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );

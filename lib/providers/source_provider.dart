@@ -4,7 +4,6 @@
 import 'dart:convert';
 
 import 'package:html/dom.dart';
-import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
