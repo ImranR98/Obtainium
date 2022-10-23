@@ -605,7 +605,9 @@ class AppsProvider with ChangeNotifier {
       await Future.delayed(const Duration(microseconds: 1));
     }
     for (App a in importedApps) {
-      a.installedVersion = apps[a.id]?.app.installedVersion;
+      if (apps[a.id]?.app.installedVersion != null) {
+        a.installedVersion = apps[a.id]?.app.installedVersion;
+      }
     }
     await saveApps(importedApps);
     notifyListeners();
