@@ -523,37 +523,40 @@ class AppsProvider with ChangeNotifier {
     if (!gettingUpdates) {
       gettingUpdates = true;
 
-      List<String> appIds = apps.keys.toList();
-      if (ignoreAfter != null) {
-        appIds = appIds
-            .where((id) =>
-                apps[id]!.app.lastUpdateCheck == null ||
-                apps[id]!.app.lastUpdateCheck!.isBefore(ignoreAfter))
-            .toList();
-      }
-      appIds.sort((a, b) => (apps[a]!.app.lastUpdateCheck ??
-              DateTime.fromMicrosecondsSinceEpoch(0))
-          .compareTo(apps[b]!.app.lastUpdateCheck ??
-              DateTime.fromMicrosecondsSinceEpoch(0)));
+      try {
+        List<String> appIds = apps.keys.toList();
+        if (ignoreAfter != null) {
+          appIds = appIds
+              .where((id) =>
+                  apps[id]!.app.lastUpdateCheck == null ||
+                  apps[id]!.app.lastUpdateCheck!.isBefore(ignoreAfter))
+              .toList();
+        }
+        appIds.sort((a, b) => (apps[a]!.app.lastUpdateCheck ??
+                DateTime.fromMicrosecondsSinceEpoch(0))
+            .compareTo(apps[b]!.app.lastUpdateCheck ??
+                DateTime.fromMicrosecondsSinceEpoch(0)));
 
-      for (int i = 0; i < appIds.length; i++) {
-        App? newApp;
-        try {
-          newApp = await getUpdate(appIds[i]);
-        } catch (e) {
-          if (e is RateLimitError && immediatelyThrowRateLimitError) {
-            rethrow;
+        for (int i = 0; i < appIds.length; i++) {
+          App? newApp;
+          try {
+            newApp = await getUpdate(appIds[i]);
+          } catch (e) {
+            if (e is RateLimitError && immediatelyThrowRateLimitError) {
+              rethrow;
+            }
+            var tempIds = errors.remove(e.toString());
+            tempIds ??= [];
+            tempIds.add(appIds[i]);
+            errors.putIfAbsent(e.toString(), () => tempIds!);
           }
-          var tempIds = errors.remove(e.toString());
-          tempIds ??= [];
-          tempIds.add(appIds[i]);
-          errors.putIfAbsent(e.toString(), () => tempIds!);
+          if (newApp != null) {
+            updates.add(newApp);
+          }
         }
-        if (newApp != null) {
-          updates.add(newApp);
-        }
+      } finally {
+        gettingUpdates = false;
       }
-      gettingUpdates = false;
     }
     if (errors.isNotEmpty) {
       String finalError = '';
