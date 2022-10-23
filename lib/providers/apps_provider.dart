@@ -410,6 +410,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> loadApps() async {
+    while (loadingApps) {
+      await Future.delayed(const Duration(microseconds: 1));
+    }
     loadingApps = true;
     notifyListeners();
     List<FileSystemEntity> appFiles = (await getAppsDir())
