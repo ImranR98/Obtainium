@@ -198,7 +198,7 @@ class AppsProvider with ChangeNotifier {
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
     // Don't correct install status as installation may not be done yet
-    await saveApps([apps[file.appId]!.app], dontCorrectInstallStatus: true);
+    await saveApps([apps[file.appId]!.app], shouldCorrectInstallStatus: false);
   }
 
   Future<String?> selectApkUrl(App app, BuildContext? context) async {
@@ -409,7 +409,7 @@ class AppsProvider with ChangeNotifier {
     return modded ? app : null;
   }
 
-  Future<void> loadApps() async {
+  Future<void> loadApps({shouldCorrectInstallStatus = true}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
     }
@@ -441,30 +441,26 @@ class AppsProvider with ChangeNotifier {
     loadingApps = false;
     notifyListeners();
     // For any that are not installed (by ID == package name), set to not installed if needed
-    await refreshInstalledAppInfo();
-  }
-
-  refreshInstalledAppInfo({List<String>? appIds}) async {
-    List<App> modifiedApps = [];
-    appIds ??= apps.values.map((e) => e.app.id).toList();
-    for (var id in appIds) {
-      var moddedApp =
-          correctInstallStatus(apps[id]!.app, apps[id]!.installedInfo);
-      if (moddedApp != null) {
-        modifiedApps.add(moddedApp);
+    if (shouldCorrectInstallStatus) {
+      List<App> modifiedApps = [];
+      for (var app in apps.values) {
+        var moddedApp = correctInstallStatus(app.app, app.installedInfo);
+        if (moddedApp != null) {
+          modifiedApps.add(moddedApp);
+        }
       }
-    }
-    if (modifiedApps.isNotEmpty) {
-      await saveApps(modifiedApps, dontCorrectInstallStatus: true);
+      if (modifiedApps.isNotEmpty) {
+        await saveApps(modifiedApps, shouldCorrectInstallStatus: false);
+      }
     }
   }
 
   Future<void> saveApps(List<App> apps,
-      {bool dontCorrectInstallStatus = false}) async {
+      {bool shouldCorrectInstallStatus = true}) async {
     for (var app in apps) {
-      var info = await getInstalledInfo(app.id);
+      AppInfo? info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
-      if (!dontCorrectInstallStatus) {
+      if (shouldCorrectInstallStatus) {
         app = correctInstallStatus(app, info) ?? app;
       }
       File('${(await getAppsDir()).path}/${app.id}.json')
@@ -498,7 +494,8 @@ class AppsProvider with ChangeNotifier {
     return app.latestVersion != apps[app.id]?.app.installedVersion;
   }
 
-  Future<App?> getUpdate(String appId) async {
+  Future<App?> getUpdate(String appId,
+      {bool shouldCorrectInstallStatus = true}) async {
     App? currentApp = apps[appId]!.app;
     SourceProvider sourceProvider = SourceProvider();
     App newApp = await sourceProvider.getApp(
@@ -511,13 +508,15 @@ class AppsProvider with ChangeNotifier {
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }
-    await saveApps([newApp]);
+    await saveApps([newApp],
+        shouldCorrectInstallStatus: shouldCorrectInstallStatus);
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAfter,
-      bool immediatelyThrowRateLimitError = false}) async {
+      bool immediatelyThrowRateLimitError = false,
+      bool shouldCorrectInstallStatus = true}) async {
     List<App> updates = [];
     Map<String, List<String>> errors = {};
     if (!gettingUpdates) {
@@ -540,7 +539,8 @@ class AppsProvider with ChangeNotifier {
         for (int i = 0; i < appIds.length; i++) {
           App? newApp;
           try {
-            newApp = await getUpdate(appIds[i]);
+            newApp = await getUpdate(appIds[i],
+                shouldCorrectInstallStatus: shouldCorrectInstallStatus);
           } catch (e) {
             if (e is RateLimitError && immediatelyThrowRateLimitError) {
               rethrow;
