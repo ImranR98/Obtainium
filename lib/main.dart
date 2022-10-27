@@ -12,7 +12,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-const String currentVersion = '0.6.7';
+const String currentVersion = '0.6.8';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -35,7 +35,9 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     String? err;
     try {
       await appsProvider.checkUpdates(
-          ignoreAfter: ignoreAfter, immediatelyThrowRateLimitError: true);
+          ignoreAfter: ignoreAfter,
+          immediatelyThrowRateLimitError: true,
+          shouldCorrectInstallStatus: false);
     } catch (e) {
       if (e is RateLimitError) {
         String nextTaskName =
@@ -69,16 +71,15 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     // }
 
     if (newUpdates.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(newUpdates),
-          cancelExisting: true);
+      notificationsProvider.notify(UpdateNotification(newUpdates));
     }
     if (err != null) {
       throw err;
     }
     return Future.value(true);
   } catch (e) {
-    notificationsProvider.notify(ErrorCheckingUpdatesNotification(e.toString()),
-        cancelExisting: true);
+    notificationsProvider
+        .notify(ErrorCheckingUpdatesNotification(e.toString()));
     return Future.error(false);
   } finally {
     await notificationsProvider.cancel(checkingUpdatesNotification.id);

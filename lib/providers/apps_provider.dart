@@ -43,20 +43,20 @@ class AppsProvider with ChangeNotifier {
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
-  late Stream<FGBGType> foregroundStream;
-  late StreamSubscription<FGBGType> foregroundSubscription;
+  late Stream<FGBGType>? foregroundStream;
+  late StreamSubscription<FGBGType>? foregroundSubscription;
 
   AppsProvider(
       {bool shouldLoadApps = false,
       bool shouldCheckUpdatesAfterLoad = false,
       bool shouldDeleteAPKs = false}) {
-    // Subscribe to changes in the app foreground status
-    foregroundStream = FGBGEvents.stream.asBroadcastStream();
-    foregroundSubscription = foregroundStream.listen((event) async {
-      isForeground = event == FGBGType.foreground;
-      if (isForeground) await loadApps();
-    });
     if (shouldLoadApps) {
+      // Subscribe to changes in the app foreground status
+      foregroundStream = FGBGEvents.stream.asBroadcastStream();
+      foregroundSubscription = foregroundStream?.listen((event) async {
+        isForeground = event == FGBGType.foreground;
+        if (isForeground) await loadApps();
+      });
       loadApps().then((_) {
         if (shouldDeleteAPKs) {
           deleteSavedAPKs();
@@ -622,7 +622,7 @@ class AppsProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    foregroundSubscription.cancel();
+    foregroundSubscription?.cancel();
     super.dispose();
   }
 }
