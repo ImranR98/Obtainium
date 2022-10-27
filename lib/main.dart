@@ -19,6 +19,7 @@ const String currentReleaseTag =
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
 bgUpdateCheck(int? ignoreAfterMicroseconds) async {
+  WidgetsFlutterBinding.ensureInitialized();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
@@ -27,16 +28,14 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
   try {
     var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    await appsProvider.loadApps();
+    await appsProvider.loadApps(shouldCorrectInstallStatus: false);
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
     DateTime nextIgnoreAfter = DateTime.now();
     String? err;
     try {
       await appsProvider.checkUpdates(
-          ignoreAfter: ignoreAfter,
-          immediatelyThrowRateLimitError: true,
-          shouldCorrectInstallStatus: false);
+          ignoreAfter: ignoreAfter, immediatelyThrowRateLimitError: true);
     } catch (e) {
       if (e is RateLimitError) {
         String nextTaskName =
