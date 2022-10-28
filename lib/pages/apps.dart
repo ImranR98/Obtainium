@@ -183,7 +183,9 @@ class AppsPageState extends State<AppsPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text('Update Available'),
+                              Text(appsProvider.areDownloadsRunning()
+                                  ? 'Please Wait...'
+                                  : 'Update Available'),
                               SourceProvider()
                                           .getSource(sortedApps[index].app.url)
                                           .changeLogPageFromStandardUrl(
