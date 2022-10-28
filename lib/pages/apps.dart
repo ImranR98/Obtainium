@@ -308,7 +308,7 @@ class AppsPageState extends State<AppsPage> {
                                     message:
                                         '${existingUpdateIdsAllOrSelected.length} update${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'} and ${newInstallIdsAllOrSelected.length} new install${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}.',
                                     items: formInputs,
-                                    defaultValues: const ['true', 'true'],
+                                    defaultValues: const ['true', 'false'],
                                     initValid: true,
                                   );
                                 }).then((values) {
