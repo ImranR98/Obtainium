@@ -228,6 +228,15 @@ class AppsProvider with ChangeNotifier {
     return apkUrl;
   }
 
+  Map<String, List<String>> addToErrorMap(
+      Map<String, List<String>> errors, String appId, String error) {
+    var tempIds = errors.remove(error);
+    tempIds ??= [];
+    tempIds.add(appId);
+    errors.putIfAbsent(error, () => tempIds!);
+    return errors;
+  }
+
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
   // If the APKs can be installed silently, they are
   // If no BuildContext is provided, apps that require user interaction are ignored
@@ -256,14 +265,24 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }
+    Map<String, List<String>> errors = {};
 
-    List<DownloadedApp> downloadedFiles = await Future.wait(
-        appsToInstall.map((id) => downloadApp(apps[id]!.app)));
+    List<DownloadedApp?> downloadedFiles =
+        await Future.wait(appsToInstall.map((id) async {
+      try {
+        return await downloadApp(apps[id]!.app);
+      } catch (e) {
+        addToErrorMap(errors, id, e.toString());
+      }
+      return null;
+    }));
+    downloadedFiles =
+        downloadedFiles.where((element) => element != null).toList();
 
     List<DownloadedApp> silentUpdates = [];
     List<DownloadedApp> regularInstalls = [];
     for (var f in downloadedFiles) {
-      bool willBeSilent = await canInstallSilently(apps[f.appId]!.app);
+      bool willBeSilent = await canInstallSilently(apps[f!.appId]!.app);
       if (willBeSilent) {
         silentUpdates.add(f);
       } else {
@@ -298,7 +317,7 @@ class AppsProvider with ChangeNotifier {
     // for (var u in silentUpdates) {
     //   await installApk(u, silent: true); // Would need to add silent option
     // }
-    Map<String, List<String>> errors = {};
+
     if (context != null) {
       if (regularInstalls.isNotEmpty) {
         // ignore: use_build_context_synchronously
@@ -308,10 +327,7 @@ class AppsProvider with ChangeNotifier {
         try {
           await installApk(i);
         } catch (e) {
-          var tempIds = errors.remove(e.toString());
-          tempIds ??= [];
-          tempIds.add(i.appId);
-          errors.putIfAbsent(e.toString(), () => tempIds!);
+          addToErrorMap(errors, i.appId, e.toString());
         }
       }
     }
@@ -324,7 +340,7 @@ class AppsProvider with ChangeNotifier {
       throw finalError;
     }
 
-    return downloadedFiles.map((e) => e.appId).toList();
+    return downloadedFiles.map((e) => e!.appId).toList();
   }
 
   Future<Directory> getAppsDir() async {
