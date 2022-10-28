@@ -308,7 +308,7 @@ class AppsPageState extends State<AppsPage> {
                                     message:
                                         '${existingUpdateIdsAllOrSelected.length} update${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'} and ${newInstallIdsAllOrSelected.length} new install${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}.',
                                     items: formInputs,
-                                    defaultValues: const ['true', 'false'],
+                                    defaultValues: const ['true'],
                                     initValid: true,
                                   );
                                 }).then((values) {
@@ -316,7 +316,7 @@ class AppsPageState extends State<AppsPage> {
                                 bool shouldInstallUpdates =
                                     values.length < 2 || values[0] == 'true';
                                 bool shouldInstallNew =
-                                    values.length < 2 || values[1] == 'true';
+                                    values.length >= 2 && values[1] == 'true';
                                 settingsProvider
                                     .getInstallPermission()
                                     .then((_) {
