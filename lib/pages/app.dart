@@ -45,6 +45,7 @@ class _AppPageState extends State<AppPage> {
       body: RefreshIndicator(
           child: settingsProvider.showAppWebpage
               ? WebView(
+                  backgroundColor: Theme.of(context).colorScheme.background,
                   initialUrl: app?.app.url,
                   javascriptMode: JavascriptMode.unrestricted,
                 )
