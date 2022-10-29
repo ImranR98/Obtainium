@@ -22,7 +22,6 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   AppSource? pickedSource;
   List<String> additionalData = [];
-  String customName = '';
   bool validAdditionalData = true;
 
   @override
@@ -80,9 +79,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .doesSourceHaveRequiredAdditionalData(
                                                     source)
                                             : true;
-                                        if (source == null) {
-                                          customName = '';
-                                        }
                                       }
                                     });
                                   },
@@ -90,56 +86,72 @@ class _AddAppPageState extends State<AddAppPage> {
                           const SizedBox(
                             width: 16,
                           ),
-                          ElevatedButton(
-                              onPressed: gettingAppInfo ||
-                                      pickedSource == null ||
-                                      (pickedSource!.additionalDataFormItems
-                                              .isNotEmpty &&
-                                          !validAdditionalData)
-                                  ? null
-                                  : () {
-                                      HapticFeedback.selectionClick();
-                                      setState(() {
-                                        gettingAppInfo = true;
-                                      });
-                                      sourceProvider
-                                          .getApp(pickedSource!, userInput,
-                                              additionalData,
-                                              customName: customName)
-                                          .then((app) {
-                                        var appsProvider =
-                                            context.read<AppsProvider>();
-                                        var settingsProvider =
-                                            context.read<SettingsProvider>();
-                                        if (appsProvider.apps
-                                            .containsKey(app.id)) {
-                                          throw 'App already added';
-                                        }
-                                        settingsProvider
-                                            .getInstallPermission()
-                                            .then((_) {
-                                          appsProvider
-                                              .saveApps([app]).then((_) {
+                          gettingAppInfo
+                              ? const CircularProgressIndicator()
+                              : ElevatedButton(
+                                  onPressed: gettingAppInfo ||
+                                          pickedSource == null ||
+                                          (pickedSource!.additionalDataFormItems
+                                                  .isNotEmpty &&
+                                              !validAdditionalData)
+                                      ? null
+                                      : () async {
+                                          setState(() {
+                                            gettingAppInfo = true;
+                                          });
+                                          var appsProvider =
+                                              context.read<AppsProvider>();
+                                          var settingsProvider =
+                                              context.read<SettingsProvider>();
+                                          () async {
+                                            HapticFeedback.selectionClick();
+                                            App app =
+                                                await sourceProvider.getApp(
+                                                    pickedSource!,
+                                                    userInput,
+                                                    additionalData);
+                                            await settingsProvider
+                                                .getInstallPermission();
+                                            // ignore: use_build_context_synchronously
+                                            var apkUrl = await appsProvider
+                                                .selectApkUrl(app, context);
+                                            if (apkUrl == null) {
+                                              throw 'Cancelled';
+                                            }
+                                            app.preferredApkIndex =
+                                                app.apkUrls.indexOf(apkUrl);
+                                            var downloadedApk =
+                                                await appsProvider
+                                                    .downloadApp(app);
+                                            app.id = downloadedApk.appId;
+                                            if (appsProvider.apps
+                                                .containsKey(app.id)) {
+                                              throw 'App already added';
+                                            }
+                                            await appsProvider.saveApps([app]);
+
+                                            return app;
+                                          }()
+                                              .then((app) {
                                             Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         AppPage(
                                                             appId: app.id)));
+                                          }).catchError((e) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(e.toString())),
+                                            );
+                                          }).whenComplete(() {
+                                            setState(() {
+                                              gettingAppInfo = false;
+                                            });
                                           });
-                                        });
-                                      }).catchError((e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(content: Text(e.toString())),
-                                        );
-                                      }).whenComplete(() {
-                                        setState(() {
-                                          gettingAppInfo = false;
-                                        });
-                                      });
-                                    },
-                              child: const Text('Add'))
+                                        },
+                                  child: const Text('Add'))
                         ],
                       ),
                       if (pickedSource != null)
@@ -174,21 +186,6 @@ class _AddAppPageState extends State<AddAppPage> {
                               const SizedBox(
                                 height: 8,
                               ),
-                            if (pickedSource != null)
-                              GeneratedForm(
-                                  items: [
-                                    [
-                                      GeneratedFormItem(
-                                          label: 'Custom App Name',
-                                          required: false)
-                                    ]
-                                  ],
-                                  onValueChanges: (values, valid) {
-                                    setState(() {
-                                      customName = values[0];
-                                    });
-                                  },
-                                  defaultValues: [customName])
                           ],
                         )
                       else

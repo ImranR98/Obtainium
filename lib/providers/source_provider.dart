@@ -4,7 +4,6 @@
 import 'dart:convert';
 
 import 'package:html/dom.dart';
-import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
@@ -54,7 +53,7 @@ class App {
 
   @override
   String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls';
+    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()}';
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
@@ -157,7 +156,7 @@ class SourceProvider {
     Mullvad(),
     Signal(),
     SourceForge(),
-    APKMirror()
+    // APKMirror()
   ];
 
   // Add more mass source classes here so they are available via the service
@@ -189,18 +188,21 @@ class SourceProvider {
     return false;
   }
 
+  String generateTempID(AppNames names, AppSource source) =>
+      '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
+
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String customName = ''}) async {
+      {String name = '', String? id}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);
     return App(
-        '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}',
+        id ?? generateTempID(names, source),
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
-        customName.trim().isNotEmpty
-            ? customName
+        name.trim().isNotEmpty
+            ? name
             : names.name[0].toUpperCase() + names.name.substring(1),
         null,
         apk.version,

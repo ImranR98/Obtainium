@@ -1,6 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -13,12 +14,14 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+const String currentVersion = '0.6.0';
 const String currentReleaseTag =
-    'v0.5.10-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
+    'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const String bgUpdateCheckTaskName = 'bg-update-check';
 
 bgUpdateCheck(int? ignoreAfterMicroseconds) async {
+  WidgetsFlutterBinding.ensureInitialized();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
@@ -27,21 +30,25 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
   try {
     var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    await appsProvider.loadApps();
+    await appsProvider.loadApps(shouldCorrectInstallStatus: false);
     List<String> existingUpdateIds =
         appsProvider.getExistingUpdates(installedOnly: true);
     DateTime nextIgnoreAfter = DateTime.now();
     String? err;
     try {
       await appsProvider.checkUpdates(
-          ignoreAfter: ignoreAfter, immediatelyThrowRateLimitError: true);
+          ignoreAfter: ignoreAfter,
+          immediatelyThrowRateLimitError: true,
+          immediatelyThrowSocketError: true,
+          shouldCorrectInstallStatus: false);
     } catch (e) {
-      if (e is RateLimitError) {
+      if (e is RateLimitError || e is SocketException) {
         String nextTaskName =
             '$bgUpdateCheckTaskName-${nextIgnoreAfter.microsecondsSinceEpoch.toString()}';
         Workmanager().registerOneOffTask(nextTaskName, nextTaskName,
             constraints: Constraints(networkType: NetworkType.connected),
-            initialDelay: Duration(minutes: e.remainingMinutes),
+            initialDelay: Duration(
+                minutes: e is RateLimitError ? e.remainingMinutes : 15),
             inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
       } else {
         err = e.toString();
@@ -68,16 +75,15 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     // }
 
     if (newUpdates.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(newUpdates),
-          cancelExisting: true);
+      notificationsProvider.notify(UpdateNotification(newUpdates));
     }
     if (err != null) {
       throw err;
     }
     return Future.value(true);
   } catch (e) {
-    notificationsProvider.notify(ErrorCheckingUpdatesNotification(e.toString()),
-        cancelExisting: true);
+    notificationsProvider
+        .notify(ErrorCheckingUpdatesNotification(e.toString()));
     return Future.error(false);
   } finally {
     await notificationsProvider.cancel(checkingUpdatesNotification.id);
@@ -94,7 +100,7 @@ void bgTaskCallback() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt! >= 29) {
+  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );
@@ -143,7 +149,7 @@ class _ObtainiumState extends State<Obtainium> {
         Permission.notification.request();
         appsProvider.saveApps([
           App(
-              'imranr98_obtainium_${GitHub().host}',
+              'dev.imranr.obtainium',
               'https://github.com/ImranR98/Obtainium',
               'ImranR98',
               'Obtainium',
