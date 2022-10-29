@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -37,14 +39,16 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
       await appsProvider.checkUpdates(
           ignoreAfter: ignoreAfter,
           immediatelyThrowRateLimitError: true,
+          immediatelyThrowSocketError: true,
           shouldCorrectInstallStatus: false);
     } catch (e) {
-      if (e is RateLimitError) {
+      if (e is RateLimitError || e is SocketException) {
         String nextTaskName =
             '$bgUpdateCheckTaskName-${nextIgnoreAfter.microsecondsSinceEpoch.toString()}';
         Workmanager().registerOneOffTask(nextTaskName, nextTaskName,
             constraints: Constraints(networkType: NetworkType.connected),
-            initialDelay: Duration(minutes: e.remainingMinutes),
+            initialDelay: Duration(
+                minutes: e is RateLimitError ? e.remainingMinutes : 15),
             inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
       } else {
         err = e.toString();

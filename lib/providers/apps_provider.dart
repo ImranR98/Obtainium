@@ -532,7 +532,8 @@ class AppsProvider with ChangeNotifier {
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAfter,
       bool immediatelyThrowRateLimitError = false,
-      bool shouldCorrectInstallStatus = true}) async {
+      bool shouldCorrectInstallStatus = true,
+      bool immediatelyThrowSocketError = false}) async {
     List<App> updates = [];
     Map<String, List<String>> errors = {};
     if (!gettingUpdates) {
@@ -559,6 +560,9 @@ class AppsProvider with ChangeNotifier {
                 shouldCorrectInstallStatus: shouldCorrectInstallStatus);
           } catch (e) {
             if (e is RateLimitError && immediatelyThrowRateLimitError) {
+              rethrow;
+            }
+            if (e is SocketException && immediatelyThrowSocketError) {
               rethrow;
             }
             var tempIds = errors.remove(e.toString());
