@@ -121,8 +121,10 @@ class _AddAppPageState extends State<AddAppPage> {
                                             app.preferredApkIndex =
                                                 app.apkUrls.indexOf(apkUrl);
                                             var downloadedApk =
-                                                await appsProvider
-                                                    .downloadApp(app);
+                                                await appsProvider.downloadApp(
+                                                    app,
+                                                    showOccasionalProgressToast:
+                                                        true);
                                             app.id = downloadedApk.appId;
                                             if (appsProvider.apps
                                                 .containsKey(app.id)) {

@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
@@ -115,7 +116,9 @@ class AppsProvider with ChangeNotifier {
   // Downloads the App (preferred URL) and returns an ApkFile object
   // If the app was already saved, updates it's download progress % in memory
   // But also works for Apps that are not saved
-  Future<DownloadedApp> downloadApp(App app) async {
+  Future<DownloadedApp> downloadApp(App app,
+      {bool showOccasionalProgressToast = false}) async {
+    int? prevProg;
     var fileName = '${app.id}-${app.latestVersion}-${app.preferredApkIndex}';
     File downloadFile = await downloadApk(app.apkUrls[app.preferredApkIndex],
         '${app.id}-${app.latestVersion}-${app.preferredApkIndex}',
@@ -123,6 +126,14 @@ class AppsProvider with ChangeNotifier {
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = progress;
       }
+      int? prog = progress?.ceil();
+      if (showOccasionalProgressToast &&
+          (prog == 25 || prog == 50 || prog == 75) &&
+          prevProg != prog) {
+        Fluttertoast.showToast(
+            msg: 'Progress: $prog%', toastLength: Toast.LENGTH_SHORT);
+      }
+      prevProg = prog;
       notifyListeners();
     }, SourceProvider().getSource(app.url).apkUrlPrefetchModifier);
     // Delete older versions of the APK if any
