@@ -212,8 +212,15 @@ class AppsPageState extends State<AppsPage> {
                                       )),
                             ],
                           )
-                        : Text(sortedApps[index].app.installedVersion ??
-                            'Not Installed')),
+                        : SingleChildScrollView(
+                            child: SizedBox(
+                                width: 80,
+                                child: Text(
+                                  sortedApps[index].app.installedVersion ??
+                                      'Not Installed',
+                                  overflow: TextOverflow.fade,
+                                  textAlign: TextAlign.end,
+                                )))),
                 onTap: () {
                   if (selectedIds.isNotEmpty) {
                     toggleAppSelected(sortedApps[index].app.id);
