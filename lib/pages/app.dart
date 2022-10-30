@@ -62,10 +62,13 @@ class _AppPageState extends State<AppPage> {
                                 children: [
                                     Image.memory(
                                       app!.installedInfo!.icon!,
-                                      scale: 1.5,
+                                      height: 150,
                                     )
                                   ])
                             : Container(),
+                        const SizedBox(
+                          height: 25,
+                        ),
                         Text(
                           app?.installedInfo?.name ?? app?.app.name ?? 'App',
                           textAlign: TextAlign.center,
