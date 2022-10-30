@@ -210,7 +210,7 @@ class SourceProvider {
             ? name
             : names.name[0].toUpperCase() + names.name.substring(1),
         null,
-        apk.version,
+        apk.version.replaceAll('/', '-'),
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
