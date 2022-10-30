@@ -34,23 +34,39 @@ class FDroid implements AppSource {
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse(standardUrl));
     if (res.statusCode == 200) {
-      var latestReleaseDiv =
-          parse(res.body).querySelector('#latest.package-version');
-      var apkUrl = latestReleaseDiv
-          ?.querySelector('.package-version-download a')
-          ?.attributes['href'];
-      if (apkUrl == null) {
-        throw noAPKFound;
+      var releases = parse(res.body).querySelectorAll('.package-version');
+      if (releases.isEmpty) {
+        throw couldNotFindReleases;
       }
-      var version = latestReleaseDiv
-          ?.querySelector('.package-version-header b')
+      String? latestVersion = releases[0]
+          .querySelector('.package-version-header b')
           ?.innerHtml
           .split(' ')
-          .last;
-      if (version == null) {
+          .sublist(1)
+          .join(' ');
+      if (latestVersion == null) {
         throw couldNotFindLatestVersion;
       }
-      return APKDetails(version, [apkUrl]);
+      List<String> apkUrls = releases
+          .where((element) =>
+              element
+                  .querySelector('.package-version-header b')
+                  ?.innerHtml
+                  .split(' ')
+                  .sublist(1)
+                  .join(' ') ==
+              latestVersion)
+          .map((e) =>
+              e
+                  .querySelector('.package-version-download a')
+                  ?.attributes['href'] ??
+              '')
+          .where((element) => element.isNotEmpty)
+          .toList();
+      if (apkUrls.isEmpty) {
+        throw noAPKFound;
+      }
+      return APKDetails(latestVersion, apkUrls);
     } else {
       throw couldNotFindReleases;
     }

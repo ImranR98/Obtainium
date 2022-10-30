@@ -104,6 +104,11 @@ preStandardizeUrl(String url) {
   if (url.toLowerCase().indexOf('https://www.') == 0) {
     url = 'https://${url.substring(12)}';
   }
+  url = url
+      .split('/')
+      .where((e) => e.isNotEmpty)
+      .join('/')
+      .replaceFirst(':/', '://');
   return url;
 }
 

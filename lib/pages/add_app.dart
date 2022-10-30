@@ -154,7 +154,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                   child: const Text('Add'))
                         ],
                       ),
-                      if (pickedSource != null)
+                      if (pickedSource != null &&
+                          pickedSource!.additionalDataDefaults.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
