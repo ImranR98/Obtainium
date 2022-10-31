@@ -302,7 +302,7 @@ class AppsProvider with ChangeNotifier {
     }
 
     // If Obtainium is being installed, it should be the last one
-    List<DownloadedApp> moveObtainiumToEnd(List<DownloadedApp> items) {
+    List<DownloadedApp> moveObtainiumToStart(List<DownloadedApp> items) {
       String obtainiumId = 'imranr98_obtainium_${GitHub().host}';
       DownloadedApp? temp;
       items.removeWhere((element) {
@@ -313,7 +313,7 @@ class AppsProvider with ChangeNotifier {
         return res;
       });
       if (temp != null) {
-        items.add(temp!);
+        items = [temp!, ...items];
       }
       return items;
     }
@@ -321,8 +321,8 @@ class AppsProvider with ChangeNotifier {
     // TODO: Remove below line if silentupdates are ever figured out
     regularInstalls.addAll(silentUpdates);
 
-    silentUpdates = moveObtainiumToEnd(silentUpdates);
-    regularInstalls = moveObtainiumToEnd(regularInstalls);
+    silentUpdates = moveObtainiumToStart(silentUpdates);
+    regularInstalls = moveObtainiumToStart(regularInstalls);
 
     // TODO: Uncomment below if silentupdates are ever figured out
     // for (var u in silentUpdates) {
