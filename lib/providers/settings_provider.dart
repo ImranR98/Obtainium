@@ -123,6 +123,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get pinUpdates {
+    return prefs?.getBool('pinUpdates') ?? true;
+  }
+
+  set pinUpdates(bool show) {
+    prefs?.setBool('pinUpdates', show);
+    notifyListeners();
+  }
+
   String? getSettingString(String settingId) {
     return prefs?.getString(settingId);
   }

@@ -120,8 +120,9 @@ class AppsPageState extends State<AppsPage> {
       sortedApps = sortedApps.reversed.toList();
     }
 
-    var existingUpdateIdsAllOrSelected = appsProvider
-        .getExistingUpdates(installedOnly: true)
+    var existingUpdates = appsProvider.getExistingUpdates(installedOnly: true);
+
+    var existingUpdateIdsAllOrSelected = existingUpdates
         .where((element) => selectedIds.isEmpty
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedIds.contains(element))
@@ -132,6 +133,18 @@ class AppsPageState extends State<AppsPage> {
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedIds.contains(element))
         .toList();
+
+    if (settingsProvider.pinUpdates) {
+      var temp = [];
+      sortedApps = sortedApps.where((sa) {
+        if (existingUpdates.contains(sa.app.id)) {
+          temp.add(sa);
+          return false;
+        }
+        return true;
+      }).toList();
+      sortedApps = [...temp, ...sortedApps];
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
