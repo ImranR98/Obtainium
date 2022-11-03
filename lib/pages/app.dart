@@ -63,6 +63,7 @@ class _AppPageState extends State<AppPage> {
                                     Image.memory(
                                       app!.installedInfo!.icon!,
                                       height: 150,
+                                      gaplessPlayback: true,
                                     )
                                   ])
                             : Container(),

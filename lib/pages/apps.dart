@@ -23,6 +23,7 @@ class AppsPageState extends State<AppsPage> {
   var updatesOnlyFilter =
       AppsFilter(includeUptodate: false, includeNonInstalled: false);
   Set<String> selectedIds = {};
+  DateTime? refreshingSince;
 
   clearSelected() {
     if (selectedIds.isNotEmpty) {
@@ -137,10 +138,17 @@ class AppsPageState extends State<AppsPage> {
       body: RefreshIndicator(
           onRefresh: () {
             HapticFeedback.lightImpact();
+            setState(() {
+              refreshingSince = DateTime.now();
+            });
             return appsProvider.checkUpdates().catchError((e) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(e.toString())),
               );
+            }).whenComplete(() {
+              setState(() {
+                refreshingSince = null;
+              });
             });
           },
           child: CustomScrollView(slivers: <Widget>[
@@ -157,6 +165,17 @@ class AppsPageState extends State<AppsPage> {
                               style: Theme.of(context).textTheme.headlineMedium,
                               textAlign: TextAlign.center,
                             ))),
+            if (refreshingSince != null)
+              SliverToBoxAdapter(
+                child: LinearProgressIndicator(
+                  value: appsProvider.apps.values
+                          .where((element) => !(element.app.lastUpdateCheck
+                                  ?.isBefore(refreshingSince!) ??
+                              true))
+                          .length /
+                      appsProvider.apps.length,
+                ),
+              ),
             SliverList(
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
@@ -168,7 +187,10 @@ class AppsPageState extends State<AppsPage> {
                   toggleAppSelected(sortedApps[index].app.id);
                 },
                 leading: sortedApps[index].installedInfo != null
-                    ? Image.memory(sortedApps[index].installedInfo!.icon!)
+                    ? Image.memory(
+                        sortedApps[index].installedInfo!.icon!,
+                        gaplessPlayback: true,
+                      )
                     : null,
                 title: Text(sortedApps[index].installedInfo?.name ??
                     sortedApps[index].app.name),
