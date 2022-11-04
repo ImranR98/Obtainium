@@ -213,7 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               height: 8,
                             ),
                             Text(
-                              'Longer intervals recommended for large App collections',
+                              'Longer intervals may result in less reliable behaviour',
                               style: Theme.of(context)
                                   .textTheme
                                   .labelMedium!
