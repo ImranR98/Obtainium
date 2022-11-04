@@ -28,6 +28,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
   @override
   void initState() {
     super.initState();
+    values = widget.defaultValues;
     valid = widget.initValid;
   }
 

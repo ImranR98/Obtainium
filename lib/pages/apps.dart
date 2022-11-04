@@ -362,10 +362,8 @@ class AppsPageState extends State<AppsPage> {
                                   );
                                 }).then((values) {
                               if (values != null) {
-                                bool shouldInstallUpdates =
-                                    values.isEmpty || values[0] == 'true';
-                                bool shouldInstallNew = values.isEmpty ||
-                                    (values.length >= 2 && values[1] == 'true');
+                                bool shouldInstallUpdates = values[0] == 'true';
+                                bool shouldInstallNew = values[1] == 'true';
                                 settingsProvider
                                     .getInstallPermission()
                                     .then((_) {

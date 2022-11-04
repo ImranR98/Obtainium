@@ -70,8 +70,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   downloadApk(String apkUrl, String fileName, Function? onProgress,
-      Function? urlModifier,
-      {bool useExistingIfExists = true}) async {
+      Function? urlModifier) async {
+    bool useExistingIfExists =
+        false; // This should be an function argument, but isn't because of the partially downloaded APK issue
     var destDir = (await getExternalStorageDirectory())!.path;
     if (urlModifier != null) {
       apkUrl = await urlModifier(apkUrl);
