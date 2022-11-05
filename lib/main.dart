@@ -23,7 +23,6 @@ const int bgUpdateCheckAlarmId = 666;
 
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
-  // TODO: If no internet, wait for connection
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
   await AndroidAlarmManager.initialize();
