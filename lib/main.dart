@@ -22,10 +22,11 @@ const String currentReleaseTag =
 const int bgUpdateCheckAlarmId = 666;
 
 @pragma('vm:entry-point')
-bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
+Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   // TODO: If no internet, wait for connection
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
+  await AndroidAlarmManager.initialize();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
@@ -51,7 +52,9 @@ bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             Duration(minutes: e is RateLimitError ? e.remainingMinutes : 15),
             Random().nextInt(pow(2, 31) as int),
             bgUpdateCheck,
-            params: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
+            params: {
+              'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
+            });
       } else {
         err = e.toString();
       }
