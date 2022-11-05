@@ -85,11 +85,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     if (err != null) {
       throw err;
     }
-    return Future.value(true);
   } catch (e) {
     notificationsProvider
         .notify(ErrorCheckingUpdatesNotification(e.toString()));
-    return Future.error(false);
   } finally {
     await notificationsProvider.cancel(checkingUpdatesNotification.id);
   }
