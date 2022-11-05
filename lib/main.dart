@@ -163,7 +163,8 @@ class _ObtainiumState extends State<Obtainium> {
               Duration(minutes: existingUpdateInterval),
               bgUpdateCheckAlarmId,
               bgUpdateCheck,
-              rescheduleOnReboot: true);
+              rescheduleOnReboot: true,
+              wakeup: true);
         }
       }
     }
