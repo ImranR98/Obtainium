@@ -55,7 +55,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    var min = prefs?.getInt('updateInterval') ?? 60;
+    var min = prefs?.getInt('updateInterval') ?? 360;
     if (!updateIntervals.contains(min)) {
       var temp = updateIntervals[0];
       for (var i in updateIntervals) {
