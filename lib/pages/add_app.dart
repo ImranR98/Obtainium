@@ -195,9 +195,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                              // const SizedBox(
-                              //   height: 48,
-                              // ),
                               const Text(
                                 'Supported Sources:',
                               ),

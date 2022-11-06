@@ -21,6 +21,143 @@ class _SettingsPageState extends State<SettingsPage> {
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
+
+    var themeDropdown = DropdownButtonFormField(
+        decoration: const InputDecoration(labelText: 'Theme'),
+        value: settingsProvider.theme,
+        items: const [
+          DropdownMenuItem(
+            value: ThemeSettings.dark,
+            child: Text('Dark'),
+          ),
+          DropdownMenuItem(
+            value: ThemeSettings.light,
+            child: Text('Light'),
+          ),
+          DropdownMenuItem(
+            value: ThemeSettings.system,
+            child: Text('Follow System'),
+          )
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.theme = value;
+          }
+        });
+
+    var colourDropdown = DropdownButtonFormField(
+        decoration: const InputDecoration(labelText: 'Colour'),
+        value: settingsProvider.colour,
+        items: const [
+          DropdownMenuItem(
+            value: ColourSettings.basic,
+            child: Text('Obtainium'),
+          ),
+          DropdownMenuItem(
+            value: ColourSettings.materialYou,
+            child: Text('Material You'),
+          )
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.colour = value;
+          }
+        });
+
+    var sortDropdown = DropdownButtonFormField(
+        decoration: const InputDecoration(labelText: 'App Sort By'),
+        value: settingsProvider.sortColumn,
+        items: const [
+          DropdownMenuItem(
+            value: SortColumnSettings.authorName,
+            child: Text('Author/Name'),
+          ),
+          DropdownMenuItem(
+            value: SortColumnSettings.nameAuthor,
+            child: Text('Name/Author'),
+          ),
+          DropdownMenuItem(
+            value: SortColumnSettings.added,
+            child: Text('As Added'),
+          )
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.sortColumn = value;
+          }
+        });
+
+    var orderDropdown = DropdownButtonFormField(
+        decoration: const InputDecoration(labelText: 'App Sort Order'),
+        value: settingsProvider.sortOrder,
+        items: const [
+          DropdownMenuItem(
+            value: SortOrderSettings.ascending,
+            child: Text('Ascending'),
+          ),
+          DropdownMenuItem(
+            value: SortOrderSettings.descending,
+            child: Text('Descending'),
+          ),
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.sortOrder = value;
+          }
+        });
+
+    var intervalDropdown = DropdownButtonFormField(
+        decoration: const InputDecoration(
+            labelText: 'Background Update Checking Interval'),
+        value: settingsProvider.updateInterval,
+        items: updateIntervals.map((e) {
+          int displayNum = (e < 60
+                  ? e
+                  : e < 1440
+                      ? e / 60
+                      : e / 1440)
+              .round();
+          var displayUnit = (e < 60
+              ? 'Minute'
+              : e < 1440
+                  ? 'Hour'
+                  : 'Day');
+
+          String display = e == 0
+              ? 'Never - Manual Only'
+              : '$displayNum $displayUnit${displayNum == 1 ? '' : 's'}';
+          return DropdownMenuItem(value: e, child: Text(display));
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.updateInterval = value;
+          }
+        });
+
+    var sourceSpecificFields = sourceProvider.sources.map((e) {
+      if (e.moreSourceSettingsFormItems.isNotEmpty) {
+        return GeneratedForm(
+            items: e.moreSourceSettingsFormItems.map((e) => [e]).toList(),
+            onValueChanges: (values, valid) {
+              if (valid) {
+                for (var i = 0; i < values.length; i++) {
+                  settingsProvider.setSettingString(
+                      e.moreSourceSettingsFormItems[i].id, values[i]);
+                }
+              }
+            },
+            defaultValues: e.moreSourceSettingsFormItems.map((e) {
+              return settingsProvider.getSettingString(e.id) ?? '';
+            }).toList());
+      } else {
+        return Container();
+      }
+    });
+
+    const height16 = SizedBox(
+      height: 16,
+    );
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -38,112 +175,22 @@ class _SettingsPageState extends State<SettingsPage> {
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            DropdownButtonFormField(
-                                decoration:
-                                    const InputDecoration(labelText: 'Theme'),
-                                value: settingsProvider.theme,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: ThemeSettings.dark,
-                                    child: Text('Dark'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: ThemeSettings.light,
-                                    child: Text('Light'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: ThemeSettings.system,
-                                    child: Text('Follow System'),
-                                  )
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    settingsProvider.theme = value;
-                                  }
-                                }),
-                            const SizedBox(
-                              height: 16,
-                            ),
-                            DropdownButtonFormField(
-                                decoration:
-                                    const InputDecoration(labelText: 'Colour'),
-                                value: settingsProvider.colour,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: ColourSettings.basic,
-                                    child: Text('Obtainium'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: ColourSettings.materialYou,
-                                    child: Text('Material You'),
-                                  )
-                                ],
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    settingsProvider.colour = value;
-                                  }
-                                }),
-                            const SizedBox(
-                              height: 16,
-                            ),
+                            themeDropdown,
+                            height16,
+                            colourDropdown,
+                            height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                    child: DropdownButtonFormField(
-                                        decoration: const InputDecoration(
-                                            labelText: 'App Sort By'),
-                                        value: settingsProvider.sortColumn,
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value:
-                                                SortColumnSettings.authorName,
-                                            child: Text('Author/Name'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value:
-                                                SortColumnSettings.nameAuthor,
-                                            child: Text('Name/Author'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: SortColumnSettings.added,
-                                            child: Text('As Added'),
-                                          )
-                                        ],
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            settingsProvider.sortColumn = value;
-                                          }
-                                        })),
+                                Expanded(child: sortDropdown),
                                 const SizedBox(
                                   width: 16,
                                 ),
-                                Expanded(
-                                    child: DropdownButtonFormField(
-                                        decoration: const InputDecoration(
-                                            labelText: 'App Sort Order'),
-                                        value: settingsProvider.sortOrder,
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: SortOrderSettings.ascending,
-                                            child: Text('Ascending'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: SortOrderSettings.descending,
-                                            child: Text('Descending'),
-                                          ),
-                                        ],
-                                        onChanged: (value) {
-                                          if (value != null) {
-                                            settingsProvider.sortOrder = value;
-                                          }
-                                        })),
+                                Expanded(child: orderDropdown),
                               ],
                             ),
-                            const SizedBox(
-                              height: 16,
-                            ),
+                            height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -155,9 +202,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            const SizedBox(
-                              height: 16,
-                            ),
+                            height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -172,43 +217,13 @@ class _SettingsPageState extends State<SettingsPage> {
                             const Divider(
                               height: 16,
                             ),
-                            const SizedBox(
-                              height: 16,
-                            ),
+                            height16,
                             Text(
                               'Updates',
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            DropdownButtonFormField(
-                                decoration: const InputDecoration(
-                                    labelText:
-                                        'Background Update Checking Interval'),
-                                value: settingsProvider.updateInterval,
-                                items: updateIntervals.map((e) {
-                                  int displayNum = (e < 60
-                                          ? e
-                                          : e < 1440
-                                              ? e / 60
-                                              : e / 1440)
-                                      .round();
-                                  var displayUnit = (e < 60
-                                      ? 'Minute'
-                                      : e < 1440
-                                          ? 'Hour'
-                                          : 'Day');
-
-                                  String display = e == 0
-                                      ? 'Never - Manual Only'
-                                      : '$displayNum $displayUnit${displayNum == 1 ? '' : 's'}';
-                                  return DropdownMenuItem(
-                                      value: e, child: Text(display));
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    settingsProvider.updateInterval = value;
-                                  }
-                                }),
+                            intervalDropdown,
                             const Divider(
                               height: 48,
                             ),
@@ -217,42 +232,13 @@ class _SettingsPageState extends State<SettingsPage> {
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            ...sourceProvider.sources.map((e) {
-                              if (e.moreSourceSettingsFormItems.isNotEmpty) {
-                                return GeneratedForm(
-                                    items: e.moreSourceSettingsFormItems
-                                        .map((e) => [e])
-                                        .toList(),
-                                    onValueChanges: (values, valid) {
-                                      if (valid) {
-                                        for (var i = 0;
-                                            i < values.length;
-                                            i++) {
-                                          settingsProvider.setSettingString(
-                                              e.moreSourceSettingsFormItems[i]
-                                                  .id,
-                                              values[i]);
-                                        }
-                                      }
-                                    },
-                                    defaultValues:
-                                        e.moreSourceSettingsFormItems.map((e) {
-                                      return settingsProvider
-                                              .getSettingString(e.id) ??
-                                          '';
-                                    }).toList());
-                              } else {
-                                return Container();
-                              }
-                            }),
+                            ...sourceSpecificFields,
                           ],
                         ))),
           SliverToBoxAdapter(
             child: Column(
               children: [
-                const SizedBox(
-                  height: 16,
-                ),
+                height16,
                 TextButton.icon(
                   style: ButtonStyle(
                     foregroundColor: MaterialStateProperty.resolveWith<Color>(
@@ -270,9 +256,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                const SizedBox(
-                  height: 16,
-                ),
+                height16,
               ],
             ),
           )

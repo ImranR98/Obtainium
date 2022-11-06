@@ -92,7 +92,6 @@ class _HomePageState extends State<HomePage> {
           return !(pages[0].widget.key as GlobalKey<AppsPageState>)
               .currentState
               ?.clearSelected();
-          // return !appsPageKey.currentState?.clearSelected();
         });
   }
 }
