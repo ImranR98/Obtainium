@@ -64,7 +64,7 @@ class MultiAppMultiError extends ObtainiumError {
   String toString() {
     String finalString = '';
     for (var e in content.keys) {
-      finalString += '$e ${content[e].toString()}\n\n';
+      finalString += '$e: ${content[e].toString()}\n\n';
     }
     return finalString;
   }
