@@ -159,8 +159,8 @@ class SourceProvider {
     // APKMirror()
   ];
 
-  // Add more mass source classes here so they are available via the service
-  List<MassAppUrlSource> massSources = [GitHubStars()];
+  // Add more mass url source classes here so they are available via the service
+  List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url) {
     url = preStandardizeUrl(url);
@@ -177,7 +177,7 @@ class SourceProvider {
     return source;
   }
 
-  bool doesSourceHaveRequiredAdditionalData(AppSource source) {
+  bool ifSourceAppsRequireAdditionalData(AppSource source) {
     for (var row in source.additionalDataFormItems) {
       for (var element in row) {
         if (element.required) {
@@ -212,8 +212,7 @@ class SourceProvider {
         DateTime.now());
   }
 
-  /// Returns a length 2 list, where the first element is a list of Apps and
-  /// the second is a Map<String, dynamic> of URLs and errors
+  // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getApps(List<String> urls,
       {List<String> ignoreUrls = const []}) async {
     List<App> apps = [];

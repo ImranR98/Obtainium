@@ -76,7 +76,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                             : [];
                                         validAdditionalData = source != null
                                             ? sourceProvider
-                                                .doesSourceHaveRequiredAdditionalData(
+                                                .ifSourceAppsRequireAdditionalData(
                                                     source)
                                             : true;
                                       }

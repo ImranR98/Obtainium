@@ -239,7 +239,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           child: const Text(
                             'Import from URL List',
                           )),
-                      ...sourceProvider.massSources
+                      ...sourceProvider.massUrlSources
                           .map((source) => Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
