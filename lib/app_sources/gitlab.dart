@@ -39,7 +39,9 @@ class GitLab implements AppSource {
         ...getLinksFromParsedHTML(
             entryContent,
             RegExp(
-                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
+                '^${standardUri.path.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
+                  return '\\${x[0]}';
+                })}/uploads/[^/]+/[^/]+\\.apk\$',
                 caseSensitive: false),
             standardUri.origin),
         // GitLab releases may contain links to externally hosted APKs

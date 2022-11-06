@@ -90,12 +90,7 @@ class App {
       };
 }
 
-escapeRegEx(String s) {
-  return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
-    return '\\${x[0]}';
-  });
-}
-
+// Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
