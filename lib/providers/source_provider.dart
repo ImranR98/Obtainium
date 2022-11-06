@@ -140,7 +140,7 @@ abstract class AppSource {
   Future<String> apkUrlPrefetchModifier(String apkUrl);
 }
 
-abstract class MassAppSource {
+abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
   Future<List<String>> getUrls(List<String> args);
@@ -160,7 +160,7 @@ class SourceProvider {
   ];
 
   // Add more mass source classes here so they are available via the service
-  List<MassAppSource> massSources = [GitHubStars()];
+  List<MassAppUrlSource> massSources = [GitHubStars()];
 
   AppSource getSource(String url) {
     url = preStandardizeUrl(url);
