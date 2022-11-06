@@ -35,27 +35,6 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
-// Useful for collecting errors by App ID
-class MapOfAppIdsByString {
-  Map<String, List<String>> content = {};
-
-  add(String appId, String string) {
-    var tempIds = content.remove(string);
-    tempIds ??= [];
-    tempIds.add(appId);
-    content.putIfAbsent(string, () => tempIds!);
-  }
-
-  String asString(Map<String, AppInMemory> apps) {
-    String finalString = '';
-    for (var e in content.keys) {
-      finalString +=
-          '$e ${content[e]!.map((e) => apps[e]?.app.name).toString()}. ';
-    }
-    return finalString;
-  }
-}
-
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -279,7 +258,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     // Download APKs for all Apps to be installed
-    MapOfAppIdsByString errors = MapOfAppIdsByString();
+    MultiAppMultiError errors = MultiAppMultiError();
     List<DownloadedApk?> downloadedFiles =
         await Future.wait(appsToInstall.map((id) async {
       try {
@@ -345,7 +324,7 @@ class AppsProvider with ChangeNotifier {
     }
 
     if (errors.content.isNotEmpty) {
-      throw errors.asString(apps);
+      throw errors;
     }
 
     return downloadedFiles.map((e) => e!.appId).toList();
@@ -509,7 +488,7 @@ class AppsProvider with ChangeNotifier {
       {DateTime? ignoreAppsCheckedAfter,
       bool throwErrorsForRetry = false}) async {
     List<App> updates = [];
-    MapOfAppIdsByString errors = MapOfAppIdsByString();
+    MultiAppMultiError errors = MultiAppMultiError();
     if (!gettingUpdates) {
       gettingUpdates = true;
       try {
@@ -544,7 +523,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (errors.content.isNotEmpty) {
-      throw errors.asString(apps);
+      throw errors;
     }
     return updates;
   }

@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 
 class ObtainiumError {
   late String message;
@@ -48,8 +48,30 @@ class IDChangedError extends ObtainiumError {
       : super('Downloaded package ID does not match existing App ID');
 }
 
+class MultiAppMultiError extends ObtainiumError {
+  Map<String, List<String>> content = {};
+
+  MultiAppMultiError() : super('Multiple Errors Placeholder');
+
+  add(String appId, String string) {
+    var tempIds = content.remove(string);
+    tempIds ??= [];
+    tempIds.add(appId);
+    content.putIfAbsent(string, () => tempIds!);
+  }
+
+  @override
+  String toString() {
+    String finalString = '';
+    for (var e in content.keys) {
+      finalString += '$e ${content[e].toString()}\n\n';
+    }
+    return finalString;
+  }
+}
+
 showError(dynamic e, BuildContext context) {
-  if (e is String || e is ObtainiumError) {
+  if (e is String || (e is ObtainiumError && e is! MultiAppMultiError)) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.toString())),
     );
@@ -59,7 +81,9 @@ showError(dynamic e, BuildContext context) {
         builder: (BuildContext ctx) {
           return AlertDialog(
             scrollable: true,
-            title: const Text('Unexpected Error'),
+            title: Text(e is MultiAppMultiError
+                ? 'Some Errors Occurred'
+                : 'Unexpected Error'),
             content: Text(e.toString()),
             actions: [
               TextButton(
