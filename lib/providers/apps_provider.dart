@@ -111,7 +111,7 @@ class AppsProvider with ChangeNotifier {
         '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
     String downloadUrl = await SourceProvider()
         .getSource(app.url)
-        .apkUrlPrefetchModifier(app.url);
+        .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
     int? prevProg;
     File downloadedFile =
         await downloadFile(downloadUrl, fileName, (double? progress) {
