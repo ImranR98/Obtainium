@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Signal implements AppSource {
@@ -27,15 +28,15 @@ class Signal implements AppSource {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];
       if (apkUrl == null) {
-        throw noAPKFound;
+        throw NoAPKError();
       }
       String? version = json['versionName'];
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       return APKDetails(version, [apkUrl]);
     } else {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

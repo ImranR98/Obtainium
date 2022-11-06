@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -120,7 +121,7 @@ class AppsPageState extends State<AppsPage> {
       sortedApps = sortedApps.reversed.toList();
     }
 
-    var existingUpdates = appsProvider.getExistingUpdates(installedOnly: true);
+    var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where((element) => selectedIds.isEmpty
@@ -128,7 +129,7 @@ class AppsPageState extends State<AppsPage> {
             : selectedIds.contains(element))
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
-        .getExistingUpdates(nonInstalledOnly: true)
+        .findExistingUpdates(nonInstalledOnly: true)
         .where((element) => selectedIds.isEmpty
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedIds.contains(element))
@@ -155,9 +156,7 @@ class AppsPageState extends State<AppsPage> {
               refreshingSince = DateTime.now();
             });
             return appsProvider.checkUpdates().catchError((e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e.toString())),
-              );
+              showError(e, context);
             }).whenComplete(() {
               setState(() {
                 refreshingSince = null;
@@ -380,9 +379,7 @@ class AppsPageState extends State<AppsPage> {
                                       .downloadAndInstallLatestApps(
                                           toInstall, context)
                                       .catchError((e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(e.toString())),
-                                    );
+                                    showError(e, context);
                                   });
                                 });
                               }

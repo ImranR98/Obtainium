@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class APKMirror implements AppSource {
@@ -12,7 +13,7 @@ class APKMirror implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/apk/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -57,7 +58,7 @@ class APKMirror implements AppSource {
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/feed'));
     if (res.statusCode != 200) {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
     var nextUrl = parse(res.body)
         .querySelector('item')
@@ -65,14 +66,14 @@ class APKMirror implements AppSource {
         ?.nextElementSibling
         ?.innerHtml;
     if (nextUrl == null) {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
     Response res2 = await get(Uri.parse(nextUrl), headers: {
       'User-Agent':
           'Mozilla/5.0 (X11; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0'
     });
     if (res2.statusCode != 200) {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
     var html2 = parse(res2.body);
     var origin = Uri.parse(standardUrl).origin;
@@ -85,11 +86,11 @@ class APKMirror implements AppSource {
         .map((e) => '$origin$e')
         .toList();
     if (apkUrls.isEmpty) {
-      throw noAPKFound;
+      throw NoAPKError();
     }
     var version = html2.querySelector('span.active.accent_color')?.innerHtml;
     if (version == null) {
-      throw couldNotFindLatestVersion;
+      throw NoVersionError();
     }
     return APKDetails(version, apkUrls);
   }

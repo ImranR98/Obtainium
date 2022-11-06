@@ -16,7 +16,7 @@ class GitHub implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -84,14 +84,14 @@ class GitHub implements AppSource {
         break;
       }
       if (targetRelease == null) {
-        throw couldNotFindReleases;
+        throw NoReleasesError();
       }
       if ((targetRelease['apkUrls'] as List<String>).isEmpty) {
-        throw noAPKFound;
+        throw NoAPKError();
       }
       String? version = targetRelease['tag_name'];
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       return APKDetails(version, targetRelease['apkUrls']);
     } else {
@@ -102,7 +102,7 @@ class GitHub implements AppSource {
                 .round());
       }
 
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

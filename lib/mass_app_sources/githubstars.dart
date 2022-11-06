@@ -5,7 +5,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-class GitHubStars implements MassAppSource {
+class GitHubStars implements MassAppUrlSource {
   @override
   late String name = 'GitHub Starred Repos';
 
@@ -28,14 +28,14 @@ class GitHubStars implements MassAppSource {
                 .round());
       }
 
-      throw 'Unable to find user\'s starred repos';
+      throw ObtainiumError('Unable to find user\'s starred repos');
     }
   }
 
   @override
   Future<List<String>> getUrls(List<String> args) async {
     if (args.length != requiredArgs.length) {
-      throw 'Wrong number of arguments provided';
+      throw ObtainiumError('Wrong number of arguments provided');
     }
     List<String> urls = [];
     var page = 1;

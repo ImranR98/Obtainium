@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -76,7 +77,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                             : [];
                                         validAdditionalData = source != null
                                             ? sourceProvider
-                                                .doesSourceHaveRequiredAdditionalData(
+                                                .ifSourceAppsRequireAdditionalData(
                                                     source)
                                             : true;
                                       }
@@ -114,21 +115,20 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .getInstallPermission();
                                             // ignore: use_build_context_synchronously
                                             var apkUrl = await appsProvider
-                                                .selectApkUrl(app, context);
+                                                .confirmApkUrl(app, context);
                                             if (apkUrl == null) {
-                                              throw 'Cancelled';
+                                              throw ObtainiumError('Cancelled');
                                             }
                                             app.preferredApkIndex =
                                                 app.apkUrls.indexOf(apkUrl);
                                             var downloadedApk =
-                                                await appsProvider.downloadApp(
-                                                    app,
-                                                    showOccasionalProgressToast:
-                                                        true);
+                                                await appsProvider
+                                                    .downloadApp(app);
                                             app.id = downloadedApk.appId;
                                             if (appsProvider.apps
                                                 .containsKey(app.id)) {
-                                              throw 'App already added';
+                                              throw ObtainiumError(
+                                                  'App already added');
                                             }
                                             await appsProvider.saveApps([app]);
 
@@ -142,11 +142,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                         AppPage(
                                                             appId: app.id)));
                                           }).catchError((e) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(e.toString())),
-                                            );
+                                            showError(e, context);
                                           }).whenComplete(() {
                                             setState(() {
                                               gettingAppInfo = false;
@@ -197,9 +193,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                              // const SizedBox(
-                              //   height: 48,
-                              // ),
                               const Text(
                                 'Supported Sources:',
                               ),

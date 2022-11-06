@@ -2,6 +2,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitLab implements AppSource {
@@ -13,7 +14,7 @@ class GitLab implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -39,7 +40,9 @@ class GitLab implements AppSource {
         ...getLinksFromParsedHTML(
             entryContent,
             RegExp(
-                '^${escapeRegEx(standardUri.path)}/uploads/[^/]+/[^/]+\\.apk\$',
+                '^${standardUri.path.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
+                  return '\\${x[0]}';
+                })}/uploads/[^/]+/[^/]+\\.apk\$',
                 caseSensitive: false),
             standardUri.origin),
         // GitLab releases may contain links to externally hosted APKs
@@ -49,18 +52,18 @@ class GitLab implements AppSource {
             .toList()
       ];
       if (apkUrlList.isEmpty) {
-        throw noAPKFound;
+        throw NoAPKError();
       }
 
       var entryId = entry?.querySelector('id')?.innerHtml;
       var version =
           entryId == null ? null : Uri.parse(entryId).pathSegments.last;
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       return APKDetails(version, apkUrlList);
     } else {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

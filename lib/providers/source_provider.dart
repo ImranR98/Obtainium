@@ -12,6 +12,7 @@ import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
 
 class AppNames {
@@ -90,12 +91,7 @@ class App {
       };
 }
 
-escapeRegEx(String s) {
-  return s.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
-    return '\\${x[0]}';
-  });
-}
-
+// Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
@@ -145,7 +141,7 @@ abstract class AppSource {
   Future<String> apkUrlPrefetchModifier(String apkUrl);
 }
 
-abstract class MassAppSource {
+abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
   Future<List<String>> getUrls(List<String> args);
@@ -164,8 +160,8 @@ class SourceProvider {
     // APKMirror()
   ];
 
-  // Add more mass source classes here so they are available via the service
-  List<MassAppSource> massSources = [GitHubStars()];
+  // Add more mass url source classes here so they are available via the service
+  List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url) {
     url = preStandardizeUrl(url);
@@ -177,12 +173,12 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      throw 'URL does not match a known source';
+      throw UnsupportedURLError();
     }
     return source;
   }
 
-  bool doesSourceHaveRequiredAdditionalData(AppSource source) {
+  bool ifSourceAppsRequireAdditionalData(AppSource source) {
     for (var row in source.additionalDataFormItems) {
       for (var element in row) {
         if (element.required) {
@@ -217,8 +213,7 @@ class SourceProvider {
         DateTime.now());
   }
 
-  /// Returns a length 2 list, where the first element is a list of Apps and
-  /// the second is a Map<String, dynamic> of URLs and errors
+  // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getApps(List<String> urls,
       {List<String> ignoreUrls = const []}) async {
     List<App> apps = [];
