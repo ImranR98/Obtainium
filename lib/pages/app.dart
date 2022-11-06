@@ -25,7 +25,7 @@ class _AppPageState extends State<AppPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     getUpdate(String id) {
-      appsProvider.getUpdate(id).catchError((e) {
+      appsProvider.checkUpdate(id).catchError((e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );
@@ -217,9 +217,8 @@ class _AppPageState extends State<AppPage> {
                         Expanded(
                             child: ElevatedButton(
                                 onPressed: (app?.app.installedVersion == null ||
-                                            appsProvider
-                                                .checkAppObjectForUpdate(
-                                                    app!.app)) &&
+                                            app?.app.installedVersion !=
+                                                app?.app.latestVersion) &&
                                         !appsProvider.areDownloadsRunning()
                                     ? () {
                                         HapticFeedback.heavyImpact();

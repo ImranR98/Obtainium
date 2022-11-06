@@ -32,19 +32,16 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
-    var appsProvider = AppsProvider();
+    var appsProvider = AppsProvider(forBGTask: true);
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    await appsProvider.loadApps(shouldCorrectInstallStatus: false);
+    await appsProvider.loadApps();
     List<String> existingUpdateIds =
-        appsProvider.getExistingUpdates(installedOnly: true);
+        appsProvider.findExistingUpdates(installedOnly: true);
     DateTime nextIgnoreAfter = DateTime.now();
     String? err;
     try {
       await appsProvider.checkUpdates(
-          ignoreAfter: ignoreAfter,
-          immediatelyThrowRateLimitError: true,
-          immediatelyThrowSocketError: true,
-          shouldCorrectInstallStatus: false);
+          ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
     } catch (e) {
       if (e is RateLimitError || e is SocketException) {
         AndroidAlarmManager.oneShot(
@@ -59,7 +56,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       }
     }
     List<App> newUpdates = appsProvider
-        .getExistingUpdates(installedOnly: true)
+        .findExistingUpdates(installedOnly: true)
         .where((id) => !existingUpdateIds.contains(id))
         .map((e) => appsProvider.apps[e]!.app)
         .toList();
@@ -103,11 +100,7 @@ void main() async {
   await AndroidAlarmManager.initialize();
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider(
-          create: (context) => AppsProvider(
-              shouldLoadApps: true,
-              shouldCheckUpdatesAfterLoad: false,
-              shouldDeleteAPKs: true)),
+      ChangeNotifierProvider(create: (context) => AppsProvider()),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
       Provider(create: (context) => NotificationsProvider())
     ],

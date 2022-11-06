@@ -120,7 +120,7 @@ class AppsPageState extends State<AppsPage> {
       sortedApps = sortedApps.reversed.toList();
     }
 
-    var existingUpdates = appsProvider.getExistingUpdates(installedOnly: true);
+    var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where((element) => selectedIds.isEmpty
@@ -128,7 +128,7 @@ class AppsPageState extends State<AppsPage> {
             : selectedIds.contains(element))
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
-        .getExistingUpdates(nonInstalledOnly: true)
+        .findExistingUpdates(nonInstalledOnly: true)
         .where((element) => selectedIds.isEmpty
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedIds.contains(element))

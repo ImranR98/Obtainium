@@ -114,17 +114,15 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .getInstallPermission();
                                             // ignore: use_build_context_synchronously
                                             var apkUrl = await appsProvider
-                                                .selectApkUrl(app, context);
+                                                .confirmApkUrl(app, context);
                                             if (apkUrl == null) {
                                               throw 'Cancelled';
                                             }
                                             app.preferredApkIndex =
                                                 app.apkUrls.indexOf(apkUrl);
                                             var downloadedApk =
-                                                await appsProvider.downloadApp(
-                                                    app,
-                                                    showOccasionalProgressToast:
-                                                        true);
+                                                await appsProvider
+                                                    .downloadApp(app);
                                             app.id = downloadedApk.appId;
                                             if (appsProvider.apps
                                                 .containsKey(app.id)) {
