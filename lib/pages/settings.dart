@@ -209,17 +209,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     settingsProvider.updateInterval = value;
                                   }
                                 }),
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            Text(
-                              'Longer intervals may result in less reliable behaviour',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium!
-                                  .merge(const TextStyle(
-                                      fontStyle: FontStyle.italic)),
-                            ),
                             const Divider(
                               height: 48,
                             ),

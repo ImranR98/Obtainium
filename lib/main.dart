@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,18 +11,21 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
-const String currentVersion = '0.6.6';
+const String currentVersion = '0.6.7';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
-const String bgUpdateCheckTaskName = 'bg-update-check';
+const int bgUpdateCheckAlarmId = 666;
 
-bgUpdateCheck(int? ignoreAfterMicroseconds) async {
+@pragma('vm:entry-point')
+Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
+  int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
+  await AndroidAlarmManager.initialize();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
@@ -43,13 +47,13 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
           shouldCorrectInstallStatus: false);
     } catch (e) {
       if (e is RateLimitError || e is SocketException) {
-        String nextTaskName =
-            '$bgUpdateCheckTaskName-${nextIgnoreAfter.microsecondsSinceEpoch.toString()}';
-        Workmanager().registerOneOffTask(nextTaskName, nextTaskName,
-            constraints: Constraints(networkType: NetworkType.connected),
-            initialDelay: Duration(
-                minutes: e is RateLimitError ? e.remainingMinutes : 15),
-            inputData: {'ignoreAfter': nextIgnoreAfter.microsecondsSinceEpoch});
+        AndroidAlarmManager.oneShot(
+            Duration(minutes: e is RateLimitError ? e.remainingMinutes : 15),
+            Random().nextInt(pow(2, 31) as int),
+            bgUpdateCheck,
+            params: {
+              'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
+            });
       } else {
         err = e.toString();
       }
@@ -80,22 +84,12 @@ bgUpdateCheck(int? ignoreAfterMicroseconds) async {
     if (err != null) {
       throw err;
     }
-    return Future.value(true);
   } catch (e) {
     notificationsProvider
         .notify(ErrorCheckingUpdatesNotification(e.toString()));
-    return Future.error(false);
   } finally {
     await notificationsProvider.cancel(checkingUpdatesNotification.id);
   }
-}
-
-@pragma('vm:entry-point')
-void bgTaskCallback() {
-  // Background process callback
-  Workmanager().executeTask((task, inputData) async {
-    return await bgUpdateCheck(inputData?['ignoreAfter']);
-  });
 }
 
 void main() async {
@@ -106,9 +100,7 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
-  Workmanager().initialize(
-    bgTaskCallback,
-  );
+  await AndroidAlarmManager.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(
@@ -165,17 +157,14 @@ class _ObtainiumState extends State<Obtainium> {
       if (existingUpdateInterval != settingsProvider.updateInterval) {
         existingUpdateInterval = settingsProvider.updateInterval;
         if (existingUpdateInterval == 0) {
-          Workmanager().cancelByUniqueName(bgUpdateCheckTaskName);
+          AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
         } else {
-          Workmanager().registerPeriodicTask(
-              bgUpdateCheckTaskName, bgUpdateCheckTaskName,
-              frequency: Duration(minutes: existingUpdateInterval),
-              initialDelay: Duration(minutes: existingUpdateInterval),
-              constraints: Constraints(networkType: NetworkType.connected),
-              existingWorkPolicy: ExistingWorkPolicy.replace,
-              backoffPolicy: BackoffPolicy.linear,
-              backoffPolicyDelay:
-                  const Duration(minutes: minUpdateIntervalMinutes));
+          AndroidAlarmManager.periodic(
+              Duration(minutes: existingUpdateInterval),
+              bgUpdateCheckAlarmId,
+              bgUpdateCheck,
+              rescheduleOnReboot: true,
+              wakeup: true);
         }
       }
     }
