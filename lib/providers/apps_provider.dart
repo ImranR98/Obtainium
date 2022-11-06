@@ -207,8 +207,23 @@ class AppsProvider with ChangeNotifier {
   Future<String?> confirmApkUrl(App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
-    // get device architecture
+    // get device supported architecture
     String arch = SysInfo.kernelArchitecture;
+    String supportedArch = arch;
+    switch (arch) {
+      case 'arm64':
+        supportedArch = "arm64-v8a, arm64, arm";
+        break;
+      case 'arm':
+        supportedArch = "armeabi-v7a, arm";
+        break;
+      case 'x86_64':
+        supportedArch = "x86_64, x86";
+        break;
+      case 'x86':
+        supportedArch = "x86";
+        break;
+    }
     if (app.apkUrls.length > 1 && context != null) {
       apkUrl = await showDialog(
           context: context,
@@ -216,7 +231,7 @@ class AppsProvider with ChangeNotifier {
             return APKPicker(
               app: app,
               initVal: apkUrl,
-              arch: arch,
+              arch: supportedArch,
             );
           });
     }
@@ -614,7 +629,7 @@ class _APKPickerState extends State<APKPicker> {
       title: const Text('Pick an APK'),
       content: Column(children: [
         Text(
-          'Your architecture is: ${widget.arch ?? 'Unknown'}',
+          'Your device ${widget.arch == "x86" ? "support" : "supports"}: ${widget.arch ?? 'Unknown'}',
         ),
         Text('${widget.app.name} has more than one package:'),
         const SizedBox(height: 16),
