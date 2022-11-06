@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -20,7 +21,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
-import 'package:system_info2/system_info2.dart';
 
 class AppInMemory {
   late App app;
@@ -208,7 +208,7 @@ class AppsProvider with ChangeNotifier {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
     // get device supported architecture
-    String arch = SysInfo.kernelArchitecture;
+    String arch = (await DeviceInfoPlugin().androidInfo).supportedAbis.first;
     String supportedArch = arch;
     switch (arch) {
       case 'arm64':

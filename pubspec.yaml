@@ -56,7 +56,6 @@ dependencies:
   installed_apps: ^1.3.1
   package_archive_info: ^0.1.0
   android_alarm_manager_plus: ^2.1.0
-  system_info2: ^2.0.4
 
 
 dev_dependencies:
