@@ -28,14 +28,14 @@ class GitHubStars implements MassAppUrlSource {
                 .round());
       }
 
-      throw 'Unable to find user\'s starred repos';
+      throw ObtainiumError('Unable to find user\'s starred repos');
     }
   }
 
   @override
   Future<List<String>> getUrls(List<String> args) async {
     if (args.length != requiredArgs.length) {
-      throw 'Wrong number of arguments provided';
+      throw ObtainiumError('Wrong number of arguments provided');
     }
     List<String> urls = [];
     var page = 1;

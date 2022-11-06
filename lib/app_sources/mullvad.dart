@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Mullvad implements AppSource {
@@ -12,7 +13,7 @@ class Mullvad implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -36,12 +37,12 @@ class Mullvad implements AppSource {
           ?.split('/')
           .last;
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       return APKDetails(
           version, ['https://mullvad.net/download/app/apk/latest']);
     } else {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

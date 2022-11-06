@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -81,12 +82,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           appsProvider
                                               .exportApps()
                                               .then((String path) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(
-                                                      'Exported to $path')),
-                                            );
+                                            showError(
+                                                'Exported to $path', context);
                                           });
                                         },
                                   child: const Text('Obtainium Export'))),
@@ -113,27 +110,21 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               try {
                                                 jsonDecode(data);
                                               } catch (e) {
-                                                throw 'Invalid input';
+                                                throw ObtainiumError(
+                                                    'Invalid input');
                                               }
                                               appsProvider
                                                   .importApps(data)
                                                   .then((value) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                      content: Text(
-                                                          '$value App${value == 1 ? '' : 's'} Imported')),
-                                                );
+                                                showError(
+                                                    '$value App${value == 1 ? '' : 's'} Imported',
+                                                    context);
                                               });
                                             } else {
                                               // User canceled the picker
                                             }
                                           }).catchError((e) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(e.toString())),
-                                            );
+                                            showError(e, context);
                                           }).whenComplete(() {
                                             setState(() {
                                               importInProgress = false;
@@ -208,12 +199,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       });
                                       addApps(urls).then((errors) {
                                         if (errors.isEmpty) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    'Imported ${urls.length} Apps')),
-                                          );
+                                          showError(
+                                              'Imported ${urls.length} Apps',
+                                              context);
                                         } else {
                                           showDialog(
                                               context: context,
@@ -224,10 +212,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               });
                                         }
                                       }).catchError((e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(content: Text(e.toString())),
-                                        );
+                                        showError(e, context);
                                       }).whenComplete(() {
                                         setState(() {
                                           importInProgress = false;
@@ -288,13 +273,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                               .then((errors) {
                                                             if (errors
                                                                 .isEmpty) {
-                                                              ScaffoldMessenger
-                                                                      .of(context)
-                                                                  .showSnackBar(
-                                                                SnackBar(
-                                                                    content: Text(
-                                                                        'Imported ${selectedUrls.length} Apps')),
-                                                              );
+                                                              showError(
+                                                                  'Imported ${selectedUrls.length} Apps',
+                                                                  context);
                                                             } else {
                                                               showDialog(
                                                                   context:
@@ -328,13 +309,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                         importInProgress =
                                                             false;
                                                       });
-                                                      ScaffoldMessenger.of(
-                                                              context)
-                                                          .showSnackBar(
-                                                        SnackBar(
-                                                            content: Text(
-                                                                e.toString())),
-                                                      );
+                                                      showError(e, context);
                                                     });
                                                   }
                                                 });

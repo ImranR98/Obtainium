@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class IzzyOnDroid implements AppSource {
@@ -12,7 +13,7 @@ class IzzyOnDroid implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -37,7 +38,7 @@ class IzzyOnDroid implements AppSource {
           .map((e) => 'https://$host${e.attributes['href'] ?? ''}')
           .toList();
       if (multipleVersionApkUrls.isEmpty) {
-        throw noAPKFound;
+        throw NoAPKError();
       }
       var version = parsedHtml
           .querySelector('#keydata')
@@ -50,11 +51,11 @@ class IzzyOnDroid implements AppSource {
           ?.children[1]
           .innerHtml;
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       return APKDetails(version, [multipleVersionApkUrls[0]]);
     } else {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

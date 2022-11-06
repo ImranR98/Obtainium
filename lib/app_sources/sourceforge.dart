@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class SourceForge implements AppSource {
@@ -12,7 +13,7 @@ class SourceForge implements AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/projects/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw notValidURL(runtimeType.toString());
+      throw InvalidURLError(runtimeType.toString());
     }
     return url.substring(0, match.end);
   }
@@ -42,7 +43,7 @@ class SourceForge implements AppSource {
 
       String? version = getVersion(allDownloadLinks[0]);
       if (version == null) {
-        throw couldNotFindLatestVersion;
+        throw NoVersionError();
       }
       var apkUrlListAllReleases = allDownloadLinks
           .where((element) => element.toLowerCase().endsWith('.apk/download'))
@@ -52,11 +53,11 @@ class SourceForge implements AppSource {
               .where((element) => getVersion(element) == version)
               .toList();
       if (apkUrlList.isEmpty) {
-        throw noAPKFound;
+        throw NoAPKError();
       }
       return APKDetails(version, apkUrlList);
     } else {
-      throw couldNotFindReleases;
+      throw NoReleasesError();
     }
   }
 

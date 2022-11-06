@@ -12,6 +12,7 @@ import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
 
 class AppNames {
@@ -172,7 +173,7 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      throw 'URL does not match a known source';
+      throw UnsupportedURLError();
     }
     return source;
   }

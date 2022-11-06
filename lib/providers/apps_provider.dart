@@ -160,7 +160,7 @@ class AppsProvider with ChangeNotifier {
     var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
     if (app.id != newInfo.packageName) {
       if (apps[app.id] != null) {
-        throw 'The downloaded App has a different package ID - this is not allowed for security reasons';
+        throw IDChangedError();
       }
       app.id = newInfo.packageName;
       downloadedFile = downloadedFile.renameSync(
@@ -211,7 +211,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appInfo != null &&
         int.parse(newInfo.buildNumber) < appInfo.versionCode!) {
-      throw 'Can\'t install an older version';
+      throw DowngradeError();
     }
     if (appInfo == null ||
         int.parse(newInfo.buildNumber) > appInfo.versionCode!) {
@@ -264,7 +264,7 @@ class AppsProvider with ChangeNotifier {
     // 2. That cannot be installed silently (IF no buildContext was given for interactive install)
     for (var id in appIds) {
       if (apps[id] == null) {
-        throw 'App not found';
+        throw ObtainiumError('App not found');
       }
       String? apkUrl = await confirmApkUrl(apps[id]!.app, context);
       if (apkUrl != null) {

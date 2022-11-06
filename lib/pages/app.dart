@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -26,9 +27,7 @@ class _AppPageState extends State<AppPage> {
     var settingsProvider = context.watch<SettingsProvider>();
     getUpdate(String id) {
       appsProvider.checkUpdate(id).catchError((e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        showError(e, context);
       });
     }
 
@@ -230,11 +229,7 @@ class _AppPageState extends State<AppPage> {
                                             Navigator.of(context).pop();
                                           }
                                         }).catchError((e) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(e.toString())),
-                                          );
+                                          showError(e, context);
                                         });
                                       }
                                     : null,
