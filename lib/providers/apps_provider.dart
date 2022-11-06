@@ -20,6 +20,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
+import 'package:system_info2/system_info2.dart';
 
 class AppInMemory {
   late App app;
@@ -206,11 +207,17 @@ class AppsProvider with ChangeNotifier {
   Future<String?> confirmApkUrl(App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
+    // get device architecture
+    String arch = SysInfo.kernelArchitecture;
     if (app.apkUrls.length > 1 && context != null) {
       apkUrl = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
-            return APKPicker(app: app, initVal: apkUrl);
+            return APKPicker(
+              app: app,
+              initVal: apkUrl,
+              arch: arch,
+            );
           });
     }
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
@@ -586,10 +593,11 @@ class AppsProvider with ChangeNotifier {
 }
 
 class APKPicker extends StatefulWidget {
-  const APKPicker({super.key, required this.app, this.initVal});
+  const APKPicker({super.key, required this.app, this.initVal, this.arch});
 
   final App app;
   final String? initVal;
+  final String? arch;
 
   @override
   State<APKPicker> createState() => _APKPickerState();
@@ -605,6 +613,9 @@ class _APKPickerState extends State<APKPicker> {
       scrollable: true,
       title: const Text('Pick an APK'),
       content: Column(children: [
+        Text(
+          'Your architecture is: ${widget.arch ?? 'Unknown'}',
+        ),
         Text('${widget.app.name} has more than one package:'),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map((u) => RadioListTile<String>(
