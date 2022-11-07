@@ -208,22 +208,8 @@ class AppsProvider with ChangeNotifier {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
     // get device supported architecture
-    String arch = (await DeviceInfoPlugin().androidInfo).supportedAbis.first;
-    String supportedArch = arch;
-    switch (arch) {
-      case 'arm64':
-        supportedArch = "arm64-v8a, arm64, arm";
-        break;
-      case 'arm':
-        supportedArch = "armeabi-v7a, arm";
-        break;
-      case 'x86_64':
-        supportedArch = "x86_64, x86";
-        break;
-      case 'x86':
-        supportedArch = "x86";
-        break;
-    }
+    List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+
     if (app.apkUrls.length > 1 && context != null) {
       apkUrl = await showDialog(
           context: context,
@@ -231,7 +217,7 @@ class AppsProvider with ChangeNotifier {
             return APKPicker(
               app: app,
               initVal: apkUrl,
-              arch: supportedArch,
+              arch: archs,
             );
           });
     }
@@ -612,7 +598,7 @@ class APKPicker extends StatefulWidget {
 
   final App app;
   final String? initVal;
-  final String? arch;
+  final List<String>? arch;
 
   @override
   State<APKPicker> createState() => _APKPickerState();
@@ -628,10 +614,11 @@ class _APKPickerState extends State<APKPicker> {
       scrollable: true,
       title: const Text('Pick an APK'),
       content: Column(children: [
-        Text(
-          'Your device ${widget.arch == "x86" ? "support" : "supports"}: ${widget.arch ?? 'Unknown'}',
-        ),
         Text('${widget.app.name} has more than one package:'),
+        Text(
+          'Your device ${widget.arch!.length == 1 ? "support the:" : "supports:"} ${widget.arch!.join(", ")} CPU architecture${widget.arch!.length > 1 ? "s" : ""}',
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map((u) => RadioListTile<String>(
             title: Text(Uri.parse(u)
