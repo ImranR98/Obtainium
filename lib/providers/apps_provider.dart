@@ -217,7 +217,7 @@ class AppsProvider with ChangeNotifier {
             return APKPicker(
               app: app,
               initVal: apkUrl,
-              arch: archs,
+              archs: archs,
             );
           });
     }
@@ -594,11 +594,11 @@ class AppsProvider with ChangeNotifier {
 }
 
 class APKPicker extends StatefulWidget {
-  const APKPicker({super.key, required this.app, this.initVal, this.arch});
+  const APKPicker({super.key, required this.app, this.initVal, this.archs});
 
   final App app;
   final String? initVal;
-  final List<String>? arch;
+  final List<String>? archs;
 
   @override
   State<APKPicker> createState() => _APKPickerState();
@@ -615,23 +615,30 @@ class _APKPickerState extends State<APKPicker> {
       title: const Text('Pick an APK'),
       content: Column(children: [
         Text('${widget.app.name} has more than one package:'),
-        Text(
-          'Your device ${widget.arch!.length == 1 ? "support the:" : "supports:"} ${widget.arch!.join(", ")} CPU architecture${widget.arch!.length > 1 ? "s" : ""}',
-          textAlign: TextAlign.center,
-        ),
         const SizedBox(height: 16),
-        ...widget.app.apkUrls.map((u) => RadioListTile<String>(
-            title: Text(Uri.parse(u)
-                .pathSegments
-                .where((element) => element.isNotEmpty)
-                .last),
-            value: u,
-            groupValue: apkUrl,
-            onChanged: (String? val) {
-              setState(() {
-                apkUrl = val;
-              });
-            }))
+        ...widget.app.apkUrls.map(
+          (u) => RadioListTile<String>(
+              title: Text(Uri.parse(u)
+                  .pathSegments
+                  .where((element) => element.isNotEmpty)
+                  .last),
+              value: u,
+              groupValue: apkUrl,
+              onChanged: (String? val) {
+                setState(() {
+                  apkUrl = val;
+                });
+              }),
+        ),
+        if (widget.archs != null)
+          const SizedBox(
+            height: 16,
+          ),
+        if (widget.archs != null)
+          Text(
+            'Note:\nYour device supports the ${widget.archs!.length == 1 ? '\'${widget.archs![0]}\' CPU architecture.' : 'following CPU architectures: ${list2FriendlyString(widget.archs!.map((e) => '\'$e\'').toList())}.'}',
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          ),
       ]),
       actions: [
         TextButton(

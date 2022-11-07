@@ -96,3 +96,19 @@ showError(dynamic e, BuildContext context) {
         });
   }
 }
+
+String list2FriendlyString(List<String> list) {
+  return list.length == 2
+      ? '${list[0]} and ${list[1]}'
+      : list
+          .asMap()
+          .entries
+          .map((e) =>
+              e.value +
+              (e.key == list.length - 1
+                  ? ''
+                  : e.key == list.length - 2
+                      ? ', and '
+                      : ', '))
+          .join('');
+}
