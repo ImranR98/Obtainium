@@ -156,8 +156,7 @@ class SourceProvider {
     IzzyOnDroid(),
     Mullvad(),
     Signal(),
-    SourceForge(),
-    // APKMirror()
+    SourceForge()
   ];
 
   // Add more mass url source classes here so they are available via the service
