@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -206,11 +207,18 @@ class AppsProvider with ChangeNotifier {
   Future<String?> confirmApkUrl(App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
+    // get device supported architecture
+    List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+
     if (app.apkUrls.length > 1 && context != null) {
       apkUrl = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
-            return APKPicker(app: app, initVal: apkUrl);
+            return APKPicker(
+              app: app,
+              initVal: apkUrl,
+              arch: archs,
+            );
           });
     }
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
@@ -586,10 +594,11 @@ class AppsProvider with ChangeNotifier {
 }
 
 class APKPicker extends StatefulWidget {
-  const APKPicker({super.key, required this.app, this.initVal});
+  const APKPicker({super.key, required this.app, this.initVal, this.arch});
 
   final App app;
   final String? initVal;
+  final List<String>? arch;
 
   @override
   State<APKPicker> createState() => _APKPickerState();
@@ -606,6 +615,10 @@ class _APKPickerState extends State<APKPicker> {
       title: const Text('Pick an APK'),
       content: Column(children: [
         Text('${widget.app.name} has more than one package:'),
+        Text(
+          'Your device ${widget.arch!.length == 1 ? "support the:" : "supports:"} ${widget.arch!.join(", ")} CPU architecture${widget.arch!.length > 1 ? "s" : ""}',
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map((u) => RadioListTile<String>(
             title: Text(Uri.parse(u)
