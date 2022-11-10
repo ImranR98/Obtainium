@@ -27,9 +27,11 @@ class UpdateNotification extends ObtainiumNotification {
             'Updates Available',
             'Notifies the user that updates are available for one or more Apps tracked by Obtainium',
             Importance.max) {
-    message = updates.length == 1
-        ? '${updates[0].name} has an update.'
-        : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
+    message = updates.isEmpty
+        ? "No new updates."
+        : updates.length == 1
+            ? '${updates[0].name} has an update.'
+            : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
   }
 }
 
