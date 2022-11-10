@@ -191,6 +191,19 @@ class SourceProvider {
   String generateTempID(AppNames names, AppSource source) =>
       '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
 
+  bool isTempId(String id) {
+    List<String> parts = id.split('_');
+    if (parts.length < 3) {
+      return false;
+    }
+    for (int i = 0; i < parts.length - 1; i++) {
+      if (RegExp('.*[A-Z].*').hasMatch(parts[i])) {
+        return false;
+      }
+    }
+    return getSourceHosts().contains(parts.last);
+  }
+
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
       {String name = '', String? id}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));

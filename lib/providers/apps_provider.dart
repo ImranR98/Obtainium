@@ -139,12 +139,17 @@ class AppsProvider with ChangeNotifier {
     // The former case should be handled (give the App its real ID), the latter is a security issue
     var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
     if (app.id != newInfo.packageName) {
-      if (apps[app.id] != null) {
+      if (apps[app.id] != null && !SourceProvider().isTempId(app.id)) {
         throw IDChangedError();
       }
+      var originalAppId = app.id;
       app.id = newInfo.packageName;
       downloadedFile = downloadedFile.renameSync(
           '${downloadedFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
+      if (apps[originalAppId] != null) {
+        await removeApps([originalAppId]);
+        await saveApps([app]);
+      }
     }
     return DownloadedApk(app.id, downloadedFile);
   }
