@@ -72,7 +72,7 @@ class GitHub implements AppSource {
 
         if (regexFilter != null &&
             !RegExp(regexFilter)
-                .hasMatch((releases[i]['tag_name'] as String).trim())) {
+                .hasMatch((releases[i]['name'] as String).trim())) {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
