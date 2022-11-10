@@ -335,6 +335,8 @@ class AppsProvider with ChangeNotifier {
       throw errors;
     }
 
+    NotificationsProvider().cancel(UpdateNotification([]).id);
+
     return downloadedFiles.map((e) => e!.appId).toList();
   }
 
