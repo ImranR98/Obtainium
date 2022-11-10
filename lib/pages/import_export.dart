@@ -62,7 +62,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
         body: CustomScrollView(slivers: <Widget>[
           const CustomAppBar(title: 'Import/Export'),
           SliverFillRemaining(
-              hasScrollBody: false,
               child: Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -316,7 +315,19 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               },
                                         child: Text('Import ${source.name}'))
                                   ]))
-                          .toList()
+                          .toList(),
+                      const Spacer(),
+                      const Divider(
+                        height: 32,
+                      ),
+                      const Text(
+                          'Imported Apps may incorrectly show as "Not Installed".\nTo fix this, re-install them through Obtainium.\nThis should not affect App data.\n\nOnly affects URL and third-party import methods.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontStyle: FontStyle.italic, fontSize: 12)),
+                      const SizedBox(
+                        height: 8,
+                      )
                     ],
                   )))
         ]));
