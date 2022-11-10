@@ -57,7 +57,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                               } catch (e) {
                                                 return e is String
                                                     ? e
-                                                    : 'Error';
+                                                    : e is ObtainiumError
+                                                        ? e.toString()
+                                                        : 'Error';
                                               }
                                               return null;
                                             }
