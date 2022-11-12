@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-class Signal implements AppSource {
-  @override
-  late String host = 'signal.org';
+class Signal extends AppSource {
+  Signal() {
+    host = 'signal.org';
+  }
 
   @override
   String standardizeURL(String url) {
@@ -42,13 +42,4 @@ class Signal implements AppSource {
 
   @override
   AppNames getAppNames(String standardUrl) => AppNames('Signal', 'Signal');
-
-  @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [];
-
-  @override
-  List<String> additionalDataDefaults = [];
-
-  @override
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }

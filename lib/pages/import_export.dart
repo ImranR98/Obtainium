@@ -223,6 +223,103 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           child: const Text(
                             'Import from URL List',
                           )),
+                      ...sourceProvider.sources
+                          .where((element) => element.canSearch)
+                          .map((source) => Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                        onPressed: importInProgress
+                                            ? null
+                                            : () {
+                                                () async {
+                                                  var values = await showDialog<
+                                                          List<String>>(
+                                                      context: context,
+                                                      builder:
+                                                          (BuildContext ctx) {
+                                                        return GeneratedFormModal(
+                                                          title:
+                                                              'Search ${source.runtimeType}',
+                                                          items: [
+                                                            [
+                                                              GeneratedFormItem(
+                                                                  label:
+                                                                      '${source.runtimeType} Search Query')
+                                                            ]
+                                                          ],
+                                                          defaultValues: const [],
+                                                        );
+                                                      });
+                                                  if (values != null &&
+                                                      values[0].isNotEmpty) {
+                                                    setState(() {
+                                                      importInProgress = true;
+                                                    });
+                                                    var urls = await source
+                                                        .search(values[0]);
+                                                    if (urls.isNotEmpty) {
+                                                      var selectedUrls =
+                                                          await showDialog<
+                                                                  List<
+                                                                      String>?>(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      ctx) {
+                                                                return UrlSelectionModal(
+                                                                  urls: urls,
+                                                                  defaultSelected:
+                                                                      false,
+                                                                );
+                                                              });
+                                                      if (selectedUrls !=
+                                                              null &&
+                                                          selectedUrls
+                                                              .isNotEmpty) {
+                                                        var errors =
+                                                            await addApps(
+                                                                selectedUrls);
+                                                        if (errors.isEmpty) {
+                                                          // ignore: use_build_context_synchronously
+                                                          showError(
+                                                              'Imported ${selectedUrls.length} Apps',
+                                                              context);
+                                                        } else {
+                                                          showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      ctx) {
+                                                                return ImportErrorDialog(
+                                                                    urlsLength:
+                                                                        selectedUrls
+                                                                            .length,
+                                                                    errors:
+                                                                        errors);
+                                                              });
+                                                        }
+                                                      }
+                                                    } else {
+                                                      throw ObtainiumError(
+                                                          'No results found');
+                                                    }
+                                                  }
+                                                }()
+                                                    .catchError((e) {
+                                                  showError(e, context);
+                                                }).whenComplete(() {
+                                                  setState(() {
+                                                    importInProgress = false;
+                                                  });
+                                                });
+                                              },
+                                        child: Text(
+                                            'Search ${source.runtimeType}'))
+                                  ]))
+                          .toList(),
                       ...sourceProvider.massUrlSources
                           .map((source) => Column(
                                   crossAxisAlignment:
@@ -233,84 +330,73 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         onPressed: importInProgress
                                             ? null
                                             : () {
-                                                showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext ctx) {
-                                                      return GeneratedFormModal(
-                                                        title:
-                                                            'Import ${source.name}',
-                                                        items: source
-                                                            .requiredArgs
-                                                            .map((e) => [
-                                                                  GeneratedFormItem(
-                                                                      label: e)
-                                                                ])
-                                                            .toList(),
-                                                        defaultValues: const [],
-                                                      );
-                                                    }).then((values) {
+                                                () async {
+                                                  var values = await showDialog(
+                                                      context: context,
+                                                      builder:
+                                                          (BuildContext ctx) {
+                                                        return GeneratedFormModal(
+                                                          title:
+                                                              'Import ${source.name}',
+                                                          items:
+                                                              source
+                                                                  .requiredArgs
+                                                                  .map(
+                                                                      (e) => [
+                                                                            GeneratedFormItem(label: e)
+                                                                          ])
+                                                                  .toList(),
+                                                          defaultValues: const [],
+                                                        );
+                                                      });
                                                   if (values != null) {
                                                     setState(() {
                                                       importInProgress = true;
                                                     });
-                                                    source
-                                                        .getUrls(values)
-                                                        .then((urls) {
-                                                      showDialog<List<String>?>(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      ctx) {
-                                                                return UrlSelectionModal(
-                                                                    urls: urls);
-                                                              })
-                                                          .then((selectedUrls) {
-                                                        if (selectedUrls !=
-                                                            null) {
-                                                          addApps(selectedUrls)
-                                                              .then((errors) {
-                                                            if (errors
-                                                                .isEmpty) {
-                                                              showError(
-                                                                  'Imported ${selectedUrls.length} Apps',
-                                                                  context);
-                                                            } else {
-                                                              showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (BuildContext
-                                                                          ctx) {
-                                                                    return ImportErrorDialog(
-                                                                        urlsLength:
-                                                                            selectedUrls
-                                                                                .length,
-                                                                        errors:
-                                                                            errors);
-                                                                  });
-                                                            }
-                                                          }).whenComplete(() {
-                                                            setState(() {
-                                                              importInProgress =
-                                                                  false;
+                                                    var urls = await source
+                                                        .getUrls(values);
+                                                    var selectedUrls =
+                                                        await showDialog<
+                                                                List<String>?>(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext
+                                                                    ctx) {
+                                                              return UrlSelectionModal(
+                                                                  urls: urls);
                                                             });
-                                                          });
-                                                        } else {
-                                                          setState(() {
-                                                            importInProgress =
-                                                                false;
-                                                          });
-                                                        }
-                                                      });
-                                                    }).catchError((e) {
-                                                      setState(() {
-                                                        importInProgress =
-                                                            false;
-                                                      });
-                                                      showError(e, context);
-                                                    });
+                                                    if (selectedUrls != null) {
+                                                      var errors =
+                                                          await addApps(
+                                                              selectedUrls);
+                                                      if (errors.isEmpty) {
+                                                        // ignore: use_build_context_synchronously
+                                                        showError(
+                                                            'Imported ${selectedUrls.length} Apps',
+                                                            context);
+                                                      } else {
+                                                        showDialog(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext
+                                                                    ctx) {
+                                                              return ImportErrorDialog(
+                                                                  urlsLength:
+                                                                      selectedUrls
+                                                                          .length,
+                                                                  errors:
+                                                                      errors);
+                                                            });
+                                                      }
+                                                    }
                                                   }
+                                                }()
+                                                    .catchError((e) {
+                                                  showError(e, context);
+                                                }).whenComplete(() {
+                                                  setState(() {
+                                                    importInProgress = false;
+                                                  });
                                                 });
                                               },
                                         child: Text('Import ${source.name}'))
@@ -390,9 +476,11 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
 
 // ignore: must_be_immutable
 class UrlSelectionModal extends StatefulWidget {
-  UrlSelectionModal({super.key, required this.urls});
+  UrlSelectionModal(
+      {super.key, required this.urls, this.defaultSelected = true});
 
   List<String> urls;
+  bool defaultSelected;
 
   @override
   State<UrlSelectionModal> createState() => _UrlSelectionModalState();
@@ -404,7 +492,7 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   void initState() {
     super.initState();
     for (var url in widget.urls) {
-      urlSelections.putIfAbsent(url, () => true);
+      urlSelections.putIfAbsent(url, () => widget.defaultSelected);
     }
   }
 

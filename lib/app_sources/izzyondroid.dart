@@ -1,12 +1,12 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-class IzzyOnDroid implements AppSource {
-  @override
-  late String host = 'android.izzysoft.de';
+class IzzyOnDroid extends AppSource {
+  IzzyOnDroid() {
+    host = 'android.izzysoft.de';
+  }
 
   @override
   String standardizeURL(String url) {
@@ -63,13 +63,4 @@ class IzzyOnDroid implements AppSource {
   AppNames getAppNames(String standardUrl) {
     return AppNames('IzzyOnDroid', Uri.parse(standardUrl).pathSegments.last);
   }
-
-  @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [];
-
-  @override
-  List<String> additionalDataDefaults = [];
-
-  @override
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }

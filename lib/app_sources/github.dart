@@ -7,9 +7,81 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-class GitHub implements AppSource {
-  @override
-  late String host = 'github.com';
+class GitHub extends AppSource {
+  GitHub() {
+    host = 'github.com';
+
+    additionalDataDefaults = ['true', 'true', ''];
+
+    moreSourceSettingsFormItems = [
+      GeneratedFormItem(
+          label: 'GitHub Personal Access Token (Increases Rate Limit)',
+          id: 'github-creds',
+          required: false,
+          additionalValidators: [
+            (value) {
+              if (value != null && value.trim().isNotEmpty) {
+                if (value
+                        .split(':')
+                        .where((element) => element.trim().isNotEmpty)
+                        .length !=
+                    2) {
+                  return 'PAT must be in this format: username:token';
+                }
+              }
+              return null;
+            }
+          ],
+          hint: 'username:token',
+          belowWidgets: [
+            const SizedBox(
+              height: 8,
+            ),
+            GestureDetector(
+                onTap: () {
+                  launchUrlString(
+                      'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
+                      mode: LaunchMode.externalApplication);
+                },
+                child: const Text(
+                  'About GitHub PATs',
+                  style: TextStyle(
+                      decoration: TextDecoration.underline, fontSize: 12),
+                ))
+          ])
+    ];
+
+    additionalDataFormItems = [
+      [
+        GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)
+      ],
+      [
+        GeneratedFormItem(
+            label: 'Fallback to older releases', type: FormItemType.bool)
+      ],
+      [
+        GeneratedFormItem(
+            label: 'Filter Release Titles by Regular Expression',
+            type: FormItemType.string,
+            required: false,
+            additionalValidators: [
+              (value) {
+                if (value == null || value.isEmpty) {
+                  return null;
+                }
+                try {
+                  RegExp(value);
+                } catch (e) {
+                  return 'Invalid regular expression';
+                }
+                return null;
+              }
+            ])
+      ]
+    ];
+
+    canSearch = true;
+  }
 
   @override
   String standardizeURL(String url) {
@@ -114,72 +186,23 @@ class GitHub implements AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [
-    [GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)],
-    [
-      GeneratedFormItem(
-          label: 'Fallback to older releases', type: FormItemType.bool)
-    ],
-    [
-      GeneratedFormItem(
-          label: 'Filter Release Titles by Regular Expression',
-          type: FormItemType.string,
-          required: false,
-          additionalValidators: [
-            (value) {
-              if (value == null || value.isEmpty) {
-                return null;
-              }
-              try {
-                RegExp(value);
-              } catch (e) {
-                return 'Invalid regular expression';
-              }
-              return null;
-            }
-          ])
-    ]
-  ];
-
-  @override
-  List<String> additionalDataDefaults = ['true', 'true', ''];
-
-  @override
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [
-    GeneratedFormItem(
-        label: 'GitHub Personal Access Token (Increases Rate Limit)',
-        id: 'github-creds',
-        required: false,
-        additionalValidators: [
-          (value) {
-            if (value != null && value.trim().isNotEmpty) {
-              if (value
-                      .split(':')
-                      .where((element) => element.trim().isNotEmpty)
-                      .length !=
-                  2) {
-                return 'PAT must be in this format: username:token';
-              }
-            }
-            return null;
-          }
-        ],
-        hint: 'username:token',
-        belowWidgets: [
-          const SizedBox(
-            height: 8,
-          ),
-          GestureDetector(
-              onTap: () {
-                launchUrlString(
-                    'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
-                    mode: LaunchMode.externalApplication);
-              },
-              child: const Text(
-                'About GitHub PATs',
-                style: TextStyle(
-                    decoration: TextDecoration.underline, fontSize: 12),
-              ))
-        ])
-  ];
+  Future<List<String>> search(String query) async {
+    Response res = await get(Uri.parse(
+        'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100'));
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body)['items'] as List<dynamic>)
+          .map((e) => e['html_url'] as String)
+          .toList();
+    } else {
+      if (res.headers['x-ratelimit-remaining'] == '0') {
+        throw RateLimitError(
+            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
+                    60000000)
+                .round());
+      }
+      throw ObtainiumError(
+          res.reasonPhrase ?? 'Error ${res.statusCode.toString()}',
+          unexpected: true);
+    }
+  }
 }

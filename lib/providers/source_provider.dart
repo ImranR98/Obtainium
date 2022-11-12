@@ -40,6 +40,7 @@ class App {
   late int preferredApkIndex;
   late List<String> additionalData;
   late DateTime? lastUpdateCheck;
+  bool pinned = false;
   App(
       this.id,
       this.url,
@@ -50,11 +51,12 @@ class App {
       this.apkUrls,
       this.preferredApkIndex,
       this.additionalData,
-      this.lastUpdateCheck);
+      this.lastUpdateCheck,
+      this.pinned);
 
   @override
   String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()}';
+    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
@@ -75,7 +77,8 @@ class App {
           : List<String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']));
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+      json['pinned'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -87,7 +90,8 @@ class App {
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
         'additionalData': jsonEncode(additionalData),
-        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch
+        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
+        'pinned': pinned
       };
 }
 
@@ -128,17 +132,36 @@ List<String> getLinksFromParsedHTML(
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
 
-abstract class AppSource {
+class AppSource {
   late String host;
-  String standardizeURL(String url);
+  String standardizeURL(String url) {
+    throw NotImplementedError();
+  }
+
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData);
-  AppNames getAppNames(String standardUrl);
-  late List<List<GeneratedFormItem>> additionalDataFormItems;
-  late List<String> additionalDataDefaults;
-  late List<GeneratedFormItem> moreSourceSettingsFormItems;
-  String? changeLogPageFromStandardUrl(String standardUrl);
-  Future<String> apkUrlPrefetchModifier(String apkUrl);
+      String standardUrl, List<String> additionalData) {
+    throw NotImplementedError();
+  }
+
+  AppNames getAppNames(String standardUrl) {
+    throw NotImplementedError();
+  }
+
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+  List<String> additionalDataDefaults = [];
+  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
+  String? changeLogPageFromStandardUrl(String standardUrl) {
+    throw NotImplementedError();
+  }
+
+  Future<String> apkUrlPrefetchModifier(String apkUrl) {
+    throw NotImplementedError();
+  }
+
+  bool canSearch = false;
+  Future<List<String>> search(String query) {
+    throw NotImplementedError();
+  }
 }
 
 abstract class MassAppUrlSource {
@@ -205,7 +228,7 @@ class SourceProvider {
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String name = '', String? id}) async {
+      {String name = '', String? id, bool pinned = false}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -222,7 +245,8 @@ class SourceProvider {
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
-        DateTime.now());
+        DateTime.now(),
+        pinned);
   }
 
   // Returns errors in [results, errors] instead of throwing them
