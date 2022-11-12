@@ -159,7 +159,7 @@ class AppSource {
   }
 
   bool canSearch = false;
-  Future<List<String>> search(String query) {
+  Future<Map<String, String>> search(String query) {
     throw NotImplementedError();
   }
 }

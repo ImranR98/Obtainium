@@ -186,13 +186,19 @@ class GitHub extends AppSource {
   }
 
   @override
-  Future<List<String>> search(String query) async {
+  Future<Map<String, String>> search(String query) async {
     Response res = await get(Uri.parse(
         'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100'));
     if (res.statusCode == 200) {
-      return (jsonDecode(res.body)['items'] as List<dynamic>)
-          .map((e) => e['html_url'] as String)
-          .toList();
+      Map<String, String> urlsWithDescriptions = {};
+      for (var e in (jsonDecode(res.body)['items'] as List<dynamic>)) {
+        urlsWithDescriptions.addAll({
+          e['html_url'] as String: e['description'] != null
+              ? e['description'] as String
+              : 'No description'
+        });
+      }
+      return urlsWithDescriptions;
     } else {
       if (res.headers['x-ratelimit-remaining'] == '0') {
         throw RateLimitError(

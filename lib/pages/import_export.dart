@@ -12,6 +12,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class ImportExportPage extends StatefulWidget {
   const ImportExportPage({super.key});
@@ -258,9 +259,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     setState(() {
                                                       importInProgress = true;
                                                     });
-                                                    var urls = await source
-                                                        .search(values[0]);
-                                                    if (urls.isNotEmpty) {
+                                                    var urlsWithDescriptions =
+                                                        await source
+                                                            .search(values[0]);
+                                                    if (urlsWithDescriptions
+                                                        .isNotEmpty) {
                                                       var selectedUrls =
                                                           await showDialog<
                                                                   List<
@@ -270,7 +273,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                   (BuildContext
                                                                       ctx) {
                                                                 return UrlSelectionModal(
-                                                                  urls: urls,
+                                                                  urlsWithDescriptions:
+                                                                      urlsWithDescriptions,
                                                                   defaultSelected:
                                                                       false,
                                                                 );
@@ -363,7 +367,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                 (BuildContext
                                                                     ctx) {
                                                               return UrlSelectionModal(
-                                                                  urls: urls);
+                                                                  urlsWithDescriptions:
+                                                                      Map.fromIterable(
+                                                                          urls,
+                                                                          value: (item) =>
+                                                                              ''));
                                                             });
                                                     if (selectedUrls != null) {
                                                       var errors =
@@ -477,9 +485,11 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
 // ignore: must_be_immutable
 class UrlSelectionModal extends StatefulWidget {
   UrlSelectionModal(
-      {super.key, required this.urls, this.defaultSelected = true});
+      {super.key,
+      required this.urlsWithDescriptions,
+      this.defaultSelected = true});
 
-  List<String> urls;
+  Map<String, String> urlsWithDescriptions;
   bool defaultSelected;
 
   @override
@@ -487,12 +497,13 @@ class UrlSelectionModal extends StatefulWidget {
 }
 
 class _UrlSelectionModalState extends State<UrlSelectionModal> {
-  Map<String, bool> urlSelections = {};
+  Map<MapEntry<String, String>, bool> urlWithDescriptionSelections = {};
   @override
   void initState() {
     super.initState();
-    for (var url in widget.urls) {
-      urlSelections.putIfAbsent(url, () => widget.defaultSelected);
+    for (var url in widget.urlsWithDescriptions.entries) {
+      urlWithDescriptionSelections.putIfAbsent(
+          url, () => widget.defaultSelected);
     }
   }
 
@@ -502,21 +513,48 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
       scrollable: true,
       title: const Text('Select URLs to Import'),
       content: Column(children: [
-        ...urlSelections.keys.map((url) {
+        ...urlWithDescriptionSelections.keys.map((urlWithD) {
           return Row(children: [
             Checkbox(
-                value: urlSelections[url],
+                value: urlWithDescriptionSelections[urlWithD],
                 onChanged: (value) {
                   setState(() {
-                    urlSelections[url] = value ?? false;
+                    urlWithDescriptionSelections[urlWithD] = value ?? false;
                   });
                 }),
             const SizedBox(
               width: 8,
             ),
             Expanded(
-                child: Text(
-              Uri.parse(url).path.substring(1),
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  height: 8,
+                ),
+                GestureDetector(
+                    onTap: () {
+                      launchUrlString(urlWithD.key,
+                          mode: LaunchMode.externalApplication);
+                    },
+                    child: Text(
+                      Uri.parse(urlWithD.key).path.substring(1),
+                      style:
+                          const TextStyle(decoration: TextDecoration.underline),
+                      textAlign: TextAlign.start,
+                    )),
+                Text(
+                  urlWithD.value.length > 128
+                      ? '${urlWithD.value.substring(0, 128)}...'
+                      : urlWithD.value,
+                  style: const TextStyle(
+                      fontStyle: FontStyle.italic, fontSize: 12),
+                ),
+                const SizedBox(
+                  height: 8,
+                )
+              ],
             ))
           ]);
         })
@@ -529,12 +567,13 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
             child: const Text('Cancel')),
         TextButton(
             onPressed: () {
-              Navigator.of(context).pop(urlSelections.keys
-                  .where((url) => urlSelections[url] ?? false)
+              Navigator.of(context).pop(urlWithDescriptionSelections.entries
+                  .where((entry) => entry.value)
+                  .map((e) => e.key.key)
                   .toList());
             },
             child: Text(
-                'Import ${urlSelections.values.where((b) => b).length} URLs'))
+                'Import ${urlWithDescriptionSelections.values.where((b) => b).length} URLs'))
       ],
     );
   }
