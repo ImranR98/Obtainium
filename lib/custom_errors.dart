@@ -48,6 +48,10 @@ class IDChangedError extends ObtainiumError {
       : super('Downloaded package ID does not match existing App ID');
 }
 
+class NotImplementedError extends ObtainiumError {
+  NotImplementedError() : super('This class has not implemented this function');
+}
+
 class MultiAppMultiError extends ObtainiumError {
   Map<String, List<String>> content = {};
 

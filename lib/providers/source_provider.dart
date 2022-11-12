@@ -128,17 +128,36 @@ List<String> getLinksFromParsedHTML(
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
 
-abstract class AppSource {
+class AppSource {
   late String host;
-  String standardizeURL(String url);
+  String standardizeURL(String url) {
+    throw NotImplementedError();
+  }
+
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData);
-  AppNames getAppNames(String standardUrl);
-  late List<List<GeneratedFormItem>> additionalDataFormItems;
-  late List<String> additionalDataDefaults;
-  late List<GeneratedFormItem> moreSourceSettingsFormItems;
-  String? changeLogPageFromStandardUrl(String standardUrl);
-  Future<String> apkUrlPrefetchModifier(String apkUrl);
+      String standardUrl, List<String> additionalData) {
+    throw NotImplementedError();
+  }
+
+  AppNames getAppNames(String standardUrl) {
+    throw NotImplementedError();
+  }
+
+  List<List<GeneratedFormItem>> additionalDataFormItems = [];
+  List<String> additionalDataDefaults = [];
+  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
+  String? changeLogPageFromStandardUrl(String standardUrl) {
+    throw NotImplementedError();
+  }
+
+  Future<String> apkUrlPrefetchModifier(String apkUrl) {
+    throw NotImplementedError();
+  }
+
+  bool canSearch = false;
+  Future<List<String>> search(String query) {
+    throw NotImplementedError();
+  }
 }
 
 abstract class MassAppUrlSource {

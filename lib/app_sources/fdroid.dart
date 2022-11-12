@@ -4,9 +4,10 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-class FDroid implements AppSource {
-  @override
-  late String host = 'f-droid.org';
+class FDroid extends AppSource {
+  FDroid() {
+    host = 'f-droid.org';
+  }
 
   @override
   String standardizeURL(String url) {
@@ -77,13 +78,4 @@ class FDroid implements AppSource {
   AppNames getAppNames(String standardUrl) {
     return AppNames('F-Droid', Uri.parse(standardUrl).pathSegments.last);
   }
-
-  @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [];
-
-  @override
-  List<String> additionalDataDefaults = [];
-
-  @override
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }

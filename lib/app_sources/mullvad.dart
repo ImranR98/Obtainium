@@ -1,12 +1,12 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-class Mullvad implements AppSource {
-  @override
-  late String host = 'mullvad.net';
+class Mullvad extends AppSource {
+  Mullvad() {
+    host = 'mullvad.net';
+  }
 
   @override
   String standardizeURL(String url) {
@@ -50,13 +50,4 @@ class Mullvad implements AppSource {
   AppNames getAppNames(String standardUrl) {
     return AppNames('Mullvad-VPN', 'Mullvad-VPN');
   }
-
-  @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [];
-
-  @override
-  List<String> additionalDataDefaults = [];
-
-  @override
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
 }
