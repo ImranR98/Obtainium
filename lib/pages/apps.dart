@@ -528,6 +528,36 @@ class AppsPageState extends State<AppsPage> {
                                             tooltip: 'Share Selected App URLs',
                                             icon: const Icon(Icons.share),
                                           ),
+                                          IconButton(
+                                            onPressed: () {
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext ctx) {
+                                                    return GeneratedFormModal(
+                                                      title:
+                                                          'Reset Install Status for Selected Apps?',
+                                                      items: const [],
+                                                      defaultValues: const [],
+                                                      initValid: true,
+                                                      message:
+                                                          'The install status of ${selectedApps.length} App${selectedApps.length == 1 ? '' : 's'} will be reset.\n\nThis can help when the App version shown in Obtainium is incorrect due to failed updates or other issues.',
+                                                    );
+                                                  }).then((values) {
+                                                if (values != null) {
+                                                  appsProvider.saveApps(
+                                                      selectedApps.map((e) {
+                                                    e.installedVersion = null;
+                                                    return e;
+                                                  }).toList());
+                                                }
+                                              }).whenComplete(() {
+                                                Navigator.of(context).pop();
+                                              });
+                                            },
+                                            tooltip: 'Reset Install Status',
+                                            icon: const Icon(
+                                                Icons.restore_page_outlined),
+                                          ),
                                         ]),
                                   ),
                                 );
