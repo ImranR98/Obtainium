@@ -40,6 +40,7 @@ class App {
   late int preferredApkIndex;
   late List<String> additionalData;
   late DateTime? lastUpdateCheck;
+  bool pinned = false;
   App(
       this.id,
       this.url,
@@ -50,11 +51,12 @@ class App {
       this.apkUrls,
       this.preferredApkIndex,
       this.additionalData,
-      this.lastUpdateCheck);
+      this.lastUpdateCheck,
+      this.pinned);
 
   @override
   String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()}';
+    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
   factory App.fromJson(Map<String, dynamic> json) => App(
@@ -75,7 +77,8 @@ class App {
           : List<String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']));
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+      json['pinned'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -87,7 +90,8 @@ class App {
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
         'additionalData': jsonEncode(additionalData),
-        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch
+        'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
+        'pinned': pinned
       };
 }
 
@@ -224,7 +228,7 @@ class SourceProvider {
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String name = '', String? id}) async {
+      {String name = '', String? id, bool pinned = false}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -241,7 +245,8 @@ class SourceProvider {
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
-        DateTime.now());
+        DateTime.now(),
+        pinned);
   }
 
   // Returns errors in [results, errors] instead of throwing them

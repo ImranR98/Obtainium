@@ -143,7 +143,8 @@ class _ObtainiumState extends State<Obtainium> {
               [],
               0,
               ['true'],
-              null)
+              null,
+              false)
         ]);
       }
       // Register the background update task according to the user's setting

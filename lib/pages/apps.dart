@@ -23,24 +23,24 @@ class AppsPageState extends State<AppsPage> {
   AppsFilter? filter;
   var updatesOnlyFilter =
       AppsFilter(includeUptodate: false, includeNonInstalled: false);
-  Set<String> selectedIds = {};
+  Set<App> selectedApps = {};
   DateTime? refreshingSince;
 
   clearSelected() {
-    if (selectedIds.isNotEmpty) {
+    if (selectedApps.isNotEmpty) {
       setState(() {
-        selectedIds.clear();
+        selectedApps.clear();
       });
       return true;
     }
     return false;
   }
 
-  selectThese(List<String> appIds) {
-    if (selectedIds.isEmpty) {
+  selectThese(List<App> apps) {
+    if (selectedApps.isEmpty) {
       setState(() {
-        for (var a in appIds) {
-          selectedIds.add(a);
+        for (var a in apps) {
+          selectedApps.add(a);
         }
       });
     }
@@ -54,16 +54,16 @@ class AppsPageState extends State<AppsPage> {
     var currentFilterIsUpdatesOnly =
         filter?.isIdenticalTo(updatesOnlyFilter) ?? false;
 
-    selectedIds = selectedIds
-        .where((element) => sortedApps.map((e) => e.app.id).contains(element))
+    selectedApps = selectedApps
+        .where((element) => sortedApps.map((e) => e.app).contains(element))
         .toSet();
 
-    toggleAppSelected(String appId) {
+    toggleAppSelected(App app) {
       setState(() {
-        if (selectedIds.contains(appId)) {
-          selectedIds.remove(appId);
+        if (selectedApps.contains(app)) {
+          selectedApps.remove(app);
         } else {
-          selectedIds.add(appId);
+          selectedApps.add(app);
         }
       });
     }
@@ -124,15 +124,15 @@ class AppsPageState extends State<AppsPage> {
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
     var existingUpdateIdsAllOrSelected = existingUpdates
-        .where((element) => selectedIds.isEmpty
+        .where((element) => selectedApps.isEmpty
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedIds.contains(element))
+            : selectedApps.map((e) => e.id).contains(element))
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
         .findExistingUpdates(nonInstalledOnly: true)
-        .where((element) => selectedIds.isEmpty
+        .where((element) => selectedApps.isEmpty
             ? sortedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedIds.contains(element))
+            : selectedApps.map((e) => e.id).contains(element))
         .toList();
 
     if (settingsProvider.pinUpdates) {
@@ -146,6 +146,17 @@ class AppsPageState extends State<AppsPage> {
       }).toList();
       sortedApps = [...temp, ...sortedApps];
     }
+
+    var tempPinned = [];
+    var tempNotPinned = [];
+    for (var a in sortedApps) {
+      if (a.app.pinned) {
+        tempPinned.add(a);
+      } else {
+        tempNotPinned.add(a);
+      }
+    }
+    sortedApps = [...tempPinned, ...tempNotPinned];
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -192,11 +203,16 @@ class AppsPageState extends State<AppsPage> {
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
               return ListTile(
-                selectedTileColor:
-                    Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                selected: selectedIds.contains(sortedApps[index].app.id),
+                tileColor: sortedApps[index].app.pinned
+                    ? Colors.grey.withOpacity(0.1)
+                    : Colors.transparent,
+                selectedTileColor: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withOpacity(sortedApps[index].app.pinned ? 0.2 : 0.1),
+                selected: selectedApps.contains(sortedApps[index].app),
                 onLongPress: () {
-                  toggleAppSelected(sortedApps[index].app.id);
+                  toggleAppSelected(sortedApps[index].app);
                 },
                 leading: sortedApps[index].installedInfo != null
                     ? Image.memory(
@@ -204,9 +220,19 @@ class AppsPageState extends State<AppsPage> {
                         gaplessPlayback: true,
                       )
                     : null,
-                title: Text(sortedApps[index].installedInfo?.name ??
-                    sortedApps[index].app.name),
-                subtitle: Text('By ${sortedApps[index].app.author}'),
+                title: Text(
+                  sortedApps[index].installedInfo?.name ??
+                      sortedApps[index].app.name,
+                  style: TextStyle(
+                      fontWeight: sortedApps[index].app.pinned
+                          ? FontWeight.bold
+                          : FontWeight.normal),
+                ),
+                subtitle: Text('By ${sortedApps[index].app.author}',
+                    style: TextStyle(
+                        fontWeight: sortedApps[index].app.pinned
+                            ? FontWeight.bold
+                            : FontWeight.normal)),
                 trailing: sortedApps[index].downloadProgress != null
                     ? Text(
                         'Downloading - ${sortedApps[index].downloadProgress?.toInt()}%')
@@ -256,8 +282,8 @@ class AppsPageState extends State<AppsPage> {
                                   textAlign: TextAlign.end,
                                 )))),
                 onTap: () {
-                  if (selectedIds.isNotEmpty) {
-                    toggleAppSelected(sortedApps[index].app.id);
+                  if (selectedApps.isNotEmpty) {
+                    toggleAppSelected(sortedApps[index].app);
                   } else {
                     Navigator.push(
                       context,
@@ -275,25 +301,25 @@ class AppsPageState extends State<AppsPage> {
           children: [
             IconButton(
                 onPressed: () {
-                  selectedIds.isEmpty
-                      ? selectThese(sortedApps.map((e) => e.app.id).toList())
+                  selectedApps.isEmpty
+                      ? selectThese(sortedApps.map((e) => e.app).toList())
                       : clearSelected();
                 },
                 icon: Icon(
-                  selectedIds.isEmpty
+                  selectedApps.isEmpty
                       ? Icons.select_all_outlined
                       : Icons.deselect_outlined,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                tooltip: selectedIds.isEmpty
+                tooltip: selectedApps.isEmpty
                     ? 'Select All'
-                    : 'Deselect ${selectedIds.length.toString()}'),
+                    : 'Deselect ${selectedApps.length.toString()}'),
             const VerticalDivider(),
             Expanded(
                 child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                selectedIds.isEmpty
+                selectedApps.isEmpty
                     ? const SizedBox()
                     : IconButton(
                         visualDensity: VisualDensity.compact,
@@ -307,11 +333,12 @@ class AppsPageState extends State<AppsPage> {
                                   defaultValues: const [],
                                   initValid: true,
                                   message:
-                                      '${selectedIds.length} App${selectedIds.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedIds.length == 1 ? 'it' : 'them'} manually.',
+                                      '${selectedApps.length} App${selectedApps.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedApps.length == 1 ? 'it' : 'them'} manually.',
                                 );
                               }).then((values) {
                             if (values != null) {
-                              appsProvider.removeApps(selectedIds.toList());
+                              appsProvider.removeApps(
+                                  selectedApps.map((e) => e.id).toList());
                             }
                           });
                         },
@@ -347,7 +374,7 @@ class AppsPageState extends State<AppsPage> {
                                 builder: (BuildContext ctx) {
                                   return GeneratedFormModal(
                                     title:
-                                        'Install${selectedIds.isEmpty ? ' ' : ' Selected '}Apps?',
+                                        'Install${selectedApps.isEmpty ? ' ' : ' Selected '}Apps?',
                                     message:
                                         '${existingUpdateIdsAllOrSelected.length} update${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'} and ${newInstallIdsAllOrSelected.length} new install${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}.',
                                     items: formInputs,
@@ -386,11 +413,11 @@ class AppsPageState extends State<AppsPage> {
                             });
                           },
                     tooltip:
-                        'Install/Update${selectedIds.isEmpty ? ' ' : ' Selected '}Apps',
+                        'Install/Update${selectedApps.isEmpty ? ' ' : ' Selected '}Apps',
                     icon: const Icon(
                       Icons.file_download_outlined,
                     )),
-                selectedIds.isEmpty
+                selectedApps.isEmpty
                     ? const SizedBox()
                     : IconButton(
                         visualDensity: VisualDensity.compact,
@@ -419,7 +446,7 @@ class AppsPageState extends State<AppsPage> {
                                                                       ctx) {
                                                                 return AlertDialog(
                                                                   title: Text(
-                                                                      'Mark ${selectedIds.length} Selected Apps as Updated?'),
+                                                                      'Mark ${selectedApps.length} Selected Apps as Updated?'),
                                                                   content:
                                                                       const Text(
                                                                           'Only applies to installed but out of date Apps.'),
@@ -438,9 +465,7 @@ class AppsPageState extends State<AppsPage> {
                                                                           HapticFeedback
                                                                               .selectionClick();
                                                                           appsProvider
-                                                                              .saveApps(selectedIds.map((e) {
-                                                                            var a =
-                                                                                appsProvider.apps[e]!.app;
+                                                                              .saveApps(selectedApps.map((a) {
                                                                             if (a.installedVersion !=
                                                                                 null) {
                                                                               a.installedVersion = a.latestVersion;
@@ -455,23 +480,50 @@ class AppsPageState extends State<AppsPage> {
                                                                             'Yes'))
                                                                   ],
                                                                 );
-                                                              });
+                                                              }).whenComplete(() {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          });
                                                         },
                                               tooltip:
                                                   'Mark Selected Apps as Updated',
                                               icon: const Icon(Icons.done)),
                                           IconButton(
                                             onPressed: () {
+                                              var pinStatus = selectedApps
+                                                  .where((element) =>
+                                                      element.pinned)
+                                                  .isEmpty;
+                                              appsProvider.saveApps(
+                                                  selectedApps.map((e) {
+                                                e.pinned = pinStatus;
+                                                return e;
+                                              }).toList());
+                                              Navigator.of(context).pop();
+                                            },
+                                            tooltip:
+                                                '${selectedApps.where((element) => element.pinned).isEmpty ? 'Pin to' : 'Unpin from'} top',
+                                            icon: Icon(selectedApps
+                                                    .where((element) =>
+                                                        element.pinned)
+                                                    .isEmpty
+                                                ? Icons.bookmark_outline_rounded
+                                                : Icons
+                                                    .bookmark_remove_outlined),
+                                          ),
+                                          IconButton(
+                                            onPressed: () {
                                               String urls = '';
-                                              for (var id in selectedIds) {
-                                                urls +=
-                                                    '${appsProvider.apps[id]!.app.url}\n';
+                                              for (var a in selectedApps) {
+                                                urls += '${a.url}\n';
                                               }
                                               urls = urls.substring(
                                                   0, urls.length - 1);
                                               Share.share(urls,
                                                   subject:
-                                                      '${selectedIds.length} Selected App URLs from Obtainium');
+                                                      '${selectedApps.length} Selected App URLs from Obtainium');
+                                              Navigator.of(context).pop();
                                             },
                                             tooltip: 'Share Selected App URLs',
                                             icon: const Icon(Icons.share),
