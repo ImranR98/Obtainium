@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:obtainium/providers/apps_provider.dart';
 
 class ObtainiumError {
   late String message;
-  ObtainiumError(this.message);
+  bool unexpected;
+  ObtainiumError(this.message, {this.unexpected = false});
   @override
   String toString() {
     return message;
@@ -55,7 +55,7 @@ class NotImplementedError extends ObtainiumError {
 class MultiAppMultiError extends ObtainiumError {
   Map<String, List<String>> content = {};
 
-  MultiAppMultiError() : super('Multiple Errors Placeholder');
+  MultiAppMultiError() : super('Multiple Errors Placeholder', unexpected: true);
 
   add(String appId, String string) {
     var tempIds = content.remove(string);
@@ -75,7 +75,7 @@ class MultiAppMultiError extends ObtainiumError {
 }
 
 showError(dynamic e, BuildContext context) {
-  if (e is String || (e is ObtainiumError && e is! MultiAppMultiError)) {
+  if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.toString())),
     );

@@ -270,7 +270,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                   (BuildContext
                                                                       ctx) {
                                                                 return UrlSelectionModal(
-                                                                    urls: urls);
+                                                                  urls: urls,
+                                                                  defaultSelected:
+                                                                      false,
+                                                                );
                                                               });
                                                       if (selectedUrls !=
                                                               null &&
@@ -299,6 +302,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                               });
                                                         }
                                                       }
+                                                    } else {
+                                                      throw ObtainiumError(
+                                                          'No results found');
                                                     }
                                                   }
                                                 }()
@@ -470,9 +476,11 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
 
 // ignore: must_be_immutable
 class UrlSelectionModal extends StatefulWidget {
-  UrlSelectionModal({super.key, required this.urls});
+  UrlSelectionModal(
+      {super.key, required this.urls, this.defaultSelected = true});
 
   List<String> urls;
+  bool defaultSelected;
 
   @override
   State<UrlSelectionModal> createState() => _UrlSelectionModalState();
@@ -484,7 +492,7 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   void initState() {
     super.initState();
     for (var url in widget.urls) {
-      urlSelections.putIfAbsent(url, () => true);
+      urlSelections.putIfAbsent(url, () => widget.defaultSelected);
     }
   }
 

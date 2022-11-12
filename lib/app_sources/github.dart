@@ -51,6 +51,35 @@ class GitHub extends AppSource {
           ])
     ];
 
+    additionalDataFormItems = [
+      [
+        GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)
+      ],
+      [
+        GeneratedFormItem(
+            label: 'Fallback to older releases', type: FormItemType.bool)
+      ],
+      [
+        GeneratedFormItem(
+            label: 'Filter Release Titles by Regular Expression',
+            type: FormItemType.string,
+            required: false,
+            additionalValidators: [
+              (value) {
+                if (value == null || value.isEmpty) {
+                  return null;
+                }
+                try {
+                  RegExp(value);
+                } catch (e) {
+                  return 'Invalid regular expression';
+                }
+                return null;
+              }
+            ])
+      ]
+    ];
+
     canSearch = true;
   }
 
@@ -157,35 +186,23 @@ class GitHub extends AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> additionalDataFormItems = [
-    [GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)],
-    [
-      GeneratedFormItem(
-          label: 'Fallback to older releases', type: FormItemType.bool)
-    ],
-    [
-      GeneratedFormItem(
-          label: 'Filter Release Titles by Regular Expression',
-          type: FormItemType.string,
-          required: false,
-          additionalValidators: [
-            (value) {
-              if (value == null || value.isEmpty) {
-                return null;
-              }
-              try {
-                RegExp(value);
-              } catch (e) {
-                return 'Invalid regular expression';
-              }
-              return null;
-            }
-          ])
-    ]
-  ];
-
-  @override
   Future<List<String>> search(String query) async {
-    return [];
+    Response res = await get(Uri.parse(
+        'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100'));
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body)['items'] as List<dynamic>)
+          .map((e) => e['html_url'] as String)
+          .toList();
+    } else {
+      if (res.headers['x-ratelimit-remaining'] == '0') {
+        throw RateLimitError(
+            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
+                    60000000)
+                .round());
+      }
+      throw ObtainiumError(
+          res.reasonPhrase ?? 'Error ${res.statusCode.toString()}',
+          unexpected: true);
+    }
   }
 }
