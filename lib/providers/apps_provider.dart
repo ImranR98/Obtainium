@@ -15,6 +15,7 @@ import 'package:installed_apps/installed_apps.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:package_archive_info/package_archive_info.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -310,12 +311,10 @@ class AppsProvider with ChangeNotifier {
 
     // If Obtainium is being installed, it should be the last one
     List<DownloadedApk> moveObtainiumToStart(List<DownloadedApk> items) {
-      String obtainiumIdA = 'imranr98_obtainium_${GitHub().host}';
-      String obtainiumIdB = 'dev.imranr.obtainium';
       DownloadedApk? temp;
       items.removeWhere((element) {
         bool res =
-            element.appId == obtainiumIdA || element.appId == obtainiumIdB;
+            element.appId == obtainiumId || element.appId == obtainiumTempId;
         if (res) {
           temp = element;
         }

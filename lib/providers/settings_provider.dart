@@ -2,8 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
+String obtainiumId = 'dev.imranr.obtainium';
 
 enum ThemeSettings { system, light, dark }
 

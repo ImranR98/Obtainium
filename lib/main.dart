@@ -134,7 +134,7 @@ class _ObtainiumState extends State<Obtainium> {
         Permission.notification.request();
         appsProvider.saveApps([
           App(
-              'dev.imranr.obtainium',
+              obtainiumId,
               'https://github.com/ImranR98/Obtainium',
               'ImranR98',
               'Obtainium',
