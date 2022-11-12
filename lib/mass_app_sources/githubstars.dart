@@ -12,14 +12,20 @@ class GitHubStars implements MassAppUrlSource {
   @override
   late List<String> requiredArgs = ['Username'];
 
-  Future<List<String>> getOnePageOfUserStarredUrls(
+  Future<Map<String, String>> getOnePageOfUserStarredUrlsWithDescriptions(
       String username, int page) async {
     Response res = await get(Uri.parse(
         'https://${await GitHub().getCredentialPrefixIfAny()}api.github.com/users/$username/starred?per_page=100&page=$page'));
     if (res.statusCode == 200) {
-      return (jsonDecode(res.body) as List<dynamic>)
-          .map((e) => e['html_url'] as String)
-          .toList();
+      Map<String, String> urlsWithDescriptions = {};
+      for (var e in (jsonDecode(res.body) as List<dynamic>)) {
+        urlsWithDescriptions.addAll({
+          e['html_url'] as String: e['description'] != null
+              ? e['description'] as String
+              : 'No description'
+        });
+      }
+      return urlsWithDescriptions;
     } else {
       if (res.headers['x-ratelimit-remaining'] == '0') {
         throw RateLimitError(
@@ -33,19 +39,20 @@ class GitHubStars implements MassAppUrlSource {
   }
 
   @override
-  Future<List<String>> getUrls(List<String> args) async {
+  Future<Map<String, String>> getUrlsWithDescriptions(List<String> args) async {
     if (args.length != requiredArgs.length) {
       throw ObtainiumError('Wrong number of arguments provided');
     }
-    List<String> urls = [];
+    Map<String, String> urlsWithDescriptions = {};
     var page = 1;
     while (true) {
-      var pageUrls = await getOnePageOfUserStarredUrls(args[0], page++);
-      urls.addAll(pageUrls);
+      var pageUrls =
+          await getOnePageOfUserStarredUrlsWithDescriptions(args[0], page++);
+      urlsWithDescriptions.addAll(pageUrls);
       if (pageUrls.length < 100) {
         break;
       }
     }
-    return urls;
+    return urlsWithDescriptions;
   }
 }

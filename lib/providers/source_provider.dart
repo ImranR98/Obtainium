@@ -167,7 +167,7 @@ class AppSource {
 abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
-  Future<List<String>> getUrls(List<String> args);
+  Future<Map<String, String>> getUrlsWithDescriptions(List<String> args);
 }
 
 class SourceProvider {

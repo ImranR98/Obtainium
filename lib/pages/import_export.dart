@@ -357,8 +357,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     setState(() {
                                                       importInProgress = true;
                                                     });
-                                                    var urls = await source
-                                                        .getUrls(values);
+                                                    var urlsWithDescriptions =
+                                                        await source
+                                                            .getUrlsWithDescriptions(
+                                                                values);
                                                     var selectedUrls =
                                                         await showDialog<
                                                                 List<String>?>(
@@ -368,10 +370,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                     ctx) {
                                                               return UrlSelectionModal(
                                                                   urlsWithDescriptions:
-                                                                      Map.fromIterable(
-                                                                          urls,
-                                                                          value: (item) =>
-                                                                              ''));
+                                                                      urlsWithDescriptions);
                                                             });
                                                     if (selectedUrls != null) {
                                                       var errors =
