@@ -310,10 +310,12 @@ class AppsProvider with ChangeNotifier {
 
     // If Obtainium is being installed, it should be the last one
     List<DownloadedApk> moveObtainiumToStart(List<DownloadedApk> items) {
-      String obtainiumId = 'imranr98_obtainium_${GitHub().host}';
+      String obtainiumIdA = 'imranr98_obtainium_${GitHub().host}';
+      String obtainiumIdB = 'dev.imranr.obtainium';
       DownloadedApk? temp;
       items.removeWhere((element) {
-        bool res = element.appId == obtainiumId;
+        bool res =
+            element.appId == obtainiumIdA || element.appId == obtainiumIdB;
         if (res) {
           temp = element;
         }
