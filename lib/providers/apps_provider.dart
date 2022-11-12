@@ -182,6 +182,15 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> canDowngradeApps() async {
+    try {
+      await InstalledApps.getAppInfo('com.berdik.letmedowngrade');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Unfortunately this 'await' does not actually wait for the APK to finish installing
   // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
   // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
@@ -195,7 +204,8 @@ class AppsProvider with ChangeNotifier {
       // OK
     }
     if (appInfo != null &&
-        int.parse(newInfo.buildNumber) < appInfo.versionCode!) {
+        int.parse(newInfo.buildNumber) < appInfo.versionCode! &&
+        !(await canDowngradeApps())) {
       throw DowngradeError();
     }
     if (appInfo == null ||
