@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obtainium/providers/logs_provider.dart';
+import 'package:provider/provider.dart';
 
 class ObtainiumError {
   late String message;
@@ -75,6 +77,8 @@ class MultiAppMultiError extends ObtainiumError {
 }
 
 showError(dynamic e, BuildContext context) {
+  Provider.of<LogsProvider>(context, listen: false)
+      .add(e.toString(), level: LogLevels.error);
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.toString())),

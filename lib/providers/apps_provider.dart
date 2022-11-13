@@ -12,8 +12,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:package_archive_info/package_archive_info.dart';
@@ -43,6 +43,7 @@ class AppsProvider with ChangeNotifier {
   bool loadingApps = false;
   bool gettingUpdates = false;
   bool forBGTask = false;
+  LogsProvider logs = LogsProvider();
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
