@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -238,23 +242,55 @@ class _SettingsPageState extends State<SettingsPage> {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                height16,
-                TextButton.icon(
-                  style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
-                      return Colors.grey;
-                    }),
-                  ),
-                  onPressed: () {
-                    launchUrlString(settingsProvider.sourceUrl,
-                        mode: LaunchMode.externalApplication);
-                  },
-                  icon: const Icon(Icons.code),
-                  label: Text(
-                    'Source',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                const Divider(
+                  height: 32,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        launchUrlString(settingsProvider.sourceUrl,
+                            mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.code),
+                      label: const Text(
+                        'App Source',
+                      ),
+                    ),
+                    TextButton.icon(
+                        onPressed: () {
+                          context.read<LogsProvider>().get().then((logs) {
+                            if (logs.isEmpty) {
+                              showError(ObtainiumError('No Logs'), context);
+                            } else {
+                              String logString =
+                                  logs.map((e) => e.toString()).join('\n\n');
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return GeneratedFormModal(
+                                      title: 'Obtainium App Logs',
+                                      items: const [],
+                                      defaultValues: const [],
+                                      message: logString,
+                                      initValid: true,
+                                    );
+                                  }).then((value) {
+                                if (value != null) {
+                                  Share.share(
+                                      logs
+                                          .map((e) => e.toString())
+                                          .join('\n\n'),
+                                      subject: 'Obtainium App Logs');
+                                }
+                              });
+                            }
+                          });
+                        },
+                        icon: const Icon(Icons.bug_report_outlined),
+                        label: const Text('App Logs')),
+                  ],
                 ),
                 height16,
               ],

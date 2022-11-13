@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -15,7 +16,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
-const String currentVersion = '0.7.1';
+const String currentVersion = '0.7.2';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -23,12 +24,15 @@ const int bgUpdateCheckAlarmId = 666;
 
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
+  LogsProvider logs = LogsProvider();
+  logs.add('Started BG update check task');
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
   await AndroidAlarmManager.initialize();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
+  logs.add('Bg update ignoreAfter is $ignoreAfter');
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
@@ -40,17 +44,18 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     DateTime nextIgnoreAfter = DateTime.now();
     String? err;
     try {
+      logs.add('Started actual BG update checking');
       await appsProvider.checkUpdates(
           ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
     } catch (e) {
       if (e is RateLimitError || e is SocketException) {
-        AndroidAlarmManager.oneShot(
-            Duration(minutes: e is RateLimitError ? e.remainingMinutes : 15),
-            Random().nextInt(pow(2, 31) as int),
-            bgUpdateCheck,
-            params: {
-              'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
-            });
+        var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
+        logs.add(
+            'BG update checking encountered a ${e.runtimeType}, will schedule a retry check in $remainingMinutes minutes');
+        AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
+            Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
+          'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
+        });
       } else {
         err = e.toString();
       }
@@ -74,7 +79,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
     //       cancelExisting: true);
     // }
-
+    logs.add(
+        'BG update checking found ${newUpdates.length} updates - will notify user if needed');
     if (newUpdates.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(newUpdates));
     }
@@ -85,6 +91,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     notificationsProvider
         .notify(ErrorCheckingUpdatesNotification(e.toString()));
   } finally {
+    logs.add('Finished BG update check task');
     await notificationsProvider.cancel(checkingUpdatesNotification.id);
   }
 }
@@ -102,7 +109,8 @@ void main() async {
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
-      Provider(create: (context) => NotificationsProvider())
+      Provider(create: (context) => NotificationsProvider()),
+      Provider(create: (context) => LogsProvider())
     ],
     child: const Obtainium(),
   ));
@@ -124,12 +132,14 @@ class _ObtainiumState extends State<Obtainium> {
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     AppsProvider appsProvider = context.read<AppsProvider>();
+    LogsProvider logs = context.read<LogsProvider>();
 
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     } else {
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
+        logs.add('This is the first ever run of Obtainium');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         appsProvider.saveApps([
@@ -149,6 +159,10 @@ class _ObtainiumState extends State<Obtainium> {
       }
       // Register the background update task according to the user's setting
       if (existingUpdateInterval != settingsProvider.updateInterval) {
+        if (existingUpdateInterval != -1) {
+          logs.add(
+              'Setting update interval to ${settingsProvider.updateInterval}');
+        }
         existingUpdateInterval = settingsProvider.updateInterval;
         if (existingUpdateInterval == 0) {
           AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
