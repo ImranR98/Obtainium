@@ -424,22 +424,28 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = true;
     notifyListeners();
-    List<FileSystemEntity> appFiles = (await getAppsDir())
+    List<App> newApps = (await getAppsDir())
         .listSync()
         .where((item) => item.path.toLowerCase().endsWith('.json'))
+        .map((e) => App.fromJson(jsonDecode(File(e.path).readAsStringSync())))
         .toList();
-    apps.clear();
+    var idsToDelete = apps.values
+        .map((e) => e.app.id)
+        .toSet()
+        .difference(newApps.map((e) => e.id).toSet());
+    for (var id in idsToDelete) {
+      apps.remove(id);
+    }
     var sp = SourceProvider();
     List<List<String>> errors = [];
-    for (int i = 0; i < appFiles.length; i++) {
-      App app =
-          App.fromJson(jsonDecode(File(appFiles[i].path).readAsStringSync()));
-      var info = await getInstalledInfo(app.id);
+    for (int i = 0; i < newApps.length; i++) {
+      var info = await getInstalledInfo(newApps[i].id);
       try {
-        sp.getSource(app.url);
-        apps.putIfAbsent(app.id, () => AppInMemory(app, null, info));
+        sp.getSource(newApps[i].url);
+        apps.putIfAbsent(
+            newApps[i].id, () => AppInMemory(newApps[i], null, info));
       } catch (e) {
-        errors.add([app.id, app.name, e.toString()]);
+        errors.add([newApps[i].id, newApps[i].name, e.toString()]);
       }
     }
     if (errors.isNotEmpty) {
