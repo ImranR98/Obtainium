@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:html/dom.dart';
+import 'package:http/http.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
@@ -162,6 +163,11 @@ class AppSource {
   Future<Map<String, String>> search(String query) {
     throw NotImplementedError();
   }
+}
+
+ObtainiumError getObtainiumHttpError(Response res) {
+  return ObtainiumError(
+      res.reasonPhrase ?? 'Error ${res.statusCode.toString()}');
 }
 
 abstract class MassAppUrlSource {

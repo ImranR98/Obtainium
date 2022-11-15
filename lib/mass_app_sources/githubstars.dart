@@ -27,14 +27,9 @@ class GitHubStars implements MassAppUrlSource {
       }
       return urlsWithDescriptions;
     } else {
-      if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw RateLimitError(
-            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
-                    60000000)
-                .round());
-      }
-
-      throw ObtainiumError('Unable to find user\'s starred repos');
+      var gh = GitHub();
+      gh.rateLimitErrorCheck(res);
+      throw getObtainiumHttpError(res);
     }
   }
 

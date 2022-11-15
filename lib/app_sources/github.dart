@@ -167,14 +167,8 @@ class GitHub extends AppSource {
       }
       return APKDetails(version, targetRelease['apkUrls']);
     } else {
-      if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw RateLimitError(
-            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
-                    60000000)
-                .round());
-      }
-
-      throw NoReleasesError();
+      rateLimitErrorCheck(res);
+      throw getObtainiumHttpError(res);
     }
   }
 
@@ -200,15 +194,17 @@ class GitHub extends AppSource {
       }
       return urlsWithDescriptions;
     } else {
-      if (res.headers['x-ratelimit-remaining'] == '0') {
-        throw RateLimitError(
-            (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
-                    60000000)
-                .round());
-      }
-      throw ObtainiumError(
-          res.reasonPhrase ?? 'Error ${res.statusCode.toString()}',
-          unexpected: true);
+      rateLimitErrorCheck(res);
+      throw getObtainiumHttpError(res);
+    }
+  }
+
+  rateLimitErrorCheck(Response res) {
+    if (res.headers['x-ratelimit-remaining'] == '0') {
+      throw RateLimitError(
+          (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
+                  60000000)
+              .round());
     }
   }
 }
