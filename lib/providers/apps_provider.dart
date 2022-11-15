@@ -65,7 +65,9 @@ class AppsProvider with ChangeNotifier {
         // Delete existing APKs
         (await getExternalStorageDirectory())
             ?.listSync()
-            .where((element) => element.path.endsWith('.apk'))
+            .where((element) =>
+                element.path.endsWith('.apk') ||
+                element.path.endsWith('.apk.part'))
             .forEach((apk) {
           apk.delete();
         });
@@ -73,38 +75,39 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  downloadFile(String url, String fileName, Function? onProgress) async {
+  downloadFile(String url, String fileName, Function? onProgress,
+      {bool useExisting = true}) async {
     var destDir = (await getExternalStorageDirectory())!.path;
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(url)));
     File downloadedFile = File('$destDir/$fileName');
-
-    if (downloadedFile.existsSync()) {
-      downloadedFile.deleteSync();
-    }
-    var length = response.contentLength;
-    var received = 0;
-    double? progress;
-    var sink = downloadedFile.openWrite();
-
-    await response.stream.map((s) {
-      received += s.length;
-      progress = (length != null ? received / length * 100 : 30);
+    if (!(downloadedFile.existsSync() && useExisting)) {
+      File tempDownloadedFile = File('${downloadedFile.path}.part');
+      if (tempDownloadedFile.existsSync()) {
+        tempDownloadedFile.deleteSync();
+      }
+      var length = response.contentLength;
+      var received = 0;
+      double? progress;
+      var sink = tempDownloadedFile.openWrite();
+      await response.stream.map((s) {
+        received += s.length;
+        progress = (length != null ? received / length * 100 : 30);
+        if (onProgress != null) {
+          onProgress(progress);
+        }
+        return s;
+      }).pipe(sink);
+      await sink.close();
+      progress = null;
       if (onProgress != null) {
         onProgress(progress);
       }
-      return s;
-    }).pipe(sink);
-
-    await sink.close();
-    progress = null;
-    if (onProgress != null) {
-      onProgress(progress);
-    }
-
-    if (response.statusCode != 200) {
-      downloadedFile.deleteSync();
-      throw response.reasonPhrase ?? 'Unknown Error';
+      if (response.statusCode != 200) {
+        tempDownloadedFile.deleteSync();
+        throw response.reasonPhrase ?? 'Unknown Error';
+      }
+      tempDownloadedFile.renameSync(downloadedFile.path);
     }
     return downloadedFile;
   }
