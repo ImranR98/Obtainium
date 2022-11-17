@@ -163,6 +163,10 @@ class AppSource {
   Future<Map<String, String>> search(String query) {
     throw NotImplementedError();
   }
+
+  String? tryGettingAppIdFromURL(String standardUrl) {
+    return null;
+  }
 }
 
 ObtainiumError getObtainiumHttpError(Response res) {
@@ -240,7 +244,9 @@ class SourceProvider {
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);
     return App(
-        id ?? generateTempID(names, source),
+        id ??
+            source.tryGettingAppIdFromURL(standardUrl) ??
+            generateTempID(names, source),
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),
         name.trim().isNotEmpty

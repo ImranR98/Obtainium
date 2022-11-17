@@ -115,18 +115,23 @@ class _AddAppPageState extends State<AddAppPage> {
                                                     additionalData);
                                             await settingsProvider
                                                 .getInstallPermission();
-                                            // ignore: use_build_context_synchronously
-                                            var apkUrl = await appsProvider
-                                                .confirmApkUrl(app, context);
-                                            if (apkUrl == null) {
-                                              throw ObtainiumError('Cancelled');
+                                            // Only download the APK here if you need to for the package ID
+                                            if (sourceProvider
+                                                .isTempId(app.id)) {
+                                              // ignore: use_build_context_synchronously
+                                              var apkUrl = await appsProvider
+                                                  .confirmApkUrl(app, context);
+                                              if (apkUrl == null) {
+                                                throw ObtainiumError(
+                                                    'Cancelled');
+                                              }
+                                              app.preferredApkIndex =
+                                                  app.apkUrls.indexOf(apkUrl);
+                                              var downloadedApk =
+                                                  await appsProvider
+                                                      .downloadApp(app);
+                                              app.id = downloadedApk.appId;
                                             }
-                                            app.preferredApkIndex =
-                                                app.apkUrls.indexOf(apkUrl);
-                                            var downloadedApk =
-                                                await appsProvider
-                                                    .downloadApp(app);
-                                            app.id = downloadedApk.appId;
                                             if (appsProvider.apps
                                                 .containsKey(app.id)) {
                                               throw ObtainiumError(

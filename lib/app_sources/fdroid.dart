@@ -31,6 +31,11 @@ class FDroid extends AppSource {
   Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
 
   @override
+  String? tryGettingAppIdFromURL(String standardUrl) {
+    return Uri.parse(standardUrl).pathSegments.last;
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse(standardUrl));
