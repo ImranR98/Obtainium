@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -38,36 +40,22 @@ class FDroid extends AppSource {
   @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
-    Response res = await get(Uri.parse(standardUrl));
+    String? appId = tryGettingAppIdFromURL(standardUrl);
+    Response res =
+        await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId'));
     if (res.statusCode == 200) {
-      var releases = parse(res.body).querySelectorAll('.package-version');
+      List<dynamic> releases = jsonDecode(res.body)['packages'] ?? [];
       if (releases.isEmpty) {
         throw NoReleasesError();
       }
-      String? latestVersion = releases[0]
-          .querySelector('.package-version-header b')
-          ?.innerHtml
-          .split(' ')
-          .sublist(1)
-          .join(' ');
+      String? latestVersion = releases[0]['versionName'];
       if (latestVersion == null) {
         throw NoVersionError();
       }
       List<String> apkUrls = releases
-          .where((element) =>
-              element
-                  .querySelector('.package-version-header b')
-                  ?.innerHtml
-                  .split(' ')
-                  .sublist(1)
-                  .join(' ') ==
-              latestVersion)
+          .where((element) => element['versionName'] == latestVersion)
           .map((e) =>
-              e
-                  .querySelector('.package-version-download a')
-                  ?.attributes['href'] ??
-              '')
-          .where((element) => element.isNotEmpty)
+              'https://f-droid.org/repo/${appId}_${e['versionCode']}.apk')
           .toList();
       if (apkUrls.isEmpty) {
         throw NoAPKError();
