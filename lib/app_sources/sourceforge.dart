@@ -22,9 +22,6 @@ class SourceForge extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
     Response res = await get(Uri.parse('$standardUrl/rss?path=/'));

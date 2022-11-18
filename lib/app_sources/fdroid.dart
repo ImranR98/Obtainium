@@ -30,19 +30,12 @@ class FDroid extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
-
-  @override
-  String? tryGettingAppIdFromURL(String standardUrl) {
+  String? tryInferringAppId(String standardUrl) {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
-  @override
-  Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) async {
-    String? appId = tryGettingAppIdFromURL(standardUrl);
-    Response res =
-        await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId'));
+  APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
+      Response res, String apkUrlPrefix) {
     if (res.statusCode == 200) {
       List<dynamic> releases = jsonDecode(res.body)['packages'] ?? [];
       if (releases.isEmpty) {
@@ -54,8 +47,7 @@ class FDroid extends AppSource {
       }
       List<String> apkUrls = releases
           .where((element) => element['versionName'] == latestVersion)
-          .map((e) =>
-              'https://f-droid.org/repo/${appId}_${e['versionCode']}.apk')
+          .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
       if (apkUrls.isEmpty) {
         throw NoAPKError();
@@ -64,6 +56,15 @@ class FDroid extends AppSource {
     } else {
       throw NoReleasesError();
     }
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(
+      String standardUrl, List<String> additionalData) async {
+    String? appId = tryInferringAppId(standardUrl);
+    return getAPKUrlsFromFDroidPackagesAPIResponse(
+        await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId')),
+        'https://f-droid.org/repo/$appId');
   }
 
   @override

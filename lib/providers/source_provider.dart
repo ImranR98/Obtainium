@@ -155,8 +155,8 @@ class AppSource {
     throw NotImplementedError();
   }
 
-  Future<String> apkUrlPrefetchModifier(String apkUrl) {
-    throw NotImplementedError();
+  Future<String> apkUrlPrefetchModifier(String apkUrl) async {
+    return apkUrl;
   }
 
   bool canSearch = false;
@@ -164,7 +164,7 @@ class AppSource {
     throw NotImplementedError();
   }
 
-  String? tryGettingAppIdFromURL(String standardUrl) {
+  String? tryInferringAppId(String standardUrl) {
     return null;
   }
 }
@@ -245,7 +245,7 @@ class SourceProvider {
         await source.getLatestAPKDetails(standardUrl, additionalData);
     return App(
         id ??
-            source.tryGettingAppIdFromURL(standardUrl) ??
+            source.tryInferringAppId(standardUrl) ??
             generateTempID(names, source),
         standardUrl,
         names.author[0].toUpperCase() + names.author.substring(1),

@@ -1,5 +1,6 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -22,41 +23,18 @@ class IzzyOnDroid extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl) async => apkUrl;
+  String? tryInferringAppId(String standardUrl) {
+    return FDroid().tryInferringAppId(standardUrl);
+  }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData) async {
-    Response res = await get(Uri.parse(standardUrl));
-    if (res.statusCode == 200) {
-      var parsedHtml = parse(res.body);
-      var multipleVersionApkUrls = parsedHtml
-          .querySelectorAll('a')
-          .where((element) =>
-              element.attributes['href']?.toLowerCase().endsWith('.apk') ??
-              false)
-          .map((e) => 'https://$host${e.attributes['href'] ?? ''}')
-          .toList();
-      if (multipleVersionApkUrls.isEmpty) {
-        throw NoAPKError();
-      }
-      var version = parsedHtml
-          .querySelector('#keydata')
-          ?.querySelectorAll('b')
-          .where(
-              (element) => element.innerHtml.toLowerCase().contains('version'))
-          .toList()[0]
-          .parentNode
-          ?.parentNode
-          ?.children[1]
-          .innerHtml;
-      if (version == null) {
-        throw NoVersionError();
-      }
-      return APKDetails(version, [multipleVersionApkUrls[0]]);
-    } else {
-      throw NoReleasesError();
-    }
+    String? appId = tryInferringAppId(standardUrl);
+    return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
+        await get(
+            Uri.parse('https://apt.izzysoft.de/fdroid/api/v1/packages/$appId')),
+        'https://android.izzysoft.de/frepo/$appId');
   }
 
   @override
