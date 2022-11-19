@@ -46,11 +46,16 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           ),
         GeneratedForm(
             items: widget.items,
-            onValueChanges: (values, valid) {
-              setState(() {
+            onValueChanges: (values, valid, isBuilding) {
+              if (isBuilding) {
                 this.values = values;
                 this.valid = valid;
-              });
+              } else {
+                setState(() {
+                  this.values = values;
+                  this.valid = valid;
+                });
+              }
             },
             defaultValues: widget.defaultValues)
       ]),

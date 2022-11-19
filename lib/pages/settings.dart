@@ -142,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (e.moreSourceSettingsFormItems.isNotEmpty) {
         return GeneratedForm(
             items: e.moreSourceSettingsFormItems.map((e) => [e]).toList(),
-            onValueChanges: (values, valid) {
+            onValueChanges: (values, valid, isBuilding) {
               if (valid) {
                 for (var i = 0; i < values.length; i++) {
                   settingsProvider.setSettingString(

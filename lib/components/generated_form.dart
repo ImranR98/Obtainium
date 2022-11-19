@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 enum FormItemType { string, bool }
 
-typedef OnValueChanges = void Function(List<String> values, bool valid);
+typedef OnValueChanges = void Function(
+    List<String> values, bool valid, bool isBuilding);
 
 class GeneratedFormItem {
   late String label;
@@ -13,6 +14,7 @@ class GeneratedFormItem {
   late String id;
   late List<Widget> belowWidgets;
   late String? hint;
+  late List<String>? opts;
 
   GeneratedFormItem(
       {this.label = 'Input',
@@ -22,7 +24,8 @@ class GeneratedFormItem {
       this.additionalValidators = const [],
       this.id = 'input',
       this.belowWidgets = const [],
-      this.hint});
+      this.hint,
+      this.opts});
 }
 
 class GeneratedForm extends StatefulWidget {
@@ -47,7 +50,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   List<List<Widget>> rows = [];
 
   // If any value changes, call this to update the parent with value and validity
-  void someValueChanged() {
+  void someValueChanged({bool isBuilding = false}) {
     List<String> returnValues = [];
     var valid = true;
     for (int r = 0; r < values.length; r++) {
@@ -62,7 +65,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         }
       }
     }
-    widget.onValueChanges(returnValues, valid);
+    widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
   @override
@@ -75,14 +78,16 @@ class _GeneratedFormState extends State<GeneratedForm> {
         .map((row) => row.map((e) {
               return j < widget.defaultValues.length
                   ? widget.defaultValues[j++]
-                  : '';
+                  : e.opts != null
+                      ? e.opts!.first
+                      : '';
             }).toList())
         .toList();
 
     // Dynamically create form inputs
     formInputs = widget.items.asMap().entries.map((row) {
       return row.value.asMap().entries.map((e) {
-        if (e.value.type == FormItemType.string) {
+        if (e.value.type == FormItemType.string && e.value.opts == null) {
           final formFieldKey = GlobalKey<FormFieldState>();
           return TextFormField(
             key: formFieldKey,
@@ -112,11 +117,29 @@ class _GeneratedFormState extends State<GeneratedForm> {
               return null;
             },
           );
+        } else if (e.value.type == FormItemType.string &&
+            e.value.opts != null) {
+          if (e.value.opts!.isEmpty) {
+            return const Text('ERROR: DROPDOWN MUST HAVE AT LEAST ONE OPT.');
+          }
+          return DropdownButtonFormField(
+              decoration: const InputDecoration(labelText: 'Colour'),
+              value: values[row.key][e.key],
+              items: e.value.opts!
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  values[row.key][e.key] = value ?? e.value.opts!.first;
+                  someValueChanged();
+                });
+              });
         } else {
           return Container(); // Some input types added in build
         }
       }).toList();
     }).toList();
+    someValueChanged(isBuilding: true);
   }
 
   @override

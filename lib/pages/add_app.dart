@@ -66,7 +66,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                           ])
                                     ]
                                   ],
-                                  onValueChanges: (values, valid) {
+                                  onValueChanges: (values, valid, isBuilding) {
                                     setState(() {
                                       userInput = values[0];
                                       var source = valid
@@ -179,7 +179,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                 .additionalDataFormItems.isNotEmpty)
                               GeneratedForm(
                                   items: pickedSource!.additionalDataFormItems,
-                                  onValueChanges: (values, valid) {
+                                  onValueChanges: (values, valid, isBuilding) {
                                     setState(() {
                                       additionalData = values;
                                       validAdditionalData = valid;
