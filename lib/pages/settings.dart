@@ -264,27 +264,11 @@ class _SettingsPageState extends State<SettingsPage> {
                             if (logs.isEmpty) {
                               showError(ObtainiumError('No Logs'), context);
                             } else {
-                              String logString =
-                                  logs.map((e) => e.toString()).join('\n\n');
                               showDialog(
                                   context: context,
                                   builder: (BuildContext ctx) {
-                                    return GeneratedFormModal(
-                                      title: 'Obtainium App Logs',
-                                      items: const [],
-                                      defaultValues: const [],
-                                      message: logString,
-                                      initValid: true,
-                                    );
-                                  }).then((value) {
-                                if (value != null) {
-                                  Share.share(
-                                      logs
-                                          .map((e) => e.toString())
-                                          .join('\n\n'),
-                                      subject: 'Obtainium App Logs');
-                                }
-                              });
+                                    return const LogsDialog();
+                                  });
                             }
                           });
                         },
@@ -297,5 +281,73 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           )
         ]));
+  }
+}
+
+class LogsDialog extends StatefulWidget {
+  const LogsDialog({super.key});
+
+  @override
+  State<LogsDialog> createState() => _LogsDialogState();
+}
+
+class _LogsDialogState extends State<LogsDialog> {
+  String? logString;
+  List<int> days = [7, 5, 4, 3, 2, 1];
+
+  @override
+  Widget build(BuildContext context) {
+    var logsProvider = context.read<LogsProvider>();
+    void filterLogs(int days) {
+      logsProvider
+          .get(after: DateTime.now().subtract(Duration(days: days)))
+          .then((value) {
+        setState(() {
+          String l = value.map((e) => e.toString()).join('\n\n');
+          logString = l.isNotEmpty ? l : 'No Logs';
+        });
+      });
+    }
+
+    if (logString == null) {
+      filterLogs(days.first);
+    }
+
+    return AlertDialog(
+      scrollable: true,
+      title: const Text('Obtainium App Logs'),
+      content: Column(
+        children: [
+          DropdownButtonFormField(
+              value: days.first,
+              items: days
+                  .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text('$e Day${e == 1 ? '' : 's'}'),
+                      ))
+                  .toList(),
+              onChanged: (d) {
+                filterLogs(d ?? 7);
+              }),
+          const SizedBox(
+            height: 32,
+          ),
+          Text(logString ?? '')
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Close')),
+        TextButton(
+            onPressed: () {
+              Share.share(logString ?? '', subject: 'Obtainium App Logs');
+              Navigator.of(context).pop();
+            },
+            child: const Text('Share'))
+      ],
+    );
   }
 }
