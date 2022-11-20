@@ -67,7 +67,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                     ]
                                   ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    setState(() {
+                                    fn() {
                                       userInput = values[0];
                                       var source = valid
                                           ? sourceProvider.getSource(userInput)
@@ -83,7 +83,15 @@ class _AddAppPageState extends State<AddAppPage> {
                                                     source)
                                             : true;
                                       }
-                                    });
+                                    }
+
+                                    if (isBuilding) {
+                                      fn();
+                                    } else {
+                                      setState(() {
+                                        fn();
+                                      });
+                                    }
                                   },
                                   defaultValues: const [])),
                           const SizedBox(
@@ -180,10 +188,15 @@ class _AddAppPageState extends State<AddAppPage> {
                               GeneratedForm(
                                   items: pickedSource!.additionalDataFormItems,
                                   onValueChanges: (values, valid, isBuilding) {
-                                    setState(() {
+                                    if (isBuilding) {
                                       additionalData = values;
                                       validAdditionalData = valid;
-                                    });
+                                    } else {
+                                      setState(() {
+                                        additionalData = values;
+                                        validAdditionalData = valid;
+                                      });
+                                    }
                                   },
                                   defaultValues:
                                       pickedSource!.additionalDataDefaults),
