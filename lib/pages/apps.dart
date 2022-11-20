@@ -388,6 +388,9 @@ class AppsPageState extends State<AppsPage> {
                                   );
                                 }).then((values) {
                               if (values != null) {
+                                if (values.isEmpty) {
+                                  values = ['true', 'true'];
+                                }
                                 bool shouldInstallUpdates = values[0] == 'true';
                                 bool shouldInstallNew = values[1] == 'true';
                                 settingsProvider
