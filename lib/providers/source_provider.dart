@@ -42,6 +42,7 @@ class App {
   late List<String> additionalData;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
+  bool trackOnly = false;
   App(
       this.id,
       this.url,
@@ -53,7 +54,8 @@ class App {
       this.preferredApkIndex,
       this.additionalData,
       this.lastUpdateCheck,
-      this.pinned);
+      this.pinned,
+      this.trackOnly);
 
   @override
   String toString() {
@@ -74,12 +76,15 @@ class App {
           : List<String>.from(jsonDecode(json['apkUrls'])),
       json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
       json['additionalData'] == null
-          ? SourceProvider().getSource(json['url']).additionalDataDefaults
+          ? SourceProvider()
+              .getSource(json['url'])
+              .additionalSourceAppSpecificDefaults
           : List<String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false);
+      json['pinned'] ?? false,
+      json['trackOnly'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -92,7 +97,8 @@ class App {
         'preferredApkIndex': preferredApkIndex,
         'additionalData': jsonEncode(additionalData),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
-        'pinned': pinned
+        'pinned': pinned,
+        'trackOnly': trackOnly
       };
 }
 
@@ -135,6 +141,7 @@ List<String> getLinksFromParsedHTML(
 
 class AppSource {
   late String host;
+  bool enforceTrackOnly = false;
   String standardizeURL(String url) {
     throw NotImplementedError();
   }
@@ -148,9 +155,22 @@ class AppSource {
     throw NotImplementedError();
   }
 
-  List<List<GeneratedFormItem>> additionalDataFormItems = [];
-  List<String> additionalDataDefaults = [];
-  List<GeneratedFormItem> moreSourceSettingsFormItems = [];
+  // Different Sources may need different kinds of additional data for Apps
+  List<List<GeneratedFormItem>> additionalSourceAppSpecificFormItems = [];
+  List<String> additionalSourceAppSpecificDefaults = [];
+
+  // Some additional data may be needed for Apps regardless of Source
+  final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
+    GeneratedFormItem(
+        label: 'Track Only',
+        type: FormItemType.bool,
+        key: 'trackOnlyFormItemKey')
+  ];
+  final List<String> additionalAppSpecificSourceAgnosticDefaults = [''];
+
+  // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
+  List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
+
   String? changeLogPageFromStandardUrl(String standardUrl) {
     throw NotImplementedError();
   }
@@ -211,7 +231,7 @@ class SourceProvider {
   }
 
   bool ifSourceAppsRequireAdditionalData(AppSource source) {
-    for (var row in source.additionalDataFormItems) {
+    for (var row in source.additionalSourceAppSpecificFormItems) {
       for (var element in row) {
         if (element.required) {
           return true;
@@ -238,7 +258,10 @@ class SourceProvider {
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String name = '', String? id, bool pinned = false}) async {
+      {String name = '',
+      String? id,
+      bool pinned = false,
+      bool trackOnly = false}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
@@ -258,18 +281,20 @@ class SourceProvider {
         apk.apkUrls.length - 1,
         additionalData,
         DateTime.now(),
-        pinned);
+        pinned,
+        trackOnly);
   }
 
   // Returns errors in [results, errors] instead of throwing them
-  Future<List<dynamic>> getApps(List<String> urls,
+  Future<List<dynamic>> getAppsByURLNaive(List<String> urls,
       {List<String> ignoreUrls = const []}) async {
     List<App> apps = [];
     Map<String, dynamic> errors = {};
     for (var url in urls.where((element) => !ignoreUrls.contains(element))) {
       try {
         var source = getSource(url);
-        apps.add(await getApp(source, url, source.additionalDataDefaults));
+        apps.add(await getApp(
+            source, url, source.additionalSourceAppSpecificDefaults));
       } catch (e) {
         errors.addAll(<String, dynamic>{url: e});
       }

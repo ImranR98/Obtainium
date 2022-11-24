@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -22,8 +23,10 @@ class _AddAppPageState extends State<AddAppPage> {
 
   String userInput = '';
   AppSource? pickedSource;
-  List<String> additionalData = [];
-  bool validAdditionalData = true;
+  List<String> sourceSpecificAdditionalData = [];
+  bool sourceSpecificDataIsValid = true;
+  List<String> otherAdditionalData = [];
+  bool otherAdditionalDataIsValid = true;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +77,13 @@ class _AddAppPageState extends State<AddAppPage> {
                                           : null;
                                       if (pickedSource != source) {
                                         pickedSource = source;
-                                        additionalData = source != null
-                                            ? source.additionalDataDefaults
+                                        sourceSpecificAdditionalData = source !=
+                                                null
+                                            ? source
+                                                .additionalSourceAppSpecificDefaults
                                             : [];
-                                        validAdditionalData = source != null
+                                        sourceSpecificDataIsValid = source !=
+                                                null
                                             ? sourceProvider
                                                 .ifSourceAppsRequireAdditionalData(
                                                     source)
@@ -102,9 +108,14 @@ class _AddAppPageState extends State<AddAppPage> {
                               : ElevatedButton(
                                   onPressed: gettingAppInfo ||
                                           pickedSource == null ||
-                                          (pickedSource!.additionalDataFormItems
+                                          (pickedSource!
+                                                  .additionalSourceAppSpecificFormItems
                                                   .isNotEmpty &&
-                                              !validAdditionalData)
+                                              !sourceSpecificDataIsValid) ||
+                                          (pickedSource!
+                                                  .additionalAppSpecificSourceAgnosticDefaults
+                                                  .isNotEmpty &&
+                                              !otherAdditionalDataIsValid)
                                       ? null
                                       : () async {
                                           setState(() {
@@ -115,12 +126,38 @@ class _AddAppPageState extends State<AddAppPage> {
                                           var settingsProvider =
                                               context.read<SettingsProvider>();
                                           () async {
+                                            var userPickedTrackOnly =
+                                                findGeneratedFormValueByKey(
+                                                        pickedSource!
+                                                            .additionalAppSpecificSourceAgnosticFormItems,
+                                                        otherAdditionalData,
+                                                        'trackOnlyFormItemKey') ==
+                                                    'true';
+                                            if (userPickedTrackOnly ||
+                                                pickedSource!
+                                                    .enforceTrackOnly) {
+                                              await showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext ctx) {
+                                                    return GeneratedFormModal(
+                                                      title:
+                                                          'App is Track-Only',
+                                                      items: const [],
+                                                      defaultValues: const [],
+                                                      message:
+                                                          '${pickedSource!.enforceTrackOnly ? 'Apps from this source are "Track Only".' : 'You have selected the "Track-Only" option.'} Track-Only Apps are tracked for updates, but Obtainium will not attempt to download or install them.',
+                                                    );
+                                                  });
+                                            }
                                             HapticFeedback.selectionClick();
                                             App app =
                                                 await sourceProvider.getApp(
                                                     pickedSource!,
                                                     userInput,
-                                                    additionalData);
+                                                    sourceSpecificAdditionalData,
+                                                    trackOnly: pickedSource!
+                                                            .enforceTrackOnly ||
+                                                        userPickedTrackOnly);
                                             await settingsProvider
                                                 .getInstallPermission();
                                             // Only download the APK here if you need to for the package ID
@@ -168,7 +205,8 @@ class _AddAppPageState extends State<AddAppPage> {
                         ],
                       ),
                       if (pickedSource != null &&
-                          pickedSource!.additionalDataDefaults.isNotEmpty)
+                          pickedSource!
+                              .additionalSourceAppSpecificDefaults.isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -184,24 +222,54 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 16,
                             ),
                             if (pickedSource!
-                                .additionalDataFormItems.isNotEmpty)
+                                .additionalSourceAppSpecificFormItems
+                                .isNotEmpty)
                               GeneratedForm(
-                                  items: pickedSource!.additionalDataFormItems,
+                                  items: pickedSource!
+                                      .additionalSourceAppSpecificFormItems,
                                   onValueChanges: (values, valid, isBuilding) {
                                     if (isBuilding) {
-                                      additionalData = values;
-                                      validAdditionalData = valid;
+                                      sourceSpecificAdditionalData = values;
+                                      sourceSpecificDataIsValid = valid;
                                     } else {
                                       setState(() {
-                                        additionalData = values;
-                                        validAdditionalData = valid;
+                                        sourceSpecificAdditionalData = values;
+                                        sourceSpecificDataIsValid = valid;
                                       });
                                     }
                                   },
-                                  defaultValues:
-                                      pickedSource!.additionalDataDefaults),
+                                  defaultValues: pickedSource!
+                                      .additionalSourceAppSpecificDefaults),
                             if (pickedSource!
-                                .additionalDataFormItems.isNotEmpty)
+                                .additionalSourceAppSpecificFormItems
+                                .isNotEmpty)
+                              const SizedBox(
+                                height: 8,
+                              ),
+                            if (pickedSource!
+                                .additionalAppSpecificSourceAgnosticFormItems
+                                .isNotEmpty)
+                              GeneratedForm(
+                                  items: pickedSource!
+                                      .additionalAppSpecificSourceAgnosticFormItems
+                                      .map((e) => [e])
+                                      .toList(),
+                                  onValueChanges: (values, valid, isBuilding) {
+                                    if (isBuilding) {
+                                      otherAdditionalData = values;
+                                      otherAdditionalDataIsValid = valid;
+                                    } else {
+                                      setState(() {
+                                        otherAdditionalData = values;
+                                        otherAdditionalDataIsValid = valid;
+                                      });
+                                    }
+                                  },
+                                  defaultValues: pickedSource!
+                                      .additionalSourceAppSpecificDefaults),
+                            if (pickedSource!
+                                .additionalAppSpecificSourceAgnosticDefaults
+                                .isNotEmpty)
                               const SizedBox(
                                 height: 8,
                               ),

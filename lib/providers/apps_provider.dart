@@ -512,7 +512,8 @@ class AppsProvider with ChangeNotifier {
         currentApp.additionalData,
         name: currentApp.name,
         id: currentApp.id,
-        pinned: currentApp.pinned);
+        pinned: currentApp.pinned,
+        trackOnly: currentApp.trackOnly);
     newApp.installedVersion = currentApp.installedVersion;
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;

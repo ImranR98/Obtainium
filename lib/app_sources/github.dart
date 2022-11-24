@@ -11,9 +11,9 @@ class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
 
-    additionalDataDefaults = ['true', 'true', ''];
+    additionalSourceAppSpecificDefaults = ['true', 'true', ''];
 
-    moreSourceSettingsFormItems = [
+    additionalSourceSpecificSettingFormItems = [
       GeneratedFormItem(
           label: 'GitHub Personal Access Token (Increases Rate Limit)',
           id: 'github-creds',
@@ -51,7 +51,7 @@ class GitHub extends AppSource {
           ])
     ];
 
-    additionalDataFormItems = [
+    additionalSourceAppSpecificFormItems = [
       [
         GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)
       ],
@@ -96,8 +96,8 @@ class GitHub extends AppSource {
   Future<String> getCredentialPrefixIfAny() async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    String? creds =
-        settingsProvider.getSettingString(moreSourceSettingsFormItems[0].id);
+    String? creds = settingsProvider
+        .getSettingString(additionalSourceSpecificSettingFormItems[0].id);
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
 
