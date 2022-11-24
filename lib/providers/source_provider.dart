@@ -162,7 +162,7 @@ class AppSource {
   // Some additional data may be needed for Apps regardless of Source
   final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
     GeneratedFormItem(
-        label: 'Track Only',
+        label: 'Track-Only',
         type: FormItemType.bool,
         key: 'trackOnlyFormItemKey')
   ];

@@ -147,7 +147,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                             items: const [],
                                                             defaultValues: const [],
                                                             message:
-                                                                '${pickedSource!.enforceTrackOnly ? 'Apps from this source are \'Track Only\'.' : 'You have selected the \'Track Only\' option.'}\n\nThe App will be tracked for updates, but Obtainium will not be able to download or install it.',
+                                                                '${pickedSource!.enforceTrackOnly ? 'Apps from this source are \'Track-Only\'.' : 'You have selected the \'Track-Only\' option.'}\n\nThe App will be tracked for updates, but Obtainium will not be able to download or install it.',
                                                           );
                                                         }) ==
                                                     null) {
