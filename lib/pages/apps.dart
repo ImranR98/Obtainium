@@ -135,6 +135,22 @@ class AppsPageState extends State<AppsPage> {
             : selectedApps.map((e) => e.id).contains(element))
         .toList();
 
+    List<String> trackOnlyUpdateIdsAllOrSelected = [];
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
+      if (appsProvider.apps[id]!.app.trackOnly) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+        return false;
+      }
+      return true;
+    }).toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
+      if (appsProvider.apps[id]!.app.trackOnly) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+        return false;
+      }
+      return true;
+    }).toList();
+
     if (settingsProvider.pinUpdates) {
       var temp = [];
       sortedApps = sortedApps.where((sa) {
@@ -245,7 +261,7 @@ class AppsPageState extends State<AppsPage> {
                             children: [
                               Text(appsProvider.areDownloadsRunning()
                                   ? 'Please Wait...'
-                                  : 'Update Available'),
+                                  : 'Update Available${sortedApps[index].app.trackOnly ? ' (Est.)' : ''}'),
                               SourceProvider()
                                           .getSource(sortedApps[index].app.url)
                                           .changeLogPageFromStandardUrl(
@@ -348,50 +364,66 @@ class AppsPageState extends State<AppsPage> {
                     visualDensity: VisualDensity.compact,
                     onPressed: appsProvider.areDownloadsRunning() ||
                             (existingUpdateIdsAllOrSelected.isEmpty &&
-                                newInstallIdsAllOrSelected.isEmpty)
+                                newInstallIdsAllOrSelected.isEmpty &&
+                                trackOnlyUpdateIdsAllOrSelected.isEmpty)
                         ? null
                         : () {
                             HapticFeedback.heavyImpact();
-                            List<List<GeneratedFormItem>> formInputs = [];
-                            if (existingUpdateIdsAllOrSelected.isNotEmpty &&
-                                newInstallIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add([
-                                GeneratedFormItem(
-                                    label:
-                                        'Update ${existingUpdateIdsAllOrSelected.length} App${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'}',
-                                    type: FormItemType.bool)
-                              ]);
-                              formInputs.add([
-                                GeneratedFormItem(
-                                    label:
-                                        'Install ${newInstallIdsAllOrSelected.length} new App${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}',
-                                    type: FormItemType.bool)
-                              ]);
+                            List<GeneratedFormItem> formInputs = [];
+                            List<String> defaultValues = [];
+                            if (existingUpdateIdsAllOrSelected.isNotEmpty) {
+                              formInputs.add(GeneratedFormItem(
+                                  label:
+                                      'Update ${existingUpdateIdsAllOrSelected.length} App${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'}',
+                                  type: FormItemType.bool,
+                                  key: 'updates'));
+                              defaultValues.add('true');
+                            }
+                            if (newInstallIdsAllOrSelected.isNotEmpty) {
+                              formInputs.add(GeneratedFormItem(
+                                  label:
+                                      'Install ${newInstallIdsAllOrSelected.length} new App${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}',
+                                  type: FormItemType.bool,
+                                  key: 'installs'));
+                              defaultValues
+                                  .add(defaultValues.isEmpty ? 'true' : '');
+                            }
+                            if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
+                              formInputs.add(GeneratedFormItem(
+                                  label:
+                                      'Mark ${trackOnlyUpdateIdsAllOrSelected.length} Track-Only\nApp${trackOnlyUpdateIdsAllOrSelected.length == 1 ? '' : 's'} as Updated',
+                                  type: FormItemType.bool,
+                                  key: 'trackonlies'));
+                              defaultValues
+                                  .add(defaultValues.isEmpty ? 'true' : '');
                             }
                             showDialog<List<String>?>(
                                 context: context,
                                 builder: (BuildContext ctx) {
                                   return GeneratedFormModal(
                                     title:
-                                        'Install${selectedApps.isEmpty ? ' ' : ' Selected '}Apps?',
-                                    message:
-                                        '${existingUpdateIdsAllOrSelected.length} update${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'} and ${newInstallIdsAllOrSelected.length} new install${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}.',
-                                    items: formInputs,
-                                    defaultValues: [
-                                      'true',
-                                      existingUpdateIdsAllOrSelected.isEmpty
-                                          ? 'true'
-                                          : ''
-                                    ],
+                                        'Install ${existingUpdateIdsAllOrSelected.length + newInstallIdsAllOrSelected.length + trackOnlyUpdateIdsAllOrSelected.length} Apps?',
+                                    items: formInputs.map((e) => [e]).toList(),
+                                    defaultValues: defaultValues,
                                     initValid: true,
                                   );
                                 }).then((values) {
                               if (values != null) {
                                 if (values.isEmpty) {
-                                  values = ['true', 'true'];
+                                  values = defaultValues;
                                 }
-                                bool shouldInstallUpdates = values[0] == 'true';
-                                bool shouldInstallNew = values[1] == 'true';
+                                bool shouldInstallUpdates =
+                                    findGeneratedFormValueByKey(
+                                            formInputs, values, 'updates') ==
+                                        'true';
+                                bool shouldInstallNew =
+                                    findGeneratedFormValueByKey(
+                                            formInputs, values, 'installs') ==
+                                        'true';
+                                bool shouldMarkTrackOnlies =
+                                    findGeneratedFormValueByKey(formInputs,
+                                            values, 'trackonlies') ==
+                                        'true';
                                 settingsProvider
                                     .getInstallPermission()
                                     .then((_) {
@@ -403,6 +435,10 @@ class AppsPageState extends State<AppsPage> {
                                   if (shouldInstallNew) {
                                     toInstall
                                         .addAll(newInstallIdsAllOrSelected);
+                                  }
+                                  if (shouldMarkTrackOnlies) {
+                                    toInstall.addAll(
+                                        trackOnlyUpdateIdsAllOrSelected);
                                   }
                                   appsProvider
                                       .downloadAndInstallLatestApps(

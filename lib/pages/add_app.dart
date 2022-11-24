@@ -166,7 +166,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                                   .getInstallPermission();
                                               // Only download the APK here if you need to for the package ID
                                               if (sourceProvider
-                                                  .isTempId(app.id)) {
+                                                      .isTempId(app.id) &&
+                                                  !app.trackOnly) {
                                                 // ignore: use_build_context_synchronously
                                                 var apkUrl = await appsProvider
                                                     .confirmApkUrl(
@@ -186,6 +187,10 @@ class _AddAppPageState extends State<AddAppPage> {
                                                   .containsKey(app.id)) {
                                                 throw ObtainiumError(
                                                     'App already added');
+                                              }
+                                              if (app.trackOnly) {
+                                                app.installedVersion =
+                                                    app.latestVersion;
                                               }
                                               await appsProvider
                                                   .saveApps([app]);
