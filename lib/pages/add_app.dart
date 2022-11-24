@@ -133,66 +133,75 @@ class _AddAppPageState extends State<AddAppPage> {
                                                         otherAdditionalData,
                                                         'trackOnlyFormItemKey') ==
                                                     'true';
-                                            if (userPickedTrackOnly ||
-                                                pickedSource!
-                                                    .enforceTrackOnly) {
-                                              await showDialog(
-                                                  context: context,
-                                                  builder: (BuildContext ctx) {
-                                                    return GeneratedFormModal(
-                                                      title:
-                                                          'App is Track-Only',
-                                                      items: const [],
-                                                      defaultValues: const [],
-                                                      message:
-                                                          '${pickedSource!.enforceTrackOnly ? 'Apps from this source are "Track Only".' : 'You have selected the "Track-Only" option.'} Track-Only Apps are tracked for updates, but Obtainium will not attempt to download or install them.',
-                                                    );
-                                                  });
+                                            var cont = true;
+                                            if ((userPickedTrackOnly ||
+                                                    pickedSource!
+                                                        .enforceTrackOnly) &&
+                                                await showDialog(
+                                                        context: context,
+                                                        builder:
+                                                            (BuildContext ctx) {
+                                                          return GeneratedFormModal(
+                                                            title:
+                                                                'App is Track-Only',
+                                                            items: const [],
+                                                            defaultValues: const [],
+                                                            message:
+                                                                '${pickedSource!.enforceTrackOnly ? 'Apps from this source are \'Track Only\'.' : 'You have selected the \'Track Only\' option.'}\n\nThe App will be tracked for updates, but Obtainium will not be able to download or install it.',
+                                                          );
+                                                        }) ==
+                                                    null) {
+                                              cont = false;
                                             }
-                                            HapticFeedback.selectionClick();
-                                            App app =
-                                                await sourceProvider.getApp(
-                                                    pickedSource!,
-                                                    userInput,
-                                                    sourceSpecificAdditionalData,
-                                                    trackOnly: pickedSource!
-                                                            .enforceTrackOnly ||
-                                                        userPickedTrackOnly);
-                                            await settingsProvider
-                                                .getInstallPermission();
-                                            // Only download the APK here if you need to for the package ID
-                                            if (sourceProvider
-                                                .isTempId(app.id)) {
-                                              // ignore: use_build_context_synchronously
-                                              var apkUrl = await appsProvider
-                                                  .confirmApkUrl(app, context);
-                                              if (apkUrl == null) {
-                                                throw ObtainiumError(
-                                                    'Cancelled');
+                                            if (cont) {
+                                              HapticFeedback.selectionClick();
+                                              App app = await sourceProvider.getApp(
+                                                  pickedSource!,
+                                                  userInput,
+                                                  sourceSpecificAdditionalData,
+                                                  trackOnly: pickedSource!
+                                                          .enforceTrackOnly ||
+                                                      userPickedTrackOnly);
+                                              await settingsProvider
+                                                  .getInstallPermission();
+                                              // Only download the APK here if you need to for the package ID
+                                              if (sourceProvider
+                                                  .isTempId(app.id)) {
+                                                // ignore: use_build_context_synchronously
+                                                var apkUrl = await appsProvider
+                                                    .confirmApkUrl(
+                                                        app, context);
+                                                if (apkUrl == null) {
+                                                  throw ObtainiumError(
+                                                      'Cancelled');
+                                                }
+                                                app.preferredApkIndex =
+                                                    app.apkUrls.indexOf(apkUrl);
+                                                var downloadedApk =
+                                                    await appsProvider
+                                                        .downloadApp(app);
+                                                app.id = downloadedApk.appId;
                                               }
-                                              app.preferredApkIndex =
-                                                  app.apkUrls.indexOf(apkUrl);
-                                              var downloadedApk =
-                                                  await appsProvider
-                                                      .downloadApp(app);
-                                              app.id = downloadedApk.appId;
-                                            }
-                                            if (appsProvider.apps
-                                                .containsKey(app.id)) {
-                                              throw ObtainiumError(
-                                                  'App already added');
-                                            }
-                                            await appsProvider.saveApps([app]);
+                                              if (appsProvider.apps
+                                                  .containsKey(app.id)) {
+                                                throw ObtainiumError(
+                                                    'App already added');
+                                              }
+                                              await appsProvider
+                                                  .saveApps([app]);
 
-                                            return app;
+                                              return app;
+                                            }
                                           }()
                                               .then((app) {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AppPage(
-                                                            appId: app.id)));
+                                            if (app != null) {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AppPage(
+                                                              appId: app.id)));
+                                            }
                                           }).catchError((e) {
                                             showError(e, context);
                                           }).whenComplete(() {
@@ -205,8 +214,11 @@ class _AddAppPageState extends State<AddAppPage> {
                         ],
                       ),
                       if (pickedSource != null &&
-                          pickedSource!
-                              .additionalSourceAppSpecificDefaults.isNotEmpty)
+                          (pickedSource!.additionalSourceAppSpecificDefaults
+                                  .isNotEmpty ||
+                              pickedSource!
+                                  .additionalAppSpecificSourceAgnosticDefaults
+                                  .isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -266,7 +278,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                     }
                                   },
                                   defaultValues: pickedSource!
-                                      .additionalSourceAppSpecificDefaults),
+                                      .additionalAppSpecificSourceAgnosticDefaults),
                             if (pickedSource!
                                 .additionalAppSpecificSourceAgnosticDefaults
                                 .isNotEmpty)
