@@ -267,6 +267,9 @@ class SourceProvider {
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);
+    if (apk.apkUrls.isEmpty && !trackOnly) {
+      throw NoAPKError();
+    }
     String apkVersion = apk.version.replaceAll('/', '-');
     return App(
         id ??

@@ -155,14 +155,11 @@ class GitHub extends AppSource {
       if (targetRelease == null) {
         throw NoReleasesError();
       }
-      if ((targetRelease['apkUrls'] as List<String>).isEmpty) {
-        throw NoAPKError();
-      }
       String? version = targetRelease['tag_name'];
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, targetRelease['apkUrls']);
+      return APKDetails(version, targetRelease['apkUrls'] as List<String>);
     } else {
       rateLimitErrorCheck(res);
       throw getObtainiumHttpError(res);

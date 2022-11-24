@@ -33,7 +33,7 @@ class GitLab extends AppSource {
       var entry = parsedHtml.querySelector('entry');
       var entryContent =
           parse(parseFragment(entry?.querySelector('content')!.innerHtml).text);
-      var apkUrlList = [
+      var apkUrls = [
         ...getLinksFromParsedHTML(
             entryContent,
             RegExp(
@@ -48,9 +48,6 @@ class GitLab extends AppSource {
             .where((element) => Uri.parse(element).host != '')
             .toList()
       ];
-      if (apkUrlList.isEmpty) {
-        throw NoAPKError();
-      }
 
       var entryId = entry?.querySelector('id')?.innerHtml;
       var version =
@@ -58,7 +55,7 @@ class GitLab extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrlList);
+      return APKDetails(version, apkUrls);
     } else {
       throw NoReleasesError();
     }
