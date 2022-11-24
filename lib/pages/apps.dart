@@ -276,8 +276,7 @@ class AppsPageState extends State<AppsPage> {
                             child: SizedBox(
                                 width: 80,
                                 child: Text(
-                                  sortedApps[index].app.installedVersion ??
-                                      'Not Installed',
+                                  '${sortedApps[index].app.installedVersion ?? 'Not Installed'} ${sortedApps[index].app.trackOnly == true ? '(Estimate)' : ''}',
                                   overflow: TextOverflow.fade,
                                   textAlign: TextAlign.end,
                                 )))),

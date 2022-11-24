@@ -261,11 +261,13 @@ class SourceProvider {
       {String name = '',
       String? id,
       bool pinned = false,
-      bool trackOnly = false}) async {
+      bool trackOnly = false,
+      String? installedVersion}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalData);
+    String apkVersion = apk.version.replaceAll('/', '-');
     return App(
         id ??
             source.tryInferringAppId(standardUrl) ??
@@ -275,8 +277,8 @@ class SourceProvider {
         name.trim().isNotEmpty
             ? name
             : names.name[0].toUpperCase() + names.name.substring(1),
-        null,
-        apk.version.replaceAll('/', '-'),
+        installedVersion,
+        apkVersion,
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,

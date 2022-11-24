@@ -266,6 +266,7 @@ class AppsProvider with ChangeNotifier {
   Future<List<String>> downloadAndInstallLatestApps(
       List<String> appIds, BuildContext? context) async {
     List<String> appsToInstall = [];
+    List<String> trackOnlyAppsToUpdate = [];
     // For all specified Apps, filter out those for which:
     // 1. A URL cannot be picked
     // 2. That cannot be installed silently (IF no buildContext was given for interactive install)
@@ -273,7 +274,10 @@ class AppsProvider with ChangeNotifier {
       if (apps[id] == null) {
         throw ObtainiumError('App not found');
       }
-      String? apkUrl = await confirmApkUrl(apps[id]!.app, context);
+      String? apkUrl;
+      if (!apps[id]!.app.trackOnly) {
+        apkUrl = await confirmApkUrl(apps[id]!.app, context);
+      }
       if (apkUrl != null) {
         int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
         if (urlInd != apps[id]!.app.preferredApkIndex) {
@@ -284,7 +288,16 @@ class AppsProvider with ChangeNotifier {
           appsToInstall.add(id);
         }
       }
+      if (apps[id]!.app.trackOnly) {
+        trackOnlyAppsToUpdate.add(id);
+      }
     }
+    // Mark all specified track-only apps as latest
+    saveApps(trackOnlyAppsToUpdate.map((e) {
+      var a = apps[e]!.app;
+      a.installedVersion = a.latestVersion;
+      return a;
+    }).toList());
     // Download APKs for all Apps to be installed
     MultiAppMultiError errors = MultiAppMultiError();
     List<DownloadedApk?> downloadedFiles =
@@ -391,7 +404,9 @@ class AppsProvider with ChangeNotifier {
       return null; // Can't correct in the background isolate
     }
     var modded = false;
-    if (installedInfo == null && app.installedVersion != null) {
+    if (installedInfo == null &&
+        app.installedVersion != null &&
+        !app.trackOnly) {
       app.installedVersion = null;
       modded = true;
     }
@@ -513,8 +528,8 @@ class AppsProvider with ChangeNotifier {
         name: currentApp.name,
         id: currentApp.id,
         pinned: currentApp.pinned,
-        trackOnly: currentApp.trackOnly);
-    newApp.installedVersion = currentApp.installedVersion;
+        trackOnly: currentApp.trackOnly,
+        installedVersion: currentApp.installedVersion);
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }
