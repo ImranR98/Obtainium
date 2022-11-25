@@ -460,8 +460,7 @@ class AppsProvider with ChangeNotifier {
       var info = await getInstalledInfo(newApps[i].id);
       try {
         sp.getSource(newApps[i].url);
-        apps.putIfAbsent(
-            newApps[i].id, () => AppInMemory(newApps[i], null, info));
+        apps[newApps[i].id] = AppInMemory(newApps[i], null, info);
       } catch (e) {
         errors.add([newApps[i].id, newApps[i].name, e.toString()]);
       }

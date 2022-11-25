@@ -400,9 +400,13 @@ class AppsPageState extends State<AppsPage> {
                             showDialog<List<String>?>(
                                 context: context,
                                 builder: (BuildContext ctx) {
+                                  var totalApps = existingUpdateIdsAllOrSelected
+                                          .length +
+                                      newInstallIdsAllOrSelected.length +
+                                      trackOnlyUpdateIdsAllOrSelected.length;
                                   return GeneratedFormModal(
                                     title:
-                                        'Install ${existingUpdateIdsAllOrSelected.length + newInstallIdsAllOrSelected.length + trackOnlyUpdateIdsAllOrSelected.length} Apps?',
+                                        'Change $totalApps App${totalApps == 1 ? '' : 's'}',
                                     items: formInputs.map((e) => [e]).toList(),
                                     defaultValues: defaultValues,
                                     initValid: true,
