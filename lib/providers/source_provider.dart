@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
@@ -209,7 +210,8 @@ class SourceProvider {
     IzzyOnDroid(),
     Mullvad(),
     Signal(),
-    SourceForge()
+    SourceForge(),
+    APKMirror()
   ];
 
   // Add more mass url source classes here so they are available via the service
@@ -254,7 +256,7 @@ class SourceProvider {
         return false;
       }
     }
-    return getSourceHosts().contains(parts.last);
+    return sources.map((e) => e.host).contains(parts.last);
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
@@ -306,6 +308,4 @@ class SourceProvider {
     }
     return [apps, errors];
   }
-
-  List<String> getSourceHosts() => sources.map((e) => e.host).toList();
 }

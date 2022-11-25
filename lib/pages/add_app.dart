@@ -143,7 +143,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                             (BuildContext ctx) {
                                                           return GeneratedFormModal(
                                                             title:
-                                                                'App is Track-Only',
+                                                                '${pickedSource!.enforceTrackOnly ? 'Source' : 'App'} is Track-Only',
                                                             items: const [],
                                                             defaultValues: const [],
                                                             message:
@@ -222,7 +222,11 @@ class _AddAppPageState extends State<AddAppPage> {
                           (pickedSource!.additionalSourceAppSpecificDefaults
                                   .isNotEmpty ||
                               pickedSource!
-                                  .additionalAppSpecificSourceAgnosticDefaults
+                                  .additionalAppSpecificSourceAgnosticFormItems
+                                  .where((e) => pickedSource!.enforceTrackOnly
+                                      ? e.key != 'trackOnlyFormItemKey'
+                                      : true)
+                                  .map((e) => [e])
                                   .isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -257,33 +261,27 @@ class _AddAppPageState extends State<AddAppPage> {
                                   },
                                   defaultValues: pickedSource!
                                       .additionalSourceAppSpecificDefaults),
-                            if (pickedSource!
-                                .additionalSourceAppSpecificFormItems
-                                .isNotEmpty)
-                              const SizedBox(
-                                height: 8,
-                              ),
-                            if (pickedSource!
-                                .additionalAppSpecificSourceAgnosticFormItems
-                                .isNotEmpty)
-                              GeneratedForm(
-                                  items: pickedSource!
-                                      .additionalAppSpecificSourceAgnosticFormItems
-                                      .map((e) => [e])
-                                      .toList(),
-                                  onValueChanges: (values, valid, isBuilding) {
-                                    if (isBuilding) {
+                            GeneratedForm(
+                                items: pickedSource!
+                                    .additionalAppSpecificSourceAgnosticFormItems
+                                    .where((e) => pickedSource!.enforceTrackOnly
+                                        ? e.key != 'trackOnlyFormItemKey'
+                                        : true)
+                                    .map((e) => [e])
+                                    .toList(),
+                                onValueChanges: (values, valid, isBuilding) {
+                                  if (isBuilding) {
+                                    otherAdditionalData = values;
+                                    otherAdditionalDataIsValid = valid;
+                                  } else {
+                                    setState(() {
                                       otherAdditionalData = values;
                                       otherAdditionalDataIsValid = valid;
-                                    } else {
-                                      setState(() {
-                                        otherAdditionalData = values;
-                                        otherAdditionalDataIsValid = valid;
-                                      });
-                                    }
-                                  },
-                                  defaultValues: pickedSource!
-                                      .additionalAppSpecificSourceAgnosticDefaults),
+                                    });
+                                  }
+                                },
+                                defaultValues: pickedSource!
+                                    .additionalAppSpecificSourceAgnosticDefaults),
                             if (pickedSource!
                                 .additionalAppSpecificSourceAgnosticDefaults
                                 .isNotEmpty)
@@ -304,16 +302,15 @@ class _AddAppPageState extends State<AddAppPage> {
                               const SizedBox(
                                 height: 8,
                               ),
-                              ...sourceProvider
-                                  .getSourceHosts()
+                              ...sourceProvider.sources
                                   .map((e) => GestureDetector(
                                       onTap: () {
-                                        launchUrlString('https://$e',
+                                        launchUrlString('https://${e.host}',
                                             mode:
                                                 LaunchMode.externalApplication);
                                       },
                                       child: Text(
-                                        e,
+                                        '${e.runtimeType.toString()}${e.enforceTrackOnly ? ' (Track-Only)' : ''}',
                                         style: const TextStyle(
                                             decoration:
                                                 TextDecoration.underline,
