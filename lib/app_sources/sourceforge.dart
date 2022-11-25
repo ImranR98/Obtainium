@@ -49,9 +49,6 @@ class SourceForge extends AppSource {
           apkUrlListAllReleases // This can be used skipped for fallback support later
               .where((element) => getVersion(element) == version)
               .toList();
-      if (apkUrlList.isEmpty) {
-        throw NoAPKError();
-      }
       return APKDetails(version, apkUrlList);
     } else {
       throw NoReleasesError();

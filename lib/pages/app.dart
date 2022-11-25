@@ -106,7 +106,7 @@ class _AppPageState extends State<AppPage> {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         Text(
-                          'Installed Version: ${app?.app.installedVersion ?? 'None'}',
+                          'Installed Version: ${app?.app.installedVersion ?? 'None'}${app?.app.trackOnly == true ? ' (Estimate)\n\nApp is Track-Only' : ''}',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
@@ -140,6 +140,7 @@ class _AppPageState extends State<AppPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         if (app?.app.installedVersion != null &&
+                            app?.app.trackOnly == false &&
                             app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
@@ -183,7 +184,8 @@ class _AppPageState extends State<AppPage> {
                               tooltip: 'Mark as Updated',
                               icon: const Icon(Icons.done)),
                         if (source != null &&
-                            source.additionalDataFormItems.isNotEmpty)
+                            source.additionalSourceAppSpecificFormItems
+                                .isNotEmpty)
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null
@@ -194,11 +196,11 @@ class _AppPageState extends State<AppPage> {
                                             return GeneratedFormModal(
                                                 title: 'Additional Options',
                                                 items: source
-                                                    .additionalDataFormItems,
+                                                    .additionalSourceAppSpecificFormItems,
                                                 defaultValues: app != null
                                                     ? app.app.additionalData
                                                     : source
-                                                        .additionalDataDefaults);
+                                                        .additionalSourceAppSpecificDefaults);
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
@@ -234,8 +236,12 @@ class _AppPageState extends State<AppPage> {
                                       }
                                     : null,
                                 child: Text(app?.app.installedVersion == null
-                                    ? 'Install'
-                                    : 'Update'))),
+                                    ? app?.app.trackOnly == false
+                                        ? 'Install'
+                                        : 'Mark Installed'
+                                    : app?.app.trackOnly == false
+                                        ? 'Update'
+                                        : 'Mark Updated'))),
                         const SizedBox(width: 16.0),
                         ElevatedButton(
                           onPressed: app?.downloadProgress != null

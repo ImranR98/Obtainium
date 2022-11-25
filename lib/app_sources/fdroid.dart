@@ -48,9 +48,6 @@ class FDroid extends AppSource {
           .where((element) => element['versionName'] == latestVersion)
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
-      if (apkUrls.isEmpty) {
-        throw NoAPKError();
-      }
       return APKDetails(latestVersion, apkUrls);
     } else {
       throw NoReleasesError();

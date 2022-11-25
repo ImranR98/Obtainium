@@ -24,14 +24,12 @@ class Signal extends AppSource {
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];
-      if (apkUrl == null) {
-        throw NoAPKError();
-      }
+      List<String> apkUrls = apkUrl == null ? [] : [apkUrl];
       String? version = json['versionName'];
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, [apkUrl]);
+      return APKDetails(version, apkUrls);
     } else {
       throw NoReleasesError();
     }

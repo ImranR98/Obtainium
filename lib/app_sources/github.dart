@@ -11,9 +11,9 @@ class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
 
-    additionalDataDefaults = ['true', 'true', ''];
+    additionalSourceAppSpecificDefaults = ['true', 'true', ''];
 
-    moreSourceSettingsFormItems = [
+    additionalSourceSpecificSettingFormItems = [
       GeneratedFormItem(
           label: 'GitHub Personal Access Token (Increases Rate Limit)',
           id: 'github-creds',
@@ -51,7 +51,7 @@ class GitHub extends AppSource {
           ])
     ];
 
-    additionalDataFormItems = [
+    additionalSourceAppSpecificFormItems = [
       [
         GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)
       ],
@@ -96,8 +96,8 @@ class GitHub extends AppSource {
   Future<String> getCredentialPrefixIfAny() async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    String? creds =
-        settingsProvider.getSettingString(moreSourceSettingsFormItems[0].id);
+    String? creds = settingsProvider
+        .getSettingString(additionalSourceSpecificSettingFormItems[0].id);
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
 
@@ -155,14 +155,11 @@ class GitHub extends AppSource {
       if (targetRelease == null) {
         throw NoReleasesError();
       }
-      if ((targetRelease['apkUrls'] as List<String>).isEmpty) {
-        throw NoAPKError();
-      }
       String? version = targetRelease['tag_name'];
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, targetRelease['apkUrls']);
+      return APKDetails(version, targetRelease['apkUrls'] as List<String>);
     } else {
       rateLimitErrorCheck(res);
       throw getObtainiumHttpError(res);

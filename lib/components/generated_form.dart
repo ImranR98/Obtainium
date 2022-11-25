@@ -6,6 +6,7 @@ typedef OnValueChanges = void Function(
     List<String> values, bool valid, bool isBuilding);
 
 class GeneratedFormItem {
+  late String key;
   late String label;
   late FormItemType type;
   late bool required;
@@ -25,7 +26,8 @@ class GeneratedFormItem {
       this.id = 'input',
       this.belowWidgets = const [],
       this.hint,
-      this.opts});
+      this.opts,
+      this.key = 'default'});
 }
 
 class GeneratedForm extends StatefulWidget {
@@ -208,4 +210,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
           ],
         ));
   }
+}
+
+String? findGeneratedFormValueByKey(
+    List<GeneratedFormItem> items, List<String> values, String key) {
+  var foundIndex = -1;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].key == key) {
+      foundIndex = i;
+      break;
+    }
+  }
+  if (foundIndex >= 0 && foundIndex < values.length) {
+    return values[foundIndex];
+  }
+  return null;
 }

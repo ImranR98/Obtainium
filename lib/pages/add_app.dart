@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -22,8 +23,10 @@ class _AddAppPageState extends State<AddAppPage> {
 
   String userInput = '';
   AppSource? pickedSource;
-  List<String> additionalData = [];
-  bool validAdditionalData = true;
+  List<String> sourceSpecificAdditionalData = [];
+  bool sourceSpecificDataIsValid = true;
+  List<String> otherAdditionalData = [];
+  bool otherAdditionalDataIsValid = true;
 
   @override
   Widget build(BuildContext context) {
@@ -67,23 +70,34 @@ class _AddAppPageState extends State<AddAppPage> {
                                     ]
                                   ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    setState(() {
+                                    fn() {
                                       userInput = values[0];
                                       var source = valid
                                           ? sourceProvider.getSource(userInput)
                                           : null;
                                       if (pickedSource != source) {
                                         pickedSource = source;
-                                        additionalData = source != null
-                                            ? source.additionalDataDefaults
+                                        sourceSpecificAdditionalData = source !=
+                                                null
+                                            ? source
+                                                .additionalSourceAppSpecificDefaults
                                             : [];
-                                        validAdditionalData = source != null
+                                        sourceSpecificDataIsValid = source !=
+                                                null
                                             ? sourceProvider
                                                 .ifSourceAppsRequireAdditionalData(
                                                     source)
                                             : true;
                                       }
-                                    });
+                                    }
+
+                                    if (isBuilding) {
+                                      fn();
+                                    } else {
+                                      setState(() {
+                                        fn();
+                                      });
+                                    }
                                   },
                                   defaultValues: const [])),
                           const SizedBox(
@@ -94,9 +108,14 @@ class _AddAppPageState extends State<AddAppPage> {
                               : ElevatedButton(
                                   onPressed: gettingAppInfo ||
                                           pickedSource == null ||
-                                          (pickedSource!.additionalDataFormItems
+                                          (pickedSource!
+                                                  .additionalSourceAppSpecificFormItems
                                                   .isNotEmpty &&
-                                              !validAdditionalData)
+                                              !sourceSpecificDataIsValid) ||
+                                          (pickedSource!
+                                                  .additionalAppSpecificSourceAgnosticDefaults
+                                                  .isNotEmpty &&
+                                              !otherAdditionalDataIsValid)
                                       ? null
                                       : () async {
                                           setState(() {
@@ -107,47 +126,87 @@ class _AddAppPageState extends State<AddAppPage> {
                                           var settingsProvider =
                                               context.read<SettingsProvider>();
                                           () async {
-                                            HapticFeedback.selectionClick();
-                                            App app =
-                                                await sourceProvider.getApp(
-                                                    pickedSource!,
-                                                    userInput,
-                                                    additionalData);
-                                            await settingsProvider
-                                                .getInstallPermission();
-                                            // Only download the APK here if you need to for the package ID
-                                            if (sourceProvider
-                                                .isTempId(app.id)) {
-                                              // ignore: use_build_context_synchronously
-                                              var apkUrl = await appsProvider
-                                                  .confirmApkUrl(app, context);
-                                              if (apkUrl == null) {
-                                                throw ObtainiumError(
-                                                    'Cancelled');
+                                            var userPickedTrackOnly =
+                                                findGeneratedFormValueByKey(
+                                                        pickedSource!
+                                                            .additionalAppSpecificSourceAgnosticFormItems,
+                                                        otherAdditionalData,
+                                                        'trackOnlyFormItemKey') ==
+                                                    'true';
+                                            var cont = true;
+                                            if ((userPickedTrackOnly ||
+                                                    pickedSource!
+                                                        .enforceTrackOnly) &&
+                                                await showDialog(
+                                                        context: context,
+                                                        builder:
+                                                            (BuildContext ctx) {
+                                                          return GeneratedFormModal(
+                                                            title:
+                                                                'App is Track-Only',
+                                                            items: const [],
+                                                            defaultValues: const [],
+                                                            message:
+                                                                '${pickedSource!.enforceTrackOnly ? 'Apps from this source are \'Track-Only\'.' : 'You have selected the \'Track-Only\' option.'}\n\nThe App will be tracked for updates, but Obtainium will not be able to download or install it.',
+                                                          );
+                                                        }) ==
+                                                    null) {
+                                              cont = false;
+                                            }
+                                            if (cont) {
+                                              HapticFeedback.selectionClick();
+                                              App app = await sourceProvider.getApp(
+                                                  pickedSource!,
+                                                  userInput,
+                                                  sourceSpecificAdditionalData,
+                                                  trackOnly: pickedSource!
+                                                          .enforceTrackOnly ||
+                                                      userPickedTrackOnly);
+                                              await settingsProvider
+                                                  .getInstallPermission();
+                                              // Only download the APK here if you need to for the package ID
+                                              if (sourceProvider
+                                                      .isTempId(app.id) &&
+                                                  !app.trackOnly) {
+                                                // ignore: use_build_context_synchronously
+                                                var apkUrl = await appsProvider
+                                                    .confirmApkUrl(
+                                                        app, context);
+                                                if (apkUrl == null) {
+                                                  throw ObtainiumError(
+                                                      'Cancelled');
+                                                }
+                                                app.preferredApkIndex =
+                                                    app.apkUrls.indexOf(apkUrl);
+                                                var downloadedApk =
+                                                    await appsProvider
+                                                        .downloadApp(app);
+                                                app.id = downloadedApk.appId;
                                               }
-                                              app.preferredApkIndex =
-                                                  app.apkUrls.indexOf(apkUrl);
-                                              var downloadedApk =
-                                                  await appsProvider
-                                                      .downloadApp(app);
-                                              app.id = downloadedApk.appId;
-                                            }
-                                            if (appsProvider.apps
-                                                .containsKey(app.id)) {
-                                              throw ObtainiumError(
-                                                  'App already added');
-                                            }
-                                            await appsProvider.saveApps([app]);
+                                              if (appsProvider.apps
+                                                  .containsKey(app.id)) {
+                                                throw ObtainiumError(
+                                                    'App already added');
+                                              }
+                                              if (app.trackOnly) {
+                                                app.installedVersion =
+                                                    app.latestVersion;
+                                              }
+                                              await appsProvider
+                                                  .saveApps([app]);
 
-                                            return app;
+                                              return app;
+                                            }
                                           }()
                                               .then((app) {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AppPage(
-                                                            appId: app.id)));
+                                            if (app != null) {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AppPage(
+                                                              appId: app.id)));
+                                            }
                                           }).catchError((e) {
                                             showError(e, context);
                                           }).whenComplete(() {
@@ -160,7 +219,11 @@ class _AddAppPageState extends State<AddAppPage> {
                         ],
                       ),
                       if (pickedSource != null &&
-                          pickedSource!.additionalDataDefaults.isNotEmpty)
+                          (pickedSource!.additionalSourceAppSpecificDefaults
+                                  .isNotEmpty ||
+                              pickedSource!
+                                  .additionalAppSpecificSourceAgnosticDefaults
+                                  .isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -176,19 +239,54 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 16,
                             ),
                             if (pickedSource!
-                                .additionalDataFormItems.isNotEmpty)
+                                .additionalSourceAppSpecificFormItems
+                                .isNotEmpty)
                               GeneratedForm(
-                                  items: pickedSource!.additionalDataFormItems,
+                                  items: pickedSource!
+                                      .additionalSourceAppSpecificFormItems,
                                   onValueChanges: (values, valid, isBuilding) {
-                                    setState(() {
-                                      additionalData = values;
-                                      validAdditionalData = valid;
-                                    });
+                                    if (isBuilding) {
+                                      sourceSpecificAdditionalData = values;
+                                      sourceSpecificDataIsValid = valid;
+                                    } else {
+                                      setState(() {
+                                        sourceSpecificAdditionalData = values;
+                                        sourceSpecificDataIsValid = valid;
+                                      });
+                                    }
                                   },
-                                  defaultValues:
-                                      pickedSource!.additionalDataDefaults),
+                                  defaultValues: pickedSource!
+                                      .additionalSourceAppSpecificDefaults),
                             if (pickedSource!
-                                .additionalDataFormItems.isNotEmpty)
+                                .additionalSourceAppSpecificFormItems
+                                .isNotEmpty)
+                              const SizedBox(
+                                height: 8,
+                              ),
+                            if (pickedSource!
+                                .additionalAppSpecificSourceAgnosticFormItems
+                                .isNotEmpty)
+                              GeneratedForm(
+                                  items: pickedSource!
+                                      .additionalAppSpecificSourceAgnosticFormItems
+                                      .map((e) => [e])
+                                      .toList(),
+                                  onValueChanges: (values, valid, isBuilding) {
+                                    if (isBuilding) {
+                                      otherAdditionalData = values;
+                                      otherAdditionalDataIsValid = valid;
+                                    } else {
+                                      setState(() {
+                                        otherAdditionalData = values;
+                                        otherAdditionalDataIsValid = valid;
+                                      });
+                                    }
+                                  },
+                                  defaultValues: pickedSource!
+                                      .additionalAppSpecificSourceAgnosticDefaults),
+                            if (pickedSource!
+                                .additionalAppSpecificSourceAgnosticDefaults
+                                .isNotEmpty)
                               const SizedBox(
                                 height: 8,
                               ),

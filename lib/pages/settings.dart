@@ -139,18 +139,21 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sourceSpecificFields = sourceProvider.sources.map((e) {
-      if (e.moreSourceSettingsFormItems.isNotEmpty) {
+      if (e.additionalSourceSpecificSettingFormItems.isNotEmpty) {
         return GeneratedForm(
-            items: e.moreSourceSettingsFormItems.map((e) => [e]).toList(),
+            items: e.additionalSourceSpecificSettingFormItems
+                .map((e) => [e])
+                .toList(),
             onValueChanges: (values, valid, isBuilding) {
               if (valid) {
                 for (var i = 0; i < values.length; i++) {
                   settingsProvider.setSettingString(
-                      e.moreSourceSettingsFormItems[i].id, values[i]);
+                      e.additionalSourceSpecificSettingFormItems[i].id,
+                      values[i]);
                 }
               }
             },
-            defaultValues: e.moreSourceSettingsFormItems.map((e) {
+            defaultValues: e.additionalSourceSpecificSettingFormItems.map((e) {
               return settingsProvider.getSettingString(e.id) ?? '';
             }).toList());
       } else {
