@@ -223,8 +223,12 @@ class _AppPageState extends State<AppPage> {
                                         !appsProvider.areDownloadsRunning()
                                     ? () {
                                         HapticFeedback.heavyImpact();
-                                        settingsProvider
-                                            .getInstallPermission()
+                                        () async {
+                                          if (app?.app.trackOnly != true) {
+                                            await settingsProvider
+                                                .getInstallPermission();
+                                          }
+                                        }()
                                             .then((value) {
                                           appsProvider
                                               .downloadAndInstallLatestApps(
