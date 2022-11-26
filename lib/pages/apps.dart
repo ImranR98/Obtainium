@@ -428,8 +428,13 @@ class AppsPageState extends State<AppsPage> {
                                     findGeneratedFormValueByKey(formInputs,
                                             values, 'trackonlies') ==
                                         'true';
-                                settingsProvider
-                                    .getInstallPermission()
+                                (() async {
+                                  if (shouldInstallNew ||
+                                      shouldInstallUpdates) {
+                                    await settingsProvider
+                                        .getInstallPermission();
+                                  }
+                                })()
                                     .then((_) {
                                   List<String> toInstall = [];
                                   if (shouldInstallUpdates) {

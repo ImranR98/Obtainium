@@ -41,7 +41,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
     );
 
     Future<List<List<String>>> addApps(List<String> urls) async {
-      await settingsProvider.getInstallPermission();
       List<dynamic> results = await sourceProvider.getAppsByURLNaive(urls,
           ignoreUrls: appsProvider.apps.values.map((e) => e.app.url).toList());
       List<App> apps = results[0];

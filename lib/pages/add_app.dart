@@ -155,15 +155,19 @@ class _AddAppPageState extends State<AddAppPage> {
                                             }
                                             if (cont) {
                                               HapticFeedback.selectionClick();
-                                              App app = await sourceProvider.getApp(
-                                                  pickedSource!,
-                                                  userInput,
-                                                  sourceSpecificAdditionalData,
-                                                  trackOnly: pickedSource!
-                                                          .enforceTrackOnly ||
-                                                      userPickedTrackOnly);
-                                              await settingsProvider
-                                                  .getInstallPermission();
+                                              var trackOnly = pickedSource!
+                                                      .enforceTrackOnly ||
+                                                  userPickedTrackOnly;
+                                              App app =
+                                                  await sourceProvider.getApp(
+                                                      pickedSource!,
+                                                      userInput,
+                                                      sourceSpecificAdditionalData,
+                                                      trackOnly: trackOnly);
+                                              if (!trackOnly) {
+                                                await settingsProvider
+                                                    .getInstallPermission();
+                                              }
                                               // Only download the APK here if you need to for the package ID
                                               if (sourceProvider
                                                       .isTempId(app.id) &&

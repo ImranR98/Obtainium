@@ -223,13 +223,17 @@ class _AppPageState extends State<AppPage> {
                                         !appsProvider.areDownloadsRunning()
                                     ? () {
                                         HapticFeedback.heavyImpact();
-                                        appsProvider
-                                            .downloadAndInstallLatestApps(
-                                                [app!.app.id],
-                                                context).then((res) {
-                                          if (res.isNotEmpty && mounted) {
-                                            Navigator.of(context).pop();
-                                          }
+                                        settingsProvider
+                                            .getInstallPermission()
+                                            .then((value) {
+                                          appsProvider
+                                              .downloadAndInstallLatestApps(
+                                                  [app!.app.id],
+                                                  context).then((res) {
+                                            if (res.isNotEmpty && mounted) {
+                                              Navigator.of(context).pop();
+                                            }
+                                          });
                                         }).catchError((e) {
                                           showError(e, context);
                                         });
