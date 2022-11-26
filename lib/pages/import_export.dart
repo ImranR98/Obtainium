@@ -8,7 +8,6 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -27,7 +26,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
   @override
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
-    var settingsProvider = context.read<SettingsProvider>();
     var appsProvider = context.read<AppsProvider>();
     var outlineButtonStyle = ButtonStyle(
       shape: MaterialStateProperty.all(
