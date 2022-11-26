@@ -237,22 +237,21 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 .map((e) =>
                                                     e.search(searchQuery)))
                                             .then((results) async {
-                                          var res = // TODO: Interleave results
-                                              results.reduce((value, element) {
-                                            value.addAll(element);
-                                            return value;
-                                          });
-                                          // Map<String, String> res = {};
-                                          // var si = 0;
-                                          // var done = false;
-                                          // for (var r in results) {
-                                          //   if (r.length > si) {
-                                          //     res.addEntries(r.entries.toList()[si]);
-                                          //   }
-                                          // }
-                                          // for (var rs in results) {
-                                          //   for (var r in rs.entries) {}
-                                          // }
+                                          // Interleave results instead of simple reduce
+                                          Map<String, String> res = {};
+                                          var si = 0;
+                                          var done = false;
+                                          while (!done) {
+                                            done = true;
+                                            for (var r in results) {
+                                              if (r.length > si) {
+                                                done = false;
+                                                res.addEntries(
+                                                    [r.entries.elementAt(si)]);
+                                              }
+                                            }
+                                            si++;
+                                          }
                                           List<String>? selectedUrls = res
                                                   .isEmpty
                                               ? []
