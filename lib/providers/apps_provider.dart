@@ -635,6 +635,23 @@ class AppsProvider with ChangeNotifier {
     foregroundSubscription?.cancel();
     super.dispose();
   }
+
+  Future<List<List<String>>> addAppsByURL(List<String> urls) async {
+    List<dynamic> results = await SourceProvider().getAppsByURLNaive(urls,
+        ignoreUrls: apps.values.map((e) => e.app.url).toList());
+    List<App> pps = results[0];
+    Map<String, dynamic> errorsMap = results[1];
+    for (var app in pps) {
+      if (apps.containsKey(app.id)) {
+        errorsMap.addAll({app.id: 'App already added'});
+      } else {
+        await saveApps([app]);
+      }
+    }
+    List<List<String>> errors =
+        errorsMap.keys.map((e) => [e, errorsMap[e].toString()]).toList();
+    return errors;
+  }
 }
 
 class APKPicker extends StatefulWidget {

@@ -38,23 +38,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
       ),
     );
 
-    Future<List<List<String>>> addApps(List<String> urls) async {
-      List<dynamic> results = await sourceProvider.getAppsByURLNaive(urls,
-          ignoreUrls: appsProvider.apps.values.map((e) => e.app.url).toList());
-      List<App> apps = results[0];
-      Map<String, dynamic> errorsMap = results[1];
-      for (var app in apps) {
-        if (appsProvider.apps.containsKey(app.id)) {
-          errorsMap.addAll({app.id: 'App already added'});
-        } else {
-          await appsProvider.saveApps([app]);
-        }
-      }
-      List<List<String>> errors =
-          errorsMap.keys.map((e) => [e, errorsMap[e].toString()]).toList();
-      return errors;
-    }
-
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -194,7 +177,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       setState(() {
                                         importInProgress = true;
                                       });
-                                      addApps(urls).then((errors) {
+                                      appsProvider
+                                          .addAppsByURL(urls)
+                                          .then((errors) {
                                         if (errors.isEmpty) {
                                           showError(
                                               'Imported ${urls.length} Apps',
@@ -272,7 +257,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                 return UrlSelectionModal(
                                                                   urlsWithDescriptions:
                                                                       urlsWithDescriptions,
-                                                                  defaultSelected:
+                                                                  selectedByDefault:
                                                                       false,
                                                                 );
                                                               });
@@ -281,8 +266,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                           selectedUrls
                                                               .isNotEmpty) {
                                                         var errors =
-                                                            await addApps(
-                                                                selectedUrls);
+                                                            await appsProvider
+                                                                .addAppsByURL(
+                                                                    selectedUrls);
                                                         if (errors.isEmpty) {
                                                           // ignore: use_build_context_synchronously
                                                           showError(
@@ -371,8 +357,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                             });
                                                     if (selectedUrls != null) {
                                                       var errors =
-                                                          await addApps(
-                                                              selectedUrls);
+                                                          await appsProvider
+                                                              .addAppsByURL(
+                                                                  selectedUrls);
                                                       if (errors.isEmpty) {
                                                         // ignore: use_build_context_synchronously
                                                         showError(
@@ -483,10 +470,12 @@ class UrlSelectionModal extends StatefulWidget {
   UrlSelectionModal(
       {super.key,
       required this.urlsWithDescriptions,
-      this.defaultSelected = true});
+      this.selectedByDefault = true,
+      this.onlyOneSelectionAllowed = false});
 
   Map<String, String> urlsWithDescriptions;
-  bool defaultSelected;
+  bool selectedByDefault;
+  bool onlyOneSelectionAllowed;
 
   @override
   State<UrlSelectionModal> createState() => _UrlSelectionModalState();
@@ -498,8 +487,17 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   void initState() {
     super.initState();
     for (var url in widget.urlsWithDescriptions.entries) {
-      urlWithDescriptionSelections.putIfAbsent(
-          url, () => widget.defaultSelected);
+      urlWithDescriptionSelections.putIfAbsent(url,
+          () => widget.selectedByDefault && !widget.onlyOneSelectionAllowed);
+    }
+    if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
+      selectOnlyOne(widget.urlsWithDescriptions.entries.first.key);
+    }
+  }
+
+  selectOnlyOne(String url) {
+    for (var uwd in urlWithDescriptionSelections.keys) {
+      urlWithDescriptionSelections[uwd] = uwd.key == url;
     }
   }
 
@@ -507,7 +505,8 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: const Text('Select URLs to Import'),
+      title:
+          Text(widget.onlyOneSelectionAllowed ? 'Select URL' : 'Select URLs'),
       content: Column(children: [
         ...urlWithDescriptionSelections.keys.map((urlWithD) {
           return Row(children: [
@@ -515,7 +514,12 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
                 value: urlWithDescriptionSelections[urlWithD],
                 onChanged: (value) {
                   setState(() {
-                    urlWithDescriptionSelections[urlWithD] = value ?? false;
+                    value ??= false;
+                    if (value! && widget.onlyOneSelectionAllowed) {
+                      selectOnlyOne(urlWithD.key);
+                    } else {
+                      urlWithDescriptionSelections[urlWithD] = value!;
+                    }
                   });
                 }),
             const SizedBox(
@@ -562,14 +566,19 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
             },
             child: const Text('Cancel')),
         TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(urlWithDescriptionSelections.entries
-                  .where((entry) => entry.value)
-                  .map((e) => e.key.key)
-                  .toList());
-            },
-            child: Text(
-                'Import ${urlWithDescriptionSelections.values.where((b) => b).length} URLs'))
+            onPressed:
+                urlWithDescriptionSelections.values.where((b) => b).isEmpty
+                    ? null
+                    : () {
+                        Navigator.of(context).pop(urlWithDescriptionSelections
+                            .entries
+                            .where((entry) => entry.value)
+                            .map((e) => e.key.key)
+                            .toList());
+                      },
+            child: Text(widget.onlyOneSelectionAllowed
+                ? 'Pick'
+                : 'Import ${urlWithDescriptionSelections.values.where((b) => b).length} URLs'))
       ],
     );
   }
