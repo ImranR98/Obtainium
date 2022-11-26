@@ -33,11 +33,13 @@ class APKMirror extends AppSource {
           ?.querySelector('title')
           ?.innerHtml;
       String? version = titleString
-          ?.substring(0,
-              RegExp(' build ( |[0-9])+').firstMatch(titleString)?.start ?? 0)
-          .split(' ')
-          .last;
-      if (version == null) {
+          ?.substring(RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
+              RegExp(' by ').firstMatch(titleString)?.start ?? 0)
+          .trim();
+      if (version == null || version.isEmpty) {
+        version = titleString;
+      }
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       return APKDetails(version, []);
