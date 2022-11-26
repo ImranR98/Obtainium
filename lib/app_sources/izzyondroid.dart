@@ -28,7 +28,8 @@ class IzzyOnDroid extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) async {
+      String standardUrl, List<String> additionalData,
+      {bool trackOnly = false}) async {
     String? appId = tryInferringAppId(standardUrl);
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
         await get(

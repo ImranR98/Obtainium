@@ -25,7 +25,8 @@ class APKMirror extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) async {
+      String standardUrl, List<String> additionalData,
+      {bool trackOnly = false}) async {
     Response res = await get(Uri.parse('$standardUrl/feed'));
     if (res.statusCode == 200) {
       String? titleString = parse(res.body)

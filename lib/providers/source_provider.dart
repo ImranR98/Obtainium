@@ -148,7 +148,8 @@ class AppSource {
   }
 
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) {
+      String standardUrl, List<String> additionalData,
+      {bool trackOnly = false}) {
     throw NotImplementedError();
   }
 
@@ -267,8 +268,8 @@ class SourceProvider {
       String? installedVersion}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     AppNames names = source.getAppNames(standardUrl);
-    APKDetails apk =
-        await source.getLatestAPKDetails(standardUrl, additionalData);
+    APKDetails apk = await source
+        .getLatestAPKDetails(standardUrl, additionalData, trackOnly: trackOnly);
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }

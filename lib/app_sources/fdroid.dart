@@ -56,7 +56,8 @@ class FDroid extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) async {
+      String standardUrl, List<String> additionalData,
+      {bool trackOnly = false}) async {
     String? appId = tryInferringAppId(standardUrl);
     return getAPKUrlsFromFDroidPackagesAPIResponse(
         await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId')),

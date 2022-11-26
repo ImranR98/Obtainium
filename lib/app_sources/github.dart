@@ -107,7 +107,8 @@ class GitHub extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData) async {
+      String standardUrl, List<String> additionalData,
+      {bool trackOnly = false}) async {
     var includePrereleases =
         additionalData.isNotEmpty && additionalData[0] == 'true';
     var fallbackToOlderReleases =
@@ -145,7 +146,7 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (apkUrls.isEmpty) {
+        if (apkUrls.isEmpty && !trackOnly) {
           continue;
         }
         targetRelease = releases[i];
