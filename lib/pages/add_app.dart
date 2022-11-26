@@ -198,13 +198,19 @@ class _AddAppPageState extends State<AddAppPage> {
                                   child: const Text('Add'))
                         ],
                       ),
-                      const SizedBox(
-                        height: 16,
-                      ),
                       if (sourceProvider.sources
                               .where((e) => e.canSearch)
                               .isNotEmpty &&
-                          pickedSource == null)
+                          pickedSource == null &&
+                          userInput.isEmpty)
+                        const SizedBox(
+                          height: 16,
+                        ),
+                      if (sourceProvider.sources
+                              .where((e) => e.canSearch)
+                              .isNotEmpty &&
+                          pickedSource == null &&
+                          userInput.isEmpty)
                         Row(
                           children: [
                             Expanded(
@@ -321,6 +327,12 @@ class _AddAppPageState extends State<AddAppPage> {
                                   },
                                   defaultValues: pickedSource!
                                       .additionalSourceAppSpecificDefaults),
+                            if (pickedSource!
+                                .additionalAppSpecificSourceAgnosticDefaults
+                                .isNotEmpty)
+                              const SizedBox(
+                                height: 8,
+                              ),
                             GeneratedForm(
                                 items: pickedSource!
                                     .additionalAppSpecificSourceAgnosticFormItems
@@ -342,12 +354,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                 },
                                 defaultValues: pickedSource!
                                     .additionalAppSpecificSourceAgnosticDefaults),
-                            if (pickedSource!
-                                .additionalAppSpecificSourceAgnosticDefaults
-                                .isNotEmpty)
-                              const SizedBox(
-                                height: 8,
-                              ),
                           ],
                         )
                       else
@@ -356,6 +362,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                              const SizedBox(
+                                height: 48,
+                              ),
                               const Text(
                                 'Supported Sources:',
                               ),
