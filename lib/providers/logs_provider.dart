@@ -87,7 +87,8 @@ create table if not exists $logTable (
         .delete(logTable, where: where.key, whereArgs: where.value);
     if (res > 0) {
       add(plural('clearedNLogsBeforeXAfterY', res,
-          args: [before.toString(), after.toString()]));
+          namedArgs: {'before': before.toString(), 'after': after.toString()},
+          name: 'n'));
     }
     return res;
   }
