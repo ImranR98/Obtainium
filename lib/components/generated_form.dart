@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 enum FormItemType { string, bool }
@@ -108,7 +109,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             maxLines: e.value.max <= 1 ? 1 : e.value.max,
             validator: (value) {
               if (e.value.required && (value == null || value.trim().isEmpty)) {
-                return '${e.value.label} (required)';
+                return '${e.value.label} ${tr('requiredInBrackets')}';
               }
               for (var validator in e.value.additionalValidators) {
                 String? result = validator(value);
@@ -122,10 +123,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (e.value.type == FormItemType.string &&
             e.value.opts != null) {
           if (e.value.opts!.isEmpty) {
-            return const Text('ERROR: DROPDOWN MUST HAVE AT LEAST ONE OPT.');
+            return Text(tr('dropdownNoOptsError'));
           }
           return DropdownButtonFormField(
-              decoration: const InputDecoration(labelText: 'Colour'),
+              decoration: InputDecoration(labelText: tr('colour')),
               value: values[row.key][e.key],
               items: e.value.opts!
                   .map((e) => DropdownMenuItem(value: e, child: Text(e)))

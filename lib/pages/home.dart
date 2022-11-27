@@ -1,4 +1,5 @@
 import 'package:animations/animations.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/add_app.dart';
@@ -26,11 +27,11 @@ class _HomePageState extends State<HomePage> {
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(
-        'Apps', Icons.apps, AppsPage(key: GlobalKey<AppsPageState>())),
-    NavigationPageItem('Add App', Icons.add, const AddAppPage()),
+        tr('apps'), Icons.apps, AppsPage(key: GlobalKey<AppsPageState>())),
+    NavigationPageItem(tr('addApp'), Icons.add, const AddAppPage()),
     NavigationPageItem(
-        'Import/Export', Icons.import_export, const ImportExportPage()),
-    NavigationPageItem('Settings', Icons.settings, const SettingsPage())
+        tr('importExport'), Icons.import_export, const ImportExportPage()),
+    NavigationPageItem(tr('settings'), Icons.settings, const SettingsPage())
   ];
 
   @override

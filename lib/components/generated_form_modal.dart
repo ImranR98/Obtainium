@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -64,7 +65,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: const Text('Cancel')),
+            child: Text(tr('cancel'))),
         TextButton(
             onPressed: !valid
                 ? null
@@ -74,7 +75,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                       Navigator.of(context).pop(values);
                     }
                   },
-            child: const Text('Continue'))
+            child: Text(tr('continue')))
       ],
     );
   }

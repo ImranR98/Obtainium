@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -41,7 +42,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
-          const CustomAppBar(title: 'Import/Export'),
+          CustomAppBar(title: tr('importExport')),
           SliverFillRemaining(
               child: Padding(
                   padding:
@@ -63,10 +64,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               .exportApps()
                                               .then((String path) {
                                             showError(
-                                                'Exported to $path', context);
+                                                tr('exportedTo', args: [path]),
+                                                context);
                                           });
                                         },
-                                  child: const Text('Obtainium Export'))),
+                                  child: Text(tr('obtainiumExport')))),
                           const SizedBox(
                             width: 16,
                           ),
@@ -91,13 +93,15 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                 jsonDecode(data);
                                               } catch (e) {
                                                 throw ObtainiumError(
-                                                    'Invalid input');
+                                                    tr('invalidInput'));
                                               }
                                               appsProvider
                                                   .importApps(data)
                                                   .then((value) {
                                                 showError(
-                                                    '$value App${value == 1 ? '' : 's'} Imported',
+                                                    tr('importedX', args: [
+                                                      plural('app', value)
+                                                    ]),
                                                     context);
                                               });
                                             } else {
@@ -111,7 +115,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                             });
                                           });
                                         },
-                                  child: const Text('Obtainium Import')))
+                                  child: Text(tr('obtainiumImport'))))
                         ],
                       ),
                       if (importInProgress)
@@ -138,11 +142,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       context: context,
                                       builder: (BuildContext ctx) {
                                         return GeneratedFormModal(
-                                          title: 'Import from URL List',
+                                          title: tr('importFromURLList'),
                                           items: [
                                             [
                                               GeneratedFormItem(
-                                                  label: 'App URL List',
+                                                  label: tr('appURLList'),
                                                   max: 7,
                                                   additionalValidators: [
                                                     (String? value) {
@@ -159,7 +163,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                 .getSource(
                                                                     lines[i]);
                                                           } catch (e) {
-                                                            return 'Line ${i + 1}: $e';
+                                                            return '${tr('line')} ${i + 1}: $e';
                                                           }
                                                         }
                                                       }
@@ -182,7 +186,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           .then((errors) {
                                         if (errors.isEmpty) {
                                           showError(
-                                              'Imported ${urls.length} Apps',
+                                              tr('importedX', args: [
+                                                plural('app', urls.length)
+                                              ]),
                                               context);
                                         } else {
                                           showDialog(
@@ -203,8 +209,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                     }
                                   });
                                 },
-                          child: const Text(
-                            'Import from URL List',
+                          child: Text(
+                            tr('importFromURLList'),
                           )),
                       ...sourceProvider.sources
                           .where((element) => element.canSearch)
@@ -224,13 +230,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       builder:
                                                           (BuildContext ctx) {
                                                         return GeneratedFormModal(
-                                                          title:
-                                                              'Search ${source.runtimeType}',
+                                                          title: tr('searchX',
+                                                              args: [
+                                                                source
+                                                                    .runtimeType
+                                                                    .toString()
+                                                              ]),
                                                           items: [
                                                             [
                                                               GeneratedFormItem(
-                                                                  label:
-                                                                      '${source.runtimeType} Search Query')
+                                                                  label: tr(
+                                                                      'searchQuery'))
                                                             ]
                                                           ],
                                                           defaultValues: const [],
@@ -272,7 +282,13 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                         if (errors.isEmpty) {
                                                           // ignore: use_build_context_synchronously
                                                           showError(
-                                                              'Imported ${selectedUrls.length} Apps',
+                                                              tr('importedX',
+                                                                  args: [
+                                                                    plural(
+                                                                        'app',
+                                                                        selectedUrls
+                                                                            .length)
+                                                                  ]),
                                                               context);
                                                         } else {
                                                           showDialog(
@@ -291,7 +307,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       }
                                                     } else {
                                                       throw ObtainiumError(
-                                                          'No results found');
+                                                          tr('noResults'));
                                                     }
                                                   }
                                                 }()
@@ -303,8 +319,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   });
                                                 });
                                               },
-                                        child: Text(
-                                            'Search ${source.runtimeType}'))
+                                        child: Text(tr('searchX', args: [
+                                          source.runtimeType.toString()
+                                        ])))
                                   ]))
                           .toList(),
                       ...sourceProvider.massUrlSources
@@ -323,8 +340,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       builder:
                                                           (BuildContext ctx) {
                                                         return GeneratedFormModal(
-                                                          title:
-                                                              'Import ${source.name}',
+                                                          title: tr('importX',
+                                                              args: [
+                                                                source.name
+                                                              ]),
                                                           items:
                                                               source
                                                                   .requiredArgs
@@ -363,7 +382,13 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       if (errors.isEmpty) {
                                                         // ignore: use_build_context_synchronously
                                                         showError(
-                                                            'Imported ${selectedUrls.length} Apps',
+                                                            tr('importedX',
+                                                                args: [
+                                                                  plural(
+                                                                      'app',
+                                                                      selectedUrls
+                                                                          .length)
+                                                                ]),
                                                             context);
                                                       } else {
                                                         showDialog(
@@ -390,17 +415,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   });
                                                 });
                                               },
-                                        child: Text('Import ${source.name}'))
+                                        child: Text(
+                                            tr('importX', args: [source.name])))
                                   ]))
                           .toList(),
                       const Spacer(),
                       const Divider(
                         height: 32,
                       ),
-                      const Text(
-                          'Imported Apps may incorrectly show as "Not Installed".\nTo fix this, re-install them through Obtainium.\nThis should not affect App data.\n\nOnly affects URL and third-party import methods.',
+                      Text(tr('importedAppsIdDisclaimer'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontStyle: FontStyle.italic, fontSize: 12)),
                       const SizedBox(
                         height: 8,
@@ -427,16 +452,19 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: const Text('Import Errors'),
+      title: Text(tr('importErrors')),
       content:
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(
-          '${widget.urlsLength - widget.errors.length} of ${widget.urlsLength} Apps imported.',
+          tr('importedXOfYApps', args: [
+            (widget.urlsLength - widget.errors.length).toString(),
+            widget.urlsLength.toString()
+          ]),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 16),
         Text(
-          'The following URLs had errors:',
+          tr('followingURLsHadErrors'),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         ...widget.errors.map((e) {
@@ -459,7 +487,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: const Text('Okay'))
+            child: Text(tr('okay')))
       ],
     );
   }
@@ -505,8 +533,8 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title:
-          Text(widget.onlyOneSelectionAllowed ? 'Select URL' : 'Select URLs'),
+      title: Text(
+          widget.onlyOneSelectionAllowed ? tr('selectURL') : tr('selectURLs')),
       content: Column(children: [
         ...urlWithDescriptionSelections.keys.map((urlWithD) {
           return Row(children: [
@@ -564,7 +592,7 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Cancel')),
+            child: Text(tr('cancel'))),
         TextButton(
             onPressed:
                 urlWithDescriptionSelections.values.where((b) => b).isEmpty
@@ -577,8 +605,14 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
                             .toList());
                       },
             child: Text(widget.onlyOneSelectionAllowed
-                ? 'Pick'
-                : 'Import ${urlWithDescriptionSelections.values.where((b) => b).length} URLs'))
+                ? tr('pick')
+                : tr('importX', args: [
+                    plural(
+                        'url',
+                        urlWithDescriptionSelections.values
+                            .where((b) => b)
+                            .length)
+                  ])))
       ],
     );
   }

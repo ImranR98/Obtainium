@@ -1,6 +1,7 @@
 // Exposes functions that can be used to send notifications to the user
 // Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -21,33 +22,30 @@ class UpdateNotification extends ObtainiumNotification {
   UpdateNotification(List<App> updates)
       : super(
             2,
-            'Updates Available',
+            tr('updatesAvailable'),
             '',
             'UPDATES_AVAILABLE',
-            'Updates Available',
-            'Notifies the user that updates are available for one or more Apps tracked by Obtainium',
+            tr('updatesAvailable'),
+            tr('updatesAvailableNotifDescription'),
             Importance.max) {
     message = updates.isEmpty
-        ? "No new updates."
+        ? tr('noNewUpdates')
         : updates.length == 1
-            ? '${updates[0].name} has an update.'
-            : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} have updates.';
+            ? tr('xHasAnUpdate', args: [updates[0].name])
+            : plural('xAndNMoreUpdatesAvailable', updates.length - 1,
+                args: [updates[0].name]);
   }
 }
 
 class SilentUpdateNotification extends ObtainiumNotification {
   SilentUpdateNotification(List<App> updates)
-      : super(
-            3,
-            'Apps Updated',
-            '',
-            'APPS_UPDATED',
-            'Apps Updated',
-            'Notifies the user that updates to one or more Apps were applied in the background',
-            Importance.defaultImportance) {
+      : super(3, tr('appsUpdated'), '', 'APPS_UPDATED', tr('appsUpdated'),
+            tr('appsUpdatedNotifDescription'), Importance.defaultImportance) {
     message = updates.length == 1
-        ? '${updates[0].name} was updated to ${updates[0].latestVersion}.'
-        : '${(updates.length == 2 ? '${updates[0].name} and ${updates[1].name}' : '${updates[0].name} and ${updates.length - 1} more apps')} were updated.';
+        ? tr('xWasUpdatedToY',
+            args: [updates[0].name, updates[0].latestVersion])
+        : plural('xAndNMoreUpdatesInstalled', updates.length - 1,
+            args: [updates[0].name]);
   }
 }
 
@@ -55,27 +53,21 @@ class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
   ErrorCheckingUpdatesNotification(String error)
       : super(
             5,
-            'Error Checking for Updates',
+            tr('errorCheckingUpdates'),
             error,
             'BG_UPDATE_CHECK_ERROR',
-            'Error Checking for Updates',
-            'A notification that shows when background update checking fails',
+            tr('errorCheckingUpdates'),
+            tr('errorCheckingUpdatesNotifDescription'),
             Importance.high);
 }
 
 class AppsRemovedNotification extends ObtainiumNotification {
   AppsRemovedNotification(List<List<String>> namedReasons)
-      : super(
-            6,
-            'Apps Removed',
-            '',
-            'APPS_REMOVED',
-            'Apps Removed',
-            'Notifies the user that one or more Apps were removed due to errors while loading them',
-            Importance.max) {
+      : super(6, tr('appsRemoved'), '', 'APPS_REMOVED', tr('appsRemoved'),
+            tr('appsRemovedNotifDescription'), Importance.max) {
     message = '';
     for (var r in namedReasons) {
-      message += '${r[0]} was removed due to this error: ${r[1]}. \n';
+      message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
     }
     message = message.trim();
   }
@@ -83,20 +75,20 @@ class AppsRemovedNotification extends ObtainiumNotification {
 
 final completeInstallationNotification = ObtainiumNotification(
     1,
-    'Complete App Installation',
-    'Obtainium must be open to install Apps',
+    tr('completeAppInstallation'),
+    tr('obtainiumMustBeOpenToInstallApps'),
     'COMPLETE_INSTALL',
-    'Complete App Installation',
-    'Asks the user to return to Obtanium to finish installing an App',
+    tr('completeAppInstallation'),
+    tr('completeAppInstallationNotifDescription'),
     Importance.max);
 
 final checkingUpdatesNotification = ObtainiumNotification(
     4,
-    'Checking for Updates',
+    tr('checkingForUpdates'),
     '',
     'BG_UPDATE_CHECK',
-    'Checking for Updates',
-    'Transient notification that appears when checking for updates',
+    tr('checkingForUpdates'),
+    tr('checkingForUpdatesNotifDescription'),
     Importance.min);
 
 class NotificationsProvider {

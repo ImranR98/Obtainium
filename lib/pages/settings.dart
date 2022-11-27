@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -26,20 +27,20 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     var themeDropdown = DropdownButtonFormField(
-        decoration: const InputDecoration(labelText: 'Theme'),
+        decoration: InputDecoration(labelText: tr('theme')),
         value: settingsProvider.theme,
-        items: const [
+        items: [
           DropdownMenuItem(
             value: ThemeSettings.dark,
-            child: Text('Dark'),
+            child: Text(tr('dark')),
           ),
           DropdownMenuItem(
             value: ThemeSettings.light,
-            child: Text('Light'),
+            child: Text(tr('light')),
           ),
           DropdownMenuItem(
             value: ThemeSettings.system,
-            child: Text('Follow System'),
+            child: Text(tr('followSystem')),
           )
         ],
         onChanged: (value) {
@@ -49,16 +50,16 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var colourDropdown = DropdownButtonFormField(
-        decoration: const InputDecoration(labelText: 'Colour'),
+        decoration: InputDecoration(labelText: tr('colour')),
         value: settingsProvider.colour,
-        items: const [
+        items: [
           DropdownMenuItem(
             value: ColourSettings.basic,
-            child: Text('Obtainium'),
+            child: Text(tr('obtainium')),
           ),
           DropdownMenuItem(
             value: ColourSettings.materialYou,
-            child: Text('Material You'),
+            child: Text(tr('materialYou')),
           )
         ],
         onChanged: (value) {
@@ -68,20 +69,20 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sortDropdown = DropdownButtonFormField(
-        decoration: const InputDecoration(labelText: 'App Sort By'),
+        decoration: InputDecoration(labelText: tr('appSortBy')),
         value: settingsProvider.sortColumn,
-        items: const [
+        items: [
           DropdownMenuItem(
             value: SortColumnSettings.authorName,
-            child: Text('Author/Name'),
+            child: Text(tr('authorName')),
           ),
           DropdownMenuItem(
             value: SortColumnSettings.nameAuthor,
-            child: Text('Name/Author'),
+            child: Text(tr('nameAuthor')),
           ),
           DropdownMenuItem(
             value: SortColumnSettings.added,
-            child: Text('As Added'),
+            child: Text(tr('asAdded')),
           )
         ],
         onChanged: (value) {
@@ -91,16 +92,16 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var orderDropdown = DropdownButtonFormField(
-        decoration: const InputDecoration(labelText: 'App Sort Order'),
+        decoration: InputDecoration(labelText: tr('appSortOrder')),
         value: settingsProvider.sortOrder,
-        items: const [
+        items: [
           DropdownMenuItem(
             value: SortOrderSettings.ascending,
-            child: Text('Ascending'),
+            child: Text(tr('ascending')),
           ),
           DropdownMenuItem(
             value: SortOrderSettings.descending,
-            child: Text('Descending'),
+            child: Text(tr('descending')),
           ),
         ],
         onChanged: (value) {
@@ -110,8 +111,7 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var intervalDropdown = DropdownButtonFormField(
-        decoration: const InputDecoration(
-            labelText: 'Background Update Checking Interval'),
+        decoration: InputDecoration(labelText: tr('bgUpdateCheckInterval')),
         value: settingsProvider.updateInterval,
         items: updateIntervals.map((e) {
           int displayNum = (e < 60
@@ -120,15 +120,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       ? e / 60
                       : e / 1440)
               .round();
-          var displayUnit = (e < 60
-              ? 'Minute'
-              : e < 1440
-                  ? 'Hour'
-                  : 'Day');
-
           String display = e == 0
-              ? 'Never - Manual Only'
-              : '$displayNum $displayUnit${displayNum == 1 ? '' : 's'}';
+              ? tr('neverManualOnly')
+              : (e < 60
+                  ? plural('minute', displayNum)
+                  : e < 1440
+                      ? plural('hour', displayNum)
+                      : plural('day', displayNum));
           return DropdownMenuItem(value: e, child: Text(display));
         }).toList(),
         onChanged: (value) {
@@ -167,7 +165,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
-          const CustomAppBar(title: 'Settings'),
+          CustomAppBar(title: tr('settings')),
           SliverToBoxAdapter(
               child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -177,7 +175,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Appearance',
+                              tr('appearance'),
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
@@ -200,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Show Source Webpage in App View'),
+                                Text(tr('showWebInAppView')),
                                 Switch(
                                     value: settingsProvider.showAppWebpage,
                                     onChanged: (value) {
@@ -212,7 +210,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Pin Updates to Top of Apps View'),
+                                Text(tr('pinUpdates')),
                                 Switch(
                                     value: settingsProvider.pinUpdates,
                                     onChanged: (value) {
@@ -225,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             height16,
                             Text(
-                              'Updates',
+                              tr('updates'),
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
@@ -234,7 +232,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               height: 48,
                             ),
                             Text(
-                              'Source-Specific',
+                              tr('sourceSpecific'),
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
@@ -256,15 +254,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             mode: LaunchMode.externalApplication);
                       },
                       icon: const Icon(Icons.code),
-                      label: const Text(
-                        'App Source',
+                      label: Text(
+                        tr('appSource'),
                       ),
                     ),
                     TextButton.icon(
                         onPressed: () {
                           context.read<LogsProvider>().get().then((logs) {
                             if (logs.isEmpty) {
-                              showError(ObtainiumError('No Logs'), context);
+                              showError(ObtainiumError(tr('noLogs')), context);
                             } else {
                               showDialog(
                                   context: context,
@@ -275,7 +273,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           });
                         },
                         icon: const Icon(Icons.bug_report_outlined),
-                        label: const Text('App Logs')),
+                        label: Text(tr('appLogs'))),
                   ],
                 ),
                 height16,
@@ -306,7 +304,7 @@ class _LogsDialogState extends State<LogsDialog> {
           .then((value) {
         setState(() {
           String l = value.map((e) => e.toString()).join('\n\n');
-          logString = l.isNotEmpty ? l : 'No Logs';
+          logString = l.isNotEmpty ? l : tr('noLogs');
         });
       });
     }
@@ -317,7 +315,7 @@ class _LogsDialogState extends State<LogsDialog> {
 
     return AlertDialog(
       scrollable: true,
-      title: const Text('Obtainium App Logs'),
+      title: Text(tr('appLogs')),
       content: Column(
         children: [
           DropdownButtonFormField(
@@ -325,7 +323,7 @@ class _LogsDialogState extends State<LogsDialog> {
               items: days
                   .map((e) => DropdownMenuItem(
                         value: e,
-                        child: Text('$e Day${e == 1 ? '' : 's'}'),
+                        child: Text(plural('day', e)),
                       ))
                   .toList(),
               onChanged: (d) {
@@ -342,13 +340,13 @@ class _LogsDialogState extends State<LogsDialog> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Close')),
+            child: Text(tr('close'))),
         TextButton(
             onPressed: () {
-              Share.share(logString ?? '', subject: 'Obtainium App Logs');
+              Share.share(logString ?? '', subject: tr('appLogs'));
               Navigator.of(context).pop();
             },
-            child: const Text('Share'))
+            child: Text(tr('share')))
       ],
     );
   }

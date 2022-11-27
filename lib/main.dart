@@ -26,14 +26,14 @@ const int bgUpdateCheckAlarmId = 666;
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   LogsProvider logs = LogsProvider();
-  logs.add('Started BG update check task');
+  logs.add(tr('startedBgUpdateTask'));
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
   await AndroidAlarmManager.initialize();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
       : null;
-  logs.add('Bg update ignoreAfter is $ignoreAfter');
+  logs.add(tr('bgUpdateIgnoreAfterIs', args: [ignoreAfter.toString()]));
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
@@ -45,14 +45,14 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     DateTime nextIgnoreAfter = DateTime.now();
     String? err;
     try {
-      logs.add('Started actual BG update checking');
+      logs.add(tr('startedActualBGUpdateCheck'));
       await appsProvider.checkUpdates(
           ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
     } catch (e) {
       if (e is RateLimitError || e is SocketException) {
         var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
-        logs.add(
-            'BG update checking encountered a ${e.runtimeType}, will schedule a retry check in $remainingMinutes minutes');
+        logs.add(plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes,
+            args: [e.runtimeType.toString()]));
         AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
             Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
           'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
@@ -81,7 +81,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     //       cancelExisting: true);
     // }
     logs.add(
-        'BG update checking found ${newUpdates.length} updates - will notify user if needed');
+        plural('bgCheckFoundUpdatesWillNotifyIfNeeded', newUpdates.length));
     if (newUpdates.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(newUpdates));
     }
@@ -92,7 +92,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     notificationsProvider
         .notify(ErrorCheckingUpdatesNotification(e.toString()));
   } finally {
-    logs.add('Finished BG update check task');
+    logs.add(tr('bgUpdateTaskFinished'));
     await notificationsProvider.cancel(checkingUpdatesNotification.id);
   }
 }
@@ -145,7 +145,7 @@ class _ObtainiumState extends State<Obtainium> {
     } else {
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
-        logs.add('This is the first ever run of Obtainium');
+        logs.add(tr('firstRun'));
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         appsProvider.saveApps([
@@ -167,8 +167,8 @@ class _ObtainiumState extends State<Obtainium> {
       // Register the background update task according to the user's setting
       if (existingUpdateInterval != settingsProvider.updateInterval) {
         if (existingUpdateInterval != -1) {
-          logs.add(
-              'Setting update interval to ${settingsProvider.updateInterval}');
+          logs.add(tr('settingUpdateCheckIntervalTo',
+              args: [settingsProvider.updateInterval.toString()]));
         }
         existingUpdateInterval = settingsProvider.updateInterval;
         if (existingUpdateInterval == 0) {

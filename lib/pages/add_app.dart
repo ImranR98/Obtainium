@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -75,12 +76,15 @@ class _AddAppPageState extends State<AddAppPage> {
                     context: context,
                     builder: (BuildContext ctx) {
                       return GeneratedFormModal(
-                        title:
-                            '${pickedSource!.enforceTrackOnly ? 'Source' : 'App'} is Track-Only',
+                        title: tr('xIsTrackOnly', args: [
+                          pickedSource!.enforceTrackOnly
+                              ? tr('source')
+                              : tr('app')
+                        ]),
                         items: const [],
                         defaultValues: const [],
                         message:
-                            '${pickedSource!.enforceTrackOnly ? 'Apps from this source are \'Track-Only\'.' : 'You have selected the \'Track-Only\' option.'}\n\nThe App will be tracked for updates, but Obtainium will not be able to download or install it.',
+                            '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
                       );
                     }) ==
                 null) {
@@ -100,14 +104,14 @@ class _AddAppPageState extends State<AddAppPage> {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
             if (apkUrl == null) {
-              throw ObtainiumError('Cancelled');
+              throw ObtainiumError(tr('cancelled'));
             }
             app.preferredApkIndex = app.apkUrls.indexOf(apkUrl);
             var downloadedApk = await appsProvider.downloadApp(app);
             app.id = downloadedApk.appId;
           }
           if (appsProvider.apps.containsKey(app.id)) {
-            throw ObtainiumError('App already added');
+            throw ObtainiumError(tr('appAlreadyAdded'));
           }
           if (app.trackOnly) {
             app.installedVersion = app.latestVersion;
@@ -137,7 +141,7 @@ class _AddAppPageState extends State<AddAppPage> {
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
-          const CustomAppBar(title: 'Add App'),
+          CustomAppBar(title: tr('addApp')),
           SliverFillRemaining(
             child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -151,7 +155,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                   items: [
                                     [
                                       GeneratedFormItem(
-                                          label: 'App Source Url',
+                                          label: tr('appSourceURL'),
                                           additionalValidators: [
                                             (value) {
                                               try {
@@ -165,7 +169,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                     ? e
                                                     : e is ObtainiumError
                                                         ? e.toString()
-                                                        : 'Error';
+                                                        : tr('error');
                                               }
                                               return null;
                                             }
@@ -195,7 +199,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                               !otherAdditionalDataIsValid)
                                       ? null
                                       : addApp,
-                                  child: const Text('Add'))
+                                  child: Text(tr('add')))
                         ],
                       ),
                       if (sourceProvider.sources
@@ -218,7 +222,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                   items: [
                                     [
                                       GeneratedFormItem(
-                                          label: 'Search (Some Sources Only)',
+                                          label: tr('searchSomeSourcesLabel'),
                                           required: false),
                                     ]
                                   ],
@@ -281,7 +285,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                           showError(e, context);
                                         });
                                       },
-                                child: const Text('Search'))
+                                child: Text(tr('search')))
                           ],
                         ),
                       if (pickedSource != null &&
@@ -301,7 +305,10 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 64,
                             ),
                             Text(
-                                'Additional Options for ${pickedSource?.runtimeType}',
+                                tr('additionalOptsFor', args: [
+                                  pickedSource?.runtimeType.toString() ??
+                                      tr('source')
+                                ]),
                                 style: TextStyle(
                                     color:
                                         Theme.of(context).colorScheme.primary)),
@@ -365,8 +372,8 @@ class _AddAppPageState extends State<AddAppPage> {
                               const SizedBox(
                                 height: 48,
                               ),
-                              const Text(
-                                'Supported Sources:',
+                              Text(
+                                tr('supportedSourcesBelow'),
                               ),
                               const SizedBox(
                                 height: 8,
@@ -379,7 +386,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                 LaunchMode.externalApplication);
                                       },
                                       child: Text(
-                                        '${e.runtimeType.toString()}${e.enforceTrackOnly ? ' (Track-Only)' : ''}${e.canSearch ? ' (Searchable)' : ''}',
+                                        '${e.runtimeType.toString()}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
                                         style: const TextStyle(
                                             decoration:
                                                 TextDecoration.underline,
