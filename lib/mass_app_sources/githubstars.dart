@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -7,10 +8,10 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class GitHubStars implements MassAppUrlSource {
   @override
-  late String name = 'GitHub Starred Repos';
+  late String name = tr('githubStarredRepos');
 
   @override
-  late List<String> requiredArgs = ['Username'];
+  late List<String> requiredArgs = [tr('uname')];
 
   Future<Map<String, String>> getOnePageOfUserStarredUrlsWithDescriptions(
       String username, int page) async {
@@ -22,7 +23,7 @@ class GitHubStars implements MassAppUrlSource {
         urlsWithDescriptions.addAll({
           e['html_url'] as String: e['description'] != null
               ? e['description'] as String
-              : 'No description'
+              : tr('noDescription')
         });
       }
       return urlsWithDescriptions;
@@ -36,7 +37,7 @@ class GitHubStars implements MassAppUrlSource {
   @override
   Future<Map<String, String>> getUrlsWithDescriptions(List<String> args) async {
     if (args.length != requiredArgs.length) {
-      throw ObtainiumError('Wrong number of arguments provided');
+      throw ObtainiumError(tr('wrongArgNum'));
     }
     Map<String, String> urlsWithDescriptions = {};
     var page = 1;

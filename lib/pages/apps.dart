@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -191,7 +192,7 @@ class AppsPageState extends State<AppsPage> {
             });
           },
           child: CustomScrollView(slivers: <Widget>[
-            const CustomAppBar(title: 'Apps'),
+            CustomAppBar(title: tr('appsString')),
             if (appsProvider.loadingApps || sortedApps.isEmpty)
               SliverFillRemaining(
                   child: Center(
@@ -199,8 +200,8 @@ class AppsPageState extends State<AppsPage> {
                           ? const CircularProgressIndicator()
                           : Text(
                               appsProvider.apps.isEmpty
-                                  ? 'No Apps'
-                                  : 'No Apps for Filter',
+                                  ? tr('noApps')
+                                  : tr('noAppsForFilter'),
                               style: Theme.of(context).textTheme.headlineMedium,
                               textAlign: TextAlign.center,
                             ))),
@@ -244,14 +245,19 @@ class AppsPageState extends State<AppsPage> {
                           ? FontWeight.bold
                           : FontWeight.normal),
                 ),
-                subtitle: Text('By ${sortedApps[index].app.author}',
+                subtitle: Text(tr('byX', args: [sortedApps[index].app.author]),
                     style: TextStyle(
                         fontWeight: sortedApps[index].app.pinned
                             ? FontWeight.bold
                             : FontWeight.normal)),
                 trailing: sortedApps[index].downloadProgress != null
-                    ? Text(
-                        'Downloading - ${sortedApps[index].downloadProgress?.toInt()}%')
+                    ? Text(tr('percentProgress', args: [
+                        sortedApps[index]
+                                .downloadProgress
+                                ?.toInt()
+                                .toString() ??
+                            '100'
+                      ]))
                     : (sortedApps[index].app.installedVersion != null &&
                             sortedApps[index].app.installedVersion !=
                                 sortedApps[index].app.latestVersion
@@ -260,8 +266,8 @@ class AppsPageState extends State<AppsPage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(appsProvider.areDownloadsRunning()
-                                  ? 'Please Wait...'
-                                  : 'Update Available${sortedApps[index].app.trackOnly ? ' (Est.)' : ''}'),
+                                  ? tr('pleaseWait')
+                                  : '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}'),
                               SourceProvider()
                                           .getSource(sortedApps[index].app.url)
                                           .changeLogPageFromStandardUrl(
@@ -292,7 +298,7 @@ class AppsPageState extends State<AppsPage> {
                             child: SizedBox(
                                 width: 80,
                                 child: Text(
-                                  '${sortedApps[index].app.installedVersion ?? 'Not Installed'} ${sortedApps[index].app.trackOnly == true ? '(Estimate)' : ''}',
+                                  '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
                                   overflow: TextOverflow.fade,
                                   textAlign: TextAlign.end,
                                 )))),
@@ -327,8 +333,8 @@ class AppsPageState extends State<AppsPage> {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 tooltip: selectedApps.isEmpty
-                    ? 'Select All'
-                    : 'Deselect ${selectedApps.length.toString()}'),
+                    ? tr('selectAll')
+                    : tr('deselectN', args: [selectedApps.length.toString()])),
             const VerticalDivider(),
             Expanded(
                 child: Row(
@@ -343,12 +349,15 @@ class AppsPageState extends State<AppsPage> {
                               context: context,
                               builder: (BuildContext ctx) {
                                 return GeneratedFormModal(
-                                  title: 'Remove Selected Apps?',
+                                  title: tr('removeSelectedAppsQuestion'),
                                   items: const [],
                                   defaultValues: const [],
                                   initValid: true,
-                                  message:
-                                      '${selectedApps.length} App${selectedApps.length == 1 ? '' : 's'} will be removed from Obtainium but remain installed. You still need to uninstall ${selectedApps.length == 1 ? 'it' : 'them'} manually.',
+                                  message: tr(
+                                      'xWillBeRemovedButRemainInstalled',
+                                      args: [
+                                        plural('apps', selectedApps.length)
+                                      ]),
                                 );
                               }).then((values) {
                             if (values != null) {
@@ -357,7 +366,7 @@ class AppsPageState extends State<AppsPage> {
                             }
                           });
                         },
-                        tooltip: 'Remove Selected Apps',
+                        tooltip: tr('removeSelectedApps'),
                         icon: const Icon(Icons.delete_outline_outlined),
                       ),
                 IconButton(
@@ -373,16 +382,20 @@ class AppsPageState extends State<AppsPage> {
                             List<String> defaultValues = [];
                             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
-                                  label:
-                                      'Update ${existingUpdateIdsAllOrSelected.length} App${existingUpdateIdsAllOrSelected.length == 1 ? '' : 's'}',
+                                  label: tr('updateX', args: [
+                                    plural('apps',
+                                        existingUpdateIdsAllOrSelected.length)
+                                  ]),
                                   type: FormItemType.bool,
                                   key: 'updates'));
                               defaultValues.add('true');
                             }
                             if (newInstallIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
-                                  label:
-                                      'Install ${newInstallIdsAllOrSelected.length} new App${newInstallIdsAllOrSelected.length == 1 ? '' : 's'}',
+                                  label: tr('installX', args: [
+                                    plural('apps',
+                                        newInstallIdsAllOrSelected.length)
+                                  ]),
                                   type: FormItemType.bool,
                                   key: 'installs'));
                               defaultValues
@@ -390,8 +403,10 @@ class AppsPageState extends State<AppsPage> {
                             }
                             if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
-                                  label:
-                                      'Mark ${trackOnlyUpdateIdsAllOrSelected.length} Track-Only\nApp${trackOnlyUpdateIdsAllOrSelected.length == 1 ? '' : 's'} as Updated',
+                                  label: tr('markXTrackOnlyAsUpdated', args: [
+                                    plural('apps',
+                                        trackOnlyUpdateIdsAllOrSelected.length)
+                                  ]),
                                   type: FormItemType.bool,
                                   key: 'trackonlies'));
                               defaultValues
@@ -405,8 +420,8 @@ class AppsPageState extends State<AppsPage> {
                                       newInstallIdsAllOrSelected.length +
                                       trackOnlyUpdateIdsAllOrSelected.length;
                                   return GeneratedFormModal(
-                                    title:
-                                        'Change $totalApps App${totalApps == 1 ? '' : 's'}',
+                                    title: tr('changeX',
+                                        args: [plural('apps', totalApps)]),
                                     items: formInputs.map((e) => [e]).toList(),
                                     defaultValues: defaultValues,
                                     initValid: true,
@@ -459,8 +474,9 @@ class AppsPageState extends State<AppsPage> {
                               }
                             });
                           },
-                    tooltip:
-                        'Install/Update${selectedApps.isEmpty ? ' ' : ' Selected '}Apps',
+                    tooltip: selectedApps.isEmpty
+                        ? tr('installUpdateApps')
+                        : tr('installUpdateSelectedApps'),
                     icon: const Icon(
                       Icons.file_download_outlined,
                     )),
@@ -492,11 +508,15 @@ class AppsPageState extends State<AppsPage> {
                                                                   (BuildContext
                                                                       ctx) {
                                                                 return AlertDialog(
-                                                                  title: Text(
-                                                                      'Mark ${selectedApps.length} Selected Apps as Updated?'),
-                                                                  content:
-                                                                      const Text(
-                                                                          'Only applies to installed but out of date Apps.'),
+                                                                  title: Text(tr(
+                                                                      'markXSelectedAppsAsUpdated',
+                                                                      args: [
+                                                                        selectedApps
+                                                                            .length
+                                                                            .toString()
+                                                                      ])),
+                                                                  content: Text(
+                                                                      tr('onlyAppliesToInstalledAndOutdatedApps')),
                                                                   actions: [
                                                                     TextButton(
                                                                         onPressed:
@@ -504,8 +524,8 @@ class AppsPageState extends State<AppsPage> {
                                                                           Navigator.of(context)
                                                                               .pop();
                                                                         },
-                                                                        child: const Text(
-                                                                            'No')),
+                                                                        child: Text(
+                                                                            tr('no'))),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () {
@@ -523,8 +543,8 @@ class AppsPageState extends State<AppsPage> {
                                                                           Navigator.of(context)
                                                                               .pop();
                                                                         },
-                                                                        child: const Text(
-                                                                            'Yes'))
+                                                                        child: Text(
+                                                                            tr('yes')))
                                                                   ],
                                                                 );
                                                               }).whenComplete(() {
@@ -534,7 +554,7 @@ class AppsPageState extends State<AppsPage> {
                                                           });
                                                         },
                                               tooltip:
-                                                  'Mark Selected Apps as Updated',
+                                                  tr('markSelectedAppsUpdated'),
                                               icon: const Icon(Icons.done)),
                                           IconButton(
                                             onPressed: () {
@@ -549,8 +569,12 @@ class AppsPageState extends State<AppsPage> {
                                               }).toList());
                                               Navigator.of(context).pop();
                                             },
-                                            tooltip:
-                                                '${selectedApps.where((element) => element.pinned).isEmpty ? 'Pin to' : 'Unpin from'} top',
+                                            tooltip: selectedApps
+                                                    .where((element) =>
+                                                        element.pinned)
+                                                    .isEmpty
+                                                ? tr('pinToTop')
+                                                : tr('unpinFromTop'),
                                             icon: Icon(selectedApps
                                                     .where((element) =>
                                                         element.pinned)
@@ -568,11 +592,11 @@ class AppsPageState extends State<AppsPage> {
                                               urls = urls.substring(
                                                   0, urls.length - 1);
                                               Share.share(urls,
-                                                  subject:
-                                                      '${selectedApps.length} Selected App URLs from Obtainium');
+                                                  subject: tr(
+                                                      'selectedAppURLsFromObtainium'));
                                               Navigator.of(context).pop();
                                             },
-                                            tooltip: 'Share Selected App URLs',
+                                            tooltip: tr('shareSelectedAppURLs'),
                                             icon: const Icon(Icons.share),
                                           ),
                                           IconButton(
@@ -581,13 +605,19 @@ class AppsPageState extends State<AppsPage> {
                                                   context: context,
                                                   builder: (BuildContext ctx) {
                                                     return GeneratedFormModal(
-                                                      title:
-                                                          'Reset Install Status for Selected Apps?',
+                                                      title: tr(
+                                                          'resetInstallStatusForSelectedAppsQuestion'),
                                                       items: const [],
                                                       defaultValues: const [],
                                                       initValid: true,
-                                                      message:
-                                                          'The install status of ${selectedApps.length} App${selectedApps.length == 1 ? '' : 's'} will be reset.\n\nThis can help when the App version shown in Obtainium is incorrect due to failed updates or other issues.',
+                                                      message: tr(
+                                                          'installStatusOfXWillBeResetExplanation',
+                                                          args: [
+                                                            plural(
+                                                                'app',
+                                                                selectedApps
+                                                                    .length)
+                                                          ]),
                                                     );
                                                   }).then((values) {
                                                 if (values != null) {
@@ -601,7 +631,7 @@ class AppsPageState extends State<AppsPage> {
                                                 Navigator.of(context).pop();
                                               });
                                             },
-                                            tooltip: 'Reset Install Status',
+                                            tooltip: tr('resetInstallStatus'),
                                             icon: const Icon(
                                                 Icons.restore_page_outlined),
                                           ),
@@ -610,7 +640,7 @@ class AppsPageState extends State<AppsPage> {
                                 );
                               });
                         },
-                        tooltip: 'More',
+                        tooltip: tr('more'),
                         icon: const Icon(Icons.more_horiz),
                       ),
               ],
@@ -628,8 +658,8 @@ class AppsPageState extends State<AppsPage> {
                 });
               },
               tooltip: currentFilterIsUpdatesOnly
-                  ? 'Remove Out-of-Date App Filter'
-                  : 'Show Out-of-Date Apps Only',
+                  ? tr('removeOutdatedFilter')
+                  : tr('showOutdatedOnly'),
               icon: Icon(
                 currentFilterIsUpdatesOnly
                     ? Icons.update_disabled_rounded
@@ -641,7 +671,7 @@ class AppsPageState extends State<AppsPage> {
                 ? const SizedBox()
                 : TextButton.icon(
                     label: Text(
-                      filter == null ? 'Filter' : 'Filter *',
+                      filter == null ? tr('filter') : tr('filterActive'),
                       style: TextStyle(
                           fontWeight: filter == null
                               ? FontWeight.normal
@@ -652,22 +682,22 @@ class AppsPageState extends State<AppsPage> {
                           context: context,
                           builder: (BuildContext ctx) {
                             return GeneratedFormModal(
-                                title: 'Filter Apps',
+                                title: tr('filterApps'),
                                 items: [
                                   [
                                     GeneratedFormItem(
-                                        label: 'App Name', required: false),
+                                        label: tr('appName'), required: false),
                                     GeneratedFormItem(
-                                        label: 'Author', required: false)
+                                        label: tr('author'), required: false)
                                   ],
                                   [
                                     GeneratedFormItem(
-                                        label: 'Up to Date Apps',
+                                        label: tr('upToDateApps'),
                                         type: FormItemType.bool)
                                   ],
                                   [
                                     GeneratedFormItem(
-                                        label: 'Non-Installed Apps',
+                                        label: tr('nonInstalledApps'),
                                         type: FormItemType.bool)
                                   ]
                                 ],

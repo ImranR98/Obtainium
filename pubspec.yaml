@@ -57,6 +57,7 @@ dependencies:
   package_archive_info: ^0.1.0
   android_alarm_manager_plus: ^2.1.0
   sqflite: ^2.2.0+3
+  easy_localization: ^3.0.1
 
 
 dev_dependencies:
@@ -89,9 +90,12 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  # - assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+  
+  assets:
+    - assets/translations/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:provider/provider.dart';
@@ -18,46 +19,46 @@ class RateLimitError {
 
   @override
   String toString() =>
-      'Too many requests (rate limited) - try again in $remainingMinutes minutes';
+      plural('tooManyRequestsTryAgainInMinutes', remainingMinutes);
 }
 
 class InvalidURLError extends ObtainiumError {
-  InvalidURLError(String sourceName) : super('Not a valid $sourceName App URL');
+  InvalidURLError(String sourceName)
+      : super(tr('invalidURLForSource', args: [sourceName]));
 }
 
 class NoReleasesError extends ObtainiumError {
-  NoReleasesError() : super('Could not find a suitable release');
+  NoReleasesError() : super(tr('noReleaseFound'));
 }
 
 class NoAPKError extends ObtainiumError {
-  NoAPKError() : super('Could not find a suitable release');
+  NoAPKError() : super(tr('noReleaseFound'));
 }
 
 class NoVersionError extends ObtainiumError {
-  NoVersionError() : super('Could not determine release version');
+  NoVersionError() : super(tr('noVersionFound'));
 }
 
 class UnsupportedURLError extends ObtainiumError {
-  UnsupportedURLError() : super('URL does not match a known source');
+  UnsupportedURLError() : super(tr('urlMatchesNoSource'));
 }
 
 class DowngradeError extends ObtainiumError {
-  DowngradeError() : super('Cannot install an older version of an App');
+  DowngradeError() : super(tr('cantInstallOlderVersion'));
 }
 
 class IDChangedError extends ObtainiumError {
-  IDChangedError()
-      : super('Downloaded package ID does not match existing App ID');
+  IDChangedError() : super(tr('appIdMismatch'));
 }
 
 class NotImplementedError extends ObtainiumError {
-  NotImplementedError() : super('This class has not implemented this function');
+  NotImplementedError() : super(tr('functionNotImplemented'));
 }
 
 class MultiAppMultiError extends ObtainiumError {
   Map<String, List<String>> content = {};
 
-  MultiAppMultiError() : super('Multiple Errors Placeholder', unexpected: true);
+  MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
   add(String appId, String string) {
     var tempIds = content.remove(string);
@@ -90,15 +91,15 @@ showError(dynamic e, BuildContext context) {
           return AlertDialog(
             scrollable: true,
             title: Text(e is MultiAppMultiError
-                ? 'Some Errors Occurred'
-                : 'Unexpected Error'),
+                ? tr('someErrors')
+                : tr('unexpectedError')),
             content: Text(e.toString()),
             actions: [
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(null);
                   },
-                  child: const Text('Ok')),
+                  child: Text(tr('ok'))),
             ],
           );
         });
@@ -107,7 +108,7 @@ showError(dynamic e, BuildContext context) {
 
 String list2FriendlyString(List<String> list) {
   return list.length == 2
-      ? '${list[0]} and ${list[1]}'
+      ? '${list[0]} ${tr('and')} ${list[1]}'
       : list
           .asMap()
           .entries

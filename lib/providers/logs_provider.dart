@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -85,7 +86,9 @@ create table if not exists $logTable (
     var res = await (await getDB())
         .delete(logTable, where: where.key, whereArgs: where.value);
     if (res > 0) {
-      add('Cleared $res logs (before = $before, after = $after)');
+      add(plural('clearedNLogsBeforeXAfterY', res,
+          namedArgs: {'before': before.toString(), 'after': after.toString()},
+          name: 'n'));
     }
     return res;
   }

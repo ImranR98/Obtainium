@@ -1,5 +1,6 @@
 // Exposes functions used to save/load app settings
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
@@ -109,8 +110,7 @@ class SettingsProvider with ChangeNotifier {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
       Fluttertoast.showToast(
-          msg: 'Please allow Obtainium to install Apps',
-          toastLength: Toast.LENGTH_LONG);
+          msg: tr('pleaseAllowInstallPerm'), toastLength: Toast.LENGTH_LONG);
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
         break;

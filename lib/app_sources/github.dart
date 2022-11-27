@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -15,7 +16,7 @@ class GitHub extends AppSource {
 
     additionalSourceSpecificSettingFormItems = [
       GeneratedFormItem(
-          label: 'GitHub Personal Access Token (Increases Rate Limit)',
+          label: tr('githubPATLabel'),
           id: 'github-creds',
           required: false,
           additionalValidators: [
@@ -26,13 +27,13 @@ class GitHub extends AppSource {
                         .where((element) => element.trim().isNotEmpty)
                         .length !=
                     2) {
-                  return 'PAT must be in this format: username:token';
+                  return tr('githubPATHint');
                 }
               }
               return null;
             }
           ],
-          hint: 'username:token',
+          hint: tr('githubPATFormat'),
           belowWidgets: [
             const SizedBox(
               height: 8,
@@ -43,9 +44,9 @@ class GitHub extends AppSource {
                       'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
                       mode: LaunchMode.externalApplication);
                 },
-                child: const Text(
-                  'About GitHub PATs',
-                  style: TextStyle(
+                child: Text(
+                  tr('githubPATLinkText'),
+                  style: const TextStyle(
                       decoration: TextDecoration.underline, fontSize: 12),
                 ))
           ])
@@ -53,15 +54,16 @@ class GitHub extends AppSource {
 
     additionalSourceAppSpecificFormItems = [
       [
-        GeneratedFormItem(label: 'Include prereleases', type: FormItemType.bool)
+        GeneratedFormItem(
+            label: tr('includePrereleases'), type: FormItemType.bool)
       ],
       [
         GeneratedFormItem(
-            label: 'Fallback to older releases', type: FormItemType.bool)
+            label: tr('fallbackToOlderReleases'), type: FormItemType.bool)
       ],
       [
         GeneratedFormItem(
-            label: 'Filter Release Titles by Regular Expression',
+            label: tr('filterReleaseTitlesByRegEx'),
             type: FormItemType.string,
             required: false,
             additionalValidators: [
@@ -72,7 +74,7 @@ class GitHub extends AppSource {
                 try {
                   RegExp(value);
                 } catch (e) {
-                  return 'Invalid regular expression';
+                  return tr('invalidRegEx');
                 }
                 return null;
               }
@@ -184,7 +186,7 @@ class GitHub extends AppSource {
         urlsWithDescriptions.addAll({
           e['html_url'] as String: e['description'] != null
               ? e['description'] as String
-              : 'No description'
+              : tr('noDescription')
         });
       }
       return urlsWithDescriptions;

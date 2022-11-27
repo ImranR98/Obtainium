@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -120,13 +121,6 @@ preStandardizeUrl(String url) {
   return url;
 }
 
-const String couldNotFindReleases = 'Could not find a suitable release';
-const String couldNotFindLatestVersion =
-    'Could not determine latest release version';
-String notValidURL(String sourceName) {
-  return 'Not a valid $sourceName App URL';
-}
-
 const String noAPKFound = 'No APK found';
 
 List<String> getLinksFromParsedHTML(
@@ -164,7 +158,7 @@ class AppSource {
   // Some additional data may be needed for Apps regardless of Source
   final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
     GeneratedFormItem(
-        label: 'Track-Only',
+        label: tr('trackOnly'),
         type: FormItemType.bool,
         key: 'trackOnlyFormItemKey')
   ];
@@ -192,8 +186,8 @@ class AppSource {
 }
 
 ObtainiumError getObtainiumHttpError(Response res) {
-  return ObtainiumError(
-      res.reasonPhrase ?? 'Error ${res.statusCode.toString()}');
+  return ObtainiumError(res.reasonPhrase ??
+      tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
 }
 
 abstract class MassAppUrlSource {
@@ -254,6 +248,7 @@ class SourceProvider {
     }
     for (int i = 0; i < parts.length - 1; i++) {
       if (RegExp('.*[A-Z].*').hasMatch(parts[i])) {
+        // TODO: RegEx won't work for non-eng chars
         return false;
       }
     }

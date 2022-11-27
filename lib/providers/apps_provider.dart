@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -105,7 +106,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (response.statusCode != 200) {
         tempDownloadedFile.deleteSync();
-        throw response.reasonPhrase ?? 'Unknown Error';
+        throw response.reasonPhrase ?? tr('unexpectedError');
       }
       tempDownloadedFile.renameSync(downloadedFile.path);
     }
@@ -127,7 +128,8 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
       } else if ((prog == 25 || prog == 50 || prog == 75) && prevProg != prog) {
         Fluttertoast.showToast(
-            msg: 'Progress: $prog%', toastLength: Toast.LENGTH_SHORT);
+            msg: tr('percentProgress', args: [prog.toString()]),
+            toastLength: Toast.LENGTH_SHORT);
       }
       prevProg = prog;
     });
@@ -272,7 +274,7 @@ class AppsProvider with ChangeNotifier {
     // 2. That cannot be installed silently (IF no buildContext was given for interactive install)
     for (var id in appIds) {
       if (apps[id] == null) {
-        throw ObtainiumError('App not found');
+        throw ObtainiumError(tr('appNotFound'));
       }
       String? apkUrl;
       if (!apps[id]!.app.trackOnly) {
@@ -413,6 +415,7 @@ class AppsProvider with ChangeNotifier {
     if (installedInfo != null && app.installedVersion == null) {
       if (app.latestVersion.characters
               .where((p0) => [
+                    // TODO: Won't work for other charsets
                     '0',
                     '1',
                     '2',
@@ -601,13 +604,13 @@ class AppsProvider with ChangeNotifier {
 
   Future<String> exportApps() async {
     Directory? exportDir = Directory('/storage/emulated/0/Download');
-    String path = 'Downloads';
+    String path = 'Downloads'; // TODO: Is this true on non-english phones?
     if (!exportDir.existsSync()) {
       exportDir = await getExternalStorageDirectory();
       path = exportDir!.path;
     }
     File export = File(
-        '${exportDir.path}/obtainium-export-${DateTime.now().millisecondsSinceEpoch}.json');
+        '${exportDir.path}/${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().millisecondsSinceEpoch}.json');
     export.writeAsStringSync(
         jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
     return path;
@@ -643,7 +646,7 @@ class AppsProvider with ChangeNotifier {
     Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
-        errorsMap.addAll({app.id: 'App already added'});
+        errorsMap.addAll({app.id: tr('appAlreadyAdded')});
       } else {
         await saveApps([app]);
       }
@@ -673,9 +676,9 @@ class _APKPickerState extends State<APKPicker> {
     apkUrl ??= widget.initVal;
     return AlertDialog(
       scrollable: true,
-      title: const Text('Pick an APK'),
+      title: Text(tr('pickAnAPK')),
       content: Column(children: [
-        Text('${widget.app.name} has more than one package:'),
+        Text(tr('appHasMoreThanOnePackage', args: [widget.app.name])),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map(
           (u) => RadioListTile<String>(
@@ -697,7 +700,11 @@ class _APKPickerState extends State<APKPicker> {
           ),
         if (widget.archs != null)
           Text(
-            'Note:\nYour device supports the ${widget.archs!.length == 1 ? '\'${widget.archs![0]}\' CPU architecture.' : 'following CPU architectures: ${list2FriendlyString(widget.archs!.map((e) => '\'$e\'').toList())}.'}',
+            widget.archs!.length == 1
+                ? tr('deviceSupportsXArch', args: [widget.archs![0]])
+                : tr('deviceSupportsFollowingArchs') +
+                    list2FriendlyString(
+                        widget.archs!.map((e) => '\'$e\'').toList()),
             style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
           ),
       ]),
@@ -706,13 +713,13 @@ class _APKPickerState extends State<APKPicker> {
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: const Text('Cancel')),
+            child: Text(tr('cancel'))),
         TextButton(
             onPressed: () {
               HapticFeedback.selectionClick();
               Navigator.of(context).pop(apkUrl);
             },
-            child: const Text('Continue'))
+            child: Text(tr('continue')))
       ],
     );
   }
@@ -734,21 +741,23 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: const Text('Warning'),
-      content: Text(
-          'The App source is \'${Uri.parse(widget.sourceUrl).host}\' but the release package comes from \'${Uri.parse(widget.apkUrl).host}\'. Continue?'),
+      title: Text(tr('warning')),
+      content: Text(tr('sourceIsXButPackageFromYPrompt', args: [
+        Uri.parse(widget.sourceUrl).host,
+        Uri.parse(widget.apkUrl).host
+      ])),
       actions: [
         TextButton(
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: const Text('Cancel')),
+            child: Text(tr('cancel'))),
         TextButton(
             onPressed: () {
               HapticFeedback.selectionClick();
               Navigator.of(context).pop(true);
             },
-            child: const Text('Continue'))
+            child: Text(tr('continue')))
       ],
     );
   }
