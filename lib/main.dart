@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 const String currentVersion = '0.8.1';
 const String currentReleaseTag =
@@ -98,6 +99,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
@@ -112,7 +114,11 @@ void main() async {
       Provider(create: (context) => NotificationsProvider()),
       Provider(create: (context) => LogsProvider())
     ],
-    child: const Obtainium(),
+    child: EasyLocalization(
+        supportedLocales: const [Locale('en')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('en'),
+        child: const Obtainium()),
   ));
 }
 
@@ -195,6 +201,9 @@ class _ObtainiumState extends State<Obtainium> {
       }
       return MaterialApp(
           title: 'Obtainium',
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
           theme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.dark
