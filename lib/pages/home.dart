@@ -26,8 +26,8 @@ class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
 
   List<NavigationPageItem> pages = [
-    NavigationPageItem(
-        tr('apps'), Icons.apps, AppsPage(key: GlobalKey<AppsPageState>())),
+    NavigationPageItem(tr('appsString'), Icons.apps,
+        AppsPage(key: GlobalKey<AppsPageState>())),
     NavigationPageItem(tr('addApp'), Icons.add, const AddAppPage()),
     NavigationPageItem(
         tr('importExport'), Icons.import_export, const ImportExportPage()),

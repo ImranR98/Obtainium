@@ -52,7 +52,7 @@
     "supportedSourcesBelow": "Supported Sources:",
     "trackOnlyInBrackets": "(Track-Only)",
     "searchableInBrackets": "(Searchable)",
-    "apps": "Apps",
+    "appsString": "Apps",
     "noApps": "No Apps",
     "noAppsForFilter": "No Apps for Filter",
     "byX": "By {}",
@@ -158,7 +158,7 @@
     "xWasRemovedDueToErrorY": "{} was removed due to this error: {}",
     "completeAppInstallation": "Complete App Installation",
     "obtainiumMustBeOpenToInstallApps": "Obtainium must be open to install Apps",
-    "completeAppInstallationNotifDescription": "Asks the user to return to Obtanium to finish installing an App",
+    "completeAppInstallationNotifDescription": "Asks the user to return to Obtainium to finish installing an App",
     "checkingForUpdates": "Checking for Updates",
     "checkingForUpdatesNotifDescription": "Transient notification that appears when checking for updates",
     "pleaseAllowInstallPerm": "Please allow Obtainium to install Apps",
@@ -176,7 +176,7 @@
         "one": "BG update checking found {} update - will notify user if needed",
         "other": "BG update checking found {} updates - will notify user if needed"
     },
-    "app": {
+    "apps": {
         "one": "{} App",
         "other": "{} Apps"
     },

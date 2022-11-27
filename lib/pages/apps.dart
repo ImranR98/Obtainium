@@ -192,7 +192,7 @@ class AppsPageState extends State<AppsPage> {
             });
           },
           child: CustomScrollView(slivers: <Widget>[
-            CustomAppBar(title: tr('apps')),
+            CustomAppBar(title: tr('appsString')),
             if (appsProvider.loadingApps || sortedApps.isEmpty)
               SliverFillRemaining(
                   child: Center(
@@ -356,7 +356,7 @@ class AppsPageState extends State<AppsPage> {
                                   message: tr(
                                       'xWillBeRemovedButRemainInstalled',
                                       args: [
-                                        plural('app', selectedApps.length)
+                                        plural('apps', selectedApps.length)
                                       ]),
                                 );
                               }).then((values) {
@@ -383,7 +383,7 @@ class AppsPageState extends State<AppsPage> {
                             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
                                   label: tr('updateX', args: [
-                                    plural('app',
+                                    plural('apps',
                                         existingUpdateIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
@@ -393,7 +393,7 @@ class AppsPageState extends State<AppsPage> {
                             if (newInstallIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
                                   label: tr('installX', args: [
-                                    plural('app',
+                                    plural('apps',
                                         newInstallIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
@@ -404,7 +404,7 @@ class AppsPageState extends State<AppsPage> {
                             if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
                               formInputs.add(GeneratedFormItem(
                                   label: tr('markXTrackOnlyAsUpdated', args: [
-                                    plural('app',
+                                    plural('apps',
                                         trackOnlyUpdateIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
@@ -421,7 +421,7 @@ class AppsPageState extends State<AppsPage> {
                                       trackOnlyUpdateIdsAllOrSelected.length;
                                   return GeneratedFormModal(
                                     title: tr('changeX',
-                                        args: [plural('app', totalApps)]),
+                                        args: [plural('apps', totalApps)]),
                                     items: formInputs.map((e) => [e]).toList(),
                                     defaultValues: defaultValues,
                                     initValid: true,

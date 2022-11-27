@@ -100,7 +100,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   .then((value) {
                                                 showError(
                                                     tr('importedX', args: [
-                                                      plural('app', value)
+                                                      plural('apps', value)
                                                     ]),
                                                     context);
                                               });
@@ -187,7 +187,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         if (errors.isEmpty) {
                                           showError(
                                               tr('importedX', args: [
-                                                plural('app', urls.length)
+                                                plural('apps', urls.length)
                                               ]),
                                               context);
                                         } else {
