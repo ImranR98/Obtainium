@@ -420,7 +420,8 @@ class AppsProvider with ChangeNotifier {
       app.installedVersion = installedInfo.versionName;
       modded = true;
     } else if (installedInfo?.versionName != app.installedVersion &&
-        app.enhancedVersionDetection) {
+        app.enhancedVersionDetection &&
+        !app.trackOnly) {
       app.installedVersion = installedInfo?.versionName;
       modded = true;
     }
