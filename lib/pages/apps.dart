@@ -258,50 +258,60 @@ class AppsPageState extends State<AppsPage> {
                                 .toString() ??
                             '100'
                       ]))
-                    : (sortedApps[index].app.installedVersion != null &&
-                            sortedApps[index].app.installedVersion !=
-                                sortedApps[index].app.latestVersion
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(appsProvider.areDownloadsRunning()
-                                  ? tr('pleaseWait')
-                                  : '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}'),
-                              SourceProvider()
-                                          .getSource(sortedApps[index].app.url)
-                                          .changeLogPageFromStandardUrl(
-                                              sortedApps[index].app.url) ==
-                                      null
-                                  ? const SizedBox()
-                                  : GestureDetector(
-                                      onTap: () {
-                                        launchUrlString(
-                                            SourceProvider()
-                                                .getSource(
-                                                    sortedApps[index].app.url)
-                                                .changeLogPageFromStandardUrl(
-                                                    sortedApps[index].app.url)!,
-                                            mode:
-                                                LaunchMode.externalApplication);
-                                      },
-                                      child: const Text(
-                                        'See Changes',
-                                        style: TextStyle(
-                                            fontStyle: FontStyle.italic,
-                                            decoration:
-                                                TextDecoration.underline),
-                                      )),
-                            ],
-                          )
-                        : SingleChildScrollView(
-                            child: SizedBox(
-                                width: 80,
-                                child: Text(
-                                  '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
-                                  overflow: TextOverflow.fade,
-                                  textAlign: TextAlign.end,
-                                )))),
+                    : (Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          SingleChildScrollView(
+                              child: SizedBox(
+                                  width: 80,
+                                  child: Text(
+                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                    overflow: TextOverflow.fade,
+                                    textAlign: TextAlign.end,
+                                  ))),
+                          sortedApps[index].app.installedVersion != null &&
+                                  sortedApps[index].app.installedVersion !=
+                                      sortedApps[index].app.latestVersion
+                              ? GestureDetector(
+                                  onTap: SourceProvider()
+                                              .getSource(
+                                                  sortedApps[index].app.url)
+                                              .changeLogPageFromStandardUrl(
+                                                  sortedApps[index].app.url) ==
+                                          null
+                                      ? null
+                                      : () {
+                                          launchUrlString(
+                                              SourceProvider()
+                                                  .getSource(
+                                                      sortedApps[index].app.url)
+                                                  .changeLogPageFromStandardUrl(
+                                                      sortedApps[index]
+                                                          .app
+                                                          .url)!,
+                                              mode: LaunchMode
+                                                  .externalApplication);
+                                        },
+                                  child: Text(
+                                    '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                    style: TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        decoration: SourceProvider()
+                                                    .getSource(sortedApps[index]
+                                                        .app
+                                                        .url)
+                                                    .changeLogPageFromStandardUrl(
+                                                        sortedApps[index]
+                                                            .app
+                                                            .url) ==
+                                                null
+                                            ? TextDecoration.none
+                                            : TextDecoration.underline),
+                                  ))
+                              : const SizedBox(),
+                        ],
+                      )),
                 onTap: () {
                   if (selectedApps.isNotEmpty) {
                     toggleAppSelected(sortedApps[index].app);
