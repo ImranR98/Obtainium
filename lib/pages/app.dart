@@ -141,7 +141,9 @@ class _AppPageState extends State<AppPage> {
                       children: [
                         if (app?.app.installedVersion != null &&
                             app?.app.trackOnly == false &&
-                            app?.app.installedVersion != app?.app.latestVersion)
+                            app?.app.installedVersion !=
+                                app?.app.latestVersion &&
+                            app?.app.enhancedVersionDetection != true)
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null

@@ -533,8 +533,8 @@ class AppsPageState extends State<AppsPage> {
                                                                               .selectionClick();
                                                                           appsProvider
                                                                               .saveApps(selectedApps.map((a) {
-                                                                            if (a.installedVersion !=
-                                                                                null) {
+                                                                            if (a.installedVersion != null &&
+                                                                                !a.enhancedVersionDetection) {
                                                                               a.installedVersion = a.latestVersion;
                                                                             }
                                                                             return a;
