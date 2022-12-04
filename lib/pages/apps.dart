@@ -219,6 +219,9 @@ class AppsPageState extends State<AppsPage> {
             SliverList(
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
+              String? changesUrl = SourceProvider()
+                  .getSource(sortedApps[index].app.url)
+                  .changeLogPageFromStandardUrl(sortedApps[index].app.url);
               return ListTile(
                 tileColor: sortedApps[index].app.pinned
                     ? Colors.grey.withOpacity(0.1)
@@ -274,22 +277,10 @@ class AppsPageState extends State<AppsPage> {
                                   sortedApps[index].app.installedVersion !=
                                       sortedApps[index].app.latestVersion
                               ? GestureDetector(
-                                  onTap: SourceProvider()
-                                              .getSource(
-                                                  sortedApps[index].app.url)
-                                              .changeLogPageFromStandardUrl(
-                                                  sortedApps[index].app.url) ==
-                                          null
+                                  onTap: changesUrl == null
                                       ? null
                                       : () {
-                                          launchUrlString(
-                                              SourceProvider()
-                                                  .getSource(
-                                                      sortedApps[index].app.url)
-                                                  .changeLogPageFromStandardUrl(
-                                                      sortedApps[index]
-                                                          .app
-                                                          .url)!,
+                                          launchUrlString(changesUrl,
                                               mode: LaunchMode
                                                   .externalApplication);
                                         },
@@ -297,15 +288,7 @@ class AppsPageState extends State<AppsPage> {
                                     '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
                                     style: TextStyle(
                                         fontStyle: FontStyle.italic,
-                                        decoration: SourceProvider()
-                                                    .getSource(sortedApps[index]
-                                                        .app
-                                                        .url)
-                                                    .changeLogPageFromStandardUrl(
-                                                        sortedApps[index]
-                                                            .app
-                                                            .url) ==
-                                                null
+                                        decoration: changesUrl == null
                                             ? TextDecoration.none
                                             : TextDecoration.underline),
                                   ))
