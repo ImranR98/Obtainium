@@ -182,7 +182,7 @@ packages:
       name: file_picker
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.2.2"
+    version: "5.2.3"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -194,7 +194,7 @@ packages:
       name: flutter_fgbg
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.1"
+    version: "0.2.2"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -356,7 +356,7 @@ packages:
       name: mime
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.2"
+    version: "1.0.3"
   nested:
     dependency: transitive
     description:
@@ -599,7 +599,7 @@ packages:
       name: sqflite
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.0+3"
+    version: "2.2.1"
   sqflite_common:
     dependency: transitive
     description:
