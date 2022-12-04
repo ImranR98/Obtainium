@@ -30,12 +30,10 @@ class APKDetails {
   late List<String> apkUrls;
   late bool isStandardVersionName;
 
-  APKDetails(this.version, this.apkUrls) {
+  APKDetails(version, this.apkUrls) {
     var standardVersion = extractStandardVersionName(version);
     isStandardVersionName = standardVersion != null;
-    if (isStandardVersionName) {
-      version = standardVersion!;
-    }
+    this.version = standardVersion ?? version;
   }
 }
 
@@ -201,8 +199,10 @@ ObtainiumError getObtainiumHttpError(Response res) {
       tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
 }
 
-String? extractStandardVersionName(String version) {
-  var match = RegExp('[0-9]+(\\.[0-9]+)*').firstMatch(version);
+String? extractStandardVersionName(String version, {bool strict = false}) {
+  var match = RegExp(
+          '${strict ? '^' : ''}[0-9]+(\\.[0-9]+)*(-(alpha|beta)\\+?[0-9]+)?${strict ? '\$' : ''}')
+      .firstMatch(version);
   return match != null ? version.substring(match.start, match.end) : null;
 }
 
@@ -302,7 +302,10 @@ class SourceProvider {
         DateTime.now(),
         pinned,
         trackOnly,
-        apk.isStandardVersionName);
+        apk.isStandardVersionName &&
+            (installedVersion == null ||
+                extractStandardVersionName(installedVersion, strict: true) !=
+                    null));
   }
 
   // Returns errors in [results, errors] instead of throwing them
