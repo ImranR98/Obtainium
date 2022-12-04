@@ -73,7 +73,7 @@
     "changeX": "Change {}",
     "installUpdateApps": "Install/Update Apps",
     "installUpdateSelectedApps": "Install/Update Selected Apps",
-    "onlyAppliesToInstalledAndOutdatedApps": "'Only applies to installed but out of date Apps",
+    "onlyAppliesToInstalledAndOutdatedApps": "Only applies to installed but out of date Apps",
     "markXSelectedAppsAsUpdated": "Mark {} Selected Apps as Updated?",
     "no": "No",
     "yes": "Yes",
