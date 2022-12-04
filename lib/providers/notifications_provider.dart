@@ -13,9 +13,11 @@ class ObtainiumNotification {
   late String channelName;
   late String channelDescription;
   Importance importance;
+  bool onlyAlertOnce;
 
   ObtainiumNotification(this.id, this.title, this.message, this.channelCode,
-      this.channelName, this.channelDescription, this.importance);
+      this.channelName, this.channelDescription, this.importance,
+      {this.onlyAlertOnce = false});
 }
 
 class UpdateNotification extends ObtainiumNotification {
@@ -70,6 +72,21 @@ class AppsRemovedNotification extends ObtainiumNotification {
       message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
     }
     message = message.trim();
+  }
+}
+
+class DownloadNotification extends ObtainiumNotification {
+  DownloadNotification(String appName, int progPercent)
+      : super(
+            appName.hashCode,
+            'Downloading $appName',
+            '$progPercent%',
+            'APP_DOWNLOADING',
+            'Downloading App',
+            'Notifies the user of the progress in downloading an App',
+            Importance.defaultImportance,
+            onlyAlertOnce: true) {
+    message = tr('percentProgress', args: [progPercent.toString()]);
   }
 }
 
@@ -128,7 +145,9 @@ class NotificationsProvider {
       String channelName,
       String channelDescription,
       Importance importance,
-      {bool cancelExisting = false}) async {
+      {bool cancelExisting = false,
+      int? progPercent,
+      bool onlyAlertOnce = false}) async {
     if (cancelExisting) {
       await cancel(id);
     }
@@ -144,12 +163,16 @@ class NotificationsProvider {
                 channelDescription: channelDescription,
                 importance: importance,
                 priority: importanceToPriority[importance]!,
-                groupKey: 'dev.imranr.obtainium.$channelCode')));
+                groupKey: 'dev.imranr.obtainium.$channelCode',
+                progress: progPercent ?? 0,
+                maxProgress: 100,
+                showProgress: progPercent != null,
+                onlyAlertOnce: onlyAlertOnce)));
   }
 
   Future<void> notify(ObtainiumNotification notif,
           {bool cancelExisting = false}) =>
       notifyRaw(notif.id, notif.title, notif.message, notif.channelCode,
           notif.channelName, notif.channelDescription, notif.importance,
-          cancelExisting: cancelExisting);
+          cancelExisting: cancelExisting, onlyAlertOnce: notif.onlyAlertOnce);
 }

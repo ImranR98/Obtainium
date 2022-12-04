@@ -113,12 +113,16 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
-  Future<DownloadedApk> downloadApp(App app) async {
+  Future<DownloadedApk> downloadApp(App app, BuildContext? context) async {
     var fileName =
         '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
     String downloadUrl = await SourceProvider()
         .getSource(app.url)
         .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
+    NotificationsProvider? notificationsProvider =
+        context?.read<NotificationsProvider>();
+    var notif = DownloadNotification(app.name, 100);
+    notificationsProvider?.cancel(notif.id);
     int? prevProg;
     File downloadedFile =
         await downloadFile(downloadUrl, fileName, (double? progress) {
@@ -126,13 +130,14 @@ class AppsProvider with ChangeNotifier {
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = progress;
         notifyListeners();
-      } else if ((prog == 25 || prog == 50 || prog == 75) && prevProg != prog) {
-        Fluttertoast.showToast(
-            msg: tr('percentProgress', args: [prog.toString()]),
-            toastLength: Toast.LENGTH_SHORT);
+      }
+      notif = DownloadNotification(app.name, prog ?? 100);
+      if (prog != null && prevProg != prog) {
+        notificationsProvider?.notify(notif);
       }
       prevProg = prog;
     });
+    notificationsProvider?.cancel(notif.id);
     // Delete older versions of the APK if any
     for (var file in downloadedFile.parent.listSync()) {
       var fn = file.path.split('/').last;
@@ -305,7 +310,7 @@ class AppsProvider with ChangeNotifier {
     List<DownloadedApk?> downloadedFiles =
         await Future.wait(appsToInstall.map((id) async {
       try {
-        return await downloadApp(apps[id]!.app);
+        return await downloadApp(apps[id]!.app, context);
       } catch (e) {
         errors.add(id, e.toString());
       }

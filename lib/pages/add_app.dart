@@ -107,7 +107,8 @@ class _AddAppPageState extends State<AddAppPage> {
               throw ObtainiumError(tr('cancelled'));
             }
             app.preferredApkIndex = app.apkUrls.indexOf(apkUrl);
-            var downloadedApk = await appsProvider.downloadApp(app);
+            // ignore: use_build_context_synchronously
+            var downloadedApk = await appsProvider.downloadApp(app, context);
             app.id = downloadedApk.appId;
           }
           if (appsProvider.apps.containsKey(app.id)) {
