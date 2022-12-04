@@ -28,8 +28,15 @@ class AppNames {
 class APKDetails {
   late String version;
   late List<String> apkUrls;
+  late bool isStandardVersionName;
 
-  APKDetails(this.version, this.apkUrls);
+  APKDetails(this.version, this.apkUrls) {
+    var standardVersion = extractStandardVersionName(version);
+    isStandardVersionName = standardVersion != null;
+    if (isStandardVersionName) {
+      version = standardVersion!;
+    }
+  }
 }
 
 class App {
@@ -45,6 +52,7 @@ class App {
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   bool trackOnly = false;
+  bool enhancedVersionDetection = true;
   App(
       this.id,
       this.url,
@@ -57,7 +65,8 @@ class App {
       this.additionalData,
       this.lastUpdateCheck,
       this.pinned,
-      this.trackOnly);
+      this.trackOnly,
+      this.enhancedVersionDetection);
 
   @override
   String toString() {
@@ -86,7 +95,8 @@ class App {
           ? null
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
       json['pinned'] ?? false,
-      json['trackOnly'] ?? false);
+      json['trackOnly'] ?? false,
+      json['enhancedVersionDetection'] ?? true);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -100,7 +110,8 @@ class App {
         'additionalData': jsonEncode(additionalData),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
-        'trackOnly': trackOnly
+        'trackOnly': trackOnly,
+        'enhancedVersionDetection': enhancedVersionDetection
       };
 }
 
@@ -188,6 +199,11 @@ class AppSource {
 ObtainiumError getObtainiumHttpError(Response res) {
   return ObtainiumError(res.reasonPhrase ??
       tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
+}
+
+String? extractStandardVersionName(String version) {
+  var match = RegExp('[0-9]+(\\.[0-9]+)*').firstMatch(version);
+  return match != null ? version.substring(match.start, match.end) : null;
 }
 
 abstract class MassAppUrlSource {
@@ -285,7 +301,8 @@ class SourceProvider {
         additionalData,
         DateTime.now(),
         pinned,
-        trackOnly);
+        trackOnly,
+        apk.isStandardVersionName);
   }
 
   // Returns errors in [results, errors] instead of throwing them
