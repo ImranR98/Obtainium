@@ -52,7 +52,7 @@ class App {
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   bool trackOnly = false;
-  bool enhancedVersionDetection = true;
+  bool enhancedVersionDetection = false;
   App(
       this.id,
       this.url,
@@ -96,7 +96,7 @@ class App {
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
       json['pinned'] ?? false,
       json['trackOnly'] ?? false,
-      json['enhancedVersionDetection'] ?? true);
+      json['enhancedVersionDetection'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
