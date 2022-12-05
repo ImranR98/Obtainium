@@ -17,7 +17,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-const String currentVersion = '0.8.2';
+const String currentVersion = '0.8.3';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
