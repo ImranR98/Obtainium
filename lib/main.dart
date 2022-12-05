@@ -29,6 +29,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   logs.add(tr('startedBgUpdateTask'));
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   await AndroidAlarmManager.initialize();
   DateTime? ignoreAfter = ignoreAfterMicroseconds != null
       ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
