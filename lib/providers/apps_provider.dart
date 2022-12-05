@@ -416,7 +416,15 @@ class AppsProvider with ChangeNotifier {
       app.installedVersion = null;
       modded = true;
     } else if (installedInfo != null && app.installedVersion == null) {
-      app.installedVersion = installedInfo.versionName;
+      if (app.enhancedVersionDetection) {
+        app.installedVersion = installedInfo.versionName;
+      } else {
+        if (app.latestVersion.contains(installedInfo.versionName!)) {
+          app.installedVersion = app.latestVersion;
+        } else {
+          app.installedVersion = installedInfo.versionName;
+        }
+      }
       modded = true;
     } else if (installedInfo?.versionName != app.installedVersion &&
         app.enhancedVersionDetection &&

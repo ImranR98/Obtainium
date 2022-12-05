@@ -27,13 +27,12 @@ class AppNames {
 
 class APKDetails {
   late String version;
+  late String versionFromSource;
   late List<String> apkUrls;
-  late bool isStandardVersionName;
 
-  APKDetails(version, this.apkUrls) {
-    var standardVersion = extractStandardVersionName(version);
-    isStandardVersionName = standardVersion != null;
-    this.version = standardVersion ?? version;
+  APKDetails(this.versionFromSource, this.apkUrls) {
+    version =
+        extractStandardVersionName(versionFromSource) ?? versionFromSource;
   }
 }
 
@@ -201,7 +200,7 @@ ObtainiumError getObtainiumHttpError(Response res) {
 
 String? extractStandardVersionName(String version, {bool strict = false}) {
   var match = RegExp(
-          '${strict ? '^' : ''}[0-9]+(\\.[0-9]+)+(-(alpha|beta)\\+?[0-9]+)?${strict ? '\$' : ''}')
+          '${strict ? '^' : ''}[0-9]+(\\.[0-9]+)+(-(alpha|beta|ocs)([0-9]+|\\+[0-9]+)?)?${strict ? '\$' : ''}')
       .firstMatch(version);
   return match != null ? version.substring(match.start, match.end) : null;
 }
@@ -284,6 +283,12 @@ class SourceProvider {
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
+    bool enhancedVersionDetection = apk.version != apk.versionFromSource &&
+        installedVersion != null &&
+        extractStandardVersionName(installedVersion, strict: true) != null;
+    if (!enhancedVersionDetection) {
+      apk.version = apk.versionFromSource;
+    }
     String apkVersion = apk.version.replaceAll('/', '-');
     return App(
         id ??
@@ -302,10 +307,7 @@ class SourceProvider {
         DateTime.now(),
         pinned,
         trackOnly,
-        apk.isStandardVersionName &&
-            (installedVersion == null ||
-                extractStandardVersionName(installedVersion, strict: true) !=
-                    null));
+        enhancedVersionDetection);
   }
 
   // Returns errors in [results, errors] instead of throwing them
