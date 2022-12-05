@@ -201,9 +201,9 @@ ObtainiumError getObtainiumHttpError(Response res) {
 }
 
 String? extractStandardVersionName(String version, {bool strict = false}) {
-  var match = RegExp(
-          '${strict ? '^' : ''}[0-9]+(\\.[0-9]+)+(-(alpha|beta|ocs)([0-9]+|\\+[0-9]+)?)?${strict ? '\$' : ''}')
-      .firstMatch(version);
+  var match =
+      RegExp('${strict ? '^' : ''}[0-9]+(\\.[0-9]+)+${strict ? '\$' : ''}')
+          .firstMatch(version);
   return match != null ? version.substring(match.start, match.end) : null;
 }
 
