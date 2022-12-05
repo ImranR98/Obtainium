@@ -28,11 +28,13 @@ class AppNames {
 class APKDetails {
   late String version;
   late String versionFromSource;
+  late bool isStandardVersion;
   late List<String> apkUrls;
 
   APKDetails(this.versionFromSource, this.apkUrls) {
-    version =
-        extractStandardVersionName(versionFromSource) ?? versionFromSource;
+    var temp = extractStandardVersionName(versionFromSource);
+    this.isStandardVersion = temp != null;
+    this.version = temp ?? versionFromSource;
   }
 }
 
@@ -283,7 +285,7 @@ class SourceProvider {
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
-    bool enhancedVersionDetection = apk.version != apk.versionFromSource &&
+    bool enhancedVersionDetection = apk.isStandardVersion &&
         installedVersion != null &&
         extractStandardVersionName(installedVersion, strict: true) != null;
     if (!enhancedVersionDetection) {
