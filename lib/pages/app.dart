@@ -114,7 +114,7 @@ class _AppPageState extends State<AppPage> {
                           height: 32,
                         ),
                         Text(
-                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
+                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}${app?.app.enhancedVersionDetection == true ? '\n\nThis App has enhanced version detection.' : ''}',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontStyle: FontStyle.italic, fontSize: 12),

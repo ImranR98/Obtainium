@@ -33,8 +33,8 @@ class APKDetails {
 
   APKDetails(this.versionFromSource, this.apkUrls) {
     var temp = extractStandardVersionName(versionFromSource);
-    this.isStandardVersion = temp != null;
-    this.version = temp ?? versionFromSource;
+    isStandardVersion = temp != null;
+    version = temp ?? versionFromSource;
   }
 }
 
