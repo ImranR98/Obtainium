@@ -16,17 +16,49 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+// ignore: implementation_imports
+import 'package:easy_localization/src/easy_localization_controller.dart';
+// ignore: implementation_imports
+import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.8.4';
+const String currentVersion = '0.8.5';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const int bgUpdateCheckAlarmId = 666;
 
+const supportedLocales = [Locale('en')];
+const fallbackLocale = Locale('en');
+const localeDir = 'assets/translations';
+
+Future<void> loadTranslations() async {
+  // See easy_localization/issues/210
+  await EasyLocalizationController.initEasyLocation();
+  final controller = EasyLocalizationController(
+    saveLocale: true,
+    fallbackLocale: fallbackLocale,
+    supportedLocales: supportedLocales,
+    assetLoader: const RootBundleAssetLoader(),
+    useOnlyLangCode: false,
+    useFallbackTranslations: true,
+    path: localeDir,
+    onLoadError: (FlutterError e) {
+      throw e;
+    },
+  );
+  await controller.loadTranslations();
+  Localization.load(controller.locale,
+      translations: controller.translations,
+      fallbackTranslations: controller.fallbackTranslations);
+}
+
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+
+  await loadTranslations();
+
   LogsProvider logs = LogsProvider();
   logs.add(tr('startedBgUpdateTask'));
   int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
@@ -116,9 +148,9 @@ void main() async {
       Provider(create: (context) => LogsProvider())
     ],
     child: EasyLocalization(
-        supportedLocales: const [Locale('en')],
-        path: 'assets/translations',
-        fallbackLocale: const Locale('en'),
+        supportedLocales: supportedLocales,
+        path: localeDir,
+        fallbackLocale: fallbackLocale,
         child: const Obtainium()),
   ));
 }
