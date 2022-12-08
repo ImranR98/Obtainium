@@ -84,7 +84,7 @@ class DownloadNotification extends ObtainiumNotification {
             'APP_DOWNLOADING',
             'Downloading App',
             'Notifies the user of the progress in downloading an App',
-            Importance.defaultImportance,
+            Importance.low,
             onlyAlertOnce: true) {
     message = tr('percentProgress', args: [progPercent.toString()]);
   }
