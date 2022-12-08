@@ -206,11 +206,11 @@
         "other": "Cleared {n} logs (before = {before}, after = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} and {} more app have updated.",
+        "one": "{} and 1 more app have updates.",
         "other": "{} and {} more apps have updates."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} and {} more app were updated.",
+        "one": "{} and 1 more app were updated.",
         "other": "{} and {} more apps were updated."
     }
 }
