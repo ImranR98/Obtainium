@@ -114,7 +114,7 @@ class _AppPageState extends State<AppPage> {
                           height: 32,
                         ),
                         Text(
-                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}${app?.app.enhancedVersionDetection == true ? '\n\nThis App has enhanced version detection.' : ''}',
+                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontStyle: FontStyle.italic, fontSize: 12),
@@ -141,9 +141,7 @@ class _AppPageState extends State<AppPage> {
                       children: [
                         if (app?.app.installedVersion != null &&
                             app?.app.trackOnly == false &&
-                            app?.app.installedVersion !=
-                                app?.app.latestVersion &&
-                            app?.app.enhancedVersionDetection != true)
+                            app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null

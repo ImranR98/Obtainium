@@ -27,15 +27,9 @@ class AppNames {
 
 class APKDetails {
   late String version;
-  late String versionFromSource;
-  late bool isStandardVersion;
   late List<String> apkUrls;
 
-  APKDetails(this.versionFromSource, this.apkUrls) {
-    var temp = extractStandardVersionName(versionFromSource);
-    isStandardVersion = temp != null;
-    version = temp ?? versionFromSource;
-  }
+  APKDetails(this.version, this.apkUrls);
 }
 
 class App {
@@ -51,7 +45,6 @@ class App {
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   bool trackOnly = false;
-  bool enhancedVersionDetection = false;
   App(
       this.id,
       this.url,
@@ -64,8 +57,7 @@ class App {
       this.additionalData,
       this.lastUpdateCheck,
       this.pinned,
-      this.trackOnly,
-      this.enhancedVersionDetection);
+      this.trackOnly);
 
   @override
   String toString() {
@@ -94,8 +86,7 @@ class App {
           ? null
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
       json['pinned'] ?? false,
-      json['trackOnly'] ?? false,
-      json['enhancedVersionDetection'] ?? false);
+      json['trackOnly'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -109,8 +100,7 @@ class App {
         'additionalData': jsonEncode(additionalData),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
-        'trackOnly': trackOnly,
-        'enhancedVersionDetection': enhancedVersionDetection
+        'trackOnly': trackOnly
       };
 }
 
@@ -200,13 +190,6 @@ ObtainiumError getObtainiumHttpError(Response res) {
       tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
 }
 
-String? extractStandardVersionName(String version, {bool strict = false}) {
-  var match =
-      RegExp('${strict ? '^' : ''}[0-9]+(\\.[0-9]+)+${strict ? '\$' : ''}')
-          .firstMatch(version);
-  return match != null ? version.substring(match.start, match.end) : null;
-}
-
 abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
@@ -285,12 +268,6 @@ class SourceProvider {
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
-    bool enhancedVersionDetection = apk.isStandardVersion &&
-        installedVersion != null &&
-        extractStandardVersionName(installedVersion, strict: true) != null;
-    if (!enhancedVersionDetection) {
-      apk.version = apk.versionFromSource;
-    }
     String apkVersion = apk.version.replaceAll('/', '-');
     return App(
         id ??
@@ -308,8 +285,7 @@ class SourceProvider {
         additionalData,
         DateTime.now(),
         pinned,
-        trackOnly,
-        enhancedVersionDetection);
+        trackOnly);
   }
 
   // Returns errors in [results, errors] instead of throwing them

@@ -9,6 +9,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
@@ -400,9 +401,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   // If the App says it is installed but installedInfo is null, set it to not installed
-  // If the App says is is not installed but installedInfo exists, set it to the real installed version
-  // If the internal version does not match the real one, sync them if the App supports enhanced version detection
-  // Enhanced version detection will be true if the version extracted from source matches the standard version format
+  // If the App says is is not installed but installedInfo exists, try to set it to installed as latest version...
+  // ...if the latestVersion seems to match the version in installedInfo (not guaranteed)
+  // If that fails, just set it to the actual version string (all we can do at that point)
   // Don't save changes, just return the object if changes were made (else null)
   // If in a background isolate, return null straight away as the required plugin won't work anyways
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
@@ -415,21 +416,29 @@ class AppsProvider with ChangeNotifier {
         !app.trackOnly) {
       app.installedVersion = null;
       modded = true;
-    } else if (installedInfo != null && app.installedVersion == null) {
-      if (app.enhancedVersionDetection) {
-        app.installedVersion = installedInfo.versionName;
+    }
+    if (installedInfo != null && app.installedVersion == null) {
+      if (app.latestVersion.characters
+              .where((p0) => [
+                    // TODO: Won't work for other charsets
+                    '0',
+                    '1',
+                    '2',
+                    '3',
+                    '4',
+                    '5',
+                    '6',
+                    '7',
+                    '8',
+                    '9',
+                    '.'
+                  ].contains(p0))
+              .join('') ==
+          installedInfo.versionName) {
+        app.installedVersion = app.latestVersion;
       } else {
-        if (app.latestVersion.contains(installedInfo.versionName!)) {
-          app.installedVersion = app.latestVersion;
-        } else {
-          app.installedVersion = installedInfo.versionName;
-        }
+        app.installedVersion = installedInfo.versionName;
       }
-      modded = true;
-    } else if (installedInfo?.versionName != app.installedVersion &&
-        app.enhancedVersionDetection &&
-        !app.trackOnly) {
-      app.installedVersion = installedInfo?.versionName;
       modded = true;
     }
     return modded ? app : null;
