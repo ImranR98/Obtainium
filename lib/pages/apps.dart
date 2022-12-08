@@ -253,48 +253,49 @@ class AppsPageState extends State<AppsPage> {
                         fontWeight: sortedApps[index].app.pinned
                             ? FontWeight.bold
                             : FontWeight.normal)),
-                trailing: sortedApps[index].downloadProgress != null
-                    ? Text(tr('percentProgress', args: [
-                        sortedApps[index]
-                                .downloadProgress
-                                ?.toInt()
-                                .toString() ??
-                            '100'
-                      ]))
-                    : (Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          SingleChildScrollView(
-                              child: SizedBox(
-                                  width: 80,
+                trailing: SingleChildScrollView(
+                    reverse: true,
+                    child: sortedApps[index].downloadProgress != null
+                        ? Text(tr('percentProgress', args: [
+                            sortedApps[index]
+                                    .downloadProgress
+                                    ?.toInt()
+                                    .toString() ??
+                                '100'
+                          ]))
+                        : (Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              SizedBox(
+                                  width: 100,
                                   child: Text(
                                     '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
                                     overflow: TextOverflow.fade,
                                     textAlign: TextAlign.end,
-                                  ))),
-                          sortedApps[index].app.installedVersion != null &&
-                                  sortedApps[index].app.installedVersion !=
-                                      sortedApps[index].app.latestVersion
-                              ? GestureDetector(
-                                  onTap: changesUrl == null
-                                      ? null
-                                      : () {
-                                          launchUrlString(changesUrl,
-                                              mode: LaunchMode
-                                                  .externalApplication);
-                                        },
-                                  child: Text(
-                                    '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
-                                    style: TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                        decoration: changesUrl == null
-                                            ? TextDecoration.none
-                                            : TextDecoration.underline),
-                                  ))
-                              : const SizedBox(),
-                        ],
-                      )),
+                                  )),
+                              sortedApps[index].app.installedVersion != null &&
+                                      sortedApps[index].app.installedVersion !=
+                                          sortedApps[index].app.latestVersion
+                                  ? GestureDetector(
+                                      onTap: changesUrl == null
+                                          ? null
+                                          : () {
+                                              launchUrlString(changesUrl,
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            },
+                                      child: Text(
+                                        '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                        style: TextStyle(
+                                            fontStyle: FontStyle.italic,
+                                            decoration: changesUrl == null
+                                                ? TextDecoration.none
+                                                : TextDecoration.underline),
+                                      ))
+                                  : const SizedBox(),
+                            ],
+                          ))),
                 onTap: () {
                   if (selectedApps.isNotEmpty) {
                     toggleAppSelected(sortedApps[index].app);
