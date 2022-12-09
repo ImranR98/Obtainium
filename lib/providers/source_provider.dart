@@ -248,7 +248,7 @@ class SourceProvider {
     }
     for (int i = 0; i < parts.length - 1; i++) {
       if (RegExp('.*[A-Z].*').hasMatch(parts[i])) {
-        // TODO: RegEx won't work for non-eng chars
+        // TODO: Look into RegEx for non-Latin characters
         return false;
       }
     }

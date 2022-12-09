@@ -9,7 +9,6 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
@@ -39,6 +38,7 @@ class DownloadedApk {
 }
 
 List<String> generateStandardVersionRegExStrings() {
+  // TODO: Look into RegEx for non-Latin characters / non-Arabic numerals
   var basics = [
     '[0-9]+',
     '[0-9]+\\.[0-9]+',
@@ -198,8 +198,8 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> canInstallSilently(App app) async {
     return false;
-    // TODO: Uncomment the below once silentupdates are ever figured out
-    // // TODO: This is unreliable - try to get from OS in the future
+    // TODO: Uncomment the below if silent updates are ever figured out
+    // // NOTE: This is unreliable - try to get from OS in the future
     // if (app.apkUrls.length > 1) {
     //    return false;
     // }
@@ -356,7 +356,8 @@ class AppsProvider with ChangeNotifier {
       }
     }
 
-    // Move everything to the regular install list (since silent updates don't currently work) - TODO
+    // Move everything to the regular install list (since silent updates don't currently work)
+    // TODO: Remove this when silent updates work
     regularInstalls.addAll(silentUpdates);
 
     // If Obtainium is being installed, it should be the last one
@@ -678,7 +679,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<String> exportApps() async {
     Directory? exportDir = Directory('/storage/emulated/0/Download');
-    String path = 'Downloads'; // TODO: Is this true on non-english phones?
+    String path = 'Downloads'; // TODO: See if hardcoding this can be avoided
     if (!exportDir.existsSync()) {
       exportDir = await getExternalStorageDirectory();
       path = exportDir!.path;
