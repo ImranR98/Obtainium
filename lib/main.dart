@@ -70,7 +70,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
-    var appsProvider = AppsProvider(forBGTask: true);
+    var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
     await appsProvider.loadApps();
     List<String> existingUpdateIds =

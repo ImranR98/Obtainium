@@ -38,12 +38,36 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
+List<String> generateStandardVersionRegExStrings() {
+  var basics = ['[0-9]+(\\.[0-9]+)+'];
+  var preSuffixes = ['-', '\\+'];
+  var suffixes = ['alpha', 'beta', 'ose'];
+  var finals = ['\\+[0-9]+', '[0-9]+'];
+  List<String> results = [];
+  for (var b in basics) {
+    results.add(b);
+    for (var p in preSuffixes) {
+      for (var s in suffixes) {
+        results.add('$b$s');
+        results.add('$b$p$s');
+        for (var f in finals) {
+          results.add('$b$s$f');
+          results.add('$b$p$s$f');
+        }
+      }
+    }
+  }
+  return results;
+}
+
+List<String> standardVersionRegExStrings =
+    generateStandardVersionRegExStrings();
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
   bool gettingUpdates = false;
-  bool forBGTask = false;
   LogsProvider logs = LogsProvider();
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
@@ -51,29 +75,26 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
 
-  AppsProvider({this.forBGTask = false}) {
-    // Many setup tasks should only be done in the foreground isolate
-    if (!forBGTask) {
-      // Subscribe to changes in the app foreground status
-      foregroundStream = FGBGEvents.stream.asBroadcastStream();
-      foregroundSubscription = foregroundStream?.listen((event) async {
-        isForeground = event == FGBGType.foreground;
-        if (isForeground) await loadApps();
+  AppsProvider() {
+    // Subscribe to changes in the app foreground status
+    foregroundStream = FGBGEvents.stream.asBroadcastStream();
+    foregroundSubscription = foregroundStream?.listen((event) async {
+      isForeground = event == FGBGType.foreground;
+      if (isForeground) await loadApps();
+    });
+    () async {
+      // Load Apps into memory (in background, this is done later instead of in the constructor)
+      await loadApps();
+      // Delete existing APKs
+      (await getExternalStorageDirectory())
+          ?.listSync()
+          .where((element) =>
+              element.path.endsWith('.apk') ||
+              element.path.endsWith('.apk.part'))
+          .forEach((apk) {
+        apk.delete();
       });
-      () async {
-        // Load Apps into memory (in background, this is done later instead of in the constructor)
-        await loadApps();
-        // Delete existing APKs
-        (await getExternalStorageDirectory())
-            ?.listSync()
-            .where((element) =>
-                element.path.endsWith('.apk') ||
-                element.path.endsWith('.apk.part'))
-            .forEach((apk) {
-          apk.delete();
-        });
-      }();
-    }
+    }();
   }
 
   downloadFile(String url, String fileName, Function? onProgress,
@@ -401,47 +422,88 @@ class AppsProvider with ChangeNotifier {
   }
 
   // If the App says it is installed but installedInfo is null, set it to not installed
-  // If the App says is is not installed but installedInfo exists, try to set it to installed as latest version...
-  // ...if the latestVersion seems to match the version in installedInfo (not guaranteed)
+  // If there is any other mismatch between installedInfo and installedVersion, try reconciling them intelligently
   // If that fails, just set it to the actual version string (all we can do at that point)
   // Don't save changes, just return the object if changes were made (else null)
-  // If in a background isolate, return null straight away as the required plugin won't work anyways
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
-    if (forBGTask) {
-      return null; // Can't correct in the background isolate
-    }
     var modded = false;
     if (installedInfo == null &&
         app.installedVersion != null &&
         !app.trackOnly) {
       app.installedVersion = null;
       modded = true;
-    }
-    if (installedInfo != null && app.installedVersion == null) {
-      if (app.latestVersion.characters
-              .where((p0) => [
-                    // TODO: Won't work for other charsets
-                    '0',
-                    '1',
-                    '2',
-                    '3',
-                    '4',
-                    '5',
-                    '6',
-                    '7',
-                    '8',
-                    '9',
-                    '.'
-                  ].contains(p0))
-              .join('') ==
-          installedInfo.versionName) {
-        app.installedVersion = app.latestVersion;
-      } else {
-        app.installedVersion = installedInfo.versionName;
+    } else if (installedInfo?.versionName != null &&
+        app.installedVersion == null) {
+      app.installedVersion == installedInfo!.versionName;
+    } else if (installedInfo!.versionName != app.installedVersion) {
+      String? correctedInstalledVersion = reconcileRealAndInternalVersions(
+          installedInfo.versionName!, app.installedVersion!);
+      if (correctedInstalledVersion != null) {
+        app.installedVersion = correctedInstalledVersion;
+        modded = true;
       }
+    }
+    if (app.installedVersion != null &&
+        app.installedVersion != app.latestVersion) {
+      app.installedVersion = reconcileRealAndInternalVersions(
+              app.latestVersion, app.installedVersion!,
+              matchMode: true) ??
+          app.installedVersion;
       modded = true;
     }
     return modded ? app : null;
+  }
+
+  String? reconcileRealAndInternalVersions(
+      String realVersion, String internalVersion,
+      {bool matchMode = false}) {
+    // 1. If one or both of these can't be converted to a "standard" format, return null (leave as is)
+    // 2. If both have a "standard" format under which they are equal, return null (leave as is)
+    // 3. If both have a "standard" format in common but are unequal, return realVersion (this means it was changed externally)
+    // If in matchMode, the outcomes of rules 2 and 3 are reversed, and the "real" version is not matched strictly
+    // Matchmode to be used when comparing internal install version and internal latest version
+
+    bool doStringsMatchUnderRegEx(
+        String pattern, String value1, String value2) {
+      var r = RegExp(pattern);
+      var m1 = r.firstMatch(value1);
+      var m2 = r.firstMatch(value2);
+      return m1 != null && m2 != null
+          ? value1.substring(m1.start, m1.end) ==
+              value2.substring(m2.start, m2.end)
+          : false;
+    }
+
+    Set<String> findStandardFormatsForVersion(String version, bool strict) {
+      Set<String> results = {};
+      for (var pattern in standardVersionRegExStrings) {
+        if (RegExp('${strict ? '^' : ''}$pattern${strict ? '\$' : ''}')
+            .hasMatch(version)) {
+          results.add(pattern);
+        }
+      }
+      return results;
+    }
+
+    var realStandardVersionFormats =
+        findStandardFormatsForVersion(realVersion, !matchMode);
+    var internalStandardVersionFormats =
+        findStandardFormatsForVersion(internalVersion, false);
+    var commonStandardFormats =
+        realStandardVersionFormats.intersection(internalStandardVersionFormats);
+    if (commonStandardFormats.isEmpty) {
+      return null; // Incompatible; no "enhanced detection"
+    }
+    for (String pattern in commonStandardFormats) {
+      if (doStringsMatchUnderRegEx(pattern, internalVersion, realVersion)) {
+        return matchMode
+            ? realVersion
+            : null; // Enhanced detection says no change
+      }
+    }
+    return matchMode
+        ? null
+        : realVersion; // Enhanced detection says something changed
   }
 
   Future<void> loadApps() async {
@@ -489,7 +551,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (modifiedApps.isNotEmpty) {
-      await saveApps(modifiedApps);
+      await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
     }
   }
 
