@@ -13,11 +13,12 @@ class ObtainiumNotification {
   late String channelName;
   late String channelDescription;
   Importance importance;
+  int? progPercent;
   bool onlyAlertOnce;
 
   ObtainiumNotification(this.id, this.title, this.message, this.channelCode,
       this.channelName, this.channelDescription, this.importance,
-      {this.onlyAlertOnce = false});
+      {this.onlyAlertOnce = false, this.progPercent});
 }
 
 class UpdateNotification extends ObtainiumNotification {
@@ -80,14 +81,13 @@ class DownloadNotification extends ObtainiumNotification {
       : super(
             appName.hashCode,
             'Downloading $appName',
-            '$progPercent%',
+            '',
             'APP_DOWNLOADING',
             'Downloading App',
             'Notifies the user of the progress in downloading an App',
             Importance.low,
-            onlyAlertOnce: true) {
-    message = tr('percentProgress', args: [progPercent.toString()]);
-  }
+            onlyAlertOnce: true,
+            progPercent: progPercent);
 }
 
 final completeInstallationNotification = ObtainiumNotification(
@@ -174,5 +174,7 @@ class NotificationsProvider {
           {bool cancelExisting = false}) =>
       notifyRaw(notif.id, notif.title, notif.message, notif.channelCode,
           notif.channelName, notif.channelDescription, notif.importance,
-          cancelExisting: cancelExisting, onlyAlertOnce: notif.onlyAlertOnce);
+          cancelExisting: cancelExisting,
+          onlyAlertOnce: notif.onlyAlertOnce,
+          progPercent: notif.progPercent);
 }
