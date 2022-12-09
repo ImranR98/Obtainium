@@ -39,7 +39,12 @@ class DownloadedApk {
 }
 
 List<String> generateStandardVersionRegExStrings() {
-  var basics = ['[0-9]+(\\.[0-9]+)+'];
+  var basics = [
+    '[0-9]+',
+    '[0-9]+\\.[0-9]+',
+    '[0-9]+\\.[0-9]+\\.[0-9]+',
+    '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'
+  ];
   var preSuffixes = ['-', '\\+'];
   var suffixes = ['alpha', 'beta', 'ose'];
   var finals = ['\\+[0-9]+', '[0-9]+'];
@@ -434,8 +439,10 @@ class AppsProvider with ChangeNotifier {
       modded = true;
     } else if (installedInfo?.versionName != null &&
         app.installedVersion == null) {
-      app.installedVersion == installedInfo!.versionName;
-    } else if (installedInfo!.versionName != app.installedVersion) {
+      app.installedVersion = installedInfo!.versionName;
+      modded = true;
+    } else if (installedInfo?.versionName != null &&
+        installedInfo!.versionName != app.installedVersion) {
       String? correctedInstalledVersion = reconcileRealAndInternalVersions(
           installedInfo.versionName!, app.installedVersion!);
       if (correctedInstalledVersion != null) {
@@ -446,7 +453,7 @@ class AppsProvider with ChangeNotifier {
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion) {
       app.installedVersion = reconcileRealAndInternalVersions(
-              app.latestVersion, app.installedVersion!,
+              app.installedVersion!, app.latestVersion,
               matchMode: true) ??
           app.installedVersion;
       modded = true;
@@ -486,7 +493,7 @@ class AppsProvider with ChangeNotifier {
     }
 
     var realStandardVersionFormats =
-        findStandardFormatsForVersion(realVersion, !matchMode);
+        findStandardFormatsForVersion(realVersion, true);
     var internalStandardVersionFormats =
         findStandardFormatsForVersion(internalVersion, false);
     var commonStandardFormats =
