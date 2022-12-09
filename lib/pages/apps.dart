@@ -510,7 +510,14 @@ class AppsPageState extends State<AppsPage> {
                                                                             .toString()
                                                                       ])),
                                                                   content: Text(
-                                                                      tr('onlyAppliesToInstalledAndOutdatedApps')),
+                                                                    tr('onlyWorksWithNonEVDApps'),
+                                                                    style: const TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .bold,
+                                                                        fontStyle:
+                                                                            FontStyle.italic),
+                                                                  ),
                                                                   actions: [
                                                                     TextButton(
                                                                         onPressed:
