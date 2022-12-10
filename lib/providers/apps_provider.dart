@@ -505,7 +505,7 @@ class AppsProvider with ChangeNotifier {
     for (String pattern in commonStandardFormats) {
       if (doStringsMatchUnderRegEx(pattern, internalVersion, realVersion)) {
         return matchMode
-            ? realVersion
+            ? internalVersion
             : null; // Enhanced detection says no change
       }
     }
