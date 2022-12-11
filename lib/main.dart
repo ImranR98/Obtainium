@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.8.8';
+const String currentVersion = '0.8.9';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -85,7 +85,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       if (e is RateLimitError || e is SocketException) {
         var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
         logs.add(plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes,
-            args: [e.runtimeType.toString()]));
+            args: [e.runtimeType.toString(), remainingMinutes.toString()]));
         AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
             Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
           'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch

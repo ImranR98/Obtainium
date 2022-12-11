@@ -36,7 +36,7 @@ class UpdateNotification extends ObtainiumNotification {
         : updates.length == 1
             ? tr('xHasAnUpdate', args: [updates[0].name])
             : plural('xAndNMoreUpdatesAvailable', updates.length - 1,
-                args: [updates[0].name]);
+                args: [updates[0].name, (updates.length - 1).toString()]);
   }
 }
 
@@ -48,7 +48,7 @@ class SilentUpdateNotification extends ObtainiumNotification {
         ? tr('xWasUpdatedToY',
             args: [updates[0].name, updates[0].latestVersion])
         : plural('xAndNMoreUpdatesInstalled', updates.length - 1,
-            args: [updates[0].name]);
+            args: [updates[0].name, (updates.length - 1).toString()]);
   }
 }
 
