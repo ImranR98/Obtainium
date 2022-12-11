@@ -285,14 +285,17 @@ class AppsPageState extends State<AppsPage> {
                                                   mode: LaunchMode
                                                       .externalApplication);
                                             },
-                                      child: Text(
-                                        '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
-                                        style: TextStyle(
-                                            fontStyle: FontStyle.italic,
-                                            decoration: changesUrl == null
-                                                ? TextDecoration.none
-                                                : TextDecoration.underline),
-                                      ))
+                                      child: appsProvider.areDownloadsRunning()
+                                          ? Text(tr('pleaseWait'))
+                                          : Text(
+                                              '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                              style: TextStyle(
+                                                  fontStyle: FontStyle.italic,
+                                                  decoration: changesUrl == null
+                                                      ? TextDecoration.none
+                                                      : TextDecoration
+                                                          .underline),
+                                            ))
                                   : const SizedBox(),
                             ],
                           ))),
@@ -510,7 +513,14 @@ class AppsPageState extends State<AppsPage> {
                                                                             .toString()
                                                                       ])),
                                                                   content: Text(
-                                                                      tr('onlyAppliesToInstalledAndOutdatedApps')),
+                                                                    tr('onlyWorksWithNonEVDApps'),
+                                                                    style: const TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .bold,
+                                                                        fontStyle:
+                                                                            FontStyle.italic),
+                                                                  ),
                                                                   actions: [
                                                                     TextButton(
                                                                         onPressed:

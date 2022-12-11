@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -150,8 +151,15 @@ class _AppPageState extends State<AppPage> {
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return AlertDialog(
-                                              title: const Text(
-                                                  'App Already up to Date?'),
+                                              title: Text(tr(
+                                                  'alreadyUpToDateQuestion')),
+                                              content: Text(
+                                                  tr('onlyWorksWithNonEVDApps'),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontStyle:
+                                                          FontStyle.italic)),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {

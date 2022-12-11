@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.8.7';
+const String currentVersion = '0.8.8';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -70,7 +70,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   var notificationsProvider = NotificationsProvider();
   await notificationsProvider.notify(checkingUpdatesNotification);
   try {
-    var appsProvider = AppsProvider(forBGTask: true);
+    var appsProvider = AppsProvider();
     await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
     await appsProvider.loadApps();
     List<String> existingUpdateIds =
