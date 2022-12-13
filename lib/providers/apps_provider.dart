@@ -427,6 +427,10 @@ class AppsProvider with ChangeNotifier {
     return null;
   }
 
+  Future<bool> doesInstalledAppsPluginWork() async {
+    return (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
+  }
+
   // If the App says it is installed but installedInfo is null, set it to not installed
   // If there is any other mismatch between installedInfo and installedVersion, try reconciling them intelligently
   // If that fails, just set it to the actual version string (all we can do at that point)
@@ -550,21 +554,25 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = false;
     notifyListeners();
-    List<App> modifiedApps = [];
-    for (var app in apps.values) {
-      var moddedApp =
-          getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
-      if (moddedApp != null) {
-        modifiedApps.add(moddedApp);
+    if (await doesInstalledAppsPluginWork()) {
+      List<App> modifiedApps = [];
+      for (var app in apps.values) {
+        var moddedApp =
+            getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
+        if (moddedApp != null) {
+          modifiedApps.add(moddedApp);
+        }
       }
-    }
-    if (modifiedApps.isNotEmpty) {
-      await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
+      if (modifiedApps.isNotEmpty) {
+        await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
+      }
     }
   }
 
   Future<void> saveApps(List<App> apps,
       {bool attemptToCorrectInstallStatus = true}) async {
+    attemptToCorrectInstallStatus =
+        attemptToCorrectInstallStatus && (await doesInstalledAppsPluginWork());
     for (var app in apps) {
       AppInfo? info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
