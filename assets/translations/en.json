@@ -170,6 +170,7 @@
     "pleaseAllowInstallPerm": "Please allow Obtainium to install Apps",
     "trackOnly": "Track-Only",
     "errorWithHttpStatusCode": "Error {}",
+    "versionCorrectionDisabled": "Version correction disabled (plugin doesn't seem to work)",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"

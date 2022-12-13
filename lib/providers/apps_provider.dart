@@ -428,7 +428,12 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<bool> doesInstalledAppsPluginWork() async {
-    return (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
+    bool res =
+        (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
+    if (!res) {
+      logs.add(tr('versionCorrectionDisabled'));
+    }
+    return res;
   }
 
   // If the App says it is installed but installedInfo is null, set it to not installed
