@@ -428,8 +428,12 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<bool> doesInstalledAppsPluginWork() async {
-    bool res =
-        (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
+    bool res = false;
+    try {
+      res = (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
+    } catch (e) {
+      //
+    }
     if (!res) {
       logs.add(tr('versionCorrectionDisabled'));
     }
