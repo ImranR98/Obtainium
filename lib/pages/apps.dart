@@ -5,6 +5,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -462,8 +463,8 @@ class AppsPageState extends State<AppsPage> {
                                         trackOnlyUpdateIdsAllOrSelected);
                                   }
                                   appsProvider
-                                      .downloadAndInstallLatestApps(
-                                          toInstall, context)
+                                      .downloadAndInstallLatestApps(toInstall,
+                                          globalNavigatorKey.currentContext)
                                       .catchError((e) {
                                     showError(e, context);
                                   });

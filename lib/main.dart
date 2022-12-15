@@ -31,6 +31,8 @@ const supportedLocales = [Locale('en'), Locale('zh'), Locale('it')];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
 
+final globalNavigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> loadTranslations() async {
   // See easy_localization/issues/210
   await EasyLocalizationController.initEasyLocation();
@@ -237,6 +239,7 @@ class _ObtainiumState extends State<Obtainium> {
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
+          navigatorKey: globalNavigatorKey,
           theme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.dark

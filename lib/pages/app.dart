@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -250,7 +251,9 @@ class _AppPageState extends State<AppPage> {
                                           appsProvider
                                               .downloadAndInstallLatestApps(
                                                   [app!.app.id],
-                                                  context).then((res) {
+                                                  globalNavigatorKey
+                                                      .currentContext).then(
+                                                  (res) {
                                             if (res.isNotEmpty && mounted) {
                                               Navigator.of(context).pop();
                                             }

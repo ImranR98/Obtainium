@@ -5,6 +5,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -108,7 +109,8 @@ class _AddAppPageState extends State<AddAppPage> {
             }
             app.preferredApkIndex = app.apkUrls.indexOf(apkUrl);
             // ignore: use_build_context_synchronously
-            var downloadedApk = await appsProvider.downloadApp(app, context);
+            var downloadedApk = await appsProvider.downloadApp(
+                app, globalNavigatorKey.currentContext);
             app.id = downloadedApk.appId;
           }
           if (appsProvider.apps.containsKey(app.id)) {
