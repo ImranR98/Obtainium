@@ -76,7 +76,7 @@ class _AppPageState extends State<AppPage> {
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         Text(
-                          'By ${app?.app.author ?? 'Unknown'}',
+                          tr('byX', args: [app?.app.author ?? tr('unknown')]),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
@@ -102,12 +102,17 @@ class _AppPageState extends State<AppPage> {
                           height: 32,
                         ),
                         Text(
-                          'Latest Version: ${app?.app.latestVersion ?? 'Unknown'}',
+                          tr('latestVersionX',
+                              args: [app?.app.latestVersion ?? tr('unknown')]),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         Text(
-                          'Installed Version: ${app?.app.installedVersion ?? 'None'}${app?.app.trackOnly == true ? ' (Estimate)\n\nApp is Track-Only' : ''}',
+                          '${tr('installedVersionX', args: [
+                                app?.app.installedVersion ?? tr('none')
+                              ])}${app?.app.trackOnly == true ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
+                                  tr('app')
+                                ])}' : ''}',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
@@ -115,7 +120,11 @@ class _AppPageState extends State<AppPage> {
                           height: 32,
                         ),
                         Text(
-                          'Last Update Check: ${app?.app.lastUpdateCheck == null ? 'Never' : '\n${app?.app.lastUpdateCheck?.toLocal()}'}',
+                          tr('lastUpdateCheckX', args: [
+                            app?.app.lastUpdateCheck == null
+                                ? tr('never')
+                                : '\n${app?.app.lastUpdateCheck?.toLocal()}'
+                          ]),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontStyle: FontStyle.italic, fontSize: 12),
@@ -166,7 +175,7 @@ class _AppPageState extends State<AppPage> {
                                                       Navigator.of(context)
                                                           .pop();
                                                     },
-                                                    child: const Text('No')),
+                                                    child: Text(tr('no'))),
                                                 TextButton(
                                                     onPressed: () {
                                                       HapticFeedback
@@ -183,8 +192,8 @@ class _AppPageState extends State<AppPage> {
                                                       Navigator.of(context)
                                                           .pop();
                                                     },
-                                                    child: const Text(
-                                                        'Yes, Mark as Updated'))
+                                                    child: Text(
+                                                        tr('yesMarkUpdated')))
                                               ],
                                             );
                                           });
@@ -267,9 +276,14 @@ class _AppPageState extends State<AppPage> {
                                       context: context,
                                       builder: (BuildContext ctx) {
                                         return AlertDialog(
-                                          title: const Text('Remove App?'),
-                                          content: Text(
-                                              'This will remove \'${app?.installedInfo?.name ?? app?.app.name}\' from Obtainium.${app?.app.installedVersion != null ? '\n\nNote that while Obtainium will no longer track its updates, the App will remain installed.' : ''}'),
+                                          title: Text(tr('removeAppQuestion')),
+                                          content: Text(tr(
+                                              'xWillBeRemovedButRemainInstalled',
+                                              args: [
+                                                app?.installedInfo?.name ??
+                                                    app?.app.name ??
+                                                    tr('app')
+                                              ])),
                                           actions: [
                                             TextButton(
                                                 onPressed: () {
@@ -283,12 +297,12 @@ class _AppPageState extends State<AppPage> {
                                                             count++ >= 2);
                                                   });
                                                 },
-                                                child: const Text('Remove')),
+                                                child: Text(tr('remove'))),
                                             TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: const Text('Cancel'))
+                                                child: Text(tr('cancel')))
                                           ],
                                         );
                                       });
@@ -298,7 +312,7 @@ class _AppPageState extends State<AppPage> {
                                   Theme.of(context).colorScheme.error,
                               surfaceTintColor:
                                   Theme.of(context).colorScheme.error),
-                          child: const Text('Remove'),
+                          child: Text(tr('remove')),
                         ),
                       ])),
               if (app?.downloadProgress != null)

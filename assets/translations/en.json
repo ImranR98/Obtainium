@@ -171,6 +171,15 @@
     "trackOnly": "Track-Only",
     "errorWithHttpStatusCode": "Error {}",
     "versionCorrectionDisabled": "Version correction disabled (plugin doesn't seem to work)",
+    "unknown": "Unknown",
+    "none": "None",
+    "never": "Never",
+    "latestVersionX": "Latest Version: {}",
+    "installedVersionX": "Installed Version: {}",
+    "lastUpdateCheckX": "Last Update Check: {}",
+    "remove": "Remove",
+    "removeAppQuestion": "Remove App?",
+    "yesMarkUpdated": "'Yes, Mark as Updated",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"
