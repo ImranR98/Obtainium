@@ -87,7 +87,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       if (e is RateLimitError || e is SocketException) {
         var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
         logs.add(plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes,
-            args: [(e as AppSource).name, remainingMinutes.toString()]));
+            args: [e.toString(), remainingMinutes.toString()]));
         AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
             Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
           'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
