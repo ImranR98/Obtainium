@@ -52,7 +52,7 @@
     "additionalOptsFor": "Opzioni aggiuntive per {}",
     "supportedSourcesBelow": "Fonti supportate:",
     "trackOnlyInBrackets": "(Solo-Monitoraggio)",
-    "searchableInBrackets": "(Ricercabile)",
+    "searchableInBrackets": "(ricercabile)",
     "appsString": "App",
     "noApps": "Nessuna App",
     "noAppsForFilter": "Nessuna App per i filtri selezionati",
@@ -181,10 +181,10 @@
     "removeAppQuestion": "Rimuovere App?",
     "yesMarkUpdated": "Sì, contrassegna come aggiornato",
     "fdroid": "F-Droid",
-    "appIdOrName": "App ID or Name",
-    "appWithIdOrNameNotFound": "No App was found with that ID or Name",
-    "reposHaveMultipleApps": "Repos may contain multiple Apps",
-    "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
+    "appIdOrName": "ID o nome dell'App",
+    "appWithIdOrNameNotFound": "Non è stata trovata alcuna App con quell'ID o nome",
+    "reposHaveMultipleApps": "I repository possono contenere più App",
+    "fdroidThirdPartyRepo": "Repository di terze parti di F-Droid",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"
