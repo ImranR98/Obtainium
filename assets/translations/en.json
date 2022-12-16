@@ -181,7 +181,8 @@
     "removeAppQuestion": "Remove App?",
     "yesMarkUpdated": "Yes, Mark as Updated",
     "fdroid": "F-Droid",
-    "appId": "App ID",
+    "appIdOrName": "App ID or Name",
+    "appWithIdOrNameNotFound": "No App was found with that ID or Name",
     "reposHaveMultipleApps": "Repos may contain multiple Apps",
     "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
     "tooManyRequestsTryAgainInMinutes": {

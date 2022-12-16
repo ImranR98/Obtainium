@@ -12,10 +12,10 @@ class FDroidRepo extends AppSource {
     additionalSourceAppSpecificFormItems = [
       [
         GeneratedFormItem(
-            label: tr('appId'),
+            label: tr('appIdOrName'),
             hint: tr('reposHaveMultipleApps'),
             required: true,
-            key: 'appId')
+            key: 'appIdOrName')
       ]
     ];
   }
@@ -32,36 +32,45 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  String? tryInferringAppId(String standardUrl,
-      {List<String> additionalData = const []}) {
-    return findGeneratedFormValueByKey(
-        additionalSourceAppSpecificFormItems
-            .reduce((value, element) => [...value, ...element]),
-        additionalData,
-        'appId');
-  }
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData,
       {bool trackOnly = false}) async {
-    String? appId =
-        tryInferringAppId(standardUrl, additionalData: additionalData);
-    if (appId == null) {
+    String? appIdOrName = findGeneratedFormValueByKey(
+        additionalSourceAppSpecificFormItems
+            .reduce((value, element) => [...value, ...element]),
+        additionalData,
+        'appIdOrName');
+    if (appIdOrName == null) {
       throw NoReleasesError();
     }
     var res = await get(Uri.parse('$standardUrl/index.xml'));
     if (res.statusCode == 200) {
       var body = parse(res.body);
-      var foundApps = body
-          .querySelectorAll('application')
-          .where((element) => element.attributes['id'] == appId)
-          .toList();
+      var foundApps = body.querySelectorAll('application').where((element) {
+        return element.attributes['id'] == appIdOrName;
+      }).toList();
       if (foundApps.isEmpty) {
-        throw NoReleasesError();
+        foundApps = body.querySelectorAll('application').where((element) {
+          return element.querySelector('name')?.innerHtml.toLowerCase() ==
+              appIdOrName.toLowerCase();
+        }).toList();
+      }
+      if (foundApps.isEmpty) {
+        foundApps = body.querySelectorAll('application').where((element) {
+          return element
+                  .querySelector('name')
+                  ?.innerHtml
+                  .toLowerCase()
+                  .contains(appIdOrName.toLowerCase()) ??
+              false;
+        }).toList();
+      }
+      if (foundApps.isEmpty) {
+        throw ObtainiumError(tr('appWithIdOrNameNotFound'));
       }
       var authorName = body.querySelector('repo')?.attributes['name'] ?? name;
-      var appName = foundApps[0].querySelector('name')?.innerHtml ?? appId;
+      var appName =
+          foundApps[0].querySelector('name')?.innerHtml ?? appIdOrName;
       var releases = foundApps[0].querySelectorAll('package');
       String? latestVersion = releases[0].querySelector('version')?.innerHtml;
       if (latestVersion == null) {
