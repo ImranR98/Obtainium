@@ -20,7 +20,7 @@
     "githubPATLabel": "GitHub Personal Access Token (Increases Rate Limit)",
     "githubPATHint": "PAT must be in this format: username:token",
     "githubPATFormat": "username:token",
-    "githubPATLinkText": "'About GitHub PATs",
+    "githubPATLinkText": "About GitHub PATs",
     "includePrereleases": "Include prereleases",
     "fallbackToOlderReleases": "Fallback to older releases",
     "filterReleaseTitlesByRegEx": "Filter Release Titles by Regular Expression",
@@ -179,7 +179,11 @@
     "lastUpdateCheckX": "Last Update Check: {}",
     "remove": "Remove",
     "removeAppQuestion": "Remove App?",
-    "yesMarkUpdated": "'Yes, Mark as Updated",
+    "yesMarkUpdated": "Yes, Mark as Updated",
+    "fdroid": "F-Droid",
+    "appId": "App ID",
+    "reposHaveMultipleApps": "Repos may contain multiple Apps",
+    "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"

@@ -90,7 +90,7 @@ class GitHub extends AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw InvalidURLError(runtimeType.toString());
+      throw InvalidURLError(name);
     }
     return url.substring(0, match.end);
   }
@@ -162,14 +162,14 @@ class GitHub extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, targetRelease['apkUrls'] as List<String>);
+      return APKDetails(version, targetRelease['apkUrls'] as List<String>,
+          getAppNames(standardUrl));
     } else {
       rateLimitErrorCheck(res);
       throw getObtainiumHttpError(res);
     }
   }
 
-  @override
   AppNames getAppNames(String standardUrl) {
     String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
     List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');

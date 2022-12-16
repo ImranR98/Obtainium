@@ -179,7 +179,11 @@
     "lastUpdateCheckX": "Ultimo controllo degli aggiornamenti: {}",
     "remove": "Rimuovi",
     "removeAppQuestion": "Rimuovere App?",
-    "yesMarkUpdated": "'Sì, contrassegna come aggiornato",
+    "yesMarkUpdated": "Sì, contrassegna come aggiornato",
+    "fdroid": "F-Droid",
+    "appId": "App ID",
+    "reposHaveMultipleApps": "Repos may contain multiple Apps",
+    "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"

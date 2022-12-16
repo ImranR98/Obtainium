@@ -13,7 +13,7 @@ class IzzyOnDroid extends AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw InvalidURLError(runtimeType.toString());
+      throw InvalidURLError(name);
     }
     return url.substring(0, match.end);
   }
@@ -22,7 +22,8 @@ class IzzyOnDroid extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
-  String? tryInferringAppId(String standardUrl) {
+  String? tryInferringAppId(String standardUrl,
+      {List<String> additionalData = const []}) {
     return FDroid().tryInferringAppId(standardUrl);
   }
 
@@ -34,11 +35,7 @@ class IzzyOnDroid extends AppSource {
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
         await get(
             Uri.parse('https://apt.izzysoft.de/fdroid/api/v1/packages/$appId')),
-        'https://android.izzysoft.de/frepo/$appId');
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames('IzzyOnDroid', Uri.parse(standardUrl).pathSegments.last);
+        'https://android.izzysoft.de/frepo/$appId',
+        standardUrl);
   }
 }

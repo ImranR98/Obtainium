@@ -15,6 +15,7 @@ Currently supported App sources:
 - [Signal](https://signal.org/)
 - [SourceForge](https://sourceforge.net/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
+- Third Party F-Droid Repos (URLs ending with `/fdroid/repo`)
 
 ## Limitations
 - App installs happen asynchronously and the success/failure of an install cannot be determined directly. This results in install statuses and versions sometimes being out of sync with the OS until the next launch or until the problem is manually corrected.

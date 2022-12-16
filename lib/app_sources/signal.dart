@@ -30,12 +30,9 @@ class Signal extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrls);
+      return APKDetails(version, apkUrls, AppNames(name, 'Signal'));
     } else {
       throw NoReleasesError();
     }
   }
-
-  @override
-  AppNames getAppNames(String standardUrl) => AppNames('Signal', 'Signal');
 }

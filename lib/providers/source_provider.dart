@@ -8,6 +8,7 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
+import 'package:obtainium/app_sources/fdroidRepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
@@ -28,8 +29,9 @@ class AppNames {
 class APKDetails {
   late String version;
   late List<String> apkUrls;
+  late AppNames names;
 
-  APKDetails(this.version, this.apkUrls);
+  APKDetails(this.version, this.apkUrls, this.names);
 }
 
 class App {
@@ -106,11 +108,11 @@ class App {
 
 // Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
-  if (url.toLowerCase().indexOf('http://') != 0 &&
-      url.toLowerCase().indexOf('https://') != 0) {
+  url = url.toLowerCase();
+  if (url.indexOf('http://') != 0 && url.indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  if (url.toLowerCase().indexOf('https://www.') == 0) {
+  if (url.indexOf('https://www.') == 0) {
     url = 'https://${url.substring(12)}';
   }
   url = url
@@ -135,8 +137,14 @@ List<String> getLinksFromParsedHTML(
         .toList();
 
 class AppSource {
-  late String host;
+  String? host;
+  late String name;
   bool enforceTrackOnly = false;
+
+  AppSource() {
+    name = runtimeType.toString();
+  }
+
   String standardizeURL(String url) {
     throw NotImplementedError();
   }
@@ -144,10 +152,6 @@ class AppSource {
   Future<APKDetails> getLatestAPKDetails(
       String standardUrl, List<String> additionalData,
       {bool trackOnly = false}) {
-    throw NotImplementedError();
-  }
-
-  AppNames getAppNames(String standardUrl) {
     throw NotImplementedError();
   }
 
@@ -168,7 +172,7 @@ class AppSource {
   List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
-    throw NotImplementedError();
+    return null;
   }
 
   Future<String> apkUrlPrefetchModifier(String apkUrl) async {
@@ -180,7 +184,8 @@ class AppSource {
     throw NotImplementedError();
   }
 
-  String? tryInferringAppId(String standardUrl) {
+  String? tryInferringAppId(String standardUrl,
+      {List<String> additionalData = const []}) {
     return null;
   }
 }
@@ -206,7 +211,8 @@ class SourceProvider {
     Mullvad(),
     Signal(),
     SourceForge(),
-    APKMirror()
+    APKMirror(),
+    FDroidRepo()
   ];
 
   // Add more mass url source classes here so they are available via the service
@@ -215,10 +221,21 @@ class SourceProvider {
   AppSource getSource(String url) {
     url = preStandardizeUrl(url);
     AppSource? source;
-    for (var s in sources) {
-      if (url.toLowerCase().contains('://${s.host}')) {
+    for (var s in sources.where((element) => element.host != null)) {
+      if (url.contains('://${s.host}')) {
         source = s;
         break;
+      }
+    }
+    if (source == null) {
+      for (var s in sources.where((element) => element.host == null)) {
+        try {
+          s.standardizeURL(url);
+          source = s;
+          break;
+        } catch (e) {
+          //
+        }
       }
     }
     if (source == null) {
@@ -252,7 +269,7 @@ class SourceProvider {
         return false;
       }
     }
-    return sources.map((e) => e.host).contains(parts.last);
+    return true;
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
@@ -262,7 +279,6 @@ class SourceProvider {
       bool trackOnly = false,
       String? installedVersion}) async {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
-    AppNames names = source.getAppNames(standardUrl);
     APKDetails apk = await source
         .getLatestAPKDetails(standardUrl, additionalData, trackOnly: trackOnly);
     if (apk.apkUrls.isEmpty && !trackOnly) {
@@ -271,13 +287,14 @@ class SourceProvider {
     String apkVersion = apk.version.replaceAll('/', '-');
     return App(
         id ??
-            source.tryInferringAppId(standardUrl) ??
-            generateTempID(names, source),
+            source.tryInferringAppId(standardUrl,
+                additionalData: additionalData) ??
+            generateTempID(apk.names, source),
         standardUrl,
-        names.author[0].toUpperCase() + names.author.substring(1),
+        apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
         name.trim().isNotEmpty
             ? name
-            : names.name[0].toUpperCase() + names.name.substring(1),
+            : apk.names.name[0].toUpperCase() + apk.names.name.substring(1),
         installedVersion,
         apkVersion,
         apk.apkUrls,

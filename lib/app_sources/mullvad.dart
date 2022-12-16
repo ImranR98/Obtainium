@@ -13,7 +13,7 @@ class Mullvad extends AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw InvalidURLError(runtimeType.toString());
+      throw InvalidURLError(name);
     }
     return url.substring(0, match.end);
   }
@@ -38,14 +38,11 @@ class Mullvad extends AppSource {
         throw NoVersionError();
       }
       return APKDetails(
-          version, ['https://mullvad.net/download/app/apk/latest']);
+          version,
+          ['https://mullvad.net/download/app/apk/latest'],
+          AppNames(name, 'Mullvad-VPN'));
     } else {
       throw NoReleasesError();
     }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames('Mullvad-VPN', 'Mullvad-VPN');
   }
 }

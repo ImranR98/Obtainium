@@ -41,12 +41,12 @@ class _AddAppPageState extends State<AddAppPage> {
       userInput = input;
       fn() {
         var source = valid ? sourceProvider.getSource(userInput) : null;
-        if (pickedSource != source) {
+        if (pickedSource.runtimeType != source.runtimeType) {
           pickedSource = source;
           sourceSpecificAdditionalData =
               source != null ? source.additionalSourceAppSpecificDefaults : [];
           sourceSpecificDataIsValid = source != null
-              ? sourceProvider.ifSourceAppsRequireAdditionalData(source)
+              ? !sourceProvider.ifSourceAppsRequireAdditionalData(source)
               : true;
         }
       }
@@ -308,10 +308,8 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 64,
                             ),
                             Text(
-                                tr('additionalOptsFor', args: [
-                                  pickedSource?.runtimeType.toString() ??
-                                      tr('source')
-                                ]),
+                                tr('additionalOptsFor',
+                                    args: [pickedSource?.name ?? tr('source')]),
                                 style: TextStyle(
                                     color:
                                         Theme.of(context).colorScheme.primary)),
@@ -383,16 +381,20 @@ class _AddAppPageState extends State<AddAppPage> {
                               ),
                               ...sourceProvider.sources
                                   .map((e) => GestureDetector(
-                                      onTap: () {
-                                        launchUrlString('https://${e.host}',
-                                            mode:
-                                                LaunchMode.externalApplication);
-                                      },
+                                      onTap: e.host != null
+                                          ? () {
+                                              launchUrlString(
+                                                  'https://${e.host}',
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            }
+                                          : null,
                                       child: Text(
-                                        '${e.runtimeType.toString()}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                                        style: const TextStyle(
-                                            decoration:
-                                                TextDecoration.underline,
+                                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                                        style: TextStyle(
+                                            decoration: e.host != null
+                                                ? TextDecoration.underline
+                                                : TextDecoration.none,
                                             fontStyle: FontStyle.italic),
                                       )))
                                   .toList()

@@ -20,7 +20,7 @@
     "githubPATLabel": "GitHub 个人访问令牌 (提高 API 限制)",
     "githubPATHint": "个人访问令牌必须为: username:token 形式",
     "githubPATFormat": "username:token",
-    "githubPATLinkText": "'关于 GitHub 个人访问令牌",
+    "githubPATLinkText": "关于 GitHub 个人访问令牌",
     "includePrereleases": "包含预发布版",
     "fallbackToOlderReleases": "回落到旧版",
     "filterReleaseTitlesByRegEx": "通过正则表达式过滤发布标题",
@@ -179,7 +179,11 @@
     "lastUpdateCheckX": "Last Update Check: {}",
     "remove": "Remove",
     "removeAppQuestion": "Remove App?",
-    "yesMarkUpdated": "'Yes, Mark as Updated",
+    "yesMarkUpdated": "Yes, Mark as Updated",
+    "fdroid": "F-Droid",
+    "appId": "App ID",
+    "reposHaveMultipleApps": "Repos may contain multiple Apps",
+    "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"

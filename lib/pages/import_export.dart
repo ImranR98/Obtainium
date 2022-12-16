@@ -232,9 +232,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                         return GeneratedFormModal(
                                                           title: tr('searchX',
                                                               args: [
-                                                                source
-                                                                    .runtimeType
-                                                                    .toString()
+                                                                source.name
                                                               ]),
                                                           items: [
                                                             [
@@ -319,9 +317,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   });
                                                 });
                                               },
-                                        child: Text(tr('searchX', args: [
-                                          source.runtimeType.toString()
-                                        ])))
+                                        child: Text(
+                                            tr('searchX', args: [source.name])))
                                   ]))
                           .toList(),
                       ...sourceProvider.massUrlSources

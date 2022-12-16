@@ -13,7 +13,7 @@ class SourceForge extends AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/projects/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw InvalidURLError(runtimeType.toString());
+      throw InvalidURLError(name);
     }
     return url.substring(0, match.end);
   }
@@ -50,15 +50,13 @@ class SourceForge extends AppSource {
           apkUrlListAllReleases // This can be used skipped for fallback support later
               .where((element) => getVersion(element) == version)
               .toList();
-      return APKDetails(version, apkUrlList);
+      return APKDetails(
+          version,
+          apkUrlList,
+          AppNames(
+              name, standardUrl.substring(standardUrl.lastIndexOf('/') + 1)));
     } else {
       throw NoReleasesError();
     }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    return AppNames(runtimeType.toString(),
-        standardUrl.substring(standardUrl.lastIndexOf('/') + 1));
   }
 }

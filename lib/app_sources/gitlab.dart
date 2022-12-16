@@ -14,7 +14,7 @@ class GitLab extends AppSource {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
-      throw InvalidURLError(runtimeType.toString());
+      throw InvalidURLError(name);
     }
     return url.substring(0, match.end);
   }
@@ -56,15 +56,9 @@ class GitLab extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrls);
+      return APKDetails(version, apkUrls, GitHub().getAppNames(standardUrl));
     } else {
       throw NoReleasesError();
     }
-  }
-
-  @override
-  AppNames getAppNames(String standardUrl) {
-    // Same as GitHub
-    return GitHub().getAppNames(standardUrl);
   }
 }

@@ -28,7 +28,11 @@ class GeneratedFormItem {
       this.belowWidgets = const [],
       this.hint,
       this.opts,
-      this.key = 'default'});
+      this.key = 'default'}) {
+    if (type != FormItemType.string) {
+      required = false;
+    }
+  }
 }
 
 class GeneratedForm extends StatefulWidget {
