@@ -274,9 +274,14 @@ class AppsProvider with ChangeNotifier {
             );
           });
     }
+    getHost(String url) {
+      var temp = Uri.parse(url).host.split('.');
+      return temp.sublist(temp.length - 2).join('.');
+    }
+
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
     if (apkUrl != null &&
-        Uri.parse(apkUrl).origin != Uri.parse(app.url).origin &&
+        getHost(apkUrl) != getHost(app.url) &&
         context != null) {
       if (await showDialog(
               context: context,

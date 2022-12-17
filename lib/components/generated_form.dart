@@ -16,7 +16,7 @@ class GeneratedFormItem {
   late String id;
   late List<Widget> belowWidgets;
   late String? hint;
-  late List<String>? opts;
+  late List<MapEntry<String, String>>? opts;
 
   GeneratedFormItem(
       {this.label = 'Input',
@@ -86,7 +86,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
               return j < widget.defaultValues.length
                   ? widget.defaultValues[j++]
                   : e.opts != null
-                      ? e.opts!.first
+                      ? e.opts!.first.key
                       : '';
             }).toList())
         .toList();
@@ -130,14 +130,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
             return Text(tr('dropdownNoOptsError'));
           }
           return DropdownButtonFormField(
-              decoration: InputDecoration(labelText: tr('colour')),
+              decoration: InputDecoration(labelText: e.value.label),
               value: values[row.key][e.key],
               items: e.value.opts!
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .map((e) =>
+                      DropdownMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
               onChanged: (value) {
                 setState(() {
-                  values[row.key][e.key] = value ?? e.value.opts!.first;
+                  values[row.key][e.key] = value ?? e.value.opts!.first.key;
                   someValueChanged();
                 });
               });

@@ -8,13 +8,14 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
-import 'package:obtainium/app_sources/fdroidRepo.dart';
+import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
+import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -212,7 +213,8 @@ class SourceProvider {
     Signal(),
     SourceForge(),
     APKMirror(),
-    FDroidRepo()
+    FDroidRepo(),
+    SteamMobile()
   ];
 
   // Add more mass url source classes here so they are available via the service
@@ -247,7 +249,7 @@ class SourceProvider {
   bool ifSourceAppsRequireAdditionalData(AppSource source) {
     for (var row in source.additionalSourceAppSpecificFormItems) {
       for (var element in row) {
-        if (element.required) {
+        if (element.required && element.opts == null) {
           return true;
         }
       }

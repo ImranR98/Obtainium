@@ -185,6 +185,9 @@
     "appWithIdOrNameNotFound": "Non è stata trovata alcuna App con quell'ID o nome",
     "reposHaveMultipleApps": "I repository possono contenere più App",
     "fdroidThirdPartyRepo": "Repository di terze parti di F-Droid",
+    "steam": "Steam",
+    "steamMobile": "Steam Mobile",
+    "steamChat": "Steam Chat",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"

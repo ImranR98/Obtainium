@@ -185,6 +185,9 @@
     "appWithIdOrNameNotFound": "No App was found with that ID or Name",
     "reposHaveMultipleApps": "Repos may contain multiple Apps",
     "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",
+    "steam": "Steam",
+    "steamMobile": "Steam Mobile",
+    "steamChat": "Steam Chat",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"

@@ -185,6 +185,9 @@
     "appWithIdOrNameNotFound": "没有发现具有此 ID 或名称的应用",
     "reposHaveMultipleApps": "来源可能包含多个应用",
     "fdroidThirdPartyRepo": "F-Droid 第三方源",
+    "steam": "Steam",
+    "steamMobile": "Steam Mobile",
+    "steamChat": "Steam Chat",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"
