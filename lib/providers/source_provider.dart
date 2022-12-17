@@ -109,11 +109,11 @@ class App {
 
 // Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
-  url = url.toLowerCase();
-  if (url.indexOf('http://') != 0 && url.indexOf('https://') != 0) {
+  if (url.toLowerCase().indexOf('http://') != 0 &&
+      url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  if (url.indexOf('https://www.') == 0) {
+  if (url.toLowerCase().indexOf('https://www.') == 0) {
     url = 'https://${url.substring(12)}';
   }
   url = url
