@@ -27,7 +27,7 @@ const String currentReleaseTag =
 
 const int bgUpdateCheckAlarmId = 666;
 
-const supportedLocales = [Locale('en'), Locale('zh'), Locale('it')];
+const supportedLocales = [Locale('en'), Locale('zh'), Locale('it'), Locale('ja')];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
 
