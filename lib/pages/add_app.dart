@@ -323,10 +323,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                   items: pickedSource!
                                       .additionalSourceAppSpecificFormItems,
                                   onValueChanges: (values, valid, isBuilding) {
-                                    if (isBuilding) {
-                                      sourceSpecificAdditionalData = values;
-                                      sourceSpecificDataIsValid = valid;
-                                    } else {
+                                    if (!isBuilding) {
                                       setState(() {
                                         sourceSpecificAdditionalData = values;
                                         sourceSpecificDataIsValid = valid;
@@ -350,10 +347,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                     .map((e) => [e])
                                     .toList(),
                                 onValueChanges: (values, valid, isBuilding) {
-                                  if (isBuilding) {
-                                    otherAdditionalData = values;
-                                    otherAdditionalDataIsValid = valid;
-                                  } else {
+                                  if (!isBuilding) {
                                     setState(() {
                                       otherAdditionalData = values;
                                       otherAdditionalDataIsValid = valid;
