@@ -461,7 +461,8 @@ class AppsProvider with ChangeNotifier {
       app.installedVersion = installedInfo!.versionName;
       modded = true;
     } else if (installedInfo?.versionName != null &&
-        installedInfo!.versionName != app.installedVersion) {
+        installedInfo!.versionName != app.installedVersion &&
+        !app.noVersionDetection) {
       String? correctedInstalledVersion = reconcileRealAndInternalVersions(
           installedInfo.versionName!, app.installedVersion!);
       if (correctedInstalledVersion != null) {
@@ -470,7 +471,8 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (app.installedVersion != null &&
-        app.installedVersion != app.latestVersion) {
+        app.installedVersion != app.latestVersion &&
+        !app.noVersionDetection) {
       app.installedVersion = reconcileRealAndInternalVersions(
               app.installedVersion!, app.latestVersion,
               matchMode: true) ??
@@ -624,11 +626,7 @@ class AppsProvider with ChangeNotifier {
         sourceProvider.getSource(currentApp.url),
         currentApp.url,
         currentApp.additionalData,
-        name: currentApp.name,
-        id: currentApp.id,
-        pinned: currentApp.pinned,
-        trackOnly: currentApp.trackOnly,
-        installedVersion: currentApp.installedVersion);
+        currentApp: currentApp);
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }

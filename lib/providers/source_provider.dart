@@ -48,6 +48,7 @@ class App {
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   bool trackOnly = false;
+  bool noVersionDetection = false;
   App(
       this.id,
       this.url,
@@ -60,7 +61,8 @@ class App {
       this.additionalData,
       this.lastUpdateCheck,
       this.pinned,
-      this.trackOnly);
+      this.trackOnly,
+      {this.noVersionDetection = false});
 
   @override
   String toString() {
@@ -89,7 +91,8 @@ class App {
           ? null
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
       json['pinned'] ?? false,
-      json['trackOnly'] ?? false);
+      json['trackOnly'] ?? false,
+      noVersionDetection: json['noVersionDetection'] ?? false);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -103,7 +106,8 @@ class App {
         'additionalData': jsonEncode(additionalData),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
-        'trackOnly': trackOnly
+        'trackOnly': trackOnly,
+        'noVersionDetection': noVersionDetection
       };
 }
 
@@ -165,9 +169,13 @@ class AppSource {
     GeneratedFormItem(
         label: tr('trackOnly'),
         type: FormItemType.bool,
-        key: 'trackOnlyFormItemKey')
+        key: 'trackOnlyFormItemKey'),
+    GeneratedFormItem(
+        label: 'Do not attempt version detection', // TODO
+        type: FormItemType.bool,
+        key: 'noVersionDetectionKey')
   ];
-  final List<String> additionalAppSpecificSourceAgnosticDefaults = [''];
+  final List<String> additionalAppSpecificSourceAgnosticDefaults = ['', ''];
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
@@ -275,11 +283,11 @@ class SourceProvider {
   }
 
   Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String name = '',
-      String? id,
-      bool pinned = false,
-      bool trackOnly = false,
-      String? installedVersion}) async {
+      {App? currentApp,
+      bool trackOnlyOverride = false,
+      noVersionDetectionOverride = false}) async {
+    var trackOnly = trackOnlyOverride || (currentApp?.trackOnly ?? false);
+
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk = await source
         .getLatestAPKDetails(standardUrl, additionalData, trackOnly: trackOnly);
@@ -287,8 +295,10 @@ class SourceProvider {
       throw NoAPKError();
     }
     String apkVersion = apk.version.replaceAll('/', '-');
+    var name = currentApp?.name.trim() ??
+        apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
     return App(
-        id ??
+        currentApp?.id ??
             source.tryInferringAppId(standardUrl,
                 additionalData: additionalData) ??
             generateTempID(apk.names, source),
@@ -297,14 +307,16 @@ class SourceProvider {
         name.trim().isNotEmpty
             ? name
             : apk.names.name[0].toUpperCase() + apk.names.name.substring(1),
-        installedVersion,
+        currentApp?.installedVersion,
         apkVersion,
         apk.apkUrls,
         apk.apkUrls.length - 1,
         additionalData,
         DateTime.now(),
-        pinned,
-        trackOnly);
+        currentApp?.pinned ?? false,
+        trackOnly,
+        noVersionDetection: noVersionDetectionOverride ||
+            (currentApp?.noVersionDetection ?? false));
   }
 
   // Returns errors in [results, errors] instead of throwing them

@@ -71,6 +71,11 @@ class _AddAppPageState extends State<AddAppPage> {
                 otherAdditionalData,
                 'trackOnlyFormItemKey') ==
             'true';
+        var userPickedNoVersionDetection = findGeneratedFormValueByKey(
+                pickedSource!.additionalAppSpecificSourceAgnosticFormItems,
+                otherAdditionalData,
+                'noVersionDetectionKey') ==
+            'true';
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             await showDialog(
@@ -91,12 +96,27 @@ class _AddAppPageState extends State<AddAppPage> {
                 null) {
           cont = false;
         }
+        if (userPickedNoVersionDetection &&
+            await showDialog(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return GeneratedFormModal(
+                        title: 'Disable Version Detection', // TODO
+                        items: const [],
+                        defaultValues: const [],
+                        message: 'TODO',
+                      );
+                    }) ==
+                null) {
+          cont = false;
+        }
         if (cont) {
           HapticFeedback.selectionClick();
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           App app = await sourceProvider.getApp(
               pickedSource!, userInput, sourceSpecificAdditionalData,
-              trackOnly: trackOnly);
+              trackOnlyOverride: trackOnly,
+              noVersionDetectionOverride: userPickedNoVersionDetection);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }
