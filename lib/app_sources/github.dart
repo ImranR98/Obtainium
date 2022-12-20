@@ -54,7 +54,7 @@ class GitHub extends AppSource {
         GeneratedFormItem('includePrereleases',
             label: tr('includePrereleases'),
             type: FormItemType.bool,
-            defaultValue: 'true')
+            defaultValue: '')
       ],
       [
         GeneratedFormItem('fallbackToOlderReleases',
