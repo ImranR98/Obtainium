@@ -133,7 +133,7 @@
     "bgUpdateCheckInterval": "Háttérfrissítés ellenőrzési időköz",
     "neverManualOnly": "Soha – csak manuális",
     "appearance": "Megjelenés",
-    "showWebInAppView": "Forrás webhely megjelenítése az Appok nézetben",
+    "showWebInAppView": "Forrás megjelenítése az Appok nézetben",
     "pinUpdates": "Frissítések kitűzése az App nézet tetejére",
     "updates": "Frissítve",
     "sourceSpecific": "Forrás-specifikus",

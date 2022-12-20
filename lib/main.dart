@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.8.20';
+const String currentVersion = '0.8.21';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -32,7 +32,8 @@ const supportedLocales = [
   Locale('zh'),
   Locale('it'),
   Locale('ja'),
-  Locale('hu')
+  Locale('hu'),
+  Locale('de')
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
