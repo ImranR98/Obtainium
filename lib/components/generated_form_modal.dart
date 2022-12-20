@@ -8,14 +8,12 @@ class GeneratedFormModal extends StatefulWidget {
       {super.key,
       required this.title,
       required this.items,
-      required this.defaultValues,
       this.initValid = false,
       this.message = ''});
 
   final String title;
   final String message;
   final List<List<GeneratedFormItem>> items;
-  final Map<String, String> defaultValues;
   final bool initValid;
 
   @override
@@ -29,9 +27,6 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
   @override
   void initState() {
     super.initState();
-    widget.defaultValues.forEach((key, value) {
-      values[key] = value;
-    });
     valid = widget.initValid || widget.items.isEmpty;
   }
 

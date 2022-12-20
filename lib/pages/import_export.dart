@@ -172,7 +172,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   ])
                                             ]
                                           ],
-                                          defaultValues: const {},
                                         );
                                       }).then((values) {
                                     if (values != null) {
@@ -242,7 +241,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                       'searchQuery'))
                                                             ]
                                                           ],
-                                                          defaultValues: const {},
                                                         );
                                                       });
                                                   if (values != null &&
@@ -351,7 +349,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                                 label: e)
                                                                           ])
                                                                   .toList(),
-                                                          defaultValues: const {},
                                                         );
                                                       });
                                                   if (values != null) {

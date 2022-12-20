@@ -214,12 +214,7 @@ class _AppPageState extends State<AppPage> {
                                             return GeneratedFormModal(
                                                 title: 'Additional Options',
                                                 items: source
-                                                    .additionalSourceAppSpecificFormItems,
-                                                defaultValues: app != null
-                                                    ? app.app.additionalData
-                                                    : getDefaultValuesFromFormItems(
-                                                        source
-                                                            .additionalSourceAppSpecificFormItems));
+                                                    .additionalSourceAppSpecificFormItems);
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;

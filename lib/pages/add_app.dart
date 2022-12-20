@@ -84,7 +84,6 @@ class _AddAppPageState extends State<AddAppPage> {
                               : tr('app')
                         ]),
                         items: const [],
-                        defaultValues: const {},
                         message:
                             '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
                       );
@@ -99,7 +98,6 @@ class _AddAppPageState extends State<AddAppPage> {
                       return const GeneratedFormModal(
                         title: 'Disable Version Detection', // TODO
                         items: [],
-                        defaultValues: {},
                         message: 'TODO',
                       );
                     }) ==

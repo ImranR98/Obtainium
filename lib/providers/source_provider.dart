@@ -141,8 +141,9 @@ List<String> getLinksFromParsedHTML(
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
 
-getDefaultValuesFromFormItems(List<List<GeneratedFormItem>> items) {
-  Map.fromEntries(items
+Map<String, String> getDefaultValuesFromFormItems(
+    List<List<GeneratedFormItem>> items) {
+  return Map.fromEntries(items
       .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
       .reduce((value, element) => [...value, ...element]));
 }

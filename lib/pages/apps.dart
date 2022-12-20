@@ -349,7 +349,6 @@ class AppsPageState extends State<AppsPage> {
                                 return GeneratedFormModal(
                                   title: tr('removeSelectedAppsQuestion'),
                                   items: const [],
-                                  defaultValues: const {},
                                   initValid: true,
                                   message: tr(
                                       'xWillBeRemovedButRemainInstalled',
@@ -376,36 +375,40 @@ class AppsPageState extends State<AppsPage> {
                         ? null
                         : () {
                             HapticFeedback.heavyImpact();
-                            List<GeneratedFormItem> formInputs = [];
-                            Map<String, String> defaultValues = {};
+                            List<GeneratedFormItem> formItems = [];
                             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem('updates',
+                              formItems.add(GeneratedFormItem('updates',
                                   label: tr('updateX', args: [
                                     plural('apps',
                                         existingUpdateIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool));
-                              defaultValues['updates'] = 'true';
+                                  type: FormItemType.bool,
+                                  defaultValue: 'true'));
                             }
                             if (newInstallIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem('installs',
+                              formItems.add(GeneratedFormItem('installs',
                                   label: tr('installX', args: [
                                     plural('apps',
                                         newInstallIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool));
-                              defaultValues['installs'] =
-                                  defaultValues.isEmpty ? 'true' : '';
+                                  type: FormItemType.bool,
+                                  defaultValue:
+                                      existingUpdateIdsAllOrSelected.isNotEmpty
+                                          ? 'true'
+                                          : ''));
                             }
                             if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem('trackonlies',
+                              formItems.add(GeneratedFormItem('trackonlies',
                                   label: tr('markXTrackOnlyAsUpdated', args: [
                                     plural('apps',
                                         trackOnlyUpdateIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool));
-                              defaultValues['trackonlies'] =
-                                  defaultValues.isEmpty ? 'true' : '';
+                                  type: FormItemType.bool,
+                                  defaultValue: existingUpdateIdsAllOrSelected
+                                              .isNotEmpty ||
+                                          newInstallIdsAllOrSelected.isNotEmpty
+                                      ? 'true'
+                                      : ''));
                             }
                             showDialog<Map<String, String>?>(
                                 context: context,
@@ -417,14 +420,14 @@ class AppsPageState extends State<AppsPage> {
                                   return GeneratedFormModal(
                                     title: tr('changeX',
                                         args: [plural('apps', totalApps)]),
-                                    items: formInputs.map((e) => [e]).toList(),
-                                    defaultValues: defaultValues,
+                                    items: formItems.map((e) => [e]).toList(),
                                     initValid: true,
                                   );
                                 }).then((values) {
                               if (values != null) {
                                 if (values.isEmpty) {
-                                  values = defaultValues;
+                                  values = getDefaultValuesFromFormItems(
+                                      [formItems]);
                                 }
                                 bool shouldInstallUpdates =
                                     values['updates'] == 'true';
@@ -604,7 +607,6 @@ class AppsPageState extends State<AppsPage> {
                                                       title: tr(
                                                           'resetInstallStatusForSelectedAppsQuestion'),
                                                       items: const [],
-                                                      defaultValues: const {},
                                                       initValid: true,
                                                       message: tr(
                                                           'installStatusOfXWillBeResetExplanation',
@@ -677,29 +679,35 @@ class AppsPageState extends State<AppsPage> {
                       showDialog<Map<String, String>?>(
                           context: context,
                           builder: (BuildContext ctx) {
+                            var vals = filter == null
+                                ? AppsFilter().toValuesMap()
+                                : filter!.toValuesMap();
                             return GeneratedFormModal(
                                 title: tr('filterApps'),
                                 items: [
                                   [
                                     GeneratedFormItem('appName',
-                                        label: tr('appName'), required: false),
+                                        label: tr('appName'),
+                                        required: false,
+                                        defaultValue: vals['appName']),
                                     GeneratedFormItem('author',
-                                        label: tr('author'), required: false)
+                                        label: tr('author'),
+                                        required: false,
+                                        defaultValue: vals['author'])
                                   ],
                                   [
                                     GeneratedFormItem('upToDateApps',
                                         label: tr('upToDateApps'),
-                                        type: FormItemType.bool)
+                                        type: FormItemType.bool,
+                                        defaultValue: vals['upToDateApps'])
                                   ],
                                   [
                                     GeneratedFormItem('nonInstalledApps',
                                         label: tr('nonInstalledApps'),
-                                        type: FormItemType.bool)
+                                        type: FormItemType.bool,
+                                        defaultValue: vals['nonInstalledApps'])
                                   ]
-                                ],
-                                defaultValues: filter == null
-                                    ? AppsFilter().toValuesMap()
-                                    : filter!.toValuesMap());
+                                ]);
                           }).then((values) {
                         if (values != null) {
                           setState(() {
