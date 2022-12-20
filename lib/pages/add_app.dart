@@ -27,10 +27,8 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   AppSource? pickedSource;
-  Map<String, String> sourceSpecificAdditionalData = {};
-  bool sourceSpecificDataIsValid = true;
-  Map<String, String> otherAdditionalData = {};
-  bool otherAdditionalDataIsValid = true;
+  Map<String, String> additionalSettings = {};
+  bool additionalSettingsValid = true;
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +41,12 @@ class _AddAppPageState extends State<AddAppPage> {
         var source = valid ? sourceProvider.getSource(userInput) : null;
         if (pickedSource.runtimeType != source.runtimeType) {
           pickedSource = source;
-          sourceSpecificAdditionalData = source != null
+          additionalSettings = source != null
               ? getDefaultValuesFromFormItems(
-                  source.additionalSourceAppSpecificFormItems)
+                  source.combinedAppSpecificSettingFormItems)
               : {};
-          sourceSpecificDataIsValid = source != null
-              ? !sourceProvider.ifSourceAppsRequireAdditionalData(source)
+          additionalSettingsValid = source != null
+              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
               : true;
         }
       }
@@ -68,10 +66,9 @@ class _AddAppPageState extends State<AddAppPage> {
       });
       var settingsProvider = context.read<SettingsProvider>();
       () async {
-        var userPickedTrackOnly =
-            otherAdditionalData['trackOnlyFormItemKey'] == 'true';
+        var userPickedTrackOnly = additionalSettings['trackOnly'] == 'true';
         var userPickedNoVersionDetection =
-            otherAdditionalData['noVersionDetectionKey'] == 'true';
+            additionalSettings['noVersionDetection'] == 'true';
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             await showDialog(
@@ -108,14 +105,15 @@ class _AddAppPageState extends State<AddAppPage> {
           HapticFeedback.selectionClick();
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           App app = await sourceProvider.getApp(
-              pickedSource!, userInput, sourceSpecificAdditionalData,
+              pickedSource!, userInput, additionalSettings,
               trackOnlyOverride: trackOnly,
               noVersionDetectionOverride: userPickedNoVersionDetection);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }
           // Only download the APK here if you need to for the package ID
-          if (sourceProvider.isTempId(app.id) && !app.trackOnly) {
+          if (sourceProvider.isTempId(app.id) &&
+              app.additionalSettings['trackOnly'] != 'true') {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
             if (apkUrl == null) {
@@ -130,7 +128,7 @@ class _AddAppPageState extends State<AddAppPage> {
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
-          if (app.trackOnly) {
+          if (app.additionalSettings['trackOnly'] == 'true') {
             app.installedVersion = app.latestVersion;
           }
           await appsProvider.saveApps([app]);
@@ -206,13 +204,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                   onPressed: gettingAppInfo ||
                                           pickedSource == null ||
                                           (pickedSource!
-                                                  .additionalSourceAppSpecificFormItems
+                                                  .combinedAppSpecificSettingFormItems
                                                   .isNotEmpty &&
-                                              !sourceSpecificDataIsValid) ||
-                                          (pickedSource!
-                                                  .additionalAppSpecificSourceAgnosticFormItems
-                                                  .isNotEmpty &&
-                                              !otherAdditionalDataIsValid)
+                                              !additionalSettingsValid)
                                       ? null
                                       : addApp,
                                   child: Text(tr('add')))
@@ -305,15 +299,8 @@ class _AddAppPageState extends State<AddAppPage> {
                           ],
                         ),
                       if (pickedSource != null &&
-                          (pickedSource!.additionalSourceAppSpecificFormItems
-                                  .isNotEmpty ||
-                              pickedSource!
-                                  .additionalAppSpecificSourceAgnosticFormItems
-                                  .where((e) => pickedSource!.enforceTrackOnly
-                                      ? e.key != 'trackOnlyFormItemKey'
-                                      : true)
-                                  .map((e) => [e])
-                                  .isNotEmpty))
+                          (pickedSource!
+                              .combinedAppSpecificSettingFormItems.isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -329,39 +316,14 @@ class _AddAppPageState extends State<AddAppPage> {
                             const SizedBox(
                               height: 16,
                             ),
-                            if (pickedSource!
-                                .additionalSourceAppSpecificFormItems
-                                .isNotEmpty)
-                              GeneratedForm(
-                                  items: pickedSource!
-                                      .additionalSourceAppSpecificFormItems,
-                                  onValueChanges: (values, valid, isBuilding) {
-                                    if (!isBuilding) {
-                                      setState(() {
-                                        sourceSpecificAdditionalData = values;
-                                        sourceSpecificDataIsValid = valid;
-                                      });
-                                    }
-                                  }),
-                            if (pickedSource!
-                                .additionalAppSpecificSourceAgnosticFormItems
-                                .isNotEmpty)
-                              const SizedBox(
-                                height: 8,
-                              ),
                             GeneratedForm(
                                 items: pickedSource!
-                                    .additionalAppSpecificSourceAgnosticFormItems
-                                    .where((e) => pickedSource!.enforceTrackOnly
-                                        ? e.key != 'trackOnlyFormItemKey'
-                                        : true)
-                                    .map((e) => [e])
-                                    .toList(),
+                                    .combinedAppSpecificSettingFormItems,
                                 onValueChanges: (values, valid, isBuilding) {
                                   if (!isBuilding) {
                                     setState(() {
-                                      otherAdditionalData = values;
-                                      otherAdditionalDataIsValid = valid;
+                                      additionalSettings = values;
+                                      additionalSettingsValid = valid;
                                     });
                                   }
                                 }),

@@ -40,6 +40,7 @@ class _AppPageState extends State<AppPage> {
       prevApp = app;
       getUpdate(app.app.id);
     }
+    var trackOnly = app?.app.additionalSettings['trackOnly'] == 'true';
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -111,7 +112,7 @@ class _AppPageState extends State<AppPage> {
                         Text(
                           '${tr('installedVersionX', args: [
                                 app?.app.installedVersion ?? tr('none')
-                              ])}${app?.app.trackOnly == true ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
+                              ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
                                   tr('app')
                                 ])}' : ''}',
                           textAlign: TextAlign.center,
@@ -151,7 +152,7 @@ class _AppPageState extends State<AppPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         if (app?.app.installedVersion != null &&
-                            app?.app.trackOnly == false &&
+                            !trackOnly &&
                             app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
@@ -202,8 +203,8 @@ class _AppPageState extends State<AppPage> {
                               tooltip: 'Mark as Updated',
                               icon: const Icon(Icons.done)),
                         if (source != null &&
-                            source.additionalSourceAppSpecificFormItems
-                                .isNotEmpty)
+                            source
+                                .combinedAppSpecificSettingFormItems.isNotEmpty)
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null
@@ -211,14 +212,36 @@ class _AppPageState extends State<AppPage> {
                                       showDialog<Map<String, String>>(
                                           context: context,
                                           builder: (BuildContext ctx) {
+                                            var items = source
+                                                .combinedAppSpecificSettingFormItems
+                                                .map((row) {
+                                              row.map((e) {
+                                                if (app?.app.additionalSettings[
+                                                        e.key] !=
+                                                    null) {
+                                                  e.defaultValue = app?.app
+                                                          .additionalSettings[
+                                                      e.key];
+                                                }
+                                                return e;
+                                              }).toList();
+                                              return row;
+                                            }).toList();
                                             return GeneratedFormModal(
                                                 title: 'Additional Options',
-                                                items: source
-                                                    .additionalSourceAppSpecificFormItems);
+                                                items: items);
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
-                                          changedApp.additionalData = values;
+                                          changedApp.additionalSettings =
+                                              values;
+                                          if (source.enforceTrackOnly) {
+                                            changedApp.additionalSettings[
+                                                'trackOnly'] = 'true';
+                                            showError(
+                                                tr('appsFromSourceAreTrackOnly'),
+                                                context);
+                                          }
                                           appsProvider.saveApps(
                                               [changedApp]).then((value) {
                                             getUpdate(changedApp.id);
@@ -238,7 +261,9 @@ class _AppPageState extends State<AppPage> {
                                     ? () {
                                         HapticFeedback.heavyImpact();
                                         () async {
-                                          if (app?.app.trackOnly != true) {
+                                          if (app?.app.additionalSettings[
+                                                  'trackOnly'] !=
+                                              'true') {
                                             await settingsProvider
                                                 .getInstallPermission();
                                           }
@@ -260,10 +285,10 @@ class _AppPageState extends State<AppPage> {
                                       }
                                     : null,
                                 child: Text(app?.app.installedVersion == null
-                                    ? app?.app.trackOnly == false
+                                    ? !trackOnly
                                         ? 'Install'
                                         : 'Mark Installed'
-                                    : app?.app.trackOnly == false
+                                    : !trackOnly
                                         ? 'Update'
                                         : 'Mark Updated'))),
                         const SizedBox(width: 16.0),

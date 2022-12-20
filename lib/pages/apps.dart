@@ -139,14 +139,16 @@ class AppsPageState extends State<AppsPage> {
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
     existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.trackOnly) {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
+          'true') {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
       return true;
     }).toList();
     newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.trackOnly) {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
+          'true') {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
@@ -271,7 +273,7 @@ class AppsPageState extends State<AppsPage> {
                               SizedBox(
                                   width: 100,
                                   child: Text(
-                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBrackets')}' : ''}',
                                     overflow: TextOverflow.fade,
                                     textAlign: TextAlign.end,
                                   )),
@@ -289,7 +291,7 @@ class AppsPageState extends State<AppsPage> {
                                       child: appsProvider.areDownloadsRunning()
                                           ? Text(tr('pleaseWait'))
                                           : Text(
-                                              '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                              '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBracketsShort')}' : ''}',
                                               style: TextStyle(
                                                   fontStyle: FontStyle.italic,
                                                   decoration: changesUrl == null
@@ -343,7 +345,7 @@ class AppsPageState extends State<AppsPage> {
                     : IconButton(
                         visualDensity: VisualDensity.compact,
                         onPressed: () {
-                          showDialog<List<String>?>(
+                          showDialog<Map<String, String>?>(
                               context: context,
                               builder: (BuildContext ctx) {
                                 return GeneratedFormModal(

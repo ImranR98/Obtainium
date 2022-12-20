@@ -49,7 +49,7 @@ class GitHub extends AppSource {
           ])
     ];
 
-    additionalSourceAppSpecificFormItems = [
+    additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormItem('includePrereleases',
             label: tr('includePrereleases'),
@@ -110,14 +110,15 @@ class GitHub extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, Map<String, String> additionalData,
-      {bool trackOnly = false}) async {
-    var includePrereleases = additionalData['includePrereleases'] == 'true';
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
+    var includePrereleases = additionalSettings['includePrereleases'] == 'true';
     var fallbackToOlderReleases =
-        additionalData['fallbackToOlderReleases'] == 'true';
+        additionalSettings['fallbackToOlderReleases'] == 'true';
     var regexFilter =
-        additionalData['filterReleaseTitlesByRegEx']?.isNotEmpty == true
-            ? additionalData['filterReleaseTitlesByRegEx']
+        additionalSettings['filterReleaseTitlesByRegEx']?.isNotEmpty == true
+            ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
     Response res = await get(Uri.parse(
         'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
@@ -149,7 +150,7 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (apkUrls.isEmpty && !trackOnly) {
+        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != 'true') {
           continue;
         }
         targetRelease = releases[i];

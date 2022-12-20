@@ -313,7 +313,8 @@ class AppsProvider with ChangeNotifier {
         throw ObtainiumError(tr('appNotFound'));
       }
       String? apkUrl;
-      if (!apps[id]!.app.trackOnly) {
+      var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == 'true';
+      if (!trackOnly) {
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
       }
       if (apkUrl != null) {
@@ -326,7 +327,7 @@ class AppsProvider with ChangeNotifier {
           appsToInstall.add(id);
         }
       }
-      if (apps[id]!.app.trackOnly) {
+      if (trackOnly) {
         trackOnlyAppsToUpdate.add(id);
       }
     }
@@ -451,9 +452,10 @@ class AppsProvider with ChangeNotifier {
   // Don't save changes, just return the object if changes were made (else null)
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
-    if (installedInfo == null &&
-        app.installedVersion != null &&
-        !app.trackOnly) {
+    var trackOnly = app.additionalSettings['trackOnly'] == 'true';
+    var noVersionDetection =
+        app.additionalSettings['noVersionDetection'] == 'true';
+    if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       app.installedVersion = null;
       modded = true;
     } else if (installedInfo?.versionName != null &&
@@ -462,7 +464,7 @@ class AppsProvider with ChangeNotifier {
       modded = true;
     } else if (installedInfo?.versionName != null &&
         installedInfo!.versionName != app.installedVersion &&
-        !app.noVersionDetection) {
+        !noVersionDetection) {
       String? correctedInstalledVersion = reconcileRealAndInternalVersions(
           installedInfo.versionName!, app.installedVersion!);
       if (correctedInstalledVersion != null) {
@@ -472,7 +474,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion &&
-        !app.noVersionDetection) {
+        !noVersionDetection) {
       app.installedVersion = reconcileRealAndInternalVersions(
               app.installedVersion!, app.latestVersion,
               matchMode: true) ??
@@ -625,7 +627,7 @@ class AppsProvider with ChangeNotifier {
     App newApp = await sourceProvider.getApp(
         sourceProvider.getSource(currentApp.url),
         currentApp.url,
-        currentApp.additionalData,
+        currentApp.additionalSettings,
         currentApp: currentApp);
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;

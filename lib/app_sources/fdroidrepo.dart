@@ -9,7 +9,7 @@ class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
 
-    additionalSourceAppSpecificFormItems = [
+    additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormItem('appIdOrName',
             label: tr('appIdOrName'),
@@ -32,9 +32,10 @@ class FDroidRepo extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, Map<String, String> additionalData,
-      {bool trackOnly = false}) async {
-    String? appIdOrName = additionalData['appIdOrName'];
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
+    String? appIdOrName = additionalSettings['appIdOrName'];
     if (appIdOrName == null) {
       throw NoReleasesError();
     }

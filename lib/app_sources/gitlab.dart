@@ -25,8 +25,9 @@ class GitLab extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, Map<String, String> additionalData,
-      {bool trackOnly = false}) async {
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
     Response res = await get(Uri.parse('$standardUrl/-/tags?format=atom'));
     if (res.statusCode == 200) {
       var standardUri = Uri.parse(standardUrl);
