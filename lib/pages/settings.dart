@@ -147,12 +147,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   settingsProvider.setSettingString(key, value);
                 });
               }
-            },
-            defaultValues: Map.fromEntries(
-                e.additionalSourceSpecificSettingFormItems.map((e) {
-              return MapEntry(
-                  e.key, settingsProvider.getSettingString(e.key) ?? '');
-            })));
+            });
       } else {
         return Container();
       }

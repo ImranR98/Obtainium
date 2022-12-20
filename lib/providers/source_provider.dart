@@ -83,9 +83,9 @@ class App {
           : List<String>.from(jsonDecode(json['apkUrls'])),
       json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
       json['additionalData'] == null
-          ? SourceProvider()
+          ? getDefaultValuesFromFormItems(SourceProvider()
               .getSource(json['url'])
-              .additionalSourceAppSpecificDefaults
+              .additionalSourceAppSpecificFormItems)
           : Map<String, String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
@@ -141,6 +141,12 @@ List<String> getLinksFromParsedHTML(
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
 
+getDefaultValuesFromFormItems(List<List<GeneratedFormItem>> items) {
+  Map.fromEntries(items
+      .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
+      .reduce((value, element) => [...value, ...element]));
+}
+
 class AppSource {
   String? host;
   late String name;
@@ -162,7 +168,6 @@ class AppSource {
 
   // Different Sources may need different kinds of additional data for Apps
   List<List<GeneratedFormItem>> additionalSourceAppSpecificFormItems = [];
-  Map<String, String> additionalSourceAppSpecificDefaults = {};
 
   // Some additional data may be needed for Apps regardless of Source
   final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
@@ -175,10 +180,6 @@ class AppSource {
         label: 'Do not attempt version detection', // TODO
         type: FormItemType.bool)
   ];
-  final Map<String, String> additionalAppSpecificSourceAgnosticDefaults = {
-    'trackOnlyFormItemKey': '',
-    'noVersionDetectionKey': ''
-  };
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
@@ -332,7 +333,10 @@ class SourceProvider {
       try {
         var source = getSource(url);
         apps.add(await getApp(
-            source, url, source.additionalSourceAppSpecificDefaults));
+            source,
+            url,
+            getDefaultValuesFromFormItems(
+                source.additionalSourceAppSpecificFormItems)));
       } catch (e) {
         errors.addAll(<String, dynamic>{url: e});
       }

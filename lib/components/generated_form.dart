@@ -16,6 +16,7 @@ class GeneratedFormItem {
   late List<Widget> belowWidgets;
   late String? hint;
   late List<MapEntry<String, String>>? opts;
+  late String? defaultValue;
 
   GeneratedFormItem(this.key,
       {this.label = 'Input',
@@ -25,7 +26,8 @@ class GeneratedFormItem {
       this.additionalValidators = const [],
       this.belowWidgets = const [],
       this.hint,
-      this.opts}) {
+      this.opts,
+      this.defaultValue}) {
     if (type != FormItemType.string) {
       required = false;
     }
@@ -34,14 +36,10 @@ class GeneratedFormItem {
 
 class GeneratedForm extends StatefulWidget {
   const GeneratedForm(
-      {super.key,
-      required this.items,
-      required this.onValueChanges,
-      required this.defaultValues});
+      {super.key, required this.items, required this.onValueChanges});
 
   final List<List<GeneratedFormItem>> items;
   final OnValueChanges onValueChanges;
-  final Map<String, String> defaultValues;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -82,7 +80,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     int j = 0;
     for (var row in widget.items) {
       for (var e in row) {
-        values[e.key] = widget.defaultValues[e.key] ?? e.opts?.first.key ?? '';
+        values[e.key] = e.defaultValue ?? e.opts?.first.key ?? '';
       }
     }
 

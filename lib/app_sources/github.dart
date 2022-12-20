@@ -49,20 +49,18 @@ class GitHub extends AppSource {
           ])
     ];
 
-    additionalSourceAppSpecificDefaults = {
-      'includePrereleases': 'true',
-      'fallbackToOlderReleases': 'true',
-      'filterReleaseTitlesByRegEx': ''
-    };
-
     additionalSourceAppSpecificFormItems = [
       [
         GeneratedFormItem('includePrereleases',
-            label: tr('includePrereleases'), type: FormItemType.bool)
+            label: tr('includePrereleases'),
+            type: FormItemType.bool,
+            defaultValue: 'true')
       ],
       [
         GeneratedFormItem('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'), type: FormItemType.bool)
+            label: tr('fallbackToOlderReleases'),
+            type: FormItemType.bool,
+            defaultValue: 'true')
       ],
       [
         GeneratedFormItem('filterReleaseTitlesByRegEx',

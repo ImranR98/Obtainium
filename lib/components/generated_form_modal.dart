@@ -59,8 +59,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                   this.valid = valid;
                 });
               }
-            },
-            defaultValues: widget.defaultValues)
+            })
       ]),
       actions: [
         TextButton(

@@ -217,8 +217,9 @@ class _AppPageState extends State<AppPage> {
                                                     .additionalSourceAppSpecificFormItems,
                                                 defaultValues: app != null
                                                     ? app.app.additionalData
-                                                    : source
-                                                        .additionalSourceAppSpecificDefaults);
+                                                    : getDefaultValuesFromFormItems(
+                                                        source
+                                                            .additionalSourceAppSpecificFormItems));
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;

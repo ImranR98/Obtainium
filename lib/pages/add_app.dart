@@ -43,8 +43,10 @@ class _AddAppPageState extends State<AddAppPage> {
         var source = valid ? sourceProvider.getSource(userInput) : null;
         if (pickedSource.runtimeType != source.runtimeType) {
           pickedSource = source;
-          sourceSpecificAdditionalData =
-              source != null ? source.additionalSourceAppSpecificDefaults : {};
+          sourceSpecificAdditionalData = source != null
+              ? getDefaultValuesFromFormItems(
+                  source.additionalSourceAppSpecificFormItems)
+              : {};
           sourceSpecificDataIsValid = source != null
               ? !sourceProvider.ifSourceAppsRequireAdditionalData(source)
               : true;
@@ -170,34 +172,33 @@ class _AddAppPageState extends State<AddAppPage> {
                           Expanded(
                               child: GeneratedForm(
                                   items: [
-                                    [
-                                      GeneratedFormItem('appSourceURL',
-                                          label: tr('appSourceURL'),
-                                          additionalValidators: [
-                                            (value) {
-                                              try {
-                                                sourceProvider
-                                                    .getSource(value ?? '')
-                                                    .standardizeURL(
-                                                        preStandardizeUrl(
-                                                            value ?? ''));
-                                              } catch (e) {
-                                                return e is String
-                                                    ? e
-                                                    : e is ObtainiumError
-                                                        ? e.toString()
-                                                        : tr('error');
-                                              }
-                                              return null;
-                                            }
-                                          ])
-                                    ]
-                                  ],
+                                [
+                                  GeneratedFormItem('appSourceURL',
+                                      label: tr('appSourceURL'),
+                                      additionalValidators: [
+                                        (value) {
+                                          try {
+                                            sourceProvider
+                                                .getSource(value ?? '')
+                                                .standardizeURL(
+                                                    preStandardizeUrl(
+                                                        value ?? ''));
+                                          } catch (e) {
+                                            return e is String
+                                                ? e
+                                                : e is ObtainiumError
+                                                    ? e.toString()
+                                                    : tr('error');
+                                          }
+                                          return null;
+                                        }
+                                      ])
+                                ]
+                              ],
                                   onValueChanges: (values, valid, isBuilding) {
                                     changeUserInput(values['appSourceURL']!,
                                         valid, isBuilding);
-                                  },
-                                  defaultValues: const {'appSourceURL': ''})),
+                                  })),
                           const SizedBox(
                             width: 16,
                           ),
@@ -211,7 +212,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                                   .isNotEmpty &&
                                               !sourceSpecificDataIsValid) ||
                                           (pickedSource!
-                                                  .additionalAppSpecificSourceAgnosticDefaults
+                                                  .additionalAppSpecificSourceAgnosticFormItems
                                                   .isNotEmpty &&
                                               !otherAdditionalDataIsValid)
                                       ? null
@@ -250,9 +251,6 @@ class _AddAppPageState extends State<AddAppPage> {
                                             values['searchSomeSources']!.trim();
                                       });
                                     }
-                                  },
-                                  defaultValues: const {
-                                    'searchSomeSources': ''
                                   }),
                             ),
                             const SizedBox(
@@ -309,7 +307,7 @@ class _AddAppPageState extends State<AddAppPage> {
                           ],
                         ),
                       if (pickedSource != null &&
-                          (pickedSource!.additionalSourceAppSpecificDefaults
+                          (pickedSource!.additionalSourceAppSpecificFormItems
                                   .isNotEmpty ||
                               pickedSource!
                                   .additionalAppSpecificSourceAgnosticFormItems
@@ -346,11 +344,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                         sourceSpecificDataIsValid = valid;
                                       });
                                     }
-                                  },
-                                  defaultValues: pickedSource!
-                                      .additionalSourceAppSpecificDefaults),
+                                  }),
                             if (pickedSource!
-                                .additionalAppSpecificSourceAgnosticDefaults
+                                .additionalAppSpecificSourceAgnosticFormItems
                                 .isNotEmpty)
                               const SizedBox(
                                 height: 8,
@@ -370,9 +366,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                       otherAdditionalDataIsValid = valid;
                                     });
                                   }
-                                },
-                                defaultValues: pickedSource!
-                                    .additionalAppSpecificSourceAgnosticDefaults),
+                                }),
                           ],
                         )
                       else
