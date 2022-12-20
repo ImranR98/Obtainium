@@ -37,7 +37,7 @@
     "xIsTrackOnly": "{} csak nyomon követhető",
     "source": "Forrás",
     "app": "App",
-    "appsFromSourceAreTrackOnly": "Az ebből a forrásból származó alkalmazások 'Csak nyomon követhetőek'.' ",
+    "appsFromSourceAreTrackOnly": "Az ebből a forrásból származó alkalmazások 'Csak nyomon követhetőek'.",
     "youPickedTrackOnly": "A 'Csak követés' opciót választotta.",
     "trackOnlyAppDescription": "Az alkalmazás frissítéseit nyomon követi, de az Obtainium nem tudja letölteni vagy telepíteni.",
     "cancelled": "Törölve",

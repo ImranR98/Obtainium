@@ -37,7 +37,7 @@
     "xIsTrackOnly": "{} is Track-Only",
     "source": "Source",
     "app": "App",
-    "appsFromSourceAreTrackOnly": "Apps from this source are 'Track-Only'.' ",
+    "appsFromSourceAreTrackOnly": "Apps from this source are 'Track-Only'.",
     "youPickedTrackOnly": "You have selected the 'Track-Only' option.",
     "trackOnlyAppDescription": "The App will be tracked for updates, but Obtainium will not be able to download or install it.",
     "cancelled": "Cancelled",
