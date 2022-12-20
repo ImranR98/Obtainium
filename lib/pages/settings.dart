@@ -143,16 +143,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 .toList(),
             onValueChanges: (values, valid, isBuilding) {
               if (valid) {
-                for (var i = 0; i < values.length; i++) {
-                  settingsProvider.setSettingString(
-                      e.additionalSourceSpecificSettingFormItems[i].id,
-                      values[i]);
-                }
+                values.forEach((key, value) {
+                  settingsProvider.setSettingString(key, value);
+                });
               }
             },
-            defaultValues: e.additionalSourceSpecificSettingFormItems.map((e) {
-              return settingsProvider.getSettingString(e.id) ?? '';
-            }).toList());
+            defaultValues: Map.fromEntries(
+                e.additionalSourceSpecificSettingFormItems.map((e) {
+              return MapEntry(
+                  e.key, settingsProvider.getSettingString(e.key) ?? '');
+            })));
       } else {
         return Container();
       }

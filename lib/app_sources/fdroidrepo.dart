@@ -11,11 +11,10 @@ class FDroidRepo extends AppSource {
 
     additionalSourceAppSpecificFormItems = [
       [
-        GeneratedFormItem(
+        GeneratedFormItem('appIdOrName',
             label: tr('appIdOrName'),
             hint: tr('reposHaveMultipleApps'),
-            required: true,
-            key: 'appIdOrName')
+            required: true)
       ]
     ];
   }
@@ -33,13 +32,9 @@ class FDroidRepo extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
+      String standardUrl, Map<String, String> additionalData,
       {bool trackOnly = false}) async {
-    String? appIdOrName = findGeneratedFormValueByKey(
-        additionalSourceAppSpecificFormItems
-            .reduce((value, element) => [...value, ...element]),
-        additionalData,
-        'appIdOrName');
+    String? appIdOrName = additionalData['appIdOrName'];
     if (appIdOrName == null) {
       throw NoReleasesError();
     }

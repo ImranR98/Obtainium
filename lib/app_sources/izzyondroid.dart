@@ -23,13 +23,13 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String? tryInferringAppId(String standardUrl,
-      {List<String> additionalData = const []}) {
+      {Map<String, String> additionalData = const {}}) {
     return FDroid().tryInferringAppId(standardUrl);
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
+      String standardUrl, Map<String, String> additionalData,
       {bool trackOnly = false}) async {
     String? appId = tryInferringAppId(standardUrl);
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(

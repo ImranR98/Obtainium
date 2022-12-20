@@ -208,7 +208,7 @@ class _AppPageState extends State<AppPage> {
                               onPressed: app?.downloadProgress != null
                                   ? null
                                   : () {
-                                      showDialog<List<String>>(
+                                      showDialog<Map<String, String>>(
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return GeneratedFormModal(

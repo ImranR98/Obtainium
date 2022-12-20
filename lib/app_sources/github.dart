@@ -12,12 +12,9 @@ class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
 
-    additionalSourceAppSpecificDefaults = ['true', 'true', ''];
-
     additionalSourceSpecificSettingFormItems = [
-      GeneratedFormItem(
+      GeneratedFormItem('github-creds',
           label: tr('githubPATLabel'),
-          id: 'github-creds',
           required: false,
           additionalValidators: [
             (value) {
@@ -52,17 +49,23 @@ class GitHub extends AppSource {
           ])
     ];
 
+    additionalSourceAppSpecificDefaults = {
+      'includePrereleases': 'true',
+      'fallbackToOlderReleases': 'true',
+      'filterReleaseTitlesByRegEx': ''
+    };
+
     additionalSourceAppSpecificFormItems = [
       [
-        GeneratedFormItem(
+        GeneratedFormItem('includePrereleases',
             label: tr('includePrereleases'), type: FormItemType.bool)
       ],
       [
-        GeneratedFormItem(
+        GeneratedFormItem('fallbackToOlderReleases',
             label: tr('fallbackToOlderReleases'), type: FormItemType.bool)
       ],
       [
-        GeneratedFormItem(
+        GeneratedFormItem('filterReleaseTitlesByRegEx',
             label: tr('filterReleaseTitlesByRegEx'),
             type: FormItemType.string,
             required: false,
@@ -99,7 +102,7 @@ class GitHub extends AppSource {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
     String? creds = settingsProvider
-        .getSettingString(additionalSourceSpecificSettingFormItems[0].id);
+        .getSettingString(additionalSourceSpecificSettingFormItems[0].key);
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
 
@@ -109,15 +112,15 @@ class GitHub extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
+      String standardUrl, Map<String, String> additionalData,
       {bool trackOnly = false}) async {
-    var includePrereleases =
-        additionalData.isNotEmpty && additionalData[0] == 'true';
+    var includePrereleases = additionalData['includePrereleases'] == 'true';
     var fallbackToOlderReleases =
-        additionalData.length >= 2 && additionalData[1] == 'true';
-    var regexFilter = additionalData.length >= 3 && additionalData[2].isNotEmpty
-        ? additionalData[2]
-        : null;
+        additionalData['fallbackToOlderReleases'] == 'true';
+    var regexFilter =
+        additionalData['filterReleaseTitlesByRegEx']?.isNotEmpty == true
+            ? additionalData['filterReleaseTitlesByRegEx']
+            : null;
     Response res = await get(Uri.parse(
         'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {

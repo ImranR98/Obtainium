@@ -44,7 +44,7 @@ class App {
   late String latestVersion;
   List<String> apkUrls = [];
   late int preferredApkIndex;
-  late List<String> additionalData;
+  late Map<String, String> additionalData;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   bool trackOnly = false;
@@ -86,7 +86,7 @@ class App {
           ? SourceProvider()
               .getSource(json['url'])
               .additionalSourceAppSpecificDefaults
-          : List<String>.from(jsonDecode(json['additionalData'])),
+          : Map<String, String>.from(jsonDecode(json['additionalData'])),
       json['lastUpdateCheck'] == null
           ? null
           : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
@@ -155,27 +155,30 @@ class AppSource {
   }
 
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
+      String standardUrl, Map<String, String> additionalData,
       {bool trackOnly = false}) {
     throw NotImplementedError();
   }
 
   // Different Sources may need different kinds of additional data for Apps
   List<List<GeneratedFormItem>> additionalSourceAppSpecificFormItems = [];
-  List<String> additionalSourceAppSpecificDefaults = [];
+  Map<String, String> additionalSourceAppSpecificDefaults = {};
 
   // Some additional data may be needed for Apps regardless of Source
   final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
     GeneratedFormItem(
-        label: tr('trackOnly'),
-        type: FormItemType.bool,
-        key: 'trackOnlyFormItemKey'),
-    GeneratedFormItem(
+      'trackOnlyFormItemKey',
+      label: tr('trackOnly'),
+      type: FormItemType.bool,
+    ),
+    GeneratedFormItem('noVersionDetectionKey',
         label: 'Do not attempt version detection', // TODO
-        type: FormItemType.bool,
-        key: 'noVersionDetectionKey')
+        type: FormItemType.bool)
   ];
-  final List<String> additionalAppSpecificSourceAgnosticDefaults = ['', ''];
+  final Map<String, String> additionalAppSpecificSourceAgnosticDefaults = {
+    'trackOnlyFormItemKey': '',
+    'noVersionDetectionKey': ''
+  };
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
@@ -194,7 +197,7 @@ class AppSource {
   }
 
   String? tryInferringAppId(String standardUrl,
-      {List<String> additionalData = const []}) {
+      {Map<String, String> additionalData = const {}}) {
     return null;
   }
 }
@@ -282,7 +285,8 @@ class SourceProvider {
     return true;
   }
 
-  Future<App> getApp(AppSource source, String url, List<String> additionalData,
+  Future<App> getApp(
+      AppSource source, String url, Map<String, String> additionalData,
       {App? currentApp,
       bool trackOnlyOverride = false,
       noVersionDetectionOverride = false}) async {

@@ -27,9 +27,9 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   AppSource? pickedSource;
-  List<String> sourceSpecificAdditionalData = [];
+  Map<String, String> sourceSpecificAdditionalData = {};
   bool sourceSpecificDataIsValid = true;
-  List<String> otherAdditionalData = [];
+  Map<String, String> otherAdditionalData = {};
   bool otherAdditionalDataIsValid = true;
 
   @override
@@ -44,7 +44,7 @@ class _AddAppPageState extends State<AddAppPage> {
         if (pickedSource.runtimeType != source.runtimeType) {
           pickedSource = source;
           sourceSpecificAdditionalData =
-              source != null ? source.additionalSourceAppSpecificDefaults : [];
+              source != null ? source.additionalSourceAppSpecificDefaults : {};
           sourceSpecificDataIsValid = source != null
               ? !sourceProvider.ifSourceAppsRequireAdditionalData(source)
               : true;
@@ -66,16 +66,10 @@ class _AddAppPageState extends State<AddAppPage> {
       });
       var settingsProvider = context.read<SettingsProvider>();
       () async {
-        var userPickedTrackOnly = findGeneratedFormValueByKey(
-                pickedSource!.additionalAppSpecificSourceAgnosticFormItems,
-                otherAdditionalData,
-                'trackOnlyFormItemKey') ==
-            'true';
-        var userPickedNoVersionDetection = findGeneratedFormValueByKey(
-                pickedSource!.additionalAppSpecificSourceAgnosticFormItems,
-                otherAdditionalData,
-                'noVersionDetectionKey') ==
-            'true';
+        var userPickedTrackOnly =
+            otherAdditionalData['trackOnlyFormItemKey'] == 'true';
+        var userPickedNoVersionDetection =
+            otherAdditionalData['noVersionDetectionKey'] == 'true';
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             await showDialog(
@@ -88,7 +82,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               : tr('app')
                         ]),
                         items: const [],
-                        defaultValues: const [],
+                        defaultValues: const {},
                         message:
                             '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
                       );
@@ -100,10 +94,10 @@ class _AddAppPageState extends State<AddAppPage> {
             await showDialog(
                     context: context,
                     builder: (BuildContext ctx) {
-                      return GeneratedFormModal(
+                      return const GeneratedFormModal(
                         title: 'Disable Version Detection', // TODO
-                        items: const [],
-                        defaultValues: const [],
+                        items: [],
+                        defaultValues: {},
                         message: 'TODO',
                       );
                     }) ==
@@ -177,7 +171,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: GeneratedForm(
                                   items: [
                                     [
-                                      GeneratedFormItem(
+                                      GeneratedFormItem('appSourceURL',
                                           label: tr('appSourceURL'),
                                           additionalValidators: [
                                             (value) {
@@ -200,10 +194,10 @@ class _AddAppPageState extends State<AddAppPage> {
                                     ]
                                   ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    changeUserInput(
-                                        values[0], valid, isBuilding);
+                                    changeUserInput(values['appSourceURL']!,
+                                        valid, isBuilding);
                                   },
-                                  defaultValues: const [])),
+                                  defaultValues: const {'appSourceURL': ''})),
                           const SizedBox(
                             width: 16,
                           ),
@@ -244,7 +238,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: GeneratedForm(
                                   items: [
                                     [
-                                      GeneratedFormItem(
+                                      GeneratedFormItem('searchSomeSources',
                                           label: tr('searchSomeSourcesLabel'),
                                           required: false),
                                     ]
@@ -252,11 +246,14 @@ class _AddAppPageState extends State<AddAppPage> {
                                   onValueChanges: (values, valid, isBuilding) {
                                     if (values.isNotEmpty && valid) {
                                       setState(() {
-                                        searchQuery = values[0].trim();
+                                        searchQuery =
+                                            values['searchSomeSources']!.trim();
                                       });
                                     }
                                   },
-                                  defaultValues: const ['']),
+                                  defaultValues: const {
+                                    'searchSomeSources': ''
+                                  }),
                             ),
                             const SizedBox(
                               width: 16,
