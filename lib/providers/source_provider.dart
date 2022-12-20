@@ -142,7 +142,7 @@ preStandardizeUrl(String url) {
   return url;
 }
 
-const String noAPKFound = 'No APK found';
+String noAPKFound = tr('noAPKFound');
 
 List<String> getLinksFromParsedHTML(
         Document dom, RegExp hrefPattern, String prependToLinks) =>
@@ -196,8 +196,7 @@ class AppSource {
     ],
     [
       GeneratedFormItem('noVersionDetection',
-          label: 'Do not attempt version detection', // TODO
-          type: FormItemType.bool)
+          label: tr('noVersionDetection'), type: FormItemType.bool)
     ]
   ];
 

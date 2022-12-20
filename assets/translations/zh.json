@@ -188,6 +188,17 @@
     "steam": "Steam",
     "steamMobile": "Steam Mobile",
     "steamChat": "Steam Chat",
+    "install": "Install",
+    "markInstalled": "Mark Installed",
+    "update": "Update",
+    "markUpdated": "Mark Updated",
+    "additionalOptions": "Additional Options",
+    "disableVersionDetection": "Disable Version Detection",
+    "noVersionDetectionExplanation": "This option should only be used for Apps where version detection does not work correctly.",
+    "downloadingX": "Downloading {}",
+    "downloadNotifDescription": "Notifies the user of the progress in downloading an App",
+    "noAPKFound": "No APK found",
+    "noVersionDetection": "No version detection",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"

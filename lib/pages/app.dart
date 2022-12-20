@@ -73,7 +73,9 @@ class _AppPageState extends State<AppPage> {
                           height: 25,
                         ),
                         Text(
-                          app?.installedInfo?.name ?? app?.app.name ?? 'App',
+                          app?.installedInfo?.name ??
+                              app?.app.name ??
+                              tr('app'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
@@ -200,7 +202,7 @@ class _AppPageState extends State<AppPage> {
                                             );
                                           });
                                     },
-                              tooltip: 'Mark as Updated',
+                              tooltip: tr('markUpdated'),
                               icon: const Icon(Icons.done)),
                         if (source != null &&
                             source
@@ -228,7 +230,7 @@ class _AppPageState extends State<AppPage> {
                                               return row;
                                             }).toList();
                                             return GeneratedFormModal(
-                                                title: 'Additional Options',
+                                                title: tr('additionalOptions'),
                                                 items: items);
                                           }).then((values) {
                                         if (app != null && values != null) {
@@ -249,7 +251,7 @@ class _AppPageState extends State<AppPage> {
                                         }
                                       });
                                     },
-                              tooltip: 'Additional Options',
+                              tooltip: tr('additionalOptions'),
                               icon: const Icon(Icons.settings)),
                         const SizedBox(width: 16.0),
                         Expanded(
@@ -286,11 +288,11 @@ class _AppPageState extends State<AppPage> {
                                     : null,
                                 child: Text(app?.app.installedVersion == null
                                     ? !trackOnly
-                                        ? 'Install'
-                                        : 'Mark Installed'
+                                        ? tr('install')
+                                        : tr('markInstalled')
                                     : !trackOnly
-                                        ? 'Update'
-                                        : 'Mark Updated'))),
+                                        ? tr('update')
+                                        : tr('markUpdated')))),
                         const SizedBox(width: 16.0),
                         ElevatedButton(
                           onPressed: app?.downloadProgress != null

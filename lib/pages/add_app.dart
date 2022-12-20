@@ -92,10 +92,10 @@ class _AddAppPageState extends State<AddAppPage> {
             await showDialog(
                     context: context,
                     builder: (BuildContext ctx) {
-                      return const GeneratedFormModal(
-                        title: 'Disable Version Detection', // TODO
-                        items: [],
-                        message: 'TODO',
+                      return GeneratedFormModal(
+                        title: tr('disableVersionDetection'),
+                        items: const [],
+                        message: tr('noVersionDetectionExplanation'),
                       );
                     }) ==
                 null) {
