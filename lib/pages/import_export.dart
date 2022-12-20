@@ -145,7 +145,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           title: tr('importFromURLList'),
                                           items: [
                                             [
-                                              GeneratedFormItem(
+                                              GeneratedFormItem('appURLList',
                                                   label: tr('appURLList'),
                                                   max: 7,
                                                   additionalValidators: [
@@ -172,7 +172,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   ])
                                             ]
                                           ],
-                                          defaultValues: const [],
                                         );
                                       }).then((values) {
                                     if (values != null) {
@@ -237,11 +236,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                           items: [
                                                             [
                                                               GeneratedFormItem(
+                                                                  'searchQuery',
                                                                   label: tr(
                                                                       'searchQuery'))
                                                             ]
                                                           ],
-                                                          defaultValues: const [],
                                                         );
                                                       });
                                                   if (values != null &&
@@ -346,10 +345,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                   .requiredArgs
                                                                   .map(
                                                                       (e) => [
-                                                                            GeneratedFormItem(label: e)
+                                                                            GeneratedFormItem(e,
+                                                                                label: e)
                                                                           ])
                                                                   .toList(),
-                                                          defaultValues: const [],
                                                         );
                                                       });
                                                   if (values != null) {

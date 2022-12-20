@@ -200,9 +200,8 @@ class _ObtainiumState extends State<Obtainium> {
               currentReleaseTag,
               [],
               0,
-              ['true'],
+              {},
               null,
-              false,
               false)
         ]);
       }

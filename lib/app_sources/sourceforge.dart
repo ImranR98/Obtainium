@@ -23,8 +23,9 @@ class SourceForge extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) async {
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
     Response res = await get(Uri.parse('$standardUrl/rss?path=/'));
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);

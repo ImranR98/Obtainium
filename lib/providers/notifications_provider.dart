@@ -80,11 +80,11 @@ class DownloadNotification extends ObtainiumNotification {
   DownloadNotification(String appName, int progPercent)
       : super(
             appName.hashCode,
-            'Downloading $appName',
+            tr('downloadingX', args: [appName]),
             '',
             'APP_DOWNLOADING',
-            'Downloading App',
-            'Notifies the user of the progress in downloading an App',
+            tr('downloadingX', args: [tr('app')]),
+            tr('downloadNotifDescription'),
             Importance.low,
             onlyAlertOnce: true,
             progPercent: progPercent);

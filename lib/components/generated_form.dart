@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 enum FormItemType { string, bool }
 
 typedef OnValueChanges = void Function(
-    List<String> values, bool valid, bool isBuilding);
+    Map<String, String> values, bool valid, bool isBuilding);
 
 class GeneratedFormItem {
   late String key;
@@ -13,22 +13,21 @@ class GeneratedFormItem {
   late bool required;
   late int max;
   late List<String? Function(String? value)> additionalValidators;
-  late String id;
   late List<Widget> belowWidgets;
   late String? hint;
   late List<MapEntry<String, String>>? opts;
+  late String? defaultValue;
 
-  GeneratedFormItem(
+  GeneratedFormItem(this.key,
       {this.label = 'Input',
       this.type = FormItemType.string,
       this.required = true,
       this.max = 1,
       this.additionalValidators = const [],
-      this.id = 'input',
       this.belowWidgets = const [],
       this.hint,
       this.opts,
-      this.key = 'default'}) {
+      this.defaultValue}) {
     if (type != FormItemType.string) {
       required = false;
     }
@@ -37,14 +36,10 @@ class GeneratedFormItem {
 
 class GeneratedForm extends StatefulWidget {
   const GeneratedForm(
-      {super.key,
-      required this.items,
-      required this.onValueChanges,
-      required this.defaultValues});
+      {super.key, required this.items, required this.onValueChanges});
 
   final List<List<GeneratedFormItem>> items;
   final OnValueChanges onValueChanges;
-  final List<String> defaultValues;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -52,17 +47,18 @@ class GeneratedForm extends StatefulWidget {
 
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
-  late List<List<String>> values;
+  Map<String, String> values = {};
   late List<List<Widget>> formInputs;
   List<List<Widget>> rows = [];
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false}) {
-    List<String> returnValues = [];
+    Map<String, String> returnValues = {};
     var valid = true;
-    for (int r = 0; r < values.length; r++) {
-      for (int i = 0; i < values[r].length; i++) {
-        returnValues.add(values[r][i]);
+    for (int r = 0; r < widget.items.length; r++) {
+      for (int i = 0; i < widget.items[r].length; i++) {
+        returnValues[widget.items[r][i].key] =
+            values[widget.items[r][i].key] ?? '';
         if (formInputs[r][i] is TextFormField) {
           valid = valid &&
               ((formInputs[r][i].key as GlobalKey<FormFieldState>)
@@ -80,16 +76,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.initState();
 
     // Initialize form values as all empty
+    values.clear();
     int j = 0;
-    values = widget.items
-        .map((row) => row.map((e) {
-              return j < widget.defaultValues.length
-                  ? widget.defaultValues[j++]
-                  : e.opts != null
-                      ? e.opts!.first.key
-                      : '';
-            }).toList())
-        .toList();
+    for (var row in widget.items) {
+      for (var e in row) {
+        values[e.key] = e.defaultValue ?? e.opts?.first.key ?? '';
+      }
+    }
 
     // Dynamically create form inputs
     formInputs = widget.items.asMap().entries.map((row) {
@@ -98,11 +91,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
           final formFieldKey = GlobalKey<FormFieldState>();
           return TextFormField(
             key: formFieldKey,
-            initialValue: values[row.key][e.key],
+            initialValue: values[e.value.key],
             autovalidateMode: AutovalidateMode.onUserInteraction,
             onChanged: (value) {
               setState(() {
-                values[row.key][e.key] = value;
+                values[e.value.key] = value;
                 someValueChanged();
               });
             },
@@ -131,14 +124,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
           }
           return DropdownButtonFormField(
               decoration: InputDecoration(labelText: e.value.label),
-              value: values[row.key][e.key],
+              value: values[e.value.key],
               items: e.value.opts!
                   .map((e) =>
                       DropdownMenuItem(value: e.key, child: Text(e.value)))
                   .toList(),
               onChanged: (value) {
                 setState(() {
-                  values[row.key][e.key] = value ?? e.value.opts!.first.key;
+                  values[e.value.key] = value ?? e.value.opts!.first.key;
                   someValueChanged();
                 });
               });
@@ -160,10 +153,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
             children: [
               Text(widget.items[r][e].label),
               Switch(
-                  value: values[r][e] == 'true',
+                  value: values[widget.items[r][e].key] == 'true',
                   onChanged: (value) {
                     setState(() {
-                      values[r][e] = value ? 'true' : '';
+                      values[widget.items[r][e].key] = value ? 'true' : '';
                       someValueChanged();
                     });
                   })
@@ -216,19 +209,4 @@ class _GeneratedFormState extends State<GeneratedForm> {
           ],
         ));
   }
-}
-
-String? findGeneratedFormValueByKey(
-    List<GeneratedFormItem> items, List<String> values, String key) {
-  var foundIndex = -1;
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].key == key) {
-      foundIndex = i;
-      break;
-    }
-  }
-  if (foundIndex >= 0 && foundIndex < values.length) {
-    return values[foundIndex];
-  }
-  return null;
 }

@@ -139,14 +139,16 @@ class AppsPageState extends State<AppsPage> {
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
     existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.trackOnly) {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
+          'true') {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
       return true;
     }).toList();
     newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.trackOnly) {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
+          'true') {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
@@ -271,7 +273,7 @@ class AppsPageState extends State<AppsPage> {
                               SizedBox(
                                   width: 100,
                                   child: Text(
-                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.trackOnly == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBrackets')}' : ''}',
                                     overflow: TextOverflow.fade,
                                     textAlign: TextAlign.end,
                                   )),
@@ -289,7 +291,7 @@ class AppsPageState extends State<AppsPage> {
                                       child: appsProvider.areDownloadsRunning()
                                           ? Text(tr('pleaseWait'))
                                           : Text(
-                                              '${tr('updateAvailable')}${sortedApps[index].app.trackOnly ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                              '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBracketsShort')}' : ''}',
                                               style: TextStyle(
                                                   fontStyle: FontStyle.italic,
                                                   decoration: changesUrl == null
@@ -343,13 +345,12 @@ class AppsPageState extends State<AppsPage> {
                     : IconButton(
                         visualDensity: VisualDensity.compact,
                         onPressed: () {
-                          showDialog<List<String>?>(
+                          showDialog<Map<String, String>?>(
                               context: context,
                               builder: (BuildContext ctx) {
                                 return GeneratedFormModal(
                                   title: tr('removeSelectedAppsQuestion'),
                                   items: const [],
-                                  defaultValues: const [],
                                   initValid: true,
                                   message: tr(
                                       'xWillBeRemovedButRemainInstalled',
@@ -376,41 +377,42 @@ class AppsPageState extends State<AppsPage> {
                         ? null
                         : () {
                             HapticFeedback.heavyImpact();
-                            List<GeneratedFormItem> formInputs = [];
-                            List<String> defaultValues = [];
+                            List<GeneratedFormItem> formItems = [];
                             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem(
+                              formItems.add(GeneratedFormItem('updates',
                                   label: tr('updateX', args: [
                                     plural('apps',
                                         existingUpdateIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
-                                  key: 'updates'));
-                              defaultValues.add('true');
+                                  defaultValue: 'true'));
                             }
                             if (newInstallIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem(
+                              formItems.add(GeneratedFormItem('installs',
                                   label: tr('installX', args: [
                                     plural('apps',
                                         newInstallIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
-                                  key: 'installs'));
-                              defaultValues
-                                  .add(defaultValues.isEmpty ? 'true' : '');
+                                  defaultValue:
+                                      existingUpdateIdsAllOrSelected.isNotEmpty
+                                          ? 'true'
+                                          : ''));
                             }
                             if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                              formInputs.add(GeneratedFormItem(
+                              formItems.add(GeneratedFormItem('trackonlies',
                                   label: tr('markXTrackOnlyAsUpdated', args: [
                                     plural('apps',
                                         trackOnlyUpdateIdsAllOrSelected.length)
                                   ]),
                                   type: FormItemType.bool,
-                                  key: 'trackonlies'));
-                              defaultValues
-                                  .add(defaultValues.isEmpty ? 'true' : '');
+                                  defaultValue: existingUpdateIdsAllOrSelected
+                                              .isNotEmpty ||
+                                          newInstallIdsAllOrSelected.isNotEmpty
+                                      ? 'true'
+                                      : ''));
                             }
-                            showDialog<List<String>?>(
+                            showDialog<Map<String, String>?>(
                                 context: context,
                                 builder: (BuildContext ctx) {
                                   var totalApps = existingUpdateIdsAllOrSelected
@@ -420,27 +422,21 @@ class AppsPageState extends State<AppsPage> {
                                   return GeneratedFormModal(
                                     title: tr('changeX',
                                         args: [plural('apps', totalApps)]),
-                                    items: formInputs.map((e) => [e]).toList(),
-                                    defaultValues: defaultValues,
+                                    items: formItems.map((e) => [e]).toList(),
                                     initValid: true,
                                   );
                                 }).then((values) {
                               if (values != null) {
                                 if (values.isEmpty) {
-                                  values = defaultValues;
+                                  values = getDefaultValuesFromFormItems(
+                                      [formItems]);
                                 }
                                 bool shouldInstallUpdates =
-                                    findGeneratedFormValueByKey(
-                                            formInputs, values, 'updates') ==
-                                        'true';
+                                    values['updates'] == 'true';
                                 bool shouldInstallNew =
-                                    findGeneratedFormValueByKey(
-                                            formInputs, values, 'installs') ==
-                                        'true';
+                                    values['installs'] == 'true';
                                 bool shouldMarkTrackOnlies =
-                                    findGeneratedFormValueByKey(formInputs,
-                                            values, 'trackonlies') ==
-                                        'true';
+                                    values['trackonlies'] == 'true';
                                 (() async {
                                   if (shouldInstallNew ||
                                       shouldInstallUpdates) {
@@ -613,7 +609,6 @@ class AppsPageState extends State<AppsPage> {
                                                       title: tr(
                                                           'resetInstallStatusForSelectedAppsQuestion'),
                                                       items: const [],
-                                                      defaultValues: const [],
                                                       initValid: true,
                                                       message: tr(
                                                           'installStatusOfXWillBeResetExplanation',
@@ -683,36 +678,42 @@ class AppsPageState extends State<AppsPage> {
                               : FontWeight.bold),
                     ),
                     onPressed: () {
-                      showDialog<List<String>?>(
+                      showDialog<Map<String, String>?>(
                           context: context,
                           builder: (BuildContext ctx) {
+                            var vals = filter == null
+                                ? AppsFilter().toValuesMap()
+                                : filter!.toValuesMap();
                             return GeneratedFormModal(
                                 title: tr('filterApps'),
                                 items: [
                                   [
-                                    GeneratedFormItem(
-                                        label: tr('appName'), required: false),
-                                    GeneratedFormItem(
-                                        label: tr('author'), required: false)
+                                    GeneratedFormItem('appName',
+                                        label: tr('appName'),
+                                        required: false,
+                                        defaultValue: vals['appName']),
+                                    GeneratedFormItem('author',
+                                        label: tr('author'),
+                                        required: false,
+                                        defaultValue: vals['author'])
                                   ],
                                   [
-                                    GeneratedFormItem(
+                                    GeneratedFormItem('upToDateApps',
                                         label: tr('upToDateApps'),
-                                        type: FormItemType.bool)
+                                        type: FormItemType.bool,
+                                        defaultValue: vals['upToDateApps'])
                                   ],
                                   [
-                                    GeneratedFormItem(
+                                    GeneratedFormItem('nonInstalledApps',
                                         label: tr('nonInstalledApps'),
-                                        type: FormItemType.bool)
+                                        type: FormItemType.bool,
+                                        defaultValue: vals['nonInstalledApps'])
                                   ]
-                                ],
-                                defaultValues: filter == null
-                                    ? AppsFilter().toValuesArray()
-                                    : filter!.toValuesArray());
+                                ]);
                           }).then((values) {
                         if (values != null) {
                           setState(() {
-                            filter = AppsFilter.fromValuesArray(values);
+                            filter = AppsFilter.fromValuesMap(values);
                             if (AppsFilter().isIdenticalTo(filter!)) {
                               filter = null;
                             }
@@ -740,20 +741,20 @@ class AppsFilter {
       this.includeUptodate = true,
       this.includeNonInstalled = true});
 
-  List<String> toValuesArray() {
-    return [
-      nameFilter,
-      authorFilter,
-      includeUptodate ? 'true' : '',
-      includeNonInstalled ? 'true' : ''
-    ];
+  Map<String, String> toValuesMap() {
+    return {
+      'appName': nameFilter,
+      'author': authorFilter,
+      'upToDateApps': includeUptodate ? 'true' : '',
+      'nonInstalledApps': includeNonInstalled ? 'true' : ''
+    };
   }
 
-  AppsFilter.fromValuesArray(List<String> values) {
-    nameFilter = values[0];
-    authorFilter = values[1];
-    includeUptodate = values[2] == 'true';
-    includeNonInstalled = values[3] == 'true';
+  AppsFilter.fromValuesMap(Map<String, String> values) {
+    nameFilter = values['appName']!;
+    authorFilter = values['author']!;
+    includeUptodate = values['upToDateApps'] == 'true';
+    includeNonInstalled = values['nonInstalledApps'] == 'true';
   }
 
   bool isIdenticalTo(AppsFilter other) =>

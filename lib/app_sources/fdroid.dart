@@ -32,7 +32,7 @@ class FDroid extends AppSource {
 
   @override
   String? tryInferringAppId(String standardUrl,
-      {List<String> additionalData = const []}) {
+      {Map<String, String> additionalSettings = const {}}) {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
@@ -60,8 +60,9 @@ class FDroid extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) async {
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
     String? appId = tryInferringAppId(standardUrl);
     return getAPKUrlsFromFDroidPackagesAPIResponse(
         await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId')),

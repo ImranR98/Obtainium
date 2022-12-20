@@ -8,14 +8,12 @@ class GeneratedFormModal extends StatefulWidget {
       {super.key,
       required this.title,
       required this.items,
-      required this.defaultValues,
       this.initValid = false,
       this.message = ''});
 
   final String title;
   final String message;
   final List<List<GeneratedFormItem>> items;
-  final List<String> defaultValues;
   final bool initValid;
 
   @override
@@ -23,13 +21,12 @@ class GeneratedFormModal extends StatefulWidget {
 }
 
 class _GeneratedFormModalState extends State<GeneratedFormModal> {
-  List<String> values = [];
+  Map<String, String> values = {};
   bool valid = false;
 
   @override
   void initState() {
     super.initState();
-    values = widget.defaultValues;
     valid = widget.initValid || widget.items.isEmpty;
   }
 
@@ -57,8 +54,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                   this.valid = valid;
                 });
               }
-            },
-            defaultValues: widget.defaultValues)
+            })
       ]),
       actions: [
         TextButton(

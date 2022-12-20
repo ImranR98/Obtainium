@@ -12,12 +12,9 @@ class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
 
-    additionalSourceAppSpecificDefaults = ['true', 'true', ''];
-
     additionalSourceSpecificSettingFormItems = [
-      GeneratedFormItem(
+      GeneratedFormItem('github-creds',
           label: tr('githubPATLabel'),
-          id: 'github-creds',
           required: false,
           additionalValidators: [
             (value) {
@@ -52,17 +49,21 @@ class GitHub extends AppSource {
           ])
     ];
 
-    additionalSourceAppSpecificFormItems = [
+    additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormItem(
-            label: tr('includePrereleases'), type: FormItemType.bool)
+        GeneratedFormItem('includePrereleases',
+            label: tr('includePrereleases'),
+            type: FormItemType.bool,
+            defaultValue: 'true')
       ],
       [
-        GeneratedFormItem(
-            label: tr('fallbackToOlderReleases'), type: FormItemType.bool)
+        GeneratedFormItem('fallbackToOlderReleases',
+            label: tr('fallbackToOlderReleases'),
+            type: FormItemType.bool,
+            defaultValue: 'true')
       ],
       [
-        GeneratedFormItem(
+        GeneratedFormItem('filterReleaseTitlesByRegEx',
             label: tr('filterReleaseTitlesByRegEx'),
             type: FormItemType.string,
             required: false,
@@ -99,7 +100,7 @@ class GitHub extends AppSource {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
     String? creds = settingsProvider
-        .getSettingString(additionalSourceSpecificSettingFormItems[0].id);
+        .getSettingString(additionalSourceSpecificSettingFormItems[0].key);
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
 
@@ -109,15 +110,16 @@ class GitHub extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) async {
-    var includePrereleases =
-        additionalData.isNotEmpty && additionalData[0] == 'true';
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
+    var includePrereleases = additionalSettings['includePrereleases'] == 'true';
     var fallbackToOlderReleases =
-        additionalData.length >= 2 && additionalData[1] == 'true';
-    var regexFilter = additionalData.length >= 3 && additionalData[2].isNotEmpty
-        ? additionalData[2]
-        : null;
+        additionalSettings['fallbackToOlderReleases'] == 'true';
+    var regexFilter =
+        additionalSettings['filterReleaseTitlesByRegEx']?.isNotEmpty == true
+            ? additionalSettings['filterReleaseTitlesByRegEx']
+            : null;
     Response res = await get(Uri.parse(
         'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases'));
     if (res.statusCode == 200) {
@@ -148,7 +150,7 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (apkUrls.isEmpty && !trackOnly) {
+        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != 'true') {
           continue;
         }
         targetRelease = releases[i];

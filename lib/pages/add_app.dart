@@ -27,10 +27,8 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   AppSource? pickedSource;
-  List<String> sourceSpecificAdditionalData = [];
-  bool sourceSpecificDataIsValid = true;
-  List<String> otherAdditionalData = [];
-  bool otherAdditionalDataIsValid = true;
+  Map<String, String> additionalSettings = {};
+  bool additionalSettingsValid = true;
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +41,12 @@ class _AddAppPageState extends State<AddAppPage> {
         var source = valid ? sourceProvider.getSource(userInput) : null;
         if (pickedSource.runtimeType != source.runtimeType) {
           pickedSource = source;
-          sourceSpecificAdditionalData =
-              source != null ? source.additionalSourceAppSpecificDefaults : [];
-          sourceSpecificDataIsValid = source != null
-              ? !sourceProvider.ifSourceAppsRequireAdditionalData(source)
+          additionalSettings = source != null
+              ? getDefaultValuesFromFormItems(
+                  source.combinedAppSpecificSettingFormItems)
+              : {};
+          additionalSettingsValid = source != null
+              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
               : true;
         }
       }
@@ -66,11 +66,9 @@ class _AddAppPageState extends State<AddAppPage> {
       });
       var settingsProvider = context.read<SettingsProvider>();
       () async {
-        var userPickedTrackOnly = findGeneratedFormValueByKey(
-                pickedSource!.additionalAppSpecificSourceAgnosticFormItems,
-                otherAdditionalData,
-                'trackOnlyFormItemKey') ==
-            'true';
+        var userPickedTrackOnly = additionalSettings['trackOnly'] == 'true';
+        var userPickedNoVersionDetection =
+            additionalSettings['noVersionDetection'] == 'true';
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             await showDialog(
@@ -83,9 +81,21 @@ class _AddAppPageState extends State<AddAppPage> {
                               : tr('app')
                         ]),
                         items: const [],
-                        defaultValues: const [],
                         message:
                             '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
+                      );
+                    }) ==
+                null) {
+          cont = false;
+        }
+        if (userPickedNoVersionDetection &&
+            await showDialog(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return GeneratedFormModal(
+                        title: tr('disableVersionDetection'),
+                        items: const [],
+                        message: tr('noVersionDetectionExplanation'),
                       );
                     }) ==
                 null) {
@@ -95,13 +105,15 @@ class _AddAppPageState extends State<AddAppPage> {
           HapticFeedback.selectionClick();
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           App app = await sourceProvider.getApp(
-              pickedSource!, userInput, sourceSpecificAdditionalData,
-              trackOnly: trackOnly);
+              pickedSource!, userInput, additionalSettings,
+              trackOnlyOverride: trackOnly,
+              noVersionDetectionOverride: userPickedNoVersionDetection);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }
           // Only download the APK here if you need to for the package ID
-          if (sourceProvider.isTempId(app.id) && !app.trackOnly) {
+          if (sourceProvider.isTempId(app.id) &&
+              app.additionalSettings['trackOnly'] != 'true') {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
             if (apkUrl == null) {
@@ -116,7 +128,7 @@ class _AddAppPageState extends State<AddAppPage> {
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
-          if (app.trackOnly) {
+          if (app.additionalSettings['trackOnly'] == 'true') {
             app.installedVersion = app.latestVersion;
           }
           await appsProvider.saveApps([app]);
@@ -156,34 +168,33 @@ class _AddAppPageState extends State<AddAppPage> {
                           Expanded(
                               child: GeneratedForm(
                                   items: [
-                                    [
-                                      GeneratedFormItem(
-                                          label: tr('appSourceURL'),
-                                          additionalValidators: [
-                                            (value) {
-                                              try {
-                                                sourceProvider
-                                                    .getSource(value ?? '')
-                                                    .standardizeURL(
-                                                        preStandardizeUrl(
-                                                            value ?? ''));
-                                              } catch (e) {
-                                                return e is String
-                                                    ? e
-                                                    : e is ObtainiumError
-                                                        ? e.toString()
-                                                        : tr('error');
-                                              }
-                                              return null;
-                                            }
-                                          ])
-                                    ]
-                                  ],
+                                [
+                                  GeneratedFormItem('appSourceURL',
+                                      label: tr('appSourceURL'),
+                                      additionalValidators: [
+                                        (value) {
+                                          try {
+                                            sourceProvider
+                                                .getSource(value ?? '')
+                                                .standardizeURL(
+                                                    preStandardizeUrl(
+                                                        value ?? ''));
+                                          } catch (e) {
+                                            return e is String
+                                                ? e
+                                                : e is ObtainiumError
+                                                    ? e.toString()
+                                                    : tr('error');
+                                          }
+                                          return null;
+                                        }
+                                      ])
+                                ]
+                              ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    changeUserInput(
-                                        values[0], valid, isBuilding);
-                                  },
-                                  defaultValues: const [])),
+                                    changeUserInput(values['appSourceURL']!,
+                                        valid, isBuilding);
+                                  })),
                           const SizedBox(
                             width: 16,
                           ),
@@ -193,13 +204,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                   onPressed: gettingAppInfo ||
                                           pickedSource == null ||
                                           (pickedSource!
-                                                  .additionalSourceAppSpecificFormItems
+                                                  .combinedAppSpecificSettingFormItems
                                                   .isNotEmpty &&
-                                              !sourceSpecificDataIsValid) ||
-                                          (pickedSource!
-                                                  .additionalAppSpecificSourceAgnosticDefaults
-                                                  .isNotEmpty &&
-                                              !otherAdditionalDataIsValid)
+                                              !additionalSettingsValid)
                                       ? null
                                       : addApp,
                                   child: Text(tr('add')))
@@ -224,7 +231,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: GeneratedForm(
                                   items: [
                                     [
-                                      GeneratedFormItem(
+                                      GeneratedFormItem('searchSomeSources',
                                           label: tr('searchSomeSourcesLabel'),
                                           required: false),
                                     ]
@@ -232,11 +239,11 @@ class _AddAppPageState extends State<AddAppPage> {
                                   onValueChanges: (values, valid, isBuilding) {
                                     if (values.isNotEmpty && valid) {
                                       setState(() {
-                                        searchQuery = values[0].trim();
+                                        searchQuery =
+                                            values['searchSomeSources']!.trim();
                                       });
                                     }
-                                  },
-                                  defaultValues: const ['']),
+                                  }),
                             ),
                             const SizedBox(
                               width: 16,
@@ -292,15 +299,8 @@ class _AddAppPageState extends State<AddAppPage> {
                           ],
                         ),
                       if (pickedSource != null &&
-                          (pickedSource!.additionalSourceAppSpecificDefaults
-                                  .isNotEmpty ||
-                              pickedSource!
-                                  .additionalAppSpecificSourceAgnosticFormItems
-                                  .where((e) => pickedSource!.enforceTrackOnly
-                                      ? e.key != 'trackOnlyFormItemKey'
-                                      : true)
-                                  .map((e) => [e])
-                                  .isNotEmpty))
+                          (pickedSource!
+                              .combinedAppSpecificSettingFormItems.isNotEmpty))
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -316,46 +316,17 @@ class _AddAppPageState extends State<AddAppPage> {
                             const SizedBox(
                               height: 16,
                             ),
-                            if (pickedSource!
-                                .additionalSourceAppSpecificFormItems
-                                .isNotEmpty)
-                              GeneratedForm(
-                                  items: pickedSource!
-                                      .additionalSourceAppSpecificFormItems,
-                                  onValueChanges: (values, valid, isBuilding) {
-                                    if (!isBuilding) {
-                                      setState(() {
-                                        sourceSpecificAdditionalData = values;
-                                        sourceSpecificDataIsValid = valid;
-                                      });
-                                    }
-                                  },
-                                  defaultValues: pickedSource!
-                                      .additionalSourceAppSpecificDefaults),
-                            if (pickedSource!
-                                .additionalAppSpecificSourceAgnosticDefaults
-                                .isNotEmpty)
-                              const SizedBox(
-                                height: 8,
-                              ),
                             GeneratedForm(
                                 items: pickedSource!
-                                    .additionalAppSpecificSourceAgnosticFormItems
-                                    .where((e) => pickedSource!.enforceTrackOnly
-                                        ? e.key != 'trackOnlyFormItemKey'
-                                        : true)
-                                    .map((e) => [e])
-                                    .toList(),
+                                    .combinedAppSpecificSettingFormItems,
                                 onValueChanges: (values, valid, isBuilding) {
                                   if (!isBuilding) {
                                     setState(() {
-                                      otherAdditionalData = values;
-                                      otherAdditionalDataIsValid = valid;
+                                      additionalSettings = values;
+                                      additionalSettingsValid = valid;
                                     });
                                   }
-                                },
-                                defaultValues: pickedSource!
-                                    .additionalAppSpecificSourceAgnosticDefaults),
+                                }),
                           ],
                         )
                       else

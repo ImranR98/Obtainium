@@ -9,13 +9,10 @@ class SteamMobile extends AppSource {
   SteamMobile() {
     host = 'store.steampowered.com';
     name = tr('steam');
-    additionalSourceAppSpecificFormItems = [
+    additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormItem(
-            label: tr('app'),
-            key: 'app',
-            required: true,
-            opts: apks.entries.toList())
+        GeneratedFormItem('app',
+            label: tr('app'), required: true, opts: apks.entries.toList())
       ]
     ];
   }
@@ -32,15 +29,12 @@ class SteamMobile extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) async {
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
     Response res = await get(Uri.parse('https://$host/mobile'));
     if (res.statusCode == 200) {
-      var apkNamePrefix = findGeneratedFormValueByKey(
-          additionalSourceAppSpecificFormItems
-              .reduce((value, element) => [...value, ...element]),
-          additionalData,
-          'app');
+      var apkNamePrefix = additionalSettings['app'];
       if (apkNamePrefix == null) {
         throw NoReleasesError();
       }

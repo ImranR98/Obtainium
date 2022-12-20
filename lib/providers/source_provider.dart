@@ -44,10 +44,9 @@ class App {
   late String latestVersion;
   List<String> apkUrls = [];
   late int preferredApkIndex;
-  late List<String> additionalData;
+  late Map<String, String> additionalSettings;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
-  bool trackOnly = false;
   App(
       this.id,
       this.url,
@@ -57,39 +56,59 @@ class App {
       this.latestVersion,
       this.apkUrls,
       this.preferredApkIndex,
-      this.additionalData,
+      this.additionalSettings,
       this.lastUpdateCheck,
-      this.pinned,
-      this.trackOnly);
+      this.pinned);
 
   @override
   String toString() {
-    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
+    return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALSETTINGS: ${additionalSettings.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
-  factory App.fromJson(Map<String, dynamic> json) => App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      json['latestVersion'] as String,
-      json['apkUrls'] == null
-          ? []
-          : List<String>.from(jsonDecode(json['apkUrls'])),
-      json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
-      json['additionalData'] == null
-          ? SourceProvider()
-              .getSource(json['url'])
-              .additionalSourceAppSpecificDefaults
-          : List<String>.from(jsonDecode(json['additionalData'])),
-      json['lastUpdateCheck'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false,
-      json['trackOnly'] ?? false);
+  factory App.fromJson(Map<String, dynamic> json) {
+    var source = SourceProvider().getSource(json['url']);
+    var formItems = source.combinedAppSpecificSettingFormItems
+        .reduce((value, element) => [...value, ...element]);
+    Map<String, String> additionalSettings =
+        getDefaultValuesFromFormItems([formItems]);
+    if (json['additionalSettings'] != null) {
+      additionalSettings.addEntries(
+          Map<String, String>.from(jsonDecode(json['additionalSettings']))
+              .entries);
+    }
+    // If needed, migrate old-style additionalData to new-style additionalSettings
+    if (json['additionalData'] != null) {
+      List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
+      temp.asMap().forEach((i, value) {
+        if (i < formItems.length) {
+          additionalSettings[formItems[i].key] = value;
+        }
+      });
+      additionalSettings['trackOnly'] = (json['trackOnly'] ?? false).toString();
+      additionalSettings['noVersionDetection'] =
+          (json['noVersionDetection'] ?? false).toString();
+    }
+    return App(
+        json['id'] as String,
+        json['url'] as String,
+        json['author'] as String,
+        json['name'] as String,
+        json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        json['latestVersion'] as String,
+        json['apkUrls'] == null
+            ? []
+            : List<String>.from(jsonDecode(json['apkUrls'])),
+        json['preferredApkIndex'] == null
+            ? 0
+            : json['preferredApkIndex'] as int,
+        additionalSettings,
+        json['lastUpdateCheck'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        json['pinned'] ?? false);
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -100,10 +119,9 @@ class App {
         'latestVersion': latestVersion,
         'apkUrls': jsonEncode(apkUrls),
         'preferredApkIndex': preferredApkIndex,
-        'additionalData': jsonEncode(additionalData),
+        'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
-        'pinned': pinned,
-        'trackOnly': trackOnly
+        'pinned': pinned
       };
 }
 
@@ -124,7 +142,7 @@ preStandardizeUrl(String url) {
   return url;
 }
 
-const String noAPKFound = 'No APK found';
+String noAPKFound = tr('noAPKFound');
 
 List<String> getLinksFromParsedHTML(
         Document dom, RegExp hrefPattern, String prependToLinks) =>
@@ -136,6 +154,13 @@ List<String> getLinksFromParsedHTML(
         })
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
+
+Map<String, String> getDefaultValuesFromFormItems(
+    List<List<GeneratedFormItem>> items) {
+  return Map.fromEntries(items
+      .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
+      .reduce((value, element) => [...value, ...element]));
+}
 
 class AppSource {
   String? host;
@@ -151,23 +176,37 @@ class AppSource {
   }
 
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) {
+      String standardUrl, Map<String, String> additionalSettings) {
     throw NotImplementedError();
   }
 
   // Different Sources may need different kinds of additional data for Apps
-  List<List<GeneratedFormItem>> additionalSourceAppSpecificFormItems = [];
-  List<String> additionalSourceAppSpecificDefaults = [];
+  List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
+      [];
 
   // Some additional data may be needed for Apps regardless of Source
-  final List<GeneratedFormItem> additionalAppSpecificSourceAgnosticFormItems = [
-    GeneratedFormItem(
+  final List<List<GeneratedFormItem>>
+      additionalAppSpecificSourceAgnosticSettingFormItems = [
+    [
+      GeneratedFormItem(
+        'trackOnly',
         label: tr('trackOnly'),
         type: FormItemType.bool,
-        key: 'trackOnlyFormItemKey')
+      )
+    ],
+    [
+      GeneratedFormItem('noVersionDetection',
+          label: tr('noVersionDetection'), type: FormItemType.bool)
+    ]
   ];
-  final List<String> additionalAppSpecificSourceAgnosticDefaults = [''];
+
+  // Previous 2 variables combined into one at runtime for convenient usage
+  List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
+    return [
+      ...additionalSourceAppSpecificSettingFormItems,
+      ...additionalAppSpecificSourceAgnosticSettingFormItems
+    ];
+  }
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
@@ -186,7 +225,7 @@ class AppSource {
   }
 
   String? tryInferringAppId(String standardUrl,
-      {List<String> additionalData = const []}) {
+      {Map<String, String> additionalSettings = const {}}) {
     return null;
   }
 }
@@ -246,8 +285,8 @@ class SourceProvider {
     return source;
   }
 
-  bool ifSourceAppsRequireAdditionalData(AppSource source) {
-    for (var row in source.additionalSourceAppSpecificFormItems) {
+  bool ifRequiredAppSpecificSettingsExist(AppSource source) {
+    for (var row in source.combinedAppSpecificSettingFormItems) {
       for (var element in row) {
         if (element.required && element.opts == null) {
           return true;
@@ -274,37 +313,44 @@ class SourceProvider {
     return true;
   }
 
-  Future<App> getApp(AppSource source, String url, List<String> additionalData,
-      {String name = '',
-      String? id,
-      bool pinned = false,
-      bool trackOnly = false,
-      String? installedVersion}) async {
+  Future<App> getApp(
+      AppSource source, String url, Map<String, String> additionalSettings,
+      {App? currentApp,
+      bool trackOnlyOverride = false,
+      noVersionDetectionOverride = false}) async {
+    if (trackOnlyOverride) {
+      additionalSettings['trackOnly'] = 'true';
+    }
+    if (noVersionDetectionOverride) {
+      additionalSettings['noVersionDetection'] = 'true';
+    }
+    var trackOnly = currentApp?.additionalSettings['trackOnly'] == 'true';
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
-    APKDetails apk = await source
-        .getLatestAPKDetails(standardUrl, additionalData, trackOnly: trackOnly);
+    APKDetails apk =
+        await source.getLatestAPKDetails(standardUrl, additionalSettings);
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
     String apkVersion = apk.version.replaceAll('/', '-');
+    var name = currentApp?.name.trim() ??
+        apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
     return App(
-        id ??
+        currentApp?.id ??
             source.tryInferringAppId(standardUrl,
-                additionalData: additionalData) ??
+                additionalSettings: additionalSettings) ??
             generateTempID(apk.names, source),
         standardUrl,
         apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
         name.trim().isNotEmpty
             ? name
             : apk.names.name[0].toUpperCase() + apk.names.name.substring(1),
-        installedVersion,
+        currentApp?.installedVersion,
         apkVersion,
         apk.apkUrls,
         apk.apkUrls.length - 1,
-        additionalData,
+        additionalSettings,
         DateTime.now(),
-        pinned,
-        trackOnly);
+        currentApp?.pinned ?? false);
   }
 
   // Returns errors in [results, errors] instead of throwing them
@@ -316,7 +362,10 @@ class SourceProvider {
       try {
         var source = getSource(url);
         apps.add(await getApp(
-            source, url, source.additionalSourceAppSpecificDefaults));
+            source,
+            url,
+            getDefaultValuesFromFormItems(
+                source.combinedAppSpecificSettingFormItems)));
       } catch (e) {
         errors.addAll(<String, dynamic>{url: e});
       }

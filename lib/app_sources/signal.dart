@@ -18,8 +18,9 @@ class Signal extends AppSource {
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, List<String> additionalData,
-      {bool trackOnly = false}) async {
+    String standardUrl,
+    Map<String, String> additionalSettings,
+  ) async {
     Response res =
         await get(Uri.parse('https://updates.$host/android/latest.json'));
     if (res.statusCode == 200) {
