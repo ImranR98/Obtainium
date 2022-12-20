@@ -69,30 +69,51 @@ class App {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALDATA: ${additionalData.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
-  factory App.fromJson(Map<String, dynamic> json) => App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      json['latestVersion'] as String,
-      json['apkUrls'] == null
-          ? []
-          : List<String>.from(jsonDecode(json['apkUrls'])),
-      json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int,
-      json['additionalData'] == null
-          ? getDefaultValuesFromFormItems(SourceProvider()
-              .getSource(json['url'])
-              .additionalSourceAppSpecificFormItems)
-          : Map<String, String>.from(jsonDecode(json['additionalData'])),
-      json['lastUpdateCheck'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false,
-      json['trackOnly'] ?? false,
-      noVersionDetection: json['noVersionDetection'] ?? false);
+  factory App.fromJson(Map<String, dynamic> json) {
+    var formItems = SourceProvider()
+        .getSource(json['url'])
+        .additionalSourceAppSpecificFormItems
+        .reduce((value, element) => [...value, ...element]);
+    Map<String, String> additionalData =
+        getDefaultValuesFromFormItems([formItems]);
+    if (json['additionalData'] != null) {
+      try {
+        additionalData =
+            Map<String, String>.from(jsonDecode(json['additionalData']));
+      } catch (e) {
+        // Migrate old-style additionalData List to new-style Map
+        List<String> temp =
+            List<String>.from(jsonDecode(json['additionalData']));
+        temp.asMap().forEach((i, value) {
+          if (i < formItems.length) {
+            additionalData[formItems[i].key] = value;
+          }
+        });
+      }
+    }
+    return App(
+        json['id'] as String,
+        json['url'] as String,
+        json['author'] as String,
+        json['name'] as String,
+        json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        json['latestVersion'] as String,
+        json['apkUrls'] == null
+            ? []
+            : List<String>.from(jsonDecode(json['apkUrls'])),
+        json['preferredApkIndex'] == null
+            ? 0
+            : json['preferredApkIndex'] as int,
+        additionalData,
+        json['lastUpdateCheck'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        json['pinned'] ?? false,
+        json['trackOnly'] ?? false,
+        noVersionDetection: json['noVersionDetection'] ?? false);
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
