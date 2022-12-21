@@ -254,7 +254,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             ...sourceSpecificFields,
-                            intervalDropdown,
                             const Divider(
                               height: 48,
                             ),
