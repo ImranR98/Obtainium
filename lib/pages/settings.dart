@@ -158,9 +158,10 @@ class _SettingsPageState extends State<SettingsPage> {
     var sourceSpecificFields = sourceProvider.sources.map((e) {
       if (e.additionalSourceSpecificSettingFormItems.isNotEmpty) {
         return GeneratedForm(
-            items: e.additionalSourceSpecificSettingFormItems
-                .map((e) => [e])
-                .toList(),
+            items: e.additionalSourceSpecificSettingFormItems.map((e) {
+              e.defaultValue = settingsProvider.getSettingString(e.key);
+              return [e];
+            }).toList(),
             onValueChanges: (values, valid, isBuilding) {
               if (valid) {
                 values.forEach((key, value) {
@@ -274,7 +275,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         backgroundColor: Color(e.value),
                                         visualDensity: VisualDensity.compact,
                                         onDeleted: () {
-                                          showDialog<Map<String, String>?>(
+                                          showDialog<Map<String, dynamic>?>(
                                               context: context,
                                               builder: (BuildContext ctx) {
                                                 return GeneratedFormModal(
@@ -311,14 +312,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                         horizontal: 4),
                                     child: IconButton(
                                       onPressed: () {
-                                        showDialog<Map<String, String>?>(
+                                        showDialog<Map<String, dynamic>?>(
                                             context: context,
                                             builder: (BuildContext ctx) {
                                               return GeneratedFormModal(
                                                   title: tr('addCategory'),
                                                   items: [
                                                     [
-                                                      GeneratedFormItem('label',
+                                                      GeneratedFormTextField(
+                                                          'label',
                                                           label: tr('label'))
                                                     ]
                                                   ]);

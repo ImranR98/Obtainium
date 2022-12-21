@@ -13,7 +13,7 @@ class GitHub extends AppSource {
     host = 'github.com';
 
     additionalSourceSpecificSettingFormItems = [
-      GeneratedFormItem('github-creds',
+      GeneratedFormTextField('github-creds',
           label: tr('githubPATLabel'),
           required: false,
           additionalValidators: [
@@ -51,21 +51,16 @@ class GitHub extends AppSource {
 
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormItem('includePrereleases',
-            label: tr('includePrereleases'),
-            type: FormItemType.bool,
-            defaultValue: '')
+        GeneratedFormSwitch('includePrereleases',
+            label: tr('includePrereleases'), defaultValue: false)
       ],
       [
-        GeneratedFormItem('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'),
-            type: FormItemType.bool,
-            defaultValue: 'true')
+        GeneratedFormSwitch('fallbackToOlderReleases',
+            label: tr('fallbackToOlderReleases'), defaultValue: true)
       ],
       [
-        GeneratedFormItem('filterReleaseTitlesByRegEx',
+        GeneratedFormTextField('filterReleaseTitlesByRegEx',
             label: tr('filterReleaseTitlesByRegEx'),
-            type: FormItemType.string,
             required: false,
             additionalValidators: [
               (value) {
@@ -111,13 +106,15 @@ class GitHub extends AppSource {
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
-    Map<String, String> additionalSettings,
+    Map<String, dynamic> additionalSettings,
   ) async {
-    var includePrereleases = additionalSettings['includePrereleases'] == 'true';
-    var fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == 'true';
-    var regexFilter =
-        additionalSettings['filterReleaseTitlesByRegEx']?.isNotEmpty == true
+    bool includePrereleases = additionalSettings['includePrereleases'];
+    bool fallbackToOlderReleases =
+        additionalSettings['fallbackToOlderReleases'];
+    String? regexFilter =
+        (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
+                    ?.isNotEmpty ==
+                true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
     Response res = await get(Uri.parse(
@@ -150,7 +147,7 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != 'true') {
+        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
           continue;
         }
         targetRelease = releases[i];

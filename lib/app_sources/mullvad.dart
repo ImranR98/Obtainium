@@ -25,7 +25,7 @@ class Mullvad extends AppSource {
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
-    Map<String, String> additionalSettings,
+    Map<String, dynamic> additionalSettings,
   ) async {
     Response res = await get(Uri.parse('$standardUrl/en/download/android'));
     if (res.statusCode == 200) {

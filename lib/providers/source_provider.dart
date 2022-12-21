@@ -45,7 +45,7 @@ class App {
   late String latestVersion;
   List<String> apkUrls = [];
   late int preferredApkIndex;
-  late Map<String, String> additionalSettings;
+  late Map<String, dynamic> additionalSettings;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   String? category;
@@ -72,24 +72,36 @@ class App {
     var source = SourceProvider().getSource(json['url']);
     var formItems = source.combinedAppSpecificSettingFormItems
         .reduce((value, element) => [...value, ...element]);
-    Map<String, String> additionalSettings =
+    Map<String, dynamic> additionalSettings =
         getDefaultValuesFromFormItems([formItems]);
     if (json['additionalSettings'] != null) {
       additionalSettings.addEntries(
-          Map<String, String>.from(jsonDecode(json['additionalSettings']))
+          Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
               .entries);
     }
-    // If needed, migrate old-style additionalData to new-style additionalSettings
+    // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
     if (json['additionalData'] != null) {
       List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
       temp.asMap().forEach((i, value) {
         if (i < formItems.length) {
-          additionalSettings[formItems[i].key] = value;
+          if (formItems[i] is GeneratedFormSwitch) {
+            additionalSettings[formItems[i].key] = value == 'true';
+          } else {
+            additionalSettings[formItems[i].key] = value;
+          }
         }
       });
-      additionalSettings['trackOnly'] = (json['trackOnly'] ?? false).toString();
+      additionalSettings['trackOnly'] =
+          json['trackOnly'] == 'true' || json['trackOnly'] == true;
       additionalSettings['noVersionDetection'] =
-          (json['noVersionDetection'] ?? false).toString();
+          json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
+    }
+    // Ensure additionalSettings are correctly typed
+    for (var item in formItems) {
+      if (additionalSettings[item.key] != null) {
+        additionalSettings[item.key] =
+            item.ensureType(additionalSettings[item.key]);
+      }
     }
     return App(
         json['id'] as String,
@@ -160,7 +172,7 @@ List<String> getLinksFromParsedHTML(
         .map((e) => '$prependToLinks${e.attributes['href']!}')
         .toList();
 
-Map<String, String> getDefaultValuesFromFormItems(
+Map<String, dynamic> getDefaultValuesFromFormItems(
     List<List<GeneratedFormItem>> items) {
   return Map.fromEntries(items
       .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
@@ -181,7 +193,7 @@ class AppSource {
   }
 
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, Map<String, String> additionalSettings) {
+      String standardUrl, Map<String, dynamic> additionalSettings) {
     throw NotImplementedError();
   }
 
@@ -193,16 +205,12 @@ class AppSource {
   final List<List<GeneratedFormItem>>
       additionalAppSpecificSourceAgnosticSettingFormItems = [
     [
-      GeneratedFormItem(
+      GeneratedFormSwitch(
         'trackOnly',
         label: tr('trackOnly'),
-        type: FormItemType.bool,
       )
     ],
-    [
-      GeneratedFormItem('noVersionDetection',
-          label: tr('noVersionDetection'), type: FormItemType.bool)
-    ]
+    [GeneratedFormSwitch('noVersionDetection', label: tr('noVersionDetection'))]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -230,7 +238,7 @@ class AppSource {
   }
 
   String? tryInferringAppId(String standardUrl,
-      {Map<String, String> additionalSettings = const {}}) {
+      {Map<String, dynamic> additionalSettings = const {}}) {
     return null;
   }
 }
@@ -293,7 +301,7 @@ class SourceProvider {
   bool ifRequiredAppSpecificSettingsExist(AppSource source) {
     for (var row in source.combinedAppSpecificSettingFormItems) {
       for (var element in row) {
-        if (element.required && element.opts == null) {
+        if (element is GeneratedFormTextField && element.required) {
           return true;
         }
       }
@@ -319,17 +327,17 @@ class SourceProvider {
   }
 
   Future<App> getApp(
-      AppSource source, String url, Map<String, String> additionalSettings,
+      AppSource source, String url, Map<String, dynamic> additionalSettings,
       {App? currentApp,
       bool trackOnlyOverride = false,
       noVersionDetectionOverride = false}) async {
     if (trackOnlyOverride) {
-      additionalSettings['trackOnly'] = 'true';
+      additionalSettings['trackOnly'] = true;
     }
     if (noVersionDetectionOverride) {
-      additionalSettings['noVersionDetection'] = 'true';
+      additionalSettings['noVersionDetection'] = true;
     }
-    var trackOnly = currentApp?.additionalSettings['trackOnly'] == 'true';
+    var trackOnly = currentApp?.additionalSettings['trackOnly'] == true;
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);

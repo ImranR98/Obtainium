@@ -142,16 +142,14 @@ class AppsPageState extends State<AppsPage> {
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
     existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
-          'true') {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
       return true;
     }).toList();
     newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] ==
-          'true') {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
@@ -286,7 +284,7 @@ class AppsPageState extends State<AppsPage> {
                                   SizedBox(
                                       width: 100,
                                       child: Text(
-                                        '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBrackets')}' : ''}',
+                                        '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
                                         overflow: TextOverflow.fade,
                                         textAlign: TextAlign.end,
                                       )),
@@ -310,7 +308,7 @@ class AppsPageState extends State<AppsPage> {
                                                   .areDownloadsRunning()
                                               ? Text(tr('pleaseWait'))
                                               : Text(
-                                                  '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                                  '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBracketsShort')}' : ''}',
                                                   style: TextStyle(
                                                       fontStyle:
                                                           FontStyle.italic,
@@ -366,7 +364,7 @@ class AppsPageState extends State<AppsPage> {
                     : IconButton(
                         visualDensity: VisualDensity.compact,
                         onPressed: () {
-                          showDialog<Map<String, String>?>(
+                          showDialog<Map<String, dynamic>?>(
                               context: context,
                               builder: (BuildContext ctx) {
                                 return GeneratedFormModal(
@@ -400,40 +398,33 @@ class AppsPageState extends State<AppsPage> {
                             HapticFeedback.heavyImpact();
                             List<GeneratedFormItem> formItems = [];
                             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                              formItems.add(GeneratedFormItem('updates',
+                              formItems.add(GeneratedFormSwitch('updates',
                                   label: tr('updateX', args: [
                                     plural('apps',
                                         existingUpdateIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool,
-                                  defaultValue: 'true'));
+                                  defaultValue: true));
                             }
                             if (newInstallIdsAllOrSelected.isNotEmpty) {
-                              formItems.add(GeneratedFormItem('installs',
+                              formItems.add(GeneratedFormSwitch('installs',
                                   label: tr('installX', args: [
                                     plural('apps',
                                         newInstallIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool,
-                                  defaultValue:
-                                      existingUpdateIdsAllOrSelected.isNotEmpty
-                                          ? 'true'
-                                          : ''));
+                                  defaultValue: existingUpdateIdsAllOrSelected
+                                      .isNotEmpty));
                             }
                             if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                              formItems.add(GeneratedFormItem('trackonlies',
+                              formItems.add(GeneratedFormSwitch('trackonlies',
                                   label: tr('markXTrackOnlyAsUpdated', args: [
                                     plural('apps',
                                         trackOnlyUpdateIdsAllOrSelected.length)
                                   ]),
-                                  type: FormItemType.bool,
                                   defaultValue: existingUpdateIdsAllOrSelected
-                                              .isNotEmpty ||
-                                          newInstallIdsAllOrSelected.isNotEmpty
-                                      ? 'true'
-                                      : ''));
+                                          .isNotEmpty ||
+                                      newInstallIdsAllOrSelected.isNotEmpty));
                             }
-                            showDialog<Map<String, String>?>(
+                            showDialog<Map<String, dynamic>?>(
                                 context: context,
                                 builder: (BuildContext ctx) {
                                   var totalApps = existingUpdateIdsAllOrSelected
@@ -453,11 +444,11 @@ class AppsPageState extends State<AppsPage> {
                                       [formItems]);
                                 }
                                 bool shouldInstallUpdates =
-                                    values['updates'] == 'true';
+                                    values['updates'] == true;
                                 bool shouldInstallNew =
-                                    values['installs'] == 'true';
+                                    values['installs'] == true;
                                 bool shouldMarkTrackOnlies =
-                                    values['trackonlies'] == 'true';
+                                    values['trackonlies'] == true;
                                 (() async {
                                   if (shouldInstallNew ||
                                       shouldInstallUpdates) {
@@ -699,7 +690,7 @@ class AppsPageState extends State<AppsPage> {
                               : FontWeight.bold),
                     ),
                     onPressed: () {
-                      showDialog<Map<String, String>?>(
+                      showDialog<Map<String, dynamic>?>(
                           context: context,
                           builder: (BuildContext ctx) {
                             var vals = filter == null
@@ -709,25 +700,23 @@ class AppsPageState extends State<AppsPage> {
                                 title: tr('filterApps'),
                                 items: [
                                   [
-                                    GeneratedFormItem('appName',
+                                    GeneratedFormTextField('appName',
                                         label: tr('appName'),
                                         required: false,
                                         defaultValue: vals['appName']),
-                                    GeneratedFormItem('author',
+                                    GeneratedFormTextField('author',
                                         label: tr('author'),
                                         required: false,
                                         defaultValue: vals['author'])
                                   ],
                                   [
-                                    GeneratedFormItem('upToDateApps',
+                                    GeneratedFormSwitch('upToDateApps',
                                         label: tr('upToDateApps'),
-                                        type: FormItemType.bool,
                                         defaultValue: vals['upToDateApps'])
                                   ],
                                   [
-                                    GeneratedFormItem('nonInstalledApps',
+                                    GeneratedFormSwitch('nonInstalledApps',
                                         label: tr('nonInstalledApps'),
-                                        type: FormItemType.bool,
                                         defaultValue: vals['nonInstalledApps'])
                                   ],
                                   [
@@ -768,21 +757,21 @@ class AppsFilter {
       this.includeNonInstalled = true,
       this.categoryFilter = ''});
 
-  Map<String, String> toValuesMap() {
+  Map<String, dynamic> toValuesMap() {
     return {
       'appName': nameFilter,
       'author': authorFilter,
-      'upToDateApps': includeUptodate ? 'true' : '',
-      'nonInstalledApps': includeNonInstalled ? 'true' : '',
+      'upToDateApps': includeUptodate,
+      'nonInstalledApps': includeNonInstalled,
       'category': categoryFilter
     };
   }
 
-  AppsFilter.fromValuesMap(Map<String, String> values) {
+  AppsFilter.fromValuesMap(Map<String, dynamic> values) {
     nameFilter = values['appName']!;
     authorFilter = values['author']!;
-    includeUptodate = values['upToDateApps'] == 'true';
-    includeNonInstalled = values['nonInstalledApps'] == 'true';
+    includeUptodate = values['upToDateApps'];
+    includeNonInstalled = values['nonInstalledApps'];
     categoryFilter = values['category']!;
   }
 

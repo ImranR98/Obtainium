@@ -42,7 +42,7 @@ class _AppPageState extends State<AppPage> {
       prevApp = app;
       getUpdate(app.app.id);
     }
-    var trackOnly = app?.app.additionalSettings['trackOnly'] == 'true';
+    var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -170,7 +170,7 @@ class _AppPageState extends State<AppPage> {
                                 children: [
                                     TextButton(
                                         onPressed: () {
-                                          showDialog<Map<String, String>?>(
+                                          showDialog<Map<String, dynamic>?>(
                                               context: context,
                                               builder: (BuildContext ctx) {
                                                 return GeneratedFormModal(
@@ -273,7 +273,7 @@ class _AppPageState extends State<AppPage> {
                               onPressed: app?.downloadProgress != null
                                   ? null
                                   : () {
-                                      showDialog<Map<String, String>>(
+                                      showDialog<Map<String, dynamic>?>(
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             var items = source
@@ -301,7 +301,7 @@ class _AppPageState extends State<AppPage> {
                                               values;
                                           if (source.enforceTrackOnly) {
                                             changedApp.additionalSettings[
-                                                'trackOnly'] = 'true';
+                                                'trackOnly'] = true;
                                             showError(
                                                 tr('appsFromSourceAreTrackOnly'),
                                                 context);
@@ -327,7 +327,7 @@ class _AppPageState extends State<AppPage> {
                                         () async {
                                           if (app?.app.additionalSettings[
                                                   'trackOnly'] !=
-                                              'true') {
+                                              true) {
                                             await settingsProvider
                                                 .getInstallPermission();
                                           }
