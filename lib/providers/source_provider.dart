@@ -19,6 +19,7 @@ import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
   late String author;
@@ -354,7 +355,8 @@ class SourceProvider {
         apk.apkUrls.length - 1,
         additionalSettings,
         DateTime.now(),
-        currentApp?.pinned ?? false);
+        currentApp?.pinned ?? false,
+        category: currentApp?.category);
   }
 
   // Returns errors in [results, errors] instead of throwing them
