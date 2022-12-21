@@ -46,11 +46,27 @@ class _AppPageState extends State<AppPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
           child: settingsProvider.showAppWebpage
-              ? WebView(
-                  backgroundColor: Theme.of(context).colorScheme.background,
-                  initialUrl: app?.app.url,
-                  javascriptMode: JavascriptMode.unrestricted,
-                )
+              ? app != null
+                  ? WebViewWidget(
+                      controller: WebViewController()
+                        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                        ..setBackgroundColor(
+                            Theme.of(context).colorScheme.background)
+                        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                        ..setNavigationDelegate(
+                          NavigationDelegate(
+                            onWebResourceError: (WebResourceError error) {
+                              if (error.isForMainFrame == true) {
+                                showError(
+                                    ObtainiumError(error.description,
+                                        unexpected: true),
+                                    context);
+                              }
+                            },
+                          ),
+                        )
+                        ..loadRequest(Uri.parse(app.app.url)))
+                  : Container()
               : CustomScrollView(
                   slivers: [
                     SliverFillRemaining(
