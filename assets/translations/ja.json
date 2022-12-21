@@ -16,7 +16,7 @@
     "startedActualBGUpdateCheck": "実際のバックグラウンドのアップデート確認を開始",
     "bgUpdateTaskFinished": "バックグラウンドのアップデート確認タスクを終了",
     "firstRun": "これがObtainiumの最初の実行です",
-    "settingUpdateCheckIntervalTo": "更新間隔を{}に設定する",
+    "settingUpdateCheckIntervalTo": "確認間隔を{}に設定する",
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
     "githubPATHint": "PATは次の形式でなければなりません: ユーザー名:トークン",
     "githubPATFormat": "ユーザー名:トークン",
@@ -124,13 +124,13 @@
     "obtainium": "Obtainium",
     "materialYou": "Material You",
     "appSortBy": "アプリの並び方",
-    "authorName": "作者/アプリ名",
-    "nameAuthor": "アプリ名/作者",
+    "authorName": "作者名/アプリ名",
+    "nameAuthor": "アプリ名/作者名",
     "asAdded": "追加順",
     "appSortOrder": "並び順",
     "ascending": "昇順",
     "descending": "降順",
-    "bgUpdateCheckInterval": "バックグラウンド更新の確認間隔",
+    "bgUpdateCheckInterval": "バックグラウンドでのアップデート確認の間隔",
     "neverManualOnly": "手動",
     "appearance": "外観",
     "showWebInAppView": "アプリビューにソースウェブページを表示する",
@@ -199,25 +199,25 @@
     "downloadNotifDescription": "アプリのダウンロード状況を通知する",
     "noAPKFound": "APKが見つかりません",
     "noVersionDetection": "バージョン検出を行わない",
-    "categorize": "Categorize",
-    "categories": "Categories",
-    "category": "Category",
-    "noCategory": "No Category",
-    "deleteCategoryQuestion": "Delete Category?",
-    "categoryDeleteWarning": "All Apps in {} will be set to uncategorized.",
-    "addCategory": "Add Category",
-    "label": "Label",
+    "categorize": "カテゴライズ",
+    "categories": "カテゴリ",
+    "category": "カテゴリ",
+    "noCategory": "カテゴリなし",
+    "deleteCategoryQuestion": "カテゴリを削除しますか？",
+    "categoryDeleteWarning": "「{}」内のすべてのアプリは未分類に設定されます。",
+    "addCategory": "カテゴリを追加",
+    "label": "ラベル",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"
     },
     "bgUpdateGotErrorRetryInMinutes": {
-        "one": "バックグラウンドのアップデート確認で {} の問題が発生, {} 分後に再試行します",
-        "other": "バックグラウンドのアップデート確認で {} の問題が発生, {} 分後に再試行します"
+        "one": "バックグラウンドでのアップデート確認で {} の問題が発生, {} 分後に再試行します",
+        "other": "バックグラウンドでのアップデート確認で {} の問題が発生, {} 分後に再試行します"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "バックグラウンドのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します",
-        "other": "バックグラウンドのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します"
+        "one": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します",
+        "other": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します"
     },
     "apps": {
         "one": "{}個のアプリ",
