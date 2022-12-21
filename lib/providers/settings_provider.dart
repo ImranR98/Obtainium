@@ -155,12 +155,12 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setString('categories', jsonEncode(cats));
   }
 
-  getCategoryFormItem({String initCategory = ''}) =>
-      GeneratedFormItem('category',
-          label: tr('category'),
-          opts: [
-            MapEntry('', tr('noCategory')),
-            ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
-          ],
-          defaultValue: initCategory);
+  getCategoryFormItem({String initCategory = ''}) => GeneratedFormDropdown(
+      'category',
+      label: tr('category'),
+      [
+        MapEntry('', tr('noCategory')),
+        ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
+      ],
+      defaultValue: initCategory);
 }

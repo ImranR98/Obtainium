@@ -27,7 +27,7 @@ class _AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   AppSource? pickedSource;
-  Map<String, String> additionalSettings = {};
+  Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
 
   @override
@@ -66,9 +66,9 @@ class _AddAppPageState extends State<AddAppPage> {
       });
       var settingsProvider = context.read<SettingsProvider>();
       () async {
-        var userPickedTrackOnly = additionalSettings['trackOnly'] == 'true';
+        var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
         var userPickedNoVersionDetection =
-            additionalSettings['noVersionDetection'] == 'true';
+            additionalSettings['noVersionDetection'] == true;
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             await showDialog(
@@ -113,7 +113,7 @@ class _AddAppPageState extends State<AddAppPage> {
           }
           // Only download the APK here if you need to for the package ID
           if (sourceProvider.isTempId(app.id) &&
-              app.additionalSettings['trackOnly'] != 'true') {
+              app.additionalSettings['trackOnly'] != true) {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
             if (apkUrl == null) {
@@ -128,7 +128,7 @@ class _AddAppPageState extends State<AddAppPage> {
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
-          if (app.additionalSettings['trackOnly'] == 'true') {
+          if (app.additionalSettings['trackOnly'] == true) {
             app.installedVersion = app.latestVersion;
           }
           await appsProvider.saveApps([app]);
@@ -169,7 +169,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: GeneratedForm(
                                   items: [
                                 [
-                                  GeneratedFormItem('appSourceURL',
+                                  GeneratedFormTextField('appSourceURL',
                                       label: tr('appSourceURL'),
                                       additionalValidators: [
                                         (value) {
@@ -231,7 +231,8 @@ class _AddAppPageState extends State<AddAppPage> {
                               child: GeneratedForm(
                                   items: [
                                     [
-                                      GeneratedFormItem('searchSomeSources',
+                                      GeneratedFormTextField(
+                                          'searchSomeSources',
                                           label: tr('searchSomeSourcesLabel'),
                                           required: false),
                                     ]

@@ -138,18 +138,19 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           onPressed: importInProgress
                               ? null
                               : () {
-                                  showDialog(
+                                  showDialog<Map<String, dynamic>?>(
                                       context: context,
                                       builder: (BuildContext ctx) {
                                         return GeneratedFormModal(
                                           title: tr('importFromURLList'),
                                           items: [
                                             [
-                                              GeneratedFormItem('appURLList',
+                                              GeneratedFormTextField(
+                                                  'appURLList',
                                                   label: tr('appURLList'),
                                                   max: 7,
                                                   additionalValidators: [
-                                                    (String? value) {
+                                                    (dynamic value) {
                                                       if (value != null &&
                                                           value.isNotEmpty) {
                                                         var lines = value
@@ -176,7 +177,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       }).then((values) {
                                     if (values != null) {
                                       var urls =
-                                          (values[0] as String).split('\n');
+                                          (values['appURLList'] as String)
+                                              .split('\n');
                                       setState(() {
                                         importInProgress = true;
                                       });
@@ -224,7 +226,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                             : () {
                                                 () async {
                                                   var values = await showDialog<
-                                                          List<String>>(
+                                                          Map<String,
+                                                              dynamic>?>(
                                                       context: context,
                                                       builder:
                                                           (BuildContext ctx) {
@@ -235,7 +238,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                               ]),
                                                           items: [
                                                             [
-                                                              GeneratedFormItem(
+                                                              GeneratedFormTextField(
                                                                   'searchQuery',
                                                                   label: tr(
                                                                       'searchQuery'))
@@ -244,13 +247,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                         );
                                                       });
                                                   if (values != null &&
-                                                      values[0].isNotEmpty) {
+                                                      (values['searchQuery']
+                                                                  as String?)
+                                                              ?.isNotEmpty ==
+                                                          true) {
                                                     setState(() {
                                                       importInProgress = true;
                                                     });
                                                     var urlsWithDescriptions =
-                                                        await source
-                                                            .search(values[0]);
+                                                        await source.search(
+                                                            values['searchQuery']
+                                                                as String);
                                                     if (urlsWithDescriptions
                                                         .isNotEmpty) {
                                                       var selectedUrls =
@@ -345,7 +352,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                   .requiredArgs
                                                                   .map(
                                                                       (e) => [
-                                                                            GeneratedFormItem(e,
+                                                                            GeneratedFormTextField(e,
                                                                                 label: e)
                                                                           ])
                                                                   .toList(),

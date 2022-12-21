@@ -313,7 +313,7 @@ class AppsProvider with ChangeNotifier {
         throw ObtainiumError(tr('appNotFound'));
       }
       String? apkUrl;
-      var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == 'true';
+      var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
       }
@@ -452,9 +452,9 @@ class AppsProvider with ChangeNotifier {
   // Don't save changes, just return the object if changes were made (else null)
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
-    var trackOnly = app.additionalSettings['trackOnly'] == 'true';
+    var trackOnly = app.additionalSettings['trackOnly'] == true;
     var noVersionDetection =
-        app.additionalSettings['noVersionDetection'] == 'true';
+        app.additionalSettings['noVersionDetection'] == true;
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       app.installedVersion = null;
       modded = true;

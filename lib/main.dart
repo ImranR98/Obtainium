@@ -200,7 +200,7 @@ class _ObtainiumState extends State<Obtainium> {
               currentReleaseTag,
               [],
               0,
-              {'includePrereleases': 'true'},
+              {'includePrereleases': true},
               null,
               false)
         ]);

@@ -23,14 +23,14 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String? tryInferringAppId(String standardUrl,
-      {Map<String, String> additionalSettings = const {}}) {
+      {Map<String, dynamic> additionalSettings = const {}}) {
     return FDroid().tryInferringAppId(standardUrl);
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
-    Map<String, String> additionalSettings,
+    Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = tryInferringAppId(standardUrl);
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(

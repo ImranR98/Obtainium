@@ -11,7 +11,7 @@ class FDroidRepo extends AppSource {
 
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormItem('appIdOrName',
+        GeneratedFormTextField('appIdOrName',
             label: tr('appIdOrName'),
             hint: tr('reposHaveMultipleApps'),
             required: true)
@@ -33,7 +33,7 @@ class FDroidRepo extends AppSource {
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
-    Map<String, String> additionalSettings,
+    Map<String, dynamic> additionalSettings,
   ) async {
     String? appIdOrName = additionalSettings['appIdOrName'];
     if (appIdOrName == null) {

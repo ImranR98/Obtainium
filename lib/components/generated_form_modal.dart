@@ -21,7 +21,7 @@ class GeneratedFormModal extends StatefulWidget {
 }
 
 class _GeneratedFormModalState extends State<GeneratedFormModal> {
-  Map<String, String> values = {};
+  Map<String, dynamic> values = {};
   bool valid = false;
 
   @override
