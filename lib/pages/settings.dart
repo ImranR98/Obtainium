@@ -259,7 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               height: 48,
                             ),
                             Text(
-                              'Categories', // TODO
+                              tr('categories'),
                               style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             ),
@@ -279,10 +279,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                               context: context,
                                               builder: (BuildContext ctx) {
                                                 return GeneratedFormModal(
-                                                    // TODO
-                                                    title: 'Delete Category?',
-                                                    message:
-                                                        'All Apps in ${e.key} will be set to uncategorized.',
+                                                    title: tr(
+                                                        'deleteCategoryQuestion'),
+                                                    message: tr(
+                                                        'categoryDeleteWarning',
+                                                        args: [e.key]),
                                                     items: []);
                                               }).then((value) {
                                             if (value != null) {
@@ -314,13 +315,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                         showDialog<Map<String, String>?>(
                                             context: context,
                                             builder: (BuildContext ctx) {
-                                              // TODO
                                               return GeneratedFormModal(
-                                                  title: 'Add Category',
+                                                  title: tr('addCategory'),
                                                   items: [
                                                     [
                                                       GeneratedFormItem('label',
-                                                          label: 'Label')
+                                                          label: tr('label'))
                                                     ]
                                                   ]);
                                             }).then((value) {

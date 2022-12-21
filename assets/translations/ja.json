@@ -199,6 +199,14 @@
     "downloadNotifDescription": "アプリのダウンロード状況を通知する",
     "noAPKFound": "APKが見つかりません",
     "noVersionDetection": "バージョン検出を行わない",
+    "categorize": "Categorize",
+    "categories": "Categories",
+    "category": "Category",
+    "noCategory": "No Category",
+    "deleteCategoryQuestion": "Delete Category?",
+    "categoryDeleteWarning": "All Apps in {} will be set to uncategorized.",
+    "addCategory": "Add Category",
+    "label": "Label",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"

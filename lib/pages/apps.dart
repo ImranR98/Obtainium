@@ -729,7 +729,7 @@ class AppsPageState extends State<AppsPage> {
                                         label: tr('nonInstalledApps'),
                                         type: FormItemType.bool,
                                         defaultValue: vals['nonInstalledApps'])
-                                  ], // TODO
+                                  ],
                                   [
                                     settingsProvider.getCategoryFormItem(
                                         initCategory: vals['category'] ?? '')

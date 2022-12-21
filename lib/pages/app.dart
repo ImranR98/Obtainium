@@ -193,7 +193,7 @@ class _AppPageState extends State<AppPage> {
                                             }
                                           });
                                         },
-                                        child: const Text('Categorize')) // TODO
+                                        child: Text(tr('categorize')))
                                   ])
                       ],
                     )),

@@ -156,10 +156,10 @@ class SettingsProvider with ChangeNotifier {
   }
 
   getCategoryFormItem({String initCategory = ''}) =>
-      GeneratedFormItem('category', // TODO
-          label: 'Category',
+      GeneratedFormItem('category',
+          label: tr('category'),
           opts: [
-            const MapEntry('', 'No Category'),
+            MapEntry('', tr('noCategory')),
             ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
           ],
           defaultValue: initCategory);
