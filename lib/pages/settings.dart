@@ -1,8 +1,12 @@
+import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -17,11 +21,27 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+// Generates a random light color
+// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+Color generateRandomLightColor() {
+  // Create a random number generator
+  final Random random = Random();
+
+  // Generate random hue, saturation, and value values
+  final double hue = random.nextDouble() * 360;
+  final double saturation = 0.5 + random.nextDouble() * 0.5;
+  final double value = 0.9 + random.nextDouble() * 0.1;
+
+  // Create a HSV color with the random values
+  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
+}
+
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     SourceProvider sourceProvider = SourceProvider();
+    AppsProvider appsProvider = context.read<AppsProvider>();
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
@@ -157,6 +177,8 @@ class _SettingsPageState extends State<SettingsPage> {
       height: 16,
     );
 
+    var categories = settingsProvider.categories;
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -232,6 +254,94 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             ...sourceSpecificFields,
+                            intervalDropdown,
+                            const Divider(
+                              height: 48,
+                            ),
+                            Text(
+                              'Categories', // TODO
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            height16,
+                            Wrap(
+                              children: [
+                                ...categories.entries.toList().map((e) {
+                                  return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      child: Chip(
+                                        label: Text(e.key),
+                                        backgroundColor: Color(e.value),
+                                        visualDensity: VisualDensity.compact,
+                                        onDeleted: () {
+                                          showDialog<Map<String, String>?>(
+                                              context: context,
+                                              builder: (BuildContext ctx) {
+                                                return GeneratedFormModal(
+                                                    // TODO
+                                                    title: 'Delete Category?',
+                                                    message:
+                                                        'All Apps in ${e.key} will be set to uncategorized.',
+                                                    items: []);
+                                              }).then((value) {
+                                            if (value != null) {
+                                              setState(() {
+                                                categories.remove(e.key);
+                                                settingsProvider.categories =
+                                                    categories;
+                                              });
+                                              appsProvider.saveApps(appsProvider
+                                                  .apps.values
+                                                  .where((element) =>
+                                                      element.app.category ==
+                                                      e.key)
+                                                  .map((e) {
+                                                var a = e.app;
+                                                a.category = null;
+                                                return a;
+                                              }).toList());
+                                            }
+                                          });
+                                        },
+                                      ));
+                                }),
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        showDialog<Map<String, String>?>(
+                                            context: context,
+                                            builder: (BuildContext ctx) {
+                                              // TODO
+                                              return GeneratedFormModal(
+                                                  title: 'Add Category',
+                                                  items: [
+                                                    [
+                                                      GeneratedFormItem('label',
+                                                          label: 'Label')
+                                                    ]
+                                                  ]);
+                                            }).then((value) {
+                                          String? label = value?['label'];
+                                          if (label != null) {
+                                            setState(() {
+                                              categories[label] =
+                                                  generateRandomLightColor()
+                                                      .value;
+                                              settingsProvider.categories =
+                                                  categories;
+                                            });
+                                          }
+                                        });
+                                      },
+                                      icon: const Icon(Icons.add),
+                                      visualDensity: VisualDensity.compact,
+                                      tooltip: tr('add'),
+                                    ))
+                              ],
+                            )
                           ],
                         ))),
           SliverToBoxAdapter(

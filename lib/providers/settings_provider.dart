@@ -1,5 +1,7 @@
 // Exposes functions used to save/load app settings
 
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -143,5 +145,12 @@ class SettingsProvider with ChangeNotifier {
   void setSettingString(String settingId, String value) {
     prefs?.setString(settingId, value);
     notifyListeners();
+  }
+
+  Map<String, int> get categories =>
+      Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
+
+  set categories(Map<String, int> cats) {
+    prefs?.setString('categories', jsonEncode(cats));
   }
 }
