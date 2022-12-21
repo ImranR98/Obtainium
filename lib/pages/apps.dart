@@ -80,28 +80,31 @@ class AppsPageState extends State<AppsPage> {
             !(filter!.includeNonInstalled)) {
           return false;
         }
-        if (filter!.nameFilter.isEmpty && filter!.authorFilter.isEmpty) {
-          return true;
-        }
-        List<String> nameTokens = filter!.nameFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-        List<String> authorTokens = filter!.authorFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
+        if (filter!.nameFilter.isNotEmpty || filter!.authorFilter.isNotEmpty) {
+          List<String> nameTokens = filter!.nameFilter
+              .split(' ')
+              .where((element) => element.trim().isNotEmpty)
+              .toList();
+          List<String> authorTokens = filter!.authorFilter
+              .split(' ')
+              .where((element) => element.trim().isNotEmpty)
+              .toList();
 
-        for (var t in nameTokens) {
-          var name = app.installedInfo?.name ?? app.app.name;
-          if (!name.toLowerCase().contains(t.toLowerCase())) {
-            return false;
+          for (var t in nameTokens) {
+            var name = app.installedInfo?.name ?? app.app.name;
+            if (!name.toLowerCase().contains(t.toLowerCase())) {
+              return false;
+            }
+          }
+          for (var t in authorTokens) {
+            if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
+              return false;
+            }
           }
         }
-        for (var t in authorTokens) {
-          if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
+        if (filter!.categoryFilter.isNotEmpty &&
+            filter!.categoryFilter != app.app.category) {
+          return false;
         }
         return true;
       }).toList();
@@ -726,6 +729,10 @@ class AppsPageState extends State<AppsPage> {
                                         label: tr('nonInstalledApps'),
                                         type: FormItemType.bool,
                                         defaultValue: vals['nonInstalledApps'])
+                                  ], // TODO
+                                  [
+                                    settingsProvider.getCategoryFormItem(
+                                        initCategory: vals['category'] ?? '')
                                   ]
                                 ]);
                           }).then((values) {
@@ -752,19 +759,22 @@ class AppsFilter {
   late String authorFilter;
   late bool includeUptodate;
   late bool includeNonInstalled;
+  late String categoryFilter;
 
   AppsFilter(
       {this.nameFilter = '',
       this.authorFilter = '',
       this.includeUptodate = true,
-      this.includeNonInstalled = true});
+      this.includeNonInstalled = true,
+      this.categoryFilter = ''});
 
   Map<String, String> toValuesMap() {
     return {
       'appName': nameFilter,
       'author': authorFilter,
       'upToDateApps': includeUptodate ? 'true' : '',
-      'nonInstalledApps': includeNonInstalled ? 'true' : ''
+      'nonInstalledApps': includeNonInstalled ? 'true' : '',
+      'category': categoryFilter
     };
   }
 
@@ -773,11 +783,13 @@ class AppsFilter {
     authorFilter = values['author']!;
     includeUptodate = values['upToDateApps'] == 'true';
     includeNonInstalled = values['nonInstalledApps'] == 'true';
+    categoryFilter = values['category']!;
   }
 
   bool isIdenticalTo(AppsFilter other) =>
       authorFilter.trim() == other.authorFilter.trim() &&
       nameFilter.trim() == other.nameFilter.trim() &&
       includeUptodate == other.includeUptodate &&
-      includeNonInstalled == other.includeNonInstalled;
+      includeNonInstalled == other.includeNonInstalled &&
+      categoryFilter.trim() == other.categoryFilter.trim();
 }

@@ -177,20 +177,8 @@ class _AppPageState extends State<AppPage> {
                                                     title: 'Pick a Category',
                                                     items: [
                                                       [
-                                                        GeneratedFormItem(
-                                                            'category', // TODO
-                                                            label: 'Category',
-                                                            opts: [
-                                                              MapEntry('',
-                                                                  'No Category'),
-                                                              ...categories
-                                                                  .entries
-                                                                  .map((e) =>
-                                                                      MapEntry(
-                                                                          e.key,
-                                                                          e.key))
-                                                                  .toList()
-                                                            ])
+                                                        settingsProvider
+                                                            .getCategoryFormItem()
                                                       ]
                                                     ]);
                                               }).then((value) {
