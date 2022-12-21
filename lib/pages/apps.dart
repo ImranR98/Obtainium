@@ -80,28 +80,31 @@ class AppsPageState extends State<AppsPage> {
             !(filter!.includeNonInstalled)) {
           return false;
         }
-        if (filter!.nameFilter.isEmpty && filter!.authorFilter.isEmpty) {
-          return true;
-        }
-        List<String> nameTokens = filter!.nameFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-        List<String> authorTokens = filter!.authorFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
+        if (filter!.nameFilter.isNotEmpty || filter!.authorFilter.isNotEmpty) {
+          List<String> nameTokens = filter!.nameFilter
+              .split(' ')
+              .where((element) => element.trim().isNotEmpty)
+              .toList();
+          List<String> authorTokens = filter!.authorFilter
+              .split(' ')
+              .where((element) => element.trim().isNotEmpty)
+              .toList();
 
-        for (var t in nameTokens) {
-          var name = app.installedInfo?.name ?? app.app.name;
-          if (!name.toLowerCase().contains(t.toLowerCase())) {
-            return false;
+          for (var t in nameTokens) {
+            var name = app.installedInfo?.name ?? app.app.name;
+            if (!name.toLowerCase().contains(t.toLowerCase())) {
+              return false;
+            }
+          }
+          for (var t in authorTokens) {
+            if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
+              return false;
+            }
           }
         }
-        for (var t in authorTokens) {
-          if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
+        if (filter!.categoryFilter.isNotEmpty &&
+            filter!.categoryFilter != app.app.category) {
+          return false;
         }
         return true;
       }).toList();
@@ -225,96 +228,114 @@ class AppsPageState extends State<AppsPage> {
               String? changesUrl = SourceProvider()
                   .getSource(sortedApps[index].app.url)
                   .changeLogPageFromStandardUrl(sortedApps[index].app.url);
-              return ListTile(
-                tileColor: sortedApps[index].app.pinned
-                    ? Colors.grey.withOpacity(0.1)
-                    : Colors.transparent,
-                selectedTileColor: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withOpacity(sortedApps[index].app.pinned ? 0.2 : 0.1),
-                selected: selectedApps.contains(sortedApps[index].app),
-                onLongPress: () {
-                  toggleAppSelected(sortedApps[index].app);
-                },
-                leading: sortedApps[index].installedInfo != null
-                    ? Image.memory(
-                        sortedApps[index].installedInfo!.icon!,
-                        gaplessPlayback: true,
-                      )
-                    : null,
-                title: Text(
-                  sortedApps[index].installedInfo?.name ??
-                      sortedApps[index].app.name,
-                  style: TextStyle(
-                      fontWeight: sortedApps[index].app.pinned
-                          ? FontWeight.bold
-                          : FontWeight.normal),
-                ),
-                subtitle: Text(tr('byX', args: [sortedApps[index].app.author]),
-                    style: TextStyle(
+              return Container(
+                  decoration: BoxDecoration(
+                      border: Border.symmetric(
+                          vertical: BorderSide(
+                              width: 3,
+                              color: Color(settingsProvider.categories[
+                                      sortedApps[index].app.category] ??
+                                  const Color.fromARGB(0, 0, 0, 0).value)))),
+                  child: ListTile(
+                    tileColor: sortedApps[index].app.pinned
+                        ? Colors.grey.withOpacity(0.1)
+                        : Colors.transparent,
+                    selectedTileColor: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(sortedApps[index].app.pinned ? 0.2 : 0.1),
+                    selected: selectedApps.contains(sortedApps[index].app),
+                    onLongPress: () {
+                      toggleAppSelected(sortedApps[index].app);
+                    },
+                    leading: sortedApps[index].installedInfo != null
+                        ? Image.memory(
+                            sortedApps[index].installedInfo!.icon!,
+                            gaplessPlayback: true,
+                          )
+                        : null,
+                    title: Text(
+                      sortedApps[index].installedInfo?.name ??
+                          sortedApps[index].app.name,
+                      style: TextStyle(
                         fontWeight: sortedApps[index].app.pinned
                             ? FontWeight.bold
-                            : FontWeight.normal)),
-                trailing: SingleChildScrollView(
-                    reverse: true,
-                    child: sortedApps[index].downloadProgress != null
-                        ? Text(tr('percentProgress', args: [
-                            sortedApps[index]
-                                    .downloadProgress
-                                    ?.toInt()
-                                    .toString() ??
-                                '100'
-                          ]))
-                        : (Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              SizedBox(
-                                  width: 100,
-                                  child: Text(
-                                    '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBrackets')}' : ''}',
-                                    overflow: TextOverflow.fade,
-                                    textAlign: TextAlign.end,
-                                  )),
-                              sortedApps[index].app.installedVersion != null &&
-                                      sortedApps[index].app.installedVersion !=
-                                          sortedApps[index].app.latestVersion
-                                  ? GestureDetector(
-                                      onTap: changesUrl == null
-                                          ? null
-                                          : () {
-                                              launchUrlString(changesUrl,
-                                                  mode: LaunchMode
-                                                      .externalApplication);
-                                            },
-                                      child: appsProvider.areDownloadsRunning()
-                                          ? Text(tr('pleaseWait'))
-                                          : Text(
-                                              '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBracketsShort')}' : ''}',
-                                              style: TextStyle(
-                                                  fontStyle: FontStyle.italic,
-                                                  decoration: changesUrl == null
-                                                      ? TextDecoration.none
-                                                      : TextDecoration
-                                                          .underline),
-                                            ))
-                                  : const SizedBox(),
-                            ],
-                          ))),
-                onTap: () {
-                  if (selectedApps.isNotEmpty) {
-                    toggleAppSelected(sortedApps[index].app);
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              AppPage(appId: sortedApps[index].app.id)),
-                    );
-                  }
-                },
-              );
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    subtitle: Text(
+                        tr('byX', args: [sortedApps[index].app.author]),
+                        style: TextStyle(
+                            fontWeight: sortedApps[index].app.pinned
+                                ? FontWeight.bold
+                                : FontWeight.normal)),
+                    trailing: SingleChildScrollView(
+                        reverse: true,
+                        child: sortedApps[index].downloadProgress != null
+                            ? Text(tr('percentProgress', args: [
+                                sortedApps[index]
+                                        .downloadProgress
+                                        ?.toInt()
+                                        .toString() ??
+                                    '100'
+                              ]))
+                            : (Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  SizedBox(
+                                      width: 100,
+                                      child: Text(
+                                        '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBrackets')}' : ''}',
+                                        overflow: TextOverflow.fade,
+                                        textAlign: TextAlign.end,
+                                      )),
+                                  sortedApps[index].app.installedVersion !=
+                                              null &&
+                                          sortedApps[index]
+                                                  .app
+                                                  .installedVersion !=
+                                              sortedApps[index]
+                                                  .app
+                                                  .latestVersion
+                                      ? GestureDetector(
+                                          onTap: changesUrl == null
+                                              ? null
+                                              : () {
+                                                  launchUrlString(changesUrl,
+                                                      mode: LaunchMode
+                                                          .externalApplication);
+                                                },
+                                          child: appsProvider
+                                                  .areDownloadsRunning()
+                                              ? Text(tr('pleaseWait'))
+                                              : Text(
+                                                  '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == 'true' ? ' ${tr('estimateInBracketsShort')}' : ''}',
+                                                  style: TextStyle(
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      decoration: changesUrl ==
+                                                              null
+                                                          ? TextDecoration.none
+                                                          : TextDecoration
+                                                              .underline),
+                                                ))
+                                      : const SizedBox(),
+                                ],
+                              ))),
+                    onTap: () {
+                      if (selectedApps.isNotEmpty) {
+                        toggleAppSelected(sortedApps[index].app);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  AppPage(appId: sortedApps[index].app.id)),
+                        );
+                      }
+                    },
+                  ));
             }, childCount: sortedApps.length))
           ])),
       persistentFooterButtons: [
@@ -708,6 +729,10 @@ class AppsPageState extends State<AppsPage> {
                                         label: tr('nonInstalledApps'),
                                         type: FormItemType.bool,
                                         defaultValue: vals['nonInstalledApps'])
+                                  ],
+                                  [
+                                    settingsProvider.getCategoryFormItem(
+                                        initCategory: vals['category'] ?? '')
                                   ]
                                 ]);
                           }).then((values) {
@@ -734,19 +759,22 @@ class AppsFilter {
   late String authorFilter;
   late bool includeUptodate;
   late bool includeNonInstalled;
+  late String categoryFilter;
 
   AppsFilter(
       {this.nameFilter = '',
       this.authorFilter = '',
       this.includeUptodate = true,
-      this.includeNonInstalled = true});
+      this.includeNonInstalled = true,
+      this.categoryFilter = ''});
 
   Map<String, String> toValuesMap() {
     return {
       'appName': nameFilter,
       'author': authorFilter,
       'upToDateApps': includeUptodate ? 'true' : '',
-      'nonInstalledApps': includeNonInstalled ? 'true' : ''
+      'nonInstalledApps': includeNonInstalled ? 'true' : '',
+      'category': categoryFilter
     };
   }
 
@@ -755,11 +783,13 @@ class AppsFilter {
     authorFilter = values['author']!;
     includeUptodate = values['upToDateApps'] == 'true';
     includeNonInstalled = values['nonInstalledApps'] == 'true';
+    categoryFilter = values['category']!;
   }
 
   bool isIdenticalTo(AppsFilter other) =>
       authorFilter.trim() == other.authorFilter.trim() &&
       nameFilter.trim() == other.nameFilter.trim() &&
       includeUptodate == other.includeUptodate &&
-      includeNonInstalled == other.includeNonInstalled;
+      includeNonInstalled == other.includeNonInstalled &&
+      categoryFilter.trim() == other.categoryFilter.trim();
 }

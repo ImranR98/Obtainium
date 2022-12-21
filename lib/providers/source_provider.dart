@@ -19,6 +19,7 @@ import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
   late String author;
@@ -47,6 +48,7 @@ class App {
   late Map<String, String> additionalSettings;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
+  String? category;
   App(
       this.id,
       this.url,
@@ -58,7 +60,8 @@ class App {
       this.preferredApkIndex,
       this.additionalSettings,
       this.lastUpdateCheck,
-      this.pinned);
+      this.pinned,
+      {this.category});
 
   @override
   String toString() {
@@ -107,7 +110,8 @@ class App {
         json['lastUpdateCheck'] == null
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-        json['pinned'] ?? false);
+        json['pinned'] ?? false,
+        category: json['category']);
   }
 
   Map<String, dynamic> toJson() => {
@@ -121,7 +125,8 @@ class App {
         'preferredApkIndex': preferredApkIndex,
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
-        'pinned': pinned
+        'pinned': pinned,
+        'category': category
       };
 }
 
@@ -350,7 +355,8 @@ class SourceProvider {
         apk.apkUrls.length - 1,
         additionalSettings,
         DateTime.now(),
-        currentApp?.pinned ?? false);
+        currentApp?.pinned ?? false,
+        category: currentApp?.category);
   }
 
   // Returns errors in [results, errors] instead of throwing them

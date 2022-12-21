@@ -1,9 +1,12 @@
 // Exposes functions used to save/load app settings
 
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -144,4 +147,20 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setString(settingId, value);
     notifyListeners();
   }
+
+  Map<String, int> get categories =>
+      Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
+
+  set categories(Map<String, int> cats) {
+    prefs?.setString('categories', jsonEncode(cats));
+  }
+
+  getCategoryFormItem({String initCategory = ''}) =>
+      GeneratedFormItem('category',
+          label: tr('category'),
+          opts: [
+            MapEntry('', tr('noCategory')),
+            ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
+          ],
+          defaultValue: initCategory);
 }

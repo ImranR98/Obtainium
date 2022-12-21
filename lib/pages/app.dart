@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -33,6 +34,7 @@ class _AppPageState extends State<AppPage> {
       });
     }
 
+    var categories = settingsProvider.categories;
     var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId];
     var source = app != null ? sourceProvider.getSource(app.app.url) : null;
@@ -148,7 +150,51 @@ class _AppPageState extends State<AppPage> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontStyle: FontStyle.italic, fontSize: 12),
-                        )
+                        ),
+                        const SizedBox(
+                          height: 32,
+                        ),
+                        app?.app.category != null
+                            ? Chip(
+                                label: Text(app!.app.category!),
+                                backgroundColor:
+                                    Color(categories[app.app.category!] ?? 0x0),
+                                onDeleted: () {
+                                  app.app.category = null;
+                                  appsProvider.saveApps([app.app]);
+                                },
+                                visualDensity: VisualDensity.compact,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                    TextButton(
+                                        onPressed: () {
+                                          showDialog<Map<String, String>?>(
+                                              context: context,
+                                              builder: (BuildContext ctx) {
+                                                return GeneratedFormModal(
+                                                    title: 'Pick a Category',
+                                                    items: [
+                                                      [
+                                                        settingsProvider
+                                                            .getCategoryFormItem()
+                                                      ]
+                                                    ]);
+                                              }).then((value) {
+                                            if (value != null && app != null) {
+                                              String? cat = (value['category']
+                                                          ?.isNotEmpty ??
+                                                      false)
+                                                  ? value['category']
+                                                  : null;
+                                              app.app.category = cat;
+                                              appsProvider.saveApps([app.app]);
+                                            }
+                                          });
+                                        },
+                                        child: Text(tr('categorize')))
+                                  ])
                       ],
                     )),
                   ],

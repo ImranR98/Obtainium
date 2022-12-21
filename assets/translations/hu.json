@@ -199,6 +199,14 @@
     "downloadNotifDescription": "Notifies the user of the progress in downloading an App",
     "noAPKFound": "No APK found",
     "noVersionDetection": "No version detection",
+    "categorize": "Categorize",
+    "categories": "Categories",
+    "category": "Category",
+    "noCategory": "No Category",
+    "deleteCategoryQuestion": "Delete Category?",
+    "categoryDeleteWarning": "All Apps in {} will be set to uncategorized.",
+    "addCategory": "Add Category",
+    "label": "Label",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"
