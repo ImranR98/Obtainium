@@ -153,6 +153,7 @@ class SettingsProvider with ChangeNotifier {
 
   set categories(Map<String, int> cats) {
     prefs?.setString('categories', jsonEncode(cats));
+    notifyListeners();
   }
 
   getCategoryFormItem({String initCategory = ''}) => GeneratedFormDropdown(

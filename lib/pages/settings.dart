@@ -41,7 +41,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     SourceProvider sourceProvider = SourceProvider();
-    AppsProvider appsProvider = context.read<AppsProvider>();
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
@@ -174,17 +173,6 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
 
-    var categories = settingsProvider.categories;
-    var categoryTagInput = GeneratedForm(items: [
-      [
-        GeneratedFormTagInput('categories',
-            defaultValue: categories
-                .map((key, value) => MapEntry(key, MapEntry(value, false))),
-            deleteConfirmationMessage: MapEntry(
-                tr('deleteCategoryQuestion'), tr('categoryDeleteWarning')))
-      ]
-    ], onValueChanges: ((values, valid, isBuilding) {}));
-
     const height16 = SizedBox(
       height: 16,
     );
@@ -273,7 +261,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,
-                            categoryTagInput
+                            const CategoryEditorSelector()
                           ],
                         ))),
           SliverToBoxAdapter(
@@ -390,15 +378,45 @@ class _LogsDialogState extends State<LogsDialog> {
 }
 
 class CategoryEditorSelector extends StatefulWidget {
-  const CategoryEditorSelector({super.key});
+  final void Function(List<String> categories)? onSelected;
+  final bool singleSelect;
+  const CategoryEditorSelector(
+      {super.key, this.onSelected, this.singleSelect = false});
 
   @override
   State<CategoryEditorSelector> createState() => _CategoryEditorSelectorState();
 }
 
 class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
+  Map<String, MapEntry<int, bool>> storedValues = {};
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    var settingsProvider = context.watch<SettingsProvider>();
+    storedValues = settingsProvider.categories.map((key, value) =>
+        MapEntry(key, MapEntry(value, storedValues[key]?.value ?? false)));
+    return GeneratedForm(
+        items: [
+          [
+            GeneratedFormTagInput('categories',
+                defaultValue: storedValues,
+                deleteConfirmationMessage: MapEntry(
+                    tr('deleteCategoryQuestion'), tr('categoryDeleteWarning')),
+                singleSelect: widget.singleSelect)
+          ]
+        ],
+        onValueChanges: ((values, valid, isBuilding) {
+          if (!isBuilding) {
+            storedValues =
+                values['categories'] as Map<String, MapEntry<int, bool>>;
+            settingsProvider.categories =
+                storedValues.map((key, value) => MapEntry(key, value.key));
+            if (widget.onSelected != null) {
+              widget.onSelected!(storedValues.keys
+                  .where((k) => storedValues[k]!.value)
+                  .toList());
+            }
+          }
+        }));
   }
 }

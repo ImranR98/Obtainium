@@ -88,13 +88,15 @@ class GeneratedFormSwitch extends GeneratedFormItem {
 
 class GeneratedFormTagInput extends GeneratedFormItem {
   late MapEntry<String, String>? deleteConfirmationMessage;
+  late bool singleSelect;
   GeneratedFormTagInput(String key,
       {String label = 'Input',
       List<Widget> belowWidgets = const [],
       Map<String, MapEntry<int, bool>> defaultValue = const {},
       List<String? Function(Map<String, MapEntry<int, bool>> value)>
           additionalValidators = const [],
-      this.deleteConfirmationMessage})
+      this.deleteConfirmationMessage,
+      this.singleSelect = false})
       : super(key,
             label: label,
             belowWidgets: belowWidgets,
@@ -277,6 +279,25 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                               MapEntry<int, bool>>)[e2.key]!
                                           .key,
                                       value);
+                              if ((widget.items[r][e] as GeneratedFormTagInput)
+                                      .singleSelect &&
+                                  value == true) {
+                                for (var key in (values[widget.items[r][e].key]
+                                        as Map<String, MapEntry<int, bool>>)
+                                    .keys) {
+                                  if (key != e2.key) {
+                                    (values[widget.items[r][e].key] as Map<
+                                        String,
+                                        MapEntry<int,
+                                            bool>>)[key] = MapEntry(
+                                        (values[widget.items[r][e].key] as Map<
+                                                String,
+                                                MapEntry<int, bool>>)[key]!
+                                            .key,
+                                        false);
+                                  }
+                                }
+                              }
                               someValueChanged();
                             });
                           },
