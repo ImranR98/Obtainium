@@ -203,8 +203,9 @@
     "categories": "カテゴリ",
     "category": "カテゴリ",
     "noCategory": "カテゴリなし",
-    "deleteCategoryQuestion": "カテゴリを削除しますか？",
-    "categoryDeleteWarning": "「{}」内のすべてのアプリは未分類に設定されます。",
+    "noCategories": "No Categories",
+    "deleteCategoriesQuestion": "Delete Categories?",
+    "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "カテゴリを追加",
     "label": "ラベル",
     "tooManyRequestsTryAgainInMinutes": {

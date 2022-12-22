@@ -380,8 +380,14 @@ class _LogsDialogState extends State<LogsDialog> {
 class CategoryEditorSelector extends StatefulWidget {
   final void Function(List<String> categories)? onSelected;
   final bool singleSelect;
+  final Set<String> preselected;
+  final WrapAlignment alignment;
   const CategoryEditorSelector(
-      {super.key, this.onSelected, this.singleSelect = false});
+      {super.key,
+      this.onSelected,
+      this.singleSelect = false,
+      this.preselected = const {},
+      this.alignment = WrapAlignment.start});
 
   @override
   State<CategoryEditorSelector> createState() => _CategoryEditorSelectorState();
@@ -393,15 +399,21 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
   @override
   Widget build(BuildContext context) {
     var settingsProvider = context.watch<SettingsProvider>();
-    storedValues = settingsProvider.categories.map((key, value) =>
-        MapEntry(key, MapEntry(value, storedValues[key]?.value ?? false)));
+    storedValues = settingsProvider.categories.map((key, value) => MapEntry(
+        key,
+        MapEntry(value,
+            storedValues[key]?.value ?? widget.preselected.contains(key))));
     return GeneratedForm(
         items: [
           [
             GeneratedFormTagInput('categories',
+                label: tr('category'),
+                emptyMessage: tr('noCategories'),
                 defaultValue: storedValues,
+                alignment: widget.alignment,
                 deleteConfirmationMessage: MapEntry(
-                    tr('deleteCategoryQuestion'), tr('categoryDeleteWarning')),
+                    tr('deleteCategoriesQuestion'),
+                    tr('categoryDeleteWarning')),
                 singleSelect: widget.singleSelect)
           ]
         ],

@@ -89,6 +89,8 @@ class GeneratedFormSwitch extends GeneratedFormItem {
 class GeneratedFormTagInput extends GeneratedFormItem {
   late MapEntry<String, String>? deleteConfirmationMessage;
   late bool singleSelect;
+  late WrapAlignment alignment;
+  late String emptyMessage;
   GeneratedFormTagInput(String key,
       {String label = 'Input',
       List<Widget> belowWidgets = const [],
@@ -96,7 +98,9 @@ class GeneratedFormTagInput extends GeneratedFormItem {
       List<String? Function(Map<String, MapEntry<int, bool>> value)>
           additionalValidators = const [],
       this.deleteConfirmationMessage,
-      this.singleSelect = false})
+      this.singleSelect = false,
+      this.alignment = WrapAlignment.start,
+      this.emptyMessage = 'Input'})
       : super(key,
             label: label,
             belowWidgets: belowWidgets,
@@ -256,7 +260,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
           );
         } else if (widget.items[r][e] is GeneratedFormTagInput) {
           formInputs[r][e] = Wrap(
+            alignment: (widget.items[r][e] as GeneratedFormTagInput).alignment,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              (values[widget.items[r][e].key]
+                              as Map<String, MapEntry<int, bool>>?)
+                          ?.isEmpty ==
+                      true
+                  ? Text(
+                      (widget.items[r][e] as GeneratedFormTagInput)
+                          .emptyMessage,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  : const SizedBox.shrink(),
               ...(values[widget.items[r][e].key]
                           as Map<String, MapEntry<int, bool>>?)
                       ?.entries
@@ -265,7 +281,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: ChoiceChip(
                           label: Text(e2.key),
-                          backgroundColor: Color(e2.value.key).withAlpha(200),
+                          backgroundColor: Color(e2.value.key).withAlpha(50),
                           selectedColor: Color(e2.value.key),
                           visualDensity: VisualDensity.compact,
                           selected: e2.value.value,
@@ -327,12 +343,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           if ((widget.items[r][e] as GeneratedFormTagInput)
                                   .deleteConfirmationMessage !=
                               null) {
+                            var message =
+                                (widget.items[r][e] as GeneratedFormTagInput)
+                                    .deleteConfirmationMessage!;
                             showDialog<Map<String, dynamic>?>(
                                 context: context,
                                 builder: (BuildContext ctx) {
                                   return GeneratedFormModal(
-                                      title: tr('deleteCategoryQuestion'),
-                                      message: tr('categoryDeleteWarning'),
+                                      title: message.key,
+                                      message: message.value,
                                       items: const []);
                                 }).then((value) {
                               if (value != null) {
@@ -370,8 +389,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                             var temp = values[widget.items[r][e].key]
                                 as Map<String, MapEntry<int, bool>>?;
                             temp ??= {};
+                            var singleSelect =
+                                (widget.items[r][e] as GeneratedFormTagInput)
+                                    .singleSelect;
+                            var someSelected = temp.entries
+                                .where((element) => element.value.value)
+                                .isNotEmpty;
                             temp[label] = MapEntry(
-                                generateRandomLightColor().value, false);
+                                generateRandomLightColor().value,
+                                !(someSelected && singleSelect));
                             values[widget.items[r][e].key] = temp;
                             someValueChanged();
                           });

@@ -5,6 +5,7 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -152,49 +153,22 @@ class _AppPageState extends State<AppPage> {
                               fontStyle: FontStyle.italic, fontSize: 12),
                         ),
                         const SizedBox(
-                          height: 32,
+                          height: 48,
                         ),
-                        app?.app.category != null
-                            ? Chip(
-                                label: Text(app!.app.category!),
-                                backgroundColor:
-                                    Color(categories[app.app.category!] ?? 0x0),
-                                onDeleted: () {
-                                  app.app.category = null;
-                                  appsProvider.saveApps([app.app]);
-                                },
-                                visualDensity: VisualDensity.compact,
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                    TextButton(
-                                        onPressed: () {
-                                          showDialog<Map<String, dynamic>?>(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return GeneratedFormModal(
-                                                    title: 'Pick a Category',
-                                                    items: [
-                                                      [
-                                                        settingsProvider
-                                                            .getCategoryFormItem()
-                                                      ]
-                                                    ]);
-                                              }).then((value) {
-                                            if (value != null && app != null) {
-                                              String? cat = (value['category']
-                                                          ?.isNotEmpty ??
-                                                      false)
-                                                  ? value['category']
-                                                  : null;
-                                              app.app.category = cat;
-                                              appsProvider.saveApps([app.app]);
-                                            }
-                                          });
-                                        },
-                                        child: Text(tr('categorize')))
-                                  ])
+                        CategoryEditorSelector(
+                            alignment: WrapAlignment.center,
+                            singleSelect: true,
+                            preselected: app?.app.category != null
+                                ? {app!.app.category!}
+                                : {},
+                            onSelected: (categories) {
+                              if (app != null) {
+                                app.app.category = categories.isNotEmpty
+                                    ? categories[0]
+                                    : null;
+                                appsProvider.saveApps([app.app]);
+                              }
+                            })
                       ],
                     )),
                   ],

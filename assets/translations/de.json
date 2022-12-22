@@ -203,8 +203,9 @@
     "categories": "Categories",
     "category": "Category",
     "noCategory": "No Category",
-    "deleteCategoryQuestion": "Delete Category?",
-    "categoryDeleteWarning": "All Apps in {} will be set to uncategorized.",
+    "noCategories": "No Categories",
+    "deleteCategoriesQuestion": "Delete Categories?",
+    "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "Add Category",
     "label": "Label",
     "tooManyRequestsTryAgainInMinutes": {
