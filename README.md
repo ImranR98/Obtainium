@@ -15,7 +15,8 @@ Currently supported App sources:
 - [Signal](https://signal.org/)
 - [SourceForge](https://sourceforge.net/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
-- Third Party F-Droid Repos (URLs ending with `/fdroid/repo`)
+- Third Party F-Droid Repos
+  - Any URLs ending with `/fdroid/<word>`, where `<word>` can be anything - most often `repo`
 - [Steam](https://store.steampowered.com/mobile)
 
 ## Limitations

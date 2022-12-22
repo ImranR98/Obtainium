@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.9.2';
+const String currentVersion = '0.9.4';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -43,12 +43,16 @@ final globalNavigatorKey = GlobalKey<NavigatorState>();
 Future<void> loadTranslations() async {
   // See easy_localization/issues/210
   await EasyLocalizationController.initEasyLocation();
+  var s = SettingsProvider();
+  await s.initializeSettings();
+  var forceLocale = s.forcedLocale;
   final controller = EasyLocalizationController(
     saveLocale: true,
+    forceLocale: forceLocale != null ? Locale(forceLocale) : null,
     fallbackLocale: fallbackLocale,
     supportedLocales: supportedLocales,
     assetLoader: const RootBundleAssetLoader(),
-    useOnlyLangCode: false,
+    useOnlyLangCode: true,
     useFallbackTranslations: true,
     path: localeDir,
     onLoadError: (FlutterError e) {
@@ -160,6 +164,7 @@ void main() async {
         supportedLocales: supportedLocales,
         path: localeDir,
         fallbackLocale: fallbackLocale,
+        useOnlyLangCode: true,
         child: const Obtainium()),
   ));
 }
