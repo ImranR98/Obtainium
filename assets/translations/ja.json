@@ -208,6 +208,7 @@
     "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "カテゴリを追加",
     "label": "ラベル",
+    "language": "Language",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"

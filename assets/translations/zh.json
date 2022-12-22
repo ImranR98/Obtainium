@@ -208,6 +208,7 @@
     "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "Add Category",
     "label": "Label",
+    "language": "Language",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"

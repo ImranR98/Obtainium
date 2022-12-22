@@ -208,6 +208,7 @@
     "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "Add Category",
     "label": "Label",
+    "language": "Language",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"

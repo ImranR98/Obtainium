@@ -6,6 +6,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -129,6 +130,25 @@ class _SettingsPageState extends State<SettingsPage> {
           }
         });
 
+    var localeDropdown = DropdownButtonFormField(
+        decoration: InputDecoration(labelText: tr('language')),
+        value: settingsProvider.forcedLocale,
+        items: [
+          DropdownMenuItem(
+            value: null,
+            child: Text(tr('followSystem')),
+          ),
+          ...supportedLocales.map((e) => DropdownMenuItem(
+                value: e.toLanguageTag(),
+                child: Text(e.toLanguageTag().toUpperCase()),
+              ))
+        ],
+        onChanged: (value) {
+          settingsProvider.forcedLocale = value;
+          context.setLocale(Locale(settingsProvider.forcedLocale ??
+              context.fallbackLocale!.languageCode));
+        });
+
     var intervalDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('bgUpdateCheckInterval')),
         value: settingsProvider.updateInterval,
@@ -209,6 +229,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 Expanded(child: orderDropdown),
                               ],
                             ),
+                            height16,
+                            localeDropdown,
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/main.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -164,4 +165,24 @@ class SettingsProvider with ChangeNotifier {
         ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
       ],
       defaultValue: initCategory);
+
+  String? get forcedLocale {
+    var fl = prefs?.getString('forcedLocale');
+    return supportedLocales
+            .where((element) => element.toLanguageTag() == fl)
+            .isNotEmpty
+        ? fl
+        : null;
+  }
+
+  set forcedLocale(String? fl) {
+    if (fl == null) {
+      prefs?.remove('forcedLocale');
+    } else if (supportedLocales
+        .where((element) => element.toLanguageTag() == fl)
+        .isNotEmpty) {
+      prefs?.setString('forcedLocale', fl);
+    }
+    notifyListeners();
+  }
 }

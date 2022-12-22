@@ -208,6 +208,7 @@
     "categoryDeleteWarning": "All Apps in deleted categories will be set to uncategorized.",
     "addCategory": "Add Category",
     "label": "Label",
+    "language": "Language",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minute erneut",
         "other": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minuten erneut"
