@@ -174,11 +174,20 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
 
+    var categories = settingsProvider.categories;
+    var categoryTagInput = GeneratedForm(items: [
+      [
+        GeneratedFormTagInput('categories',
+            defaultValue: categories
+                .map((key, value) => MapEntry(key, MapEntry(value, false))),
+            deleteConfirmationMessage: MapEntry(
+                tr('deleteCategoryQuestion'), tr('categoryDeleteWarning')))
+      ]
+    ], onValueChanges: ((values, valid, isBuilding) {}));
+
     const height16 = SizedBox(
       height: 16,
     );
-
-    var categories = settingsProvider.categories;
 
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -264,85 +273,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,
-                            Wrap(
-                              children: [
-                                ...categories.entries.toList().map((e) {
-                                  return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      child: Chip(
-                                        label: Text(e.key),
-                                        backgroundColor: Color(e.value),
-                                        visualDensity: VisualDensity.compact,
-                                        onDeleted: () {
-                                          showDialog<Map<String, dynamic>?>(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return GeneratedFormModal(
-                                                    title: tr(
-                                                        'deleteCategoryQuestion'),
-                                                    message: tr(
-                                                        'categoryDeleteWarning',
-                                                        args: [e.key]),
-                                                    items: []);
-                                              }).then((value) {
-                                            if (value != null) {
-                                              setState(() {
-                                                categories.remove(e.key);
-                                                settingsProvider.categories =
-                                                    categories;
-                                              });
-                                              appsProvider.saveApps(appsProvider
-                                                  .apps.values
-                                                  .where((element) =>
-                                                      element.app.category ==
-                                                      e.key)
-                                                  .map((e) {
-                                                var a = e.app;
-                                                a.category = null;
-                                                return a;
-                                              }).toList());
-                                            }
-                                          });
-                                        },
-                                      ));
-                                }),
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4),
-                                    child: IconButton(
-                                      onPressed: () {
-                                        showDialog<Map<String, dynamic>?>(
-                                            context: context,
-                                            builder: (BuildContext ctx) {
-                                              return GeneratedFormModal(
-                                                  title: tr('addCategory'),
-                                                  items: [
-                                                    [
-                                                      GeneratedFormTextField(
-                                                          'label',
-                                                          label: tr('label'))
-                                                    ]
-                                                  ]);
-                                            }).then((value) {
-                                          String? label = value?['label'];
-                                          if (label != null) {
-                                            setState(() {
-                                              categories[label] =
-                                                  generateRandomLightColor()
-                                                      .value;
-                                              settingsProvider.categories =
-                                                  categories;
-                                            });
-                                          }
-                                        });
-                                      },
-                                      icon: const Icon(Icons.add),
-                                      visualDensity: VisualDensity.compact,
-                                      tooltip: tr('add'),
-                                    ))
-                              ],
-                            )
+                            categoryTagInput
                           ],
                         ))),
           SliverToBoxAdapter(
@@ -455,5 +386,19 @@ class _LogsDialogState extends State<LogsDialog> {
             child: Text(tr('share')))
       ],
     );
+  }
+}
+
+class CategoryEditorSelector extends StatefulWidget {
+  const CategoryEditorSelector({super.key});
+
+  @override
+  State<CategoryEditorSelector> createState() => _CategoryEditorSelectorState();
+}
+
+class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }
