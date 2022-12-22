@@ -1,5 +1,9 @@
+import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 
 abstract class GeneratedFormItem {
   late String key;
@@ -82,6 +86,33 @@ class GeneratedFormSwitch extends GeneratedFormItem {
   }
 }
 
+class GeneratedFormTagInput extends GeneratedFormItem {
+  late MapEntry<String, String>? deleteConfirmationMessage;
+  late bool singleSelect;
+  late WrapAlignment alignment;
+  late String emptyMessage;
+  GeneratedFormTagInput(String key,
+      {String label = 'Input',
+      List<Widget> belowWidgets = const [],
+      Map<String, MapEntry<int, bool>> defaultValue = const {},
+      List<String? Function(Map<String, MapEntry<int, bool>> value)>
+          additionalValidators = const [],
+      this.deleteConfirmationMessage,
+      this.singleSelect = false,
+      this.alignment = WrapAlignment.start,
+      this.emptyMessage = 'Input'})
+      : super(key,
+            label: label,
+            belowWidgets: belowWidgets,
+            defaultValue: defaultValue,
+            additionalValidators: additionalValidators);
+
+  @override
+  Map<String, MapEntry<int, bool>> ensureType(val) {
+    return val is Map<String, MapEntry<int, bool>> ? val : {};
+  }
+}
+
 typedef OnValueChanges = void Function(
     Map<String, dynamic> values, bool valid, bool isBuilding);
 
@@ -118,6 +149,21 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
+  }
+
+  // Generates a random light color
+// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+  Color generateRandomLightColor() {
+    // Create a random number generator
+    final Random random = Random();
+
+    // Generate random hue, saturation, and value values
+    final double hue = random.nextDouble() * 360;
+    final double saturation = 0.5 + random.nextDouble() * 0.5;
+    final double value = 0.9 + random.nextDouble() * 0.1;
+
+    // Create a HSV color with the random values
+    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
   }
 
   @override
@@ -210,6 +256,158 @@ class _GeneratedFormState extends State<GeneratedForm> {
                       someValueChanged();
                     });
                   })
+            ],
+          );
+        } else if (widget.items[r][e] is GeneratedFormTagInput) {
+          formInputs[r][e] = Wrap(
+            alignment: (widget.items[r][e] as GeneratedFormTagInput).alignment,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              (values[widget.items[r][e].key]
+                              as Map<String, MapEntry<int, bool>>?)
+                          ?.isEmpty ==
+                      true
+                  ? Text(
+                      (widget.items[r][e] as GeneratedFormTagInput)
+                          .emptyMessage,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  : const SizedBox.shrink(),
+              ...(values[widget.items[r][e].key]
+                          as Map<String, MapEntry<int, bool>>?)
+                      ?.entries
+                      .map((e2) {
+                    return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ChoiceChip(
+                          label: Text(e2.key),
+                          backgroundColor: Color(e2.value.key).withAlpha(50),
+                          selectedColor: Color(e2.value.key),
+                          visualDensity: VisualDensity.compact,
+                          selected: e2.value.value,
+                          onSelected: (value) {
+                            setState(() {
+                              (values[widget.items[r][e].key] as Map<String,
+                                      MapEntry<int, bool>>)[e2.key] =
+                                  MapEntry(
+                                      (values[widget.items[r][e].key] as Map<
+                                              String,
+                                              MapEntry<int, bool>>)[e2.key]!
+                                          .key,
+                                      value);
+                              if ((widget.items[r][e] as GeneratedFormTagInput)
+                                      .singleSelect &&
+                                  value == true) {
+                                for (var key in (values[widget.items[r][e].key]
+                                        as Map<String, MapEntry<int, bool>>)
+                                    .keys) {
+                                  if (key != e2.key) {
+                                    (values[widget.items[r][e].key] as Map<
+                                        String,
+                                        MapEntry<int,
+                                            bool>>)[key] = MapEntry(
+                                        (values[widget.items[r][e].key] as Map<
+                                                String,
+                                                MapEntry<int, bool>>)[key]!
+                                            .key,
+                                        false);
+                                  }
+                                }
+                              }
+                              someValueChanged();
+                            });
+                          },
+                        ));
+                  }) ??
+                  [const SizedBox.shrink()],
+              (values[widget.items[r][e].key]
+                              as Map<String, MapEntry<int, bool>>?)
+                          ?.values
+                          .where((e) => e.value)
+                          .isNotEmpty ==
+                      true
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: IconButton(
+                        onPressed: () {
+                          fn() {
+                            setState(() {
+                              var temp = values[widget.items[r][e].key]
+                                  as Map<String, MapEntry<int, bool>>;
+                              temp.removeWhere((key, value) => value.value);
+                              values[widget.items[r][e].key] = temp;
+                              someValueChanged();
+                            });
+                          }
+
+                          if ((widget.items[r][e] as GeneratedFormTagInput)
+                                  .deleteConfirmationMessage !=
+                              null) {
+                            var message =
+                                (widget.items[r][e] as GeneratedFormTagInput)
+                                    .deleteConfirmationMessage!;
+                            showDialog<Map<String, dynamic>?>(
+                                context: context,
+                                builder: (BuildContext ctx) {
+                                  return GeneratedFormModal(
+                                      title: message.key,
+                                      message: message.value,
+                                      items: const []);
+                                }).then((value) {
+                              if (value != null) {
+                                fn();
+                              }
+                            });
+                          } else {
+                            fn();
+                          }
+                        },
+                        icon: const Icon(Icons.remove),
+                        visualDensity: VisualDensity.compact,
+                        tooltip: tr('remove'),
+                      ))
+                  : const SizedBox.shrink(),
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: IconButton(
+                    onPressed: () {
+                      showDialog<Map<String, dynamic>?>(
+                          context: context,
+                          builder: (BuildContext ctx) {
+                            return GeneratedFormModal(
+                                title: widget.items[r][e].label,
+                                items: [
+                                  [
+                                    GeneratedFormTextField('label',
+                                        label: tr('label'))
+                                  ]
+                                ]);
+                          }).then((value) {
+                        String? label = value?['label'];
+                        if (label != null) {
+                          setState(() {
+                            var temp = values[widget.items[r][e].key]
+                                as Map<String, MapEntry<int, bool>>?;
+                            temp ??= {};
+                            var singleSelect =
+                                (widget.items[r][e] as GeneratedFormTagInput)
+                                    .singleSelect;
+                            var someSelected = temp.entries
+                                .where((element) => element.value.value)
+                                .isNotEmpty;
+                            temp[label] = MapEntry(
+                                generateRandomLightColor().value,
+                                !(someSelected && singleSelect));
+                            values[widget.items[r][e].key] = temp;
+                            someValueChanged();
+                          });
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.add),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: tr('add'),
+                  )),
             ],
           );
         }

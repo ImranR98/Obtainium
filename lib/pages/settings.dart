@@ -6,6 +6,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -41,7 +42,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     SourceProvider sourceProvider = SourceProvider();
-    AppsProvider appsProvider = context.read<AppsProvider>();
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
@@ -130,6 +130,25 @@ class _SettingsPageState extends State<SettingsPage> {
           }
         });
 
+    var localeDropdown = DropdownButtonFormField(
+        decoration: InputDecoration(labelText: tr('language')),
+        value: settingsProvider.forcedLocale,
+        items: [
+          DropdownMenuItem(
+            value: null,
+            child: Text(tr('followSystem')),
+          ),
+          ...supportedLocales.map((e) => DropdownMenuItem(
+                value: e.toLanguageTag(),
+                child: Text(e.toLanguageTag().toUpperCase()),
+              ))
+        ],
+        onChanged: (value) {
+          settingsProvider.forcedLocale = value;
+          context.setLocale(Locale(settingsProvider.forcedLocale ??
+              context.fallbackLocale!.languageCode));
+        });
+
     var intervalDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('bgUpdateCheckInterval')),
         value: settingsProvider.updateInterval,
@@ -178,8 +197,6 @@ class _SettingsPageState extends State<SettingsPage> {
       height: 16,
     );
 
-    var categories = settingsProvider.categories;
-
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -212,6 +229,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 Expanded(child: orderDropdown),
                               ],
                             ),
+                            height16,
+                            localeDropdown,
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,85 +283,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,
-                            Wrap(
-                              children: [
-                                ...categories.entries.toList().map((e) {
-                                  return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      child: Chip(
-                                        label: Text(e.key),
-                                        backgroundColor: Color(e.value),
-                                        visualDensity: VisualDensity.compact,
-                                        onDeleted: () {
-                                          showDialog<Map<String, dynamic>?>(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return GeneratedFormModal(
-                                                    title: tr(
-                                                        'deleteCategoryQuestion'),
-                                                    message: tr(
-                                                        'categoryDeleteWarning',
-                                                        args: [e.key]),
-                                                    items: []);
-                                              }).then((value) {
-                                            if (value != null) {
-                                              setState(() {
-                                                categories.remove(e.key);
-                                                settingsProvider.categories =
-                                                    categories;
-                                              });
-                                              appsProvider.saveApps(appsProvider
-                                                  .apps.values
-                                                  .where((element) =>
-                                                      element.app.category ==
-                                                      e.key)
-                                                  .map((e) {
-                                                var a = e.app;
-                                                a.category = null;
-                                                return a;
-                                              }).toList());
-                                            }
-                                          });
-                                        },
-                                      ));
-                                }),
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4),
-                                    child: IconButton(
-                                      onPressed: () {
-                                        showDialog<Map<String, dynamic>?>(
-                                            context: context,
-                                            builder: (BuildContext ctx) {
-                                              return GeneratedFormModal(
-                                                  title: tr('addCategory'),
-                                                  items: [
-                                                    [
-                                                      GeneratedFormTextField(
-                                                          'label',
-                                                          label: tr('label'))
-                                                    ]
-                                                  ]);
-                                            }).then((value) {
-                                          String? label = value?['label'];
-                                          if (label != null) {
-                                            setState(() {
-                                              categories[label] =
-                                                  generateRandomLightColor()
-                                                      .value;
-                                              settingsProvider.categories =
-                                                  categories;
-                                            });
-                                          }
-                                        });
-                                      },
-                                      icon: const Icon(Icons.add),
-                                      visualDensity: VisualDensity.compact,
-                                      tooltip: tr('add'),
-                                    ))
-                              ],
-                            )
+                            const CategoryEditorSelector()
                           ],
                         ))),
           SliverToBoxAdapter(
@@ -455,5 +396,61 @@ class _LogsDialogState extends State<LogsDialog> {
             child: Text(tr('share')))
       ],
     );
+  }
+}
+
+class CategoryEditorSelector extends StatefulWidget {
+  final void Function(List<String> categories)? onSelected;
+  final bool singleSelect;
+  final Set<String> preselected;
+  final WrapAlignment alignment;
+  const CategoryEditorSelector(
+      {super.key,
+      this.onSelected,
+      this.singleSelect = false,
+      this.preselected = const {},
+      this.alignment = WrapAlignment.start});
+
+  @override
+  State<CategoryEditorSelector> createState() => _CategoryEditorSelectorState();
+}
+
+class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
+  Map<String, MapEntry<int, bool>> storedValues = {};
+
+  @override
+  Widget build(BuildContext context) {
+    var settingsProvider = context.watch<SettingsProvider>();
+    storedValues = settingsProvider.categories.map((key, value) => MapEntry(
+        key,
+        MapEntry(value,
+            storedValues[key]?.value ?? widget.preselected.contains(key))));
+    return GeneratedForm(
+        items: [
+          [
+            GeneratedFormTagInput('categories',
+                label: tr('category'),
+                emptyMessage: tr('noCategories'),
+                defaultValue: storedValues,
+                alignment: widget.alignment,
+                deleteConfirmationMessage: MapEntry(
+                    tr('deleteCategoriesQuestion'),
+                    tr('categoryDeleteWarning')),
+                singleSelect: widget.singleSelect)
+          ]
+        ],
+        onValueChanges: ((values, valid, isBuilding) {
+          if (!isBuilding) {
+            storedValues =
+                values['categories'] as Map<String, MapEntry<int, bool>>;
+            settingsProvider.categories =
+                storedValues.map((key, value) => MapEntry(key, value.key));
+            if (widget.onSelected != null) {
+              widget.onSelected!(storedValues.keys
+                  .where((k) => storedValues[k]!.value)
+                  .toList());
+            }
+          }
+        }));
   }
 }
