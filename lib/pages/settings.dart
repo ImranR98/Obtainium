@@ -145,8 +145,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
         onChanged: (value) {
           settingsProvider.forcedLocale = value;
-          context.setLocale(Locale(settingsProvider.forcedLocale ??
-              context.fallbackLocale!.languageCode));
+          if (value != null) {
+            context.setLocale(Locale(value));
+          } else {
+            context.resetLocale();
+          }
         });
 
     var intervalDropdown = DropdownButtonFormField(
