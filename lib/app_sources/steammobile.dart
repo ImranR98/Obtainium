@@ -54,7 +54,7 @@ class SteamMobile extends AppSource {
       var apkUrls = [links[0]];
       return APKDetails(version, apkUrls, AppNames(name, apks[apkNamePrefix]!));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 }

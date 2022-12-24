@@ -59,7 +59,7 @@ class GitLab extends AppSource {
       }
       return APKDetails(version, apkUrls, GitHub().getAppNames(standardUrl));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 }

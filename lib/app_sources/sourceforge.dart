@@ -57,7 +57,7 @@ class SourceForge extends AppSource {
           AppNames(
               name, standardUrl.substring(standardUrl.lastIndexOf('/') + 1)));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 }

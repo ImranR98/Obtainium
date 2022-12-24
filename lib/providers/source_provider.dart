@@ -331,13 +331,13 @@ class SourceProvider {
       {App? currentApp,
       bool trackOnlyOverride = false,
       noVersionDetectionOverride = false}) async {
-    if (trackOnlyOverride) {
+    if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
     if (noVersionDetectionOverride) {
       additionalSettings['noVersionDetection'] = true;
     }
-    var trackOnly = currentApp?.additionalSettings['trackOnly'] == true;
+    var trackOnly = additionalSettings['trackOnly'] == true;
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);

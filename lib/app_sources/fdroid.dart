@@ -54,7 +54,7 @@ class FDroid extends AppSource {
       return APKDetails(latestVersion, apkUrls,
           AppNames(name, Uri.parse(standardUrl).pathSegments.last));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 

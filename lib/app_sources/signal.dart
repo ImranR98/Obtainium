@@ -33,7 +33,7 @@ class Signal extends AppSource {
       }
       return APKDetails(version, apkUrls, AppNames(name, 'Signal'));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 }
