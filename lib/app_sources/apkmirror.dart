@@ -46,7 +46,7 @@ class APKMirror extends AppSource {
       }
       return APKDetails(version, [], getAppNames(standardUrl));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 

@@ -80,7 +80,7 @@ class FDroidRepo extends AppSource {
           .toList();
       return APKDetails(latestVersion, apkUrls, AppNames(authorName, appName));
     } else {
-      throw NoReleasesError();
+      throw getObtainiumHttpError(res);
     }
   }
 }
