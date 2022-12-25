@@ -338,7 +338,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                             ? null
                                             : () {
                                                 () async {
-                                                  var values = await showDialog(
+                                                  var values = await showDialog<
+                                                          Map<String,
+                                                              dynamic>?>(
                                                       context: context,
                                                       builder:
                                                           (BuildContext ctx) {
@@ -365,7 +367,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     var urlsWithDescriptions =
                                                         await source
                                                             .getUrlsWithDescriptions(
-                                                                values);
+                                                                values.values
+                                                                    .map((e) =>
+                                                                        e.toString())
+                                                                    .toList());
                                                     var selectedUrls =
                                                         await showDialog<
                                                                 List<String>?>(
