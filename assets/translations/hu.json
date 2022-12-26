@@ -207,6 +207,8 @@
     "categoryDeleteWarning": "A(z) {} összes app kategorizálatlan állapotba kerül.",
     "addCategory": "Új kategória",
     "label": "Címke",
+    "language": "Language",
+    "storagePermissionDenied": "Storage permission denied",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"

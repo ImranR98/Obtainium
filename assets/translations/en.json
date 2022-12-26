@@ -209,6 +209,7 @@
     "addCategory": "Add Category",
     "label": "Label",
     "language": "Language",
+    "storagePermissionDenied": "Storage permission denied",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"

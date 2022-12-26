@@ -209,6 +209,7 @@
     "addCategory": "Kategorie hinzufügen",
     "label": "Bezeichnung",
     "language": "Sprache",
+    "storagePermissionDenied": "Storage permission denied",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minute erneut",
         "other": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minuten erneut"

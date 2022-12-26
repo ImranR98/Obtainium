@@ -209,6 +209,7 @@
     "addCategory": "カテゴリを追加",
     "label": "ラベル",
     "language": "言語",
+    "storagePermissionDenied": "Storage permission denied",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"
