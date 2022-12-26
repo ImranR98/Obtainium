@@ -152,7 +152,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   // Generates a random light color
-// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+  // Courtesy of ChatGPT 😭 (with a bugfix 🥳)
   Color generateRandomLightColor() {
     // Create a random number generator
     final Random random = Random();
@@ -389,17 +389,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
                             var temp = values[widget.items[r][e].key]
                                 as Map<String, MapEntry<int, bool>>?;
                             temp ??= {};
-                            var singleSelect =
-                                (widget.items[r][e] as GeneratedFormTagInput)
-                                    .singleSelect;
-                            var someSelected = temp.entries
-                                .where((element) => element.value.value)
-                                .isNotEmpty;
-                            temp[label] = MapEntry(
-                                generateRandomLightColor().value,
-                                !(someSelected && singleSelect));
-                            values[widget.items[r][e].key] = temp;
-                            someValueChanged();
+                            if (temp[label] == null) {
+                              var singleSelect =
+                                  (widget.items[r][e] as GeneratedFormTagInput)
+                                      .singleSelect;
+                              var someSelected = temp.entries
+                                  .where((element) => element.value.value)
+                                  .isNotEmpty;
+                              temp[label] = MapEntry(
+                                  generateRandomLightColor().value,
+                                  !(someSelected && singleSelect));
+                              values[widget.items[r][e].key] = temp;
+                              someValueChanged();
+                            }
                           });
                         }
                       });
