@@ -230,7 +230,7 @@ class AppsPageState extends State<AppsPage> {
                   decoration: BoxDecoration(
                       border: Border.symmetric(
                           vertical: BorderSide(
-                              width: 3,
+                              width: 4,
                               color: Color(settingsProvider.categories[
                                       sortedApps[index].app.category] ??
                                   const Color.fromARGB(0, 0, 0, 0).value)))),
