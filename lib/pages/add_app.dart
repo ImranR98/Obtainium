@@ -8,6 +8,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
+import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -29,6 +30,7 @@ class _AddAppPageState extends State<AddAppPage> {
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
+  String? category;
 
   @override
   Widget build(BuildContext context) {
@@ -37,25 +39,19 @@ class _AddAppPageState extends State<AddAppPage> {
 
     changeUserInput(String input, bool valid, bool isBuilding) {
       userInput = input;
-      fn() {
-        var source = valid ? sourceProvider.getSource(userInput) : null;
-        if (pickedSource.runtimeType != source.runtimeType) {
-          pickedSource = source;
-          additionalSettings = source != null
-              ? getDefaultValuesFromFormItems(
-                  source.combinedAppSpecificSettingFormItems)
-              : {};
-          additionalSettingsValid = source != null
-              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-              : true;
-        }
-      }
-
-      if (isBuilding) {
-        fn();
-      } else {
+      if (!isBuilding) {
         setState(() {
-          fn();
+          var source = valid ? sourceProvider.getSource(userInput) : null;
+          if (pickedSource.runtimeType != source.runtimeType) {
+            pickedSource = source;
+            additionalSettings = source != null
+                ? getDefaultValuesFromFormItems(
+                    source.combinedAppSpecificSettingFormItems)
+                : {};
+            additionalSettingsValid = source != null
+                ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
+                : true;
+          }
         });
       }
     }
@@ -130,6 +126,9 @@ class _AddAppPageState extends State<AddAppPage> {
           }
           if (app.additionalSettings['trackOnly'] == true) {
             app.installedVersion = app.latestVersion;
+          }
+          if (category != null) {
+            app.category = category;
           }
           await appsProvider.saveApps([app]);
 
@@ -238,7 +237,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                     ]
                                   ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    if (values.isNotEmpty && valid) {
+                                    if (values.isNotEmpty &&
+                                        valid &&
+                                        !isBuilding) {
                                       setState(() {
                                         searchQuery =
                                             values['searchSomeSources']!.trim();
@@ -299,9 +300,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                 child: Text(tr('search')))
                           ],
                         ),
-                      if (pickedSource != null &&
-                          (pickedSource!
-                              .combinedAppSpecificSettingFormItems.isNotEmpty))
+                      if (pickedSource != null)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -328,6 +327,21 @@ class _AddAppPageState extends State<AddAppPage> {
                                     });
                                   }
                                 }),
+                            Column(
+                              children: [
+                                const SizedBox(
+                                  height: 16,
+                                ),
+                                CategoryEditorSelector(
+                                    alignment: WrapAlignment.start,
+                                    singleSelect: true,
+                                    onSelected: (categories) {
+                                      category = categories.isEmpty
+                                          ? null
+                                          : categories.first;
+                                    }),
+                              ],
+                            ),
                           ],
                         )
                       else
