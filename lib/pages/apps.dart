@@ -337,21 +337,29 @@ class AppsPageState extends State<AppsPage> {
       persistentFooterButtons: [
         Row(
           children: [
-            IconButton(
-                onPressed: () {
-                  selectedApps.isEmpty
-                      ? selectThese(sortedApps.map((e) => e.app).toList())
-                      : clearSelected();
-                },
-                icon: Icon(
-                  selectedApps.isEmpty
-                      ? Icons.select_all_outlined
-                      : Icons.deselect_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                tooltip: selectedApps.isEmpty
-                    ? tr('selectAll')
-                    : tr('deselectN', args: [selectedApps.length.toString()])),
+            selectedApps.isEmpty
+                ? IconButton(
+                    onPressed: () {
+                      selectThese(sortedApps.map((e) => e.app).toList());
+                    },
+                    icon: Icon(
+                      Icons.select_all_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    tooltip: tr('selectAll'))
+                : TextButton.icon(
+                    onPressed: () {
+                      selectedApps.isEmpty
+                          ? selectThese(sortedApps.map((e) => e.app).toList())
+                          : clearSelected();
+                    },
+                    icon: Icon(
+                      selectedApps.isEmpty
+                          ? Icons.select_all_outlined
+                          : Icons.deselect_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    label: Text(selectedApps.length.toString())),
             const VerticalDivider(),
             Expanded(
                 child: Row(
