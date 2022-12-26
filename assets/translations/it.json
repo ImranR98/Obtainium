@@ -209,6 +209,7 @@
     "addCategory": "Aggiungi categoria",
     "label": "Etichetta",
     "language": "Lingua",
+    "storagePermissionDenied": "Storage permission denied",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"

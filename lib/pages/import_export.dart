@@ -66,6 +66,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                             showError(
                                                 tr('exportedTo', args: [path]),
                                                 context);
+                                          }).catchError((e) {
+                                            showError(e, context);
                                           });
                                         },
                                   child: Text(tr('obtainiumExport')))),

@@ -17,6 +17,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:package_archive_info/package_archive_info.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -705,6 +706,14 @@ class AppsProvider with ChangeNotifier {
     if (!exportDir.existsSync()) {
       exportDir = await getExternalStorageDirectory();
       path = exportDir!.path;
+    }
+    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 28) {
+      if (await Permission.storage.isDenied) {
+        await Permission.storage.request();
+      }
+      if (await Permission.storage.isDenied) {
+        throw ObtainiumError(tr('storagePermissionDenied'));
+      }
     }
     File export = File(
         '${exportDir.path}/${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().millisecondsSinceEpoch}.json');
