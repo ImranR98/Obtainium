@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -35,7 +34,6 @@ class _AppPageState extends State<AppPage> {
       });
     }
 
-    var categories = settingsProvider.categories;
     var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId];
     var source = app != null ? sourceProvider.getSource(app.app.url) : null;
@@ -72,11 +70,12 @@ class _AppPageState extends State<AppPage> {
                   : Container()
               : CustomScrollView(
                   slivers: [
-                    SliverFillRemaining(
+                    SliverToBoxAdapter(
                         child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const SizedBox(height: 100),
                         app?.installedInfo != null
                             ? Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -168,7 +167,8 @@ class _AppPageState extends State<AppPage> {
                                     : null;
                                 appsProvider.saveApps([app.app]);
                               }
-                            })
+                            }),
+                        const SizedBox(height: 100)
                       ],
                     )),
                   ],
