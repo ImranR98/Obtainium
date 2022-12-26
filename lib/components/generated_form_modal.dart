@@ -9,12 +9,14 @@ class GeneratedFormModal extends StatefulWidget {
       required this.title,
       required this.items,
       this.initValid = false,
-      this.message = ''});
+      this.message = '',
+      this.additionalWidgets = const []});
 
   final String title;
   final String message;
   final List<List<GeneratedFormItem>> items;
   final bool initValid;
+  final List<Widget> additionalWidgets;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
@@ -54,7 +56,8 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                   this.valid = valid;
                 });
               }
-            })
+            }),
+        if (widget.additionalWidgets.isNotEmpty) ...widget.additionalWidgets
       ]),
       actions: [
         TextButton(

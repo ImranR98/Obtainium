@@ -39,25 +39,19 @@ class _AddAppPageState extends State<AddAppPage> {
 
     changeUserInput(String input, bool valid, bool isBuilding) {
       userInput = input;
-      fn() {
-        var source = valid ? sourceProvider.getSource(userInput) : null;
-        if (pickedSource.runtimeType != source.runtimeType) {
-          pickedSource = source;
-          additionalSettings = source != null
-              ? getDefaultValuesFromFormItems(
-                  source.combinedAppSpecificSettingFormItems)
-              : {};
-          additionalSettingsValid = source != null
-              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-              : true;
-        }
-      }
-
-      if (isBuilding) {
-        fn();
-      } else {
+      if (!isBuilding) {
         setState(() {
-          fn();
+          var source = valid ? sourceProvider.getSource(userInput) : null;
+          if (pickedSource.runtimeType != source.runtimeType) {
+            pickedSource = source;
+            additionalSettings = source != null
+                ? getDefaultValuesFromFormItems(
+                    source.combinedAppSpecificSettingFormItems)
+                : {};
+            additionalSettingsValid = source != null
+                ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
+                : true;
+          }
         });
       }
     }
@@ -243,7 +237,9 @@ class _AddAppPageState extends State<AddAppPage> {
                                     ]
                                   ],
                                   onValueChanges: (values, valid, isBuilding) {
-                                    if (values.isNotEmpty && valid) {
+                                    if (values.isNotEmpty &&
+                                        valid &&
+                                        !isBuilding) {
                                       setState(() {
                                         searchQuery =
                                             values['searchSomeSources']!.trim();

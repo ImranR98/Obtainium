@@ -185,7 +185,7 @@ class _SettingsPageState extends State<SettingsPage> {
               return [e];
             }).toList(),
             onValueChanges: (values, valid, isBuilding) {
-              if (valid) {
+              if (valid && !isBuilding) {
                 values.forEach((key, value) {
                   settingsProvider.setSettingString(key, value);
                 });
@@ -286,7 +286,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,
-                            const CategoryEditorSelector()
+                            const CategoryEditorSelector(
+                              showLabelWhenNotEmpty: false,
+                            )
                           ],
                         ))),
           SliverToBoxAdapter(
@@ -407,12 +409,14 @@ class CategoryEditorSelector extends StatefulWidget {
   final bool singleSelect;
   final Set<String> preselected;
   final WrapAlignment alignment;
+  final bool showLabelWhenNotEmpty;
   const CategoryEditorSelector(
       {super.key,
       this.onSelected,
       this.singleSelect = false,
       this.preselected = const {},
-      this.alignment = WrapAlignment.start});
+      this.alignment = WrapAlignment.start,
+      this.showLabelWhenNotEmpty = true});
 
   @override
   State<CategoryEditorSelector> createState() => _CategoryEditorSelectorState();
@@ -439,7 +443,8 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
                 deleteConfirmationMessage: MapEntry(
                     tr('deleteCategoriesQuestion'),
                     tr('categoryDeleteWarning')),
-                singleSelect: widget.singleSelect)
+                singleSelect: widget.singleSelect,
+                showLabelWhenNotEmpty: widget.showLabelWhenNotEmpty)
           ]
         ],
         onValueChanges: ((values, valid, isBuilding) {

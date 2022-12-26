@@ -7,6 +7,7 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
+import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -22,7 +23,8 @@ class AppsPage extends StatefulWidget {
 }
 
 class AppsPageState extends State<AppsPage> {
-  AppsFilter? filter;
+  AppsFilter filter = AppsFilter();
+  final AppsFilter neutralFilter = AppsFilter();
   var updatesOnlyFilter =
       AppsFilter(includeUptodate: false, includeNonInstalled: false);
   Set<App> selectedApps = {};
@@ -53,8 +55,7 @@ class AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var sortedApps = appsProvider.apps.values.toList();
-    var currentFilterIsUpdatesOnly =
-        filter?.isIdenticalTo(updatesOnlyFilter) ?? false;
+    var currentFilterIsUpdatesOnly = filter.isIdenticalTo(updatesOnlyFilter);
 
     selectedApps = selectedApps
         .where((element) => sortedApps.map((e) => e.app).contains(element))
@@ -70,45 +71,42 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    if (filter != null) {
-      sortedApps = sortedApps.where((app) {
-        if (app.app.installedVersion == app.app.latestVersion &&
-            !(filter!.includeUptodate)) {
-          return false;
-        }
-        if (app.app.installedVersion == null &&
-            !(filter!.includeNonInstalled)) {
-          return false;
-        }
-        if (filter!.nameFilter.isNotEmpty || filter!.authorFilter.isNotEmpty) {
-          List<String> nameTokens = filter!.nameFilter
-              .split(' ')
-              .where((element) => element.trim().isNotEmpty)
-              .toList();
-          List<String> authorTokens = filter!.authorFilter
-              .split(' ')
-              .where((element) => element.trim().isNotEmpty)
-              .toList();
+    sortedApps = sortedApps.where((app) {
+      if (app.app.installedVersion == app.app.latestVersion &&
+          !(filter.includeUptodate)) {
+        return false;
+      }
+      if (app.app.installedVersion == null && !(filter.includeNonInstalled)) {
+        return false;
+      }
+      if (filter.nameFilter.isNotEmpty || filter.authorFilter.isNotEmpty) {
+        List<String> nameTokens = filter.nameFilter
+            .split(' ')
+            .where((element) => element.trim().isNotEmpty)
+            .toList();
+        List<String> authorTokens = filter.authorFilter
+            .split(' ')
+            .where((element) => element.trim().isNotEmpty)
+            .toList();
 
-          for (var t in nameTokens) {
-            var name = app.installedInfo?.name ?? app.app.name;
-            if (!name.toLowerCase().contains(t.toLowerCase())) {
-              return false;
-            }
-          }
-          for (var t in authorTokens) {
-            if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
-              return false;
-            }
+        for (var t in nameTokens) {
+          var name = app.installedInfo?.name ?? app.app.name;
+          if (!name.toLowerCase().contains(t.toLowerCase())) {
+            return false;
           }
         }
-        if (filter!.categoryFilter.isNotEmpty &&
-            filter!.categoryFilter != app.app.category) {
-          return false;
+        for (var t in authorTokens) {
+          if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
+            return false;
+          }
         }
-        return true;
-      }).toList();
-    }
+      }
+      if (filter.categoryFilter.isNotEmpty &&
+          !filter.categoryFilter.contains(app.app.category)) {
+        return false;
+      }
+      return true;
+    }).toList();
 
     sortedApps.sort((a, b) {
       var nameA = a.installedInfo?.name ?? a.app.name;
@@ -663,7 +661,7 @@ class AppsPageState extends State<AppsPage> {
               onPressed: () {
                 setState(() {
                   if (currentFilterIsUpdatesOnly) {
-                    filter = null;
+                    filter = AppsFilter();
                   } else {
                     filter = updatesOnlyFilter;
                   }
@@ -683,9 +681,11 @@ class AppsPageState extends State<AppsPage> {
                 ? const SizedBox()
                 : TextButton.icon(
                     label: Text(
-                      filter == null ? tr('filter') : tr('filterActive'),
+                      filter.isIdenticalTo(neutralFilter)
+                          ? tr('filter')
+                          : tr('filterActive'),
                       style: TextStyle(
-                          fontWeight: filter == null
+                          fontWeight: filter.isIdenticalTo(neutralFilter)
                               ? FontWeight.normal
                               : FontWeight.bold),
                     ),
@@ -693,44 +693,48 @@ class AppsPageState extends State<AppsPage> {
                       showDialog<Map<String, dynamic>?>(
                           context: context,
                           builder: (BuildContext ctx) {
-                            var vals = filter == null
-                                ? AppsFilter().toValuesMap()
-                                : filter!.toValuesMap();
+                            var vals = filter.toFormValuesMap();
                             return GeneratedFormModal(
-                                title: tr('filterApps'),
-                                items: [
-                                  [
-                                    GeneratedFormTextField('appName',
-                                        label: tr('appName'),
-                                        required: false,
-                                        defaultValue: vals['appName']),
-                                    GeneratedFormTextField('author',
-                                        label: tr('author'),
-                                        required: false,
-                                        defaultValue: vals['author'])
-                                  ],
-                                  [
-                                    GeneratedFormSwitch('upToDateApps',
-                                        label: tr('upToDateApps'),
-                                        defaultValue: vals['upToDateApps'])
-                                  ],
-                                  [
-                                    GeneratedFormSwitch('nonInstalledApps',
-                                        label: tr('nonInstalledApps'),
-                                        defaultValue: vals['nonInstalledApps'])
-                                  ],
-                                  [
-                                    settingsProvider.getCategoryFormItem(
-                                        initCategory: vals['category'] ?? '')
-                                  ]
-                                ]);
+                              initValid: true,
+                              title: tr('filterApps'),
+                              items: [
+                                [
+                                  GeneratedFormTextField('appName',
+                                      label: tr('appName'),
+                                      required: false,
+                                      defaultValue: vals['appName']),
+                                  GeneratedFormTextField('author',
+                                      label: tr('author'),
+                                      required: false,
+                                      defaultValue: vals['author'])
+                                ],
+                                [
+                                  GeneratedFormSwitch('upToDateApps',
+                                      label: tr('upToDateApps'),
+                                      defaultValue: vals['upToDateApps'])
+                                ],
+                                [
+                                  GeneratedFormSwitch('nonInstalledApps',
+                                      label: tr('nonInstalledApps'),
+                                      defaultValue: vals['nonInstalledApps'])
+                                ]
+                              ],
+                              additionalWidgets: [
+                                const SizedBox(
+                                  height: 16,
+                                ),
+                                CategoryEditorSelector(
+                                  preselected: filter.categoryFilter,
+                                  onSelected: (categories) {
+                                    filter.categoryFilter = categories.toSet();
+                                  },
+                                )
+                              ],
+                            );
                           }).then((values) {
                         if (values != null) {
                           setState(() {
-                            filter = AppsFilter.fromValuesMap(values);
-                            if (AppsFilter().isIdenticalTo(filter!)) {
-                              filter = null;
-                            }
+                            filter.setFormValuesFromMap(values);
                           });
                         }
                       });
@@ -748,31 +752,29 @@ class AppsFilter {
   late String authorFilter;
   late bool includeUptodate;
   late bool includeNonInstalled;
-  late String categoryFilter;
+  late Set<String> categoryFilter;
 
   AppsFilter(
       {this.nameFilter = '',
       this.authorFilter = '',
       this.includeUptodate = true,
       this.includeNonInstalled = true,
-      this.categoryFilter = ''});
+      this.categoryFilter = const {}});
 
-  Map<String, dynamic> toValuesMap() {
+  Map<String, dynamic> toFormValuesMap() {
     return {
       'appName': nameFilter,
       'author': authorFilter,
       'upToDateApps': includeUptodate,
-      'nonInstalledApps': includeNonInstalled,
-      'category': categoryFilter
+      'nonInstalledApps': includeNonInstalled
     };
   }
 
-  AppsFilter.fromValuesMap(Map<String, dynamic> values) {
+  setFormValuesFromMap(Map<String, dynamic> values) {
     nameFilter = values['appName']!;
     authorFilter = values['author']!;
     includeUptodate = values['upToDateApps'];
     includeNonInstalled = values['nonInstalledApps'];
-    categoryFilter = values['category']!;
   }
 
   bool isIdenticalTo(AppsFilter other) =>
@@ -780,5 +782,7 @@ class AppsFilter {
       nameFilter.trim() == other.nameFilter.trim() &&
       includeUptodate == other.includeUptodate &&
       includeNonInstalled == other.includeNonInstalled &&
-      categoryFilter.trim() == other.categoryFilter.trim();
+      categoryFilter.length == other.categoryFilter.length &&
+      categoryFilter.union(other.categoryFilter).length ==
+          categoryFilter.length;
 }

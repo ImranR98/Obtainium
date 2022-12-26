@@ -75,7 +75,7 @@ class _AppPageState extends State<AppPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 100),
+                        const SizedBox(height: 150),
                         app?.installedInfo != null
                             ? Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -168,7 +168,7 @@ class _AppPageState extends State<AppPage> {
                                 appsProvider.saveApps([app.app]);
                               }
                             }),
-                        const SizedBox(height: 100)
+                        const SizedBox(height: 150)
                       ],
                     )),
                   ],
