@@ -103,7 +103,12 @@ class App {
             item.ensureType(additionalSettings[item.key]);
       }
     }
-
+    int preferredApkIndex = json['preferredApkIndex'] == null
+        ? 0
+        : json['preferredApkIndex'] as int;
+    if (preferredApkIndex < 0) {
+      preferredApkIndex = 0;
+    }
     return App(
         json['id'] as String,
         json['url'] as String,
@@ -116,9 +121,7 @@ class App {
         json['apkUrls'] == null
             ? []
             : List<String>.from(jsonDecode(json['apkUrls'])),
-        json['preferredApkIndex'] == null
-            ? 0
-            : json['preferredApkIndex'] as int,
+        preferredApkIndex,
         additionalSettings,
         json['lastUpdateCheck'] == null
             ? null
@@ -367,7 +370,7 @@ class SourceProvider {
         currentApp?.installedVersion,
         apkVersion,
         apk.apkUrls,
-        apk.apkUrls.length - 1,
+        apk.apkUrls.length - 1 >= 0 ? apk.apkUrls.length - 1 : 0,
         additionalSettings,
         DateTime.now(),
         currentApp?.pinned ?? false,
