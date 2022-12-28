@@ -176,4 +176,7 @@ class SettingsProvider with ChangeNotifier {
     }
     notifyListeners();
   }
+
+  bool setEqual(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.union(b).length == a.length;
 }

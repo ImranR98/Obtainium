@@ -210,6 +210,7 @@
     "label": "Label",
     "language": "Language",
     "storagePermissionDenied": "Storage permission denied",
+    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"
