@@ -551,7 +551,9 @@ class AppsPageState extends State<AppsPage> {
                                       singleNullReturnButton: tr('continue'),
                                       additionalWidgets: [
                                         CategoryEditorSelector(
-                                          preselected: preselected ?? {},
+                                          preselected: !showPrompt
+                                              ? preselected ?? {}
+                                              : {},
                                           showLabelWhenNotEmpty: false,
                                           onSelected: (categories) {
                                             appsProvider

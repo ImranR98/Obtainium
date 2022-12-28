@@ -1,4 +1,4 @@
-# ![Obtainium Icon](./android/app/src/main/res/drawable/ic_notification.png) Obtainium
+# ![Obtainium Icon](./android/app/src/main/res/drawable-mdpi/ic_launcher_foreground.png) Obtainium
 
 Get Android App Updates Directly From the Source.
 
