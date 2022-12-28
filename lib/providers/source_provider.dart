@@ -48,7 +48,7 @@ class App {
   late Map<String, dynamic> additionalSettings;
   late DateTime? lastUpdateCheck;
   bool pinned = false;
-  String? category;
+  List<String> categories;
   App(
       this.id,
       this.url,
@@ -61,7 +61,7 @@ class App {
       this.additionalSettings,
       this.lastUpdateCheck,
       this.pinned,
-      {this.category});
+      {this.categories = const []});
 
   @override
   String toString() {
@@ -103,6 +103,7 @@ class App {
             item.ensureType(additionalSettings[item.key]);
       }
     }
+
     return App(
         json['id'] as String,
         json['url'] as String,
@@ -123,7 +124,13 @@ class App {
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
         json['pinned'] ?? false,
-        category: json['category']);
+        categories: json['categories'] != null
+            ? (json['categories'] as List<dynamic>)
+                .map((e) => e.toString())
+                .toList()
+            : json['category'] != null
+                ? [json['category'] as String]
+                : []);
   }
 
   Map<String, dynamic> toJson() => {
@@ -138,7 +145,7 @@ class App {
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
-        'category': category
+        'categories': categories
       };
 }
 
@@ -364,7 +371,7 @@ class SourceProvider {
         additionalSettings,
         DateTime.now(),
         currentApp?.pinned ?? false,
-        category: currentApp?.category);
+        categories: currentApp?.categories ?? const []);
   }
 
   // Returns errors in [results, errors] instead of throwing them

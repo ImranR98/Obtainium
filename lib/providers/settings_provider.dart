@@ -157,15 +157,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  getCategoryFormItem({String initCategory = ''}) => GeneratedFormDropdown(
-      'category',
-      label: tr('category'),
-      [
-        MapEntry('', tr('noCategory')),
-        ...categories.entries.map((e) => MapEntry(e.key, e.key)).toList()
-      ],
-      defaultValue: initCategory);
-
   String? get forcedLocale {
     var fl = prefs?.getString('forcedLocale');
     return supportedLocales

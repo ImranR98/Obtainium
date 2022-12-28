@@ -156,15 +156,12 @@ class _AppPageState extends State<AppPage> {
                         ),
                         CategoryEditorSelector(
                             alignment: WrapAlignment.center,
-                            singleSelect: true,
-                            preselected: app?.app.category != null
-                                ? {app!.app.category!}
+                            preselected: app?.app.categories != null
+                                ? app!.app.categories.toSet()
                                 : {},
                             onSelected: (categories) {
                               if (app != null) {
-                                app.app.category = categories.isNotEmpty
-                                    ? categories[0]
-                                    : null;
+                                app.app.categories = categories;
                                 appsProvider.saveApps([app.app]);
                               }
                             }),

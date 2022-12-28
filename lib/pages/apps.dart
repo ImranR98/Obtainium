@@ -102,7 +102,9 @@ class AppsPageState extends State<AppsPage> {
         }
       }
       if (filter.categoryFilter.isNotEmpty &&
-          !filter.categoryFilter.contains(app.app.category)) {
+          filter.categoryFilter
+              .intersection(app.app.categories.toSet())
+              .isEmpty) {
         return false;
       }
       return true;
@@ -224,14 +226,21 @@ class AppsPageState extends State<AppsPage> {
               String? changesUrl = SourceProvider()
                   .getSource(sortedApps[index].app.url)
                   .changeLogPageFromStandardUrl(sortedApps[index].app.url);
+              var transparent = const Color.fromARGB(0, 0, 0, 0).value;
               return Container(
                   decoration: BoxDecoration(
                       border: Border.symmetric(
                           vertical: BorderSide(
                               width: 4,
-                              color: Color(settingsProvider.categories[
-                                      sortedApps[index].app.category] ??
-                                  const Color.fromARGB(0, 0, 0, 0).value)))),
+                              color: Color(
+                                  sortedApps[index].app.categories.isNotEmpty
+                                      ? settingsProvider.categories[
+                                              sortedApps[index]
+                                                  .app
+                                                  .categories
+                                                  .first] ??
+                                          transparent
+                                      : transparent)))),
                   child: ListTile(
                     tileColor: sortedApps[index].app.pinned
                         ? Colors.grey.withOpacity(0.1)
