@@ -42,6 +42,106 @@ class _AppPageState extends State<AppPage> {
       getUpdate(app.app.id);
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
+
+    var infoColumn = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+            onTap: () {
+              if (app?.app.url != null) {
+                launchUrlString(app?.app.url ?? '',
+                    mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              app?.app.url ?? '',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  decoration: TextDecoration.underline,
+                  fontStyle: FontStyle.italic,
+                  fontSize: 12),
+            )),
+        const SizedBox(
+          height: 32,
+        ),
+        Text(
+          tr('latestVersionX', args: [app?.app.latestVersion ?? tr('unknown')]),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        Text(
+          '${tr('installedVersionX', args: [
+                app?.app.installedVersion ?? tr('none')
+              ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
+                  tr('app')
+                ])}' : ''}',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(
+          height: 32,
+        ),
+        Text(
+          tr('lastUpdateCheckX', args: [
+            app?.app.lastUpdateCheck == null
+                ? tr('never')
+                : '\n${app?.app.lastUpdateCheck?.toLocal()}'
+          ]),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+        ),
+        const SizedBox(
+          height: 48,
+        ),
+        CategoryEditorSelector(
+            alignment: WrapAlignment.center,
+            preselected:
+                app?.app.categories != null ? app!.app.categories.toSet() : {},
+            onSelected: (categories) {
+              if (app != null) {
+                app.app.categories = categories;
+                appsProvider.saveApps([app.app]);
+              }
+            }),
+      ],
+    );
+
+    var fullInfoColumn = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 150),
+        app?.installedInfo != null
+            ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Image.memory(
+                  app!.installedInfo!.icon!,
+                  height: 150,
+                  gaplessPlayback: true,
+                )
+              ])
+            : Container(),
+        const SizedBox(
+          height: 25,
+        ),
+        Text(
+          app?.installedInfo?.name ?? app?.app.name ?? tr('app'),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
+        Text(
+          tr('byX', args: [app?.app.author ?? tr('unknown')]),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(
+          height: 32,
+        ),
+        infoColumn,
+        const SizedBox(height: 150)
+      ],
+    );
+
     return Scaffold(
       appBar: settingsProvider.showAppWebpage ? AppBar() : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -71,106 +171,7 @@ class _AppPageState extends State<AppPage> {
               : CustomScrollView(
                   slivers: [
                     SliverToBoxAdapter(
-                        child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 150),
-                        app?.installedInfo != null
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                    Image.memory(
-                                      app!.installedInfo!.icon!,
-                                      height: 150,
-                                      gaplessPlayback: true,
-                                    )
-                                  ])
-                            : Container(),
-                        const SizedBox(
-                          height: 25,
-                        ),
-                        Text(
-                          app?.installedInfo?.name ??
-                              app?.app.name ??
-                              tr('app'),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displayLarge,
-                        ),
-                        Text(
-                          tr('byX', args: [app?.app.author ?? tr('unknown')]),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(
-                          height: 32,
-                        ),
-                        GestureDetector(
-                            onTap: () {
-                              if (app?.app.url != null) {
-                                launchUrlString(app?.app.url ?? '',
-                                    mode: LaunchMode.externalApplication);
-                              }
-                            },
-                            child: Text(
-                              app?.app.url ?? '',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  decoration: TextDecoration.underline,
-                                  fontStyle: FontStyle.italic,
-                                  fontSize: 12),
-                            )),
-                        const SizedBox(
-                          height: 32,
-                        ),
-                        Text(
-                          tr('latestVersionX',
-                              args: [app?.app.latestVersion ?? tr('unknown')]),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        Text(
-                          '${tr('installedVersionX', args: [
-                                app?.app.installedVersion ?? tr('none')
-                              ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
-                                  tr('app')
-                                ])}' : ''}',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        const SizedBox(
-                          height: 32,
-                        ),
-                        Text(
-                          tr('lastUpdateCheckX', args: [
-                            app?.app.lastUpdateCheck == null
-                                ? tr('never')
-                                : '\n${app?.app.lastUpdateCheck?.toLocal()}'
-                          ]),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontStyle: FontStyle.italic, fontSize: 12),
-                        ),
-                        const SizedBox(
-                          height: 48,
-                        ),
-                        CategoryEditorSelector(
-                            alignment: WrapAlignment.center,
-                            singleSelect: true,
-                            preselected: app?.app.category != null
-                                ? {app!.app.category!}
-                                : {},
-                            onSelected: (categories) {
-                              if (app != null) {
-                                app.app.category = categories.isNotEmpty
-                                    ? categories[0]
-                                    : null;
-                                appsProvider.saveApps([app.app]);
-                              }
-                            }),
-                        const SizedBox(height: 150)
-                      ],
-                    )),
+                        child: Column(children: [fullInfoColumn])),
                   ],
                 ),
           onRefresh: () async {
@@ -289,6 +290,31 @@ class _AppPageState extends State<AppPage> {
                                     },
                               tooltip: tr('additionalOptions'),
                               icon: const Icon(Icons.settings)),
+                        if (app != null && settingsProvider.showAppWebpage)
+                          IconButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext ctx) {
+                                      return AlertDialog(
+                                        scrollable: true,
+                                        content: infoColumn,
+                                        title: Text(
+                                            '${app.app.name} ${tr('byX', args: [
+                                              app.app.author
+                                            ])}'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text(tr('continue')))
+                                        ],
+                                      );
+                                    });
+                              },
+                              icon: const Icon(Icons.more_horiz),
+                              tooltip: tr('more')),
                         const SizedBox(width: 16.0),
                         Expanded(
                             child: ElevatedButton(

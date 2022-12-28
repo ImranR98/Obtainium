@@ -30,7 +30,7 @@ class _AddAppPageState extends State<AddAppPage> {
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
-  String? category;
+  List<String> pickedCategories = [];
 
   @override
   Widget build(BuildContext context) {
@@ -127,9 +127,7 @@ class _AddAppPageState extends State<AddAppPage> {
           if (app.additionalSettings['trackOnly'] == true) {
             app.installedVersion = app.latestVersion;
           }
-          if (category != null) {
-            app.category = category;
-          }
+          app.categories = pickedCategories;
           await appsProvider.saveApps([app]);
 
           return app;
@@ -290,7 +288,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                           if (selectedUrls != null &&
                                               selectedUrls.isNotEmpty) {
                                             changeUserInput(
-                                                selectedUrls[0], true, true);
+                                                selectedUrls[0], true, false);
                                             addApp(resetUserInputAfter: true);
                                           }
                                         }).catchError((e) {
@@ -334,11 +332,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                 ),
                                 CategoryEditorSelector(
                                     alignment: WrapAlignment.start,
-                                    singleSelect: true,
                                     onSelected: (categories) {
-                                      category = categories.isEmpty
-                                          ? null
-                                          : categories.first;
+                                      pickedCategories = categories;
                                     }),
                               ],
                             ),

@@ -55,7 +55,8 @@ class AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var sortedApps = appsProvider.apps.values.toList();
-    var currentFilterIsUpdatesOnly = filter.isIdenticalTo(updatesOnlyFilter);
+    var currentFilterIsUpdatesOnly =
+        filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
 
     selectedApps = selectedApps
         .where((element) => sortedApps.map((e) => e.app).contains(element))
@@ -102,7 +103,9 @@ class AppsPageState extends State<AppsPage> {
         }
       }
       if (filter.categoryFilter.isNotEmpty &&
-          !filter.categoryFilter.contains(app.app.category)) {
+          filter.categoryFilter
+              .intersection(app.app.categories.toSet())
+              .isEmpty) {
         return false;
       }
       return true;
@@ -224,14 +227,21 @@ class AppsPageState extends State<AppsPage> {
               String? changesUrl = SourceProvider()
                   .getSource(sortedApps[index].app.url)
                   .changeLogPageFromStandardUrl(sortedApps[index].app.url);
+              var transparent = const Color.fromARGB(0, 0, 0, 0).value;
               return Container(
                   decoration: BoxDecoration(
                       border: Border.symmetric(
                           vertical: BorderSide(
                               width: 4,
-                              color: Color(settingsProvider.categories[
-                                      sortedApps[index].app.category] ??
-                                  const Color.fromARGB(0, 0, 0, 0).value)))),
+                              color: Color(
+                                  sortedApps[index].app.categories.isNotEmpty
+                                      ? settingsProvider.categories[
+                                              sortedApps[index]
+                                                  .app
+                                                  .categories
+                                                  .first] ??
+                                          transparent
+                                      : transparent)))),
                   child: ListTile(
                     tileColor: sortedApps[index].app.pinned
                         ? Colors.grey.withOpacity(0.1)
@@ -339,6 +349,7 @@ class AppsPageState extends State<AppsPage> {
           children: [
             selectedApps.isEmpty
                 ? IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       selectThese(sortedApps.map((e) => e.app).toList());
                     },
@@ -348,6 +359,8 @@ class AppsPageState extends State<AppsPage> {
                     ),
                     tooltip: tr('selectAll'))
                 : TextButton.icon(
+                    style:
+                        const ButtonStyle(visualDensity: VisualDensity.compact),
                     onPressed: () {
                       selectedApps.isEmpty
                           ? selectThese(sortedApps.map((e) => e.app).toList())
@@ -492,6 +505,73 @@ class AppsPageState extends State<AppsPage> {
                     icon: const Icon(
                       Icons.file_download_outlined,
                     )),
+                selectedApps.isEmpty
+                    ? const SizedBox()
+                    : IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () async {
+                          try {
+                            Set<String>? preselected;
+                            var showPrompt = false;
+                            for (var element in selectedApps) {
+                              var currentCats = element.categories.toSet();
+                              if (preselected == null) {
+                                preselected = currentCats;
+                              } else {
+                                if (!settingsProvider.setEqual(
+                                    currentCats, preselected)) {
+                                  showPrompt = true;
+                                  break;
+                                }
+                              }
+                            }
+                            var cont = true;
+                            if (showPrompt) {
+                              cont = await showDialog<Map<String, dynamic>?>(
+                                      context: context,
+                                      builder: (BuildContext ctx) {
+                                        return GeneratedFormModal(
+                                          title: tr('categorize'),
+                                          items: const [],
+                                          initValid: true,
+                                          message:
+                                              tr('selectedCategorizeWarning'),
+                                        );
+                                      }) !=
+                                  null;
+                            }
+                            if (cont) {
+                              await showDialog<Map<String, dynamic>?>(
+                                  context: context,
+                                  builder: (BuildContext ctx) {
+                                    return GeneratedFormModal(
+                                      title: tr('categorize'),
+                                      items: const [],
+                                      initValid: true,
+                                      singleNullReturnButton: tr('continue'),
+                                      additionalWidgets: [
+                                        CategoryEditorSelector(
+                                          preselected: preselected ?? {},
+                                          showLabelWhenNotEmpty: false,
+                                          onSelected: (categories) {
+                                            appsProvider
+                                                .saveApps(selectedApps.map((e) {
+                                              e.categories = categories;
+                                              return e;
+                                            }).toList());
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  });
+                            }
+                          } catch (err) {
+                            showError(err, context);
+                          }
+                        },
+                        tooltip: tr('categorize'),
+                        icon: const Icon(Icons.category_outlined),
+                      ),
                 selectedApps.isEmpty
                     ? const SizedBox()
                     : IconButton(
@@ -688,12 +768,15 @@ class AppsPageState extends State<AppsPage> {
             appsProvider.apps.isEmpty
                 ? const SizedBox()
                 : TextButton.icon(
+                    style:
+                        const ButtonStyle(visualDensity: VisualDensity.compact),
                     label: Text(
-                      filter.isIdenticalTo(neutralFilter)
+                      filter.isIdenticalTo(neutralFilter, settingsProvider)
                           ? tr('filter')
                           : tr('filterActive'),
                       style: TextStyle(
-                          fontWeight: filter.isIdenticalTo(neutralFilter)
+                          fontWeight: filter.isIdenticalTo(
+                                  neutralFilter, settingsProvider)
                               ? FontWeight.normal
                               : FontWeight.bold),
                     ),
@@ -785,12 +868,10 @@ class AppsFilter {
     includeNonInstalled = values['nonInstalledApps'];
   }
 
-  bool isIdenticalTo(AppsFilter other) =>
+  bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
       authorFilter.trim() == other.authorFilter.trim() &&
       nameFilter.trim() == other.nameFilter.trim() &&
       includeUptodate == other.includeUptodate &&
       includeNonInstalled == other.includeNonInstalled &&
-      categoryFilter.length == other.categoryFilter.length &&
-      categoryFilter.union(other.categoryFilter).length ==
-          categoryFilter.length;
+      settingsProvider.setEqual(categoryFilter, other.categoryFilter);
 }

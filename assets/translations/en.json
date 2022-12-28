@@ -210,6 +210,7 @@
     "label": "Label",
     "language": "Language",
     "storagePermissionDenied": "Storage permission denied",
+    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
         "other": "Too many requests (rate limited) - try again in {} minutes"

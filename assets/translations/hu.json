@@ -209,6 +209,7 @@
     "label": "Címke",
     "language": "Language",
     "storagePermissionDenied": "Storage permission denied",
+    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"

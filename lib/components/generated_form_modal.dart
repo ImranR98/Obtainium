@@ -10,13 +10,15 @@ class GeneratedFormModal extends StatefulWidget {
       required this.items,
       this.initValid = false,
       this.message = '',
-      this.additionalWidgets = const []});
+      this.additionalWidgets = const [],
+      this.singleNullReturnButton});
 
   final String title;
   final String message;
   final List<List<GeneratedFormItem>> items;
   final bool initValid;
   final List<Widget> additionalWidgets;
+  final String? singleNullReturnButton;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
@@ -64,17 +66,21 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: Text(tr('cancel'))),
-        TextButton(
-            onPressed: !valid
-                ? null
-                : () {
-                    if (valid) {
-                      HapticFeedback.selectionClick();
-                      Navigator.of(context).pop(values);
-                    }
-                  },
-            child: Text(tr('continue')))
+            child: Text(widget.singleNullReturnButton == null
+                ? tr('cancel')
+                : widget.singleNullReturnButton!)),
+        widget.singleNullReturnButton == null
+            ? TextButton(
+                onPressed: !valid
+                    ? null
+                    : () {
+                        if (valid) {
+                          HapticFeedback.selectionClick();
+                          Navigator.of(context).pop(values);
+                        }
+                      },
+                child: Text(tr('continue')))
+            : const SizedBox.shrink()
       ],
     );
   }

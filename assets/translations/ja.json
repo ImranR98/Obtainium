@@ -210,6 +210,7 @@
     "label": "ラベル",
     "language": "言語",
     "storagePermissionDenied": "Storage permission denied",
+    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"

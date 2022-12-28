@@ -436,7 +436,7 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
         items: [
           [
             GeneratedFormTagInput('categories',
-                label: tr('category'),
+                label: tr('categories'),
                 emptyMessage: tr('noCategories'),
                 defaultValue: storedValues,
                 alignment: widget.alignment,
