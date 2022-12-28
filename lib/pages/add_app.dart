@@ -127,9 +127,7 @@ class _AddAppPageState extends State<AddAppPage> {
           if (app.additionalSettings['trackOnly'] == true) {
             app.installedVersion = app.latestVersion;
           }
-          if (pickedCategories != null) {
-            app.categories = pickedCategories;
-          }
+          app.categories = pickedCategories;
           await appsProvider.saveApps([app]);
 
           return app;
@@ -290,7 +288,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                           if (selectedUrls != null &&
                                               selectedUrls.isNotEmpty) {
                                             changeUserInput(
-                                                selectedUrls[0], true, true);
+                                                selectedUrls[0], true, false);
                                             addApp(resetUserInputAfter: true);
                                           }
                                         }).catchError((e) {
