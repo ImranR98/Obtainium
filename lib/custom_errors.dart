@@ -13,13 +13,10 @@ class ObtainiumError {
   }
 }
 
-class RateLimitError {
+class RateLimitError extends ObtainiumError {
   late int remainingMinutes;
-  RateLimitError(this.remainingMinutes);
-
-  @override
-  String toString() =>
-      plural('tooManyRequestsTryAgainInMinutes', remainingMinutes);
+  RateLimitError(this.remainingMinutes)
+      : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
 }
 
 class InvalidURLError extends ObtainiumError {

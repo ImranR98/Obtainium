@@ -548,7 +548,7 @@ class AppsPageState extends State<AppsPage> {
                                       title: tr('categorize'),
                                       items: const [],
                                       initValid: true,
-                                      singleNullReturnButton: tr('ok'),
+                                      singleNullReturnButton: tr('continue'),
                                       additionalWidgets: [
                                         CategoryEditorSelector(
                                           preselected: preselected ?? {},
