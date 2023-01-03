@@ -58,6 +58,7 @@ dependencies:
   android_alarm_manager_plus: ^2.1.0
   sqflite: ^2.2.0+3
   easy_localization: ^3.0.1
+  another_flutter_splash_screen: ^1.1.3
 
 
 dev_dependencies:
@@ -96,6 +97,7 @@ flutter:
   
   assets:
     - assets/translations/
+    - assets/graphics/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

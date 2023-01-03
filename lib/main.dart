@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/pages/home.dart';
+import 'package:obtainium/pages/splash_screen.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -246,24 +246,25 @@ class _ObtainiumState extends State<Obtainium> {
             seedColor: defaultThemeColour, brightness: Brightness.dark);
       }
       return MaterialApp(
-          title: 'Obtainium',
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-          navigatorKey: globalNavigatorKey,
-          theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.dark
-                  ? darkColorScheme
-                  : lightColorScheme,
-              fontFamily: 'Metropolis'),
-          darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.light
-                  ? lightColorScheme
-                  : darkColorScheme,
-              fontFamily: 'Metropolis'),
-          home: const HomePage());
+        title: 'Obtainium',
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
+        navigatorKey: globalNavigatorKey,
+        theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: settingsProvider.theme == ThemeSettings.dark
+                ? darkColorScheme
+                : lightColorScheme,
+            fontFamily: 'Metropolis'),
+        darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: settingsProvider.theme == ThemeSettings.light
+                ? lightColorScheme
+                : darkColorScheme,
+            fontFamily: 'Metropolis'),
+        home: const SplashScreen(),
+      );
     });
   }
 }
