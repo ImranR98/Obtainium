@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
-import 'package:obtainium/providers/settings_provider.dart';
 
 abstract class GeneratedFormItem {
   late String key;
@@ -24,6 +23,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late bool required;
   late int max;
   late String? hint;
+  late bool password;
 
   GeneratedFormTextField(String key,
       {String label = 'Input',
@@ -32,7 +32,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       List<String? Function(String? value)> additionalValidators = const [],
       this.required = true,
       this.max = 1,
-      this.hint})
+      this.hint,
+      this.password = false})
       : super(key,
             label: label,
             belowWidgets: belowWidgets,
@@ -129,6 +130,21 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+// Generates a random light color
+// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+Color generateRandomLightColor() {
+  // Create a random number generator
+  final Random random = Random();
+
+  // Generate random hue, saturation, and value values
+  final double hue = random.nextDouble() * 360;
+  final double saturation = 0.5 + random.nextDouble() * 0.5;
+  final double value = 0.9 + random.nextDouble() * 0.1;
+
+  // Create a HSV color with the random values
+  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
+}
+
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
@@ -153,21 +169,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
-  // Generates a random light color
-  // Courtesy of ChatGPT 😭 (with a bugfix 🥳)
-  Color generateRandomLightColor() {
-    // Create a random number generator
-    final Random random = Random();
-
-    // Generate random hue, saturation, and value values
-    final double hue = random.nextDouble() * 360;
-    final double saturation = 0.5 + random.nextDouble() * 0.5;
-    final double value = 0.9 + random.nextDouble() * 0.1;
-
-    // Create a HSV color with the random values
-    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
-  }
-
   @override
   void initState() {
     super.initState();
@@ -188,6 +189,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
         if (formItem is GeneratedFormTextField) {
           final formFieldKey = GlobalKey<FormFieldState>();
           return TextFormField(
+            obscureText: formItem.password,
+            autocorrect: !formItem.password,
+            enableSuggestions: !formItem.password,
             key: formFieldKey,
             initialValue: values[formItem.key],
             autovalidateMode: AutovalidateMode.onUserInteraction,
