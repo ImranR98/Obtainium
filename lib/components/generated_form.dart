@@ -130,6 +130,21 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+// Generates a random light color
+// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+Color generateRandomLightColor() {
+  // Create a random number generator
+  final Random random = Random();
+
+  // Generate random hue, saturation, and value values
+  final double hue = random.nextDouble() * 360;
+  final double saturation = 0.5 + random.nextDouble() * 0.5;
+  final double value = 0.9 + random.nextDouble() * 0.1;
+
+  // Create a HSV color with the random values
+  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
+}
+
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
@@ -152,21 +167,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
-  }
-
-  // Generates a random light color
-  // Courtesy of ChatGPT 😭 (with a bugfix 🥳)
-  Color generateRandomLightColor() {
-    // Create a random number generator
-    final Random random = Random();
-
-    // Generate random hue, saturation, and value values
-    final double hue = random.nextDouble() * 360;
-    final double saturation = 0.5 + random.nextDouble() * 0.5;
-    final double value = 0.9 + random.nextDouble() * 0.1;
-
-    // Create a HSV color with the random values
-    return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
   }
 
   @override

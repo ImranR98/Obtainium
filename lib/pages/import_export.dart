@@ -9,6 +9,7 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -28,6 +29,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
     var appsProvider = context.read<AppsProvider>();
+    var settingsProvider = context.read<SettingsProvider>();
     var outlineButtonStyle = ButtonStyle(
       shape: MaterialStateProperty.all(
         StadiumBorder(
@@ -100,6 +102,21 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               appsProvider
                                                   .importApps(data)
                                                   .then((value) {
+                                                var cats =
+                                                    settingsProvider.categories;
+                                                appsProvider.apps
+                                                    .forEach((key, value) {
+                                                  for (var c
+                                                      in value.app.categories) {
+                                                    if (!cats.containsKey(c)) {
+                                                      cats[c] =
+                                                          generateRandomLightColor()
+                                                              .value;
+                                                    }
+                                                  }
+                                                });
+                                                settingsProvider.categories =
+                                                    cats;
                                                 showError(
                                                     tr('importedX', args: [
                                                       plural('apps', value)
