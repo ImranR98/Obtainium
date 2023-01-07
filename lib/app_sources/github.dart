@@ -141,10 +141,13 @@ class GitHub extends AppSource {
         if (!includePrereleases && releases[i]['prerelease'] == true) {
           continue;
         }
-
+        var nameToFilter = releases[i]['name'] as String;
+        if (nameToFilter.trim().isEmpty) {
+          // Some leave titles empty so tag is used
+          nameToFilter = releases[i]['tag_name'] as String;
+        }
         if (regexFilter != null &&
-            !RegExp(regexFilter)
-                .hasMatch((releases[i]['name'] as String).trim())) {
+            !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
