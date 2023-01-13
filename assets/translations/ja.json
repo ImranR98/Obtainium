@@ -12,7 +12,7 @@
     "ok": "OK",
     "and": "と",
     "startedBgUpdateTask": "バックグラウンドのアップデート確認タスクを開始",
-    "bgUpdateIgnoreAfterIs": "Bg update ignoreAfter is  {}",
+    "bgUpdateIgnoreAfterIs": "Bg update ignoreAfter is {}",
     "startedActualBGUpdateCheck": "実際のバックグラウンドのアップデート確認を開始",
     "bgUpdateTaskFinished": "バックグラウンドのアップデート確認タスクを終了",
     "firstRun": "これがObtainiumの最初の実行です",
@@ -65,13 +65,13 @@
     "estimateInBrackets": "(推定)",
     "selectAll": "すべて選択",
     "deselectN": "{}件の選択を解除",
-    "xWillBeRemovedButRemainInstalled": "{}はObtainiumから削除されますが、デバイスにはインストールされたままです。",
+    "xWillBeRemovedButRemainInstalled": "{} はObtainiumから削除されますが、デバイスにはインストールされたままです。",
     "removeSelectedAppsQuestion": "選択したアプリを削除しますか？",
     "removeSelectedApps": "選択したアプリを削除する",
-    "updateX": "{}をアップデートする",
-    "installX": "{}をインストールする",
+    "updateX": "{} をアップデートする",
+    "installX": "{} をインストールする",
     "markXTrackOnlyAsUpdated": "{}\n(追跡のみ)\nをアップデート済みとしてマークする",
-    "changeX": "{}を変更する",
+    "changeX": "{} を変更する",
     "installUpdateApps": "アプリのインストール/アップデート",
     "installUpdateSelectedApps": "選択したアプリのインストール/アップデート",
     "onlyWorksWithNonEVDApps": "インストール状況を自動検出できないアプリ（一般的でないもの）のみ動作します。",
@@ -145,23 +145,23 @@
     "appNotFound": "アプリが見つかりません",
     "obtainiumExportHyphenatedLowercase": "obtainium-エクスポート",
     "pickAnAPK": "APKを選択",
-    "appHasMoreThanOnePackage": "{}は複数のパッケージが存在します: ",
-    "deviceSupportsXArch": "お使いのデバイスは{} CPUアーキテクチャに対応しています。",
+    "appHasMoreThanOnePackage": "{} は複数のパッケージが存在します: ",
+    "deviceSupportsXArch": "お使いのデバイスは {} CPUアーキテクチャに対応しています。",
     "deviceSupportsFollowingArchs": "お使いのデバイスは、以下のCPUアーキテクチャをサポートしています:",
     "warning": "警告",
     "sourceIsXButPackageFromYPrompt": "アプリのソースは'{}'ですが、リリースパッケージは'{}'から来ています。続行しますか？",
     "updatesAvailable": "アップデートが利用可能",
     "updatesAvailableNotifDescription": "Obtainiumが追跡している1つまたは複数のアプリのアップデートが利用可能であることをユーザーに通知する",
     "noNewUpdates": "新しいアップデートはありません",
-    "xHasAnUpdate": "{}のアップデートが利用可能です",
+    "xHasAnUpdate": "{} のアップデートが利用可能です",
     "appsUpdated": "アプリをアップデートしました",
     "appsUpdatedNotifDescription": "1つまたは複数のAppのアップデートがバックグラウンドで適用されたことをユーザーに通知する",
-    "xWasUpdatedToY": "{}が{}にアップデートされました",
+    "xWasUpdatedToY": "{} が {} にアップデートされました",
     "errorCheckingUpdates": "アップデート確認中のエラー",
     "errorCheckingUpdatesNotifDescription": "バックグラウンドでのアップデート確認に失敗した際に表示される通知",
     "appsRemoved": "削除されたアプリ",
     "appsRemovedNotifDescription": "アプリの読み込み中にエラーが発生したため、1つまたは複数のアプリが削除されたことをユーザーに通知する",
-    "xWasRemovedDueToErrorY": "このエラーのため、{}は削除されました: {}",
+    "xWasRemovedDueToErrorY": "このエラーのため、{} は削除されました: {}",
     "completeAppInstallation": "アプリのインストールを完了する",
     "obtainiumMustBeOpenToInstallApps": "アプリをインストールするにはObtainiumを開いている必要があります。",
     "completeAppInstallationNotifDescription": "アプリのインストールを完了するために、Obtainiumに戻る必要があります。",
@@ -209,8 +209,8 @@
     "addCategory": "カテゴリを追加",
     "label": "ラベル",
     "language": "言語",
-    "storagePermissionDenied": "Storage permission denied",
-    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
+    "storagePermissionDenied": "ストレージ権限が拒否されました",
+    "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"
@@ -248,11 +248,11 @@
         "other": "{n}個のログをクリアしました (前 = {before}, 後 = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{}とさらに{}個のアプリのアップデートが利用可能です",
-        "other": "{}とさらに{}個のアプリのアップデートが利用可能です"
+        "one": "{} とさらに {} 個のアプリのアップデートが利用可能です",
+        "other": "{} とさらに {} 個のアプリのアップデートが利用可能です"
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{}とさらに{}個のアプリがアップデートされました",
-        "other": "{}とさらに{}個のアプリがアップデートされました"
+        "one": "{} とさらに {} 個のアプリがアップデートされました",
+        "other": "{} とさらに {} 個のアプリがアップデートされました"
     }
 }
