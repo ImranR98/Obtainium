@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
+import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
@@ -19,7 +20,6 @@ import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
-import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
   late String author;
@@ -269,6 +269,7 @@ class SourceProvider {
   List<AppSource> sources = [
     GitHub(),
     GitLab(),
+    Codeberg(),
     FDroid(),
     IzzyOnDroid(),
     Mullvad(),

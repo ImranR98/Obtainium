@@ -9,6 +9,7 @@ Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to 
 Currently supported App sources:
 - [GitHub](https://github.com/)
 - [GitLab](https://gitlab.com/)
+- [Codeberg](https://codeberg.org/)
 - [F-Droid](https://f-droid.org/)
 - [IzzyOnDroid](https://android.izzysoft.de/)
 - [Mullvad](https://mullvad.net/en/)
