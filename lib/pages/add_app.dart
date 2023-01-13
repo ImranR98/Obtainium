@@ -24,6 +24,7 @@ class AddAppPage extends StatefulWidget {
 
 class _AddAppPageState extends State<AddAppPage> {
   bool gettingAppInfo = false;
+  bool searching = false;
 
   String userInput = '';
   String searchQuery = '';
@@ -36,6 +37,8 @@ class _AddAppPageState extends State<AddAppPage> {
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
     AppsProvider appsProvider = context.read<AppsProvider>();
+
+    bool doingSomething = gettingAppInfo || searching;
 
     changeUserInput(String input, bool valid, bool isBuilding) {
       userInput = input;
@@ -198,7 +201,7 @@ class _AddAppPageState extends State<AddAppPage> {
                           gettingAppInfo
                               ? const CircularProgressIndicator()
                               : ElevatedButton(
-                                  onPressed: gettingAppInfo ||
+                                  onPressed: doingSomething ||
                                           pickedSource == null ||
                                           (pickedSource!
                                                   .combinedAppSpecificSettingFormItems
@@ -249,9 +252,12 @@ class _AddAppPageState extends State<AddAppPage> {
                               width: 16,
                             ),
                             ElevatedButton(
-                                onPressed: searchQuery.isEmpty || gettingAppInfo
+                                onPressed: searchQuery.isEmpty || doingSomething
                                     ? null
                                     : () {
+                                        setState(() {
+                                          searching = true;
+                                        });
                                         Future.wait(sourceProvider.sources
                                                 .where((e) => e.canSearch)
                                                 .map((e) =>
@@ -293,6 +299,10 @@ class _AddAppPageState extends State<AddAppPage> {
                                           }
                                         }).catchError((e) {
                                           showError(e, context);
+                                        }).whenComplete(() {
+                                          setState(() {
+                                            searching = false;
+                                          });
                                         });
                                       },
                                 child: Text(tr('search')))

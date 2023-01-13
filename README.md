@@ -9,6 +9,7 @@ Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to 
 Currently supported App sources:
 - [GitHub](https://github.com/)
 - [GitLab](https://gitlab.com/)
+- [Codeberg](https://codeberg.org/)
 - [F-Droid](https://f-droid.org/)
 - [IzzyOnDroid](https://android.izzysoft.de/)
 - [Mullvad](https://mullvad.net/en/)
@@ -18,6 +19,8 @@ Currently supported App sources:
 - Third Party F-Droid Repos
   - Any URLs ending with `/fdroid/<word>`, where `<word>` can be anything - most often `repo`
 - [Steam](https://store.steampowered.com/mobile)
+- "HTML" (Fallback)
+  - Any other URL that returns an HTML page with links to APK files (if multiple, the last file alphabetically is picked)
 
 ## Limitations
 - App installs happen asynchronously and the success/failure of an install cannot be determined directly. This results in install statuses and versions sometimes being out of sync with the OS until the next launch or until the problem is manually corrected.

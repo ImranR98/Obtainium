@@ -7,11 +7,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
+import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -19,7 +21,6 @@ import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
-import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
   late String author;
@@ -154,6 +155,10 @@ class App {
 
 // Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
+  var firstDotIndex = url.indexOf('.');
+  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1)) {
+    throw UnsupportedURLError();
+  }
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
@@ -269,6 +274,7 @@ class SourceProvider {
   List<AppSource> sources = [
     GitHub(),
     GitLab(),
+    Codeberg(),
     FDroid(),
     IzzyOnDroid(),
     Mullvad(),
@@ -276,7 +282,8 @@ class SourceProvider {
     SourceForge(),
     APKMirror(),
     FDroidRepo(),
-    SteamMobile()
+    SteamMobile(),
+    HTML() // This should ALWAYS be the last option as they are tried in order
   ];
 
   // Add more mass url source classes here so they are available via the service
