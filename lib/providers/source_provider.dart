@@ -13,6 +13,7 @@ import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -154,6 +155,10 @@ class App {
 
 // Ensure the input is starts with HTTPS and has no WWW
 preStandardizeUrl(String url) {
+  var firstDotIndex = url.indexOf('.');
+  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1)) {
+    throw UnsupportedURLError();
+  }
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
@@ -277,7 +282,8 @@ class SourceProvider {
     SourceForge(),
     APKMirror(),
     FDroidRepo(),
-    SteamMobile()
+    SteamMobile(),
+    HTML() // This should ALWAYS be the last option as they are tried in order
   ];
 
   // Add more mass url source classes here so they are available via the service
