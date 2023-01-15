@@ -207,9 +207,9 @@
     "categoryDeleteWarning": "A(z) {} összes app kategorizálatlan állapotba kerül.",
     "addCategory": "Új kategória",
     "label": "Címke",
-    "language": "Language",
-    "storagePermissionDenied": "Storage permission denied",
-    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
+    "language": "Nyelv",
+    "storagePermissionDenied": "Tárhely engedély megtagadva",
+    "selectedCategorizeWarning": "Ez felváltja a kiválasztott alkalmazások meglévő kategória-beállításait.",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"
