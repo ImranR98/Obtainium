@@ -141,8 +141,8 @@ class GitHub extends AppSource {
         if (!includePrereleases && releases[i]['prerelease'] == true) {
           continue;
         }
-        var nameToFilter = releases[i]['name'] as String;
-        if (nameToFilter.trim().isEmpty) {
+        var nameToFilter = releases[i]['name'] as String?;
+        if (nameToFilter == null || nameToFilter.trim().isEmpty) {
           // Some leave titles empty so tag is used
           nameToFilter = releases[i]['tag_name'] as String;
         }
