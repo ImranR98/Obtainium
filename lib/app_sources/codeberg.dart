@@ -99,8 +99,8 @@ class Codeberg extends AppSource {
         if (releases[i]['draft'] == true) {
           // Draft releases not supported
         }
-        var nameToFilter = releases[i]['name'] as String;
-        if (nameToFilter.trim().isEmpty) {
+        var nameToFilter = releases[i]['name'] as String?;
+        if (nameToFilter == null || nameToFilter.trim().isEmpty) {
           // Some leave titles empty so tag is used
           nameToFilter = releases[i]['tag_name'] as String;
         }
