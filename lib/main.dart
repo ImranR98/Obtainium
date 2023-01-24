@@ -37,6 +37,7 @@ const supportedLocales = [
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
+var fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -195,20 +196,22 @@ class _ObtainiumState extends State<Obtainium> {
         logs.add(tr('firstRun'));
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApps([
-          App(
-              obtainiumId,
-              'https://github.com/ImranR98/Obtainium',
-              'ImranR98',
-              'Obtainium',
-              currentReleaseTag,
-              currentReleaseTag,
-              [],
-              0,
-              {'includePrereleases': true},
-              null,
-              false)
-        ]);
+        if (!fdroid) {
+          appsProvider.saveApps([
+            App(
+                obtainiumId,
+                'https://github.com/ImranR98/Obtainium',
+                'ImranR98',
+                'Obtainium',
+                currentReleaseTag,
+                currentReleaseTag,
+                [],
+                0,
+                {'includePrereleases': true},
+                null,
+                false)
+          ]);
+        }
       }
       // Register the background update task according to the user's setting
       if (existingUpdateInterval != settingsProvider.updateInterval) {

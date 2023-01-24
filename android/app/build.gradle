@@ -59,6 +59,18 @@ android {
         versionName flutterVersionName
     }
 
+    flavorDimensions "flavor"
+
+    productFlavors {
+        no {
+            dimension "flavor"
+            applicationIdSuffix ""
+        }
+        fdroid {
+            dimension "flavor"
+            applicationIdSuffix ".fdroid"
+        }
+    }
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']
