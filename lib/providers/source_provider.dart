@@ -374,7 +374,6 @@ class SourceProvider {
     App? currentApp,
     bool trackOnlyOverride = false,
     noVersionDetectionOverride = false,
-    // String? apkFilterOverride
   }) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
@@ -382,9 +381,6 @@ class SourceProvider {
     if (noVersionDetectionOverride) {
       additionalSettings['noVersionDetection'] = true;
     }
-    // if (apkFilterOverride != null) {
-    //   additionalSettings['apkFilterRegEx'] = apkFilterOverride;
-    // }
     var trackOnly = additionalSettings['trackOnly'] == true;
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
