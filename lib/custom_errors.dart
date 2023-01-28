@@ -29,7 +29,7 @@ class NoReleasesError extends ObtainiumError {
 }
 
 class NoAPKError extends ObtainiumError {
-  NoAPKError() : super(tr('noReleaseFound'));
+  NoAPKError() : super(tr('noAPKFound'));
 }
 
 class NoVersionError extends ObtainiumError {
