@@ -64,7 +64,7 @@ class Codeberg extends AppSource {
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
     Response res = await get(Uri.parse(
-        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases'));
+        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100'));
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
 
