@@ -317,7 +317,7 @@ class _AppPageState extends State<AppPage> {
                               tooltip: tr('more')),
                         const SizedBox(width: 16.0),
                         Expanded(
-                            child: ElevatedButton(
+                            child: TextButton(
                                 onPressed: (app?.app.installedVersion == null ||
                                             app?.app.installedVersion !=
                                                 app?.app.latestVersion) &&
@@ -356,7 +356,8 @@ class _AppPageState extends State<AppPage> {
                                         ? tr('update')
                                         : tr('markUpdated')))),
                         const SizedBox(width: 16.0),
-                        ElevatedButton(
+                        Expanded(
+                            child: TextButton(
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
@@ -401,7 +402,7 @@ class _AppPageState extends State<AppPage> {
                               surfaceTintColor:
                                   Theme.of(context).colorScheme.error),
                           child: Text(tr('remove')),
-                        ),
+                        )),
                       ])),
               if (app?.downloadProgress != null)
                 Padding(
