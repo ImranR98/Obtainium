@@ -225,7 +225,19 @@ class AppSource {
         label: tr('trackOnly'),
       )
     ],
-    [GeneratedFormSwitch('noVersionDetection', label: tr('noVersionDetection'))]
+    [
+      GeneratedFormSwitch('noVersionDetection', label: tr('noVersionDetection'))
+    ],
+    [
+      GeneratedFormTextField('apkFilterRegEx',
+          label: tr('filterAPKsByRegEx'),
+          required: false,
+          additionalValidators: [
+            (value) {
+              return regExValidator(value);
+            }
+          ])
+    ]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -267,6 +279,18 @@ abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
   Future<Map<String, String>> getUrlsWithDescriptions(List<String> args);
+}
+
+regExValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  try {
+    RegExp(value);
+  } catch (e) {
+    return tr('invalidRegEx');
+  }
+  return null;
 }
 
 class SourceProvider {
@@ -344,20 +368,32 @@ class SourceProvider {
   }
 
   Future<App> getApp(
-      AppSource source, String url, Map<String, dynamic> additionalSettings,
-      {App? currentApp,
-      bool trackOnlyOverride = false,
-      noVersionDetectionOverride = false}) async {
+    AppSource source,
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    App? currentApp,
+    bool trackOnlyOverride = false,
+    noVersionDetectionOverride = false,
+    // String? apkFilterOverride
+  }) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
     if (noVersionDetectionOverride) {
       additionalSettings['noVersionDetection'] = true;
     }
+    // if (apkFilterOverride != null) {
+    //   additionalSettings['apkFilterRegEx'] = apkFilterOverride;
+    // }
     var trackOnly = additionalSettings['trackOnly'] == true;
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
+    if (additionalSettings['apkFilterRegEx'] != null) {
+      var reg = RegExp(additionalSettings['apkFilterRegEx']);
+      apk.apkUrls =
+          apk.apkUrls.where((element) => reg.hasMatch(element)).toList();
+    }
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }

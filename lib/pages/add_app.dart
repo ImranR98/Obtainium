@@ -70,6 +70,7 @@ class _AddAppPageState extends State<AddAppPage> {
             additionalSettings['noVersionDetection'] == true;
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
+            // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
                     builder: (BuildContext ctx) {
@@ -88,6 +89,7 @@ class _AddAppPageState extends State<AddAppPage> {
           cont = false;
         }
         if (userPickedNoVersionDetection &&
+            // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
                     builder: (BuildContext ctx) {

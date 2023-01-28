@@ -26,15 +26,7 @@ class Codeberg extends AppSource {
             required: false,
             additionalValidators: [
               (value) {
-                if (value == null || value.isEmpty) {
-                  return null;
-                }
-                try {
-                  RegExp(value);
-                } catch (e) {
-                  return tr('invalidRegEx');
-                }
-                return null;
+                return regExValidator(value);
               }
             ])
       ]
