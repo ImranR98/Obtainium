@@ -211,6 +211,7 @@
     "language": "Lingua",
     "storagePermissionDenied": "Storage permission denied",
     "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
+    "filterAPKsByRegEx": "Filter APKs by Regular Expression",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"

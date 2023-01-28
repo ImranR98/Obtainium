@@ -211,6 +211,7 @@
     "language": "语言",
     "storagePermissionDenied": "存储权限已被拒绝",
     "selectedCategorizeWarning": "这将取代所选应用程序的任何现有类别",
+    "filterAPKsByRegEx": "Filter APKs by Regular Expression",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"

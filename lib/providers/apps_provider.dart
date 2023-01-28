@@ -262,6 +262,7 @@ class AppsProvider with ChangeNotifier {
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
     if (app.apkUrls.length > 1 && context != null) {
+      // ignore: use_build_context_synchronously
       apkUrl = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
@@ -281,6 +282,7 @@ class AppsProvider with ChangeNotifier {
     if (apkUrl != null &&
         getHost(apkUrl) != getHost(app.url) &&
         context != null) {
+      // ignore: use_build_context_synchronously
       if (await showDialog(
               context: context,
               builder: (BuildContext ctx) {

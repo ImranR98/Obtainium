@@ -211,6 +211,7 @@
     "language": "言語",
     "storagePermissionDenied": "ストレージ権限が拒否されました",
     "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
+    "filterAPKsByRegEx": "Filter APKs by Regular Expression",
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"

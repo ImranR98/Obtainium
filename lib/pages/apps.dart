@@ -344,538 +344,564 @@ class AppsPageState extends State<AppsPage> {
                   ));
             }, childCount: sortedApps.length))
           ])),
-      persistentFooterButtons: [
-        Row(
-          children: [
-            selectedApps.isEmpty
-                ? TextButton.icon(
-                    style:
-                        const ButtonStyle(visualDensity: VisualDensity.compact),
-                    onPressed: () {
-                      selectThese(sortedApps.map((e) => e.app).toList());
-                    },
-                    icon: Icon(
-                      Icons.select_all_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    label: Text(sortedApps.length.toString()))
-                : TextButton.icon(
-                    style:
-                        const ButtonStyle(visualDensity: VisualDensity.compact),
-                    onPressed: () {
-                      selectedApps.isEmpty
-                          ? selectThese(sortedApps.map((e) => e.app).toList())
-                          : clearSelected();
-                    },
-                    icon: Icon(
-                      selectedApps.isEmpty
-                          ? Icons.select_all_outlined
-                          : Icons.deselect_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    label: Text(selectedApps.length.toString())),
-            const VerticalDivider(),
-            Expanded(
-                child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          onPressed: selectedApps.isEmpty
-                              ? null
-                              : () {
-                                  showDialog<Map<String, dynamic>?>(
-                                      context: context,
-                                      builder: (BuildContext ctx) {
-                                        return GeneratedFormModal(
-                                          title:
-                                              tr('removeSelectedAppsQuestion'),
-                                          items: const [],
-                                          initValid: true,
-                                          message: tr(
-                                              'xWillBeRemovedButRemainInstalled',
-                                              args: [
-                                                plural(
-                                                    'apps', selectedApps.length)
-                                              ]),
-                                        );
-                                      }).then((values) {
-                                    if (values != null) {
-                                      appsProvider.removeApps(selectedApps
-                                          .map((e) => e.id)
-                                          .toList());
-                                    }
-                                  });
-                                },
-                          tooltip: tr('removeSelectedApps'),
-                          icon: const Icon(Icons.delete_outline_outlined),
-                        ),
-                        IconButton(
-                            visualDensity: VisualDensity.compact,
-                            onPressed: appsProvider.areDownloadsRunning() ||
-                                    (existingUpdateIdsAllOrSelected.isEmpty &&
-                                        newInstallIdsAllOrSelected.isEmpty &&
-                                        trackOnlyUpdateIdsAllOrSelected.isEmpty)
-                                ? null
-                                : () {
-                                    HapticFeedback.heavyImpact();
-                                    List<GeneratedFormItem> formItems = [];
-                                    if (existingUpdateIdsAllOrSelected
-                                        .isNotEmpty) {
-                                      formItems.add(GeneratedFormSwitch(
-                                          'updates',
-                                          label: tr('updateX', args: [
-                                            plural(
-                                                'apps',
-                                                existingUpdateIdsAllOrSelected
-                                                    .length)
-                                          ]),
-                                          defaultValue: true));
-                                    }
-                                    if (newInstallIdsAllOrSelected.isNotEmpty) {
-                                      formItems.add(GeneratedFormSwitch(
-                                          'installs',
-                                          label: tr('installX', args: [
-                                            plural(
-                                                'apps',
-                                                newInstallIdsAllOrSelected
-                                                    .length)
-                                          ]),
-                                          defaultValue:
-                                              existingUpdateIdsAllOrSelected
-                                                  .isNotEmpty));
-                                    }
-                                    if (trackOnlyUpdateIdsAllOrSelected
-                                        .isNotEmpty) {
-                                      formItems.add(GeneratedFormSwitch(
-                                          'trackonlies',
-                                          label: tr('markXTrackOnlyAsUpdated',
-                                              args: [
-                                                plural(
-                                                    'apps',
-                                                    trackOnlyUpdateIdsAllOrSelected
-                                                        .length)
-                                              ]),
-                                          defaultValue:
-                                              existingUpdateIdsAllOrSelected
-                                                      .isNotEmpty ||
-                                                  newInstallIdsAllOrSelected
-                                                      .isNotEmpty));
-                                    }
-                                    showDialog<Map<String, dynamic>?>(
-                                        context: context,
-                                        builder: (BuildContext ctx) {
-                                          var totalApps =
-                                              existingUpdateIdsAllOrSelected.length +
-                                                  newInstallIdsAllOrSelected
-                                                      .length +
-                                                  trackOnlyUpdateIdsAllOrSelected
-                                                      .length;
-                                          return GeneratedFormModal(
-                                            title: tr('changeX', args: [
-                                              plural('apps', totalApps)
-                                            ]),
-                                            items: formItems
-                                                .map((e) => [e])
-                                                .toList(),
-                                            initValid: true,
-                                          );
-                                        }).then((values) {
-                                      if (values != null) {
-                                        if (values.isEmpty) {
-                                          values =
-                                              getDefaultValuesFromFormItems(
-                                                  [formItems]);
-                                        }
-                                        bool shouldInstallUpdates =
-                                            values['updates'] == true;
-                                        bool shouldInstallNew =
-                                            values['installs'] == true;
-                                        bool shouldMarkTrackOnlies =
-                                            values['trackonlies'] == true;
-                                        (() async {
-                                          if (shouldInstallNew ||
-                                              shouldInstallUpdates) {
-                                            await settingsProvider
-                                                .getInstallPermission();
+      persistentFooterButtons: appsProvider.apps.isEmpty
+          ? null
+          : [
+              Row(
+                children: [
+                  selectedApps.isEmpty
+                      ? TextButton.icon(
+                          style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact),
+                          onPressed: () {
+                            selectThese(sortedApps.map((e) => e.app).toList());
+                          },
+                          icon: Icon(
+                            Icons.select_all_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          label: Text(sortedApps.length.toString()))
+                      : TextButton.icon(
+                          style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact),
+                          onPressed: () {
+                            selectedApps.isEmpty
+                                ? selectThese(
+                                    sortedApps.map((e) => e.app).toList())
+                                : clearSelected();
+                          },
+                          icon: Icon(
+                            selectedApps.isEmpty
+                                ? Icons.select_all_outlined
+                                : Icons.deselect_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          label: Text(selectedApps.length.toString())),
+                  const VerticalDivider(),
+                  Expanded(
+                      child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                onPressed: selectedApps.isEmpty
+                                    ? null
+                                    : () {
+                                        showDialog<Map<String, dynamic>?>(
+                                            context: context,
+                                            builder: (BuildContext ctx) {
+                                              return GeneratedFormModal(
+                                                title: tr(
+                                                    'removeSelectedAppsQuestion'),
+                                                items: const [],
+                                                initValid: true,
+                                                message: tr(
+                                                    'xWillBeRemovedButRemainInstalled',
+                                                    args: [
+                                                      plural('apps',
+                                                          selectedApps.length)
+                                                    ]),
+                                              );
+                                            }).then((values) {
+                                          if (values != null) {
+                                            appsProvider.removeApps(selectedApps
+                                                .map((e) => e.id)
+                                                .toList());
                                           }
-                                        })()
-                                            .then((_) {
-                                          List<String> toInstall = [];
-                                          if (shouldInstallUpdates) {
-                                            toInstall.addAll(
-                                                existingUpdateIdsAllOrSelected);
-                                          }
-                                          if (shouldInstallNew) {
-                                            toInstall.addAll(
-                                                newInstallIdsAllOrSelected);
-                                          }
-                                          if (shouldMarkTrackOnlies) {
-                                            toInstall.addAll(
-                                                trackOnlyUpdateIdsAllOrSelected);
-                                          }
-                                          appsProvider
-                                              .downloadAndInstallLatestApps(
-                                                  toInstall,
-                                                  globalNavigatorKey
-                                                      .currentContext)
-                                              .catchError((e) {
-                                            showError(e, context);
-                                          });
                                         });
-                                      }
-                                    });
-                                  },
-                            tooltip: selectedApps.isEmpty
-                                ? tr('installUpdateApps')
-                                : tr('installUpdateSelectedApps'),
-                            icon: const Icon(
-                              Icons.file_download_outlined,
-                            )),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          onPressed: selectedApps.isEmpty
-                              ? null
-                              : () async {
-                                  try {
-                                    Set<String>? preselected;
-                                    var showPrompt = false;
-                                    for (var element in selectedApps) {
-                                      var currentCats =
-                                          element.categories.toSet();
-                                      if (preselected == null) {
-                                        preselected = currentCats;
-                                      } else {
-                                        if (!settingsProvider.setEqual(
-                                            currentCats, preselected)) {
-                                          showPrompt = true;
-                                          break;
-                                        }
-                                      }
-                                    }
-                                    var cont = true;
-                                    if (showPrompt) {
-                                      cont = await showDialog<
-                                                  Map<String, dynamic>?>(
+                                      },
+                                tooltip: tr('removeSelectedApps'),
+                                icon: const Icon(Icons.delete_outline_outlined),
+                              ),
+                              IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: appsProvider
+                                              .areDownloadsRunning() ||
+                                          (existingUpdateIdsAllOrSelected
+                                                  .isEmpty &&
+                                              newInstallIdsAllOrSelected
+                                                  .isEmpty &&
+                                              trackOnlyUpdateIdsAllOrSelected
+                                                  .isEmpty)
+                                      ? null
+                                      : () {
+                                          HapticFeedback.heavyImpact();
+                                          List<GeneratedFormItem> formItems =
+                                              [];
+                                          if (existingUpdateIdsAllOrSelected
+                                              .isNotEmpty) {
+                                            formItems.add(GeneratedFormSwitch(
+                                                'updates',
+                                                label: tr('updateX', args: [
+                                                  plural(
+                                                      'apps',
+                                                      existingUpdateIdsAllOrSelected
+                                                          .length)
+                                                ]),
+                                                defaultValue: true));
+                                          }
+                                          if (newInstallIdsAllOrSelected
+                                              .isNotEmpty) {
+                                            formItems.add(GeneratedFormSwitch(
+                                                'installs',
+                                                label: tr('installX', args: [
+                                                  plural(
+                                                      'apps',
+                                                      newInstallIdsAllOrSelected
+                                                          .length)
+                                                ]),
+                                                defaultValue:
+                                                    existingUpdateIdsAllOrSelected
+                                                        .isNotEmpty));
+                                          }
+                                          if (trackOnlyUpdateIdsAllOrSelected
+                                              .isNotEmpty) {
+                                            formItems.add(GeneratedFormSwitch(
+                                                'trackonlies',
+                                                label: tr(
+                                                    'markXTrackOnlyAsUpdated',
+                                                    args: [
+                                                      plural(
+                                                          'apps',
+                                                          trackOnlyUpdateIdsAllOrSelected
+                                                              .length)
+                                                    ]),
+                                                defaultValue:
+                                                    existingUpdateIdsAllOrSelected
+                                                            .isNotEmpty ||
+                                                        newInstallIdsAllOrSelected
+                                                            .isNotEmpty));
+                                          }
+                                          showDialog<Map<String, dynamic>?>(
                                               context: context,
                                               builder: (BuildContext ctx) {
+                                                var totalApps = existingUpdateIdsAllOrSelected
+                                                        .length +
+                                                    newInstallIdsAllOrSelected
+                                                        .length +
+                                                    trackOnlyUpdateIdsAllOrSelected
+                                                        .length;
                                                 return GeneratedFormModal(
-                                                  title: tr('categorize'),
-                                                  items: const [],
+                                                  title: tr('changeX', args: [
+                                                    plural('apps', totalApps)
+                                                  ]),
+                                                  items: formItems
+                                                      .map((e) => [e])
+                                                      .toList(),
                                                   initValid: true,
-                                                  message: tr(
-                                                      'selectedCategorizeWarning'),
                                                 );
-                                              }) !=
-                                          null;
-                                    }
-                                    if (cont) {
-                                      await showDialog<Map<String, dynamic>?>(
-                                          context: context,
-                                          builder: (BuildContext ctx) {
-                                            return GeneratedFormModal(
-                                              title: tr('categorize'),
-                                              items: const [],
-                                              initValid: true,
-                                              singleNullReturnButton:
-                                                  tr('continue'),
-                                              additionalWidgets: [
-                                                CategoryEditorSelector(
-                                                  preselected: !showPrompt
-                                                      ? preselected ?? {}
-                                                      : {},
-                                                  showLabelWhenNotEmpty: false,
-                                                  onSelected: (categories) {
-                                                    appsProvider.saveApps(
-                                                        selectedApps.map((e) {
-                                                      e.categories = categories;
-                                                      return e;
-                                                    }).toList());
-                                                  },
-                                                )
-                                              ],
-                                            );
+                                              }).then((values) {
+                                            if (values != null) {
+                                              if (values.isEmpty) {
+                                                values =
+                                                    getDefaultValuesFromFormItems(
+                                                        [formItems]);
+                                              }
+                                              bool shouldInstallUpdates =
+                                                  values['updates'] == true;
+                                              bool shouldInstallNew =
+                                                  values['installs'] == true;
+                                              bool shouldMarkTrackOnlies =
+                                                  values['trackonlies'] == true;
+                                              (() async {
+                                                if (shouldInstallNew ||
+                                                    shouldInstallUpdates) {
+                                                  await settingsProvider
+                                                      .getInstallPermission();
+                                                }
+                                              })()
+                                                  .then((_) {
+                                                List<String> toInstall = [];
+                                                if (shouldInstallUpdates) {
+                                                  toInstall.addAll(
+                                                      existingUpdateIdsAllOrSelected);
+                                                }
+                                                if (shouldInstallNew) {
+                                                  toInstall.addAll(
+                                                      newInstallIdsAllOrSelected);
+                                                }
+                                                if (shouldMarkTrackOnlies) {
+                                                  toInstall.addAll(
+                                                      trackOnlyUpdateIdsAllOrSelected);
+                                                }
+                                                appsProvider
+                                                    .downloadAndInstallLatestApps(
+                                                        toInstall,
+                                                        globalNavigatorKey
+                                                            .currentContext)
+                                                    .catchError((e) {
+                                                  showError(e, context);
+                                                });
+                                              });
+                                            }
                                           });
-                                    }
-                                  } catch (err) {
-                                    showError(err, context);
-                                  }
-                                },
-                          tooltip: tr('categorize'),
-                          icon: const Icon(Icons.category_outlined),
-                        ),
-                        IconButton(
-                          visualDensity: VisualDensity.compact,
-                          onPressed: selectedApps.isEmpty
-                              ? null
-                              : () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext ctx) {
-                                        return AlertDialog(
-                                          scrollable: true,
-                                          content: Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 6),
-                                            child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
-                                                children: [
-                                                  IconButton(
-                                                      onPressed: appsProvider
-                                                              .areDownloadsRunning()
-                                                          ? null
-                                                          : () {
-                                                              showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (BuildContext
-                                                                          ctx) {
-                                                                    return AlertDialog(
-                                                                      title: Text(tr(
-                                                                          'markXSelectedAppsAsUpdated',
-                                                                          args: [
-                                                                            selectedApps.length.toString()
-                                                                          ])),
-                                                                      content:
-                                                                          Text(
-                                                                        tr('onlyWorksWithNonEVDApps'),
-                                                                        style: const TextStyle(
-                                                                            fontWeight:
-                                                                                FontWeight.bold,
-                                                                            fontStyle: FontStyle.italic),
-                                                                      ),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.of(context).pop();
-                                                                            },
-                                                                            child:
-                                                                                Text(tr('no'))),
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              HapticFeedback.selectionClick();
-                                                                              appsProvider.saveApps(selectedApps.map((a) {
-                                                                                if (a.installedVersion != null) {
-                                                                                  a.installedVersion = a.latestVersion;
-                                                                                }
-                                                                                return a;
-                                                                              }).toList());
-
-                                                                              Navigator.of(context).pop();
-                                                                            },
-                                                                            child:
-                                                                                Text(tr('yes')))
-                                                                      ],
-                                                                    );
-                                                                  }).whenComplete(() {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop();
-                                                              });
-                                                            },
-                                                      tooltip: tr(
-                                                          'markSelectedAppsUpdated'),
-                                                      icon: const Icon(
-                                                          Icons.done)),
-                                                  IconButton(
-                                                    onPressed: () {
-                                                      var pinStatus =
-                                                          selectedApps
-                                                              .where((element) =>
-                                                                  element
-                                                                      .pinned)
-                                                              .isEmpty;
-                                                      appsProvider.saveApps(
-                                                          selectedApps.map((e) {
-                                                        e.pinned = pinStatus;
-                                                        return e;
-                                                      }).toList());
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    tooltip: selectedApps
-                                                            .where((element) =>
-                                                                element.pinned)
-                                                            .isEmpty
-                                                        ? tr('pinToTop')
-                                                        : tr('unpinFromTop'),
-                                                    icon: Icon(selectedApps
-                                                            .where((element) =>
-                                                                element.pinned)
-                                                            .isEmpty
-                                                        ? Icons
-                                                            .bookmark_outline_rounded
-                                                        : Icons
-                                                            .bookmark_remove_outlined),
-                                                  ),
-                                                  IconButton(
-                                                    onPressed: () {
-                                                      String urls = '';
-                                                      for (var a
-                                                          in selectedApps) {
-                                                        urls += '${a.url}\n';
-                                                      }
-                                                      urls = urls.substring(
-                                                          0, urls.length - 1);
-                                                      Share.share(urls,
-                                                          subject: tr(
-                                                              'selectedAppURLsFromObtainium'));
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    tooltip: tr(
-                                                        'shareSelectedAppURLs'),
-                                                    icon:
-                                                        const Icon(Icons.share),
-                                                  ),
-                                                  IconButton(
-                                                    onPressed: () {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              ctx) {
-                                                            return GeneratedFormModal(
-                                                              title: tr(
-                                                                  'resetInstallStatusForSelectedAppsQuestion'),
-                                                              items: const [],
-                                                              initValid: true,
-                                                              message: tr(
-                                                                  'installStatusOfXWillBeResetExplanation',
-                                                                  args: [
-                                                                    plural(
-                                                                        'app',
-                                                                        selectedApps
-                                                                            .length)
-                                                                  ]),
-                                                            );
-                                                          }).then((values) {
-                                                        if (values != null) {
+                                        },
+                                  tooltip: selectedApps.isEmpty
+                                      ? tr('installUpdateApps')
+                                      : tr('installUpdateSelectedApps'),
+                                  icon: const Icon(
+                                    Icons.file_download_outlined,
+                                  )),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                onPressed: selectedApps.isEmpty
+                                    ? null
+                                    : () async {
+                                        try {
+                                          Set<String>? preselected;
+                                          var showPrompt = false;
+                                          for (var element in selectedApps) {
+                                            var currentCats =
+                                                element.categories.toSet();
+                                            if (preselected == null) {
+                                              preselected = currentCats;
+                                            } else {
+                                              if (!settingsProvider.setEqual(
+                                                  currentCats, preselected)) {
+                                                showPrompt = true;
+                                                break;
+                                              }
+                                            }
+                                          }
+                                          var cont = true;
+                                          if (showPrompt) {
+                                            cont = await showDialog<
+                                                        Map<String, dynamic>?>(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext ctx) {
+                                                      return GeneratedFormModal(
+                                                        title: tr('categorize'),
+                                                        items: const [],
+                                                        initValid: true,
+                                                        message: tr(
+                                                            'selectedCategorizeWarning'),
+                                                      );
+                                                    }) !=
+                                                null;
+                                          }
+                                          if (cont) {
+                                            // ignore: use_build_context_synchronously
+                                            await showDialog<
+                                                    Map<String, dynamic>?>(
+                                                context: context,
+                                                builder: (BuildContext ctx) {
+                                                  return GeneratedFormModal(
+                                                    title: tr('categorize'),
+                                                    items: const [],
+                                                    initValid: true,
+                                                    singleNullReturnButton:
+                                                        tr('continue'),
+                                                    additionalWidgets: [
+                                                      CategoryEditorSelector(
+                                                        preselected: !showPrompt
+                                                            ? preselected ?? {}
+                                                            : {},
+                                                        showLabelWhenNotEmpty:
+                                                            false,
+                                                        onSelected:
+                                                            (categories) {
                                                           appsProvider.saveApps(
                                                               selectedApps
                                                                   .map((e) {
-                                                            e.installedVersion =
-                                                                null;
+                                                            e.categories =
+                                                                categories;
                                                             return e;
                                                           }).toList());
-                                                        }
-                                                      }).whenComplete(() {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      });
-                                                    },
-                                                    tooltip: tr(
-                                                        'resetInstallStatus'),
-                                                    icon: const Icon(Icons
-                                                        .restore_page_outlined),
-                                                  ),
-                                                ]),
-                                          ),
-                                        );
-                                      });
-                                },
-                          tooltip: tr('more'),
-                          icon: const Icon(Icons.more_horiz),
-                        ),
-                      ],
-                    ))),
-            const VerticalDivider(),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              onPressed: () {
-                setState(() {
-                  if (currentFilterIsUpdatesOnly) {
-                    filter = AppsFilter();
-                  } else {
-                    filter = updatesOnlyFilter;
-                  }
-                });
-              },
-              tooltip: currentFilterIsUpdatesOnly
-                  ? tr('removeOutdatedFilter')
-                  : tr('showOutdatedOnly'),
-              icon: Icon(
-                currentFilterIsUpdatesOnly
-                    ? Icons.update_disabled_rounded
-                    : Icons.update_rounded,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            appsProvider.apps.isEmpty
-                ? const SizedBox()
-                : TextButton.icon(
-                    style:
-                        const ButtonStyle(visualDensity: VisualDensity.compact),
-                    label: Text(
-                      filter.isIdenticalTo(neutralFilter, settingsProvider)
-                          ? tr('filter')
-                          : tr('filterActive'),
-                      style: TextStyle(
-                          fontWeight: filter.isIdenticalTo(
-                                  neutralFilter, settingsProvider)
-                              ? FontWeight.normal
-                              : FontWeight.bold),
-                    ),
+                                                        },
+                                                      )
+                                                    ],
+                                                  );
+                                                });
+                                          }
+                                        } catch (err) {
+                                          showError(err, context);
+                                        }
+                                      },
+                                tooltip: tr('categorize'),
+                                icon: const Icon(Icons.category_outlined),
+                              ),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                onPressed: selectedApps.isEmpty
+                                    ? null
+                                    : () {
+                                        showDialog(
+                                            context: context,
+                                            builder: (BuildContext ctx) {
+                                              return AlertDialog(
+                                                scrollable: true,
+                                                content: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 6),
+                                                  child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        IconButton(
+                                                            onPressed: appsProvider
+                                                                    .areDownloadsRunning()
+                                                                ? null
+                                                                : () {
+                                                                    showDialog(
+                                                                        context:
+                                                                            context,
+                                                                        builder:
+                                                                            (BuildContext
+                                                                                ctx) {
+                                                                          return AlertDialog(
+                                                                            title:
+                                                                                Text(tr('markXSelectedAppsAsUpdated', args: [
+                                                                              selectedApps.length.toString()
+                                                                            ])),
+                                                                            content:
+                                                                                Text(
+                                                                              tr('onlyWorksWithNonEVDApps'),
+                                                                              style: const TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
+                                                                            ),
+                                                                            actions: [
+                                                                              TextButton(
+                                                                                  onPressed: () {
+                                                                                    Navigator.of(context).pop();
+                                                                                  },
+                                                                                  child: Text(tr('no'))),
+                                                                              TextButton(
+                                                                                  onPressed: () {
+                                                                                    HapticFeedback.selectionClick();
+                                                                                    appsProvider.saveApps(selectedApps.map((a) {
+                                                                                      if (a.installedVersion != null) {
+                                                                                        a.installedVersion = a.latestVersion;
+                                                                                      }
+                                                                                      return a;
+                                                                                    }).toList());
+
+                                                                                    Navigator.of(context).pop();
+                                                                                  },
+                                                                                  child: Text(tr('yes')))
+                                                                            ],
+                                                                          );
+                                                                        }).whenComplete(() {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop();
+                                                                    });
+                                                                  },
+                                                            tooltip: tr(
+                                                                'markSelectedAppsUpdated'),
+                                                            icon: const Icon(
+                                                                Icons.done)),
+                                                        IconButton(
+                                                          onPressed: () {
+                                                            var pinStatus = selectedApps
+                                                                .where((element) =>
+                                                                    element
+                                                                        .pinned)
+                                                                .isEmpty;
+                                                            appsProvider
+                                                                .saveApps(
+                                                                    selectedApps
+                                                                        .map(
+                                                                            (e) {
+                                                              e.pinned =
+                                                                  pinStatus;
+                                                              return e;
+                                                            }).toList());
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                          tooltip: selectedApps
+                                                                  .where((element) =>
+                                                                      element
+                                                                          .pinned)
+                                                                  .isEmpty
+                                                              ? tr('pinToTop')
+                                                              : tr(
+                                                                  'unpinFromTop'),
+                                                          icon: Icon(selectedApps
+                                                                  .where((element) =>
+                                                                      element
+                                                                          .pinned)
+                                                                  .isEmpty
+                                                              ? Icons
+                                                                  .bookmark_outline_rounded
+                                                              : Icons
+                                                                  .bookmark_remove_outlined),
+                                                        ),
+                                                        IconButton(
+                                                          onPressed: () {
+                                                            String urls = '';
+                                                            for (var a
+                                                                in selectedApps) {
+                                                              urls +=
+                                                                  '${a.url}\n';
+                                                            }
+                                                            urls =
+                                                                urls.substring(
+                                                                    0,
+                                                                    urls.length -
+                                                                        1);
+                                                            Share.share(urls,
+                                                                subject: tr(
+                                                                    'selectedAppURLsFromObtainium'));
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                          tooltip: tr(
+                                                              'shareSelectedAppURLs'),
+                                                          icon: const Icon(
+                                                              Icons.share),
+                                                        ),
+                                                        IconButton(
+                                                          onPressed: () {
+                                                            showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (BuildContext
+                                                                        ctx) {
+                                                                  return GeneratedFormModal(
+                                                                    title: tr(
+                                                                        'resetInstallStatusForSelectedAppsQuestion'),
+                                                                    items: const [],
+                                                                    initValid:
+                                                                        true,
+                                                                    message: tr(
+                                                                        'installStatusOfXWillBeResetExplanation',
+                                                                        args: [
+                                                                          plural(
+                                                                              'app',
+                                                                              selectedApps.length)
+                                                                        ]),
+                                                                  );
+                                                                }).then((values) {
+                                                              if (values !=
+                                                                  null) {
+                                                                appsProvider.saveApps(
+                                                                    selectedApps
+                                                                        .map(
+                                                                            (e) {
+                                                                  e.installedVersion =
+                                                                      null;
+                                                                  return e;
+                                                                }).toList());
+                                                              }
+                                                            }).whenComplete(() {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            });
+                                                          },
+                                                          tooltip: tr(
+                                                              'resetInstallStatus'),
+                                                          icon: const Icon(Icons
+                                                              .restore_page_outlined),
+                                                        ),
+                                                      ]),
+                                                ),
+                                              );
+                                            });
+                                      },
+                                tooltip: tr('more'),
+                                icon: const Icon(Icons.more_horiz),
+                              ),
+                            ],
+                          ))),
+                  const VerticalDivider(),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
-                      showDialog<Map<String, dynamic>?>(
-                          context: context,
-                          builder: (BuildContext ctx) {
-                            var vals = filter.toFormValuesMap();
-                            return GeneratedFormModal(
-                              initValid: true,
-                              title: tr('filterApps'),
-                              items: [
-                                [
-                                  GeneratedFormTextField('appName',
-                                      label: tr('appName'),
-                                      required: false,
-                                      defaultValue: vals['appName']),
-                                  GeneratedFormTextField('author',
-                                      label: tr('author'),
-                                      required: false,
-                                      defaultValue: vals['author'])
-                                ],
-                                [
-                                  GeneratedFormSwitch('upToDateApps',
-                                      label: tr('upToDateApps'),
-                                      defaultValue: vals['upToDateApps'])
-                                ],
-                                [
-                                  GeneratedFormSwitch('nonInstalledApps',
-                                      label: tr('nonInstalledApps'),
-                                      defaultValue: vals['nonInstalledApps'])
-                                ]
-                              ],
-                              additionalWidgets: [
-                                const SizedBox(
-                                  height: 16,
-                                ),
-                                CategoryEditorSelector(
-                                  preselected: filter.categoryFilter,
-                                  onSelected: (categories) {
-                                    filter.categoryFilter = categories.toSet();
-                                  },
-                                )
-                              ],
-                            );
-                          }).then((values) {
-                        if (values != null) {
-                          setState(() {
-                            filter.setFormValuesFromMap(values);
-                          });
+                      setState(() {
+                        if (currentFilterIsUpdatesOnly) {
+                          filter = AppsFilter();
+                        } else {
+                          filter = updatesOnlyFilter;
                         }
                       });
                     },
-                    icon: const Icon(Icons.filter_list_rounded))
-          ],
-        ),
-      ],
+                    tooltip: currentFilterIsUpdatesOnly
+                        ? tr('removeOutdatedFilter')
+                        : tr('showOutdatedOnly'),
+                    icon: Icon(
+                      currentFilterIsUpdatesOnly
+                          ? Icons.update_disabled_rounded
+                          : Icons.update_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  TextButton.icon(
+                      style: const ButtonStyle(
+                          visualDensity: VisualDensity.compact),
+                      label: Text(
+                        filter.isIdenticalTo(neutralFilter, settingsProvider)
+                            ? tr('filter')
+                            : tr('filterActive'),
+                        style: TextStyle(
+                            fontWeight: filter.isIdenticalTo(
+                                    neutralFilter, settingsProvider)
+                                ? FontWeight.normal
+                                : FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        showDialog<Map<String, dynamic>?>(
+                            context: context,
+                            builder: (BuildContext ctx) {
+                              var vals = filter.toFormValuesMap();
+                              return GeneratedFormModal(
+                                initValid: true,
+                                title: tr('filterApps'),
+                                items: [
+                                  [
+                                    GeneratedFormTextField('appName',
+                                        label: tr('appName'),
+                                        required: false,
+                                        defaultValue: vals['appName']),
+                                    GeneratedFormTextField('author',
+                                        label: tr('author'),
+                                        required: false,
+                                        defaultValue: vals['author'])
+                                  ],
+                                  [
+                                    GeneratedFormSwitch('upToDateApps',
+                                        label: tr('upToDateApps'),
+                                        defaultValue: vals['upToDateApps'])
+                                  ],
+                                  [
+                                    GeneratedFormSwitch('nonInstalledApps',
+                                        label: tr('nonInstalledApps'),
+                                        defaultValue: vals['nonInstalledApps'])
+                                  ]
+                                ],
+                                additionalWidgets: [
+                                  const SizedBox(
+                                    height: 16,
+                                  ),
+                                  CategoryEditorSelector(
+                                    preselected: filter.categoryFilter,
+                                    onSelected: (categories) {
+                                      filter.categoryFilter =
+                                          categories.toSet();
+                                    },
+                                  )
+                                ],
+                              );
+                            }).then((values) {
+                          if (values != null) {
+                            setState(() {
+                              filter.setFormValuesFromMap(values);
+                            });
+                          }
+                        });
+                      },
+                      icon: const Icon(Icons.filter_list_rounded))
+                ],
+              ),
+            ],
     );
   }
 }
