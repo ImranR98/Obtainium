@@ -247,7 +247,11 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    await InstallPlugin.installApk(file.file.path, 'dev.imranr.obtainium');
+    await InstallPlugin.installApk(file.file.path, obtainiumId);
+    if (file.appId == obtainiumId) {
+      // Obtainium prompt should be lowest
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
     apps[file.appId]!.app.installedVersion =
         apps[file.appId]!.app.latestVersion;
     // Don't correct install status as installation may not be done yet
