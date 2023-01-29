@@ -1,0 +1,5 @@
+- APK RegEx Filter
+- Increased GitHub/Codeberg Release Range
+- UI Tweaks
+- Remember which APK to install
+- Bug fixes

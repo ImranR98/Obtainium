@@ -1,0 +1,16 @@
+Obtainium allows you to install and update Open-Source Apps directly from their releases pages, and receive notifications when new releases are made available.
+
+Currently supported App sources:
+
+- GitHub
+- GitLab
+- Codeberg
+- F-Droid
+- IzzyOnDroid
+- Mullvad
+- Signal
+- SourceForge
+- APKMirror (Track-Only)
+- Third Party F-Droid Repos
+- Steam
+- "HTML" (fallback)
