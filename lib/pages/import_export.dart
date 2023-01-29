@@ -564,18 +564,22 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
           widget.onlyOneSelectionAllowed ? tr('selectURL') : tr('selectURLs')),
       content: Column(children: [
         ...urlWithDescriptionSelections.keys.map((urlWithD) {
+          select(bool? value) {
+            setState(() {
+              value ??= false;
+              if (value! && widget.onlyOneSelectionAllowed) {
+                selectOnlyOne(urlWithD.key);
+              } else {
+                urlWithDescriptionSelections[urlWithD] = value!;
+              }
+            });
+          }
+
           return Row(children: [
             Checkbox(
                 value: urlWithDescriptionSelections[urlWithD],
                 onChanged: (value) {
-                  setState(() {
-                    value ??= false;
-                    if (value! && widget.onlyOneSelectionAllowed) {
-                      selectOnlyOne(urlWithD.key);
-                    } else {
-                      urlWithDescriptionSelections[urlWithD] = value!;
-                    }
-                  });
+                  select(value);
                 }),
             const SizedBox(
               width: 8,
@@ -599,12 +603,17 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
                           const TextStyle(decoration: TextDecoration.underline),
                       textAlign: TextAlign.start,
                     )),
-                Text(
-                  urlWithD.value.length > 128
-                      ? '${urlWithD.value.substring(0, 128)}...'
-                      : urlWithD.value,
-                  style: const TextStyle(
-                      fontStyle: FontStyle.italic, fontSize: 12),
+                GestureDetector(
+                  onTap: () {
+                    select(!(urlWithDescriptionSelections[urlWithD] ?? false));
+                  },
+                  child: Text(
+                    urlWithD.value.length > 128
+                        ? '${urlWithD.value.substring(0, 128)}...'
+                        : urlWithD.value,
+                    style: const TextStyle(
+                        fontStyle: FontStyle.italic, fontSize: 12),
+                  ),
                 ),
                 const SizedBox(
                   height: 8,
