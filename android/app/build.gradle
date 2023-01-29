@@ -62,7 +62,7 @@ android {
     flavorDimensions "flavor"
 
     productFlavors {
-        no {
+        github {
             dimension "flavor"
             applicationIdSuffix ""
         }
