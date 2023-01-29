@@ -327,6 +327,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 16,
                             ),
                             GeneratedForm(
+                                key: Key(pickedSource.runtimeType.toString()),
                                 items: pickedSource!
                                     .combinedAppSpecificSettingFormItems,
                                 onValueChanges: (values, valid, isBuilding) {
