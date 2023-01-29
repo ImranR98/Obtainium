@@ -32,6 +32,7 @@ class _AddAppPageState extends State<AddAppPage> {
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
   List<String> pickedCategories = [];
+  int searchnum = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +41,14 @@ class _AddAppPageState extends State<AddAppPage> {
 
     bool doingSomething = gettingAppInfo || searching;
 
-    changeUserInput(String input, bool valid, bool isBuilding) {
+    changeUserInput(String input, bool valid, bool isBuilding,
+        {bool isSearch = false}) {
       userInput = input;
       if (!isBuilding) {
         setState(() {
+          if (isSearch) {
+            searchnum++;
+          }
           var source = valid ? sourceProvider.getSource(userInput) : null;
           if (pickedSource.runtimeType != source.runtimeType) {
             pickedSource = source;
@@ -169,30 +174,32 @@ class _AddAppPageState extends State<AddAppPage> {
                         children: [
                           Expanded(
                               child: GeneratedForm(
+                                  key: Key(searchnum.toString()),
                                   items: [
-                                [
-                                  GeneratedFormTextField('appSourceURL',
-                                      label: tr('appSourceURL'),
-                                      additionalValidators: [
-                                        (value) {
-                                          try {
-                                            sourceProvider
-                                                .getSource(value ?? '')
-                                                .standardizeURL(
-                                                    preStandardizeUrl(
-                                                        value ?? ''));
-                                          } catch (e) {
-                                            return e is String
-                                                ? e
-                                                : e is ObtainiumError
-                                                    ? e.toString()
-                                                    : tr('error');
-                                          }
-                                          return null;
-                                        }
-                                      ])
-                                ]
-                              ],
+                                    [
+                                      GeneratedFormTextField('appSourceURL',
+                                          label: tr('appSourceURL'),
+                                          defaultValue: userInput,
+                                          additionalValidators: [
+                                            (value) {
+                                              try {
+                                                sourceProvider
+                                                    .getSource(value ?? '')
+                                                    .standardizeURL(
+                                                        preStandardizeUrl(
+                                                            value ?? ''));
+                                              } catch (e) {
+                                                return e is String
+                                                    ? e
+                                                    : e is ObtainiumError
+                                                        ? e.toString()
+                                                        : tr('error');
+                                              }
+                                              return null;
+                                            }
+                                          ])
+                                    ]
+                                  ],
                                   onValueChanges: (values, valid, isBuilding) {
                                     changeUserInput(values['appSourceURL']!,
                                         valid, isBuilding);
@@ -296,8 +303,8 @@ class _AddAppPageState extends State<AddAppPage> {
                                           if (selectedUrls != null &&
                                               selectedUrls.isNotEmpty) {
                                             changeUserInput(
-                                                selectedUrls[0], true, false);
-                                            addApp(resetUserInputAfter: true);
+                                                selectedUrls[0], true, false,
+                                                isSearch: true);
                                           }
                                         }).catchError((e) {
                                           showError(e, context);
@@ -327,6 +334,7 @@ class _AddAppPageState extends State<AddAppPage> {
                               height: 16,
                             ),
                             GeneratedForm(
+                                key: Key(pickedSource.runtimeType.toString()),
                                 items: pickedSource!
                                     .combinedAppSpecificSettingFormItems,
                                 onValueChanges: (values, valid, isBuilding) {

@@ -150,6 +150,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   List<List<Widget>> rows = [];
+  String? initKey;
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false}) {
@@ -169,13 +170,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
-  @override
-  void initState() {
-    super.initState();
-
+  initForm() {
+    initKey = widget.key.toString();
     // Initialize form values as all empty
     values.clear();
-    int j = 0;
     for (var row in widget.items) {
       for (var e in row) {
         values[e.key] = e.defaultValue;
@@ -246,7 +244,16 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    initForm();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.key.toString() != initKey) {
+      initForm();
+    }
     for (var r = 0; r < formInputs.length; r++) {
       for (var e = 0; e < formInputs[r].length; e++) {
         if (widget.items[r][e] is GeneratedFormSwitch) {
