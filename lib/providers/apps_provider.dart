@@ -444,9 +444,6 @@ class AppsProvider with ChangeNotifier {
     } catch (e) {
       //
     }
-    if (!res) {
-      logs.add(tr('versionCorrectionDisabled'));
-    }
     return res;
   }
 
