@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                         .currentState !=
                     null) {
                   // Avoid duplicate GlobalKey error
-                  await Future.delayed(const Duration(milliseconds: 200));
+                  await Future.delayed(const Duration(microseconds: 1));
                 }
                 setState(() {
                   selectedIndexHistory.clear();
