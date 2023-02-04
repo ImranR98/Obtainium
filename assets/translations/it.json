@@ -178,7 +178,6 @@
     "installedVersionX": "Versione installata: {}",
     "lastUpdateCheckX": "Ultimo controllo degli aggiornamenti: {}",
     "remove": "Rimuovi",
-    "removeAppQuestion": "Rimuovere l'App?",
     "yesMarkUpdated": "Sì, contrassegna come aggiornato",
     "fdroid": "F-Droid",
     "appIdOrName": "ID o nome dell'App",
@@ -212,6 +211,12 @@
     "storagePermissionDenied": "Storage permission denied",
     "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
     "filterAPKsByRegEx": "Filter APKs by Regular Expression",
+    "removeFromObtainium": "Remove from Obtainium",
+    "uninstallFromDevice": "Uninstall from Device",
+    "removeAppQuestion": {
+        "one": "Rimuovere l'App?",
+        "other": "Rimuovere l'App?"
+    },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
         "other": "Troppe richieste (traffico limitato) - riprova tra {} minuti"

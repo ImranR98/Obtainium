@@ -58,6 +58,7 @@ dependencies:
   android_alarm_manager_plus: ^2.1.0
   sqflite: ^2.2.0+3
   easy_localization: ^3.0.1
+  android_intent_plus: ^3.1.5
 
 
 dev_dependencies:

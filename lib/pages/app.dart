@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -361,40 +362,12 @@ class _AppPageState extends State<AppPage> {
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext ctx) {
-                                        return AlertDialog(
-                                          title: Text(tr('removeAppQuestion')),
-                                          content: Text(tr(
-                                              'xWillBeRemovedButRemainInstalled',
-                                              args: [
-                                                app?.installedInfo?.name ??
-                                                    app?.app.name ??
-                                                    tr('app')
-                                              ])),
-                                          actions: [
-                                            TextButton(
-                                                onPressed: () {
-                                                  HapticFeedback
-                                                      .selectionClick();
-                                                  appsProvider.removeApps(
-                                                      [app!.app.id]).then((_) {
-                                                    int count = 0;
-                                                    Navigator.of(context)
-                                                        .popUntil((_) =>
-                                                            count++ >= 2);
-                                                  });
-                                                },
-                                                child: Text(tr('remove'))),
-                                            TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text(tr('cancel')))
-                                          ],
-                                        );
-                                      });
+                                  appsProvider.removeAppsWithModal(
+                                      context, [app!.app]).then((value) {
+                                    if (value == true) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  });
                                 },
                           style: TextButton.styleFrom(
                               foregroundColor:
@@ -412,5 +385,20 @@ class _AppPageState extends State<AppPage> {
             ],
           )),
     );
+  }
+}
+
+class RemoveAppsModal extends StatefulWidget {
+  const RemoveAppsModal({super.key, this.apps = const []});
+  final List<App> apps;
+
+  @override
+  State<RemoveAppsModal> createState() => _RemoveAppsModalState();
+}
+
+class _RemoveAppsModalState extends State<RemoveAppsModal> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

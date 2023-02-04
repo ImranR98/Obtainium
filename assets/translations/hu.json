@@ -178,7 +178,6 @@
     "installedVersionX": "Telepített verzió: {}",
     "lastUpdateCheckX": "Frissítés ellenőrizve: {}",
     "remove": "Eltávolítás",
-    "removeAppQuestion": "Eltávolítja az alkalmazást?",
     "yesMarkUpdated": "Igen, megjelölés frissítettként",
     "fdroid": "F-Droid",
     "appIdOrName": "App ID vagy név",
@@ -211,6 +210,12 @@
     "storagePermissionDenied": "Tárhely engedély megtagadva",
     "selectedCategorizeWarning": "Ez felváltja a kiválasztott alkalmazások meglévő kategória-beállításait.",
     "filterAPKsByRegEx": "Filter APKs by Regular Expression",
+    "removeFromObtainium": "Remove from Obtainium",
+    "uninstallFromDevice": "Uninstall from Device",
+    "removeAppQuestion": {
+        "one": "Eltávolítja az alkalmazást?",
+        "other": "Eltávolítja az alkalmazást?"
+    },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
         "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"

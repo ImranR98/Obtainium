@@ -178,7 +178,6 @@
     "installedVersionX": "インストールされたバージョン: {}",
     "lastUpdateCheckX": "最終アップデート確認: {}",
     "remove": "削除",
-    "removeAppQuestion": "アプリを削除しますか？",
     "yesMarkUpdated": "はい、アップデート済みとしてマークします",
     "fdroid": "F-Droid",
     "appIdOrName": "アプリのIDまたは名前",
@@ -212,6 +211,12 @@
     "storagePermissionDenied": "ストレージ権限が拒否されました",
     "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
     "filterAPKsByRegEx": "正規表現でAPKを絞り込む",
+    "removeFromObtainium": "Remove from Obtainium",
+    "uninstallFromDevice": "Uninstall from Device",
+    "removeAppQuestion": {
+        "one": "アプリを削除しますか？",
+        "other": "アプリを削除しますか？"
+    },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
         "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"

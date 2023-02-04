@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  android_intent_plus:
+    dependency: "direct main"
+    description:
+      name: android_intent_plus
+      sha256: ebd110b60723334bdc6eeb373116d6c52e9bed8feb9dcbd9f034531f56636e31
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.5"
   animations:
     dependency: "direct main"
     description:
