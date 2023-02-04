@@ -710,7 +710,7 @@ class AppsProvider with ChangeNotifier {
       exportDir = await getExternalStorageDirectory();
       path = exportDir!.path;
     }
-    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 28) {
+    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
       if (await Permission.storage.isDenied) {
         await Permission.storage.request();
       }
