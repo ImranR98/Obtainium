@@ -42,6 +42,8 @@ class _AppPageState extends State<AppPage> {
       getUpdate(app.app.id);
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
+    var noVersionDetection =
+        app?.app.additionalSettings['noVersionDetection'] == true;
 
     var infoColumn = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -190,8 +192,9 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.installedVersion != null &&
+                        if (noVersionDetection &&
                             !trackOnly &&
+                            app?.app.installedVersion != null &&
                             app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
@@ -203,13 +206,6 @@ class _AppPageState extends State<AppPage> {
                                             return AlertDialog(
                                               title: Text(tr(
                                                   'alreadyUpToDateQuestion')),
-                                              content: Text(
-                                                  tr('onlyWorksWithNonEVDApps'),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontStyle:
-                                                          FontStyle.italic)),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {
@@ -267,8 +263,9 @@ class _AppPageState extends State<AppPage> {
                                               return row;
                                             }).toList();
                                             return GeneratedFormModal(
-                                                title: tr('additionalOptions'),
-                                                items: items);
+                                              title: tr('additionalOptions'),
+                                              items: items,
+                                            );
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
@@ -289,7 +286,15 @@ class _AppPageState extends State<AppPage> {
                                       });
                                     },
                               tooltip: tr('additionalOptions'),
-                              icon: const Icon(Icons.settings)),
+                              icon: const Icon(Icons.edit)),
+                        if (app != null && app.installedInfo != null)
+                          IconButton(
+                            onPressed: () {
+                              appsProvider.openAppSettings(app.app.id);
+                            },
+                            icon: const Icon(Icons.settings),
+                            tooltip: tr('settings'),
+                          ),
                         if (app != null && settingsProvider.showAppWebpage)
                           IconButton(
                               onPressed: () {
@@ -361,40 +366,12 @@ class _AppPageState extends State<AppPage> {
                           onPressed: app?.downloadProgress != null
                               ? null
                               : () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext ctx) {
-                                        return AlertDialog(
-                                          title: Text(tr('removeAppQuestion')),
-                                          content: Text(tr(
-                                              'xWillBeRemovedButRemainInstalled',
-                                              args: [
-                                                app?.installedInfo?.name ??
-                                                    app?.app.name ??
-                                                    tr('app')
-                                              ])),
-                                          actions: [
-                                            TextButton(
-                                                onPressed: () {
-                                                  HapticFeedback
-                                                      .selectionClick();
-                                                  appsProvider.removeApps(
-                                                      [app!.app.id]).then((_) {
-                                                    int count = 0;
-                                                    Navigator.of(context)
-                                                        .popUntil((_) =>
-                                                            count++ >= 2);
-                                                  });
-                                                },
-                                                child: Text(tr('remove'))),
-                                            TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text(tr('cancel')))
-                                          ],
-                                        );
-                                      });
+                                  appsProvider.removeAppsWithModal(
+                                      context, [app!.app]).then((value) {
+                                    if (value == true) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  });
                                 },
                           style: TextButton.styleFrom(
                               foregroundColor:
@@ -412,5 +389,20 @@ class _AppPageState extends State<AppPage> {
             ],
           )),
     );
+  }
+}
+
+class RemoveAppsModal extends StatefulWidget {
+  const RemoveAppsModal({super.key, this.apps = const []});
+  final List<App> apps;
+
+  @override
+  State<RemoveAppsModal> createState() => _RemoveAppsModalState();
+}
+
+class _RemoveAppsModalState extends State<RemoveAppsModal> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

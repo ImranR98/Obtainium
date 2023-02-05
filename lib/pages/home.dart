@@ -63,21 +63,29 @@ class _HomePageState extends State<HomePage> {
                 .map((e) =>
                     NavigationDestination(icon: Icon(e.icon), label: e.title))
                 .toList(),
-            onDestinationSelected: (int index) {
+            onDestinationSelected: (int index) async {
               HapticFeedback.selectionClick();
-              setState(() {
-                if (index == 0) {
+              if (index == 0) {
+                while ((pages[0].widget.key as GlobalKey<AppsPageState>)
+                        .currentState !=
+                    null) {
+                  // Avoid duplicate GlobalKey error
+                  await Future.delayed(const Duration(microseconds: 1));
+                }
+                setState(() {
                   selectedIndexHistory.clear();
-                } else if (selectedIndexHistory.isEmpty ||
-                    (selectedIndexHistory.isNotEmpty &&
-                        selectedIndexHistory.last != index)) {
+                });
+              } else if (selectedIndexHistory.isEmpty ||
+                  (selectedIndexHistory.isNotEmpty &&
+                      selectedIndexHistory.last != index)) {
+                setState(() {
                   int existingInd = selectedIndexHistory.indexOf(index);
                   if (existingInd >= 0) {
                     selectedIndexHistory.removeAt(existingInd);
                   }
                   selectedIndexHistory.add(index);
-                }
-              });
+                });
+              }
             },
             selectedIndex:
                 selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,

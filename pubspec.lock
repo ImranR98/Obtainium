@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  android_intent_plus:
+    dependency: "direct main"
+    description:
+      name: android_intent_plus
+      sha256: ebd110b60723334bdc6eeb373116d6c52e9bed8feb9dcbd9f034531f56636e31
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.5"
   animations:
     dependency: "direct main"
     description:
@@ -101,10 +109,10 @@ packages:
     dependency: transitive
     description:
       name: cross_file
-      sha256: f71079978789bc2fe78d79227f1f8cfe195b31bbd8db2399b0d15a4b96fb843b
+      sha256: "0b0036e8cccbfbe0555fd83c1d31a6f30b77a96b598b35a5d36dd41f718695e9"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.3+2"
+    version: "0.3.3+4"
   crypto:
     dependency: transitive
     description:
@@ -157,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: dynamic_color
-      sha256: "37a15576f5a0bfd5555b613cf20ea3bd379607cf88d457374a16032f4e942174"
+      sha256: c4a508284b14ec4dda5adba2c28b2cdd34fbae1afead7e8c52cad87d51c5405b
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.4"
+    version: "1.6.2"
   easy_localization:
     dependency: "direct main"
     description:
@@ -609,10 +617,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_foundation
-      sha256: "1ffa239043ab8baf881ec3094a3c767af9d10399b2839020b9e4d44c0bb23951"
+      sha256: "2b55c18636a4edc529fa5cd44c03d3f3100c00513f518c5127c951978efcccd0"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.2"
+    version: "2.1.3"
   shared_preferences_linux:
     dependency: transitive
     description:
@@ -830,10 +838,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: "9d97fa2bae0f1900553c48a2ef0aaa3864367fd7bb625d683c460754b691312c"
+      sha256: "5f49a6e5fc59e21fcec5e1bbcd401afbee9792a24a4f3d9cef9b5bb0cd1e3767"
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.1"
+    version: "3.2.4"
   webview_flutter_platform_interface:
     dependency: transitive
     description:
@@ -846,10 +854,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_wkwebview
-      sha256: "523aff9168af9bb2170e4809e0499d7dee065c3919799fd3341d3e616c137960"
+      sha256: "92e7e7fa468f1df597fb9d37bcf1f303175cbe147c4dbdf06ecc323d950116eb"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.2"
+    version: "3.0.5"
   win32:
     dependency: transitive
     description:
@@ -883,5 +891,5 @@ packages:
     source: hosted
     version: "3.1.1"
 sdks:
-  dart: ">=2.18.2 <4.0.0"
-  flutter: ">=3.3.0"
+  dart: ">=2.18.2 <3.0.0"
+  flutter: ">=3.4.0-17.0.pre"

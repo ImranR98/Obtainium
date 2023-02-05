@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:android_intent_plus/flag.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ import 'package:flutter/services.dart';
 import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
+import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -23,6 +26,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class AppInMemory {
   late App app;
@@ -259,6 +263,15 @@ class AppsProvider with ChangeNotifier {
         attemptToCorrectInstallStatus: false);
   }
 
+  void uninstallApp(String appId) async {
+    var intent = AndroidIntent(
+        action: 'android.intent.action.DELETE',
+        data: 'package:$appId',
+        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+        package: 'vnd.android.package-archive');
+    await intent.launch();
+  }
+
   Future<String?> confirmApkUrl(App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
     String? apkUrl = app.apkUrls[app.preferredApkIndex];
@@ -444,9 +457,6 @@ class AppsProvider with ChangeNotifier {
     } catch (e) {
       //
     }
-    if (!res) {
-      logs.add(tr('versionCorrectionDisabled'));
-    }
     return res;
   }
 
@@ -625,6 +635,57 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> removeAppsWithModal(BuildContext context, List<App> apps) async {
+    var showUninstallOption =
+        apps.where((a) => a.installedVersion != null).isNotEmpty;
+    var values = await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return GeneratedFormModal(
+            title: plural('removeAppQuestion', apps.length),
+            items: !showUninstallOption
+                ? []
+                : [
+                    [
+                      GeneratedFormSwitch('rmAppEntry',
+                          label: tr('removeFromObtainium'), defaultValue: true)
+                    ],
+                    [
+                      GeneratedFormSwitch('uninstallApp',
+                          label: tr('uninstallFromDevice'))
+                    ]
+                  ],
+            initValid: true,
+          );
+        });
+    if (values != null) {
+      bool uninstall = values['uninstallApp'] == true && showUninstallOption;
+      bool remove = values['rmAppEntry'] == true || !showUninstallOption;
+      if (uninstall) {
+        for (var i = 0; i < apps.length; i++) {
+          if (apps[i].installedVersion != null) {
+            uninstallApp(apps[i].id);
+            apps[i].installedVersion = null;
+          }
+        }
+        await saveApps(apps, attemptToCorrectInstallStatus: false);
+      }
+      if (remove) {
+        await removeApps(apps.map((e) => e.id).toList());
+      }
+      return uninstall || remove;
+    }
+    return false;
+  }
+
+  Future<void> openAppSettings(String appId) async {
+    final AndroidIntent intent = AndroidIntent(
+      action: 'action_application_details_settings',
+      data: 'package:$appId',
+    );
+    await intent.launch();
+  }
+
   Future<App?> checkUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
     SourceProvider sourceProvider = SourceProvider();
@@ -710,7 +771,7 @@ class AppsProvider with ChangeNotifier {
       exportDir = await getExternalStorageDirectory();
       path = exportDir!.path;
     }
-    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 28) {
+    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
       if (await Permission.storage.isDenied) {
         await Permission.storage.request();
       }

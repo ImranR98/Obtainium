@@ -178,7 +178,6 @@
     "installedVersionX": "已安装: {}",
     "lastUpdateCheckX": "最后检查: {}",
     "remove": "删除",
-    "removeAppQuestion": "删除应用？",
     "yesMarkUpdated": "'是的，标为已更新",
     "fdroid": "F-Droid",
     "appIdOrName": "应用 ID 或名称",
@@ -212,6 +211,12 @@
     "storagePermissionDenied": "存储权限已被拒绝",
     "selectedCategorizeWarning": "这将取代所选应用程序的任何现有类别",
     "filterAPKsByRegEx": "Filter APKs by Regular Expression",
+    "removeFromObtainium": "Remove from Obtainium",
+    "uninstallFromDevice": "Uninstall from Device",
+    "removeAppQuestion": {
+        "one": "删除应用？",
+        "other": "删除应用？"
+    },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "请求过多 (API 限制) - 在 {} 分钟后重试",
         "other": "请求过多 (API 限制) - 在 {} 分钟后重试"

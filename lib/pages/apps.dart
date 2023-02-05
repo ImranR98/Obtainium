@@ -389,28 +389,30 @@ class AppsPageState extends State<AppsPage> {
                                 onPressed: selectedApps.isEmpty
                                     ? null
                                     : () {
-                                        showDialog<Map<String, dynamic>?>(
-                                            context: context,
-                                            builder: (BuildContext ctx) {
-                                              return GeneratedFormModal(
-                                                title: tr(
-                                                    'removeSelectedAppsQuestion'),
-                                                items: const [],
-                                                initValid: true,
-                                                message: tr(
-                                                    'xWillBeRemovedButRemainInstalled',
-                                                    args: [
-                                                      plural('apps',
-                                                          selectedApps.length)
-                                                    ]),
-                                              );
-                                            }).then((values) {
-                                          if (values != null) {
-                                            appsProvider.removeApps(selectedApps
-                                                .map((e) => e.id)
-                                                .toList());
-                                          }
-                                        });
+                                        appsProvider.removeAppsWithModal(
+                                            context, selectedApps.toList());
+                                        // showDialog<Map<String, dynamic>?>(
+                                        //     context: context,
+                                        //     builder: (BuildContext ctx) {
+                                        //       return GeneratedFormModal(
+                                        //         title: tr(
+                                        //             'removeSelectedAppsQuestion'),
+                                        //         items: const [],
+                                        //         initValid: true,
+                                        //         message: tr(
+                                        //             'xWillBeRemovedButRemainInstalled',
+                                        //             args: [
+                                        //               plural('apps',
+                                        //                   selectedApps.length)
+                                        //             ]),
+                                        //       );
+                                        //     }).then((values) {
+                                        //   if (values != null) {
+                                        //     appsProvider.removeApps(selectedApps
+                                        //         .map((e) => e.id)
+                                        //         .toList());
+                                        //   }
+                                        // });
                                       },
                                 tooltip: tr('removeSelectedApps'),
                                 icon: const Icon(Icons.delete_outline_outlined),
@@ -660,7 +662,7 @@ class AppsPageState extends State<AppsPage> {
                                                                             ])),
                                                                             content:
                                                                                 Text(
-                                                                              tr('onlyWorksWithNonEVDApps'),
+                                                                              tr('onlyWorksWithNonVersionDetectApps'),
                                                                               style: const TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
                                                                             ),
                                                                             actions: [
@@ -673,7 +675,7 @@ class AppsPageState extends State<AppsPage> {
                                                                                   onPressed: () {
                                                                                     HapticFeedback.selectionClick();
                                                                                     appsProvider.saveApps(selectedApps.map((a) {
-                                                                                      if (a.installedVersion != null) {
+                                                                                      if (a.installedVersion != null && a.additionalSettings['noVersionDetection'] == true) {
                                                                                         a.installedVersion = a.latestVersion;
                                                                                       }
                                                                                       return a;
