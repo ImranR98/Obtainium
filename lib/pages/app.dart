@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -268,8 +267,9 @@ class _AppPageState extends State<AppPage> {
                                               return row;
                                             }).toList();
                                             return GeneratedFormModal(
-                                                title: tr('additionalOptions'),
-                                                items: items);
+                                              title: tr('additionalOptions'),
+                                              items: items,
+                                            );
                                           }).then((values) {
                                         if (app != null && values != null) {
                                           var changedApp = app.app;
@@ -290,7 +290,15 @@ class _AppPageState extends State<AppPage> {
                                       });
                                     },
                               tooltip: tr('additionalOptions'),
-                              icon: const Icon(Icons.settings)),
+                              icon: const Icon(Icons.edit)),
+                        if (app != null && app.installedInfo != null)
+                          IconButton(
+                            onPressed: () {
+                              appsProvider.openAppSettings(app.app.id);
+                            },
+                            icon: const Icon(Icons.settings),
+                            tooltip: tr('settings'),
+                          ),
                         if (app != null && settingsProvider.showAppWebpage)
                           IconButton(
                               onPressed: () {

@@ -678,6 +678,14 @@ class AppsProvider with ChangeNotifier {
     return false;
   }
 
+  Future<void> openAppSettings(String appId) async {
+    final AndroidIntent intent = AndroidIntent(
+      action: 'action_application_details_settings',
+      data: 'package:$appId',
+    );
+    await intent.launch();
+  }
+
   Future<App?> checkUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
     SourceProvider sourceProvider = SourceProvider();
