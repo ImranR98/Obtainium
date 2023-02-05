@@ -207,15 +207,15 @@
     "addCategory": "Aggiungi categoria",
     "label": "Etichetta",
     "language": "Lingua",
-    "storagePermissionDenied": "Storage permission denied",
-    "selectedCategorizeWarning": "This will replace any existing category settings for the selected Apps.",
-    "filterAPKsByRegEx": "Filter APKs by Regular Expression",
-    "removeFromObtainium": "Remove from Obtainium",
-    "uninstallFromDevice": "Uninstall from Device",
-    "onlyWorksWithNonVersionDetectApps": "Only works for Apps with version detection disabled.",
+    "storagePermissionDenied": "Accesso ai file non autorizzato",
+    "selectedCategorizeWarning": "Ciò sostituirà le impostazioni di categoria esistenti per le App selezionate.",
+    "filterAPKsByRegEx": "Filtra file APK con espressioni regolari",
+    "removeFromObtainium": "Rimuovi da Obtainium",
+    "uninstallFromDevice": "Disinstalla dal dispositivo",
+    "onlyWorksWithNonVersionDetectApps": "Funziona solo per le App con il rilevamento della versione disattivato.",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
-        "other": "Rimuovere l'App?"
+        "other": "Rimuovere le App?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Troppe richieste (traffico limitato) - riprova tra {} minuto",
