@@ -391,18 +391,3 @@ class _AppPageState extends State<AppPage> {
     );
   }
 }
-
-class RemoveAppsModal extends StatefulWidget {
-  const RemoveAppsModal({super.key, this.apps = const []});
-  final List<App> apps;
-
-  @override
-  State<RemoveAppsModal> createState() => _RemoveAppsModalState();
-}
-
-class _RemoveAppsModalState extends State<RemoveAppsModal> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
