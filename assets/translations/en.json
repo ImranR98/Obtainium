@@ -74,7 +74,6 @@
     "changeX": "Change {}",
     "installUpdateApps": "Install/Update Apps",
     "installUpdateSelectedApps": "Install/Update Selected Apps",
-    "onlyWorksWithNonEVDApps": "Only works for Apps whose install status cannot be automatically detected (uncommon).",
     "markXSelectedAppsAsUpdated": "Mark {} Selected Apps as Updated?",
     "no": "No",
     "yes": "Yes",
@@ -213,6 +212,7 @@
     "filterAPKsByRegEx": "Filter APKs by Regular Expression",
     "removeFromObtainium": "Remove from Obtainium",
     "uninstallFromDevice": "Uninstall from Device",
+    "onlyWorksWithNonVersionDetectApps": "Only works for Apps with version detection disabled.",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

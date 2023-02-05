@@ -662,7 +662,7 @@ class AppsPageState extends State<AppsPage> {
                                                                             ])),
                                                                             content:
                                                                                 Text(
-                                                                              tr('onlyWorksWithNonEVDApps'),
+                                                                              tr('onlyWorksWithNonVersionDetectApps'),
                                                                               style: const TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
                                                                             ),
                                                                             actions: [
@@ -675,7 +675,7 @@ class AppsPageState extends State<AppsPage> {
                                                                                   onPressed: () {
                                                                                     HapticFeedback.selectionClick();
                                                                                     appsProvider.saveApps(selectedApps.map((a) {
-                                                                                      if (a.installedVersion != null) {
+                                                                                      if (a.installedVersion != null && a.additionalSettings['noVersionDetection'] == true) {
                                                                                         a.installedVersion = a.latestVersion;
                                                                                       }
                                                                                       return a;

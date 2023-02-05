@@ -42,6 +42,8 @@ class _AppPageState extends State<AppPage> {
       getUpdate(app.app.id);
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
+    var noVersionDetection =
+        app?.app.additionalSettings['noVersionDetection'] == true;
 
     var infoColumn = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -190,8 +192,9 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.installedVersion != null &&
+                        if (noVersionDetection &&
                             !trackOnly &&
+                            app?.app.installedVersion != null &&
                             app?.app.installedVersion != app?.app.latestVersion)
                           IconButton(
                               onPressed: app?.downloadProgress != null
@@ -203,13 +206,6 @@ class _AppPageState extends State<AppPage> {
                                             return AlertDialog(
                                               title: Text(tr(
                                                   'alreadyUpToDateQuestion')),
-                                              content: Text(
-                                                  tr('onlyWorksWithNonEVDApps'),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontStyle:
-                                                          FontStyle.italic)),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {
