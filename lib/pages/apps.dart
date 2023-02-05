@@ -391,28 +391,6 @@ class AppsPageState extends State<AppsPage> {
                                     : () {
                                         appsProvider.removeAppsWithModal(
                                             context, selectedApps.toList());
-                                        // showDialog<Map<String, dynamic>?>(
-                                        //     context: context,
-                                        //     builder: (BuildContext ctx) {
-                                        //       return GeneratedFormModal(
-                                        //         title: tr(
-                                        //             'removeSelectedAppsQuestion'),
-                                        //         items: const [],
-                                        //         initValid: true,
-                                        //         message: tr(
-                                        //             'xWillBeRemovedButRemainInstalled',
-                                        //             args: [
-                                        //               plural('apps',
-                                        //                   selectedApps.length)
-                                        //             ]),
-                                        //       );
-                                        //     }).then((values) {
-                                        //   if (values != null) {
-                                        //     appsProvider.removeApps(selectedApps
-                                        //         .map((e) => e.id)
-                                        //         .toList());
-                                        //   }
-                                        // });
                                       },
                                 tooltip: tr('removeSelectedApps'),
                                 icon: const Icon(Icons.delete_outline_outlined),
