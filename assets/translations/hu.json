@@ -4,7 +4,6 @@
     "noVersionFound": "Nem sikerült meghatározni a kiadás verzióját",
     "urlMatchesNoSource": "Az URL nem egyezik ismert forrással",
     "cantInstallOlderVersion": "Nem telepíthető egy app régebbi verziója",
-    "appIdMismatch": "A letöltött csomagazonosító nem egyezik a meglévő app azonosítóval",
     "functionNotImplemented": "Ez az osztály nem valósította meg ezt a függvényt",
     "placeholder": "Helykitöltő",
     "someErrors": "Néhány hiba történt",
