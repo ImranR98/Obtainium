@@ -347,6 +347,8 @@ class _AppPageState extends State<AppPage> {
                                             if (res.isNotEmpty && mounted) {
                                               Navigator.of(context).pop();
                                             }
+                                          }).catchError((e) {
+                                            showError(e, context);
                                           });
                                         }).catchError((e) {
                                           showError(e, context);
