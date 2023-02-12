@@ -4,6 +4,7 @@
     "noVersionFound": "リリースバージョンを特定できませんでした",
     "urlMatchesNoSource": "URLが既知のソースと一致しません",
     "cantInstallOlderVersion": "旧バージョンのアプリをインストールできません",
+    "appIdMismatch": "ダウンロードしたパッケージのIDが既存のApp IDと一致しません",
     "functionNotImplemented": "このクラスはこの機能を実装していません",
     "placeholder": "プレースホルダー",
     "someErrors": "何らかのエラーが発生しました",

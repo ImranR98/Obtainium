@@ -4,6 +4,7 @@
     "noVersionFound": "Release-Version nicht ermittelbar",
     "urlMatchesNoSource": "URL stimmt mit keiner bekannten Quelle überein",
     "cantInstallOlderVersion": "Installation einer älteren App-Version nicht möglich",
+    "appIdMismatch": "Die heruntergeladene Paket-ID stimmt nicht mit der vorhandenen App-ID überein",
     "functionNotImplemented": "Diese Klasse hat diese Funktion nicht implementiert",
     "placeholder": "Platzhalter",
     "someErrors": "Es traten einige Fehler auf",
