@@ -179,9 +179,12 @@ class AppsProvider with ChangeNotifier {
       }
     }
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
-    // In either case, the app should be given the new ID
+    // The former case should be handled (give the App its real ID), the latter is a security issue
     var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
     if (app.id != newInfo.packageName) {
+      if (apps[app.id] != null && !SourceProvider().isTempId(app.id)) {
+        throw IDChangedError();
+      }
       var originalAppId = app.id;
       app.id = newInfo.packageName;
       downloadedFile = downloadedFile.renameSync(

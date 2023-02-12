@@ -44,6 +44,10 @@ class DowngradeError extends ObtainiumError {
   DowngradeError() : super(tr('cantInstallOlderVersion'));
 }
 
+class IDChangedError extends ObtainiumError {
+  IDChangedError() : super(tr('appIdMismatch'));
+}
+
 class NotImplementedError extends ObtainiumError {
   NotImplementedError() : super(tr('functionNotImplemented'));
 }

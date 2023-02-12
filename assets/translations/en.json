@@ -4,6 +4,7 @@
     "noVersionFound": "Could not determine release version",
     "urlMatchesNoSource": "URL does not match a known source",
     "cantInstallOlderVersion": "Cannot install an older version of an App",
+    "appIdMismatch": "Downloaded package ID does not match existing App ID",
     "functionNotImplemented": "This class has not implemented this function",
     "placeholder": "Placeholder",
     "someErrors": "Some Errors Occurred",

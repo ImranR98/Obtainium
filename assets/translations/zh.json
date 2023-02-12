@@ -4,6 +4,7 @@
     "noVersionFound": "无法确定更新版本",
     "urlMatchesNoSource": "URL 与已知来源不符",
     "cantInstallOlderVersion": "无法安装旧版应用程序",
+    "appIdMismatch": "下载的软件包名与现有的应用程序包名不一致",
     "functionNotImplemented": "该类没有实现此功能",
     "placeholder": "占位符",
     "someErrors": "出现了一些错误",
