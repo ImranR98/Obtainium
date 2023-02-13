@@ -33,7 +33,8 @@ const supportedLocales = [
   Locale('it'),
   Locale('ja'),
   Locale('hu'),
-  Locale('de')
+  Locale('de'),
+  Locale('fa')
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
