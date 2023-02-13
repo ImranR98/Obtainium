@@ -148,7 +148,7 @@
     "deviceSupportsXArch": "دستگاه شما از معماری پردازنده {} پشتیبانی میکند",
     "deviceSupportsFollowingArchs": "دستگاه شما از معماری های پردازنده زیر پشتیبانی می کند:",
     "warning": "اخطار",
-    "sourceIsXButPackageFromYPrompt": "منبع برنامه "{}" است اما بسته انتشار از "{}" آمده است. ادامه هید؟",
+    "sourceIsXButPackageFromYPrompt": "منبع برنامه \"{}\" است اما بسته انتشار از \"{}\" آمده است. ادامه هید؟",
     "updatesAvailable": "بروزرسانی در دسترس ",
     "updatesAvailableNotifDescription": "به کاربر اطلاع می دهد که به روز رسانی برای یک یا چند برنامه ردیابی شده توسط Obtainium در دسترس است",
     "noNewUpdates": "به روز رسانی جدیدی وجود ندارد.",
