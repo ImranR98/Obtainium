@@ -37,7 +37,9 @@ class HTML extends AppSource {
           .map((e) => e.toLowerCase().startsWith('http://') ||
                   e.toLowerCase().startsWith('https://')
               ? e
-              : '${uri.origin}/$e')
+              : e.startsWith('/')
+                  ? '${uri.origin}/$e'
+                  : '${uri.origin}/${uri.path}/$e')
           .toList();
       return APKDetails(version, apkUrls, AppNames(uri.host, tr('app')));
     } else {
