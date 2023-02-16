@@ -10,7 +10,10 @@ class SteamMobile extends AppSource {
     host = 'store.steampowered.com';
     name = tr('steam');
     additionalSourceAppSpecificSettingFormItems = [
-      [GeneratedFormDropdown('app', apks.entries.toList(), label: tr('app'))]
+      [
+        GeneratedFormDropdown('app', apks.entries.toList(),
+            label: tr('app'), defaultValue: apks.entries.toList()[0].key)
+      ]
     ];
   }
 
@@ -35,7 +38,8 @@ class SteamMobile extends AppSource {
       if (apkNamePrefix == null) {
         throw NoReleasesError();
       }
-      String apkInURLRegexPattern = '/$apkNamePrefix-[^/]+\\.apk\$';
+      String apkInURLRegexPattern =
+          '/$apkNamePrefix-([0-9]+\\.)*[0-9]+\\.apk\$';
       var links = parse(res.body)
           .querySelectorAll('a')
           .map((e) => e.attributes['href'] ?? '')
