@@ -101,9 +101,9 @@ class GitHub extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool includePrereleases = additionalSettings['includePrereleases'];
+    bool includePrereleases = additionalSettings['includePrereleases'] == true;
     bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'];
+        additionalSettings['fallbackToOlderReleases'] == true;
     String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
                     ?.isNotEmpty ==
