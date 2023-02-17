@@ -27,6 +27,10 @@ class HTML extends AppSource {
           .where((element) => element.toLowerCase().endsWith('.apk'))
           .toList();
       links.sort((a, b) => a.split('/').last.compareTo(b.split('/').last));
+      if (additionalSettings['apkFilterRegEx'] != null) {
+        var reg = RegExp(additionalSettings['apkFilterRegEx']);
+        links = links.where((element) => reg.hasMatch(element)).toList();
+      }
       if (links.isEmpty) {
         throw NoReleasesError();
       }
