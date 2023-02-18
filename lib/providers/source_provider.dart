@@ -350,21 +350,12 @@ class SourceProvider {
     return false;
   }
 
-  String generateTempID(AppNames names, AppSource source) =>
-      '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
+  String generateTempID(
+          String standardUrl, Map<String, dynamic> additionalSettings) =>
+      (standardUrl + additionalSettings.toString()).hashCode.toString();
 
-  bool isTempId(String id) {
-    List<String> parts = id.split('_');
-    if (parts.length < 3) {
-      return false;
-    }
-    for (int i = 0; i < parts.length - 1; i++) {
-      if (RegExp('.*[A-Z].*').hasMatch(parts[i])) {
-        // TODO: Look into RegEx for non-Latin characters
-        return false;
-      }
-    }
-    return true;
+  bool isTempId(App app) {
+    return app.id == generateTempID(app.url, app.additionalSettings);
   }
 
   Future<App> getApp(
@@ -400,7 +391,7 @@ class SourceProvider {
         currentApp?.id ??
             source.tryInferringAppId(standardUrl,
                 additionalSettings: additionalSettings) ??
-            generateTempID(apk.names, source),
+            generateTempID(standardUrl, additionalSettings),
         standardUrl,
         apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
         name.trim().isNotEmpty

@@ -113,7 +113,7 @@ class _AppPageState extends State<AppPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 150),
+        const SizedBox(height: 125),
         app?.installedInfo != null
             ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Image.memory(
@@ -135,6 +135,14 @@ class _AppPageState extends State<AppPage> {
           tr('byX', args: [app?.app.author ?? tr('unknown')]),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(
+          height: 8,
+        ),
+        Text(
+          app?.app.id ?? '',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall,
         ),
         const SizedBox(
           height: 32,
