@@ -73,6 +73,8 @@ class _AddAppPageState extends State<AddAppPage> {
         var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
         var userPickedNoVersionDetection =
             additionalSettings['noVersionDetection'] == true;
+        var userPickedReleaseDateAsVersion =
+            additionalSettings['releaseDateAsVersion'] == true;
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             // ignore: use_build_context_synchronously
@@ -93,7 +95,22 @@ class _AddAppPageState extends State<AddAppPage> {
                 null) {
           cont = false;
         }
-        if (userPickedNoVersionDetection &&
+        if (userPickedReleaseDateAsVersion && // ignore: use_build_context_synchronously
+            // ignore: use_build_context_synchronously
+            await showDialog(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return GeneratedFormModal(
+                        title: tr('useReleaseDateAsVersion'),
+                        items: const [],
+                        message: tr('releaseDateAsVersionExplanation'),
+                      );
+                    }) ==
+                null) {
+          cont = false;
+        }
+        if (!userPickedReleaseDateAsVersion &&
+            userPickedNoVersionDetection &&
             // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
@@ -113,7 +130,8 @@ class _AddAppPageState extends State<AddAppPage> {
           App app = await sourceProvider.getApp(
               pickedSource!, userInput, additionalSettings,
               trackOnlyOverride: trackOnly,
-              noVersionDetectionOverride: userPickedNoVersionDetection);
+              noVersionDetectionOverride: userPickedNoVersionDetection,
+              releaseDateAsVersionOverride: userPickedReleaseDateAsVersion);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }

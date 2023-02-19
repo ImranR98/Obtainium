@@ -213,6 +213,9 @@
     "removeFromObtainium": "Rimuovi da Obtainium",
     "uninstallFromDevice": "Disinstalla dal dispositivo",
     "onlyWorksWithNonVersionDetectApps": "Funziona solo per le App con il rilevamento della versione disattivato.",
+    "useReleaseDateAsVersion": "Use Release Date as Version",
+    "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
+    "changes": "Changes",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
         "other": "Rimuovere le App?"

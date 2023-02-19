@@ -264,6 +264,7 @@ class AppsPageState extends State<AppsPage> {
                       sortedApps[index].installedInfo?.name ??
                           sortedApps[index].app.name,
                       style: TextStyle(
+                        overflow: TextOverflow.ellipsis,
                         fontWeight: sortedApps[index].app.pinned
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -289,12 +290,35 @@ class AppsPageState extends State<AppsPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  SizedBox(
-                                      width: 100,
+                                  Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.end,
+                                        )
+                                      ]),
+                                  GestureDetector(
+                                      onTap: changesUrl == null
+                                          ? null
+                                          : () {
+                                              launchUrlString(changesUrl,
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            },
                                       child: Text(
-                                        '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
-                                        overflow: TextOverflow.fade,
-                                        textAlign: TextAlign.end,
+                                        sortedApps[index].app.releaseDate ==
+                                                null
+                                            ? tr('changes')
+                                            : DateFormat('yyyy-MM-dd').format(
+                                                sortedApps[index]
+                                                    .app
+                                                    .releaseDate!),
+                                        style: const TextStyle(
+                                            fontStyle: FontStyle.italic,
+                                            decoration:
+                                                TextDecoration.underline),
                                       )),
                                   sortedApps[index].app.installedVersion !=
                                               null &&
@@ -304,29 +328,47 @@ class AppsPageState extends State<AppsPage> {
                                               sortedApps[index]
                                                   .app
                                                   .latestVersion
-                                      ? GestureDetector(
-                                          onTap: changesUrl == null
-                                              ? null
-                                              : () {
-                                                  launchUrlString(changesUrl,
-                                                      mode: LaunchMode
-                                                          .externalApplication);
-                                                },
-                                          child: appsProvider
-                                                  .areDownloadsRunning()
-                                              ? Text(tr('pleaseWait'))
-                                              : Text(
-                                                  '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBracketsShort')}' : ''}',
-                                                  style: TextStyle(
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      decoration: changesUrl ==
-                                                              null
-                                                          ? TextDecoration.none
-                                                          : TextDecoration
-                                                              .underline),
-                                                ))
-                                      : const SizedBox(),
+                                      ? appsProvider.areDownloadsRunning()
+                                          ? Text(tr('pleaseWait'))
+                                          : Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                GestureDetector(
+                                                    onTap: () {
+                                                      appsProvider
+                                                          .downloadAndInstallLatestApps(
+                                                              [
+                                                            sortedApps[index]
+                                                                .app
+                                                                .id
+                                                          ],
+                                                              globalNavigatorKey
+                                                                  .currentContext).catchError(
+                                                              (e) {
+                                                        showError(e, context);
+                                                      });
+                                                    },
+                                                    child: Text(
+                                                      sortedApps[index]
+                                                                      .app
+                                                                      .additionalSettings[
+                                                                  'trackOnly'] ==
+                                                              true
+                                                          ? tr('markUpdated')
+                                                          : tr('update'),
+                                                      style: TextStyle(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .primary,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    )),
+                                              ],
+                                            )
+                                      : const SizedBox.shrink(),
                                 ],
                               ))),
                     onTap: () {

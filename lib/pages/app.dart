@@ -144,6 +144,13 @@ class _AppPageState extends State<AppPage> {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.labelSmall,
         ),
+        app?.app.releaseDate == null
+            ? const SizedBox.shrink()
+            : Text(
+                app!.app.releaseDate.toString(),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
         const SizedBox(
           height: 32,
         ),
@@ -285,6 +292,37 @@ class _AppPageState extends State<AppPage> {
                                             showError(
                                                 tr('appsFromSourceAreTrackOnly'),
                                                 context);
+                                          }
+                                          if (changedApp.additionalSettings[
+                                                  'releaseDateAsVersion'] ==
+                                              true) {
+                                            changedApp.additionalSettings[
+                                                'noVersionDetection'] = true;
+                                            if (app.app.additionalSettings[
+                                                    'releaseDateAsVersion'] !=
+                                                true) {
+                                              if (app.app.releaseDate != null) {
+                                                changedApp.latestVersion = app
+                                                    .app
+                                                    .releaseDate!
+                                                    .microsecondsSinceEpoch
+                                                    .toString();
+                                                if (app.app.installedVersion ==
+                                                    app.app.latestVersion) {
+                                                  changedApp.installedVersion =
+                                                      changedApp.latestVersion;
+                                                }
+                                              }
+                                            }
+                                          } else if (app.app.additionalSettings[
+                                                  'releaseDateAsVersion'] ==
+                                              true) {
+                                            changedApp.additionalSettings[
+                                                'noVersionDetection'] = false;
+                                            changedApp.installedVersion = app
+                                                    .installedInfo
+                                                    ?.versionName ??
+                                                changedApp.installedVersion;
                                           }
                                           appsProvider.saveApps(
                                               [changedApp]).then((value) {
