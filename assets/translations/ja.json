@@ -213,10 +213,10 @@
     "removeFromObtainium": "Obtainiumから削除する",
     "uninstallFromDevice": "デバイスからアンインストールする",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ動作します。",
-    "useReleaseDateAsVersion": "Use Release Date as Version",
-    "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
-    "changes": "Changes",
-    "releaseDate": "Release Date",
+    "useReleaseDateAsVersion": "リリース日をバージョンとして使用する",
+    "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
+    "changes": "変更点",
+    "releaseDate": "リリース日",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
