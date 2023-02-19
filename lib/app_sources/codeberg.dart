@@ -112,11 +112,15 @@ class Codeberg extends AppSource {
         throw NoReleasesError();
       }
       String? version = targetRelease['tag_name'];
+      DateTime? releaseDate = targetRelease['published_at'] != null
+          ? DateTime.parse(targetRelease['published_at'])
+          : null;
       if (version == null) {
         throw NoVersionError();
       }
       return APKDetails(version, targetRelease['apkUrls'] as List<String>,
-          getAppNames(standardUrl));
+          getAppNames(standardUrl),
+          releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);
     }
