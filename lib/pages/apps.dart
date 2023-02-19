@@ -266,6 +266,7 @@ class AppsPageState extends State<AppsPage> {
                           )
                         : null,
                     title: Text(
+                      maxLines: 1,
                       listedApps[index].installedInfo?.name ??
                           listedApps[index].app.name,
                       style: TextStyle(
@@ -298,11 +299,14 @@ class AppsPageState extends State<AppsPage> {
                                   Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          '${listedApps[index].app.installedVersion ?? tr('notInstalled')}${listedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.end,
-                                        )
+                                        Container(
+                                            constraints: const BoxConstraints(
+                                                maxWidth: 150),
+                                            child: Text(
+                                              '${listedApps[index].app.installedVersion ?? tr('notInstalled')}${listedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.end,
+                                            ))
                                       ]),
                                   GestureDetector(
                                       onTap: changesUrl == null
