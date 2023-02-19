@@ -283,50 +283,53 @@ class _AppPageState extends State<AppPage> {
                                             );
                                           }).then((values) {
                                         if (app != null && values != null) {
-                                          var changedApp = app.app;
-                                          changedApp.additionalSettings =
-                                              values;
+                                          Map<String, dynamic>
+                                              originalSettings =
+                                              app.app.additionalSettings;
+                                          app.app.additionalSettings = values;
                                           if (source.enforceTrackOnly) {
-                                            changedApp.additionalSettings[
+                                            app.app.additionalSettings[
                                                 'trackOnly'] = true;
                                             showError(
                                                 tr('appsFromSourceAreTrackOnly'),
                                                 context);
                                           }
-                                          if (changedApp.additionalSettings[
+                                          if (app.app.additionalSettings[
                                                   'releaseDateAsVersion'] ==
                                               true) {
-                                            changedApp.additionalSettings[
+                                            app.app.additionalSettings[
                                                 'noVersionDetection'] = true;
-                                            if (app.app.additionalSettings[
+                                            if (originalSettings[
                                                     'releaseDateAsVersion'] !=
                                                 true) {
                                               if (app.app.releaseDate != null) {
-                                                changedApp.latestVersion = app
+                                                bool isUpdated =
+                                                    app.app.installedVersion ==
+                                                        app.app.latestVersion;
+                                                app.app.latestVersion = app
                                                     .app
                                                     .releaseDate!
                                                     .microsecondsSinceEpoch
                                                     .toString();
-                                                if (app.app.installedVersion ==
-                                                    app.app.latestVersion) {
-                                                  changedApp.installedVersion =
-                                                      changedApp.latestVersion;
+                                                if (isUpdated) {
+                                                  app.app.installedVersion =
+                                                      app.app.latestVersion;
                                                 }
                                               }
                                             }
-                                          } else if (app.app.additionalSettings[
+                                          } else if (originalSettings[
                                                   'releaseDateAsVersion'] ==
                                               true) {
-                                            changedApp.additionalSettings[
+                                            app.app.additionalSettings[
                                                 'noVersionDetection'] = false;
-                                            changedApp.installedVersion = app
+                                            app.app.installedVersion = app
                                                     .installedInfo
                                                     ?.versionName ??
-                                                changedApp.installedVersion;
+                                                app.app.installedVersion;
                                           }
-                                          appsProvider.saveApps(
-                                              [changedApp]).then((value) {
-                                            getUpdate(changedApp.id);
+                                          appsProvider.saveApps([app.app]).then(
+                                              (value) {
+                                            getUpdate(app.app.id);
                                           });
                                         }
                                       });
