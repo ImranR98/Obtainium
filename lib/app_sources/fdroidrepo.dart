@@ -69,6 +69,8 @@ class FDroidRepo extends AppSource {
           foundApps[0].querySelector('name')?.innerHtml ?? appIdOrName;
       var releases = foundApps[0].querySelectorAll('package');
       String? latestVersion = releases[0].querySelector('version')?.innerHtml;
+      String? added = releases[0].querySelector('added')?.innerHtml;
+      DateTime? releaseDate = added != null ? DateTime.parse(added) : null;
       if (latestVersion == null) {
         throw NoVersionError();
       }
@@ -78,7 +80,8 @@ class FDroidRepo extends AppSource {
               element.querySelector('apkname') != null)
           .map((e) => '$standardUrl/${e.querySelector('apkname')!.innerHtml}')
           .toList();
-      return APKDetails(latestVersion, apkUrls, AppNames(authorName, appName));
+      return APKDetails(latestVersion, apkUrls, AppNames(authorName, appName),
+          releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);
     }

@@ -54,12 +54,12 @@ class AppsPageState extends State<AppsPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    var sortedApps = appsProvider.apps.values.toList();
+    var listedApps = appsProvider.apps.values.toList();
     var currentFilterIsUpdatesOnly =
         filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
 
     selectedApps = selectedApps
-        .where((element) => sortedApps.map((e) => e.app).contains(element))
+        .where((element) => listedApps.map((e) => e.app).contains(element))
         .toSet();
 
     toggleAppSelected(App app) {
@@ -72,7 +72,7 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    sortedApps = sortedApps.where((app) {
+    listedApps = listedApps.where((app) {
       if (app.app.installedVersion == app.app.latestVersion &&
           !(filter.includeUptodate)) {
         return false;
@@ -111,7 +111,7 @@ class AppsPageState extends State<AppsPage> {
       return true;
     }).toList();
 
-    sortedApps.sort((a, b) {
+    listedApps.sort((a, b) {
       var nameA = a.installedInfo?.name ?? a.app.name;
       var nameB = b.installedInfo?.name ?? b.app.name;
       int result = 0;
@@ -119,25 +119,30 @@ class AppsPageState extends State<AppsPage> {
         result = (a.app.author + nameA).compareTo(b.app.author + nameB);
       } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
         result = (nameA + a.app.author).compareTo(nameB + b.app.author);
+      } else if (settingsProvider.sortColumn ==
+          SortColumnSettings.releaseDate) {
+        result = (a.app.releaseDate)?.compareTo(
+                b.app.releaseDate ?? DateTime.fromMicrosecondsSinceEpoch(0)) ??
+            0;
       }
       return result;
     });
 
     if (settingsProvider.sortOrder == SortOrderSettings.descending) {
-      sortedApps = sortedApps.reversed.toList();
+      listedApps = listedApps.reversed.toList();
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where((element) => selectedApps.isEmpty
-            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            ? listedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedApps.map((e) => e.id).contains(element))
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
         .findExistingUpdates(nonInstalledOnly: true)
         .where((element) => selectedApps.isEmpty
-            ? sortedApps.where((a) => a.app.id == element).isNotEmpty
+            ? listedApps.where((a) => a.app.id == element).isNotEmpty
             : selectedApps.map((e) => e.id).contains(element))
         .toList();
 
@@ -159,26 +164,26 @@ class AppsPageState extends State<AppsPage> {
 
     if (settingsProvider.pinUpdates) {
       var temp = [];
-      sortedApps = sortedApps.where((sa) {
+      listedApps = listedApps.where((sa) {
         if (existingUpdates.contains(sa.app.id)) {
           temp.add(sa);
           return false;
         }
         return true;
       }).toList();
-      sortedApps = [...temp, ...sortedApps];
+      listedApps = [...temp, ...listedApps];
     }
 
     var tempPinned = [];
     var tempNotPinned = [];
-    for (var a in sortedApps) {
+    for (var a in listedApps) {
       if (a.app.pinned) {
         tempPinned.add(a);
       } else {
         tempNotPinned.add(a);
       }
     }
-    sortedApps = [...tempPinned, ...tempNotPinned];
+    listedApps = [...tempPinned, ...tempNotPinned];
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -198,7 +203,7 @@ class AppsPageState extends State<AppsPage> {
           },
           child: CustomScrollView(slivers: <Widget>[
             CustomAppBar(title: tr('appsString')),
-            if (appsProvider.loadingApps || sortedApps.isEmpty)
+            if (appsProvider.loadingApps || listedApps.isEmpty)
               SliverFillRemaining(
                   child: Center(
                       child: appsProvider.loadingApps
@@ -225,8 +230,8 @@ class AppsPageState extends State<AppsPage> {
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
               String? changesUrl = SourceProvider()
-                  .getSource(sortedApps[index].app.url)
-                  .changeLogPageFromStandardUrl(sortedApps[index].app.url);
+                  .getSource(listedApps[index].app.url)
+                  .changeLogPageFromStandardUrl(listedApps[index].app.url);
               var transparent = const Color.fromARGB(0, 0, 0, 0).value;
               return Container(
                   decoration: BoxDecoration(
@@ -234,52 +239,53 @@ class AppsPageState extends State<AppsPage> {
                           vertical: BorderSide(
                               width: 4,
                               color: Color(
-                                  sortedApps[index].app.categories.isNotEmpty
+                                  listedApps[index].app.categories.isNotEmpty
                                       ? settingsProvider.categories[
-                                              sortedApps[index]
+                                              listedApps[index]
                                                   .app
                                                   .categories
                                                   .first] ??
                                           transparent
                                       : transparent)))),
                   child: ListTile(
-                    tileColor: sortedApps[index].app.pinned
+                    tileColor: listedApps[index].app.pinned
                         ? Colors.grey.withOpacity(0.1)
                         : Colors.transparent,
                     selectedTileColor: Theme.of(context)
                         .colorScheme
                         .primary
-                        .withOpacity(sortedApps[index].app.pinned ? 0.2 : 0.1),
-                    selected: selectedApps.contains(sortedApps[index].app),
+                        .withOpacity(listedApps[index].app.pinned ? 0.2 : 0.1),
+                    selected: selectedApps.contains(listedApps[index].app),
                     onLongPress: () {
-                      toggleAppSelected(sortedApps[index].app);
+                      toggleAppSelected(listedApps[index].app);
                     },
-                    leading: sortedApps[index].installedInfo != null
+                    leading: listedApps[index].installedInfo != null
                         ? Image.memory(
-                            sortedApps[index].installedInfo!.icon!,
+                            listedApps[index].installedInfo!.icon!,
                             gaplessPlayback: true,
                           )
                         : null,
                     title: Text(
-                      sortedApps[index].installedInfo?.name ??
-                          sortedApps[index].app.name,
+                      listedApps[index].installedInfo?.name ??
+                          listedApps[index].app.name,
                       style: TextStyle(
-                        fontWeight: sortedApps[index].app.pinned
+                        overflow: TextOverflow.ellipsis,
+                        fontWeight: listedApps[index].app.pinned
                             ? FontWeight.bold
                             : FontWeight.normal,
                       ),
                     ),
                     subtitle: Text(
-                        tr('byX', args: [sortedApps[index].app.author]),
+                        tr('byX', args: [listedApps[index].app.author]),
                         style: TextStyle(
-                            fontWeight: sortedApps[index].app.pinned
+                            fontWeight: listedApps[index].app.pinned
                                 ? FontWeight.bold
                                 : FontWeight.normal)),
                     trailing: SingleChildScrollView(
                         reverse: true,
-                        child: sortedApps[index].downloadProgress != null
+                        child: listedApps[index].downloadProgress != null
                             ? Text(tr('percentProgress', args: [
-                                sortedApps[index]
+                                listedApps[index]
                                         .downloadProgress
                                         ?.toInt()
                                         .toString() ??
@@ -289,60 +295,101 @@ class AppsPageState extends State<AppsPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  SizedBox(
-                                      width: 100,
+                                  Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${listedApps[index].app.installedVersion ?? tr('notInstalled')}${listedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.end,
+                                        )
+                                      ]),
+                                  GestureDetector(
+                                      onTap: changesUrl == null
+                                          ? null
+                                          : () {
+                                              launchUrlString(changesUrl,
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            },
                                       child: Text(
-                                        '${sortedApps[index].app.installedVersion ?? tr('notInstalled')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
-                                        overflow: TextOverflow.fade,
-                                        textAlign: TextAlign.end,
+                                        listedApps[index].app.releaseDate ==
+                                                null
+                                            ? tr('changes')
+                                            : DateFormat('yyyy-MM-dd').format(
+                                                listedApps[index]
+                                                    .app
+                                                    .releaseDate!),
+                                        style: const TextStyle(
+                                            fontStyle: FontStyle.italic,
+                                            decoration:
+                                                TextDecoration.underline),
                                       )),
-                                  sortedApps[index].app.installedVersion !=
+                                  listedApps[index].app.installedVersion !=
                                               null &&
-                                          sortedApps[index]
+                                          listedApps[index]
                                                   .app
                                                   .installedVersion !=
-                                              sortedApps[index]
+                                              listedApps[index]
                                                   .app
                                                   .latestVersion
-                                      ? GestureDetector(
-                                          onTap: changesUrl == null
-                                              ? null
-                                              : () {
-                                                  launchUrlString(changesUrl,
-                                                      mode: LaunchMode
-                                                          .externalApplication);
-                                                },
-                                          child: appsProvider
-                                                  .areDownloadsRunning()
-                                              ? Text(tr('pleaseWait'))
-                                              : Text(
-                                                  '${tr('updateAvailable')}${sortedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBracketsShort')}' : ''}',
-                                                  style: TextStyle(
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      decoration: changesUrl ==
-                                                              null
-                                                          ? TextDecoration.none
-                                                          : TextDecoration
-                                                              .underline),
-                                                ))
-                                      : const SizedBox(),
+                                      ? appsProvider.areDownloadsRunning()
+                                          ? Text(tr('pleaseWait'))
+                                          : Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                GestureDetector(
+                                                    onTap: () {
+                                                      appsProvider
+                                                          .downloadAndInstallLatestApps(
+                                                              [
+                                                            listedApps[index]
+                                                                .app
+                                                                .id
+                                                          ],
+                                                              globalNavigatorKey
+                                                                  .currentContext).catchError(
+                                                              (e) {
+                                                        showError(e, context);
+                                                      });
+                                                    },
+                                                    child: Text(
+                                                      listedApps[index]
+                                                                      .app
+                                                                      .additionalSettings[
+                                                                  'trackOnly'] ==
+                                                              true
+                                                          ? tr('markUpdated')
+                                                          : tr('update'),
+                                                      style: TextStyle(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .primary,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    )),
+                                              ],
+                                            )
+                                      : const SizedBox.shrink(),
                                 ],
                               ))),
                     onTap: () {
                       if (selectedApps.isNotEmpty) {
-                        toggleAppSelected(sortedApps[index].app);
+                        toggleAppSelected(listedApps[index].app);
                       } else {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) =>
-                                  AppPage(appId: sortedApps[index].app.id)),
+                                  AppPage(appId: listedApps[index].app.id)),
                         );
                       }
                     },
                   ));
-            }, childCount: sortedApps.length))
+            }, childCount: listedApps.length))
           ])),
       persistentFooterButtons: appsProvider.apps.isEmpty
           ? null
@@ -354,20 +401,20 @@ class AppsPageState extends State<AppsPage> {
                           style: const ButtonStyle(
                               visualDensity: VisualDensity.compact),
                           onPressed: () {
-                            selectThese(sortedApps.map((e) => e.app).toList());
+                            selectThese(listedApps.map((e) => e.app).toList());
                           },
                           icon: Icon(
                             Icons.select_all_outlined,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          label: Text(sortedApps.length.toString()))
+                          label: Text(listedApps.length.toString()))
                       : TextButton.icon(
                           style: const ButtonStyle(
                               visualDensity: VisualDensity.compact),
                           onPressed: () {
                             selectedApps.isEmpty
                                 ? selectThese(
-                                    sortedApps.map((e) => e.app).toList())
+                                    listedApps.map((e) => e.app).toList())
                                 : clearSelected();
                           },
                           icon: Icon(

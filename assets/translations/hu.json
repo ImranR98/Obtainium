@@ -212,6 +212,10 @@
     "removeFromObtainium": "Eltávolítás az Obtainiumból",
     "uninstallFromDevice": "Eltávolítás a készülékről",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verzióérzékelés le van tiltva.",
+    "useReleaseDateAsVersion": "Use Release Date as Version",
+    "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
+    "changes": "Changes",
+    "releaseDate": "Release Date",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

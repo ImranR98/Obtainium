@@ -33,8 +33,9 @@ class APKDetails {
   late String version;
   late List<String> apkUrls;
   late AppNames names;
+  late DateTime? releaseDate;
 
-  APKDetails(this.version, this.apkUrls, this.names);
+  APKDetails(this.version, this.apkUrls, this.names, {this.releaseDate});
 }
 
 class App {
@@ -50,6 +51,7 @@ class App {
   late DateTime? lastUpdateCheck;
   bool pinned = false;
   List<String> categories;
+  late DateTime? releaseDate;
   App(
       this.id,
       this.url,
@@ -62,7 +64,8 @@ class App {
       this.additionalSettings,
       this.lastUpdateCheck,
       this.pinned,
-      {this.categories = const []});
+      {this.categories = const [],
+      this.releaseDate});
 
   @override
   String toString() {
@@ -111,30 +114,34 @@ class App {
       preferredApkIndex = 0;
     }
     return App(
-        json['id'] as String,
-        json['url'] as String,
-        json['author'] as String,
-        json['name'] as String,
-        json['installedVersion'] == null
-            ? null
-            : json['installedVersion'] as String,
-        json['latestVersion'] as String,
-        json['apkUrls'] == null
-            ? []
-            : List<String>.from(jsonDecode(json['apkUrls'])),
-        preferredApkIndex,
-        additionalSettings,
-        json['lastUpdateCheck'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-        json['pinned'] ?? false,
-        categories: json['categories'] != null
-            ? (json['categories'] as List<dynamic>)
-                .map((e) => e.toString())
-                .toList()
-            : json['category'] != null
-                ? [json['category'] as String]
-                : []);
+      json['id'] as String,
+      json['url'] as String,
+      json['author'] as String,
+      json['name'] as String,
+      json['installedVersion'] == null
+          ? null
+          : json['installedVersion'] as String,
+      json['latestVersion'] as String,
+      json['apkUrls'] == null
+          ? []
+          : List<String>.from(jsonDecode(json['apkUrls'])),
+      preferredApkIndex,
+      additionalSettings,
+      json['lastUpdateCheck'] == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+      json['pinned'] ?? false,
+      categories: json['categories'] != null
+          ? (json['categories'] as List<dynamic>)
+              .map((e) => e.toString())
+              .toList()
+          : json['category'] != null
+              ? [json['category'] as String]
+              : [],
+      releaseDate: json['releaseDate'] == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+    );
   }
 
   Map<String, dynamic> toJson() => {
@@ -149,7 +156,8 @@ class App {
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
-        'categories': categories
+        'categories': categories,
+        'releaseDate': releaseDate?.microsecondsSinceEpoch
       };
 }
 
@@ -224,6 +232,10 @@ class AppSource {
         'trackOnly',
         label: tr('trackOnly'),
       )
+    ],
+    [
+      GeneratedFormSwitch('releaseDateAsVersion',
+          label: tr('useReleaseDateAsVersion'))
     ],
     [
       GeneratedFormSwitch('noVersionDetection', label: tr('noVersionDetection'))
@@ -350,33 +362,27 @@ class SourceProvider {
     return false;
   }
 
-  String generateTempID(AppNames names, AppSource source) =>
-      '${names.author.toLowerCase()}_${names.name.toLowerCase()}_${source.host}';
+  String generateTempID(
+          String standardUrl, Map<String, dynamic> additionalSettings) =>
+      (standardUrl + additionalSettings.toString()).hashCode.toString();
 
-  bool isTempId(String id) {
-    List<String> parts = id.split('_');
-    if (parts.length < 3) {
-      return false;
-    }
-    for (int i = 0; i < parts.length - 1; i++) {
-      if (RegExp('.*[A-Z].*').hasMatch(parts[i])) {
-        // TODO: Look into RegEx for non-Latin characters
-        return false;
-      }
-    }
-    return true;
+  bool isTempId(App app) {
+    return app.id == generateTempID(app.url, app.additionalSettings);
   }
 
   Future<App> getApp(
-    AppSource source,
-    String url,
-    Map<String, dynamic> additionalSettings, {
-    App? currentApp,
-    bool trackOnlyOverride = false,
-    noVersionDetectionOverride = false,
-  }) async {
+      AppSource source, String url, Map<String, dynamic> additionalSettings,
+      {App? currentApp,
+      bool trackOnlyOverride = false,
+      bool noVersionDetectionOverride = false,
+      bool releaseDateAsVersionOverride = false}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
+    }
+    if (releaseDateAsVersionOverride) {
+      additionalSettings['releaseDateAsVersion'] = true;
+      noVersionDetectionOverride =
+          true; // Rel. date as version means no ver. det.
     }
     if (noVersionDetectionOverride) {
       additionalSettings['noVersionDetection'] = true;
@@ -385,6 +391,10 @@ class SourceProvider {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
+    if (additionalSettings['releaseDateAsVersion'] == true &&
+        apk.releaseDate != null) {
+      apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
+    }
     if (additionalSettings['apkFilterRegEx'] != null) {
       var reg = RegExp(additionalSettings['apkFilterRegEx']);
       apk.apkUrls =
@@ -400,7 +410,7 @@ class SourceProvider {
         currentApp?.id ??
             source.tryInferringAppId(standardUrl,
                 additionalSettings: additionalSettings) ??
-            generateTempID(apk.names, source),
+            generateTempID(standardUrl, additionalSettings),
         standardUrl,
         apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
         name.trim().isNotEmpty
@@ -413,7 +423,8 @@ class SourceProvider {
         additionalSettings,
         DateTime.now(),
         currentApp?.pinned ?? false,
-        categories: currentApp?.categories ?? const []);
+        categories: currentApp?.categories ?? const [],
+        releaseDate: apk.releaseDate);
   }
 
   // Returns errors in [results, errors] instead of throwing them

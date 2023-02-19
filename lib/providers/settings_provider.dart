@@ -6,7 +6,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/main.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +17,7 @@ enum ThemeSettings { system, light, dark }
 
 enum ColourSettings { basic, materialYou }
 
-enum SortColumnSettings { added, nameAuthor, authorName }
+enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
 enum SortOrderSettings { ascending, descending }
 

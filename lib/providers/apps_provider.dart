@@ -182,7 +182,7 @@ class AppsProvider with ChangeNotifier {
     // The former case should be handled (give the App its real ID), the latter is a security issue
     var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
     if (app.id != newInfo.packageName) {
-      if (apps[app.id] != null && !SourceProvider().isTempId(app.id)) {
+      if (apps[app.id] != null && !SourceProvider().isTempId(app)) {
         throw IDChangedError();
       }
       var originalAppId = app.id;
