@@ -101,6 +101,10 @@ class _SettingsPageState extends State<SettingsPage> {
           DropdownMenuItem(
             value: SortColumnSettings.added,
             child: Text(tr('asAdded')),
+          ),
+          DropdownMenuItem(
+            value: SortColumnSettings.releaseDate,
+            child: Text(tr('releaseDate')),
           )
         ],
         onChanged: (value) {
