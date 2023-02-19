@@ -121,8 +121,8 @@ class AppsPageState extends State<AppsPage> {
         result = (nameA + a.app.author).compareTo(nameB + b.app.author);
       } else if (settingsProvider.sortColumn ==
           SortColumnSettings.releaseDate) {
-        result = (a.app.releaseDate)
-                ?.compareTo(b.app.releaseDate ?? DateTime.now()) ??
+        result = (a.app.releaseDate)?.compareTo(
+                b.app.releaseDate ?? DateTime.fromMicrosecondsSinceEpoch(0)) ??
             0;
       }
       return result;
