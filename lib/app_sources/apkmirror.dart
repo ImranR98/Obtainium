@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -9,6 +11,23 @@ class APKMirror extends AppSource {
   APKMirror() {
     host = 'apkmirror.com';
     enforceTrackOnly = true;
+
+    additionalSourceAppSpecificSettingFormItems = [
+      [
+        GeneratedFormSwitch('fallbackToOlderReleases',
+            label: tr('fallbackToOlderReleases'), defaultValue: true)
+      ],
+      [
+        GeneratedFormTextField('filterReleaseTitlesByRegEx',
+            label: tr('filterReleaseTitlesByRegEx'),
+            required: false,
+            additionalValidators: [
+              (value) {
+                return regExValidator(value);
+              }
+            ])
+      ]
+    ];
   }
 
   @override
@@ -30,11 +49,31 @@ class APKMirror extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+    bool fallbackToOlderReleases =
+        additionalSettings['fallbackToOlderReleases'] == true;
+    String? regexFilter =
+        (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
+                    ?.isNotEmpty ==
+                true
+            ? additionalSettings['filterReleaseTitlesByRegEx']
+            : null;
     Response res = await get(Uri.parse('$standardUrl/feed'));
     if (res.statusCode == 200) {
-      var item = parse(res.body).querySelector('item');
-      String? titleString = item?.querySelector('title')?.innerHtml;
-      String? dateString = item
+      var items = parse(res.body).querySelectorAll('item');
+      dynamic targetRelease;
+      for (int i = 0; i < items.length; i++) {
+        if (!fallbackToOlderReleases && i > 0) break;
+        String? nameToFilter = items[i].querySelector('title')?.innerHtml;
+        if (regexFilter != null &&
+            nameToFilter != null &&
+            !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
+          continue;
+        }
+        targetRelease = items[i];
+        break;
+      }
+      String? titleString = targetRelease?.querySelector('title')?.innerHtml;
+      String? dateString = targetRelease
           ?.querySelector('pubDate')
           ?.innerHtml
           .split(' ')
