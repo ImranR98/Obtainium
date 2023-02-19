@@ -54,10 +54,14 @@ class GitLab extends AppSource {
       var entryId = entry?.querySelector('id')?.innerHtml;
       var version =
           entryId == null ? null : Uri.parse(entryId).pathSegments.last;
+      var releaseDateString = entry?.querySelector('updated')?.innerHtml;
+      DateTime? releaseDate =
+          releaseDateString != null ? DateTime.parse(releaseDateString) : null;
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrls, GitHub().getAppNames(standardUrl));
+      return APKDetails(version, apkUrls, GitHub().getAppNames(standardUrl),
+          releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);
     }
