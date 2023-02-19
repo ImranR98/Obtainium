@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -30,10 +32,16 @@ class APKMirror extends AppSource {
   ) async {
     Response res = await get(Uri.parse('$standardUrl/feed'));
     if (res.statusCode == 200) {
-      String? titleString = parse(res.body)
-          .querySelector('item')
-          ?.querySelector('title')
-          ?.innerHtml;
+      var item = parse(res.body).querySelector('item');
+      String? titleString = item?.querySelector('title')?.innerHtml;
+      String? dateString = item
+          ?.querySelector('pubDate')
+          ?.innerHtml
+          .split(' ')
+          .sublist(0, 5)
+          .join(' ');
+      DateTime? releaseDate =
+          dateString != null ? HttpDate.parse('$dateString GMT') : null;
       String? version = titleString
           ?.substring(RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
               RegExp(' by ').firstMatch(titleString)?.start ?? 0)
@@ -44,7 +52,8 @@ class APKMirror extends AppSource {
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
-      return APKDetails(version, [], getAppNames(standardUrl));
+      return APKDetails(version, [], getAppNames(standardUrl),
+          releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);
     }
