@@ -367,7 +367,8 @@ class SourceProvider {
       (standardUrl + additionalSettings.toString()).hashCode.toString();
 
   bool isTempId(App app) {
-    return app.id == generateTempID(app.url, app.additionalSettings);
+    // return app.id == generateTempID(app.url, app.additionalSettings);
+    return RegExp('^[0-9]+\$').hasMatch(app.id);
   }
 
   Future<App> getApp(
