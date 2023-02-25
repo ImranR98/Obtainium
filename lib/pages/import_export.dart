@@ -41,6 +41,66 @@ class _ImportExportPageState extends State<ImportExportPage> {
       ),
     );
 
+    urlListImport({String? initValue, bool overrideInitValid = false}) {
+      showDialog<Map<String, dynamic>?>(
+          context: context,
+          builder: (BuildContext ctx) {
+            return GeneratedFormModal(
+              initValid: overrideInitValid,
+              title: tr('importFromURLList'),
+              items: [
+                [
+                  GeneratedFormTextField('appURLList',
+                      defaultValue: initValue ?? '',
+                      label: tr('appURLList'),
+                      max: 7,
+                      additionalValidators: [
+                        (dynamic value) {
+                          if (value != null && value.isNotEmpty) {
+                            var lines = value.trim().split('\n');
+                            for (int i = 0; i < lines.length; i++) {
+                              try {
+                                sourceProvider.getSource(lines[i]);
+                              } catch (e) {
+                                return '${tr('line')} ${i + 1}: $e';
+                              }
+                            }
+                          }
+                          return null;
+                        }
+                      ])
+                ]
+              ],
+            );
+          }).then((values) {
+        if (values != null) {
+          var urls = (values['appURLList'] as String).split('\n');
+          setState(() {
+            importInProgress = true;
+          });
+          appsProvider.addAppsByURL(urls).then((errors) {
+            if (errors.isEmpty) {
+              showError(tr('importedX', args: [plural('apps', urls.length)]),
+                  context);
+            } else {
+              showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return ImportErrorDialog(
+                        urlsLength: urls.length, errors: errors);
+                  });
+            }
+          }).catchError((e) {
+            showError(e, context);
+          }).whenComplete(() {
+            setState(() {
+              importInProgress = false;
+            });
+          });
+        }
+      });
+    }
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -150,88 +210,60 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           ],
                         )
                       else
-                        const Divider(
-                          height: 32,
-                        ),
-                      TextButton(
-                          onPressed: importInProgress
-                              ? null
-                              : () {
-                                  showDialog<Map<String, dynamic>?>(
-                                      context: context,
-                                      builder: (BuildContext ctx) {
-                                        return GeneratedFormModal(
-                                          title: tr('importFromURLList'),
-                                          items: [
-                                            [
-                                              GeneratedFormTextField(
-                                                  'appURLList',
-                                                  label: tr('appURLList'),
-                                                  max: 7,
-                                                  additionalValidators: [
-                                                    (dynamic value) {
-                                                      if (value != null &&
-                                                          value.isNotEmpty) {
-                                                        var lines = value
-                                                            .trim()
-                                                            .split('\n');
-                                                        for (int i = 0;
-                                                            i < lines.length;
-                                                            i++) {
-                                                          try {
-                                                            sourceProvider
-                                                                .getSource(
-                                                                    lines[i]);
-                                                          } catch (e) {
-                                                            return '${tr('line')} ${i + 1}: $e';
-                                                          }
-                                                        }
-                                                      }
-                                                      return null;
-                                                    }
-                                                  ])
-                                            ]
-                                          ],
-                                        );
-                                      }).then((values) {
-                                    if (values != null) {
-                                      var urls =
-                                          (values['appURLList'] as String)
-                                              .split('\n');
-                                      setState(() {
-                                        importInProgress = true;
-                                      });
-                                      appsProvider
-                                          .addAppsByURL(urls)
-                                          .then((errors) {
-                                        if (errors.isEmpty) {
-                                          showError(
-                                              tr('importedX', args: [
-                                                plural('apps', urls.length)
-                                              ]),
-                                              context);
-                                        } else {
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return ImportErrorDialog(
-                                                    urlsLength: urls.length,
-                                                    errors: errors);
-                                              });
-                                        }
-                                      }).catchError((e) {
-                                        showError(e, context);
-                                      }).whenComplete(() {
-                                        setState(() {
-                                          importInProgress = false;
+                        Column(
+                          children: [
+                            const Divider(
+                              height: 32,
+                            ),
+                            TextButton(
+                                onPressed: importInProgress
+                                    ? null
+                                    : () {
+                                        urlListImport();
+                                      },
+                                child: Text(
+                                  tr('importFromURLList'),
+                                )),
+                            const SizedBox(height: 8),
+                            TextButton(
+                                onPressed: importInProgress
+                                    ? null
+                                    : () {
+                                        FilePicker.platform
+                                            .pickFiles()
+                                            .then((result) {
+                                          if (result != null) {
+                                            urlListImport(
+                                                overrideInitValid: true,
+                                                initValue:
+                                                    RegExp('https?://[^"]+')
+                                                        .allMatches(File(result
+                                                                .files
+                                                                .single
+                                                                .path!)
+                                                            .readAsStringSync())
+                                                        .map((e) =>
+                                                            e.input.substring(
+                                                                e.start, e.end))
+                                                        .toSet()
+                                                        .toList()
+                                                        .where((url) {
+                                                  try {
+                                                    sourceProvider
+                                                        .getSource(url);
+                                                    return true;
+                                                  } catch (e) {
+                                                    return false;
+                                                  }
+                                                }).join('\n'));
+                                          }
                                         });
-                                      });
-                                    }
-                                  });
-                                },
-                          child: Text(
-                            tr('importFromURLList'),
-                          )),
+                                      },
+                                child: Text(
+                                  tr('importFromURLsInFile'),
+                                )),
+                          ],
+                        ),
                       ...sourceProvider.sources
                           .where((element) => element.canSearch)
                           .map((source) => Column(
@@ -280,6 +312,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                     if (urlsWithDescriptions
                                                         .isNotEmpty) {
                                                       var selectedUrls =
+                                                          // ignore: use_build_context_synchronously
                                                           await showDialog<
                                                                   List<
                                                                       String>?>(
@@ -314,6 +347,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                   ]),
                                                               context);
                                                         } else {
+                                                          // ignore: use_build_context_synchronously
                                                           showDialog(
                                                               context: context,
                                                               builder:
@@ -391,6 +425,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                         e.toString())
                                                                     .toList());
                                                     var selectedUrls =
+                                                        // ignore: use_build_context_synchronously
                                                         await showDialog<
                                                                 List<String>?>(
                                                             context: context,
@@ -418,6 +453,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                 ]),
                                                             context);
                                                       } else {
+                                                        // ignore: use_build_context_synchronously
                                                         showDialog(
                                                             context: context,
                                                             builder:

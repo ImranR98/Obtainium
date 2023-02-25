@@ -217,6 +217,7 @@
     "releaseDateAsVersionExplanation": "Questa opzione dovrebbe essere usata solo per le App in cui il rilevamento della versione non funziona correttamente, ma è disponibile una data di rilascio.",
     "changes": "Novità",
     "releaseDate": "Data di rilascio",
+    "importFromURLsInFile": "Import from URLs in File (like OPML)",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
         "other": "Rimuovere le App?"

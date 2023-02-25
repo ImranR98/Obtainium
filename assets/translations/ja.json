@@ -217,6 +217,7 @@
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
     "changes": "変更点",
     "releaseDate": "リリース日",
+    "importFromURLsInFile": "Import from URLs in File (like OPML)",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

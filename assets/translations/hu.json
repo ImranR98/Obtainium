@@ -216,6 +216,7 @@
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verzió érzékelése nem működik megfelelően, de elérhető a kiadás dátuma.",
     "changes": "Változtatások",
     "releaseDate": "Kiadás dátuma",
+    "importFromURLsInFile": "Import from URLs in File (like OPML)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
