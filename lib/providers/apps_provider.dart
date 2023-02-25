@@ -467,8 +467,8 @@ class AppsProvider with ChangeNotifier {
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
-    var noVersionDetection =
-        app.additionalSettings['noVersionDetection'] == true;
+    var noVersionDetection = app.additionalSettings['versionDetection'] !=
+        'standardVersionDetection';
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       app.installedVersion = null;
       modded = true;

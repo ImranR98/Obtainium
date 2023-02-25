@@ -213,10 +213,13 @@
     "removeFromObtainium": "از Obtainium حذف کنید",
     "uninstallFromDevice": "حذف نصب از دستگاه",
     "onlyWorksWithNonVersionDetectApps": "فقط برای برنامه‌هایی کار می‌کند که تشخیص نسخه غیرفعال است.",
-    "useReleaseDateAsVersion": "Use Release Date as Version",
+    "releaseDateAsVersion": "Use Release Date as Version",
     "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
     "changes": "Changes",
     "releaseDate": "Release Date",
+    "importFromURLsInFile": "Import from URLs in File (like OPML)",
+    "versionDetection": "Version Detection",
+    "standardVersionDetection": "Standard version detection",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

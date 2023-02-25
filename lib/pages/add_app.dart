@@ -71,10 +71,6 @@ class _AddAppPageState extends State<AddAppPage> {
       var settingsProvider = context.read<SettingsProvider>();
       () async {
         var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
-        var userPickedNoVersionDetection =
-            additionalSettings['noVersionDetection'] == true;
-        var userPickedReleaseDateAsVersion =
-            additionalSettings['releaseDateAsVersion'] == true;
         var cont = true;
         if ((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
             // ignore: use_build_context_synchronously
@@ -95,13 +91,13 @@ class _AddAppPageState extends State<AddAppPage> {
                 null) {
           cont = false;
         }
-        if (userPickedReleaseDateAsVersion && // ignore: use_build_context_synchronously
+        if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
             // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
                     builder: (BuildContext ctx) {
                       return GeneratedFormModal(
-                        title: tr('useReleaseDateAsVersion'),
+                        title: tr('releaseDateAsVersion'),
                         items: const [],
                         message: tr('releaseDateAsVersionExplanation'),
                       );
@@ -109,8 +105,7 @@ class _AddAppPageState extends State<AddAppPage> {
                 null) {
           cont = false;
         }
-        if (!userPickedReleaseDateAsVersion &&
-            userPickedNoVersionDetection &&
+        if (additionalSettings['versionDetection'] == 'noVersionDetection' &&
             // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
@@ -129,9 +124,7 @@ class _AddAppPageState extends State<AddAppPage> {
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           App app = await sourceProvider.getApp(
               pickedSource!, userInput, additionalSettings,
-              trackOnlyOverride: trackOnly,
-              noVersionDetectionOverride: userPickedNoVersionDetection,
-              releaseDateAsVersionOverride: userPickedReleaseDateAsVersion);
+              trackOnlyOverride: trackOnly);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }

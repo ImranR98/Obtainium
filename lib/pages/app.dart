@@ -42,8 +42,6 @@ class _AppPageState extends State<AppPage> {
       getUpdate(app.app.id);
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
-    var noVersionDetection =
-        app?.app.additionalSettings['noVersionDetection'] == true;
 
     var infoColumn = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -207,7 +205,8 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (noVersionDetection &&
+                        if (app?.app.additionalSettings['versionDetection'] !=
+                                'standardVersionDetection' &&
                             !trackOnly &&
                             app?.app.installedVersion != null &&
                             app?.app.installedVersion != app?.app.latestVersion)
@@ -295,13 +294,11 @@ class _AppPageState extends State<AppPage> {
                                                 context);
                                           }
                                           if (app.app.additionalSettings[
-                                                  'releaseDateAsVersion'] ==
-                                              true) {
-                                            app.app.additionalSettings[
-                                                'noVersionDetection'] = true;
+                                                  'versionDetection'] ==
+                                              'releaseDateAsVersion') {
                                             if (originalSettings[
-                                                    'releaseDateAsVersion'] !=
-                                                true) {
+                                                    'versionDetection'] !=
+                                                'releaseDateAsVersion') {
                                               if (app.app.releaseDate != null) {
                                                 bool isUpdated =
                                                     app.app.installedVersion ==
@@ -318,10 +315,8 @@ class _AppPageState extends State<AppPage> {
                                               }
                                             }
                                           } else if (originalSettings[
-                                                  'releaseDateAsVersion'] ==
-                                              true) {
-                                            app.app.additionalSettings[
-                                                'noVersionDetection'] = false;
+                                                  'versionDetection'] ==
+                                              'releaseDateAsVersion') {
                                             app.app.installedVersion = app
                                                     .installedInfo
                                                     ?.versionName ??

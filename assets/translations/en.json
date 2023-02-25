@@ -213,10 +213,13 @@
     "removeFromObtainium": "Remove from Obtainium",
     "uninstallFromDevice": "Uninstall from Device",
     "onlyWorksWithNonVersionDetectApps": "Only works for Apps with version detection disabled.",
-    "useReleaseDateAsVersion": "Use Release Date as Version",
+    "releaseDateAsVersion": "Use Release Date as Version",
     "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
     "changes": "Changes",
     "releaseDate": "Release Date",
+    "importFromURLsInFile": "Import from URLs in File (like OPML)",
+    "versionDetection": "Version Detection",
+    "standardVersionDetection": "Standard version detection",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

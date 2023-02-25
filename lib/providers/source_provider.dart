@@ -100,6 +100,20 @@ class App {
       additionalSettings['noVersionDetection'] =
           json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
     }
+    // Convert bool style version detection options to dropdown style
+    if (additionalSettings['noVersionDetection'] == true) {
+      additionalSettings['versionDetection'] = 'noVersionDetection';
+    }
+    if (additionalSettings['releaseDateAsVersion'] == true) {
+      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+      additionalSettings.remove('releaseDateAsVersion');
+    }
+    if (additionalSettings['noVersionDetection'] != null) {
+      additionalSettings.remove('noVersionDetection');
+    }
+    if (additionalSettings['releaseDateAsVersion'] != null) {
+      additionalSettings.remove('releaseDateAsVersion');
+    }
     // Ensure additionalSettings are correctly typed
     for (var item in formItems) {
       if (additionalSettings[item.key] != null) {
@@ -234,11 +248,16 @@ class AppSource {
       )
     ],
     [
-      GeneratedFormSwitch('releaseDateAsVersion',
-          label: tr('useReleaseDateAsVersion'))
-    ],
-    [
-      GeneratedFormSwitch('noVersionDetection', label: tr('noVersionDetection'))
+      GeneratedFormDropdown(
+          'versionDetection',
+          [
+            MapEntry(
+                'standardVersionDetection', tr('standardVersionDetection')),
+            MapEntry('releaseDateAsVersion', tr('releaseDateAsVersion')),
+            MapEntry('noVersionDetection', tr('noVersionDetection'))
+          ],
+          label: tr('versionDetection'),
+          defaultValue: 'standardVersionDetection')
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -373,26 +392,15 @@ class SourceProvider {
 
   Future<App> getApp(
       AppSource source, String url, Map<String, dynamic> additionalSettings,
-      {App? currentApp,
-      bool trackOnlyOverride = false,
-      bool noVersionDetectionOverride = false,
-      bool releaseDateAsVersionOverride = false}) async {
+      {App? currentApp, bool trackOnlyOverride = false}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
-    }
-    if (releaseDateAsVersionOverride) {
-      additionalSettings['releaseDateAsVersion'] = true;
-      noVersionDetectionOverride =
-          true; // Rel. date as version means no ver. det.
-    }
-    if (noVersionDetectionOverride) {
-      additionalSettings['noVersionDetection'] = true;
     }
     var trackOnly = additionalSettings['trackOnly'] == true;
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
-    if (additionalSettings['releaseDateAsVersion'] == true &&
+    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
     }
