@@ -107,7 +107,7 @@
     "line": "行",
     "searchX": "{}で検索",
     "noResults": "結果は見つかりませんでした",
-    "importX": "{}をインポートする",
+    "importX": "{}をインポート",
     "importedAppsIdDisclaimer": "インポートしたアプリが「未インストール」と表示されることがあります。\nこれを解決するには、Obtainiumから再インストールしてください。\nアプリのデータには影響しません。\n\nURLとサードパーティのインポートメソッドにのみ影響します。",
     "importErrors": "インポートエラー",
     "importedXOfYApps": "{} / {} アプリをインポートしました",
@@ -217,9 +217,9 @@
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
     "changes": "変更点",
     "releaseDate": "リリース日",
-    "importFromURLsInFile": "Import from URLs in File (like OPML)",
-    "versionDetection": "Version Detection",
-    "standardVersionDetection": "Standard version detection",
+    "importFromURLsInFile": "ファイル（OPMLなど）内のURLからインポート",
+    "versionDetection": "バージョン検出",
+    "standardVersionDetection": "標準のバージョン検出",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
