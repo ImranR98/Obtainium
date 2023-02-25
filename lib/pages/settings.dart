@@ -87,6 +87,7 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sortDropdown = DropdownButtonFormField(
+        isExpanded: true,
         decoration: InputDecoration(labelText: tr('appSortBy')),
         value: settingsProvider.sortColumn,
         items: [
@@ -114,6 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var orderDropdown = DropdownButtonFormField(
+        isExpanded: true,
         decoration: InputDecoration(labelText: tr('appSortOrder')),
         value: settingsProvider.sortOrder,
         items: [
