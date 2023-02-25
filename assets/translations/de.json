@@ -209,7 +209,7 @@
     "language": "Sprache",
     "storagePermissionDenied": "Speicherberechtigung verweigert",
     "selectedCategorizeWarning": "Dadurch werden alle bestehenden Kategorieeinstellungen für die ausgewählten Apps ersetzt.",
-    "filterAPKsByRegEx": "APKs mit regulärem Ausdruck (RegEx) filtern",
+    "filterAPKsByRegEx": "APKs nach regulärem Ausdruck filtern",
     "removeFromObtainium": "Aus Obtainium entfernen",
     "uninstallFromDevice": "Vom Gerät deinstallieren",
     "onlyWorksWithNonVersionDetectApps": "Funktioniert nur bei Apps mit deaktivierter Versionserkennung.",
