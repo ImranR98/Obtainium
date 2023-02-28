@@ -152,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           if (value != null) {
             context.setLocale(Locale(value));
           } else {
-            context.resetLocale();
+            settingsProvider.resetLocaleSafe(context);
           }
         });
 
