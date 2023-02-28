@@ -178,4 +178,15 @@ class SettingsProvider with ChangeNotifier {
 
   bool setEqual(Set<String> a, Set<String> b) =>
       a.length == b.length && a.union(b).length == a.length;
+
+  void resetLocaleSafe(BuildContext context) {
+    if (context.supportedLocales
+        .map((e) => e.languageCode)
+        .contains(context.deviceLocale.languageCode)) {
+      context.resetLocale();
+    } else {
+      context.setLocale(context.fallbackLocale!);
+      context.deleteSaveLocale();
+    }
+  }
 }
