@@ -233,6 +233,31 @@ class AppsPageState extends State<AppsPage> {
                   .getSource(listedApps[index].app.url)
                   .changeLogPageFromStandardUrl(listedApps[index].app.url);
               var transparent = const Color.fromARGB(0, 0, 0, 0).value;
+              var hasUpdate = listedApps[index].app.installedVersion != null &&
+                  listedApps[index].app.installedVersion !=
+                      listedApps[index].app.latestVersion;
+              var updateButton = IconButton(
+                  visualDensity: VisualDensity.compact,
+                  color: Theme.of(context).colorScheme.primary,
+                  tooltip:
+                      listedApps[index].app.additionalSettings['trackOnly'] ==
+                              true
+                          ? tr('markUpdated')
+                          : tr('update'),
+                  onPressed: appsProvider.areDownloadsRunning()
+                      ? null
+                      : () {
+                          appsProvider.downloadAndInstallLatestApps([
+                            listedApps[index].app.id
+                          ], globalNavigatorKey.currentContext).catchError((e) {
+                            showError(e, context);
+                          });
+                        },
+                  icon: Icon(
+                      listedApps[index].app.additionalSettings['trackOnly'] ==
+                              true
+                          ? Icons.check_circle_outline
+                          : Icons.install_mobile));
               return Container(
                   decoration: BoxDecoration(
                       border: Border.symmetric(
@@ -293,21 +318,33 @@ class AppsPageState extends State<AppsPage> {
                     ),
                     subtitle: Text(
                         tr('byX', args: [listedApps[index].app.author]),
+                        maxLines: 1,
                         style: TextStyle(
+                            overflow: TextOverflow.ellipsis,
                             fontWeight: listedApps[index].app.pinned
                                 ? FontWeight.bold
                                 : FontWeight.normal)),
-                    trailing: SingleChildScrollView(
-                        reverse: true,
-                        child: listedApps[index].downloadProgress != null
-                            ? Text(tr('percentProgress', args: [
-                                listedApps[index]
-                                        .downloadProgress
-                                        ?.toInt()
-                                        .toString() ??
-                                    '100'
-                              ]))
-                            : (Column(
+                    trailing: listedApps[index].downloadProgress != null
+                        ? Text(tr('percentProgress', args: [
+                            listedApps[index]
+                                    .downloadProgress
+                                    ?.toInt()
+                                    .toString() ??
+                                '100'
+                          ]))
+                        : (Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              hasUpdate
+                                  ? updateButton
+                                  : const SizedBox.shrink(),
+                              hasUpdate
+                                  ? const SizedBox(
+                                      width: 10,
+                                    )
+                                  : const SizedBox.shrink(),
+                              Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
@@ -321,80 +358,38 @@ class AppsPageState extends State<AppsPage> {
                                               '${listedApps[index].app.installedVersion ?? tr('notInstalled')}${listedApps[index].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}',
                                               overflow: TextOverflow.ellipsis,
                                               textAlign: TextAlign.end,
-                                            ))
+                                            )),
                                       ]),
-                                  GestureDetector(
-                                      onTap: changesUrl == null
-                                          ? null
-                                          : () {
-                                              launchUrlString(changesUrl,
-                                                  mode: LaunchMode
-                                                      .externalApplication);
-                                            },
-                                      child: Text(
-                                        listedApps[index].app.releaseDate ==
-                                                null
-                                            ? tr('changes')
-                                            : DateFormat('yyyy-MM-dd').format(
-                                                listedApps[index]
-                                                    .app
-                                                    .releaseDate!),
-                                        style: const TextStyle(
-                                            fontStyle: FontStyle.italic,
-                                            decoration:
-                                                TextDecoration.underline),
-                                      )),
-                                  listedApps[index].app.installedVersion !=
-                                              null &&
-                                          listedApps[index]
-                                                  .app
-                                                  .installedVersion !=
-                                              listedApps[index]
-                                                  .app
-                                                  .latestVersion
-                                      ? appsProvider.areDownloadsRunning()
-                                          ? Text(tr('pleaseWait'))
-                                          : Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                GestureDetector(
-                                                    onTap: () {
-                                                      appsProvider
-                                                          .downloadAndInstallLatestApps(
-                                                              [
-                                                            listedApps[index]
-                                                                .app
-                                                                .id
-                                                          ],
-                                                              globalNavigatorKey
-                                                                  .currentContext).catchError(
-                                                              (e) {
-                                                        showError(e, context);
-                                                      });
-                                                    },
-                                                    child: Text(
-                                                      listedApps[index]
-                                                                      .app
-                                                                      .additionalSettings[
-                                                                  'trackOnly'] ==
-                                                              true
-                                                          ? tr('markUpdated')
-                                                          : tr('update'),
-                                                      style: TextStyle(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .primary,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    )),
-                                              ],
-                                            )
-                                      : const SizedBox.shrink(),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                          onTap: changesUrl == null
+                                              ? null
+                                              : () {
+                                                  launchUrlString(changesUrl,
+                                                      mode: LaunchMode
+                                                          .externalApplication);
+                                                },
+                                          child: Text(
+                                            listedApps[index].app.releaseDate ==
+                                                    null
+                                                ? tr('changes')
+                                                : DateFormat('yyyy-MM-dd')
+                                                    .format(listedApps[index]
+                                                        .app
+                                                        .releaseDate!),
+                                            style: const TextStyle(
+                                                fontStyle: FontStyle.italic,
+                                                decoration:
+                                                    TextDecoration.underline),
+                                          ))
+                                    ],
+                                  ),
                                 ],
-                              ))),
+                              )
+                            ],
+                          )),
                     onTap: () {
                       if (selectedApps.isNotEmpty) {
                         toggleAppSelected(listedApps[index].app);
