@@ -264,7 +264,22 @@ class AppsPageState extends State<AppsPage> {
                             listedApps[index].installedInfo!.icon!,
                             gaplessPlayback: true,
                           )
-                        : null,
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                                Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.rotationZ(0.31),
+                                  child: Image(
+                                    image: const AssetImage(
+                                        'assets/graphics/icon.png'),
+                                    color: Colors.white.withOpacity(0.1),
+                                    colorBlendMode: BlendMode.modulate,
+                                    gaplessPlayback: true,
+                                  ),
+                                ),
+                              ]),
                     title: Text(
                       maxLines: 1,
                       listedApps[index].installedInfo?.name ??
