@@ -1,5 +1,5 @@
 {
-    "invalidURLForSource": "Not a valid {} App URL",
+    "invalidURLForSource": "URL d'application {} invalide",
     "noReleaseFound": "Impossible de trouver une version appropriée",
     "noVersionFound": "Impossible de déterminer la version de la version",
     "urlMatchesNoSource": "L'URL ne correspond pas à une source connue",
