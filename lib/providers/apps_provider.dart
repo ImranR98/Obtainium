@@ -145,6 +145,10 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<DownloadedApk> downloadApp(App app, BuildContext? context) async {
+    if (apps[app.id] != null) {
+      apps[app.id]!.downloadProgress = 0;
+      notifyListeners();
+    }
     var fileName =
         '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
     String downloadUrl = await SourceProvider()
