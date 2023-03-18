@@ -149,56 +149,63 @@ class AppsProvider with ChangeNotifier {
       apps[app.id]!.downloadProgress = 0;
       notifyListeners();
     }
-    var fileName =
-        '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
-    String downloadUrl = await SourceProvider()
-        .getSource(app.url)
-        .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
-    NotificationsProvider? notificationsProvider =
-        context?.read<NotificationsProvider>();
-    var notif = DownloadNotification(app.name, 100);
-    notificationsProvider?.cancel(notif.id);
-    int? prevProg;
-    File downloadedFile =
-        await downloadFile(downloadUrl, fileName, (double? progress) {
-      int? prog = progress?.ceil();
+    try {
+      var fileName =
+          '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
+      String downloadUrl = await SourceProvider()
+          .getSource(app.url)
+          .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
+      NotificationsProvider? notificationsProvider =
+          context?.read<NotificationsProvider>();
+      var notif = DownloadNotification(app.name, 100);
+      notificationsProvider?.cancel(notif.id);
+      int? prevProg;
+      File downloadedFile =
+          await downloadFile(downloadUrl, fileName, (double? progress) {
+        int? prog = progress?.ceil();
+        if (apps[app.id] != null) {
+          apps[app.id]!.downloadProgress = progress;
+          notifyListeners();
+        }
+        notif = DownloadNotification(app.name, prog ?? 100);
+        if (prog != null && prevProg != prog) {
+          notificationsProvider?.notify(notif);
+        }
+        prevProg = prog;
+      });
+      notificationsProvider?.cancel(notif.id);
+      // Delete older versions of the APK if any
+      for (var file in downloadedFile.parent.listSync()) {
+        var fn = file.path.split('/').last;
+        if (fn.startsWith('${app.id}-') &&
+            fn.endsWith('.apk') &&
+            fn != fileName) {
+          file.delete();
+        }
+      }
+      // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
+      // The former case should be handled (give the App its real ID), the latter is a security issue
+      var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
+      if (app.id != newInfo.packageName) {
+        if (apps[app.id] != null && !SourceProvider().isTempId(app)) {
+          throw IDChangedError();
+        }
+        var originalAppId = app.id;
+        app.id = newInfo.packageName;
+        downloadedFile = downloadedFile.renameSync(
+            '${downloadedFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
+        if (apps[originalAppId] != null) {
+          await removeApps([originalAppId]);
+          await saveApps([app]);
+        }
+      }
+      return DownloadedApk(app.id, downloadedFile);
+    } finally {
       if (apps[app.id] != null) {
-        apps[app.id]!.downloadProgress = progress;
+        apps[app.id]!.downloadProgress = null;
         notifyListeners();
       }
-      notif = DownloadNotification(app.name, prog ?? 100);
-      if (prog != null && prevProg != prog) {
-        notificationsProvider?.notify(notif);
-      }
-      prevProg = prog;
-    });
-    notificationsProvider?.cancel(notif.id);
-    // Delete older versions of the APK if any
-    for (var file in downloadedFile.parent.listSync()) {
-      var fn = file.path.split('/').last;
-      if (fn.startsWith('${app.id}-') &&
-          fn.endsWith('.apk') &&
-          fn != fileName) {
-        file.delete();
-      }
     }
-    // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
-    // The former case should be handled (give the App its real ID), the latter is a security issue
-    var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
-    if (app.id != newInfo.packageName) {
-      if (apps[app.id] != null && !SourceProvider().isTempId(app)) {
-        throw IDChangedError();
-      }
-      var originalAppId = app.id;
-      app.id = newInfo.packageName;
-      downloadedFile = downloadedFile.renameSync(
-          '${downloadedFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
-      if (apps[originalAppId] != null) {
-        await removeApps([originalAppId]);
-        await saveApps([app]);
-      }
-    }
-    return DownloadedApk(app.id, downloadedFile);
   }
 
   bool areDownloadsRunning() => apps.values
