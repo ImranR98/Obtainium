@@ -460,10 +460,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
       if (rowInputs.key > 0) {
         rows.add([
           SizedBox(
-            height: widget.items[rowInputs.key][0] is GeneratedFormSwitch &&
-                    widget.items[rowInputs.key - 1][0] is! GeneratedFormSwitch
-                ? 25
-                : 8,
+            height: widget.items[rowInputs.key - 1][0] is GeneratedFormSwitch
+                ? 8
+                : 25,
           )
         ]);
       }
