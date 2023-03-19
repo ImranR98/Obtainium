@@ -15,6 +15,7 @@ import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
+import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
@@ -338,6 +339,7 @@ class SourceProvider {
     APKMirror(),
     FDroidRepo(),
     SteamMobile(),
+    NeutronCode(),
     HTML() // This should ALWAYS be the last option as they are tried in order
   ];
 
