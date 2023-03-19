@@ -160,9 +160,11 @@ class GitHub extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
+      var changeLog = targetRelease['body'].toString();
       return APKDetails(version, targetRelease['apkUrls'] as List<String>,
           getAppNames(standardUrl),
-          releaseDate: releaseDate);
+          releaseDate: releaseDate,
+          changeLog: changeLog.isEmpty ? null : changeLog);
     } else {
       rateLimitErrorCheck(res);
       throw getObtainiumHttpError(res);

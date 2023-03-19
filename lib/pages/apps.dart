@@ -232,6 +232,49 @@ class AppsPageState extends State<AppsPage> {
               String? changesUrl = SourceProvider()
                   .getSource(listedApps[index].app.url)
                   .changeLogPageFromStandardUrl(listedApps[index].app.url);
+              String? changeLog = listedApps[index].app.changeLog;
+              var showChanges = (changeLog == null && changesUrl == null)
+                  ? null
+                  : () {
+                      if (changeLog != null) {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return GeneratedFormModal(
+                                title: tr('changes'),
+                                items: [],
+                                additionalWidgets: [
+                                  Text(changeLog),
+                                  changesUrl != null
+                                      ? const SizedBox(
+                                          height: 16,
+                                        )
+                                      : const SizedBox.shrink(),
+                                  changesUrl != null
+                                      ? GestureDetector(
+                                          child: Text(
+                                            changesUrl,
+                                            style: const TextStyle(
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                fontStyle: FontStyle.italic),
+                                          ),
+                                          onTap: () {
+                                            launchUrlString(changesUrl,
+                                                mode: LaunchMode
+                                                    .externalApplication);
+                                          },
+                                        )
+                                      : const SizedBox.shrink()
+                                ],
+                                singleNullReturnButton: tr('ok'),
+                              );
+                            });
+                      } else {
+                        launchUrlString(changesUrl!,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    };
               var transparent = const Color.fromARGB(0, 0, 0, 0).value;
               var hasUpdate = listedApps[index].app.installedVersion != null &&
                   listedApps[index].app.installedVersion !=
@@ -366,13 +409,7 @@ class AppsPageState extends State<AppsPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       GestureDetector(
-                                          onTap: changesUrl == null
-                                              ? null
-                                              : () {
-                                                  launchUrlString(changesUrl,
-                                                      mode: LaunchMode
-                                                          .externalApplication);
-                                                },
+                                          onTap: showChanges,
                                           child: Text(
                                             listedApps[index].app.releaseDate ==
                                                     null
@@ -381,10 +418,11 @@ class AppsPageState extends State<AppsPage> {
                                                     .format(listedApps[index]
                                                         .app
                                                         .releaseDate!),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontStyle: FontStyle.italic,
-                                                decoration:
-                                                    TextDecoration.underline),
+                                                decoration: showChanges != null
+                                                    ? TextDecoration.underline
+                                                    : TextDecoration.none),
                                           ))
                                     ],
                                   ),

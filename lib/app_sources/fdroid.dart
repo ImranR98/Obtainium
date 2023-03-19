@@ -28,9 +28,6 @@ class FDroid extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
-
-  @override
   String? tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) {
     return Uri.parse(standardUrl).pathSegments.last;

@@ -36,8 +36,10 @@ class APKDetails {
   late List<String> apkUrls;
   late AppNames names;
   late DateTime? releaseDate;
+  late String? changeLog;
 
-  APKDetails(this.version, this.apkUrls, this.names, {this.releaseDate});
+  APKDetails(this.version, this.apkUrls, this.names,
+      {this.releaseDate, this.changeLog});
 }
 
 class App {
@@ -54,6 +56,7 @@ class App {
   bool pinned = false;
   List<String> categories;
   late DateTime? releaseDate;
+  late String? changeLog;
   App(
       this.id,
       this.url,
@@ -67,7 +70,8 @@ class App {
       this.lastUpdateCheck,
       this.pinned,
       {this.categories = const [],
-      this.releaseDate});
+      this.releaseDate,
+      this.changeLog});
 
   @override
   String toString() {
@@ -130,34 +134,35 @@ class App {
       preferredApkIndex = 0;
     }
     return App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      json['latestVersion'] as String,
-      json['apkUrls'] == null
-          ? []
-          : List<String>.from(jsonDecode(json['apkUrls'])),
-      preferredApkIndex,
-      additionalSettings,
-      json['lastUpdateCheck'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false,
-      categories: json['categories'] != null
-          ? (json['categories'] as List<dynamic>)
-              .map((e) => e.toString())
-              .toList()
-          : json['category'] != null
-              ? [json['category'] as String]
-              : [],
-      releaseDate: json['releaseDate'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
-    );
+        json['id'] as String,
+        json['url'] as String,
+        json['author'] as String,
+        json['name'] as String,
+        json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        json['latestVersion'] as String,
+        json['apkUrls'] == null
+            ? []
+            : List<String>.from(jsonDecode(json['apkUrls'])),
+        preferredApkIndex,
+        additionalSettings,
+        json['lastUpdateCheck'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        json['pinned'] ?? false,
+        categories: json['categories'] != null
+            ? (json['categories'] as List<dynamic>)
+                .map((e) => e.toString())
+                .toList()
+            : json['category'] != null
+                ? [json['category'] as String]
+                : [],
+        releaseDate: json['releaseDate'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+        changeLog:
+            json['changeLog'] == null ? null : json['changeLog'] as String);
   }
 
   Map<String, dynamic> toJson() => {
@@ -173,7 +178,8 @@ class App {
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
         'categories': categories,
-        'releaseDate': releaseDate?.microsecondsSinceEpoch
+        'releaseDate': releaseDate?.microsecondsSinceEpoch,
+        'changeLog': changeLog
       };
 }
 
@@ -437,7 +443,8 @@ class SourceProvider {
         DateTime.now(),
         currentApp?.pinned ?? false,
         categories: currentApp?.categories ?? const [],
-        releaseDate: apk.releaseDate);
+        releaseDate: apk.releaseDate,
+        changeLog: apk.changeLog);
   }
 
   // Returns errors in [results, errors] instead of throwing them

@@ -25,9 +25,6 @@ class SteamMobile extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
