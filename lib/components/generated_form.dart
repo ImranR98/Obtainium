@@ -476,6 +476,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         rowItems.add(Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
               rowInput.value,
               ...widget.items[rowInputs.key][rowInput.key].belowWidgets

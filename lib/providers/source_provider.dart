@@ -20,6 +20,7 @@ import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -228,6 +229,7 @@ class AppSource {
   String? host;
   late String name;
   bool enforceTrackOnly = false;
+  bool changeLogIfAnyIsMarkDown = true;
 
   AppSource() {
     name = runtimeType.toString();
@@ -347,6 +349,7 @@ class SourceProvider {
     FDroidRepo(),
     SteamMobile(),
     TelegramApp(),
+    VLC(),
     NeutronCode(),
     HTML() // This should ALWAYS be the last option as they are tried in order
   ];

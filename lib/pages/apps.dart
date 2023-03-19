@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -14,6 +15,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:markdown/markdown.dart' as md;
 
 class AppsPage extends StatefulWidget {
   const AppsPage({super.key});
@@ -229,8 +231,9 @@ class AppsPageState extends State<AppsPage> {
             SliverList(
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
-              String? changesUrl = SourceProvider()
-                  .getSource(listedApps[index].app.url)
+              AppSource appSource =
+                  SourceProvider().getSource(listedApps[index].app.url);
+              String? changesUrl = appSource
                   .changeLogPageFromStandardUrl(listedApps[index].app.url);
               String? changeLog = listedApps[index].app.changeLog;
               var showChanges = (changeLog == null && changesUrl == null)
@@ -242,14 +245,8 @@ class AppsPageState extends State<AppsPage> {
                             builder: (BuildContext context) {
                               return GeneratedFormModal(
                                 title: tr('changes'),
-                                items: [],
+                                items: const [],
                                 additionalWidgets: [
-                                  Text(changeLog),
-                                  changesUrl != null
-                                      ? const SizedBox(
-                                          height: 16,
-                                        )
-                                      : const SizedBox.shrink(),
                                   changesUrl != null
                                       ? GestureDetector(
                                           child: Text(
@@ -265,7 +262,48 @@ class AppsPageState extends State<AppsPage> {
                                                     .externalApplication);
                                           },
                                         )
-                                      : const SizedBox.shrink()
+                                      : const SizedBox.shrink(),
+                                  changesUrl != null
+                                      ? const SizedBox(
+                                          height: 16,
+                                        )
+                                      : const SizedBox.shrink(),
+                                  appSource.changeLogIfAnyIsMarkDown
+                                      ? SizedBox(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height -
+                                              350,
+                                          child: Markdown(
+                                            data: changeLog,
+                                            onTapLink: (text, href, title) {
+                                              if (href != null) {
+                                                launchUrlString(
+                                                    href.startsWith(
+                                                                'http://') ||
+                                                            href.startsWith(
+                                                                'https://')
+                                                        ? href
+                                                        : '${Uri.parse(listedApps[index].app.url).origin}/$href',
+                                                    mode: LaunchMode
+                                                        .externalApplication);
+                                              }
+                                            },
+                                            extensionSet: md.ExtensionSet(
+                                              md.ExtensionSet.gitHubFlavored
+                                                  .blockSyntaxes,
+                                              [
+                                                md.EmojiSyntax(),
+                                                ...md
+                                                    .ExtensionSet
+                                                    .gitHubFlavored
+                                                    .inlineSyntaxes
+                                              ],
+                                            ),
+                                          ))
+                                      : Text(changeLog),
                                 ],
                                 singleNullReturnButton: tr('ok'),
                               );
@@ -413,7 +451,9 @@ class AppsPageState extends State<AppsPage> {
                                           child: Text(
                                             listedApps[index].app.releaseDate ==
                                                     null
-                                                ? tr('changes')
+                                                ? showChanges != null
+                                                    ? tr('changes')
+                                                    : ''
                                                 : DateFormat('yyyy-MM-dd')
                                                     .format(listedApps[index]
                                                         .app
