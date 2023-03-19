@@ -20,6 +20,7 @@ Currently supported App sources:
   - Any URLs ending with `/fdroid/<word>`, where `<word>` can be anything - most often `repo`
 - [Steam](https://store.steampowered.com/mobile)
 - [Telegram App](https://telegram.org)
+- [VLC](https://www.videolan.org/vlc/download-android.html)
 - [Neutron Code](https://neutroncode.com)
 - "HTML" (Fallback)
   - Any other URL that returns an HTML page with links to APK files (if multiple, the last file alphabetically is picked)
