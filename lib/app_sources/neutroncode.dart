@@ -97,10 +97,13 @@ class NeutronCode extends AppSource {
       var dateString = dateStringOriginal != null
           ? (customDateParse(dateStringOriginal))
           : null;
-
+      var changeLogElements = http.querySelectorAll('.pd-fdesc p');
       return APKDetails(version, [apkUrl],
           AppNames(runtimeType.toString(), name ?? standardUrl.split('/').last),
-          releaseDate: dateString != null ? DateTime.parse(dateString) : null);
+          releaseDate: dateString != null ? DateTime.parse(dateString) : null,
+          changeLog: changeLogElements.isNotEmpty
+              ? changeLogElements.last.innerHtml
+              : null);
     } else {
       throw getObtainiumHttpError(res);
     }

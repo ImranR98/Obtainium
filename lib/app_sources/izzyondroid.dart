@@ -19,9 +19,6 @@ class IzzyOnDroid extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
-
-  @override
   String? tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) {
     return FDroid().tryInferringAppId(standardUrl);
