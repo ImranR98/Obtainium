@@ -15,9 +15,11 @@ import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
+import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
+import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -338,6 +340,8 @@ class SourceProvider {
     APKMirror(),
     FDroidRepo(),
     SteamMobile(),
+    TelegramApp(),
+    NeutronCode(),
     HTML() // This should ALWAYS be the last option as they are tried in order
   ];
 

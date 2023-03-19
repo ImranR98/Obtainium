@@ -145,6 +145,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<DownloadedApk> downloadApp(App app, BuildContext? context) async {
+    NotificationsProvider? notificationsProvider =
+        context?.read<NotificationsProvider>();
+    var notifId = DownloadNotification(app.name, 0).id;
     if (apps[app.id] != null) {
       apps[app.id]!.downloadProgress = 0;
       notifyListeners();
@@ -155,8 +158,6 @@ class AppsProvider with ChangeNotifier {
       String downloadUrl = await SourceProvider()
           .getSource(app.url)
           .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
-      NotificationsProvider? notificationsProvider =
-          context?.read<NotificationsProvider>();
       var notif = DownloadNotification(app.name, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
@@ -173,7 +174,6 @@ class AppsProvider with ChangeNotifier {
         }
         prevProg = prog;
       });
-      notificationsProvider?.cancel(notif.id);
       // Delete older versions of the APK if any
       for (var file in downloadedFile.parent.listSync()) {
         var fn = file.path.split('/').last;
@@ -201,6 +201,7 @@ class AppsProvider with ChangeNotifier {
       }
       return DownloadedApk(app.id, downloadedFile);
     } finally {
+      notificationsProvider?.cancel(notifId);
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = null;
         notifyListeners();

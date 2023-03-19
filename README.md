@@ -19,6 +19,7 @@ Currently supported App sources:
 - Third Party F-Droid Repos
   - Any URLs ending with `/fdroid/<word>`, where `<word>` can be anything - most often `repo`
 - [Steam](https://store.steampowered.com/mobile)
+- [Neutron Code](https://neutroncode.com)
 - "HTML" (Fallback)
   - Any other URL that returns an HTML page with links to APK files (if multiple, the last file alphabetically is picked)
 
