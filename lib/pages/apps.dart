@@ -274,6 +274,18 @@ class AppsPageState extends State<AppsPage> {
                                               350,
                                       child: Markdown(
                                         data: changeLog,
+                                        onTapLink: (text, href, title) {
+                                          if (href != null) {
+                                            launchUrlString(
+                                                href.startsWith('http://') ||
+                                                        href.startsWith(
+                                                            'https://')
+                                                    ? href
+                                                    : '${Uri.parse(listedApps[index].app.url).origin}/$href',
+                                                mode: LaunchMode
+                                                    .externalApplication);
+                                          }
+                                        },
                                         extensionSet: md.ExtensionSet(
                                           md.ExtensionSet.gitHubFlavored
                                               .blockSyntaxes,
