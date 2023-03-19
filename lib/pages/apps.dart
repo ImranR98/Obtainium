@@ -431,7 +431,9 @@ class AppsPageState extends State<AppsPage> {
                                           child: Text(
                                             listedApps[index].app.releaseDate ==
                                                     null
-                                                ? tr('changes')
+                                                ? showChanges != null
+                                                    ? tr('changes')
+                                                    : ''
                                                 : DateFormat('yyyy-MM-dd')
                                                     .format(listedApps[index]
                                                         .app
