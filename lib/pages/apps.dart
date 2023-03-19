@@ -231,8 +231,9 @@ class AppsPageState extends State<AppsPage> {
             SliverList(
                 delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
-              String? changesUrl = SourceProvider()
-                  .getSource(listedApps[index].app.url)
+              AppSource appSource =
+                  SourceProvider().getSource(listedApps[index].app.url);
+              String? changesUrl = appSource
                   .changeLogPageFromStandardUrl(listedApps[index].app.url);
               String? changeLog = listedApps[index].app.changeLog;
               var showChanges = (changeLog == null && changesUrl == null)
@@ -267,35 +268,42 @@ class AppsPageState extends State<AppsPage> {
                                           height: 16,
                                         )
                                       : const SizedBox.shrink(),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width,
-                                      height:
-                                          MediaQuery.of(context).size.height -
+                                  appSource.changeLogIfAnyIsMarkDown
+                                      ? SizedBox(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height -
                                               350,
-                                      child: Markdown(
-                                        data: changeLog,
-                                        onTapLink: (text, href, title) {
-                                          if (href != null) {
-                                            launchUrlString(
-                                                href.startsWith('http://') ||
-                                                        href.startsWith(
-                                                            'https://')
-                                                    ? href
-                                                    : '${Uri.parse(listedApps[index].app.url).origin}/$href',
-                                                mode: LaunchMode
-                                                    .externalApplication);
-                                          }
-                                        },
-                                        extensionSet: md.ExtensionSet(
-                                          md.ExtensionSet.gitHubFlavored
-                                              .blockSyntaxes,
-                                          [
-                                            md.EmojiSyntax(),
-                                            ...md.ExtensionSet.gitHubFlavored
-                                                .inlineSyntaxes
-                                          ],
-                                        ),
-                                      )),
+                                          child: Markdown(
+                                            data: changeLog,
+                                            onTapLink: (text, href, title) {
+                                              if (href != null) {
+                                                launchUrlString(
+                                                    href.startsWith(
+                                                                'http://') ||
+                                                            href.startsWith(
+                                                                'https://')
+                                                        ? href
+                                                        : '${Uri.parse(listedApps[index].app.url).origin}/$href',
+                                                    mode: LaunchMode
+                                                        .externalApplication);
+                                              }
+                                            },
+                                            extensionSet: md.ExtensionSet(
+                                              md.ExtensionSet.gitHubFlavored
+                                                  .blockSyntaxes,
+                                              [
+                                                md.EmojiSyntax(),
+                                                ...md
+                                                    .ExtensionSet
+                                                    .gitHubFlavored
+                                                    .inlineSyntaxes
+                                              ],
+                                            ),
+                                          ))
+                                      : Text(changeLog),
                                 ],
                                 singleNullReturnButton: tr('ok'),
                               );

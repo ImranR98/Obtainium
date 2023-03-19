@@ -228,6 +228,7 @@ class AppSource {
   String? host;
   late String name;
   bool enforceTrackOnly = false;
+  bool changeLogIfAnyIsMarkDown = true;
 
   AppSource() {
     name = runtimeType.toString();
