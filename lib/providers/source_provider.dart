@@ -21,6 +21,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/vlc.dart';
+import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -342,14 +343,15 @@ class SourceProvider {
     Codeberg(),
     FDroid(),
     IzzyOnDroid(),
-    Mullvad(),
-    Signal(),
+    FDroidRepo(),
     SourceForge(),
     APKMirror(),
-    FDroidRepo(),
-    SteamMobile(),
-    TelegramApp(),
+    Mullvad(),
+    Signal(),
     VLC(),
+    // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+    TelegramApp(),
+    SteamMobile(),
     NeutronCode(),
     HTML() // This should ALWAYS be the last option as they are tried in order
   ];
