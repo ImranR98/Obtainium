@@ -571,7 +571,21 @@ class AppsProvider with ChangeNotifier {
     List<App> newApps = (await getAppsDir())
         .listSync()
         .where((item) => item.path.toLowerCase().endsWith('.json'))
-        .map((e) => App.fromJson(jsonDecode(File(e.path).readAsStringSync())))
+        .map((e) {
+          try {
+            return App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
+          } catch (err) {
+            if (err is FormatException) {
+              logs.add('Corrupt JSON when loading App (will be ignored): $e');
+              e.renameSync('${e.path}.corrupt');
+              return App(
+                  '', '', '', '', '', '', [], 0, {}, DateTime.now(), false);
+            } else {
+              rethrow;
+            }
+          }
+        })
+        .where((element) => element.id.isNotEmpty)
         .toList();
     var idsToDelete = apps.values
         .map((e) => e.app.id)
