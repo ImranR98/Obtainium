@@ -149,7 +149,7 @@ class _AddAppPageState extends State<AddAppPage> {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;
-          await appsProvider.saveApps([app]);
+          await appsProvider.saveApps([app], onlyIfExists: false);
 
           return app;
         }

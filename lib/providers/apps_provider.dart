@@ -628,7 +628,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> saveApps(List<App> apps,
-      {bool attemptToCorrectInstallStatus = true}) async {
+      {bool attemptToCorrectInstallStatus = true,
+      bool onlyIfExists = true}) async {
     attemptToCorrectInstallStatus =
         attemptToCorrectInstallStatus && (await doesInstalledAppsPluginWork());
     for (var app in apps) {
@@ -639,9 +640,15 @@ class AppsProvider with ChangeNotifier {
       }
       File('${(await getAppsDir()).path}/${app.id}.json')
           .writeAsStringSync(jsonEncode(app.toJson()));
-      this.apps.update(
-          app.id, (value) => AppInMemory(app, value.downloadProgress, info),
-          ifAbsent: () => AppInMemory(app, null, info));
+      try {
+        this.apps.update(
+            app.id, (value) => AppInMemory(app, value.downloadProgress, info),
+            ifAbsent: onlyIfExists ? null : () => AppInMemory(app, null, info));
+      } catch (e) {
+        if (e is! ArgumentError || e.name != 'key') {
+          rethrow;
+        }
+      }
     }
     notifyListeners();
   }
@@ -824,7 +831,7 @@ class AppsProvider with ChangeNotifier {
         a.installedVersion = apps[a.id]?.app.installedVersion;
       }
     }
-    await saveApps(importedApps);
+    await saveApps(importedApps, onlyIfExists: false);
     notifyListeners();
     return importedApps.length;
   }
@@ -844,7 +851,7 @@ class AppsProvider with ChangeNotifier {
       if (apps.containsKey(app.id)) {
         errorsMap.addAll({app.id: tr('appAlreadyAdded')});
       } else {
-        await saveApps([app]);
+        await saveApps([app], onlyIfExists: false);
       }
     }
     List<List<String>> errors =

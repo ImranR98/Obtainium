@@ -210,7 +210,7 @@ class _ObtainiumState extends State<Obtainium> {
               {'includePrereleases': true},
               null,
               false)
-        ]);
+        ], onlyIfExists: false);
       }
       if (!supportedLocales
               .map((e) => e.languageCode)
