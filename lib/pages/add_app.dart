@@ -156,7 +156,7 @@ class _AddAppPageState extends State<AddAppPage> {
       }()
           .then((app) {
         if (app != null) {
-          Navigator.push(context,
+          Navigator.push(globalNavigatorKey.currentContext ?? context,
               MaterialPageRoute(builder: (context) => AppPage(appId: app.id)));
         }
       }).catchError((e) {
