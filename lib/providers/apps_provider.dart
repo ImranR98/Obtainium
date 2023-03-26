@@ -669,8 +669,11 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<bool> removeAppsWithModal(BuildContext context, List<App> apps) async {
-    var showUninstallOption =
-        apps.where((a) => a.installedVersion != null).isNotEmpty;
+    var showUninstallOption = apps
+        .where((a) =>
+            a.installedVersion != null &&
+            a.additionalSettings['trackOnly'] != true)
+        .isNotEmpty;
     var values = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
