@@ -476,6 +476,7 @@ class AppsProvider with ChangeNotifier {
   // If there is any other mismatch between installedInfo and installedVersion, try reconciling them intelligently
   // If that fails, just set it to the actual version string (all we can do at that point)
   // Don't save changes, just return the object if changes were made (else null)
+  // TODO: This is an incomprehensible mess
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
@@ -491,26 +492,36 @@ class AppsProvider with ChangeNotifier {
     } else if (installedInfo?.versionName != null &&
         installedInfo!.versionName != app.installedVersion &&
         !noVersionDetection) {
-      String? correctedInstalledVersion = reconcileRealAndInternalVersions(
+      var correctedInstalledVersion = reconcileRealAndInternalVersions(
           installedInfo.versionName!, app.installedVersion!);
-      if (correctedInstalledVersion != null) {
-        app.installedVersion = correctedInstalledVersion;
+      if (correctedInstalledVersion.value != null) {
+        app.installedVersion = correctedInstalledVersion.value;
+        modded = true;
+      }
+      if (!correctedInstalledVersion.key) {
+        app.additionalSettings['versionDetection'] = 'noVersionDetection';
+        logs.add('Could not reconcile version formats for: ${app.id}');
         modded = true;
       }
     }
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion &&
         !noVersionDetection) {
-      app.installedVersion = reconcileRealAndInternalVersions(
-              app.installedVersion!, app.latestVersion,
-              matchMode: true) ??
-          app.installedVersion;
+      var correctedInstalledVersion = reconcileRealAndInternalVersions(
+          app.installedVersion!, app.latestVersion,
+          matchMode: true);
+      app.installedVersion =
+          correctedInstalledVersion.value ?? app.installedVersion;
+      if (!correctedInstalledVersion.key) {
+        app.additionalSettings['versionDetection'] = 'noVersionDetection';
+        logs.add('Could not reconcile version formats for: ${app.id}');
+      }
       modded = true;
     }
     return modded ? app : null;
   }
 
-  String? reconcileRealAndInternalVersions(
+  MapEntry<bool, String?> reconcileRealAndInternalVersions(
       String realVersion, String internalVersion,
       {bool matchMode = false}) {
     // 1. If one or both of these can't be converted to a "standard" format, return null (leave as is)
@@ -548,18 +559,20 @@ class AppsProvider with ChangeNotifier {
     var commonStandardFormats =
         realStandardVersionFormats.intersection(internalStandardVersionFormats);
     if (commonStandardFormats.isEmpty) {
-      return null; // Incompatible; no "enhanced detection"
+      return const MapEntry(
+          false, null); // Incompatible; no "enhanced detection"
     }
     for (String pattern in commonStandardFormats) {
       if (doStringsMatchUnderRegEx(pattern, internalVersion, realVersion)) {
         return matchMode
-            ? internalVersion
-            : null; // Enhanced detection says no change
+            ? MapEntry(true, internalVersion)
+            : const MapEntry(true, null); // Enhanced detection says no change
       }
     }
     return matchMode
-        ? null
-        : realVersion; // Enhanced detection says something changed
+        ? const MapEntry(true, null)
+        : MapEntry(
+            true, realVersion); // Enhanced detection says something changed
   }
 
   Future<void> loadApps() async {
