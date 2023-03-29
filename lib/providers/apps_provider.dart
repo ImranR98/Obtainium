@@ -484,13 +484,20 @@ class AppsProvider with ChangeNotifier {
     return res;
   }
 
+  bool isVersionDetectionEnabled(AppInMemory? app) {
+    return app?.app.additionalSettings['trackOnly'] != true &&
+        app?.installedInfo?.versionName != null &&
+        app?.app.installedVersion != null &&
+        reconcileVersionDifferences(
+                app!.installedInfo!.versionName!, app.app.installedVersion!) !=
+            null;
+  }
+
   // Given an App and it's on-device info...
   // Reconcile unexpected differences between its reported installed version, real installed version, and reported latest version
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
-    var noVersionDetection = app.additionalSettings['versionDetection'] !=
-        'standardVersionDetection';
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
@@ -504,9 +511,8 @@ class AppsProvider with ChangeNotifier {
     }
     // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
     if (installedInfo?.versionName != null &&
-        installedInfo!.versionName != app.installedVersion &&
-        !noVersionDetection) {
-      // App's reported version and real version don't match (and it uses standard version detection)
+        installedInfo!.versionName != app.installedVersion) {
+      // App's reported version and real version don't match
       // If they share a standard format (and are still different under it), update the reported version accordingly
       var correctedInstalledVersion = reconcileVersionDifferences(
           installedInfo.versionName!, app.installedVersion!);
@@ -517,25 +523,15 @@ class AppsProvider with ChangeNotifier {
     }
     // THIRD, RECONCILE THE APP'S REPORTED INSTALLED AND LATEST VERSIONS
     if (app.installedVersion != null &&
-        app.installedVersion != app.latestVersion &&
-        !noVersionDetection) {
-      // App's reported installed and latest versions don't match (and it uses standard version detection)
+        app.installedVersion != app.latestVersion) {
+      // App's reported installed and latest versions don't match
       // If they share a standard format, make sure the App's reported installed version uses that format
-      // If they don't share a standard format, disable version detection for the App
       var correctedInstalledVersion =
           reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
       if (correctedInstalledVersion?.key == true) {
         app.installedVersion = correctedInstalledVersion!.value;
         modded = true;
       }
-    }
-    // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED INSTALLED VERSION IS NOT STANDARD
-    if (!noVersionDetection &&
-        app.installedVersion != null &&
-        findStandardFormatsForVersion(app.installedVersion!, true).isEmpty) {
-      app.additionalSettings['versionDetection'] = 'noVersionDetection';
-      logs.add('Could not reconcile version formats for: ${app.id}');
-      modded = true;
     }
     return modded ? app : null;
   }

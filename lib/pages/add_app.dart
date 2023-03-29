@@ -91,7 +91,7 @@ class _AddAppPageState extends State<AddAppPage> {
                 null) {
           cont = false;
         }
-        if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
+        if (additionalSettings['releaseDateAsVersion'] == true &&
             // ignore: use_build_context_synchronously
             await showDialog(
                     context: context,
@@ -100,20 +100,6 @@ class _AddAppPageState extends State<AddAppPage> {
                         title: tr('releaseDateAsVersion'),
                         items: const [],
                         message: tr('releaseDateAsVersionExplanation'),
-                      );
-                    }) ==
-                null) {
-          cont = false;
-        }
-        if (additionalSettings['versionDetection'] == 'noVersionDetection' &&
-            // ignore: use_build_context_synchronously
-            await showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return GeneratedFormModal(
-                        title: tr('disableVersionDetection'),
-                        items: const [],
-                        message: tr('noVersionDetectionExplanation'),
                       );
                     }) ==
                 null) {

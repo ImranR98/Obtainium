@@ -108,19 +108,14 @@ class App {
       additionalSettings['noVersionDetection'] =
           json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
     }
-    // Convert bool style version detection options to dropdown style
-    if (additionalSettings['noVersionDetection'] == true) {
-      additionalSettings['versionDetection'] = 'noVersionDetection';
+    // Convert dropdown style version detection option to bool style
+    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
+      additionalSettings['releaseDateAsVersion'] = true;
+    } else if (additionalSettings['versionDetection'] != null) {
+      additionalSettings['releaseDateAsVersion'] = false;
     }
-    if (additionalSettings['releaseDateAsVersion'] == true) {
-      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
-      additionalSettings.remove('releaseDateAsVersion');
-    }
-    if (additionalSettings['noVersionDetection'] != null) {
-      additionalSettings.remove('noVersionDetection');
-    }
-    if (additionalSettings['releaseDateAsVersion'] != null) {
-      additionalSettings.remove('releaseDateAsVersion');
+    if (additionalSettings['versionDetection'] != null) {
+      additionalSettings.remove('versionDetection');
     }
     // Ensure additionalSettings are correctly typed
     for (var item in formItems) {
@@ -259,16 +254,10 @@ class AppSource {
       )
     ],
     [
-      GeneratedFormDropdown(
-          'versionDetection',
-          [
-            MapEntry(
-                'standardVersionDetection', tr('standardVersionDetection')),
-            MapEntry('releaseDateAsVersion', tr('releaseDateAsVersion')),
-            MapEntry('noVersionDetection', tr('noVersionDetection'))
-          ],
-          label: tr('versionDetection'),
-          defaultValue: 'standardVersionDetection')
+      GeneratedFormSwitch(
+        'releaseDateAsVersion',
+        label: tr('releaseDateAsVersion'),
+      )
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -415,7 +404,7 @@ class SourceProvider {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
-    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
+    if (additionalSettings['releaseDateAsVersion'] == true &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
     }

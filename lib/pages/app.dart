@@ -80,6 +80,19 @@ class _AppPageState extends State<AppPage> {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
+        if (app?.installedInfo != null &&
+            !appsProvider.isVersionDetectionEnabled(app))
+          Column(
+            children: [
+              const SizedBox(
+                height: 4,
+              ),
+              Text(
+                tr('noVersionDetection'),
+                style: Theme.of(context).textTheme.labelSmall,
+              )
+            ],
+          ),
         const SizedBox(
           height: 32,
         ),
@@ -206,11 +219,10 @@ class _AppPageState extends State<AppPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (app?.app.additionalSettings['versionDetection'] !=
-                                'standardVersionDetection' &&
-                            !trackOnly &&
-                            app?.app.installedVersion != null &&
-                            app?.app.installedVersion != app?.app.latestVersion)
+                        if (app?.app.installedVersion != null &&
+                            app?.app.installedVersion !=
+                                app?.app.latestVersion &&
+                            !appsProvider.isVersionDetectionEnabled(app))
                           IconButton(
                               onPressed: app?.downloadProgress != null
                                   ? null
@@ -278,32 +290,15 @@ class _AppPageState extends State<AppPage> {
                                               return row;
                                             }).toList();
 
-                                            items = items.map((row) {
-                                              row = row.map((e) {
-                                                if (e.key ==
-                                                        'versionDetection' &&
-                                                    e is GeneratedFormDropdown) {
-                                                  e.disabledOptKeys ??= [];
-                                                  if (app?.app.installedVersion !=
-                                                          null &&
-                                                      findStandardFormatsForVersion(
-                                                              app!.app
-                                                                  .installedVersion!,
-                                                              true)
-                                                          .isEmpty) {
-                                                    e.disabledOptKeys!.add(
-                                                        'standardVersionDetection');
-                                                  }
-                                                  if (app?.app.releaseDate ==
-                                                      null) {
-                                                    e.disabledOptKeys!.add(
-                                                        'releaseDateAsVersion');
-                                                  }
-                                                }
-                                                return e;
+                                            if (app?.app.releaseDate == null) {
+                                              items = items.where((row) {
+                                                row = row.where((e) {
+                                                  return (e.key !=
+                                                      'releaseDateAsVersion');
+                                                }).toList();
+                                                return row.isNotEmpty;
                                               }).toList();
-                                              return row;
-                                            }).toList();
+                                            }
 
                                             return GeneratedFormModal(
                                               title: tr('additionalOptions'),
@@ -323,11 +318,11 @@ class _AppPageState extends State<AppPage> {
                                                 context);
                                           }
                                           if (app.app.additionalSettings[
-                                                  'versionDetection'] ==
-                                              'releaseDateAsVersion') {
+                                                  'releaseDateAsVersion'] ==
+                                              true) {
                                             if (originalSettings[
-                                                    'versionDetection'] !=
-                                                'releaseDateAsVersion') {
+                                                    'releaseDateAsVersion'] !=
+                                                true) {
                                               if (app.app.releaseDate != null) {
                                                 bool isUpdated =
                                                     app.app.installedVersion ==
@@ -344,8 +339,8 @@ class _AppPageState extends State<AppPage> {
                                               }
                                             }
                                           } else if (originalSettings[
-                                                  'versionDetection'] ==
-                                              'releaseDateAsVersion') {
+                                                  'releaseDateAsVersion'] ==
+                                              true) {
                                             app.app.installedVersion = app
                                                     .installedInfo
                                                     ?.versionName ??
