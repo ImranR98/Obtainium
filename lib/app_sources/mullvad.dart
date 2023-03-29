@@ -1,5 +1,6 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -37,6 +38,15 @@ class Mullvad extends AppSource {
     }
     details.version = fileName.substring(versionMatch.start, versionMatch.end);
     details.names = AppNames(name, 'Mullvad-VPN');
+    try {
+      details.changeLog = (await GitHub().getLatestAPKDetails(
+              'https://github.com/mullvad/mullvadvpn-app',
+              {'fallbackToOlderReleases': true}))
+          .changeLog;
+    } catch (e) {
+      print(e);
+      // Ignore
+    }
     return details;
   }
 }
