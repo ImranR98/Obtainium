@@ -30,6 +30,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     SourceProvider sourceProvider = SourceProvider();
     var appsProvider = context.read<AppsProvider>();
     var settingsProvider = context.read<SettingsProvider>();
+
     var outlineButtonStyle = ButtonStyle(
       shape: MaterialStateProperty.all(
         StadiumBorder(
@@ -101,6 +102,193 @@ class _ImportExportPageState extends State<ImportExportPage> {
       });
     }
 
+    runObtainiumExport() {
+      HapticFeedback.selectionClick();
+      appsProvider.exportApps().then((String path) {
+        showError(tr('exportedTo', args: [path]), context);
+      }).catchError((e) {
+        showError(e, context);
+      });
+    }
+
+    runObtainiumImport() {
+      HapticFeedback.selectionClick();
+      FilePicker.platform.pickFiles().then((result) {
+        setState(() {
+          importInProgress = true;
+        });
+        if (result != null) {
+          String data = File(result.files.single.path!).readAsStringSync();
+          try {
+            jsonDecode(data);
+          } catch (e) {
+            throw ObtainiumError(tr('invalidInput'));
+          }
+          appsProvider.importApps(data).then((value) {
+            var cats = settingsProvider.categories;
+            appsProvider.apps.forEach((key, value) {
+              for (var c in value.app.categories) {
+                if (!cats.containsKey(c)) {
+                  cats[c] = generateRandomLightColor().value;
+                }
+              }
+            });
+            settingsProvider.categories = cats;
+            showError(tr('importedX', args: [plural('apps', value)]), context);
+          });
+        } else {
+          // User canceled the picker
+        }
+      }).catchError((e) {
+        showError(e, context);
+      }).whenComplete(() {
+        setState(() {
+          importInProgress = false;
+        });
+      });
+    }
+
+    runUrlImport() {
+      FilePicker.platform.pickFiles().then((result) {
+        if (result != null) {
+          urlListImport(
+              overrideInitValid: true,
+              initValue: RegExp('https?://[^"]+')
+                  .allMatches(
+                      File(result.files.single.path!).readAsStringSync())
+                  .map((e) => e.input.substring(e.start, e.end))
+                  .toSet()
+                  .toList()
+                  .where((url) {
+                try {
+                  sourceProvider.getSource(url);
+                  return true;
+                } catch (e) {
+                  return false;
+                }
+              }).join('\n'));
+        }
+      });
+    }
+
+    runSourceSearch(AppSource source) {
+      () async {
+        var values = await showDialog<Map<String, dynamic>?>(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('searchX', args: [source.name]),
+                items: [
+                  [
+                    GeneratedFormTextField('searchQuery',
+                        label: tr('searchQuery'))
+                  ]
+                ],
+              );
+            });
+        if (values != null &&
+            (values['searchQuery'] as String?)?.isNotEmpty == true) {
+          setState(() {
+            importInProgress = true;
+          });
+          var urlsWithDescriptions =
+              await source.search(values['searchQuery'] as String);
+          if (urlsWithDescriptions.isNotEmpty) {
+            var selectedUrls =
+                // ignore: use_build_context_synchronously
+                await showDialog<List<String>?>(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return UrlSelectionModal(
+                        urlsWithDescriptions: urlsWithDescriptions,
+                        selectedByDefault: false,
+                      );
+                    });
+            if (selectedUrls != null && selectedUrls.isNotEmpty) {
+              var errors = await appsProvider.addAppsByURL(selectedUrls);
+              if (errors.isEmpty) {
+                // ignore: use_build_context_synchronously
+                showError(
+                    tr('importedX', args: [plural('app', selectedUrls.length)]),
+                    context);
+              } else {
+                // ignore: use_build_context_synchronously
+                showDialog(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return ImportErrorDialog(
+                          urlsLength: selectedUrls.length, errors: errors);
+                    });
+              }
+            }
+          } else {
+            throw ObtainiumError(tr('noResults'));
+          }
+        }
+      }()
+          .catchError((e) {
+        showError(e, context);
+      }).whenComplete(() {
+        setState(() {
+          importInProgress = false;
+        });
+      });
+    }
+
+    runMassSourceImport(MassAppUrlSource source) {
+      () async {
+        var values = await showDialog<Map<String, dynamic>?>(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('importX', args: [source.name]),
+                items: source.requiredArgs
+                    .map((e) => [GeneratedFormTextField(e, label: e)])
+                    .toList(),
+              );
+            });
+        if (values != null) {
+          setState(() {
+            importInProgress = true;
+          });
+          var urlsWithDescriptions = await source.getUrlsWithDescriptions(
+              values.values.map((e) => e.toString()).toList());
+          var selectedUrls =
+              // ignore: use_build_context_synchronously
+              await showDialog<List<String>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return UrlSelectionModal(
+                        urlsWithDescriptions: urlsWithDescriptions);
+                  });
+          if (selectedUrls != null) {
+            var errors = await appsProvider.addAppsByURL(selectedUrls);
+            if (errors.isEmpty) {
+              // ignore: use_build_context_synchronously
+              showError(
+                  tr('importedX', args: [plural('app', selectedUrls.length)]),
+                  context);
+            } else {
+              // ignore: use_build_context_synchronously
+              showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return ImportErrorDialog(
+                        urlsLength: selectedUrls.length, errors: errors);
+                  });
+            }
+          }
+        }
+      }()
+          .catchError((e) {
+        showError(e, context);
+      }).whenComplete(() {
+        setState(() {
+          importInProgress = false;
+        });
+      });
+    }
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -120,18 +308,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                   onPressed: appsProvider.apps.isEmpty ||
                                           importInProgress
                                       ? null
-                                      : () {
-                                          HapticFeedback.selectionClick();
-                                          appsProvider
-                                              .exportApps()
-                                              .then((String path) {
-                                            showError(
-                                                tr('exportedTo', args: [path]),
-                                                context);
-                                          }).catchError((e) {
-                                            showError(e, context);
-                                          });
-                                        },
+                                      : runObtainiumExport,
                                   child: Text(tr('obtainiumExport')))),
                           const SizedBox(
                             width: 16,
@@ -141,59 +318,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                   style: outlineButtonStyle,
                                   onPressed: importInProgress
                                       ? null
-                                      : () {
-                                          HapticFeedback.selectionClick();
-                                          FilePicker.platform
-                                              .pickFiles()
-                                              .then((result) {
-                                            setState(() {
-                                              importInProgress = true;
-                                            });
-                                            if (result != null) {
-                                              String data = File(
-                                                      result.files.single.path!)
-                                                  .readAsStringSync();
-                                              try {
-                                                jsonDecode(data);
-                                              } catch (e) {
-                                                throw ObtainiumError(
-                                                    tr('invalidInput'));
-                                              }
-                                              appsProvider
-                                                  .importApps(data)
-                                                  .then((value) {
-                                                var cats =
-                                                    settingsProvider.categories;
-                                                appsProvider.apps
-                                                    .forEach((key, value) {
-                                                  for (var c
-                                                      in value.app.categories) {
-                                                    if (!cats.containsKey(c)) {
-                                                      cats[c] =
-                                                          generateRandomLightColor()
-                                                              .value;
-                                                    }
-                                                  }
-                                                });
-                                                settingsProvider.categories =
-                                                    cats;
-                                                showError(
-                                                    tr('importedX', args: [
-                                                      plural('apps', value)
-                                                    ]),
-                                                    context);
-                                              });
-                                            } else {
-                                              // User canceled the picker
-                                            }
-                                          }).catchError((e) {
-                                            showError(e, context);
-                                          }).whenComplete(() {
-                                            setState(() {
-                                              importInProgress = false;
-                                            });
-                                          });
-                                        },
+                                      : runObtainiumImport,
                                   child: Text(tr('obtainiumImport'))))
                         ],
                       ),
@@ -216,49 +341,15 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               height: 32,
                             ),
                             TextButton(
-                                onPressed: importInProgress
-                                    ? null
-                                    : () {
-                                        urlListImport();
-                                      },
+                                onPressed:
+                                    importInProgress ? null : urlListImport,
                                 child: Text(
                                   tr('importFromURLList'),
                                 )),
                             const SizedBox(height: 8),
                             TextButton(
-                                onPressed: importInProgress
-                                    ? null
-                                    : () {
-                                        FilePicker.platform
-                                            .pickFiles()
-                                            .then((result) {
-                                          if (result != null) {
-                                            urlListImport(
-                                                overrideInitValid: true,
-                                                initValue:
-                                                    RegExp('https?://[^"]+')
-                                                        .allMatches(File(result
-                                                                .files
-                                                                .single
-                                                                .path!)
-                                                            .readAsStringSync())
-                                                        .map((e) =>
-                                                            e.input.substring(
-                                                                e.start, e.end))
-                                                        .toSet()
-                                                        .toList()
-                                                        .where((url) {
-                                                  try {
-                                                    sourceProvider
-                                                        .getSource(url);
-                                                    return true;
-                                                  } catch (e) {
-                                                    return false;
-                                                  }
-                                                }).join('\n'));
-                                          }
-                                        });
-                                      },
+                                onPressed:
+                                    importInProgress ? null : runUrlImport,
                                 child: Text(
                                   tr('importFromURLsInFile'),
                                 )),
@@ -275,106 +366,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         onPressed: importInProgress
                                             ? null
                                             : () {
-                                                () async {
-                                                  var values = await showDialog<
-                                                          Map<String,
-                                                              dynamic>?>(
-                                                      context: context,
-                                                      builder:
-                                                          (BuildContext ctx) {
-                                                        return GeneratedFormModal(
-                                                          title: tr('searchX',
-                                                              args: [
-                                                                source.name
-                                                              ]),
-                                                          items: [
-                                                            [
-                                                              GeneratedFormTextField(
-                                                                  'searchQuery',
-                                                                  label: tr(
-                                                                      'searchQuery'))
-                                                            ]
-                                                          ],
-                                                        );
-                                                      });
-                                                  if (values != null &&
-                                                      (values['searchQuery']
-                                                                  as String?)
-                                                              ?.isNotEmpty ==
-                                                          true) {
-                                                    setState(() {
-                                                      importInProgress = true;
-                                                    });
-                                                    var urlsWithDescriptions =
-                                                        await source.search(
-                                                            values['searchQuery']
-                                                                as String);
-                                                    if (urlsWithDescriptions
-                                                        .isNotEmpty) {
-                                                      var selectedUrls =
-                                                          // ignore: use_build_context_synchronously
-                                                          await showDialog<
-                                                                  List<
-                                                                      String>?>(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      ctx) {
-                                                                return UrlSelectionModal(
-                                                                  urlsWithDescriptions:
-                                                                      urlsWithDescriptions,
-                                                                  selectedByDefault:
-                                                                      false,
-                                                                );
-                                                              });
-                                                      if (selectedUrls !=
-                                                              null &&
-                                                          selectedUrls
-                                                              .isNotEmpty) {
-                                                        var errors =
-                                                            await appsProvider
-                                                                .addAppsByURL(
-                                                                    selectedUrls);
-                                                        if (errors.isEmpty) {
-                                                          // ignore: use_build_context_synchronously
-                                                          showError(
-                                                              tr('importedX',
-                                                                  args: [
-                                                                    plural(
-                                                                        'app',
-                                                                        selectedUrls
-                                                                            .length)
-                                                                  ]),
-                                                              context);
-                                                        } else {
-                                                          // ignore: use_build_context_synchronously
-                                                          showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      ctx) {
-                                                                return ImportErrorDialog(
-                                                                    urlsLength:
-                                                                        selectedUrls
-                                                                            .length,
-                                                                    errors:
-                                                                        errors);
-                                                              });
-                                                        }
-                                                      }
-                                                    } else {
-                                                      throw ObtainiumError(
-                                                          tr('noResults'));
-                                                    }
-                                                  }
-                                                }()
-                                                    .catchError((e) {
-                                                  showError(e, context);
-                                                }).whenComplete(() {
-                                                  setState(() {
-                                                    importInProgress = false;
-                                                  });
-                                                });
+                                                runSourceSearch(source);
                                               },
                                         child: Text(
                                             tr('searchX', args: [source.name])))
@@ -390,93 +382,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         onPressed: importInProgress
                                             ? null
                                             : () {
-                                                () async {
-                                                  var values = await showDialog<
-                                                          Map<String,
-                                                              dynamic>?>(
-                                                      context: context,
-                                                      builder:
-                                                          (BuildContext ctx) {
-                                                        return GeneratedFormModal(
-                                                          title: tr('importX',
-                                                              args: [
-                                                                source.name
-                                                              ]),
-                                                          items:
-                                                              source
-                                                                  .requiredArgs
-                                                                  .map(
-                                                                      (e) => [
-                                                                            GeneratedFormTextField(e,
-                                                                                label: e)
-                                                                          ])
-                                                                  .toList(),
-                                                        );
-                                                      });
-                                                  if (values != null) {
-                                                    setState(() {
-                                                      importInProgress = true;
-                                                    });
-                                                    var urlsWithDescriptions =
-                                                        await source
-                                                            .getUrlsWithDescriptions(
-                                                                values.values
-                                                                    .map((e) =>
-                                                                        e.toString())
-                                                                    .toList());
-                                                    var selectedUrls =
-                                                        // ignore: use_build_context_synchronously
-                                                        await showDialog<
-                                                                List<String>?>(
-                                                            context: context,
-                                                            builder:
-                                                                (BuildContext
-                                                                    ctx) {
-                                                              return UrlSelectionModal(
-                                                                  urlsWithDescriptions:
-                                                                      urlsWithDescriptions);
-                                                            });
-                                                    if (selectedUrls != null) {
-                                                      var errors =
-                                                          await appsProvider
-                                                              .addAppsByURL(
-                                                                  selectedUrls);
-                                                      if (errors.isEmpty) {
-                                                        // ignore: use_build_context_synchronously
-                                                        showError(
-                                                            tr('importedX',
-                                                                args: [
-                                                                  plural(
-                                                                      'app',
-                                                                      selectedUrls
-                                                                          .length)
-                                                                ]),
-                                                            context);
-                                                      } else {
-                                                        // ignore: use_build_context_synchronously
-                                                        showDialog(
-                                                            context: context,
-                                                            builder:
-                                                                (BuildContext
-                                                                    ctx) {
-                                                              return ImportErrorDialog(
-                                                                  urlsLength:
-                                                                      selectedUrls
-                                                                          .length,
-                                                                  errors:
-                                                                      errors);
-                                                            });
-                                                      }
-                                                    }
-                                                  }
-                                                }()
-                                                    .catchError((e) {
-                                                  showError(e, context);
-                                                }).whenComplete(() {
-                                                  setState(() {
-                                                    importInProgress = false;
-                                                  });
-                                                });
+                                                runMassSourceImport(source);
                                               },
                                         child: Text(
                                             tr('importX', args: [source.name])))
