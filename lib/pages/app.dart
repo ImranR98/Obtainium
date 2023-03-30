@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -45,8 +46,9 @@ class _AppPageState extends State<AppPage> {
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
 
-    bool isVersionDetectionEnabled =
-        appsProvider.isVersionDetectionEnabled(app);
+    bool isVersionDetectionStandard =
+        app?.app.additionalSettings['versionDetection'] ==
+            'standardVersionDetection';
 
     getInfoColumn() => Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -85,7 +87,8 @@ class _AppPageState extends State<AppPage> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-            if (app?.installedInfo != null && !isVersionDetectionEnabled)
+            if (app?.app.installedVersion != null &&
+                !isVersionDetectionStandard)
               Column(
                 children: [
                   const SizedBox(
@@ -239,14 +242,22 @@ class _AppPageState extends State<AppPage> {
               return row;
             }).toList();
 
-            if (app?.app.releaseDate == null) {
-              items = items.where((row) {
-                row = row.where((e) {
-                  return (e.key != 'releaseDateAsVersion');
-                }).toList();
-                return row.isNotEmpty;
+            items = items.map((row) {
+              row = row.map((e) {
+                if (e.key == 'versionDetection' && e is GeneratedFormDropdown) {
+                  e.disabledOptKeys ??= [];
+                  if (app?.app.installedVersion != null &&
+                      !appsProvider.isVersionDetectionPossible(app)) {
+                    e.disabledOptKeys!.add('standardVersionDetection');
+                  }
+                  if (app?.app.releaseDate == null) {
+                    e.disabledOptKeys!.add('releaseDateAsVersion');
+                  }
+                }
+                return e;
               }).toList();
-            }
+              return row;
+            }).toList();
 
             return GeneratedFormModal(
               title: tr('additionalOptions'),
@@ -264,8 +275,9 @@ class _AppPageState extends State<AppPage> {
           // ignore: use_build_context_synchronously
           showError(tr('appsFromSourceAreTrackOnly'), context);
         }
-        if (app.app.additionalSettings['releaseDateAsVersion'] == true) {
-          if (originalSettings['releaseDateAsVersion'] != true) {
+        if (app.app.additionalSettings['versionDetection'] ==
+            'releaseDateAsVersion') {
+          if (originalSettings['versionDetection'] != 'releaseDateAsVersion') {
             if (app.app.releaseDate != null) {
               bool isUpdated =
                   app.app.installedVersion == app.app.latestVersion;
@@ -276,7 +288,8 @@ class _AppPageState extends State<AppPage> {
               }
             }
           }
-        } else if (originalSettings['releaseDateAsVersion'] == true) {
+        } else if (originalSettings['versionDetection'] ==
+            'releaseDateAsVersion') {
           app.app.installedVersion =
               app.installedInfo?.versionName ?? app.app.installedVersion;
         }
@@ -327,7 +340,7 @@ class _AppPageState extends State<AppPage> {
                     children: [
                       if (app?.app.installedVersion != null &&
                           app?.app.installedVersion != app?.app.latestVersion &&
-                          !isVersionDetectionEnabled &&
+                          !isVersionDetectionStandard &&
                           !trackOnly)
                         IconButton(
                             onPressed: app?.downloadProgress != null

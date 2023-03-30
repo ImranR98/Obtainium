@@ -86,7 +86,8 @@ class _AddAppPageState extends State<AddAppPage> {
 
     getReleaseDateAsVersionConfirmationIfNeeded(
         bool userPickedTrackOnly) async {
-      return (!(additionalSettings['releaseDateAsVersion'] == true &&
+      return (!(additionalSettings['versionDetection'] ==
+              'releaseDateAsVersion' &&
           // ignore: use_build_context_synchronously
           await showDialog(
                   context: context,

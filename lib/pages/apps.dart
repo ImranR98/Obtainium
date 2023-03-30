@@ -655,7 +655,7 @@ class AppsPageState extends State<AppsPage> {
                       HapticFeedback.selectionClick();
                       appsProvider.saveApps(selectedApps.map((a) {
                         if (a.installedVersion != null &&
-                            !appsProvider.isVersionDetectionEnabled(
+                            !appsProvider.isVersionDetectionPossible(
                                 appsProvider.apps[a.id])) {
                           a.installedVersion = a.latestVersion;
                         }

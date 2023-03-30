@@ -21,7 +21,6 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/vlc.dart';
-import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -108,14 +107,19 @@ class App {
       additionalSettings['noVersionDetection'] =
           json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
     }
-    // Convert dropdown style version detection option to bool style
-    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
-      additionalSettings['releaseDateAsVersion'] = true;
-    } else if (additionalSettings['versionDetection'] != null) {
-      additionalSettings['releaseDateAsVersion'] = false;
-    }
-    if (additionalSettings['versionDetection'] != null) {
-      additionalSettings.remove('versionDetection');
+    // Convert bool style version detection options to dropdown style
+    if (additionalSettings['noVersionDetection'] == true) {
+      additionalSettings['versionDetection'] = 'noVersionDetection';
+      if (additionalSettings['releaseDateAsVersion'] == true) {
+        additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+        additionalSettings.remove('releaseDateAsVersion');
+      }
+      if (additionalSettings['noVersionDetection'] != null) {
+        additionalSettings.remove('noVersionDetection');
+      }
+      if (additionalSettings['releaseDateAsVersion'] != null) {
+        additionalSettings.remove('releaseDateAsVersion');
+      }
     }
     // Ensure additionalSettings are correctly typed
     for (var item in formItems) {
@@ -254,10 +258,16 @@ class AppSource {
       )
     ],
     [
-      GeneratedFormSwitch(
-        'releaseDateAsVersion',
-        label: tr('releaseDateAsVersion'),
-      )
+      GeneratedFormDropdown(
+          'versionDetection',
+          [
+            MapEntry(
+                'standardVersionDetection', tr('standardVersionDetection')),
+            MapEntry('releaseDateAsVersion', tr('releaseDateAsVersion')),
+            MapEntry('noVersionDetection', tr('noVersionDetection'))
+          ],
+          label: tr('versionDetection'),
+          defaultValue: 'standardVersionDetection')
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -404,7 +414,7 @@ class SourceProvider {
     String standardUrl = source.standardizeURL(preStandardizeUrl(url));
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
-    if (additionalSettings['releaseDateAsVersion'] == true &&
+    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
     }
