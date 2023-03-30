@@ -73,6 +73,18 @@ List<String> generateStandardVersionRegExStrings() {
 List<String> standardVersionRegExStrings =
     generateStandardVersionRegExStrings();
 
+Set<String> findStandardFormatsForVersion(String version, bool strict) {
+  // If !strict, even a substring match is valid
+  Set<String> results = {};
+  for (var pattern in standardVersionRegExStrings) {
+    if (RegExp('${strict ? '^' : ''}$pattern${strict ? '\$' : ''}')
+        .hasMatch(version)) {
+      results.add(pattern);
+    }
+  }
+  return results;
+}
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -472,94 +484,113 @@ class AppsProvider with ChangeNotifier {
     return res;
   }
 
-  // If the App says it is installed but installedInfo is null, set it to not installed
-  // If there is any other mismatch between installedInfo and installedVersion, try reconciling them intelligently
-  // If that fails, just set it to the actual version string (all we can do at that point)
-  // Don't save changes, just return the object if changes were made (else null)
+  bool isVersionDetectionPossible(AppInMemory? app) {
+    return app?.app.additionalSettings['trackOnly'] != true &&
+        app?.installedInfo?.versionName != null &&
+        app?.app.installedVersion != null &&
+        reconcileVersionDifferences(
+                app!.installedInfo!.versionName!, app.app.installedVersion!) !=
+            null;
+  }
+
+  // Given an App and it's on-device info...
+  // Reconcile unexpected differences between its reported installed version, real installed version, and reported latest version
   App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
     var noVersionDetection = app.additionalSettings['versionDetection'] !=
         'standardVersionDetection';
+    // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
+      // App says it's installed but isn't really (and isn't track only) - set to not installed
       app.installedVersion = null;
       modded = true;
     } else if (installedInfo?.versionName != null &&
         app.installedVersion == null) {
+      // App says it's not installed but really is - set to installed and use real package versionName
       app.installedVersion = installedInfo!.versionName;
       modded = true;
-    } else if (installedInfo?.versionName != null &&
+    }
+    // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
+    if (installedInfo?.versionName != null &&
         installedInfo!.versionName != app.installedVersion &&
         !noVersionDetection) {
-      String? correctedInstalledVersion = reconcileRealAndInternalVersions(
+      // App's reported version and real version don't match (and it uses standard version detection)
+      // If they share a standard format (and are still different under it), update the reported version accordingly
+      var correctedInstalledVersion = reconcileVersionDifferences(
           installedInfo.versionName!, app.installedVersion!);
-      if (correctedInstalledVersion != null) {
-        app.installedVersion = correctedInstalledVersion;
+      if (correctedInstalledVersion?.key == false) {
+        app.installedVersion = correctedInstalledVersion!.value;
         modded = true;
       }
     }
+    // THIRD, RECONCILE THE APP'S REPORTED INSTALLED AND LATEST VERSIONS
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion &&
         !noVersionDetection) {
-      app.installedVersion = reconcileRealAndInternalVersions(
-              app.installedVersion!, app.latestVersion,
-              matchMode: true) ??
-          app.installedVersion;
+      // App's reported installed and latest versions don't match (and it uses standard version detection)
+      // If they share a standard format, make sure the App's reported installed version uses that format
+      var correctedInstalledVersion =
+          reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
+      if (correctedInstalledVersion?.key == true) {
+        app.installedVersion = correctedInstalledVersion!.value;
+        modded = true;
+      }
+    }
+    // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
+    if (installedInfo != null &&
+        !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
+      app.additionalSettings['versionDetection'] = 'noVersionDetection';
+      logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }
+    // if (app.installedVersion != null &&
+    //     app.additionalSettings['versionDetection'] ==
+    //         'standardVersionDetection') {
+    //   var correctedInstalledVersion =
+    //       reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
+    //   if (correctedInstalledVersion == null) {
+    //     app.additionalSettings['versionDetection'] = 'noVersionDetection';
+    //     logs.add('Could not reconcile version formats for: ${app.id}');
+    //     modded = true;
+    //   }
+    // }
+
     return modded ? app : null;
   }
 
-  String? reconcileRealAndInternalVersions(
-      String realVersion, String internalVersion,
-      {bool matchMode = false}) {
-    // 1. If one or both of these can't be converted to a "standard" format, return null (leave as is)
-    // 2. If both have a "standard" format under which they are equal, return null (leave as is)
-    // 3. If both have a "standard" format in common but are unequal, return realVersion (this means it was changed externally)
-    // If in matchMode, the outcomes of rules 2 and 3 are reversed, and the "real" version is not matched strictly
-    // Matchmode to be used when comparing internal install version and internal latest version
-
-    bool doStringsMatchUnderRegEx(
-        String pattern, String value1, String value2) {
-      var r = RegExp(pattern);
-      var m1 = r.firstMatch(value1);
-      var m2 = r.firstMatch(value2);
-      return m1 != null && m2 != null
-          ? value1.substring(m1.start, m1.end) ==
-              value2.substring(m2.start, m2.end)
-          : false;
-    }
-
-    Set<String> findStandardFormatsForVersion(String version, bool strict) {
-      Set<String> results = {};
-      for (var pattern in standardVersionRegExStrings) {
-        if (RegExp('${strict ? '^' : ''}$pattern${strict ? '\$' : ''}')
-            .hasMatch(version)) {
-          results.add(pattern);
-        }
-      }
-      return results;
-    }
-
-    var realStandardVersionFormats =
-        findStandardFormatsForVersion(realVersion, true);
-    var internalStandardVersionFormats =
-        findStandardFormatsForVersion(internalVersion, false);
+  MapEntry<bool, String>? reconcileVersionDifferences(
+      String templateVersion, String comparisonVersion) {
+    // Returns null if the versions don't share a common standard format
+    // Returns <true, comparisonVersion> if they share a common format and are equal
+    // Returns <false, templateVersion> if they share a common format but are not equal
+    // templateVersion must fully match a standard format, while comparisonVersion can have a substring match
+    var templateVersionFormats =
+        findStandardFormatsForVersion(templateVersion, true);
+    var comparisonVersionFormats =
+        findStandardFormatsForVersion(comparisonVersion, false);
     var commonStandardFormats =
-        realStandardVersionFormats.intersection(internalStandardVersionFormats);
+        templateVersionFormats.intersection(comparisonVersionFormats);
     if (commonStandardFormats.isEmpty) {
-      return null; // Incompatible; no "enhanced detection"
+      return null;
     }
     for (String pattern in commonStandardFormats) {
-      if (doStringsMatchUnderRegEx(pattern, internalVersion, realVersion)) {
-        return matchMode
-            ? internalVersion
-            : null; // Enhanced detection says no change
+      if (doStringsMatchUnderRegEx(
+          pattern, comparisonVersion, templateVersion)) {
+        return MapEntry(true, comparisonVersion);
       }
     }
-    return matchMode
-        ? null
-        : realVersion; // Enhanced detection says something changed
+    return MapEntry(false, templateVersion);
+  }
+
+  bool doStringsMatchUnderRegEx(String pattern, String value1, String value2) {
+    var r = RegExp(pattern);
+    var m1 = r.firstMatch(value1);
+    var m2 = r.firstMatch(value2);
+    return m1 != null && m2 != null
+        ? value1.substring(m1.start, m1.end) ==
+            value2.substring(m2.start, m2.end)
+        : false;
   }
 
   Future<void> loadApps() async {

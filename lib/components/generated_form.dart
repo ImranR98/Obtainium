@@ -48,6 +48,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
 
 class GeneratedFormDropdown extends GeneratedFormItem {
   late List<MapEntry<String, String>>? opts;
+  List<String>? disabledOptKeys;
 
   GeneratedFormDropdown(
     String key,
@@ -55,6 +56,7 @@ class GeneratedFormDropdown extends GeneratedFormItem {
     String label = 'Input',
     List<Widget> belowWidgets = const [],
     String defaultValue = '',
+    this.disabledOptKeys,
     List<String? Function(String? value)> additionalValidators = const [],
   }) : super(key,
             label: label,
@@ -225,10 +227,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
           return DropdownButtonFormField(
               decoration: InputDecoration(labelText: formItem.label),
               value: values[formItem.key],
-              items: formItem.opts!
-                  .map((e2) =>
-                      DropdownMenuItem(value: e2.key, child: Text(e2.value)))
-                  .toList(),
+              items: formItem.opts!.map((e2) {
+                var enabled =
+                    formItem.disabledOptKeys?.contains(e2.key) != true;
+                return DropdownMenuItem(
+                    value: e2.key,
+                    enabled: enabled,
+                    child: Opacity(
+                        opacity: enabled ? 1 : 0.5, child: Text(e2.value)));
+              }).toList(),
               onChanged: (value) {
                 setState(() {
                   values[formItem.key] = value ?? formItem.opts!.first.key;

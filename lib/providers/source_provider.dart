@@ -21,7 +21,6 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/vlc.dart';
-import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -111,16 +110,16 @@ class App {
     // Convert bool style version detection options to dropdown style
     if (additionalSettings['noVersionDetection'] == true) {
       additionalSettings['versionDetection'] = 'noVersionDetection';
-    }
-    if (additionalSettings['releaseDateAsVersion'] == true) {
-      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
-      additionalSettings.remove('releaseDateAsVersion');
-    }
-    if (additionalSettings['noVersionDetection'] != null) {
-      additionalSettings.remove('noVersionDetection');
-    }
-    if (additionalSettings['releaseDateAsVersion'] != null) {
-      additionalSettings.remove('releaseDateAsVersion');
+      if (additionalSettings['releaseDateAsVersion'] == true) {
+        additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+        additionalSettings.remove('releaseDateAsVersion');
+      }
+      if (additionalSettings['noVersionDetection'] != null) {
+        additionalSettings.remove('noVersionDetection');
+      }
+      if (additionalSettings['releaseDateAsVersion'] != null) {
+        additionalSettings.remove('releaseDateAsVersion');
+      }
     }
     // Ensure additionalSettings are correctly typed
     for (var item in formItems) {
