@@ -80,7 +80,9 @@ class _AppPageState extends State<AppPage> {
             ),
             Text(
               '${tr('installedVersionX', args: [
-                    app?.app.installedVersion ?? tr('none')
+                    app?.installedInfo?.versionName ??
+                        app?.app.installedVersion ??
+                        tr('none')
                   ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
                       tr('app')
                     ])}' : ''}',

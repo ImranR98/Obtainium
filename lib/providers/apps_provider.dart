@@ -537,18 +537,24 @@ class AppsProvider with ChangeNotifier {
         modded = true;
       }
     }
-    // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED INSTALLED VERSION IS NOT STANDARD
-    if (app.installedVersion != null &&
-        app.additionalSettings['versionDetection'] ==
-            'standardVersionDetection') {
-      var correctedInstalledVersion =
-          reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
-      if (correctedInstalledVersion == null) {
-        app.additionalSettings['versionDetection'] = 'noVersionDetection';
-        logs.add('Could not reconcile version formats for: ${app.id}');
-        modded = true;
-      }
+    // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
+    if (installedInfo != null &&
+        !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
+      app.additionalSettings['versionDetection'] = 'noVersionDetection';
+      logs.add('Could not reconcile version formats for: ${app.id}');
+      modded = true;
     }
+    // if (app.installedVersion != null &&
+    //     app.additionalSettings['versionDetection'] ==
+    //         'standardVersionDetection') {
+    //   var correctedInstalledVersion =
+    //       reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
+    //   if (correctedInstalledVersion == null) {
+    //     app.additionalSettings['versionDetection'] = 'noVersionDetection';
+    //     logs.add('Could not reconcile version formats for: ${app.id}');
+    //     modded = true;
+    //   }
+    // }
 
     return modded ? app : null;
   }
