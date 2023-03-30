@@ -486,6 +486,8 @@ class AppsProvider with ChangeNotifier {
 
   bool isVersionDetectionPossible(AppInMemory? app) {
     return app?.app.additionalSettings['trackOnly'] != true &&
+        app?.app.additionalSettings['versionDetection'] !=
+            'releaseDateAsVersion' &&
         app?.installedInfo?.versionName != null &&
         app?.app.installedVersion != null &&
         reconcileVersionDifferences(
@@ -539,6 +541,8 @@ class AppsProvider with ChangeNotifier {
     }
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
     if (installedInfo != null &&
+        app.additionalSettings['versionDetection'] ==
+            'standardVersionDetection' &&
         !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
       app.additionalSettings['versionDetection'] = 'noVersionDetection';
       logs.add('Could not reconcile version formats for: ${app.id}');
