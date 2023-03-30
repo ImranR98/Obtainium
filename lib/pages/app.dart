@@ -80,9 +80,7 @@ class _AppPageState extends State<AppPage> {
             ),
             Text(
               '${tr('installedVersionX', args: [
-                    app?.installedInfo?.versionName ??
-                        app?.app.installedVersion ??
-                        tr('none')
+                    app?.app.installedVersion ?? tr('none')
                   ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
                       tr('app')
                     ])}' : ''}',
@@ -249,6 +247,8 @@ class _AppPageState extends State<AppPage> {
                 if (e.key == 'versionDetection' && e is GeneratedFormDropdown) {
                   e.disabledOptKeys ??= [];
                   if (app?.app.installedVersion != null &&
+                      app?.app.additionalSettings['versionDetection'] !=
+                          'releaseDateAsVersion' &&
                       !appsProvider.isVersionDetectionPossible(app)) {
                     e.disabledOptKeys!.add('standardVersionDetection');
                   }
