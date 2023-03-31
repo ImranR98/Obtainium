@@ -220,6 +220,7 @@
     "importFromURLsInFile": "Import from URLs in File (like OPML)",
     "versionDetection": "Version Detection",
     "standardVersionDetection": "Standard version detection",
+    "groupByCategory": "Group by Category",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
