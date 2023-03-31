@@ -220,6 +220,7 @@
     "importFromURLsInFile": "ファイル（OPMLなど）内のURLからインポート",
     "versionDetection": "バージョン検出",
     "standardVersionDetection": "標準のバージョン検出",
+    "groupByCategory": "Group by Category",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

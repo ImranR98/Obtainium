@@ -262,6 +262,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(tr('groupByCategory')),
+                                Switch(
+                                    value: settingsProvider.groupByCategory,
+                                    onChanged: (value) {
+                                      settingsProvider.groupByCategory = value;
+                                    })
+                              ],
+                            ),
                             const Divider(
                               height: 16,
                             ),

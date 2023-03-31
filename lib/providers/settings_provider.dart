@@ -139,6 +139,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get groupByCategory {
+    return prefs?.getBool('groupByCategory') ?? false;
+  }
+
+  set groupByCategory(bool show) {
+    prefs?.setBool('groupByCategory', show);
+    notifyListeners();
+  }
+
   String? getSettingString(String settingId) {
     return prefs?.getString(settingId);
   }

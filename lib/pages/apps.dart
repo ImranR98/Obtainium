@@ -187,6 +187,25 @@ class AppsPageState extends State<AppsPage> {
     }
     listedApps = [...tempPinned, ...tempNotPinned];
 
+    List<String?> getListedCategories() {
+      var temp = listedApps
+          .map((e) => e.app.categories.isNotEmpty ? e.app.categories : [null]);
+      return temp.isNotEmpty
+          ? {
+              ...temp.reduce((v, e) => [...v, ...e])
+            }.toList()
+          : [];
+    }
+
+    var listedCategories = getListedCategories();
+    listedCategories.sort((a, b) {
+      return a != null && b != null
+          ? a.compareTo(b)
+          : a == null
+              ? 1
+              : -1;
+    });
+
     showChangeLogDialog(
         String? changesUrl, AppSource appSource, String changeLog, int index) {
       showDialog(
@@ -402,17 +421,37 @@ class AppsPageState extends State<AppsPage> {
         ],
       );
 
-      var transparent = const Color.fromARGB(0, 0, 0, 0).value;
+      var transparent =
+          Theme.of(context).colorScheme.background.withAlpha(0).value;
+      List<double> stops = [
+        ...listedApps[index]
+            .app
+            .categories
+            .asMap()
+            .entries
+            .map((e) =>
+                ((e.key / (listedApps[index].app.categories.length - 1))))
+            .toList(),
+        1
+      ];
+      if (stops.length == 2) {
+        stops[0] = 1;
+      }
       return Container(
           decoration: BoxDecoration(
-              border: Border.symmetric(
-                  vertical: BorderSide(
-                      width: 4,
-                      color: Color(listedApps[index].app.categories.isNotEmpty
-                          ? settingsProvider.categories[
-                                  listedApps[index].app.categories.first] ??
-                              transparent
-                          : transparent)))),
+              gradient: LinearGradient(
+                  stops: stops,
+                  begin: const Alignment(-1, 0),
+                  end: const Alignment(-0.97, 0),
+                  colors: [
+                ...listedApps[index]
+                    .app
+                    .categories
+                    .map((e) =>
+                        Color(settingsProvider.categories[e]!).withAlpha(255))
+                    .toList(),
+                Color(transparent)
+              ])),
           child: ListTile(
             tileColor: listedApps[index].app.pinned
                 ? Colors.grey.withOpacity(0.1)
@@ -463,6 +502,28 @@ class AppsPageState extends State<AppsPage> {
               }
             },
           ));
+    }
+
+    getCategoryCollapsibleTile(int index) {
+      var tiles = listedApps
+          .asMap()
+          .entries
+          .where((e) =>
+              e.value.app.categories.contains(listedCategories[index]) ||
+              e.value.app.categories.isEmpty && listedCategories[index] == null)
+          .map((e) => getSingleAppHorizTile(e.key))
+          .toList();
+
+      capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
+      return ExpansionTile(
+          initiallyExpanded: true,
+          title: Text(
+            capFirstChar(listedCategories[index] ?? tr('noCategory')),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          controlAffinity: ListTileControlAffinity.leading,
+          trailing: Text(tiles.length.toString()),
+          children: tiles);
     }
 
     getSelectAllButton() {
@@ -903,6 +964,22 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
+    getDisplayedList() {
+      return settingsProvider.groupByCategory &&
+              !(listedCategories.isEmpty ||
+                  (listedCategories.length == 1 && listedCategories[0] == null))
+          ? SliverList(
+              delegate:
+                  SliverChildBuilderDelegate((BuildContext context, int index) {
+              return getCategoryCollapsibleTile(index);
+            }, childCount: listedCategories.length))
+          : SliverList(
+              delegate:
+                  SliverChildBuilderDelegate((BuildContext context, int index) {
+              return getSingleAppHorizTile(index);
+            }, childCount: listedApps.length));
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
@@ -922,11 +999,7 @@ class AppsPageState extends State<AppsPage> {
           child: CustomScrollView(slivers: <Widget>[
             CustomAppBar(title: tr('appsString')),
             ...getLoadingWidgets(),
-            SliverList(
-                delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-              return getSingleAppHorizTile(index);
-            }, childCount: listedApps.length))
+            getDisplayedList()
           ])),
       persistentFooterButtons: appsProvider.apps.isEmpty
           ? null

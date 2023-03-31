@@ -220,6 +220,7 @@
     "importFromURLsInFile": "وارد کردن از آدرس های اینترنتی موجود در فایل (مانند OPML)",
     "versionDetection": "تشخیص نسخه",
     "standardVersionDetection": "تشخیص نسخه استاندارد",
+    "groupByCategory": "Group by Category",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

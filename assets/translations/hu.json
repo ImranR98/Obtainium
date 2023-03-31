@@ -219,6 +219,7 @@
     "importFromURLsInFile": "Importálás fájlban található URL-ből (mint pl. OPML)",
     "versionDetection": "Verzió érzékelés",
     "standardVersionDetection": "Alapért. verzió érzékelés",
+    "groupByCategory": "Group by Category",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
