@@ -133,7 +133,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 }
               }
             });
-            settingsProvider.categories = cats;
+            appsProvider.addMissingCategories(settingsProvider);
             showError(tr('importedX', args: [plural('apps', value)]), context);
           });
         } else {

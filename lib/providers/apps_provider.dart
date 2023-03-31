@@ -757,6 +757,18 @@ class AppsProvider with ChangeNotifier {
     await intent.launch();
   }
 
+  addMissingCategories(SettingsProvider settingsProvider) {
+    var cats = settingsProvider.categories;
+    apps.forEach((key, value) {
+      for (var c in value.app.categories) {
+        if (!cats.containsKey(c)) {
+          cats[c] = generateRandomLightColor().value;
+        }
+      }
+    });
+    settingsProvider.setCategories(cats, appsProvider: this);
+  }
+
   Future<App?> checkUpdate(String appId) async {
     App? currentApp = apps[appId]!.app;
     SourceProvider sourceProvider = SourceProvider();

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -160,7 +162,22 @@ class SettingsProvider with ChangeNotifier {
   Map<String, int> get categories =>
       Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
 
-  set categories(Map<String, int> cats) {
+  void setCategories(Map<String, int> cats, {AppsProvider? appsProvider}) {
+    if (appsProvider != null) {
+      List<App> changedApps = appsProvider.apps.values
+          .map((a) {
+            var n1 = a.app.categories.length;
+            a.app.categories.removeWhere((c) => cats.keys.contains(c));
+            return n1 > a.app.categories.length ? a.app : null;
+          })
+          .where((element) => element != null)
+          .map((e) => e as App)
+          .toList();
+      if (changedApps.isNotEmpty) {
+        appsProvider.saveApps(changedApps,
+            attemptToCorrectInstallStatus: false);
+      }
+    }
     prefs?.setString('categories', jsonEncode(cats));
     notifyListeners();
   }
