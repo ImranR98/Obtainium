@@ -6,6 +6,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -444,6 +445,7 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
   @override
   Widget build(BuildContext context) {
     var settingsProvider = context.watch<SettingsProvider>();
+    var appsProvider = context.watch<AppsProvider>();
     storedValues = settingsProvider.categories.map((key, value) => MapEntry(
         key,
         MapEntry(value,
@@ -467,8 +469,9 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
           if (!isBuilding) {
             storedValues =
                 values['categories'] as Map<String, MapEntry<int, bool>>;
-            settingsProvider.categories =
-                storedValues.map((key, value) => MapEntry(key, value.key));
+            settingsProvider.setCategories(
+                storedValues.map((key, value) => MapEntry(key, value.key)),
+                appsProvider: appsProvider);
             if (widget.onSelected != null) {
               widget.onSelected!(storedValues.keys
                   .where((k) => storedValues[k]!.value)

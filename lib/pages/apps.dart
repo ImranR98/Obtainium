@@ -448,7 +448,8 @@ class AppsPageState extends State<AppsPage> {
                     .app
                     .categories
                     .map((e) =>
-                        Color(settingsProvider.categories[e]!).withAlpha(255))
+                        Color(settingsProvider.categories[e] ?? transparent)
+                            .withAlpha(255))
                     .toList(),
                 Color(transparent)
               ])),
