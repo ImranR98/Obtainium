@@ -848,12 +848,6 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<String> exportApps() async {
-    Directory? exportDir = Directory('/storage/emulated/0/Download');
-    String path = 'Downloads'; // TODO: See if hardcoding this can be avoided
-    if (!exportDir.existsSync()) {
-      exportDir = await getExternalStorageDirectory();
-      path = exportDir!.path;
-    }
     if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
       if (await Permission.storage.isDenied) {
         await Permission.storage.request();
@@ -861,6 +855,18 @@ class AppsProvider with ChangeNotifier {
       if (await Permission.storage.isDenied) {
         throw ObtainiumError(tr('storagePermissionDenied'));
       }
+    }
+    Directory? exportDir = Directory('/storage/emulated/0/Download');
+    String path = 'Downloads'; // TODO: See if hardcoding this can be avoided
+    var downloadsAccessible = false;
+    try {
+      downloadsAccessible = exportDir.existsSync();
+    } catch (e) {
+      logs.add('Error accessing Downloads (will use fallback): $e');
+    }
+    if (!downloadsAccessible) {
+      exportDir = await getExternalStorageDirectory();
+      path = exportDir!.path;
     }
     File export = File(
         '${exportDir.path}/${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().millisecondsSinceEpoch}.json');
