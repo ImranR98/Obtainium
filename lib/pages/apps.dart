@@ -735,14 +735,12 @@ class AppsPageState extends State<AppsPage> {
     }
 
     pinSelectedApps() {
-      () {
-        var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
-        appsProvider.saveApps(selectedApps.map((e) {
-          e.pinned = pinStatus;
-          return e;
-        }).toList());
-        Navigator.of(context).pop();
-      };
+      var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+      appsProvider.saveApps(selectedApps.map((e) {
+        e.pinned = pinStatus;
+        return e;
+      }).toList());
+      Navigator.of(context).pop();
     }
 
     resetSelectedAppsInstallStatuses() {
