@@ -56,6 +56,7 @@ class AppsPageState extends State<AppsPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
+    var sourceProvider = SourceProvider();
     var listedApps = appsProvider.apps.values.toList();
     var currentFilterIsUpdatesOnly =
         filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
@@ -108,6 +109,11 @@ class AppsPageState extends State<AppsPage> {
           filter.categoryFilter
               .intersection(app.app.categories.toSet())
               .isEmpty) {
+        return false;
+      }
+      if (filter.sourceFilter.isNotEmpty &&
+          sourceProvider.getSource(app.app.url).runtimeType.toString() !=
+              filter.sourceFilter) {
         return false;
       }
       return true;
@@ -892,6 +898,19 @@ class AppsPageState extends State<AppsPage> {
                   GeneratedFormSwitch('nonInstalledApps',
                       label: tr('nonInstalledApps'),
                       defaultValue: vals['nonInstalledApps'])
+                ],
+                [
+                  GeneratedFormDropdown(
+                      'sourceFilter',
+                      label: tr('appSource'),
+                      defaultValue: filter.sourceFilter,
+                      [
+                        MapEntry('', tr('none')),
+                        ...sourceProvider.sources
+                            .map((e) =>
+                                MapEntry(e.runtimeType.toString(), e.name))
+                            .toList()
+                      ])
                 ]
               ],
               additionalWidgets: [
@@ -1015,20 +1034,23 @@ class AppsFilter {
   late bool includeUptodate;
   late bool includeNonInstalled;
   late Set<String> categoryFilter;
+  late String sourceFilter;
 
   AppsFilter(
       {this.nameFilter = '',
       this.authorFilter = '',
       this.includeUptodate = true,
       this.includeNonInstalled = true,
-      this.categoryFilter = const {}});
+      this.categoryFilter = const {},
+      this.sourceFilter = ''});
 
   Map<String, dynamic> toFormValuesMap() {
     return {
       'appName': nameFilter,
       'author': authorFilter,
       'upToDateApps': includeUptodate,
-      'nonInstalledApps': includeNonInstalled
+      'nonInstalledApps': includeNonInstalled,
+      'sourceFilter': sourceFilter
     };
   }
 
@@ -1037,6 +1059,7 @@ class AppsFilter {
     authorFilter = values['author']!;
     includeUptodate = values['upToDateApps'];
     includeNonInstalled = values['nonInstalledApps'];
+    sourceFilter = values['sourceFilter'];
   }
 
   bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
@@ -1044,5 +1067,6 @@ class AppsFilter {
       nameFilter.trim() == other.nameFilter.trim() &&
       includeUptodate == other.includeUptodate &&
       includeNonInstalled == other.includeNonInstalled &&
-      settingsProvider.setEqual(categoryFilter, other.categoryFilter);
+      settingsProvider.setEqual(categoryFilter, other.categoryFilter) &&
+      sourceFilter.trim() == other.sourceFilter.trim();
 }
