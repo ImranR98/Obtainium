@@ -185,9 +185,11 @@ class GitHub extends AppSource {
       Map<String, String> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body)['items'] as List<dynamic>)) {
         urlsWithDescriptions.addAll({
-          e['html_url'] as String: e['description'] != null
-              ? e['description'] as String
-              : tr('noDescription')
+          e['html_url'] as String:
+              ((e['archived'] == true ? '[ARCHIVED] ' : '') +
+                  (e['description'] != null
+                      ? e['description'] as String
+                      : tr('noDescription')))
         });
       }
       return urlsWithDescriptions;

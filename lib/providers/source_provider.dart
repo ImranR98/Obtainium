@@ -278,7 +278,8 @@ class AppSource {
               return regExValidator(value);
             }
           ])
-    ]
+    ],
+    [GeneratedFormTextField('appName', label: tr('appName'), required: false)]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -427,8 +428,10 @@ class SourceProvider {
       throw NoAPKError();
     }
     String apkVersion = apk.version.replaceAll('/', '-');
-    var name = currentApp?.name.trim() ??
-        apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
+    var name = currentApp != null ? currentApp.name.trim() : '';
+    name = name.isNotEmpty
+        ? name
+        : apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
     return App(
         currentApp?.id ??
             source.tryInferringAppId(standardUrl,
@@ -436,9 +439,7 @@ class SourceProvider {
             generateTempID(standardUrl, additionalSettings),
         standardUrl,
         apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
-        name.trim().isNotEmpty
-            ? name
-            : apk.names.name[0].toUpperCase() + apk.names.name.substring(1),
+        name,
         currentApp?.installedVersion,
         apkVersion,
         apk.apkUrls,

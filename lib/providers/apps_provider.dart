@@ -670,6 +670,9 @@ class AppsProvider with ChangeNotifier {
     for (var app in apps) {
       AppInfo? info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
+      if (app.additionalSettings['appName']?.toString().isNotEmpty == true) {
+        app.name = app.additionalSettings['appName'].toString().trim();
+      }
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
