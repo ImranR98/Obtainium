@@ -207,6 +207,7 @@
     "addCategory": "カテゴリを追加",
     "label": "ラベル",
     "language": "言語",
+    "copiedToClipboard": "クリップボードにコピーしました",
     "storagePermissionDenied": "ストレージ権限が拒否されました",
     "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
     "filterAPKsByRegEx": "正規表現でAPKを絞り込む",

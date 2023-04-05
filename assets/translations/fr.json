@@ -207,6 +207,7 @@
     "addCategory": "Ajouter une catégorie",
     "label": "Étiquette",
     "language": "Langue",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "Autorisation de stockage refusée",
     "selectedCategorizeWarning": "Cela remplacera tous les paramètres de catégorie existants pour les applications sélectionnées.",
     "filterAPKsByRegEx": "Filtrer les APK par expression régulière",
