@@ -80,7 +80,8 @@ class FDroidRepo extends AppSource {
               element.querySelector('apkname') != null)
           .map((e) => '$standardUrl/${e.querySelector('apkname')!.innerHtml}')
           .toList();
-      return APKDetails(latestVersion, apkUrls, AppNames(authorName, appName),
+      return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
+          AppNames(authorName, appName),
           releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);

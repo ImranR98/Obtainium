@@ -50,7 +50,7 @@ class SourceForge extends AppSource {
               .toList();
       return APKDetails(
           version,
-          apkUrlList,
+          getApkUrlsFromUrls(apkUrlList),
           AppNames(
               name, standardUrl.substring(standardUrl.lastIndexOf('/') + 1)));
     } else {

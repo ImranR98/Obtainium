@@ -50,7 +50,7 @@ class FDroid extends AppSource {
           .where((element) => element['versionName'] == latestVersion)
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
-      return APKDetails(latestVersion, apkUrls,
+      return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
           AppNames(name, Uri.parse(standardUrl).pathSegments.last));
     } else {
       throw getObtainiumHttpError(res);

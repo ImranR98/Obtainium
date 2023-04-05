@@ -42,7 +42,8 @@ class HTML extends AppSource {
                   ? '${uri.origin}/$e'
                   : '${uri.origin}/${uri.path}/$e')
           .toList();
-      return APKDetails(version, apkUrls, AppNames(uri.host, tr('app')));
+      return APKDetails(
+          version, getApkUrlsFromUrls(apkUrls), AppNames(uri.host, tr('app')));
     } else {
       throw getObtainiumHttpError(res);
     }

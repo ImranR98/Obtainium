@@ -60,7 +60,8 @@ class GitLab extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrls, GitHub().getAppNames(standardUrl),
+      return APKDetails(version, getApkUrlsFromUrls(apkUrls),
+          GitHub().getAppNames(standardUrl),
           releaseDate: releaseDate);
     } else {
       throw getObtainiumHttpError(res);

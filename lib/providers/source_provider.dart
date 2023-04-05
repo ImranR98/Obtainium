@@ -34,7 +34,7 @@ class AppNames {
 
 class APKDetails {
   late String version;
-  late List<String> apkUrls;
+  late List<MapEntry<String, String>> apkUrls;
   late AppNames names;
   late DateTime? releaseDate;
   late String? changeLog;
@@ -50,7 +50,7 @@ class App {
   late String name;
   String? installedVersion;
   late String latestVersion;
-  List<String> apkUrls = [];
+  List<MapEntry<String, String>> apkUrls = [];
   late int preferredApkIndex;
   late Map<String, dynamic> additionalSettings;
   late DateTime? lastUpdateCheck;
@@ -134,6 +134,18 @@ class App {
     if (preferredApkIndex < 0) {
       preferredApkIndex = 0;
     }
+    // apkUrls can either be old list or new named list apkUrls
+    List<MapEntry<String, String>> apkUrls = [];
+    if (json['apkUrls'] != null) {
+      var apkUrlJson = jsonDecode(json['apkUrls']);
+      try {
+        apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
+      } catch (e) {
+        apkUrls = List<dynamic>.from(apkUrlJson)
+            .map((e) => MapEntry(e[0] as String, e[1] as String))
+            .toList();
+      }
+    }
     return App(
         json['id'] as String,
         json['url'] as String,
@@ -143,9 +155,7 @@ class App {
             ? null
             : json['installedVersion'] as String,
         json['latestVersion'] as String,
-        json['apkUrls'] == null
-            ? []
-            : List<String>.from(jsonDecode(json['apkUrls'])),
+        apkUrls,
         preferredApkIndex,
         additionalSettings,
         json['lastUpdateCheck'] == null
@@ -173,7 +183,7 @@ class App {
         'name': name,
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
-        'apkUrls': jsonEncode(apkUrls),
+        'apkUrls': jsonEncode(apkUrls.map((e) => [e.key, e.value]).toList()),
         'preferredApkIndex': preferredApkIndex,
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
@@ -224,6 +234,11 @@ Map<String, dynamic> getDefaultValuesFromFormItems(
       .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
       .reduce((value, element) => [...value, ...element]));
 }
+
+getApkUrlsFromUrls(List<String> urls) => urls
+    .map((e) =>
+        MapEntry(e.split('/').where((el) => el.trim().isNotEmpty).last, e))
+    .toList();
 
 class AppSource {
   String? host;
@@ -422,7 +437,7 @@ class SourceProvider {
     if (additionalSettings['apkFilterRegEx'] != null) {
       var reg = RegExp(additionalSettings['apkFilterRegEx']);
       apk.apkUrls =
-          apk.apkUrls.where((element) => reg.hasMatch(element)).toList();
+          apk.apkUrls.where((element) => reg.hasMatch(element.key)).toList();
     }
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();

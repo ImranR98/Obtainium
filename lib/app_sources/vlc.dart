@@ -54,7 +54,8 @@ class VLC extends AppSource {
         throw getObtainiumHttpError(res2);
       }
 
-      return APKDetails(version, apkUrls, AppNames('VideoLAN', 'VLC'));
+      return APKDetails(
+          version, getApkUrlsFromUrls(apkUrls), AppNames('VideoLAN', 'VLC'));
     } else {
       throw getObtainiumHttpError(res);
     }
