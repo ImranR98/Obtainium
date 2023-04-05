@@ -58,7 +58,7 @@ class Mullvad extends AppSource {
       }
       return APKDetails(
           versions[0],
-          ['https://mullvad.net/download/app/apk/latest'],
+          getApkUrlsFromUrls(['https://mullvad.net/download/app/apk/latest']),
           AppNames(name, 'Mullvad-VPN'),
           changeLog: changeLog);
     } else {

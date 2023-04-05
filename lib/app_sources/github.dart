@@ -161,7 +161,9 @@ class GitHub extends AppSource {
         throw NoVersionError();
       }
       var changeLog = targetRelease['body'].toString();
-      return APKDetails(version, targetRelease['apkUrls'] as List<String>,
+      return APKDetails(
+          version,
+          getApkUrlsFromUrls(targetRelease['apkUrls'] as List<String>),
           getAppNames(standardUrl),
           releaseDate: releaseDate,
           changeLog: changeLog.isEmpty ? null : changeLog);

@@ -98,7 +98,7 @@ class NeutronCode extends AppSource {
           ? (customDateParse(dateStringOriginal))
           : null;
       var changeLogElements = http.querySelectorAll('.pd-fdesc p');
-      return APKDetails(version, [apkUrl],
+      return APKDetails(version, getApkUrlsFromUrls([apkUrl]),
           AppNames(runtimeType.toString(), name ?? standardUrl.split('/').last),
           releaseDate: dateString != null ? DateTime.parse(dateString) : null,
           changeLog: changeLogElements.isNotEmpty

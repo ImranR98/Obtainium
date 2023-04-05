@@ -68,7 +68,7 @@ class Codeberg extends AppSource {
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
 
-      List<String> getReleaseAPKUrls(dynamic release) =>
+      List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
               ?.map((e) {
                 return e['name'] != null && e['browser_download_url'] != null
@@ -77,7 +77,6 @@ class Codeberg extends AppSource {
                     : const MapEntry('', '');
               })
               .where((element) => element.key.toLowerCase().endsWith('.apk'))
-              .map((e) => e.value)
               .toList() ??
           [];
 
@@ -119,7 +118,9 @@ class Codeberg extends AppSource {
         throw NoVersionError();
       }
       var changeLog = targetRelease['body'].toString();
-      return APKDetails(version, targetRelease['apkUrls'] as List<String>,
+      return APKDetails(
+          version,
+          targetRelease['apkUrls'] as List<MapEntry<String, String>>,
           getAppNames(standardUrl),
           releaseDate: releaseDate,
           changeLog: changeLog.isEmpty ? null : changeLog);

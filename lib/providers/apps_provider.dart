@@ -169,7 +169,7 @@ class AppsProvider with ChangeNotifier {
           '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
       String downloadUrl = await SourceProvider()
           .getSource(app.url)
-          .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex]);
+          .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex].value);
       var notif = DownloadNotification(app.name, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
@@ -296,9 +296,10 @@ class AppsProvider with ChangeNotifier {
     await intent.launch();
   }
 
-  Future<String?> confirmApkUrl(App app, BuildContext? context) async {
+  Future<MapEntry<String, String>?> confirmApkUrl(
+      App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
-    String? apkUrl = app.apkUrls[app.preferredApkIndex];
+    MapEntry<String, String>? apkUrl = app.apkUrls[app.preferredApkIndex];
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
@@ -321,14 +322,14 @@ class AppsProvider with ChangeNotifier {
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
     if (apkUrl != null &&
-        getHost(apkUrl) != getHost(app.url) &&
+        getHost(apkUrl.value) != getHost(app.url) &&
         context != null) {
       // ignore: use_build_context_synchronously
       if (await showDialog(
               context: context,
               builder: (BuildContext ctx) {
                 return APKOriginWarningDialog(
-                    sourceUrl: app.url, apkUrl: apkUrl!);
+                    sourceUrl: app.url, apkUrl: apkUrl!.value);
               }) !=
           true) {
         apkUrl = null;
@@ -353,7 +354,7 @@ class AppsProvider with ChangeNotifier {
       if (apps[id] == null) {
         throw ObtainiumError(tr('appNotFound'));
       }
-      String? apkUrl;
+      MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
@@ -923,7 +924,7 @@ class APKPicker extends StatefulWidget {
   const APKPicker({super.key, required this.app, this.initVal, this.archs});
 
   final App app;
-  final String? initVal;
+  final MapEntry<String, String>? initVal;
   final List<String>? archs;
 
   @override
@@ -931,7 +932,7 @@ class APKPicker extends StatefulWidget {
 }
 
 class _APKPickerState extends State<APKPicker> {
-  String? apkUrl;
+  MapEntry<String, String>? apkUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -944,15 +945,13 @@ class _APKPickerState extends State<APKPicker> {
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map(
           (u) => RadioListTile<String>(
-              title: Text(Uri.parse(u)
-                  .pathSegments
-                  .where((element) => element.isNotEmpty)
-                  .last),
-              value: u,
-              groupValue: apkUrl,
+              title: Text(u.key),
+              value: u.value,
+              groupValue: apkUrl!.value,
               onChanged: (String? val) {
                 setState(() {
-                  apkUrl = val;
+                  apkUrl =
+                      widget.app.apkUrls.where((e) => e.value == val).first;
                 });
               }),
         ),

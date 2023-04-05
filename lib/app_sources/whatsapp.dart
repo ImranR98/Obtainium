@@ -64,9 +64,9 @@ class WhatsApp extends AppSource {
           vLines[0].substring(versionMatch.start, versionMatch.end);
       return APKDetails(
           version,
-          [
+          getApkUrlsFromUrls([
             'https://www.whatsapp.com/android?v=$version&=thisIsaPlaceholder&a=realURLPrefetchedAtDownloadTime'
-          ],
+          ]),
           AppNames('Meta', 'WhatsApp'));
     } else {
       throw getObtainiumHttpError(res);
