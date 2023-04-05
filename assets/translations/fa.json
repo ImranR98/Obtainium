@@ -207,6 +207,7 @@
     "addCategory": "اضافه کردن دسته",
     "label": "برچسب",
     "language": "زبان",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "مجوز ذخیره سازی رد شد",
     "selectedCategorizeWarning": "این جایگزین تنظیمات دسته بندی موجود برای برنامه های انتخابی می شود.",
     "filterAPKsByRegEx": "فایل‌های APK را با نظم فیلتر کنید",

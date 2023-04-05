@@ -207,6 +207,7 @@
     "addCategory": "Kategorie hinzufügen",
     "label": "Bezeichnung",
     "language": "Sprache",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "Speicherberechtigung verweigert",
     "selectedCategorizeWarning": "Dadurch werden alle bestehenden Kategorieeinstellungen für die ausgewählten Apps ersetzt.",
     "filterAPKsByRegEx": "APKs nach regulärem Ausdruck filtern",

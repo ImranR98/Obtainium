@@ -207,6 +207,7 @@
     "addCategory": "Aggiungi categoria",
     "label": "Etichetta",
     "language": "Lingua",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "Accesso ai file non autorizzato",
     "selectedCategorizeWarning": "Ciò sostituirà le impostazioni di categoria esistenti per le App selezionate.",
     "filterAPKsByRegEx": "Filtra file APK con espressioni regolari",

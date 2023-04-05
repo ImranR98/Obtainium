@@ -206,6 +206,7 @@
     "addCategory": "Új kategória",
     "label": "Címke",
     "language": "Nyelv",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "Tárhely engedély megtagadva",
     "selectedCategorizeWarning": "Ez felváltja a kiválasztott alkalmazások meglévő kategória-beállításait.",
     "filterAPKsByRegEx": "Az APK-k szűrése reguláris kifejezéssel",

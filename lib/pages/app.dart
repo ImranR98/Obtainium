@@ -61,6 +61,12 @@ class _AppPageState extends State<AppPage> {
                         mode: LaunchMode.externalApplication);
                   }
                 },
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(tr('copiedToClipboard')),
+                  ));
+                },
                 child: Text(
                   app?.app.url ?? '',
                   textAlign: TextAlign.center,

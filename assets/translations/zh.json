@@ -208,6 +208,7 @@
     "addCategory": "添加类别",
     "label": "标签",
     "language": "语言",
+    "copiedToClipboard": "Copied to Clipboard",
     "storagePermissionDenied": "存储权限已被拒绝",
     "selectedCategorizeWarning": "这将取代所选应用程序的任何现有类别",
     "filterAPKsByRegEx": "Filter APKs by Regular Expression",
