@@ -334,11 +334,10 @@ class _AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    Widget getSourcesListWidget() => Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+    Widget getSourcesListWidget() => Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               const SizedBox(
                 height: 48,
               ),
@@ -365,16 +364,17 @@ class _AddAppPageState extends State<AddAppPage> {
                             fontStyle: FontStyle.italic),
                       )))
                   .toList()
-            ]));
+            ]);
 
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: CustomScrollView(slivers: <Widget>[
+        body: CustomScrollView(shrinkWrap: true, slivers: <Widget>[
           CustomAppBar(title: tr('addApp')),
-          SliverFillRemaining(
+          SliverToBoxAdapter(
             child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       getUrlInputRow(),

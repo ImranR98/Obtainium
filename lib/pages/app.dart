@@ -147,7 +147,7 @@ class _AppPageState extends State<AppPage> {
               height: 25,
             ),
             Text(
-              app?.installedInfo?.name ?? app?.app.name ?? tr('app'),
+              app?.app.name ?? tr('app'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displayLarge,
             ),
