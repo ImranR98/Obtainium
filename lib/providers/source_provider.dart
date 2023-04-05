@@ -363,7 +363,7 @@ class SourceProvider {
     url = preStandardizeUrl(url);
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
-      if (url.contains('://${s.host}')) {
+      if (RegExp('://(.+\\.)?${s.host}').hasMatch(url)) {
         source = s;
         break;
       }

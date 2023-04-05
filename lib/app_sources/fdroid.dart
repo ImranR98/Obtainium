@@ -14,12 +14,14 @@ class FDroid extends AppSource {
   @override
   String standardizeURL(String url) {
     RegExp standardUrlRegExB =
-        RegExp('^https?://$host/+[^/]+/+packages/+[^/]+');
+        RegExp('^https?://(cloudflare\\.)?$host/+[^/]+/+packages/+[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
-      url = 'https://$host/packages/${Uri.parse(url).pathSegments.last}';
+      url =
+          'https://${Uri.parse(url.substring(0, match.end)).host}/packages/${Uri.parse(url).pathSegments.last}';
     }
-    RegExp standardUrlRegExA = RegExp('^https?://$host/+packages/+[^/]+');
+    RegExp standardUrlRegExA =
+        RegExp('^https?://(cloudflare\\.)?$host/+packages/+[^/]+');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
@@ -61,9 +63,10 @@ class FDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = tryInferringAppId(standardUrl);
+    String host = Uri.parse(standardUrl).host;
     return getAPKUrlsFromFDroidPackagesAPIResponse(
-        await get(Uri.parse('https://f-droid.org/api/v1/packages/$appId')),
-        'https://f-droid.org/repo/$appId',
+        await get(Uri.parse('https://$host/api/v1/packages/$appId')),
+        'https://$host/repo/$appId',
         standardUrl);
   }
 }
