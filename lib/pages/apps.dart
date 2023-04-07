@@ -29,13 +29,13 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   var updatesOnlyFilter =
       AppsFilter(includeUptodate: false, includeNonInstalled: false);
-  Set<App> selectedApps = {};
+  Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
 
   clearSelected() {
-    if (selectedApps.isNotEmpty) {
+    if (selectedAppIds.isNotEmpty) {
       setState(() {
-        selectedApps.clear();
+        selectedAppIds.clear();
       });
       return true;
     }
@@ -43,10 +43,10 @@ class AppsPageState extends State<AppsPage> {
   }
 
   selectThese(List<App> apps) {
-    if (selectedApps.isEmpty) {
+    if (selectedAppIds.isEmpty) {
       setState(() {
         for (var a in apps) {
-          selectedApps.add(a);
+          selectedAppIds.add(a.id);
         }
       });
     }
@@ -57,20 +57,20 @@ class AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var sourceProvider = SourceProvider();
-    var listedApps = appsProvider.apps.values.toList();
+    var listedApps = appsProvider.getAppValues().toList();
     var currentFilterIsUpdatesOnly =
         filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
 
-    selectedApps = selectedApps
-        .where((element) => listedApps.map((e) => e.app).contains(element))
+    selectedAppIds = selectedAppIds
+        .where((element) => listedApps.map((e) => e.app.id).contains(element))
         .toSet();
 
     toggleAppSelected(App app) {
       setState(() {
-        if (selectedApps.contains(app)) {
-          selectedApps.remove(app);
+        if (selectedAppIds.map((e) => e).contains(app.id)) {
+          selectedAppIds.removeWhere((a) => a == app.id);
         } else {
-          selectedApps.add(app);
+          selectedAppIds.add(app.id);
         }
       });
     }
@@ -143,15 +143,15 @@ class AppsPageState extends State<AppsPage> {
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
     var existingUpdateIdsAllOrSelected = existingUpdates
-        .where((element) => selectedApps.isEmpty
+        .where((element) => selectedAppIds.isEmpty
             ? listedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedApps.map((e) => e.id).contains(element))
+            : selectedAppIds.map((e) => e).contains(element))
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
         .findExistingUpdates(nonInstalledOnly: true)
-        .where((element) => selectedApps.isEmpty
+        .where((element) => selectedAppIds.isEmpty
             ? listedApps.where((a) => a.app.id == element).isNotEmpty
-            : selectedApps.map((e) => e.id).contains(element))
+            : selectedAppIds.map((e) => e).contains(element))
         .toList();
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
@@ -211,6 +211,11 @@ class AppsPageState extends State<AppsPage> {
               ? 1
               : -1;
     });
+
+    Set<App> selectedApps = listedApps
+        .map((e) => e.app)
+        .where((a) => selectedAppIds.contains(a.id))
+        .toSet();
 
     showChangeLogDialog(
         String? changesUrl, AppSource appSource, String changeLog, int index) {
@@ -288,7 +293,8 @@ class AppsPageState extends State<AppsPage> {
         if (refreshingSince != null)
           SliverToBoxAdapter(
             child: LinearProgressIndicator(
-              value: appsProvider.apps.values
+              value: appsProvider
+                      .getAppValues()
                       .where((element) => !(element.app.lastUpdateCheck
                               ?.isBefore(refreshingSince!) ??
                           true))
@@ -467,7 +473,8 @@ class AppsPageState extends State<AppsPage> {
                 .colorScheme
                 .primary
                 .withOpacity(listedApps[index].app.pinned ? 0.2 : 0.1),
-            selected: selectedApps.contains(listedApps[index].app),
+            selected:
+                selectedAppIds.map((e) => e).contains(listedApps[index].app.id),
             onLongPress: () {
               toggleAppSelected(listedApps[index].app);
             },
@@ -497,7 +504,7 @@ class AppsPageState extends State<AppsPage> {
                   ]))
                 : trailingRow,
             onTap: () {
-              if (selectedApps.isNotEmpty) {
+              if (selectedAppIds.isNotEmpty) {
                 toggleAppSelected(listedApps[index].app);
               } else {
                 Navigator.push(
@@ -534,7 +541,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getSelectAllButton() {
-      return selectedApps.isEmpty
+      return selectedAppIds.isEmpty
           ? TextButton.icon(
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
               onPressed: () {
@@ -548,17 +555,17 @@ class AppsPageState extends State<AppsPage> {
           : TextButton.icon(
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
               onPressed: () {
-                selectedApps.isEmpty
+                selectedAppIds.isEmpty
                     ? selectThese(listedApps.map((e) => e.app).toList())
                     : clearSelected();
               },
               icon: Icon(
-                selectedApps.isEmpty
+                selectedAppIds.isEmpty
                     ? Icons.select_all_outlined
                     : Icons.deselect_outlined,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              label: Text(selectedApps.length.toString()));
+              label: Text(selectedAppIds.length.toString()));
     }
 
     getMassObtainFunction() {
@@ -706,7 +713,7 @@ class AppsPageState extends State<AppsPage> {
           builder: (BuildContext ctx) {
             return AlertDialog(
               title: Text(tr('markXSelectedAppsAsUpdated',
-                  args: [selectedApps.length.toString()])),
+                  args: [selectedAppIds.length.toString()])),
               content: Text(
                 tr('onlyWorksWithNonVersionDetectApps'),
                 style: const TextStyle(
@@ -760,7 +767,7 @@ class AppsPageState extends State<AppsPage> {
                   items: const [],
                   initValid: true,
                   message: tr('installStatusOfXWillBeResetExplanation',
-                      args: [plural('app', selectedApps.length)]),
+                      args: [plural('app', selectedAppIds.length)]),
                 );
               });
           if (values != null) {
@@ -836,7 +843,7 @@ class AppsPageState extends State<AppsPage> {
         children: [
           IconButton(
             visualDensity: VisualDensity.compact,
-            onPressed: selectedApps.isEmpty
+            onPressed: selectedAppIds.isEmpty
                 ? null
                 : () {
                     appsProvider.removeAppsWithModal(
@@ -848,7 +855,7 @@ class AppsPageState extends State<AppsPage> {
           IconButton(
               visualDensity: VisualDensity.compact,
               onPressed: getMassObtainFunction(),
-              tooltip: selectedApps.isEmpty
+              tooltip: selectedAppIds.isEmpty
                   ? tr('installUpdateApps')
                   : tr('installUpdateSelectedApps'),
               icon: const Icon(
@@ -856,13 +863,13 @@ class AppsPageState extends State<AppsPage> {
               )),
           IconButton(
             visualDensity: VisualDensity.compact,
-            onPressed: selectedApps.isEmpty ? null : launchCategorizeDialog(),
+            onPressed: selectedAppIds.isEmpty ? null : launchCategorizeDialog(),
             tooltip: tr('categorize'),
             icon: const Icon(Icons.category_outlined),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            onPressed: selectedApps.isEmpty ? null : showMoreOptionsDialog,
+            onPressed: selectedAppIds.isEmpty ? null : showMoreOptionsDialog,
             tooltip: tr('more'),
             icon: const Icon(Icons.more_horiz),
           ),

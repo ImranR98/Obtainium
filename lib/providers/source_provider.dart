@@ -80,6 +80,22 @@ class App {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALSETTINGS: ${additionalSettings.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
+  App deepCopy() => App(
+      id,
+      url,
+      author,
+      name,
+      installedVersion,
+      latestVersion,
+      apkUrls,
+      preferredApkIndex,
+      Map.from(additionalSettings),
+      lastUpdateCheck,
+      pinned,
+      categories: categories,
+      changeLog: changeLog,
+      releaseDate: releaseDate);
+
   factory App.fromJson(Map<String, dynamic> json) {
     var source = SourceProvider().getSource(json['url']);
     var formItems = source.combinedAppSpecificSettingFormItems

@@ -34,6 +34,8 @@ class AppInMemory {
   AppInfo? installedInfo;
 
   AppInMemory(this.app, this.downloadProgress, this.installedInfo);
+  AppInMemory deepCopy() =>
+      AppInMemory(app.deepCopy(), downloadProgress, installedInfo);
 }
 
 class DownloadedApk {
@@ -96,6 +98,8 @@ class AppsProvider with ChangeNotifier {
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
+
+  Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
   AppsProvider() {
     // Subscribe to changes in the app foreground status
@@ -667,7 +671,8 @@ class AppsProvider with ChangeNotifier {
       bool onlyIfExists = true}) async {
     attemptToCorrectInstallStatus =
         attemptToCorrectInstallStatus && (await doesInstalledAppsPluginWork());
-    for (var app in apps) {
+    for (var a in apps) {
+      var app = a.deepCopy();
       AppInfo? info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
       if (app.additionalSettings['appName']?.toString().isNotEmpty == true) {
