@@ -221,8 +221,8 @@
     "importFromURLsInFile": "ファイル（OPMLなど）内のURLからインポート",
     "versionDetection": "バージョン検出",
     "standardVersionDetection": "標準のバージョン検出",
-    "groupByCategory": "Group by Category",
-    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "groupByCategory": "カテゴリ別にグループ化する",
+    "autoApkFilterByArch": "可能であれば，CPUアーキテクチャによるAPKのフィルタリングを試みる",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
