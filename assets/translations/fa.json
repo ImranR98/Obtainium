@@ -222,6 +222,7 @@
     "versionDetection": "تشخیص نسخه",
     "standardVersionDetection": "تشخیص نسخه استاندارد",
     "groupByCategory": "Group by Category",
+    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

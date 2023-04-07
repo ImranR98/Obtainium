@@ -222,6 +222,7 @@
     "versionDetection": "Détection des versions",
     "standardVersionDetection": "Détection de version standard",
     "groupByCategory": "Group by Category",
+    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

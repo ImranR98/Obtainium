@@ -267,7 +267,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
           formInputs[r][e] = Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.items[r][e].label),
+              Flexible(child: Text(widget.items[r][e].label)),
+              const SizedBox(
+                width: 8,
+              ),
               Switch(
                   value: values[widget.items[r][e].key],
                   onChanged: (value) {
