@@ -3,6 +3,7 @@
 
 import 'dart:convert';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
@@ -145,6 +146,11 @@ class App {
             .map((e) => MapEntry(e[0] as String, e[1] as String))
             .toList();
       }
+    }
+    // Arch based APK filter option should be disabled if it previously did not exist
+    if (json['additionalSettings'] != null &&
+        jsonDecode(json['additionalSettings'])['autoApkFilterByArch'] == null) {
+      additionalSettings['autoApkFilterByArch'] = false;
     }
     return App(
         json['id'] as String,
@@ -294,6 +300,10 @@ class AppSource {
             }
           ])
     ],
+    [
+      GeneratedFormSwitch('autoApkFilterByArch',
+          label: tr('autoApkFilterByArch'), defaultValue: true)
+    ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)]
   ];
 
@@ -441,6 +451,19 @@ class SourceProvider {
     }
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
+    }
+    if (apk.apkUrls.length > 1 &&
+        additionalSettings['autoApkFilterByArch'] == true) {
+      var abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+      for (var abi in abis) {
+        var urls2 = apk.apkUrls
+            .where((element) => RegExp('.*$abi.*').hasMatch(element.key))
+            .toList();
+        if (urls2.isNotEmpty && urls2.length < apk.apkUrls.length) {
+          apk.apkUrls = urls2;
+          break;
+        }
+      }
     }
     String apkVersion = apk.version.replaceAll('/', '-');
     var name = currentApp != null ? currentApp.name.trim() : '';
