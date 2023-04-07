@@ -164,7 +164,8 @@ class SettingsProvider with ChangeNotifier {
 
   void setCategories(Map<String, int> cats, {AppsProvider? appsProvider}) {
     if (appsProvider != null) {
-      List<App> changedApps = appsProvider.apps.values
+      List<App> changedApps = appsProvider
+          .getAppValues()
           .map((a) {
             var n1 = a.app.categories.length;
             a.app.categories.removeWhere((c) => !cats.keys.contains(c));

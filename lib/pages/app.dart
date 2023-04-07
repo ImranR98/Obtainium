@@ -38,7 +38,7 @@ class _AppPageState extends State<AppPage> {
     bool areDownloadsRunning = appsProvider.areDownloadsRunning();
 
     var sourceProvider = SourceProvider();
-    AppInMemory? app = appsProvider.apps[widget.appId];
+    AppInMemory? app = appsProvider.apps[widget.appId]?.deepCopy();
     var source = app != null ? sourceProvider.getSource(app.app.url) : null;
     if (!areDownloadsRunning && prevApp == null && app != null) {
       prevApp = app;
