@@ -165,11 +165,10 @@ class AppsProvider with ChangeNotifier {
       notifyListeners();
     }
     try {
-      var fileName =
-          '${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk';
       String downloadUrl = await SourceProvider()
           .getSource(app.url)
           .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex].value);
+      var fileName = '${app.id}-${downloadUrl.hashCode}.apk';
       var notif = DownloadNotification(app.name, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
@@ -205,7 +204,7 @@ class AppsProvider with ChangeNotifier {
         var originalAppId = app.id;
         app.id = newInfo.packageName;
         downloadedFile = downloadedFile.renameSync(
-            '${downloadedFile.parent.path}/${app.id}-${app.latestVersion}-${app.preferredApkIndex}.apk');
+            '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.apk');
         if (apps[originalAppId] != null) {
           await removeApps([originalAppId]);
           await saveApps([app]);
