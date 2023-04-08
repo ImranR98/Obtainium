@@ -81,10 +81,11 @@ class Codeberg extends AppSource {
           [];
 
       dynamic targetRelease;
-
+      var prerrelsSkipped = 0;
       for (int i = 0; i < releases.length; i++) {
-        if (!fallbackToOlderReleases && i > 0) break;
+        if (!fallbackToOlderReleases && i > prerrelsSkipped) break;
         if (!includePrereleases && releases[i]['prerelease'] == true) {
+          prerrelsSkipped++;
           continue;
         }
         if (releases[i]['draft'] == true) {
