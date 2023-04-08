@@ -207,7 +207,7 @@
     "addCategory": "Aggiungi categoria",
     "label": "Etichetta",
     "language": "Lingua",
-    "copiedToClipboard": "Copied to Clipboard",
+    "copiedToClipboard": "Copiato negli appunti",
     "storagePermissionDenied": "Accesso ai file non autorizzato",
     "selectedCategorizeWarning": "Ciò sostituirà le impostazioni di categoria esistenti per le App selezionate.",
     "filterAPKsByRegEx": "Filtra file APK con espressioni regolari",
@@ -221,8 +221,8 @@
     "importFromURLsInFile": "Importa da URL in file (come OPML)",
     "versionDetection": "Rilevamento di versione",
     "standardVersionDetection": "Rilevamento di versione standard",
-    "groupByCategory": "Group by Category",
-    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "groupByCategory": "Raggruppa per categoria",
+    "autoApkFilterByArch": "Tenta di filtrare gli APK in base all'architettura della CPU, se possibile",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
         "other": "Rimuovere le App?"
