@@ -221,7 +221,7 @@
     "versionDetection": "Verzió érzékelés",
     "standardVersionDetection": "Alapért. verzió érzékelés",
     "groupByCategory": "Csoportosítás Kategória alapján",
-    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-kat",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
