@@ -207,7 +207,7 @@
     "addCategory": "اضافه کردن دسته",
     "label": "برچسب",
     "language": "زبان",
-    "copiedToClipboard": "Copied to Clipboard",
+    "copiedToClipboard": "در کلیپ بورد کپی شد",
     "storagePermissionDenied": "مجوز ذخیره سازی رد شد",
     "selectedCategorizeWarning": "این جایگزین تنظیمات دسته بندی موجود برای برنامه های انتخابی می شود.",
     "filterAPKsByRegEx": "فایل‌های APK را با نظم فیلتر کنید",
@@ -221,8 +221,8 @@
     "importFromURLsInFile": "وارد کردن از آدرس های اینترنتی موجود در فایل (مانند OPML)",
     "versionDetection": "تشخیص نسخه",
     "standardVersionDetection": "تشخیص نسخه استاندارد",
-    "groupByCategory": "Group by Category",
-    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "groupByCategory": "گروه بر اساس دسته",
+    "autoApkFilterByArch": "در صورت امکان سعی کنید APKها را بر اساس معماری CPU فیلتر کنید",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
