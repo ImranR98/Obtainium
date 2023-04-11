@@ -221,8 +221,8 @@
     "importFromURLsInFile": "Importieren von URLs aus Datei ( z.B. OPML)",
     "versionDetection": "Versionserkennung",
     "standardVersionDetection": "Standardversionserkennung",
-    "groupByCategory": "Group by Category",
-    "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "groupByCategory": "Nach Kategorie gruppieren",
+    "autoApkFilterByArch": "Nach Möglichkeit versuchen, APKs nach CPU-Architektur zu filtern",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "App entfernen?"
