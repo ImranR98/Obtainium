@@ -153,7 +153,7 @@ class _AppPageState extends State<AppPage> {
               height: 25,
             ),
             Text(
-              app?.app.name ?? tr('app'),
+              app?.name ?? tr('app'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displayLarge,
             ),
@@ -386,7 +386,7 @@ class _AppPageState extends State<AppPage> {
                                       scrollable: true,
                                       content: getInfoColumn(),
                                       title: Text(
-                                          '${app.app.name} ${tr('byX', args: [
+                                          '${app.name} ${tr('byX', args: [
                                             app.app.author
                                           ])}'),
                                       actions: [
