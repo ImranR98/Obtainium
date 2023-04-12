@@ -121,9 +121,11 @@ class AppsPageState extends State<AppsPage> {
     listedApps.sort((a, b) {
       int result = 0;
       if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result = (a.app.author + a.name).compareTo(b.app.author + b.name);
+        result = ((a.app.author + a.name).toLowerCase())
+            .compareTo((b.app.author + b.name).toLowerCase());
       } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result = (a.name + a.app.author).compareTo(b.name + b.app.author);
+        result = ((a.name + a.app.author).toLowerCase())
+            .compareTo((b.name + b.app.author).toLowerCase());
       } else if (settingsProvider.sortColumn ==
           SortColumnSettings.releaseDate) {
         result = (a.app.releaseDate)?.compareTo(
@@ -203,7 +205,7 @@ class AppsPageState extends State<AppsPage> {
     var listedCategories = getListedCategories();
     listedCategories.sort((a, b) {
       return a != null && b != null
-          ? a.compareTo(b)
+          ? a.toLowerCase().compareTo(b.toLowerCase())
           : a == null
               ? 1
               : -1;
