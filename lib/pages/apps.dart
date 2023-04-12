@@ -94,8 +94,7 @@ class AppsPageState extends State<AppsPage> {
             .toList();
 
         for (var t in nameTokens) {
-          var name = app.installedInfo?.name ?? app.app.name;
-          if (!name.toLowerCase().contains(t.toLowerCase())) {
+          if (!app.name.toLowerCase().contains(t.toLowerCase())) {
             return false;
           }
         }
@@ -120,13 +119,13 @@ class AppsPageState extends State<AppsPage> {
     }).toList();
 
     listedApps.sort((a, b) {
-      var nameA = a.installedInfo?.name ?? a.app.name;
-      var nameB = b.installedInfo?.name ?? b.app.name;
       int result = 0;
       if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result = (a.app.author + nameA).compareTo(b.app.author + nameB);
+        result = ((a.app.author + a.name).toLowerCase())
+            .compareTo((b.app.author + b.name).toLowerCase());
       } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result = (nameA + a.app.author).compareTo(nameB + b.app.author);
+        result = ((a.name + a.app.author).toLowerCase())
+            .compareTo((b.name + b.app.author).toLowerCase());
       } else if (settingsProvider.sortColumn ==
           SortColumnSettings.releaseDate) {
         result = (a.app.releaseDate)?.compareTo(
@@ -206,7 +205,7 @@ class AppsPageState extends State<AppsPage> {
     var listedCategories = getListedCategories();
     listedCategories.sort((a, b) {
       return a != null && b != null
-          ? a.compareTo(b)
+          ? a.toLowerCase().compareTo(b.toLowerCase())
           : a == null
               ? 1
               : -1;
@@ -481,8 +480,7 @@ class AppsPageState extends State<AppsPage> {
             leading: getAppIcon(index),
             title: Text(
               maxLines: 1,
-              listedApps[index].installedInfo?.name ??
-                  listedApps[index].app.name,
+              listedApps[index].name,
               style: TextStyle(
                 overflow: TextOverflow.ellipsis,
                 fontWeight: listedApps[index].app.pinned

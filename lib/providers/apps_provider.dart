@@ -36,6 +36,8 @@ class AppInMemory {
   AppInMemory(this.app, this.downloadProgress, this.installedInfo);
   AppInMemory deepCopy() =>
       AppInMemory(app.deepCopy(), downloadProgress, installedInfo);
+
+  String get name => app.overrideName ?? installedInfo?.name ?? app.finalName;
 }
 
 class DownloadedApk {
@@ -163,7 +165,7 @@ class AppsProvider with ChangeNotifier {
   Future<DownloadedApk> downloadApp(App app, BuildContext? context) async {
     NotificationsProvider? notificationsProvider =
         context?.read<NotificationsProvider>();
-    var notifId = DownloadNotification(app.name, 0).id;
+    var notifId = DownloadNotification(app.finalName, 0).id;
     if (apps[app.id] != null) {
       apps[app.id]!.downloadProgress = 0;
       notifyListeners();
@@ -173,7 +175,7 @@ class AppsProvider with ChangeNotifier {
           .getSource(app.url)
           .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex].value);
       var fileName = '${app.id}-${downloadUrl.hashCode}.apk';
-      var notif = DownloadNotification(app.name, 100);
+      var notif = DownloadNotification(app.finalName, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       File downloadedFile =
@@ -183,7 +185,7 @@ class AppsProvider with ChangeNotifier {
           apps[app.id]!.downloadProgress = progress;
           notifyListeners();
         }
-        notif = DownloadNotification(app.name, prog ?? 100);
+        notif = DownloadNotification(app.finalName, prog ?? 100);
         if (prog != null && prevProg != prog) {
           notificationsProvider?.notify(notif);
         }
@@ -641,7 +643,7 @@ class AppsProvider with ChangeNotifier {
         sp.getSource(newApps[i].url);
         apps[newApps[i].id] = AppInMemory(newApps[i], null, info);
       } catch (e) {
-        errors.add([newApps[i].id, newApps[i].name, e.toString()]);
+        errors.add([newApps[i].id, newApps[i].finalName, e.toString()]);
       }
     }
     if (errors.isNotEmpty) {
@@ -675,9 +677,6 @@ class AppsProvider with ChangeNotifier {
       var app = a.deepCopy();
       AppInfo? info = await getInstalledInfo(app.id);
       app.name = info?.name ?? app.name;
-      if (app.additionalSettings['appName']?.toString().isNotEmpty == true) {
-        app.name = app.additionalSettings['appName'].toString().trim();
-      }
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
@@ -945,7 +944,7 @@ class _APKPickerState extends State<APKPicker> {
       scrollable: true,
       title: Text(tr('pickAnAPK')),
       content: Column(children: [
-        Text(tr('appHasMoreThanOnePackage', args: [widget.app.name])),
+        Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName])),
         const SizedBox(height: 16),
         ...widget.app.apkUrls.map(
           (u) => RadioListTile<String>(

@@ -80,6 +80,15 @@ class App {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALSETTINGS: ${additionalSettings.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
 
+  String? get overrideName =>
+      additionalSettings['appName']?.toString().trim().isNotEmpty == true
+          ? additionalSettings['appName']
+          : null;
+
+  String get finalName {
+    return overrideName ?? name;
+  }
+
   App deepCopy() => App(
       id,
       url,

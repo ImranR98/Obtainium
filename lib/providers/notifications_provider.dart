@@ -34,9 +34,9 @@ class UpdateNotification extends ObtainiumNotification {
     message = updates.isEmpty
         ? tr('noNewUpdates')
         : updates.length == 1
-            ? tr('xHasAnUpdate', args: [updates[0].name])
+            ? tr('xHasAnUpdate', args: [updates[0].finalName])
             : plural('xAndNMoreUpdatesAvailable', updates.length - 1,
-                args: [updates[0].name, (updates.length - 1).toString()]);
+                args: [updates[0].finalName, (updates.length - 1).toString()]);
   }
 }
 
@@ -46,9 +46,9 @@ class SilentUpdateNotification extends ObtainiumNotification {
             tr('appsUpdatedNotifDescription'), Importance.defaultImportance) {
     message = updates.length == 1
         ? tr('xWasUpdatedToY',
-            args: [updates[0].name, updates[0].latestVersion])
+            args: [updates[0].finalName, updates[0].latestVersion])
         : plural('xAndNMoreUpdatesInstalled', updates.length - 1,
-            args: [updates[0].name, (updates.length - 1).toString()]);
+            args: [updates[0].finalName, (updates.length - 1).toString()]);
   }
 }
 

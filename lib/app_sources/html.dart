@@ -34,14 +34,20 @@ class HTML extends AppSource {
       var rel = links.last;
       var apkName = rel.split('/').last;
       var version = apkName.substring(0, apkName.length - 4);
-      List<String> apkUrls = [rel]
-          .map((e) => e.toLowerCase().startsWith('http://') ||
-                  e.toLowerCase().startsWith('https://')
-              ? e
-              : e.startsWith('/')
-                  ? '${uri.origin}/$e'
-                  : '${uri.origin}/${uri.path}/$e')
-          .toList();
+      List<String> apkUrls = [rel].map((e) {
+        try {
+          Uri.parse(e).origin;
+          return e;
+        } catch (err) {
+          // is relative
+        }
+        var currPathSegments = uri.path.split('/');
+        if (e.startsWith('/') || currPathSegments.isEmpty) {
+          return '${uri.origin}/$e';
+        } else {
+          return '${uri.origin}/${currPathSegments.sublist(0, currPathSegments.length - 1).join('/')}/$e';
+        }
+      }).toList();
       return APKDetails(
           version, getApkUrlsFromUrls(apkUrls), AppNames(uri.host, tr('app')));
     } else {
