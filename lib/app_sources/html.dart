@@ -40,7 +40,9 @@ class HTML extends AppSource {
               ? e
               : e.startsWith('/')
                   ? '${uri.origin}/$e'
-                  : '${uri.origin}/${uri.path}/$e')
+                  : uri.path.endsWith('.html') || uri.path.endsWith('.php')
+                      ? '${uri.origin}/${uri.path.split('/').sublist(0, uri.path.split('/').length - 1).join('/')}/$e'
+                      : '${uri.origin}/${uri.path}/$e')
           .toList();
       return APKDetails(
           version, getApkUrlsFromUrls(apkUrls), AppNames(uri.host, tr('app')));
