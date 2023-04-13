@@ -263,6 +263,14 @@ class _ObtainiumState extends State<Obtainium> {
         darkColorScheme = ColorScheme.fromSeed(
             seedColor: defaultThemeColour, brightness: Brightness.dark);
       }
+
+      // set the background and surface colors to pure black in the amoled theme
+      if (settingsProvider.useBlackTheme) {
+        darkColorScheme = darkColorScheme
+            .copyWith(background: Colors.black, surface: Colors.black)
+            .harmonized();
+      }
+
       return MaterialApp(
           title: 'Obtainium',
           localizationsDelegates: context.localizationDelegates,

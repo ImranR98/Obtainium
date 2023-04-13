@@ -64,6 +64,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get useBlackTheme {
+    return prefs?.getBool('useBlackTheme') ?? false;
+  }
+
+  set useBlackTheme(bool useBlackTheme) {
+    prefs?.setBool('useBlackTheme', useBlackTheme);
+    notifyListeners();
+  }
+
   int get updateInterval {
     var min = prefs?.getInt('updateInterval') ?? 360;
     if (!updateIntervals.contains(min)) {
