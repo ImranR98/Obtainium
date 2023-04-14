@@ -224,6 +224,17 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             themeDropdown,
                             height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(tr('useBlackTheme')),
+                                Switch(
+                                    value: settingsProvider.useBlackTheme,
+                                    onChanged: (value) {
+                                      settingsProvider.useBlackTheme = value;
+                                    })
+                              ],
+                            ),
                             colourDropdown,
                             height16,
                             Row(
