@@ -31,7 +31,7 @@ class SourceForge extends AppSource {
       getVersion(String url) {
         try {
           var tokens = url.split('/');
-          return tokens[tokens.length - 3];
+          return tokens[tokens.length - 2];
         } catch (e) {
           return null;
         }
