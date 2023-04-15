@@ -266,10 +266,12 @@ Map<String, dynamic> getDefaultValuesFromFormItems(
       .reduce((value, element) => [...value, ...element]));
 }
 
-getApkUrlsFromUrls(List<String> urls) => urls
-    .map((e) =>
-        MapEntry(e.split('/').where((el) => el.trim().isNotEmpty).last, e))
-    .toList();
+List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
+    urls.map((e) {
+      var segments = e.split('/').where((el) => el.trim().isNotEmpty);
+      var apkSegs = segments.where((s) => s.toLowerCase().endsWith('.apk'));
+      return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
+    }).toList();
 
 class AppSource {
   String? host;
