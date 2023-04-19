@@ -754,30 +754,28 @@ class AppsPageState extends State<AppsPage> {
       Navigator.of(context).pop();
     }
 
-    resetSelectedAppsInstallStatuses() {
-      () async {
-        try {
-          var values = await showDialog(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('resetInstallStatusForSelectedAppsQuestion'),
-                  items: const [],
-                  initValid: true,
-                  message: tr('installStatusOfXWillBeResetExplanation',
-                      args: [plural('app', selectedAppIds.length)]),
-                );
-              });
-          if (values != null) {
-            appsProvider.saveApps(selectedApps.map((e) {
-              e.installedVersion = null;
-              return e;
-            }).toList());
-          }
-        } finally {
-          Navigator.of(context).pop();
+    resetSelectedAppsInstallStatuses() async {
+      try {
+        var values = await showDialog(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('resetInstallStatusForSelectedAppsQuestion'),
+                items: const [],
+                initValid: true,
+                message: tr('installStatusOfXWillBeResetExplanation',
+                    args: [plural('app', selectedAppIds.length)]),
+              );
+            });
+        if (values != null) {
+          appsProvider.saveApps(selectedApps.map((e) {
+            e.installedVersion = null;
+            return e;
+          }).toList());
         }
-      };
+      } finally {
+        Navigator.of(context).pop();
+      }
     }
 
     showMoreOptionsDialog() {
@@ -825,7 +823,7 @@ class AppsPageState extends State<AppsPage> {
                         icon: const Icon(Icons.share),
                       ),
                       IconButton(
-                        onPressed: resetSelectedAppsInstallStatuses(),
+                        onPressed: resetSelectedAppsInstallStatuses,
                         tooltip: tr('resetInstallStatus'),
                         icon: const Icon(Icons.restore_page_outlined),
                       ),
