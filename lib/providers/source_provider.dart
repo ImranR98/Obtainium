@@ -59,6 +59,7 @@ class App {
   List<String> categories;
   late DateTime? releaseDate;
   late String? changeLog;
+  late String? overrideSource;
   App(
       this.id,
       this.url,
@@ -73,7 +74,8 @@ class App {
       this.pinned,
       {this.categories = const [],
       this.releaseDate,
-      this.changeLog});
+      this.changeLog,
+      this.overrideSource});
 
   @override
   String toString() {
@@ -103,10 +105,12 @@ class App {
       pinned,
       categories: categories,
       changeLog: changeLog,
-      releaseDate: releaseDate);
+      releaseDate: releaseDate,
+      overrideSource: overrideSource);
 
   factory App.fromJson(Map<String, dynamic> json) {
-    var source = SourceProvider().getSource(json['url']);
+    var source = SourceProvider()
+        .getSource(json['url'], overrideSource: json['overrideSource']);
     var formItems = source.combinedAppSpecificSettingFormItems
         .reduce((value, element) => [...value, ...element]);
     Map<String, dynamic> additionalSettings =
@@ -204,7 +208,10 @@ class App {
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
         changeLog:
-            json['changeLog'] == null ? null : json['changeLog'] as String);
+            json['changeLog'] == null ? null : json['changeLog'] as String,
+        overrideSource: json['overrideSource'] == null
+            ? null
+            : json['overrideSource'] as String);
   }
 
   Map<String, dynamic> toJson() => {
@@ -221,7 +228,8 @@ class App {
         'pinned': pinned,
         'categories': categories,
         'releaseDate': releaseDate?.microsecondsSinceEpoch,
-        'changeLog': changeLog
+        'changeLog': changeLog,
+        'overrideSource': overrideSource
       };
 }
 
@@ -411,7 +419,15 @@ class SourceProvider {
   // Add more mass url source classes here so they are available via the service
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
-  AppSource getSource(String url) {
+  AppSource getSource(String url, {String? overrideSource}) {
+    if (overrideSource != null) {
+      var srcs =
+          sources.where((e) => e.runtimeType.toString() == overrideSource);
+      if (srcs.isEmpty) {
+        throw UnsupportedURLError();
+      }
+      return srcs.first;
+    }
     url = preStandardizeUrl(url);
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
@@ -514,7 +530,8 @@ class SourceProvider {
         currentApp?.pinned ?? false,
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
-        changeLog: apk.changeLog);
+        changeLog: apk.changeLog,
+        overrideSource: currentApp?.overrideSource);
   }
 
   // Returns errors in [results, errors] instead of throwing them

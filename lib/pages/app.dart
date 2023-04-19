@@ -39,7 +39,10 @@ class _AppPageState extends State<AppPage> {
 
     var sourceProvider = SourceProvider();
     AppInMemory? app = appsProvider.apps[widget.appId]?.deepCopy();
-    var source = app != null ? sourceProvider.getSource(app.app.url) : null;
+    var source = app != null
+        ? sourceProvider.getSource(app.app.url,
+            overrideSource: app.app.overrideSource)
+        : null;
     if (!areDownloadsRunning && prevApp == null && app != null) {
       prevApp = app;
       getUpdate(app.app.id);

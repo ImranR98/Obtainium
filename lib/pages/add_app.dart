@@ -28,6 +28,7 @@ class _AddAppPageState extends State<AddAppPage> {
 
   String userInput = '';
   String searchQuery = '';
+  String? pickedSourceOverride;
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
@@ -49,7 +50,10 @@ class _AddAppPageState extends State<AddAppPage> {
           if (isSearch) {
             searchnum++;
           }
-          var source = valid ? sourceProvider.getSource(userInput) : null;
+          var source = valid
+              ? sourceProvider.getSource(userInput,
+                  overrideSource: pickedSourceOverride)
+              : null;
           if (pickedSource.runtimeType != source.runtimeType) {
             pickedSource = source;
             additionalSettings = source != null
@@ -172,7 +176,8 @@ class _AddAppPageState extends State<AddAppPage> {
                               (value) {
                                 try {
                                   sourceProvider
-                                      .getSource(value ?? '')
+                                      .getSource(value ?? '',
+                                          overrideSource: pickedSourceOverride)
                                       .standardizeURL(
                                           preStandardizeUrl(value ?? ''));
                                 } catch (e) {
@@ -258,6 +263,43 @@ class _AddAppPageState extends State<AddAppPage> {
         });
       }
     }
+
+    Widget getSourceOverrideDropdownRow() => Row(
+          children: [
+            Expanded(
+                child: GeneratedForm(
+              items: [
+                [
+                  GeneratedFormDropdown(
+                      'overrideSource',
+                      [
+                        MapEntry('', tr('auto')),
+                        ...sourceProvider.sources.map(
+                            (s) => MapEntry(s.runtimeType.toString(), s.name))
+                      ],
+                      label: tr('source'))
+                ]
+              ],
+              onValueChanges: (values, valid, isBuilding) {
+                fn() {
+                  pickedSourceOverride = values['overrideSource'] == null ||
+                          values['overrideSource'] == ''
+                      ? null
+                      : values['overrideSource'];
+                }
+
+                if (!isBuilding) {
+                  setState(() {
+                    fn();
+                  });
+                } else {
+                  fn();
+                }
+                changeUserInput(userInput, valid, isBuilding);
+              },
+            ))
+          ],
+        );
 
     bool shouldShowSearchBar() =>
         sourceProvider.sources.where((e) => e.canSearch).isNotEmpty &&
@@ -378,6 +420,10 @@ class _AddAppPageState extends State<AddAppPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       getUrlInputRow(),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      getSourceOverrideDropdownRow(),
                       if (shouldShowSearchBar())
                         const SizedBox(
                           height: 16,
