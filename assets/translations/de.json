@@ -226,7 +226,7 @@
     "autoApkFilterByArch": "Nach Möglichkeit versuchen, APKs nach CPU-Architektur zu filtern",
     "removeAppQuestion": {
         "one": "App entfernen?",
-        "other": "App entfernen?"
+        "other": "Apps entfernen?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minute erneut",
