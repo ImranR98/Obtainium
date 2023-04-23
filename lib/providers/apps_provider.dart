@@ -913,7 +913,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<List<List<String>>> addAppsByURL(List<String> urls) async {
     List<dynamic> results = await SourceProvider().getAppsByURLNaive(urls,
-        ignoreUrls: apps.values.map((e) => e.app.url).toList());
+        alreadyAddedUrls: apps.values.map((e) => e.app.url).toList());
     List<App> pps = results[0];
     Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
