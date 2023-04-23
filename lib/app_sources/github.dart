@@ -96,11 +96,9 @@ class GitHub extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 
-  @override
-  Future<APKDetails> getLatestAPKDetails(
-    String standardUrl,
-    Map<String, dynamic> additionalSettings,
-  ) async {
+  Future<APKDetails> getLatestAPKDetailsCommon(String requestUrl,
+      String standardUrl, Map<String, dynamic> additionalSettings,
+      {Function(Response)? onHttpErrorCode}) async {
     bool includePrereleases = additionalSettings['includePrereleases'] == true;
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
@@ -110,28 +108,50 @@ class GitHub extends AppSource {
                 true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
-    Response res = await get(Uri.parse(
-        'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100'));
+    Response res = await get(Uri.parse(requestUrl));
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
 
-      List<String> getReleaseAPKUrls(dynamic release) =>
+      List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
               ?.map((e) {
-                return e['browser_download_url'] != null
-                    ? e['browser_download_url'] as String
-                    : '';
+                return e['name'] != null && e['browser_download_url'] != null
+                    ? MapEntry(e['name'] as String,
+                        e['browser_download_url'] as String)
+                    : const MapEntry('', '');
               })
-              .where((element) => element.toLowerCase().endsWith('.apk'))
+              .where((element) => element.key.toLowerCase().endsWith('.apk'))
               .toList() ??
           [];
 
+      DateTime? getReleaseDateFromRelease(dynamic rel) =>
+          rel?['published_at'] != null
+              ? DateTime.parse(rel['published_at'])
+              : null;
+      releases.sort((a, b) {
+        // See #478
+        if (a == b) {
+          return 0;
+        } else if (a == null) {
+          return -1;
+        } else if (b == null) {
+          return 1;
+        } else {
+          return getReleaseDateFromRelease(a)!
+              .compareTo(getReleaseDateFromRelease(b)!);
+        }
+      });
+      releases = releases.reversed.toList();
       dynamic targetRelease;
       var prerrelsSkipped = 0;
       for (int i = 0; i < releases.length; i++) {
         if (!fallbackToOlderReleases && i > prerrelsSkipped) break;
         if (!includePrereleases && releases[i]['prerelease'] == true) {
           prerrelsSkipped++;
+          continue;
+        }
+        if (releases[i]['draft'] == true) {
+          // Draft releases not supported
           continue;
         }
         var nameToFilter = releases[i]['name'] as String?;
@@ -155,23 +175,36 @@ class GitHub extends AppSource {
         throw NoReleasesError();
       }
       String? version = targetRelease['tag_name'];
-      DateTime? releaseDate = targetRelease['published_at'] != null
-          ? DateTime.parse(targetRelease['published_at'])
-          : null;
+      DateTime? releaseDate = getReleaseDateFromRelease(targetRelease);
       if (version == null) {
         throw NoVersionError();
       }
       var changeLog = targetRelease['body'].toString();
       return APKDetails(
           version,
-          getApkUrlsFromUrls(targetRelease['apkUrls'] as List<String>),
+          targetRelease['apkUrls'] as List<MapEntry<String, String>>,
           getAppNames(standardUrl),
           releaseDate: releaseDate,
           changeLog: changeLog.isEmpty ? null : changeLog);
     } else {
-      rateLimitErrorCheck(res);
+      if (onHttpErrorCode != null) {
+        onHttpErrorCode(res);
+      }
       throw getObtainiumHttpError(res);
     }
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    return getLatestAPKDetailsCommon(
+        'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100',
+        standardUrl,
+        additionalSettings, onHttpErrorCode: (Response res) {
+      rateLimitErrorCheck(res);
+    });
   }
 
   AppNames getAppNames(String standardUrl) {
@@ -180,13 +213,13 @@ class GitHub extends AppSource {
     return AppNames(names[0], names[1]);
   }
 
-  @override
-  Future<Map<String, String>> search(String query) async {
-    Response res = await get(Uri.parse(
-        'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100'));
+  Future<Map<String, String>> searchCommon(
+      String query, String requestUrl, String rootProp,
+      {Function(Response)? onHttpErrorCode}) async {
+    Response res = await get(Uri.parse(requestUrl));
     if (res.statusCode == 200) {
       Map<String, String> urlsWithDescriptions = {};
-      for (var e in (jsonDecode(res.body)['items'] as List<dynamic>)) {
+      for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {
         urlsWithDescriptions.addAll({
           e['html_url'] as String:
               ((e['archived'] == true ? '[ARCHIVED] ' : '') +
@@ -197,9 +230,21 @@ class GitHub extends AppSource {
       }
       return urlsWithDescriptions;
     } else {
-      rateLimitErrorCheck(res);
+      if (onHttpErrorCode != null) {
+        onHttpErrorCode(res);
+      }
       throw getObtainiumHttpError(res);
     }
+  }
+
+  @override
+  Future<Map<String, String>> search(String query) async {
+    return searchCommon(
+        query,
+        'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
+        'items', onHttpErrorCode: (Response res) {
+      rateLimitErrorCheck(res);
+    });
   }
 
   rateLimitErrorCheck(Response res) {
