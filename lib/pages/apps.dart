@@ -224,6 +224,7 @@ class AppsPageState extends State<AppsPage> {
             return GeneratedFormModal(
               title: tr('changes'),
               items: const [],
+              message: listedApps[index].app.latestVersion,
               additionalWidgets: [
                 changesUrl != null
                     ? GestureDetector(
