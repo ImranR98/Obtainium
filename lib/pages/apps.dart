@@ -406,7 +406,8 @@ class AppsPageState extends State<AppsPage> {
             children: [
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Container(
-                    constraints: const BoxConstraints(maxWidth: 150),
+                    constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width / 4),
                     child: Text(
                       getVersionText(index),
                       overflow: TextOverflow.ellipsis,
