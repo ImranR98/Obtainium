@@ -312,7 +312,10 @@ class _AppPageState extends State<AppPage> {
                 app!.app.installedVersion = null;
                 appsProvider.saveApps([app.app]);
               },
-        child: Text(tr('resetInstallStatus')));
+        child: Text(
+          tr('resetInstallStatus'),
+          textAlign: TextAlign.center,
+        ));
 
     getInstallOrUpdateButton() => TextButton(
         onPressed: (app?.app.installedVersion == null ||
@@ -410,7 +413,7 @@ class _AppPageState extends State<AppPage> {
                             tooltip: tr('more')),
                       const SizedBox(width: 16.0),
                       Expanded(
-                          child: !isVersionDetectionStandard &&
+                          child: (!isVersionDetectionStandard || trackOnly) &&
                                   app?.app.installedVersion != null &&
                                   app?.app.installedVersion ==
                                       app?.app.latestVersion
