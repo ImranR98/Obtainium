@@ -364,7 +364,7 @@ class AppsPageState extends State<AppsPage> {
                         child: Image(
                           image: const AssetImage(
                               'assets/graphics/icon_small.png'),
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.3),
                           colorBlendMode: BlendMode.modulate,
                           gaplessPlayback: true,
                         ),
