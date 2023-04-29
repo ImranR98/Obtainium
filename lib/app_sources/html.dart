@@ -41,9 +41,14 @@ class HTML extends AppSource {
         } catch (err) {
           // is relative
         }
-        var currPathSegments = uri.path.split('/');
+        var currPathSegments = uri.path
+            .split('/')
+            .where((element) => element.trim().isNotEmpty)
+            .toList();
         if (e.startsWith('/') || currPathSegments.isEmpty) {
           return '${uri.origin}/$e';
+        } else if (e.split('/').length == 1) {
+          return '${uri.origin}/${currPathSegments.join('/')}/$e';
         } else {
           return '${uri.origin}/${currPathSegments.sublist(0, currPathSegments.length - 1).join('/')}/$e';
         }
