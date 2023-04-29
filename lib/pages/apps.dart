@@ -228,6 +228,7 @@ class AppsPageState extends State<AppsPage> {
             return GeneratedFormModal(
               title: tr('changes'),
               items: const [],
+              message: listedApps[index].app.latestVersion,
               additionalWidgets: [
                 changesUrl != null
                     ? GestureDetector(
@@ -368,7 +369,7 @@ class AppsPageState extends State<AppsPage> {
                         child: Image(
                           image: const AssetImage(
                               'assets/graphics/icon_small.png'),
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.3),
                           colorBlendMode: BlendMode.modulate,
                           gaplessPlayback: true,
                         ),
@@ -410,7 +411,8 @@ class AppsPageState extends State<AppsPage> {
             children: [
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Container(
-                    constraints: const BoxConstraints(maxWidth: 150),
+                    constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width / 4),
                     child: Text(
                       getVersionText(index),
                       overflow: TextOverflow.ellipsis,
@@ -759,30 +761,28 @@ class AppsPageState extends State<AppsPage> {
       Navigator.of(context).pop();
     }
 
-    resetSelectedAppsInstallStatuses() {
-      () async {
-        try {
-          var values = await showDialog(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('resetInstallStatusForSelectedAppsQuestion'),
-                  items: const [],
-                  initValid: true,
-                  message: tr('installStatusOfXWillBeResetExplanation',
-                      args: [plural('app', selectedAppIds.length)]),
-                );
-              });
-          if (values != null) {
-            appsProvider.saveApps(selectedApps.map((e) {
-              e.installedVersion = null;
-              return e;
-            }).toList());
-          }
-        } finally {
-          Navigator.of(context).pop();
+    resetSelectedAppsInstallStatuses() async {
+      try {
+        var values = await showDialog(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('resetInstallStatusForSelectedAppsQuestion'),
+                items: const [],
+                initValid: true,
+                message: tr('installStatusOfXWillBeResetExplanation',
+                    args: [plural('app', selectedAppIds.length)]),
+              );
+            });
+        if (values != null) {
+          appsProvider.saveApps(selectedApps.map((e) {
+            e.installedVersion = null;
+            return e;
+          }).toList());
         }
-      };
+      } finally {
+        Navigator.of(context).pop();
+      }
     }
 
     showMoreOptionsDialog() {
@@ -830,7 +830,7 @@ class AppsPageState extends State<AppsPage> {
                         icon: const Icon(Icons.share),
                       ),
                       IconButton(
-                        onPressed: resetSelectedAppsInstallStatuses(),
+                        onPressed: resetSelectedAppsInstallStatuses,
                         tooltip: tr('resetInstallStatus'),
                         icon: const Icon(Icons.restore_page_outlined),
                       ),

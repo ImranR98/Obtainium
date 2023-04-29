@@ -506,7 +506,7 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
           widget.onlyOneSelectionAllowed ? tr('selectURL') : tr('selectURLs')),
       content: Column(children: [
         ...urlWithDescriptionSelections.keys.map((urlWithD) {
-          select(bool? value) {
+          selectThis(bool? value) {
             setState(() {
               value ??= false;
               if (value! && widget.onlyOneSelectionAllowed) {
@@ -517,11 +517,56 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
             });
           }
 
-          return Row(children: [
+          var urlLink = GestureDetector(
+              onTap: () {
+                launchUrlString(urlWithD.key,
+                    mode: LaunchMode.externalApplication);
+              },
+              child: Text(
+                Uri.parse(urlWithD.key).path.substring(1),
+                style: const TextStyle(decoration: TextDecoration.underline),
+                textAlign: TextAlign.start,
+              ));
+
+          var descriptionText = Text(
+            urlWithD.value.length > 128
+                ? '${urlWithD.value.substring(0, 128)}...'
+                : urlWithD.value,
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          );
+
+          var selectedUrlsWithDs = urlWithDescriptionSelections.entries
+              .where((e) => e.value)
+              .toList();
+
+          var singleSelectTile = ListTile(
+            title: urlLink,
+            subtitle: GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectOnlyOne(urlWithD.key);
+                });
+              },
+              child: descriptionText,
+            ),
+            leading: Radio<String>(
+              value: urlWithD.key,
+              groupValue: selectedUrlsWithDs.isEmpty
+                  ? null
+                  : selectedUrlsWithDs.first.key.key,
+              onChanged: (value) {
+                setState(() {
+                  selectOnlyOne(urlWithD.key);
+                });
+              },
+            ),
+          );
+
+          var multiSelectTile = Row(children: [
             Checkbox(
                 value: urlWithDescriptionSelections[urlWithD],
                 onChanged: (value) {
-                  select(value);
+                  selectThis(value);
                 }),
             const SizedBox(
               width: 8,
@@ -534,28 +579,13 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
                 const SizedBox(
                   height: 8,
                 ),
-                GestureDetector(
-                    onTap: () {
-                      launchUrlString(urlWithD.key,
-                          mode: LaunchMode.externalApplication);
-                    },
-                    child: Text(
-                      Uri.parse(urlWithD.key).path.substring(1),
-                      style:
-                          const TextStyle(decoration: TextDecoration.underline),
-                      textAlign: TextAlign.start,
-                    )),
+                urlLink,
                 GestureDetector(
                   onTap: () {
-                    select(!(urlWithDescriptionSelections[urlWithD] ?? false));
+                    selectThis(
+                        !(urlWithDescriptionSelections[urlWithD] ?? false));
                   },
-                  child: Text(
-                    urlWithD.value.length > 128
-                        ? '${urlWithD.value.substring(0, 128)}...'
-                        : urlWithD.value,
-                    style: const TextStyle(
-                        fontStyle: FontStyle.italic, fontSize: 12),
-                  ),
+                  child: descriptionText,
                 ),
                 const SizedBox(
                   height: 8,
@@ -563,6 +593,10 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
               ],
             ))
           ]);
+
+          return widget.onlyOneSelectionAllowed
+              ? singleSelectTile
+              : multiSelectTile;
         })
       ]),
       actions: [

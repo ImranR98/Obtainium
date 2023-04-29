@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -35,6 +36,8 @@ class Codeberg extends AppSource {
     canSearch = true;
   }
 
+  var gh = GitHub();
+
   @override
   String standardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
@@ -54,80 +57,10 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool includePrereleases = additionalSettings['includePrereleases'] == true;
-    bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == true;
-    String? regexFilter =
-        (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
-                    ?.isNotEmpty ==
-                true
-            ? additionalSettings['filterReleaseTitlesByRegEx']
-            : null;
-    Response res = await get(Uri.parse(
-        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100'));
-    if (res.statusCode == 200) {
-      var releases = jsonDecode(res.body) as List<dynamic>;
-
-      List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
-          (release['assets'] as List<dynamic>?)
-              ?.map((e) {
-                return e['name'] != null && e['browser_download_url'] != null
-                    ? MapEntry(e['name'] as String,
-                        e['browser_download_url'] as String)
-                    : const MapEntry('', '');
-              })
-              .where((element) => element.key.toLowerCase().endsWith('.apk'))
-              .toList() ??
-          [];
-
-      dynamic targetRelease;
-      var prerrelsSkipped = 0;
-      for (int i = 0; i < releases.length; i++) {
-        if (!fallbackToOlderReleases && i > prerrelsSkipped) break;
-        if (!includePrereleases && releases[i]['prerelease'] == true) {
-          prerrelsSkipped++;
-          continue;
-        }
-        if (releases[i]['draft'] == true) {
-          // Draft releases not supported
-        }
-        var nameToFilter = releases[i]['name'] as String?;
-        if (nameToFilter == null || nameToFilter.trim().isEmpty) {
-          // Some leave titles empty so tag is used
-          nameToFilter = releases[i]['tag_name'] as String;
-        }
-        if (regexFilter != null &&
-            !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
-          continue;
-        }
-        var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
-          continue;
-        }
-        targetRelease = releases[i];
-        targetRelease['apkUrls'] = apkUrls;
-        break;
-      }
-      if (targetRelease == null) {
-        throw NoReleasesError();
-      }
-      String? version = targetRelease['tag_name'];
-      DateTime? releaseDate = targetRelease['published_at'] != null
-          ? DateTime.parse(targetRelease['published_at'])
-          : null;
-      if (version == null) {
-        throw NoVersionError();
-      }
-      var changeLog = targetRelease['body'].toString();
-      return APKDetails(
-          version,
-          targetRelease['apkUrls'] as List<MapEntry<String, String>>,
-          getAppNames(standardUrl),
-          releaseDate: releaseDate,
-          changeLog: changeLog.isEmpty ? null : changeLog);
-    } else {
-      throw getObtainiumHttpError(res);
-    }
+    return gh.getLatestAPKDetailsCommon(
+        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100',
+        standardUrl,
+        additionalSettings);
   }
 
   AppNames getAppNames(String standardUrl) {
@@ -138,20 +71,9 @@ class Codeberg extends AppSource {
 
   @override
   Future<Map<String, String>> search(String query) async {
-    Response res = await get(Uri.parse(
-        'https://$host/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100'));
-    if (res.statusCode == 200) {
-      Map<String, String> urlsWithDescriptions = {};
-      for (var e in (jsonDecode(res.body)['data'] as List<dynamic>)) {
-        urlsWithDescriptions.addAll({
-          e['html_url'] as String: e['description'] != null
-              ? e['description'] as String
-              : tr('noDescription')
-        });
-      }
-      return urlsWithDescriptions;
-    } else {
-      throw getObtainiumHttpError(res);
-    }
+    return gh.searchCommon(
+        query,
+        'https://$host/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
+        'data');
   }
 }

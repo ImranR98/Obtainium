@@ -204,7 +204,8 @@ class AppsProvider with ChangeNotifier {
       // The former case should be handled (give the App its real ID), the latter is a security issue
       var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
       if (app.id != newInfo.packageName) {
-        if (apps[app.id] != null && !SourceProvider().isTempId(app)) {
+        var isTempId = SourceProvider().isTempId(app);
+        if (apps[app.id] != null && !isTempId) {
           throw IDChangedError();
         }
         var originalAppId = app.id;
@@ -213,7 +214,7 @@ class AppsProvider with ChangeNotifier {
             '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.apk');
         if (apps[originalAppId] != null) {
           await removeApps([originalAppId]);
-          await saveApps([app]);
+          await saveApps([app], onlyIfExists: !isTempId);
         }
       }
       return DownloadedApk(app.id, downloadedFile);
@@ -304,7 +305,8 @@ class AppsProvider with ChangeNotifier {
   Future<MapEntry<String, String>?> confirmApkUrl(
       App app, BuildContext? context) async {
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? apkUrl = app.apkUrls[app.preferredApkIndex];
+    MapEntry<String, String>? apkUrl =
+        app.apkUrls[app.preferredApkIndex >= 0 ? app.preferredApkIndex : 0];
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
@@ -365,8 +367,13 @@ class AppsProvider with ChangeNotifier {
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
       }
       if (apkUrl != null) {
-        int urlInd = apps[id]!.app.apkUrls.indexOf(apkUrl);
-        if (urlInd != apps[id]!.app.preferredApkIndex) {
+        int urlInd = apps[id]!
+            .app
+            .apkUrls
+            .map((e) => e.value)
+            .toList()
+            .indexOf(apkUrl.value);
+        if (urlInd >= 0 && urlInd != apps[id]!.app.preferredApkIndex) {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApps([apps[id]!.app]);
         }
@@ -908,7 +915,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<List<List<String>>> addAppsByURL(List<String> urls) async {
     List<dynamic> results = await SourceProvider().getAppsByURLNaive(urls,
-        ignoreUrls: apps.values.map((e) => e.app.url).toList());
+        alreadyAddedUrls: apps.values.map((e) => e.app.url).toList());
     List<App> pps = results[0];
     Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
