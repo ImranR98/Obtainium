@@ -17,7 +17,6 @@ Currently supported App sources:
 - [SourceForge](https://sourceforge.net/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Third Party F-Droid Repos
-  - Any URLs ending with `/fdroid/<word>`, where `<word>` can be anything - most often `repo`
 - [Steam](https://store.steampowered.com/mobile)
 - [Telegram App](https://telegram.org)
 - [VLC](https://www.videolan.org/vlc/download-android.html)

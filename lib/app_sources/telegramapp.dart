@@ -11,7 +11,7 @@ class TelegramApp extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     return 'https://$host';
   }
 

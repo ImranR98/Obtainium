@@ -179,7 +179,7 @@
     "lastUpdateCheckX": "Last Update Check: {}",
     "remove": "Remove",
     "yesMarkUpdated": "Yes, Mark as Updated",
-    "fdroid": "F-Droid",
+    "fdroid": "F-Droid Official",
     "appIdOrName": "App ID or Name",
     "appWithIdOrNameNotFound": "No App was found with that ID or Name",
     "reposHaveMultipleApps": "Repos may contain multiple Apps",
@@ -224,6 +224,7 @@
     "standardVersionDetection": "Standard version detection",
     "groupByCategory": "Group by Category",
     "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "overrideSource": "Override Source",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

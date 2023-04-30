@@ -44,6 +44,106 @@ class APKDetails {
       {this.releaseDate, this.changeLog});
 }
 
+stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
+    mapList.map((e) => [e.key, e.value]).toList();
+
+assumed2DlistToStringMapList(List<dynamic> arr) =>
+    arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
+
+// App JSON schema has changed multiple times over the many versions of Obtainium
+// This function takes an App JSON and modifies it if needed to conform to the latest (current) version
+appJSONCompatibilityModifiers(Map<String, dynamic> json) {
+  var source = SourceProvider()
+      .getSource(json['url'], overrideSource: json['overrideSource']);
+  var formItems = source.combinedAppSpecificSettingFormItems
+      .reduce((value, element) => [...value, ...element]);
+  Map<String, dynamic> additionalSettings =
+      getDefaultValuesFromFormItems([formItems]);
+  if (json['additionalSettings'] != null) {
+    additionalSettings.addEntries(
+        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
+            .entries);
+  }
+  // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
+  if (json['additionalData'] != null) {
+    List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
+    temp.asMap().forEach((i, value) {
+      if (i < formItems.length) {
+        if (formItems[i] is GeneratedFormSwitch) {
+          additionalSettings[formItems[i].key] = value == 'true';
+        } else {
+          additionalSettings[formItems[i].key] = value;
+        }
+      }
+    });
+    additionalSettings['trackOnly'] =
+        json['trackOnly'] == 'true' || json['trackOnly'] == true;
+    additionalSettings['noVersionDetection'] =
+        json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
+  }
+  // Convert bool style version detection options to dropdown style
+  if (additionalSettings['noVersionDetection'] == true) {
+    additionalSettings['versionDetection'] = 'noVersionDetection';
+    if (additionalSettings['releaseDateAsVersion'] == true) {
+      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+      additionalSettings.remove('releaseDateAsVersion');
+    }
+    if (additionalSettings['noVersionDetection'] != null) {
+      additionalSettings.remove('noVersionDetection');
+    }
+    if (additionalSettings['releaseDateAsVersion'] != null) {
+      additionalSettings.remove('releaseDateAsVersion');
+    }
+  }
+  // Ensure additionalSettings are correctly typed
+  for (var item in formItems) {
+    if (additionalSettings[item.key] != null) {
+      additionalSettings[item.key] =
+          item.ensureType(additionalSettings[item.key]);
+    }
+  }
+  int preferredApkIndex =
+      json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int;
+  if (preferredApkIndex < 0) {
+    preferredApkIndex = 0;
+  }
+  json['preferredApkIndex'] = preferredApkIndex;
+  // apkUrls can either be old list or new named list apkUrls
+  List<MapEntry<String, String>> apkUrls = [];
+  if (json['apkUrls'] != null) {
+    var apkUrlJson = jsonDecode(json['apkUrls']);
+    try {
+      apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
+    } catch (e) {
+      apkUrls = assumed2DlistToStringMapList(List<dynamic>.from(apkUrlJson));
+      apkUrls = List<dynamic>.from(apkUrlJson)
+          .map((e) => MapEntry(e[0] as String, e[1] as String))
+          .toList();
+    }
+    json['apkUrls'] = jsonEncode(stringMapListTo2DList(apkUrls));
+  }
+  // Arch based APK filter option should be disabled if it previously did not exist
+  if (additionalSettings['autoApkFilterByArch'] == null) {
+    additionalSettings['autoApkFilterByArch'] = false;
+  }
+  json['additionalSettings'] = jsonEncode(additionalSettings);
+  // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
+  // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
+  // While not causing problems for existing apps from that source that were added in a previous version
+  var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
+  if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
+    json['overrideSource'] = FDroid().runtimeType.toString();
+  } else if (overrideSourceWasUndefined) {
+    // Similar to above, but for third-party F-Droid repos
+    RegExpMatch? match = RegExp('^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)')
+        .firstMatch(json['url'] as String);
+    if (match != null) {
+      json['overrideSource'] = FDroidRepo().runtimeType.toString();
+    }
+  }
+  return json;
+}
+
 class App {
   late String id;
   late String url;
@@ -59,6 +159,7 @@ class App {
   List<String> categories;
   late DateTime? releaseDate;
   late String? changeLog;
+  late String? overrideSource;
   App(
       this.id,
       this.url,
@@ -73,7 +174,8 @@ class App {
       this.pinned,
       {this.categories = const [],
       this.releaseDate,
-      this.changeLog});
+      this.changeLog,
+      this.overrideSource});
 
   @override
   String toString() {
@@ -103,80 +205,11 @@ class App {
       pinned,
       categories: categories,
       changeLog: changeLog,
-      releaseDate: releaseDate);
+      releaseDate: releaseDate,
+      overrideSource: overrideSource);
 
   factory App.fromJson(Map<String, dynamic> json) {
-    var source = SourceProvider().getSource(json['url']);
-    var formItems = source.combinedAppSpecificSettingFormItems
-        .reduce((value, element) => [...value, ...element]);
-    Map<String, dynamic> additionalSettings =
-        getDefaultValuesFromFormItems([formItems]);
-    if (json['additionalSettings'] != null) {
-      additionalSettings.addEntries(
-          Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
-              .entries);
-    }
-    // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
-    if (json['additionalData'] != null) {
-      List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
-      temp.asMap().forEach((i, value) {
-        if (i < formItems.length) {
-          if (formItems[i] is GeneratedFormSwitch) {
-            additionalSettings[formItems[i].key] = value == 'true';
-          } else {
-            additionalSettings[formItems[i].key] = value;
-          }
-        }
-      });
-      additionalSettings['trackOnly'] =
-          json['trackOnly'] == 'true' || json['trackOnly'] == true;
-      additionalSettings['noVersionDetection'] =
-          json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
-    }
-    // Convert bool style version detection options to dropdown style
-    if (additionalSettings['noVersionDetection'] == true) {
-      additionalSettings['versionDetection'] = 'noVersionDetection';
-      if (additionalSettings['releaseDateAsVersion'] == true) {
-        additionalSettings['versionDetection'] = 'releaseDateAsVersion';
-        additionalSettings.remove('releaseDateAsVersion');
-      }
-      if (additionalSettings['noVersionDetection'] != null) {
-        additionalSettings.remove('noVersionDetection');
-      }
-      if (additionalSettings['releaseDateAsVersion'] != null) {
-        additionalSettings.remove('releaseDateAsVersion');
-      }
-    }
-    // Ensure additionalSettings are correctly typed
-    for (var item in formItems) {
-      if (additionalSettings[item.key] != null) {
-        additionalSettings[item.key] =
-            item.ensureType(additionalSettings[item.key]);
-      }
-    }
-    int preferredApkIndex = json['preferredApkIndex'] == null
-        ? 0
-        : json['preferredApkIndex'] as int;
-    if (preferredApkIndex < 0) {
-      preferredApkIndex = 0;
-    }
-    // apkUrls can either be old list or new named list apkUrls
-    List<MapEntry<String, String>> apkUrls = [];
-    if (json['apkUrls'] != null) {
-      var apkUrlJson = jsonDecode(json['apkUrls']);
-      try {
-        apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
-      } catch (e) {
-        apkUrls = List<dynamic>.from(apkUrlJson)
-            .map((e) => MapEntry(e[0] as String, e[1] as String))
-            .toList();
-      }
-    }
-    // Arch based APK filter option should be disabled if it previously did not exist
-    if (json['additionalSettings'] != null &&
-        jsonDecode(json['additionalSettings'])['autoApkFilterByArch'] == null) {
-      additionalSettings['autoApkFilterByArch'] = false;
-    }
+    json = appJSONCompatibilityModifiers(json);
     return App(
         json['id'] as String,
         json['url'] as String,
@@ -186,9 +219,9 @@ class App {
             ? null
             : json['installedVersion'] as String,
         json['latestVersion'] as String,
-        apkUrls,
-        preferredApkIndex,
-        additionalSettings,
+        assumed2DlistToStringMapList(jsonDecode(json['apkUrls'])),
+        json['preferredApkIndex'] as int,
+        jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
         json['lastUpdateCheck'] == null
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
@@ -204,7 +237,8 @@ class App {
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
         changeLog:
-            json['changeLog'] == null ? null : json['changeLog'] as String);
+            json['changeLog'] == null ? null : json['changeLog'] as String,
+        overrideSource: json['overrideSource']);
   }
 
   Map<String, dynamic> toJson() => {
@@ -214,14 +248,15 @@ class App {
         'name': name,
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
-        'apkUrls': jsonEncode(apkUrls.map((e) => [e.key, e.value]).toList()),
+        'apkUrls': jsonEncode(stringMapListTo2DList(apkUrls)),
         'preferredApkIndex': preferredApkIndex,
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
         'pinned': pinned,
         'categories': categories,
         'releaseDate': releaseDate?.microsecondsSinceEpoch,
-        'changeLog': changeLog
+        'changeLog': changeLog,
+        'overrideSource': overrideSource
       };
 }
 
@@ -273,8 +308,9 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
-class AppSource {
+abstract class AppSource {
   String? host;
+  bool hostChanged = false;
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
@@ -283,7 +319,15 @@ class AppSource {
     name = runtimeType.toString();
   }
 
-  String standardizeURL(String url) {
+  String standardizeUrl(String url) {
+    url = preStandardizeUrl(url);
+    if (!hostChanged) {
+      url = sourceSpecificStandardizeURL(url);
+    }
+    return url;
+  }
+
+  String sourceSpecificStandardizeURL(String url) {
     throw NotImplementedError();
   }
 
@@ -389,33 +433,44 @@ regExValidator(String? value) {
 
 class SourceProvider {
   // Add more source classes here so they are available via the service
-  List<AppSource> sources = [
-    GitHub(),
-    GitLab(),
-    Codeberg(),
-    FDroid(),
-    IzzyOnDroid(),
-    FDroidRepo(),
-    SourceForge(),
-    APKMirror(),
-    Mullvad(),
-    Signal(),
-    VLC(),
-    // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
-    TelegramApp(),
-    SteamMobile(),
-    NeutronCode(),
-    HTML() // This should ALWAYS be the last option as they are tried in order
-  ];
+  List<AppSource> get sources => [
+        GitHub(),
+        GitLab(),
+        Codeberg(),
+        FDroid(),
+        IzzyOnDroid(),
+        FDroidRepo(),
+        SourceForge(),
+        APKMirror(),
+        Mullvad(),
+        Signal(),
+        VLC(),
+        // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+        TelegramApp(),
+        SteamMobile(),
+        NeutronCode(),
+        HTML() // This should ALWAYS be the last option as they are tried in order
+      ];
 
   // Add more mass url source classes here so they are available via the service
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
-  AppSource getSource(String url) {
+  AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
+    if (overrideSource != null) {
+      var srcs =
+          sources.where((e) => e.runtimeType.toString() == overrideSource);
+      if (srcs.isEmpty) {
+        throw UnsupportedURLError();
+      }
+      var res = srcs.first;
+      res.host = Uri.parse(url).host;
+      res.hostChanged = true;
+      return srcs.first;
+    }
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
-      if (RegExp('://(.+\\.)?${s.host}').hasMatch(url)) {
+      if (RegExp('://${s.host}').hasMatch(url)) {
         source = s;
         break;
       }
@@ -423,7 +478,7 @@ class SourceProvider {
     if (source == null) {
       for (var s in sources.where((element) => element.host == null)) {
         try {
-          s.standardizeURL(url);
+          s.sourceSpecificStandardizeURL(url);
           source = s;
           break;
         } catch (e) {
@@ -459,12 +514,14 @@ class SourceProvider {
 
   Future<App> getApp(
       AppSource source, String url, Map<String, dynamic> additionalSettings,
-      {App? currentApp, bool trackOnlyOverride = false}) async {
+      {App? currentApp,
+      bool trackOnlyOverride = false,
+      String? overrideSource}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
     var trackOnly = additionalSettings['trackOnly'] == true;
-    String standardUrl = source.standardizeURL(preStandardizeUrl(url));
+    String standardUrl = source.standardizeUrl(url);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
     if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
@@ -514,7 +571,8 @@ class SourceProvider {
         currentApp?.pinned ?? false,
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
-        changeLog: apk.changeLog);
+        changeLog: apk.changeLog,
+        overrideSource: overrideSource ?? currentApp?.overrideSource);
   }
 
   // Returns errors in [results, errors] instead of throwing them

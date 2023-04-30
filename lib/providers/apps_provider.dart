@@ -172,7 +172,7 @@ class AppsProvider with ChangeNotifier {
     }
     try {
       String downloadUrl = await SourceProvider()
-          .getSource(app.url)
+          .getSource(app.url, overrideSource: app.overrideSource)
           .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex].value);
       var fileName = '${app.id}-${downloadUrl.hashCode}.apk';
       var notif = DownloadNotification(app.finalName, 100);
@@ -647,7 +647,7 @@ class AppsProvider with ChangeNotifier {
     for (int i = 0; i < newApps.length; i++) {
       var info = await getInstalledInfo(newApps[i].id);
       try {
-        sp.getSource(newApps[i].url);
+        sp.getSource(newApps[i].url, overrideSource: newApps[i].overrideSource);
         apps[newApps[i].id] = AppInMemory(newApps[i], null, info);
       } catch (e) {
         errors.add([newApps[i].id, newApps[i].finalName, e.toString()]);
@@ -787,7 +787,8 @@ class AppsProvider with ChangeNotifier {
     App? currentApp = apps[appId]!.app;
     SourceProvider sourceProvider = SourceProvider();
     App newApp = await sourceProvider.getApp(
-        sourceProvider.getSource(currentApp.url),
+        sourceProvider.getSource(currentApp.url,
+            overrideSource: currentApp.overrideSource),
         currentApp.url,
         currentApp.additionalSettings,
         currentApp: currentApp);

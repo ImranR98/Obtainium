@@ -111,7 +111,11 @@ class AppsPageState extends State<AppsPage> {
         return false;
       }
       if (filter.sourceFilter.isNotEmpty &&
-          sourceProvider.getSource(app.app.url).runtimeType.toString() !=
+          sourceProvider
+                  .getSource(app.app.url,
+                      overrideSource: app.app.overrideSource)
+                  .runtimeType
+                  .toString() !=
               filter.sourceFilter) {
         return false;
       }
@@ -306,8 +310,9 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getChangeLogFn(int appIndex) {
-      AppSource appSource =
-          SourceProvider().getSource(listedApps[appIndex].app.url);
+      AppSource appSource = SourceProvider().getSource(
+          listedApps[appIndex].app.url,
+          overrideSource: listedApps[appIndex].app.overrideSource);
       String? changesUrl =
           appSource.changeLogPageFromStandardUrl(listedApps[appIndex].app.url);
       String? changeLog = listedApps[appIndex].app.changeLog;
