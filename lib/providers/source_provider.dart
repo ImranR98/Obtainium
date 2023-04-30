@@ -320,6 +320,22 @@ abstract class AppSource {
     name = runtimeType.toString();
   }
 
+  overrideVersionDetectionFormDefault(String vd, bool disableStandard) {
+    additionalAppSpecificSourceAgnosticSettingFormItems =
+        additionalAppSpecificSourceAgnosticSettingFormItems.map((e) {
+      return e.map((e2) {
+        if (e2.key == 'versionDetection') {
+          var item = e2 as GeneratedFormDropdown;
+          item.defaultValue = vd;
+          if (disableStandard) {
+            item.disabledOptKeys = ['standardVersionDetection'];
+          }
+        }
+        return e2;
+      }).toList();
+    }).toList();
+  }
+
   String standardizeUrl(String url) {
     url = preStandardizeUrl(url);
     if (!hostChanged) {
@@ -342,7 +358,7 @@ abstract class AppSource {
       [];
 
   // Some additional data may be needed for Apps regardless of Source
-  final List<List<GeneratedFormItem>>
+  List<List<GeneratedFormItem>>
       additionalAppSpecificSourceAgnosticSettingFormItems = [
     [
       GeneratedFormSwitch(

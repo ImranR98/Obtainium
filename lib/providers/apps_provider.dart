@@ -212,7 +212,7 @@ class AppsProvider with ChangeNotifier {
         var fn = file.path.split('/').last;
         if (fn.startsWith('${app.id}-') &&
             fn.endsWith('.apk') &&
-            fn != fileName) {
+            fn != downloadedFile.path.split('/').last) {
           file.delete();
         }
       }

@@ -166,7 +166,9 @@ class _AddAppPageState extends State<AddAppPage> {
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
-          if (app.additionalSettings['trackOnly'] == true) {
+          if (app.additionalSettings['trackOnly'] == true ||
+              app.additionalSettings['versionDetection'] !=
+                  'standardVersionDetection') {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;
