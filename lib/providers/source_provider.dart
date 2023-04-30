@@ -130,8 +130,16 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
   // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
   // While not causing problems for existing apps from that source that were added in a previous version
+  var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
   if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
     json['overrideSource'] = FDroid().runtimeType.toString();
+  } else if (overrideSourceWasUndefined) {
+    // Similar to above, but for third-party F-Droid repos
+    RegExpMatch? match = RegExp('^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)')
+        .firstMatch(json['url'] as String);
+    if (match != null) {
+      json['overrideSource'] = FDroidRepo().runtimeType.toString();
+    }
   }
   return json;
 }

@@ -20,17 +20,6 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExp =
-        RegExp('^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)');
-    RegExpMatch? match = standardUrlRegExp.firstMatch(url.toLowerCase());
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return url.substring(0, match.end);
-  }
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
