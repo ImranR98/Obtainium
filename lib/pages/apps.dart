@@ -615,7 +615,7 @@ class AppsPageState extends State<AppsPage> {
                       items: formItems.map((e) => [e]).toList(),
                       initValid: true,
                     );
-                  }).then((values) {
+                  }).then((values) async {
                 if (values != null) {
                   if (values.isEmpty) {
                     values = getDefaultValuesFromFormItems([formItems]);
@@ -623,29 +623,22 @@ class AppsPageState extends State<AppsPage> {
                   bool shouldInstallUpdates = values['updates'] == true;
                   bool shouldInstallNew = values['installs'] == true;
                   bool shouldMarkTrackOnlies = values['trackonlies'] == true;
-                  (() async {
-                    List<String> toInstall = [];
-                    if (shouldInstallUpdates) {
-                      toInstall.addAll(existingUpdateIdsAllOrSelected);
-                    }
-                    if (shouldInstallNew) {
-                      toInstall.addAll(newInstallIdsAllOrSelected);
-                    }
-                    if (shouldMarkTrackOnlies) {
-                      toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
-                    }
-                    if (toInstall.length > 1) {
-                      // Permission is requested automatically, but if there are more than 1 installs,
-                      // We want to explicitly request it and wait for the result to avoid multiple requests
-                      await settingsProvider.getInstallPermission(
-                          enforce: false);
-                    }
-                    appsProvider
-                        .downloadAndInstallLatestApps(
-                            toInstall, globalNavigatorKey.currentContext)
-                        .catchError((e) {
-                      showError(e, context);
-                    });
+                  List<String> toInstall = [];
+                  if (shouldInstallUpdates) {
+                    toInstall.addAll(existingUpdateIdsAllOrSelected);
+                  }
+                  if (shouldInstallNew) {
+                    toInstall.addAll(newInstallIdsAllOrSelected);
+                  }
+                  if (shouldMarkTrackOnlies) {
+                    toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
+                  }
+                  appsProvider
+                      .downloadAndInstallLatestApps(
+                          toInstall, globalNavigatorKey.currentContext,
+                          settingsProvider: settingsProvider)
+                      .catchError((e) {
+                    showError(e, context);
                   });
                 }
               });

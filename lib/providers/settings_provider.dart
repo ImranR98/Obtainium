@@ -120,19 +120,20 @@ class SettingsProvider with ChangeNotifier {
     return result;
   }
 
-  Future<void> getInstallPermission({bool enforce = false}) async {
+  Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
       Fluttertoast.showToast(
           msg: tr('pleaseAllowInstallPerm'), toastLength: Toast.LENGTH_LONG);
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
-        break;
+        return true;
       }
       if (!enforce) {
-        break;
+        return false;
       }
     }
+    return true;
   }
 
   bool get showAppWebpage {

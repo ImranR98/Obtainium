@@ -351,7 +351,8 @@ class AppsProvider with ChangeNotifier {
   // If user input is needed and the App is in the background, a notification is sent to get the user's attention
   // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
   Future<List<String>> downloadAndInstallLatestApps(
-      List<String> appIds, BuildContext? context) async {
+      List<String> appIds, BuildContext? context,
+      {SettingsProvider? settingsProvider}) async {
     List<String> appsToInstall = [];
     List<String> trackOnlyAppsToUpdate = [];
     // For all specified Apps, filter out those for which:
@@ -439,6 +440,11 @@ class AppsProvider with ChangeNotifier {
 
     silentUpdates = moveObtainiumToStart(silentUpdates);
     regularInstalls = moveObtainiumToStart(regularInstalls);
+
+    if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
+        true)) {
+      throw ObtainiumError(tr('cancelled'));
+    }
 
     // // Install silent updates (uncomment when it works - TODO)
     // for (var u in silentUpdates) {
