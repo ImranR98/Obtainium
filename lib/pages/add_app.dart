@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -50,11 +51,13 @@ class _AddAppPageState extends State<AddAppPage> {
           if (isSearch) {
             searchnum++;
           }
+          var prevHost = pickedSource?.host;
           var source = valid
               ? sourceProvider.getSource(userInput,
                   overrideSource: pickedSourceOverride)
               : null;
-          if (pickedSource.runtimeType != source.runtimeType) {
+          if (pickedSource.runtimeType != source.runtimeType ||
+              (prevHost != null && prevHost != source?.host)) {
             pickedSource = source;
             additionalSettings = source != null
                 ? getDefaultValuesFromFormItems(
@@ -119,7 +122,8 @@ class _AddAppPageState extends State<AddAppPage> {
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           app = await sourceProvider.getApp(
               pickedSource!, userInput, additionalSettings,
-              trackOnlyOverride: trackOnly);
+              trackOnlyOverride: trackOnly,
+              overrideSource: pickedSourceOverride);
           if (!trackOnly) {
             await settingsProvider.getInstallPermission();
           }
@@ -283,8 +287,8 @@ class _AddAppPageState extends State<AddAppPage> {
               ],
               onValueChanges: (values, valid, isBuilding) {
                 fn() {
-                  pickedSourceOverride = values['overrideSource'] == null ||
-                          values['overrideSource'] == ''
+                  pickedSourceOverride = (values['overrideSource'] == null ||
+                          values['overrideSource'] == '')
                       ? null
                       : values['overrideSource'];
                 }
@@ -424,7 +428,10 @@ class _AddAppPageState extends State<AddAppPage> {
                       const SizedBox(
                         height: 16,
                       ),
-                      getSourceOverrideDropdownRow(),
+                      if (pickedSourceOverride != null ||
+                          pickedSource.runtimeType.toString() ==
+                              HTML().runtimeType.toString())
+                        getSourceOverrideDropdownRow(),
                       if (shouldShowSearchBar())
                         const SizedBox(
                           height: 16,

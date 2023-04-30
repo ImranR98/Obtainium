@@ -44,6 +44,12 @@ class APKDetails {
       {this.releaseDate, this.changeLog});
 }
 
+stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
+    mapList.map((e) => [e.key, e.value]).toList();
+
+assumed2DlistToStringMapList(List<dynamic> arr) =>
+    arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
+
 // App JSON schema has changed multiple times over the many versions of Obtainium
 // This function takes an App JSON and modifies it if needed to conform to the latest (current) version
 appJSONCompatibilityModifiers(Map<String, dynamic> json) {
@@ -109,11 +115,12 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     try {
       apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
     } catch (e) {
+      apkUrls = assumed2DlistToStringMapList(List<dynamic>.from(apkUrlJson));
       apkUrls = List<dynamic>.from(apkUrlJson)
           .map((e) => MapEntry(e[0] as String, e[1] as String))
           .toList();
     }
-    json['apkUrls'] = jsonEncode(apkUrls);
+    json['apkUrls'] = jsonEncode(stringMapListTo2DList(apkUrls));
   }
   // Arch based APK filter option should be disabled if it previously did not exist
   if (additionalSettings['autoApkFilterByArch'] == null) {
@@ -204,7 +211,7 @@ class App {
             ? null
             : json['installedVersion'] as String,
         json['latestVersion'] as String,
-        jsonDecode(json['apkUrls']) as List<MapEntry<String, String>>,
+        assumed2DlistToStringMapList(jsonDecode(json['apkUrls'])),
         json['preferredApkIndex'] as int,
         jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
         json['lastUpdateCheck'] == null
@@ -233,7 +240,7 @@ class App {
         'name': name,
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
-        'apkUrls': jsonEncode(apkUrls.map((e) => [e.key, e.value]).toList()),
+        'apkUrls': jsonEncode(stringMapListTo2DList(apkUrls)),
         'preferredApkIndex': preferredApkIndex,
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
@@ -409,24 +416,24 @@ regExValidator(String? value) {
 
 class SourceProvider {
   // Add more source classes here so they are available via the service
-  List<AppSource> sources = [
-    GitHub(),
-    GitLab(),
-    Codeberg(),
-    FDroid(),
-    IzzyOnDroid(),
-    FDroidRepo(),
-    SourceForge(),
-    APKMirror(),
-    Mullvad(),
-    Signal(),
-    VLC(),
-    // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
-    TelegramApp(),
-    SteamMobile(),
-    NeutronCode(),
-    HTML() // This should ALWAYS be the last option as they are tried in order
-  ];
+  List<AppSource> get sources => [
+        GitHub(),
+        GitLab(),
+        Codeberg(),
+        FDroid(),
+        IzzyOnDroid(),
+        FDroidRepo(),
+        SourceForge(),
+        APKMirror(),
+        Mullvad(),
+        Signal(),
+        VLC(),
+        // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+        TelegramApp(),
+        SteamMobile(),
+        NeutronCode(),
+        HTML() // This should ALWAYS be the last option as they are tried in order
+      ];
 
   // Add more mass url source classes here so they are available via the service
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
@@ -445,7 +452,7 @@ class SourceProvider {
     }
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
-      if (RegExp('://(.+\\.)?${s.host}').hasMatch(url)) {
+      if (RegExp('://${s.host}').hasMatch(url)) {
         source = s;
         break;
       }
@@ -489,7 +496,9 @@ class SourceProvider {
 
   Future<App> getApp(
       AppSource source, String url, Map<String, dynamic> additionalSettings,
-      {App? currentApp, bool trackOnlyOverride = false}) async {
+      {App? currentApp,
+      bool trackOnlyOverride = false,
+      String? overrideSource}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
@@ -545,7 +554,7 @@ class SourceProvider {
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
         changeLog: apk.changeLog,
-        overrideSource: currentApp?.overrideSource);
+        overrideSource: overrideSource ?? currentApp?.overrideSource);
   }
 
   // Returns errors in [results, errors] instead of throwing them
