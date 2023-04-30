@@ -10,6 +10,66 @@ class HTML extends AppSource {
     return url;
   }
 
+  int compareAlphaNumeric(String a, String b) {
+    List<String> aParts = _splitAlphaNumeric(a);
+    List<String> bParts = _splitAlphaNumeric(b);
+
+    for (int i = 0; i < aParts.length && i < bParts.length; i++) {
+      String aPart = aParts[i];
+      String bPart = bParts[i];
+
+      bool aIsNumber = _isNumeric(aPart);
+      bool bIsNumber = _isNumeric(bPart);
+
+      if (aIsNumber && bIsNumber) {
+        int aNumber = int.parse(aPart);
+        int bNumber = int.parse(bPart);
+        int cmp = aNumber.compareTo(bNumber);
+        if (cmp != 0) {
+          return cmp;
+        }
+      } else if (!aIsNumber && !bIsNumber) {
+        int cmp = aPart.compareTo(bPart);
+        if (cmp != 0) {
+          return cmp;
+        }
+      } else {
+        // Alphanumeric strings come before numeric strings
+        return aIsNumber ? 1 : -1;
+      }
+    }
+
+    return aParts.length.compareTo(bParts.length);
+  }
+
+  List<String> _splitAlphaNumeric(String s) {
+    List<String> parts = [];
+    StringBuffer sb = StringBuffer();
+
+    bool isNumeric = _isNumeric(s[0]);
+    sb.write(s[0]);
+
+    for (int i = 1; i < s.length; i++) {
+      bool currentIsNumeric = _isNumeric(s[i]);
+      if (currentIsNumeric == isNumeric) {
+        sb.write(s[i]);
+      } else {
+        parts.add(sb.toString());
+        sb.clear();
+        sb.write(s[i]);
+        isNumeric = currentIsNumeric;
+      }
+    }
+
+    parts.add(sb.toString());
+
+    return parts;
+  }
+
+  bool _isNumeric(String s) {
+    return s.codeUnitAt(0) >= 48 && s.codeUnitAt(0) <= 57;
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
@@ -23,7 +83,8 @@ class HTML extends AppSource {
           .map((element) => element.attributes['href'] ?? '')
           .where((element) => element.toLowerCase().endsWith('.apk'))
           .toList();
-      links.sort((a, b) => a.split('/').last.compareTo(b.split('/').last));
+      links.sort(
+          (a, b) => compareAlphaNumeric(a.split('/').last, b.split('/').last));
       if (additionalSettings['apkFilterRegEx'] != null) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);
         links = links.where((element) => reg.hasMatch(element)).toList();
