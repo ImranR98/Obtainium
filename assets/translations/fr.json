@@ -224,6 +224,10 @@
     "standardVersionDetection": "Détection de version standard",
     "groupByCategory": "Group by Category",
     "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+    "overrideSource": "Override Source",
+    "dontShowAgain": "Don't show this again",
+    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
+    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

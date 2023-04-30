@@ -52,6 +52,18 @@ class _AddAppPageState extends State<AddAppPage> {
             searchnum++;
           }
           var prevHost = pickedSource?.host;
+          try {
+            var naturalSource =
+                valid ? sourceProvider.getSource(userInput) : null;
+            if (naturalSource != null &&
+                naturalSource.runtimeType.toString() !=
+                    HTML().runtimeType.toString()) {
+              // If input has changed to match a regular source, reset the override
+              pickedSourceOverride = null;
+            }
+          } catch (e) {
+            // ignore
+          }
           var source = valid
               ? sourceProvider.getSource(userInput,
                   overrideSource: pickedSourceOverride)
@@ -71,24 +83,35 @@ class _AddAppPageState extends State<AddAppPage> {
       }
     }
 
-    getTrackOnlyConfirmationIfNeeded(bool userPickedTrackOnly) async {
-      return (!((userPickedTrackOnly || pickedSource!.enforceTrackOnly) &&
-          // ignore: use_build_context_synchronously
-          await showDialog(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return GeneratedFormModal(
-                      title: tr('xIsTrackOnly', args: [
-                        pickedSource!.enforceTrackOnly
-                            ? tr('source')
-                            : tr('app')
-                      ]),
-                      items: const [],
-                      message:
-                          '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
-                    );
-                  }) ==
-              null));
+    Future<bool> getTrackOnlyConfirmationIfNeeded(
+        bool userPickedTrackOnly, SettingsProvider settingsProvider,
+        {bool ignoreHideSetting = false}) async {
+      var useTrackOnly = userPickedTrackOnly || pickedSource!.enforceTrackOnly;
+      if (useTrackOnly &&
+          (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
+        // ignore: use_build_context_synchronously
+        var values = await showDialog(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                initValid: true,
+                title: tr('xIsTrackOnly', args: [
+                  pickedSource!.enforceTrackOnly ? tr('source') : tr('app')
+                ]),
+                items: [
+                  [GeneratedFormSwitch('hide', label: tr('dontShowAgain'))]
+                ],
+                message:
+                    '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
+              );
+            });
+        if (values != null) {
+          settingsProvider.hideTrackOnlyWarning = values['hide'] == true;
+        }
+        return useTrackOnly && values != null;
+      } else {
+        return true;
+      }
     }
 
     getReleaseDateAsVersionConfirmationIfNeeded(
@@ -116,7 +139,8 @@ class _AddAppPageState extends State<AddAppPage> {
         var settingsProvider = context.read<SettingsProvider>();
         var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
         App? app;
-        if ((await getTrackOnlyConfirmationIfNeeded(userPickedTrackOnly)) &&
+        if ((await getTrackOnlyConfirmationIfNeeded(
+                userPickedTrackOnly, settingsProvider)) &&
             (await getReleaseDateAsVersionConfirmationIfNeeded(
                 userPickedTrackOnly))) {
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
@@ -124,9 +148,6 @@ class _AddAppPageState extends State<AddAppPage> {
               pickedSource!, userInput, additionalSettings,
               trackOnlyOverride: trackOnly,
               overrideSource: pickedSourceOverride);
-          if (!trackOnly) {
-            await settingsProvider.getInstallPermission();
-          }
           // Only download the APK here if you need to for the package ID
           if (sourceProvider.isTempId(app) &&
               app.additionalSettings['trackOnly'] != true) {

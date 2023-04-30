@@ -223,6 +223,10 @@
     "standardVersionDetection": "Alapért. verzió érzékelés",
     "groupByCategory": "Csoportosítás Kategória alapján",
     "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-kat",
+    "overrideSource": "Override Source",
+    "dontShowAgain": "Don't show this again",
+    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
+    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

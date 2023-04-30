@@ -615,7 +615,7 @@ class AppsPageState extends State<AppsPage> {
                       items: formItems.map((e) => [e]).toList(),
                       initValid: true,
                     );
-                  }).then((values) {
+                  }).then((values) async {
                 if (values != null) {
                   if (values.isEmpty) {
                     values = getDefaultValuesFromFormItems([formItems]);
@@ -623,28 +623,22 @@ class AppsPageState extends State<AppsPage> {
                   bool shouldInstallUpdates = values['updates'] == true;
                   bool shouldInstallNew = values['installs'] == true;
                   bool shouldMarkTrackOnlies = values['trackonlies'] == true;
-                  (() async {
-                    if (shouldInstallNew || shouldInstallUpdates) {
-                      await settingsProvider.getInstallPermission();
-                    }
-                  })()
-                      .then((_) {
-                    List<String> toInstall = [];
-                    if (shouldInstallUpdates) {
-                      toInstall.addAll(existingUpdateIdsAllOrSelected);
-                    }
-                    if (shouldInstallNew) {
-                      toInstall.addAll(newInstallIdsAllOrSelected);
-                    }
-                    if (shouldMarkTrackOnlies) {
-                      toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
-                    }
-                    appsProvider
-                        .downloadAndInstallLatestApps(
-                            toInstall, globalNavigatorKey.currentContext)
-                        .catchError((e) {
-                      showError(e, context);
-                    });
+                  List<String> toInstall = [];
+                  if (shouldInstallUpdates) {
+                    toInstall.addAll(existingUpdateIdsAllOrSelected);
+                  }
+                  if (shouldInstallNew) {
+                    toInstall.addAll(newInstallIdsAllOrSelected);
+                  }
+                  if (shouldMarkTrackOnlies) {
+                    toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
+                  }
+                  appsProvider
+                      .downloadAndInstallLatestApps(
+                          toInstall, globalNavigatorKey.currentContext,
+                          settingsProvider: settingsProvider)
+                      .catchError((e) {
+                    showError(e, context);
                   });
                 }
               });

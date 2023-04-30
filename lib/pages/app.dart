@@ -327,9 +327,6 @@ class _AppPageState extends State<AppPage> {
             ? () async {
                 try {
                   HapticFeedback.heavyImpact();
-                  if (app?.app.additionalSettings['trackOnly'] != true) {
-                    await settingsProvider.getInstallPermission();
-                  }
                   var res = await appsProvider.downloadAndInstallLatestApps(
                       [app!.app.id], globalNavigatorKey.currentContext);
                   if (res.isNotEmpty && mounted) {

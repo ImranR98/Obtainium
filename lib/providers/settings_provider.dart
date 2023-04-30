@@ -120,16 +120,20 @@ class SettingsProvider with ChangeNotifier {
     return result;
   }
 
-  Future<void> getInstallPermission() async {
+  Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
       Fluttertoast.showToast(
           msg: tr('pleaseAllowInstallPerm'), toastLength: Toast.LENGTH_LONG);
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
-        break;
+        return true;
+      }
+      if (!enforce) {
+        return false;
       }
     }
+    return true;
   }
 
   bool get showAppWebpage {
@@ -156,6 +160,24 @@ class SettingsProvider with ChangeNotifier {
 
   set groupByCategory(bool show) {
     prefs?.setBool('groupByCategory', show);
+    notifyListeners();
+  }
+
+  bool get hideTrackOnlyWarning {
+    return prefs?.getBool('hideTrackOnlyWarning') ?? false;
+  }
+
+  set hideTrackOnlyWarning(bool show) {
+    prefs?.setBool('hideTrackOnlyWarning', show);
+    notifyListeners();
+  }
+
+  bool get hideAPKOriginWarning {
+    return prefs?.getBool('hideAPKOriginWarning') ?? false;
+  }
+
+  set hideAPKOriginWarning(bool show) {
+    prefs?.setBool('hideAPKOriginWarning', show);
     notifyListeners();
   }
 

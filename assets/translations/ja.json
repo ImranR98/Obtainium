@@ -224,6 +224,10 @@
     "standardVersionDetection": "標準のバージョン検出",
     "groupByCategory": "カテゴリ別にグループ化する",
     "autoApkFilterByArch": "可能であれば，CPUアーキテクチャによるAPKのフィルタリングを試みる",
+    "overrideSource": "Override Source",
+    "dontShowAgain": "Don't show this again",
+    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
+    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
