@@ -15,6 +15,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
@@ -440,6 +441,7 @@ class SourceProvider {
         FDroid(),
         IzzyOnDroid(),
         FDroidRepo(),
+        Jenkins(),
         SourceForge(),
         APKMirror(),
         Mullvad(),
