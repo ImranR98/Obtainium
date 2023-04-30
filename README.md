@@ -17,6 +17,7 @@ Currently supported App sources:
 - [SourceForge](https://sourceforge.net/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Third Party F-Droid Repos
+- Jenkins Jobs
 - [Steam](https://store.steampowered.com/mobile)
 - [Telegram App](https://telegram.org)
 - [VLC](https://www.videolan.org/vlc/download-android.html)
