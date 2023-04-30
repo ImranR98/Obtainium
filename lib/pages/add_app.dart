@@ -124,9 +124,6 @@ class _AddAppPageState extends State<AddAppPage> {
               pickedSource!, userInput, additionalSettings,
               trackOnlyOverride: trackOnly,
               overrideSource: pickedSourceOverride);
-          if (!trackOnly) {
-            await settingsProvider.getInstallPermission();
-          }
           // Only download the APK here if you need to for the package ID
           if (sourceProvider.isTempId(app) &&
               app.additionalSettings['trackOnly'] != true) {

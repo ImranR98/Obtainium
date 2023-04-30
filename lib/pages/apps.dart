@@ -624,11 +624,6 @@ class AppsPageState extends State<AppsPage> {
                   bool shouldInstallNew = values['installs'] == true;
                   bool shouldMarkTrackOnlies = values['trackonlies'] == true;
                   (() async {
-                    if (shouldInstallNew || shouldInstallUpdates) {
-                      await settingsProvider.getInstallPermission();
-                    }
-                  })()
-                      .then((_) {
                     List<String> toInstall = [];
                     if (shouldInstallUpdates) {
                       toInstall.addAll(existingUpdateIdsAllOrSelected);
@@ -638,6 +633,12 @@ class AppsPageState extends State<AppsPage> {
                     }
                     if (shouldMarkTrackOnlies) {
                       toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
+                    }
+                    if (toInstall.length > 1) {
+                      // Permission is requested automatically, but if there are more than 1 installs,
+                      // We want to explicitly request it and wait for the result to avoid multiple requests
+                      await settingsProvider.getInstallPermission(
+                          enforce: false);
                     }
                     appsProvider
                         .downloadAndInstallLatestApps(
