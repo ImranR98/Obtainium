@@ -44,6 +44,91 @@ class APKDetails {
       {this.releaseDate, this.changeLog});
 }
 
+// App JSON schema has changed multiple times over the many versions of Obtainium
+// This function takes an App JSON and modifies it if needed to conform to the latest (current) version
+appJSONCompatibilityModifiers(Map<String, dynamic> json) {
+  var source = SourceProvider()
+      .getSource(json['url'], overrideSource: json['overrideSource']);
+  var formItems = source.combinedAppSpecificSettingFormItems
+      .reduce((value, element) => [...value, ...element]);
+  Map<String, dynamic> additionalSettings =
+      getDefaultValuesFromFormItems([formItems]);
+  if (json['additionalSettings'] != null) {
+    additionalSettings.addEntries(
+        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
+            .entries);
+  }
+  // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
+  if (json['additionalData'] != null) {
+    List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
+    temp.asMap().forEach((i, value) {
+      if (i < formItems.length) {
+        if (formItems[i] is GeneratedFormSwitch) {
+          additionalSettings[formItems[i].key] = value == 'true';
+        } else {
+          additionalSettings[formItems[i].key] = value;
+        }
+      }
+    });
+    additionalSettings['trackOnly'] =
+        json['trackOnly'] == 'true' || json['trackOnly'] == true;
+    additionalSettings['noVersionDetection'] =
+        json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
+  }
+  // Convert bool style version detection options to dropdown style
+  if (additionalSettings['noVersionDetection'] == true) {
+    additionalSettings['versionDetection'] = 'noVersionDetection';
+    if (additionalSettings['releaseDateAsVersion'] == true) {
+      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+      additionalSettings.remove('releaseDateAsVersion');
+    }
+    if (additionalSettings['noVersionDetection'] != null) {
+      additionalSettings.remove('noVersionDetection');
+    }
+    if (additionalSettings['releaseDateAsVersion'] != null) {
+      additionalSettings.remove('releaseDateAsVersion');
+    }
+  }
+  // Ensure additionalSettings are correctly typed
+  for (var item in formItems) {
+    if (additionalSettings[item.key] != null) {
+      additionalSettings[item.key] =
+          item.ensureType(additionalSettings[item.key]);
+    }
+  }
+  int preferredApkIndex =
+      json['preferredApkIndex'] == null ? 0 : json['preferredApkIndex'] as int;
+  if (preferredApkIndex < 0) {
+    preferredApkIndex = 0;
+  }
+  json['preferredApkIndex'] = preferredApkIndex;
+  // apkUrls can either be old list or new named list apkUrls
+  List<MapEntry<String, String>> apkUrls = [];
+  if (json['apkUrls'] != null) {
+    var apkUrlJson = jsonDecode(json['apkUrls']);
+    try {
+      apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
+    } catch (e) {
+      apkUrls = List<dynamic>.from(apkUrlJson)
+          .map((e) => MapEntry(e[0] as String, e[1] as String))
+          .toList();
+    }
+    json['apkUrls'] = jsonEncode(apkUrls);
+  }
+  // Arch based APK filter option should be disabled if it previously did not exist
+  if (additionalSettings['autoApkFilterByArch'] == null) {
+    additionalSettings['autoApkFilterByArch'] = false;
+  }
+  json['additionalSettings'] = jsonEncode(additionalSettings);
+  // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
+  // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
+  // While not causing problems for existing apps from that source that were added in a previous version
+  if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
+    json['overrideSource'] = FDroid().runtimeType.toString();
+  }
+  return json;
+}
+
 class App {
   late String id;
   late String url;
@@ -109,78 +194,7 @@ class App {
       overrideSource: overrideSource);
 
   factory App.fromJson(Map<String, dynamic> json) {
-    var source = SourceProvider()
-        .getSource(json['url'], overrideSource: json['overrideSource']);
-    var formItems = source.combinedAppSpecificSettingFormItems
-        .reduce((value, element) => [...value, ...element]);
-    Map<String, dynamic> additionalSettings =
-        getDefaultValuesFromFormItems([formItems]);
-    if (json['additionalSettings'] != null) {
-      additionalSettings.addEntries(
-          Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
-              .entries);
-    }
-    // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
-    if (json['additionalData'] != null) {
-      List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
-      temp.asMap().forEach((i, value) {
-        if (i < formItems.length) {
-          if (formItems[i] is GeneratedFormSwitch) {
-            additionalSettings[formItems[i].key] = value == 'true';
-          } else {
-            additionalSettings[formItems[i].key] = value;
-          }
-        }
-      });
-      additionalSettings['trackOnly'] =
-          json['trackOnly'] == 'true' || json['trackOnly'] == true;
-      additionalSettings['noVersionDetection'] =
-          json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
-    }
-    // Convert bool style version detection options to dropdown style
-    if (additionalSettings['noVersionDetection'] == true) {
-      additionalSettings['versionDetection'] = 'noVersionDetection';
-      if (additionalSettings['releaseDateAsVersion'] == true) {
-        additionalSettings['versionDetection'] = 'releaseDateAsVersion';
-        additionalSettings.remove('releaseDateAsVersion');
-      }
-      if (additionalSettings['noVersionDetection'] != null) {
-        additionalSettings.remove('noVersionDetection');
-      }
-      if (additionalSettings['releaseDateAsVersion'] != null) {
-        additionalSettings.remove('releaseDateAsVersion');
-      }
-    }
-    // Ensure additionalSettings are correctly typed
-    for (var item in formItems) {
-      if (additionalSettings[item.key] != null) {
-        additionalSettings[item.key] =
-            item.ensureType(additionalSettings[item.key]);
-      }
-    }
-    int preferredApkIndex = json['preferredApkIndex'] == null
-        ? 0
-        : json['preferredApkIndex'] as int;
-    if (preferredApkIndex < 0) {
-      preferredApkIndex = 0;
-    }
-    // apkUrls can either be old list or new named list apkUrls
-    List<MapEntry<String, String>> apkUrls = [];
-    if (json['apkUrls'] != null) {
-      var apkUrlJson = jsonDecode(json['apkUrls']);
-      try {
-        apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
-      } catch (e) {
-        apkUrls = List<dynamic>.from(apkUrlJson)
-            .map((e) => MapEntry(e[0] as String, e[1] as String))
-            .toList();
-      }
-    }
-    // Arch based APK filter option should be disabled if it previously did not exist
-    if (json['additionalSettings'] != null &&
-        jsonDecode(json['additionalSettings'])['autoApkFilterByArch'] == null) {
-      additionalSettings['autoApkFilterByArch'] = false;
-    }
+    json = appJSONCompatibilityModifiers(json);
     return App(
         json['id'] as String,
         json['url'] as String,
@@ -190,9 +204,9 @@ class App {
             ? null
             : json['installedVersion'] as String,
         json['latestVersion'] as String,
-        apkUrls,
-        preferredApkIndex,
-        additionalSettings,
+        jsonDecode(json['apkUrls']) as List<MapEntry<String, String>>,
+        json['preferredApkIndex'] as int,
+        jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
         json['lastUpdateCheck'] == null
             ? null
             : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
@@ -209,9 +223,7 @@ class App {
             : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
         changeLog:
             json['changeLog'] == null ? null : json['changeLog'] as String,
-        overrideSource: json['overrideSource'] == null
-            ? null
-            : json['overrideSource'] as String);
+        overrideSource: json['overrideSource']);
   }
 
   Map<String, dynamic> toJson() => {
@@ -420,15 +432,17 @@ class SourceProvider {
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url, {String? overrideSource}) {
+    url = preStandardizeUrl(url);
     if (overrideSource != null) {
       var srcs =
           sources.where((e) => e.runtimeType.toString() == overrideSource);
       if (srcs.isEmpty) {
         throw UnsupportedURLError();
       }
+      var res = srcs.first;
+      res.host = Uri.parse(url).host;
       return srcs.first;
     }
-    url = preStandardizeUrl(url);
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
       if (RegExp('://(.+\\.)?${s.host}').hasMatch(url)) {

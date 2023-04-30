@@ -14,14 +14,13 @@ class FDroid extends AppSource {
   @override
   String standardizeURL(String url) {
     RegExp standardUrlRegExB =
-        RegExp('^https?://(cloudflare\\.)?$host/+[^/]+/+packages/+[^/]+');
+        RegExp('^https?://$host/+[^/]+/+packages/+[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
       url =
           'https://${Uri.parse(url.substring(0, match.end)).host}/packages/${Uri.parse(url).pathSegments.last}';
     }
-    RegExp standardUrlRegExA =
-        RegExp('^https?://(cloudflare\\.)?$host/+packages/+[^/]+');
+    RegExp standardUrlRegExA = RegExp('^https?://$host/+packages/+[^/]+');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
