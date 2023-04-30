@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.12.0+160 # When changing this, update the tag in main() accordingly
+version: 0.12.1+161 # When changing this, update the tag in main() accordingly
 
 environment:
   sdk: '>=2.18.2 <3.0.0'
@@ -51,7 +51,10 @@ dependencies:
   device_info_plus: ^8.0.0
   file_picker: ^5.2.10
   animations: ^2.0.4
-  install_plugin_v2: ^1.0.0
+  android_package_installer:
+    git:
+      url: https://github.com/ImranR98/android_package_installer
+      ref: main
   share_plus: ^6.0.1
   installed_apps: ^1.3.1
   package_archive_info: ^0.1.0

@@ -6,11 +6,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:android_intent_plus/flag.dart';
+import 'package:android_package_installer/android_package_installer.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:install_plugin_v2/install_plugin_v2.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -268,7 +268,8 @@ class AppsProvider with ChangeNotifier {
   // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
   // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
   // But even then, we don't know if it actually succeeded
-  Future<void> installApk(DownloadedApk file) async {
+  Future<void> installApk(DownloadedApk file, {bool silent = false}) async {
+    // TODO: Use 'silent' when/if ever possible
     var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
     AppInfo? appInfo;
     try {
@@ -281,16 +282,15 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    await InstallPlugin.installApk(file.file.path, obtainiumId);
-    if (file.appId == obtainiumId) {
-      // Obtainium prompt should be lowest
-      await Future.delayed(const Duration(milliseconds: 500));
+    int? code =
+        await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    if (code != null && code != 0 && code != 3) {
+      throw InstallError(code);
+    } else if (code == 0) {
+      apps[file.appId]!.app.installedVersion =
+          apps[file.appId]!.app.latestVersion;
     }
-    apps[file.appId]!.app.installedVersion =
-        apps[file.appId]!.app.latestVersion;
-    // Don't correct install status as installation may not be done yet
-    await saveApps([apps[file.appId]!.app],
-        attemptToCorrectInstallStatus: false);
+    await saveApps([apps[file.appId]!.app]);
   }
 
   void uninstallApp(String appId) async {
@@ -395,75 +395,43 @@ class AppsProvider with ChangeNotifier {
       a.installedVersion = a.latestVersion;
       return a;
     }).toList());
-    // Download APKs for all Apps to be installed
+
+    // Prepare to download+install Apps
     MultiAppMultiError errors = MultiAppMultiError();
-    List<DownloadedApk?> downloadedFiles =
-        await Future.wait(appsToInstall.map((id) async {
+    List<String> installedIds = [];
+
+    // Move Obtainium to the end of the line (let all other apps update first)
+    String? temp;
+    appsToInstall.removeWhere((element) {
+      bool res = element == obtainiumId || element == obtainiumTempId;
+      if (res) {
+        temp = element;
+      }
+      return res;
+    });
+    if (temp != null) {
+      appsToInstall = [...appsToInstall, temp!];
+    }
+
+    for (var id in appsToInstall) {
       try {
-        return await downloadApp(apps[id]!.app, context);
+        // ignore: use_build_context_synchronously
+        var downloadedFile = await downloadApp(apps[id]!.app, context);
+        bool willBeSilent =
+            await canInstallSilently(apps[downloadedFile.appId]!.app);
+        willBeSilent = false; // TODO: Remove this when silent updates work
+        if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
+            true)) {
+          throw ObtainiumError(tr('cancelled'));
+        }
+        if (!willBeSilent && context != null) {
+          // ignore: use_build_context_synchronously
+          await waitForUserToReturnToForeground(context);
+        }
+        await installApk(downloadedFile, silent: willBeSilent);
+        installedIds.add(id);
       } catch (e) {
         errors.add(id, e.toString());
-      }
-      return null;
-    }));
-    downloadedFiles =
-        downloadedFiles.where((element) => element != null).toList();
-    // Separate the Apps to install into silent and regular lists
-    List<DownloadedApk> silentUpdates = [];
-    List<DownloadedApk> regularInstalls = [];
-    for (var f in downloadedFiles) {
-      bool willBeSilent = await canInstallSilently(apps[f!.appId]!.app);
-      if (willBeSilent) {
-        silentUpdates.add(f);
-      } else {
-        regularInstalls.add(f);
-      }
-    }
-
-    // Move everything to the regular install list (since silent updates don't currently work)
-    // TODO: Remove this when silent updates work
-    regularInstalls.addAll(silentUpdates);
-
-    // If Obtainium is being installed, it should be the last one
-    List<DownloadedApk> moveObtainiumToStart(List<DownloadedApk> items) {
-      DownloadedApk? temp;
-      items.removeWhere((element) {
-        bool res =
-            element.appId == obtainiumId || element.appId == obtainiumTempId;
-        if (res) {
-          temp = element;
-        }
-        return res;
-      });
-      if (temp != null) {
-        items = [temp!, ...items];
-      }
-      return items;
-    }
-
-    silentUpdates = moveObtainiumToStart(silentUpdates);
-    regularInstalls = moveObtainiumToStart(regularInstalls);
-
-    if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
-        true)) {
-      throw ObtainiumError(tr('cancelled'));
-    }
-
-    // // Install silent updates (uncomment when it works - TODO)
-    // for (var u in silentUpdates) {
-    //   await installApk(u, silent: true); // Would need to add silent option
-    // }
-
-    // Do regular installs
-    if (regularInstalls.isNotEmpty && context != null) {
-      // ignore: use_build_context_synchronously
-      await waitForUserToReturnToForeground(context);
-      for (var i in regularInstalls) {
-        try {
-          await installApk(i);
-        } catch (e) {
-          errors.add(i.appId, e.toString());
-        }
       }
     }
 
@@ -473,7 +441,7 @@ class AppsProvider with ChangeNotifier {
 
     NotificationsProvider().cancel(UpdateNotification([]).id);
 
-    return downloadedFiles.map((e) => e!.appId).toList();
+    return installedIds;
   }
 
   Future<Directory> getAppsDir() async {

@@ -34,7 +34,6 @@ Currently supported App sources:
      height="80">](https://apt.izzysoft.de/fdroid/index/apk/dev.imranr.obtainium)
 
 ## Limitations
-- App installs happen asynchronously and the success/failure of an install cannot be determined directly. This results in install statuses and versions sometimes being out of sync with the OS until the next launch or until the problem is manually corrected.
 - Auto (unattended) updates are unsupported due to a lack of any capable Flutter plugin.
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 

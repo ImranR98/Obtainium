@@ -17,6 +17,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.9"
+  android_package_installer:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: main
+      resolved-ref: f09c79eee5be3c60b04760143eb954a13fdd07f1
+      url: "https://github.com/ImranR98/android_package_installer"
+    source: git
+    version: "0.0.1"
   animations:
     dependency: "direct main"
     description:
@@ -293,14 +302,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
-  install_plugin_v2:
-    dependency: "direct main"
-    description:
-      name: install_plugin_v2
-      sha256: d6b014637e7a53839e9c5a254f9fd9bb8866392c6db1f16184ce17818cc2d979
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   installed_apps:
     dependency: "direct main"
     description:
