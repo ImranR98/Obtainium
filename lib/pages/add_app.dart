@@ -269,42 +269,47 @@ class _AddAppPageState extends State<AddAppPage> {
       }
     }
 
-    Widget getSourceOverrideDropdownRow() => Row(
-          children: [
-            Expanded(
-                child: GeneratedForm(
-              items: [
-                [
-                  GeneratedFormDropdown(
-                      'overrideSource',
-                      [
-                        MapEntry('', tr('auto')),
-                        ...sourceProvider.sources.map(
-                            (s) => MapEntry(s.runtimeType.toString(), s.name))
-                      ],
-                      label: tr('source'))
-                ]
-              ],
-              onValueChanges: (values, valid, isBuilding) {
-                fn() {
-                  pickedSourceOverride = (values['overrideSource'] == null ||
-                          values['overrideSource'] == '')
-                      ? null
-                      : values['overrideSource'];
-                }
+    Widget getHTMLSourceOverrideDropdown() => Column(children: [
+          Row(
+            children: [
+              Expanded(
+                  child: GeneratedForm(
+                items: [
+                  [
+                    GeneratedFormDropdown(
+                        'overrideSource',
+                        defaultValue: HTML().runtimeType.toString(),
+                        [
+                          ...sourceProvider.sources.map(
+                              (s) => MapEntry(s.runtimeType.toString(), s.name))
+                        ],
+                        label: tr('overrideSource'))
+                  ]
+                ],
+                onValueChanges: (values, valid, isBuilding) {
+                  fn() {
+                    pickedSourceOverride = (values['overrideSource'] == null ||
+                            values['overrideSource'] == '')
+                        ? null
+                        : values['overrideSource'];
+                  }
 
-                if (!isBuilding) {
-                  setState(() {
+                  if (!isBuilding) {
+                    setState(() {
+                      fn();
+                    });
+                  } else {
                     fn();
-                  });
-                } else {
-                  fn();
-                }
-                changeUserInput(userInput, valid, isBuilding);
-              },
-            ))
-          ],
-        );
+                  }
+                  changeUserInput(userInput, valid, isBuilding);
+                },
+              ))
+            ],
+          ),
+          const SizedBox(
+            height: 25,
+          ),
+        ]);
 
     bool shouldShowSearchBar() =>
         sourceProvider.sources.where((e) => e.canSearch).isNotEmpty &&
@@ -355,6 +360,10 @@ class _AddAppPageState extends State<AddAppPage> {
             const SizedBox(
               height: 16,
             ),
+            if (pickedSourceOverride != null ||
+                pickedSource.runtimeType.toString() ==
+                    HTML().runtimeType.toString())
+              getHTMLSourceOverrideDropdown(),
             GeneratedForm(
                 key: Key(pickedSource.runtimeType.toString()),
                 items: pickedSource!.combinedAppSpecificSettingFormItems,
@@ -428,10 +437,6 @@ class _AddAppPageState extends State<AddAppPage> {
                       const SizedBox(
                         height: 16,
                       ),
-                      if (pickedSourceOverride != null ||
-                          pickedSource.runtimeType.toString() ==
-                              HTML().runtimeType.toString())
-                        getSourceOverrideDropdownRow(),
                       if (shouldShowSearchBar())
                         const SizedBox(
                           height: 16,
