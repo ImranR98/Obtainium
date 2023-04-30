@@ -113,21 +113,20 @@ class AppsProvider with ChangeNotifier {
     () async {
       // Load Apps into memory (in background, this is done later instead of in the constructor)
       await loadApps();
-      // Delete existing APKs
-      (await getExternalStorageDirectory())
-          ?.listSync()
-          .where((element) =>
-              element.path.endsWith('.apk') ||
-              element.path.endsWith('.apk.part'))
-          .forEach((apk) {
-        apk.delete();
+      // Delete any partial APKs
+      (await getExternalCacheDirectories())
+          ?.first
+          .listSync()
+          .where((element) => element.path.endsWith('.apk.part'))
+          .forEach((partialApk) {
+        partialApk.delete();
       });
     }();
   }
 
   downloadFile(String url, String fileName, Function? onProgress,
       {bool useExisting = true}) async {
-    var destDir = (await getExternalStorageDirectory())!.path;
+    var destDir = (await getExternalCacheDirectories())!.first.path;
     StreamedResponse response =
         await Client().send(Request('GET', Uri.parse(url)));
     File downloadedFile = File('$destDir/$fileName');
@@ -191,15 +190,6 @@ class AppsProvider with ChangeNotifier {
         }
         prevProg = prog;
       });
-      // Delete older versions of the APK if any
-      for (var file in downloadedFile.parent.listSync()) {
-        var fn = file.path.split('/').last;
-        if (fn.startsWith('${app.id}-') &&
-            fn.endsWith('.apk') &&
-            fn != fileName) {
-          file.delete();
-        }
-      }
       // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
       // The former case should be handled (give the App its real ID), the latter is a security issue
       var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
@@ -215,6 +205,15 @@ class AppsProvider with ChangeNotifier {
         if (apps[originalAppId] != null) {
           await removeApps([originalAppId]);
           await saveApps([app], onlyIfExists: !isTempId);
+        }
+      }
+      // Delete older versions of the APK if any
+      for (var file in downloadedFile.parent.listSync()) {
+        var fn = file.path.split('/').last;
+        if (fn.startsWith('${app.id}-') &&
+            fn.endsWith('.apk') &&
+            fn != fileName) {
+          file.delete();
         }
       }
       return DownloadedApk(app.id, downloadedFile);
@@ -289,6 +288,7 @@ class AppsProvider with ChangeNotifier {
     } else if (code == 0) {
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
+      file.file.delete();
     }
     await saveApps([apps[file.appId]!.app]);
   }
