@@ -470,7 +470,7 @@ class SourceProvider {
     }
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
-      if (RegExp('://${s.host}').hasMatch(url)) {
+      if (RegExp('://${s.host}(/|\\z)?').hasMatch(url)) {
         source = s;
         break;
       }

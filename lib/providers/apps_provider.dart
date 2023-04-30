@@ -332,13 +332,16 @@ class AppsProvider with ChangeNotifier {
         getHost(apkUrl.value) != getHost(app.url) &&
         context != null) {
       // ignore: use_build_context_synchronously
-      if (await showDialog(
-              context: context,
-              builder: (BuildContext ctx) {
-                return APKOriginWarningDialog(
-                    sourceUrl: app.url, apkUrl: apkUrl!.value);
-              }) !=
-          true) {
+      var settingsProvider = context.read<SettingsProvider>();
+      if (!(settingsProvider.hideAPKOriginWarning) &&
+          // ignore: use_build_context_synchronously
+          await showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return APKOriginWarningDialog(
+                        sourceUrl: app.url, apkUrl: apkUrl!.value);
+                  }) !=
+              true) {
         apkUrl = null;
       }
     }

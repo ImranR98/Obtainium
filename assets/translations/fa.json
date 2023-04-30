@@ -224,6 +224,10 @@
     "standardVersionDetection": "تشخیص نسخه استاندارد",
     "groupByCategory": "گروه بر اساس دسته",
     "autoApkFilterByArch": "در صورت امکان سعی کنید APKها را بر اساس معماری CPU فیلتر کنید",
+    "overrideSource": "Override Source",
+    "dontShowAgain": "Don't show this again",
+    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
+    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

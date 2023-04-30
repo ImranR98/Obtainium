@@ -163,6 +163,24 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get hideTrackOnlyWarning {
+    return prefs?.getBool('hideTrackOnlyWarning') ?? false;
+  }
+
+  set hideTrackOnlyWarning(bool show) {
+    prefs?.setBool('hideTrackOnlyWarning', show);
+    notifyListeners();
+  }
+
+  bool get hideAPKOriginWarning {
+    return prefs?.getBool('hideAPKOriginWarning') ?? false;
+  }
+
+  set hideAPKOriginWarning(bool show) {
+    prefs?.setBool('hideAPKOriginWarning', show);
+    notifyListeners();
+  }
+
   String? getSettingString(String settingId) {
     return prefs?.getString(settingId);
   }

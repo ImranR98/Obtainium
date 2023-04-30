@@ -286,6 +286,34 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(tr('dontShowTrackOnlyWarnings')),
+                                Switch(
+                                    value:
+                                        settingsProvider.hideTrackOnlyWarning,
+                                    onChanged: (value) {
+                                      settingsProvider.hideTrackOnlyWarning =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(tr('dontShowAPKOriginWarnings')),
+                                Switch(
+                                    value:
+                                        settingsProvider.hideAPKOriginWarning,
+                                    onChanged: (value) {
+                                      settingsProvider.hideAPKOriginWarning =
+                                          value;
+                                    })
+                              ],
+                            ),
                             const Divider(
                               height: 16,
                             ),
