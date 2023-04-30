@@ -206,8 +206,7 @@ class SettingsProvider with ChangeNotifier {
           .map((e) => e as App)
           .toList();
       if (changedApps.isNotEmpty) {
-        appsProvider.saveApps(changedApps,
-            attemptToCorrectInstallStatus: false);
+        appsProvider.saveApps(changedApps);
       }
     }
     prefs?.setString('categories', jsonEncode(cats));
