@@ -6,6 +6,8 @@ import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,6 +26,7 @@ class NavigationPageItem {
 
 class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
+  int prevAppCount = -1;
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(tr('appsString'), Icons.apps,
@@ -36,6 +39,39 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    AppsProvider appsProvider = context.watch<AppsProvider>();
+
+    switchToPage(int index) async {
+      if (index == 0) {
+        while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
+            null) {
+          // Avoid duplicate GlobalKey error
+          await Future.delayed(const Duration(microseconds: 1));
+        }
+        setState(() {
+          selectedIndexHistory.clear();
+        });
+      } else if (selectedIndexHistory.isEmpty ||
+          (selectedIndexHistory.isNotEmpty &&
+              selectedIndexHistory.last != index)) {
+        setState(() {
+          int existingInd = selectedIndexHistory.indexOf(index);
+          if (existingInd >= 0) {
+            selectedIndexHistory.removeAt(existingInd);
+          }
+          selectedIndexHistory.add(index);
+        });
+      }
+    }
+
+    if (prevAppCount >= 0 &&
+        appsProvider.apps.length > prevAppCount &&
+        selectedIndexHistory.isNotEmpty &&
+        selectedIndexHistory.last == 1) {
+      switchToPage(0);
+    }
+    prevAppCount = appsProvider.apps.length;
+
     return WillPopScope(
         child: Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -65,27 +101,7 @@ class _HomePageState extends State<HomePage> {
                 .toList(),
             onDestinationSelected: (int index) async {
               HapticFeedback.selectionClick();
-              if (index == 0) {
-                while ((pages[0].widget.key as GlobalKey<AppsPageState>)
-                        .currentState !=
-                    null) {
-                  // Avoid duplicate GlobalKey error
-                  await Future.delayed(const Duration(microseconds: 1));
-                }
-                setState(() {
-                  selectedIndexHistory.clear();
-                });
-              } else if (selectedIndexHistory.isEmpty ||
-                  (selectedIndexHistory.isNotEmpty &&
-                      selectedIndexHistory.last != index)) {
-                setState(() {
-                  int existingInd = selectedIndexHistory.indexOf(index);
-                  if (existingInd >= 0) {
-                    selectedIndexHistory.removeAt(existingInd);
-                  }
-                  selectedIndexHistory.add(index);
-                });
-              }
+              await switchToPage(index);
             },
             selectedIndex:
                 selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,
