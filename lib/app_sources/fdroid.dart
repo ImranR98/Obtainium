@@ -12,7 +12,7 @@ class FDroid extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegExB =
         RegExp('^https?://$host/+[^/]+/+packages/+[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());

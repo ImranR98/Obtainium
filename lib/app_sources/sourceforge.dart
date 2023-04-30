@@ -9,7 +9,7 @@ class SourceForge extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp('^https?://$host/projects/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {

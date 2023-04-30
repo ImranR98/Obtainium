@@ -20,7 +20,7 @@ class SteamMobile extends AppSource {
   final apks = {'steam': tr('steamMobile'), 'steam-chat-app': tr('steamChat')};
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     return 'https://$host';
   }
 

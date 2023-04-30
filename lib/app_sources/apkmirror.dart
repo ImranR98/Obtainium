@@ -31,7 +31,7 @@ class APKMirror extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp('^https?://$host/apk/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {

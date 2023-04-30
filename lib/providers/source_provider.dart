@@ -300,8 +300,9 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
-class AppSource {
+abstract class AppSource {
   String? host;
+  bool hostChanged = false;
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
@@ -310,7 +311,15 @@ class AppSource {
     name = runtimeType.toString();
   }
 
-  String standardizeURL(String url) {
+  String standardizeUrl(String url) {
+    url = preStandardizeUrl(url);
+    if (!hostChanged) {
+      url = sourceSpecificStandardizeURL(url);
+    }
+    return url;
+  }
+
+  String sourceSpecificStandardizeURL(String url) {
     throw NotImplementedError();
   }
 
@@ -448,6 +457,7 @@ class SourceProvider {
       }
       var res = srcs.first;
       res.host = Uri.parse(url).host;
+      res.hostChanged = true;
       return srcs.first;
     }
     AppSource? source;
@@ -460,7 +470,7 @@ class SourceProvider {
     if (source == null) {
       for (var s in sources.where((element) => element.host == null)) {
         try {
-          s.standardizeURL(url);
+          s.sourceSpecificStandardizeURL(url);
           source = s;
           break;
         } catch (e) {
@@ -503,7 +513,7 @@ class SourceProvider {
       additionalSettings['trackOnly'] = true;
     }
     var trackOnly = additionalSettings['trackOnly'] == true;
-    String standardUrl = source.standardizeURL(preStandardizeUrl(url));
+    String standardUrl = source.standardizeUrl(url);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
     if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&

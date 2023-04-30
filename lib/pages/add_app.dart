@@ -183,8 +183,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                   sourceProvider
                                       .getSource(value ?? '',
                                           overrideSource: pickedSourceOverride)
-                                      .standardizeURL(
-                                          preStandardizeUrl(value ?? ''));
+                                      .standardizeUrl(value ?? '');
                                 } catch (e) {
                                   return e is String
                                       ? e

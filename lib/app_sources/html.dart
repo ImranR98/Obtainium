@@ -6,7 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class HTML extends AppSource {
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     return url;
   }
 

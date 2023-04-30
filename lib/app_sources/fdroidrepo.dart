@@ -20,7 +20,7 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegExp =
         RegExp('^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)');
     RegExpMatch? match = standardUrlRegExp.firstMatch(url.toLowerCase());
