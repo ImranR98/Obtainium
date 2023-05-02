@@ -122,7 +122,7 @@
     "followSystem": "システムに従う",
     "obtainium": "Obtainium",
     "materialYou": "Material You",
-    "useBlackTheme": "Use pure black dark theme",
+    "useBlackTheme": "ピュアブラックダークテーマを使用する",
     "appSortBy": "アプリの並び方",
     "authorName": "作者名/アプリ名",
     "nameAuthor": "アプリ名/作者名",
@@ -224,10 +224,10 @@
     "standardVersionDetection": "標準のバージョン検出",
     "groupByCategory": "カテゴリ別にグループ化する",
     "autoApkFilterByArch": "可能であれば，CPUアーキテクチャによるAPKのフィルタリングを試みる",
-    "overrideSource": "Override Source",
-    "dontShowAgain": "Don't show this again",
-    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
-    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
+    "overrideSource": "ソースの上書き",
+    "dontShowAgain": "二度と表示しない",
+    "dontShowTrackOnlyWarnings": "「追跡のみ」の警告を表示しない",
+    "dontShowAPKOriginWarnings": "APK Originの警告を表示しない",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
