@@ -470,7 +470,7 @@ class UrlSelectionModal extends StatefulWidget {
       this.selectedByDefault = true,
       this.onlyOneSelectionAllowed = false});
 
-  Map<String, String> urlsWithDescriptions;
+  Map<String, List<String>> urlsWithDescriptions;
   bool selectedByDefault;
   bool onlyOneSelectionAllowed;
 
@@ -479,7 +479,7 @@ class UrlSelectionModal extends StatefulWidget {
 }
 
 class _UrlSelectionModalState extends State<UrlSelectionModal> {
-  Map<MapEntry<String, String>, bool> urlWithDescriptionSelections = {};
+  Map<MapEntry<String, List<String>>, bool> urlWithDescriptionSelections = {};
   @override
   void initState() {
     super.initState();
@@ -522,16 +522,28 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
                 launchUrlString(urlWithD.key,
                     mode: LaunchMode.externalApplication);
               },
-              child: Text(
-                Uri.parse(urlWithD.key).path.substring(1),
-                style: const TextStyle(decoration: TextDecoration.underline),
-                textAlign: TextAlign.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    urlWithD.value[0],
+                    style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.start,
+                  ),
+                  Text(
+                    Uri.parse(urlWithD.key).host,
+                    style: const TextStyle(
+                        decoration: TextDecoration.underline, fontSize: 12),
+                  )
+                ],
               ));
 
           var descriptionText = Text(
-            urlWithD.value.length > 128
-                ? '${urlWithD.value.substring(0, 128)}...'
-                : urlWithD.value,
+            urlWithD.value[1].length > 128
+                ? '${urlWithD.value[1].substring(0, 128)}...'
+                : urlWithD.value[1],
             style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
           );
 

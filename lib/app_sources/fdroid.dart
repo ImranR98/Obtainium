@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -9,6 +10,7 @@ class FDroid extends AppSource {
   FDroid() {
     host = 'f-droid.org';
     name = tr('fdroid');
+    canSearch = true;
   }
 
   @override
@@ -67,5 +69,33 @@ class FDroid extends AppSource {
         await get(Uri.parse('https://$host/api/v1/packages/$appId')),
         'https://$host/repo/$appId',
         standardUrl);
+  }
+
+  @override
+  Future<Map<String, List<String>>> search(String query) async {
+    Response res = await get(Uri.parse('https://search.$host/?q=$query'));
+    if (res.statusCode == 200) {
+      Map<String, List<String>> urlsWithDescriptions = {};
+      parse(res.body).querySelectorAll('.package-header').forEach((e) {
+        String? url = e.attributes['href'];
+        if (url != null) {
+          try {
+            standardizeUrl(url);
+          } catch (e) {
+            url = null;
+          }
+        }
+        if (url != null) {
+          urlsWithDescriptions[url] = [
+            e.querySelector('.package-name')?.text.trim() ?? '',
+            e.querySelector('.package-summary')?.text.trim() ??
+                tr('noDescription')
+          ];
+        }
+      });
+      return urlsWithDescriptions;
+    } else {
+      throw getObtainiumHttpError(res);
+    }
   }
 }
