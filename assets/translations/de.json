@@ -71,7 +71,7 @@
     "updateX": "Aktualisiere {}",
     "installX": "Installiere {}",
     "markXTrackOnlyAsUpdated": "Markiere {}\n(Nur Nachverfolgen)\nals aktualisiert",
-    "changeX": "Ändern {}",
+    "changeX": "Ändere {}",
     "installUpdateApps": "Apps installieren/aktualisieren",
     "installUpdateSelectedApps": "Ausgewählte Apps installieren/aktualisieren",
     "markXSelectedAppsAsUpdated": "Markiere {} ausgewählte Apps als aktuell?",
@@ -224,10 +224,10 @@
     "standardVersionDetection": "Standardversionserkennung",
     "groupByCategory": "Nach Kategorie gruppieren",
     "autoApkFilterByArch": "Nach Möglichkeit versuchen, APKs nach CPU-Architektur zu filtern",
-    "overrideSource": "Override Source",
-    "dontShowAgain": "Don't show this again",
-    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
-    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
+    "overrideSource": "Quelle überschreiben",
+    "dontShowAgain": "Nicht noch einmal zeigen",
+    "dontShowTrackOnlyWarnings": "Warnung für 'Nur Nachverfolgen' nicht anzeigen",
+    "dontShowAPKOriginWarnings": "Warnung für APK-Herkunft nicht anzeigen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
