@@ -27,15 +27,16 @@ const String currentReleaseTag =
 
 const int bgUpdateCheckAlarmId = 666;
 
-const supportedLocales = [
-  Locale('en'),
-  Locale('zh'),
-  Locale('it'),
-  Locale('ja'),
-  Locale('hu'),
-  Locale('de'),
-  Locale('fa'),
-  Locale('fr')
+List<MapEntry<Locale, String>> supportedLocales = const [
+  MapEntry(Locale('en'), 'English'),
+  MapEntry(Locale('zh'), '汉语'),
+  MapEntry(Locale('it'), 'Italiano'),
+  MapEntry(Locale('ja'), '日本語'),
+  MapEntry(Locale('hu'), 'Magyar'),
+  MapEntry(Locale('de'), 'Deutsch'),
+  MapEntry(Locale('fa'), 'فارسی'),
+  MapEntry(Locale('fr'), 'Français'),
+  MapEntry(Locale('es'), 'Español'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
@@ -52,7 +53,7 @@ Future<void> loadTranslations() async {
     saveLocale: true,
     forceLocale: forceLocale != null ? Locale(forceLocale) : null,
     fallbackLocale: fallbackLocale,
-    supportedLocales: supportedLocales,
+    supportedLocales: supportedLocales.map((e) => e.key).toList(),
     assetLoader: const RootBundleAssetLoader(),
     useOnlyLangCode: true,
     useFallbackTranslations: true,
@@ -171,7 +172,7 @@ void main() async {
       Provider(create: (context) => LogsProvider())
     ],
     child: EasyLocalization(
-        supportedLocales: supportedLocales,
+        supportedLocales: supportedLocales.map((e) => e.key).toList(),
         path: localeDir,
         fallbackLocale: fallbackLocale,
         useOnlyLangCode: true,
@@ -221,7 +222,7 @@ class _ObtainiumState extends State<Obtainium> {
         ], onlyIfExists: false);
       }
       if (!supportedLocales
-              .map((e) => e.languageCode)
+              .map((e) => e.key.languageCode)
               .contains(context.locale.languageCode) ||
           settingsProvider.forcedLocale == null &&
               context.deviceLocale.languageCode !=

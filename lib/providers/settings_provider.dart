@@ -216,7 +216,7 @@ class SettingsProvider with ChangeNotifier {
   String? get forcedLocale {
     var fl = prefs?.getString('forcedLocale');
     return supportedLocales
-            .where((element) => element.toLanguageTag() == fl)
+            .where((element) => element.key.toLanguageTag() == fl)
             .isNotEmpty
         ? fl
         : null;
@@ -226,7 +226,7 @@ class SettingsProvider with ChangeNotifier {
     if (fl == null) {
       prefs?.remove('forcedLocale');
     } else if (supportedLocales
-        .where((element) => element.toLanguageTag() == fl)
+        .where((element) => element.key.toLanguageTag() == fl)
         .isNotEmpty) {
       prefs?.setString('forcedLocale', fl);
     }
