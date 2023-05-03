@@ -122,7 +122,7 @@
     "followSystem": "هماهنگ با سیستم",
     "obtainium": "Obtainium",
     "materialYou": "Material You",
-    "useBlackTheme": "Use pure black dark theme",
+    "useBlackTheme": "استفاده از تم تیره سیاه خالص",
     "appSortBy": "مرتب سازی برنامه بر اساس",
     "authorName": "سازنده/اسم",
     "nameAuthor": "اسم/سازنده",
@@ -224,10 +224,10 @@
     "standardVersionDetection": "تشخیص نسخه استاندارد",
     "groupByCategory": "گروه بر اساس دسته",
     "autoApkFilterByArch": "در صورت امکان سعی کنید APKها را بر اساس معماری CPU فیلتر کنید",
-    "overrideSource": "Override Source",
-    "dontShowAgain": "Don't show this again",
-    "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
-    "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
+    "overrideSource": "نادیده گرفتن منبع",
+    "dontShowAgain": "دوباره این را نشان نده",
+    "dontShowTrackOnlyWarnings": "هشدار "فقط ردیابی" را نشان ندهید",
+    "dontShowAPKOriginWarnings": "هشدارهای منبع APK را نشان ندهید",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
