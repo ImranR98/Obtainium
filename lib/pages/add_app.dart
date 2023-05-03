@@ -254,7 +254,7 @@ class _AddAppPageState extends State<AddAppPage> {
 
         // .then((results) async {
         // Interleave results instead of simple reduce
-        Map<String, String> res = {};
+        Map<String, List<String>> res = {};
         var si = 0;
         var done = false;
         while (!done) {

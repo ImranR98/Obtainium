@@ -213,19 +213,21 @@ class GitHub extends AppSource {
     return AppNames(names[0], names[1]);
   }
 
-  Future<Map<String, String>> searchCommon(
+  Future<Map<String, List<String>>> searchCommon(
       String query, String requestUrl, String rootProp,
       {Function(Response)? onHttpErrorCode}) async {
     Response res = await get(Uri.parse(requestUrl));
     if (res.statusCode == 200) {
-      Map<String, String> urlsWithDescriptions = {};
+      Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {
         urlsWithDescriptions.addAll({
-          e['html_url'] as String:
-              ((e['archived'] == true ? '[ARCHIVED] ' : '') +
-                  (e['description'] != null
-                      ? e['description'] as String
-                      : tr('noDescription')))
+          e['html_url'] as String: [
+            e['full_name'] as String,
+            ((e['archived'] == true ? '[ARCHIVED] ' : '') +
+                (e['description'] != null
+                    ? e['description'] as String
+                    : tr('noDescription')))
+          ]
         });
       }
       return urlsWithDescriptions;
@@ -238,7 +240,7 @@ class GitHub extends AppSource {
   }
 
   @override
-  Future<Map<String, String>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query) async {
     return searchCommon(
         query,
         'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',

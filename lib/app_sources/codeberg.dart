@@ -70,7 +70,7 @@ class Codeberg extends AppSource {
   }
 
   @override
-  Future<Map<String, String>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query) async {
     return gh.searchCommon(
         query,
         'https://$host/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',

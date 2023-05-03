@@ -415,7 +415,7 @@ abstract class AppSource {
   }
 
   bool canSearch = false;
-  Future<Map<String, String>> search(String query) {
+  Future<Map<String, List<String>>> search(String query) {
     throw NotImplementedError();
   }
 
@@ -433,7 +433,7 @@ ObtainiumError getObtainiumHttpError(Response res) {
 abstract class MassAppUrlSource {
   late String name;
   late List<String> requiredArgs;
-  Future<Map<String, String>> getUrlsWithDescriptions(List<String> args);
+  Future<Map<String, List<String>>> getUrlsWithDescriptions(List<String> args);
 }
 
 regExValidator(String? value) {
