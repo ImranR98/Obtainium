@@ -10,8 +10,14 @@ class SourceForge extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/projects/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExB = RegExp('^https?://$host/p/[^/]+');
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    if (match != null) {
+      url =
+          'https://${Uri.parse(url.substring(0, match.end)).host}/projects/${url.substring(Uri.parse(url.substring(0, match.end)).host.length + '/projects/'.length + 1)}';
+    }
+    RegExp standardUrlRegExA = RegExp('^https?://$host/projects/[^/]+');
+    match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }

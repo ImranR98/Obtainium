@@ -144,8 +144,8 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(tr('followSystem')),
           ),
           ...supportedLocales.map((e) => DropdownMenuItem(
-                value: e.toLanguageTag(),
-                child: Text(e.toLanguageTag().toUpperCase()),
+                value: e.key.toLanguageTag(),
+                child: Text(e.value),
               ))
         ],
         onChanged: (value) {
