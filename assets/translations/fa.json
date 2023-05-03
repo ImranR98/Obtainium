@@ -226,7 +226,7 @@
     "autoApkFilterByArch": "در صورت امکان سعی کنید APKها را بر اساس معماری CPU فیلتر کنید",
     "overrideSource": "نادیده گرفتن منبع",
     "dontShowAgain": "دوباره این را نشان نده",
-    "dontShowTrackOnlyWarnings": "هشدار "فقط ردیابی" را نشان ندهید",
+    "dontShowTrackOnlyWarnings": "هشدار 'فقط ردیابی' را نشان ندهید",
     "dontShowAPKOriginWarnings": "هشدارهای منبع APK را نشان ندهید",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
