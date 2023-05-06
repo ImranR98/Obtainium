@@ -7,7 +7,9 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
+import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
@@ -20,6 +22,7 @@ import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
+import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/vlc.dart';
@@ -315,6 +318,7 @@ abstract class AppSource {
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
+  bool overrideEligible = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -342,6 +346,18 @@ abstract class AppSource {
       url = sourceSpecificStandardizeURL(url);
     }
     return url;
+  }
+
+  Map<String, String>? get requestHeaders => null;
+
+  Future<Response> sourceRequest(String url) async {
+    if (requestHeaders != null) {
+      var req = Request('GET', Uri.parse(url));
+      req.headers.addAll(requestHeaders!);
+      return Response.fromStream(await Client().send(req));
+    } else {
+      return get(Uri.parse(url));
+    }
   }
 
   String sourceSpecificStandardizeURL(String url) {
@@ -410,7 +426,8 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(String apkUrl) async {
+  Future<String> apkUrlPrefetchModifier(
+      String apkUrl, String standardUrl) async {
     return apkUrl;
   }
 
@@ -459,7 +476,10 @@ class SourceProvider {
         FDroidRepo(),
         Jenkins(),
         SourceForge(),
+        SourceHut(),
         APKMirror(),
+        APKPure(),
+        // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
         VLC(),

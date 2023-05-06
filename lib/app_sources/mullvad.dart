@@ -28,7 +28,7 @@ class Mullvad extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('$standardUrl/en/download/android'));
+    Response res = await sourceRequest('$standardUrl/en/download/android');
     if (res.statusCode == 200) {
       var versions = parse(res.body)
           .querySelectorAll('p')

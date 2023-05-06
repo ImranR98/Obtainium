@@ -6,6 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Jenkins extends AppSource {
   Jenkins() {
+    overrideEligible = true;
     overrideVersionDetectionFormDefault('releaseDateAsVersion', true);
   }
 
@@ -30,7 +31,7 @@ class Jenkins extends AppSource {
   ) async {
     standardUrl = trimJobUrl(standardUrl);
     Response res =
-        await get(Uri.parse('$standardUrl/lastSuccessfulBuild/api/json'));
+        await sourceRequest('$standardUrl/lastSuccessfulBuild/api/json');
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       var releaseDate = json['timestamp'] == null
@@ -55,9 +56,6 @@ class Jenkins extends AppSource {
           .where((url) =>
               url.value.isNotEmpty && url.key.toLowerCase().endsWith('.apk'))
           .toList();
-      if (apkUrls.isEmpty) {
-        throw NoAPKError();
-      }
       return APKDetails(
           version,
           apkUrls,

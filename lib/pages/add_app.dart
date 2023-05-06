@@ -302,8 +302,10 @@ class _AddAppPageState extends State<AddAppPage> {
                         'overrideSource',
                         defaultValue: HTML().runtimeType.toString(),
                         [
-                          ...sourceProvider.sources.map(
-                              (s) => MapEntry(s.runtimeType.toString(), s.name))
+                          ...sourceProvider.sources
+                              .where((s) => s.overrideEligible)
+                              .map((s) =>
+                                  MapEntry(s.runtimeType.toString(), s.name))
                         ],
                         label: tr('overrideSource'))
                   ]

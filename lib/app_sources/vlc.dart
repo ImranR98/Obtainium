@@ -19,8 +19,8 @@ class VLC extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(
-        Uri.parse('https://www.videolan.org/vlc/download-android.html'));
+    Response res = await sourceRequest(
+        'https://www.videolan.org/vlc/download-android.html');
     if (res.statusCode == 200) {
       var dwUrlBase = 'get.videolan.org/vlc-android';
       var dwLinks = parse(res.body)
@@ -38,7 +38,7 @@ class VLC extends AppSource {
         throw NoVersionError();
       }
       String? targetUrl = 'https://$dwUrlBase/$version/';
-      Response res2 = await get(Uri.parse(targetUrl));
+      Response res2 = await sourceRequest(targetUrl);
       String mirrorDwBase =
           'https://plug-mirror.rcac.purdue.edu/vlc/vlc-android/$version/';
       List<String> apkUrls = [];

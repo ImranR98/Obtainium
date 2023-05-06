@@ -125,10 +125,13 @@ class AppsProvider with ChangeNotifier {
   }
 
   downloadFile(String url, String fileName, Function? onProgress,
-      {bool useExisting = true}) async {
+      {bool useExisting = true, Map<String, String>? headers}) async {
     var destDir = (await getExternalCacheDirectories())!.first.path;
-    StreamedResponse response =
-        await Client().send(Request('GET', Uri.parse(url)));
+    var req = Request('GET', Uri.parse(url));
+    if (headers != null) {
+      req.headers.addAll(headers);
+    }
+    StreamedResponse response = await Client().send(req);
     File downloadedFile = File('$destDir/$fileName');
     if (!(downloadedFile.existsSync() && useExisting)) {
       File tempDownloadedFile = File('${downloadedFile.path}.part');
@@ -170,15 +173,16 @@ class AppsProvider with ChangeNotifier {
       notifyListeners();
     }
     try {
-      String downloadUrl = await SourceProvider()
-          .getSource(app.url, overrideSource: app.overrideSource)
-          .apkUrlPrefetchModifier(app.apkUrls[app.preferredApkIndex].value);
+      AppSource source = SourceProvider()
+          .getSource(app.url, overrideSource: app.overrideSource);
+      String downloadUrl = await source.apkUrlPrefetchModifier(
+          app.apkUrls[app.preferredApkIndex].value, app.url);
       var fileName = '${app.id}-${downloadUrl.hashCode}.apk';
       var notif = DownloadNotification(app.finalName, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
-      File downloadedFile =
-          await downloadFile(downloadUrl, fileName, (double? progress) {
+      File downloadedFile = await downloadFile(downloadUrl, fileName,
+          headers: source.requestHeaders, (double? progress) {
         int? prog = progress?.ceil();
         if (apps[app.id] != null) {
           apps[app.id]!.downloadProgress = progress;

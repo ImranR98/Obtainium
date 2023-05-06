@@ -20,7 +20,7 @@ class TelegramApp extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('https://t.me/s/TAndroidAPK'));
+    Response res = await sourceRequest('https://t.me/s/TAndroidAPK');
     if (res.statusCode == 200) {
       var http = parse(res.body);
       var messages =

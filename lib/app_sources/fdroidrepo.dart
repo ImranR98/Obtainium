@@ -8,6 +8,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
+    overrideEligible = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [
@@ -28,7 +29,7 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
-    var res = await get(Uri.parse('$standardUrl/index.xml'));
+    var res = await sourceRequest('$standardUrl/index.xml');
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {

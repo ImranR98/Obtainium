@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
+    overrideEligible = true;
 
     additionalSourceSpecificSettingFormItems = [
       GeneratedFormTextField('github-creds',
@@ -108,7 +109,7 @@ class GitHub extends AppSource {
                 true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
-    Response res = await get(Uri.parse(requestUrl));
+    Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
 
@@ -216,7 +217,7 @@ class GitHub extends AppSource {
   Future<Map<String, List<String>>> searchCommon(
       String query, String requestUrl, String rootProp,
       {Function(Response)? onHttpErrorCode}) async {
-    Response res = await get(Uri.parse(requestUrl));
+    Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {

@@ -9,6 +9,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class Codeberg extends AppSource {
   Codeberg() {
     host = 'codeberg.org';
+    overrideEligible = true;
 
     additionalSourceSpecificSettingFormItems = [];
 

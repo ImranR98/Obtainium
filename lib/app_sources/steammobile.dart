@@ -29,7 +29,7 @@ class SteamMobile extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('https://$host/mobile'));
+    Response res = await sourceRequest('https://$host/mobile');
     if (res.statusCode == 200) {
       var apkNamePrefix = additionalSettings['app'] as String?;
       if (apkNamePrefix == null) {
