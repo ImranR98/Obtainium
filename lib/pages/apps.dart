@@ -52,6 +52,9 @@ class AppsPageState extends State<AppsPage> {
     }
   }
 
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
@@ -60,6 +63,27 @@ class AppsPageState extends State<AppsPage> {
     var listedApps = appsProvider.getAppValues().toList();
     var currentFilterIsUpdatesOnly =
         filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
+
+    refresh() {
+      HapticFeedback.lightImpact();
+      setState(() {
+        refreshingSince = DateTime.now();
+      });
+      return appsProvider.checkUpdates().catchError((e) {
+        showError(e, context);
+      }).whenComplete(() {
+        setState(() {
+          refreshingSince = null;
+        });
+      });
+    }
+
+    if (!appsProvider.loadingApps &&
+        appsProvider.apps.isNotEmpty &&
+        settingsProvider.checkJustStarted() &&
+        settingsProvider.checkOnStart) {
+      _refreshIndicatorKey.currentState?.show();
+    }
 
     selectedAppIds = selectedAppIds
         .where((element) => listedApps.map((e) => e.app.id).contains(element))
@@ -315,7 +339,7 @@ class AppsPageState extends State<AppsPage> {
                               ?.isBefore(refreshingSince!) ??
                           true))
                       .length /
-                  appsProvider.apps.length,
+                  (appsProvider.apps.isNotEmpty ? appsProvider.apps.length : 1),
             ),
           )
       ];
@@ -515,10 +539,12 @@ class AppsPageState extends State<AppsPage> {
                         ? FontWeight.bold
                         : FontWeight.normal)),
             trailing: listedApps[index].downloadProgress != null
-                ? Text(tr('percentProgress', args: [
-                    listedApps[index].downloadProgress?.toInt().toString() ??
-                        '100'
-                  ]))
+                ? SizedBox(
+                    width: 110,
+                    child: Text(tr('percentProgress', args: [
+                      listedApps[index].downloadProgress?.toInt().toString() ??
+                          '100'
+                    ])))
                 : trailingRow,
             onTap: () {
               if (selectedAppIds.isNotEmpty) {
@@ -1017,19 +1043,8 @@ class AppsPageState extends State<AppsPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
-          onRefresh: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              refreshingSince = DateTime.now();
-            });
-            return appsProvider.checkUpdates().catchError((e) {
-              showError(e, context);
-            }).whenComplete(() {
-              setState(() {
-                refreshingSince = null;
-              });
-            });
-          },
+          key: _refreshIndicatorKey,
+          onRefresh: refresh,
           child: CustomScrollView(slivers: <Widget>[
             CustomAppBar(title: tr('appsString')),
             ...getLoadingWidgets(),

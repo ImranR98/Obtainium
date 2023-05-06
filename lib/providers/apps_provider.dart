@@ -27,6 +27,7 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:archive/archive.dart';
 
 class AppInMemory {
   late App app;
@@ -44,6 +45,13 @@ class DownloadedApk {
   String appId;
   File file;
   DownloadedApk(this.appId, this.file);
+}
+
+class DownloadedXApkDir {
+  String appId;
+  File file;
+  Directory extracted;
+  DownloadedXApkDir(this.appId, this.file, this.extracted);
 }
 
 List<String> generateStandardVersionRegExStrings() {
@@ -164,7 +172,27 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
-  Future<DownloadedApk> downloadApp(App app, BuildContext? context) async {
+  handleAPKIDChange(App app, PackageArchiveInfo newInfo, File downloadedFile,
+      String downloadUrl) async {
+    // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
+    // The former case should be handled (give the App its real ID), the latter is a security issue
+    if (app.id != newInfo.packageName) {
+      var isTempId = SourceProvider().isTempId(app);
+      if (apps[app.id] != null && !isTempId) {
+        throw IDChangedError();
+      }
+      var originalAppId = app.id;
+      app.id = newInfo.packageName;
+      downloadedFile = downloadedFile.renameSync(
+          '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.apk');
+      if (apps[originalAppId] != null) {
+        await removeApps([originalAppId]);
+        await saveApps([app], onlyIfExists: !isTempId);
+      }
+    }
+  }
+
+  Future<Object> downloadApp(App app, BuildContext? context) async {
     NotificationsProvider? notificationsProvider =
         context?.read<NotificationsProvider>();
     var notifId = DownloadNotification(app.finalName, 0).id;
@@ -194,33 +222,42 @@ class AppsProvider with ChangeNotifier {
         }
         prevProg = prog;
       });
-      // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
-      // The former case should be handled (give the App its real ID), the latter is a security issue
-      var newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
-      if (app.id != newInfo.packageName) {
-        var isTempId = SourceProvider().isTempId(app);
-        if (apps[app.id] != null && !isTempId) {
-          throw IDChangedError();
-        }
-        var originalAppId = app.id;
-        app.id = newInfo.packageName;
-        downloadedFile = downloadedFile.renameSync(
-            '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.apk');
-        if (apps[originalAppId] != null) {
-          await removeApps([originalAppId]);
-          await saveApps([app], onlyIfExists: !isTempId);
-        }
+      PackageArchiveInfo? newInfo;
+      try {
+        newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
+      } catch (e) {
+        // Assume it's an XAPK
+        fileName = '${app.id}-${downloadUrl.hashCode}.xapk';
+        String newPath = '${downloadedFile.parent.path}/$fileName';
+        downloadedFile.renameSync(newPath);
+        downloadedFile = File(newPath);
       }
-      // Delete older versions of the APK if any
+      Directory? xapkDir;
+      if (newInfo == null) {
+        String xapkDirPath = '${downloadedFile.path}-dir';
+        unzipFile(downloadedFile.path, '${downloadedFile.path}-dir');
+        xapkDir = Directory(xapkDirPath);
+        var apks = xapkDir
+            .listSync()
+            .where((e) => e.path.toLowerCase().endsWith('.apk'))
+            .toList();
+        newInfo = await PackageArchiveInfo.fromPath(apks.first.path);
+      }
+      await handleAPKIDChange(app, newInfo, downloadedFile, downloadUrl);
+      // Delete older versions of the file if any
       for (var file in downloadedFile.parent.listSync()) {
         var fn = file.path.split('/').last;
         if (fn.startsWith('${app.id}-') &&
-            fn.endsWith('.apk') &&
+            fn.toLowerCase().endsWith(xapkDir == null ? '.apk' : '.xapk') &&
             fn != downloadedFile.path.split('/').last) {
           file.delete();
         }
       }
-      return DownloadedApk(app.id, downloadedFile);
+      if (xapkDir != null) {
+        return DownloadedXApkDir(app.id, downloadedFile, xapkDir);
+      } else {
+        return DownloadedApk(app.id, downloadedFile);
+      }
     } finally {
       notificationsProvider?.cancel(notifId);
       if (apps[app.id] != null) {
@@ -267,10 +304,37 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  // Unfortunately this 'await' does not actually wait for the APK to finish installing
-  // So we only know that the install prompt was shown, but the user could still cancel w/o us knowing
-  // If appropriate criteria are met, the update (never a fresh install) happens silently  in the background
-  // But even then, we don't know if it actually succeeded
+  void unzipFile(String filePath, String destinationPath) {
+    final bytes = File(filePath).readAsBytesSync();
+    final archive = ZipDecoder().decodeBytes(bytes);
+
+    for (final file in archive) {
+      final filename = '$destinationPath/${file.name}';
+      if (file.isFile) {
+        final data = file.content as List<int>;
+        File(filename)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(data);
+      } else {
+        Directory(filename).create(recursive: true);
+      }
+    }
+  }
+
+  Future<void> installXApkDir(DownloadedXApkDir dir,
+      {bool silent = false}) async {
+    try {
+      for (var apk in dir.extracted
+          .listSync()
+          .where((f) => f is File && f.path.toLowerCase().endsWith('.apk'))) {
+        await installApk(DownloadedApk(dir.appId, apk as File), silent: silent);
+      }
+      dir.file.delete();
+    } finally {
+      dir.extracted.delete(recursive: true);
+    }
+  }
+
   Future<void> installApk(DownloadedApk file, {bool silent = false}) async {
     // TODO: Use 'silent' when/if ever possible
     var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
@@ -420,9 +484,16 @@ class AppsProvider with ChangeNotifier {
     for (var id in appsToInstall) {
       try {
         // ignore: use_build_context_synchronously
-        var downloadedFile = await downloadApp(apps[id]!.app, context);
-        bool willBeSilent =
-            await canInstallSilently(apps[downloadedFile.appId]!.app);
+        var downloadedArtifact = await downloadApp(apps[id]!.app, context);
+        DownloadedApk? downloadedFile;
+        DownloadedXApkDir? downloadedDir;
+        if (downloadedArtifact is DownloadedApk) {
+          downloadedFile = downloadedArtifact;
+        } else {
+          downloadedDir = downloadedArtifact as DownloadedXApkDir;
+        }
+        bool willBeSilent = await canInstallSilently(
+            apps[downloadedFile?.appId ?? downloadedDir!.appId]!.app);
         willBeSilent = false; // TODO: Remove this when silent updates work
         if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
             true)) {
@@ -432,7 +503,11 @@ class AppsProvider with ChangeNotifier {
           // ignore: use_build_context_synchronously
           await waitForUserToReturnToForeground(context);
         }
-        await installApk(downloadedFile, silent: willBeSilent);
+        if (downloadedFile != null) {
+          await installApk(downloadedFile, silent: willBeSilent);
+        } else {
+          await installXApkDir(downloadedDir!, silent: willBeSilent);
+        }
         installedIds.add(id);
       } catch (e) {
         errors.add(id, e.toString());
@@ -734,7 +809,7 @@ class AppsProvider with ChangeNotifier {
             apps[i].installedVersion = null;
           }
         }
-        await saveApps(apps, attemptToCorrectInstallStatus: !remove);
+        await saveApps(apps, attemptToCorrectInstallStatus: false);
       }
       if (remove) {
         await removeApps(apps.map((e) => e.id).toList());

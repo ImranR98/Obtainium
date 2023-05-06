@@ -121,7 +121,7 @@
     "followSystem": "Segui sistema",
     "obtainium": "Obtainium",
     "materialYou": "Material You",
-    "useBlackTheme": "Use pure black dark theme",
+    "useBlackTheme": "Use Pure Black Dark Theme",
     "appSortBy": "App ordinate per",
     "authorName": "Autore/Nome",
     "nameAuthor": "Nome/Autore",
@@ -231,6 +231,7 @@
     "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
     "about": "About",
     "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
+    "checkOnStart": "Check Once on Start",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
         "other": "Rimuovere le App?"
