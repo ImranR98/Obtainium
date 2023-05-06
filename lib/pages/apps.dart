@@ -515,10 +515,12 @@ class AppsPageState extends State<AppsPage> {
                         ? FontWeight.bold
                         : FontWeight.normal)),
             trailing: listedApps[index].downloadProgress != null
-                ? Text(tr('percentProgress', args: [
-                    listedApps[index].downloadProgress?.toInt().toString() ??
-                        '100'
-                  ]))
+                ? SizedBox(
+                    width: 110,
+                    child: Text(tr('percentProgress', args: [
+                      listedApps[index].downloadProgress?.toInt().toString() ??
+                          '100'
+                    ])))
                 : trailingRow,
             onTap: () {
               if (selectedAppIds.isNotEmpty) {

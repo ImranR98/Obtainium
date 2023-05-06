@@ -809,7 +809,7 @@ class AppsProvider with ChangeNotifier {
             apps[i].installedVersion = null;
           }
         }
-        await saveApps(apps, attemptToCorrectInstallStatus: !remove);
+        await saveApps(apps, attemptToCorrectInstallStatus: false);
       }
       if (remove) {
         await removeApps(apps.map((e) => e.id).toList());
