@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -133,7 +135,7 @@ class GitHub extends AppSource {
               ? DateTime.parse(rel['published_at'])
               : null;
       releases.sort((a, b) {
-        // See #478
+        // See #478 and #534
         if (a == b) {
           return 0;
         } else if (a == null) {
@@ -141,8 +143,19 @@ class GitHub extends AppSource {
         } else if (b == null) {
           return 1;
         } else {
-          return getReleaseDateFromRelease(a)!
-              .compareTo(getReleaseDateFromRelease(b)!);
+          var stdFormats = findStandardFormatsForVersion(a['tag_name'], true)
+              .intersection(findStandardFormatsForVersion(b['tag_name'], true));
+          if (stdFormats.isNotEmpty) {
+            var reg = RegExp(stdFormats.first);
+            var matchA = reg.firstMatch(a['tag_name']);
+            var matchB = reg.firstMatch(b['tag_name']);
+            return compareAlphaNumeric(
+                (a['tag_name'] as String).substring(matchA!.start, matchA.end),
+                (b['tag_name'] as String).substring(matchB!.start, matchB.end));
+          } else {
+            return getReleaseDateFromRelease(a)!
+                .compareTo(getReleaseDateFromRelease(b)!);
+          }
         }
       });
       releases = releases.reversed.toList();
