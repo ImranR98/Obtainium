@@ -35,6 +35,7 @@ List<int> updateIntervals = [15, 30, 60, 120, 180, 360, 720, 1440, 4320, 0]
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
+  bool justStarted = true;
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
@@ -92,6 +93,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get checkOnStart {
+    return prefs?.getBool('checkOnStart') ?? false;
+  }
+
+  set checkOnStart(bool checkOnStart) {
+    prefs?.setBool('checkOnStart', checkOnStart);
+    notifyListeners();
+  }
+
   SortColumnSettings get sortColumn {
     return SortColumnSettings.values[
         prefs?.getInt('sortColumn') ?? SortColumnSettings.nameAuthor.index];
@@ -118,6 +128,14 @@ class SettingsProvider with ChangeNotifier {
       prefs?.setBool('firstRun', false);
     }
     return result;
+  }
+
+  bool checkJustStarted() {
+    if (justStarted) {
+      justStarted = false;
+      return true;
+    }
+    return false;
   }
 
   Future<bool> getInstallPermission({bool enforce = false}) async {
