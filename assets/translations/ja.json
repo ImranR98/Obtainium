@@ -231,6 +231,7 @@
     "gitlabPATLabel": "GitLab パーソナルアクセストークン (検索を有効化する)",
     "about": "概要",
     "requiresCredentialsInSettings": "これには追加の認証が必要です (設定にて)",
+    "checkOnStart": "Check Once on Start",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

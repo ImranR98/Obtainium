@@ -231,6 +231,7 @@
     "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
     "about": "About",
     "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
+    "checkOnStart": "Check Once on Start",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

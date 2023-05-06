@@ -228,6 +228,18 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             intervalDropdown,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('checkOnStart'))),
+                                Switch(
+                                    value: settingsProvider.checkOnStart,
+                                    onChanged: (value) {
+                                      settingsProvider.checkOnStart = value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),
