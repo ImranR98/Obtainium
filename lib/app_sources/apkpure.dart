@@ -46,9 +46,18 @@ class APKPure extends AppSource {
       }
       String? dateString =
           html.querySelector('span.info-other span.date')?.text.trim();
-      DateTime? releaseDate = dateString != null
-          ? DateFormat('MMM dd, yyyy').parse(dateString)
-          : null;
+      DateTime? releaseDate;
+      try {
+        releaseDate = dateString != null
+            ? DateFormat('MMM dd, yyyy').parse(dateString)
+            : null;
+        releaseDate = dateString != null && releaseDate == null
+            ? DateFormat('MMMM dd, yyyy').parse(dateString)
+            : null;
+      } catch (err) {
+        // ignore
+      }
+
       List<MapEntry<String, String>> apkUrls = [
         MapEntry('$appId.apk', 'https://d.$host/b/APK/$appId?version=latest')
       ];
