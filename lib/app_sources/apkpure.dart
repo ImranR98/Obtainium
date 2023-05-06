@@ -57,9 +57,9 @@ class APKPure extends AppSource {
       } catch (err) {
         // ignore
       }
-
+      String type = html.querySelector('a.info-tag')?.text.trim() ?? 'APK';
       List<MapEntry<String, String>> apkUrls = [
-        MapEntry('$appId.apk', 'https://d.$host/b/APK/$appId?version=latest')
+        MapEntry('$appId.apk', 'https://d.$host/b/$type/$appId?version=latest')
       ];
       String author = html
               .querySelector('span.info-sdk')

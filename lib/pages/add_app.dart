@@ -159,9 +159,16 @@ class _AddAppPageState extends State<AddAppPage> {
             app.preferredApkIndex =
                 app.apkUrls.map((e) => e.value).toList().indexOf(apkUrl.value);
             // ignore: use_build_context_synchronously
-            var downloadedApk = await appsProvider.downloadApp(
+            var downloadedArtifact = await appsProvider.downloadApp(
                 app, globalNavigatorKey.currentContext);
-            app.id = downloadedApk.appId;
+            DownloadedApk? downloadedFile;
+            DownloadedXApkDir? downloadedDir;
+            if (downloadedArtifact is DownloadedApk) {
+              downloadedFile = downloadedArtifact;
+            } else {
+              downloadedDir = downloadedArtifact as DownloadedXApkDir;
+            }
+            app.id = downloadedFile?.appId ?? downloadedDir!.appId;
           }
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
