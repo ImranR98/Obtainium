@@ -340,8 +340,8 @@ class _AddAppPageState extends State<AddAppPage> {
             ],
           ),
           const SizedBox(
-            height: 25,
-          ),
+            height: 16,
+          )
         ]);
 
     bool shouldShowSearchBar() =>
@@ -383,20 +383,18 @@ class _AddAppPageState extends State<AddAppPage> {
     Widget getAdditionalOptsCol() => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Divider(
-              height: 64,
+            const SizedBox(
+              height: 16,
             ),
             Text(
                 tr('additionalOptsFor',
                     args: [pickedSource?.name ?? tr('source')]),
-                style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(
               height: 16,
             ),
-            if (pickedSourceOverride != null ||
-                pickedSource.runtimeType.toString() ==
-                    HTML().runtimeType.toString())
-              getHTMLSourceOverrideDropdown(),
             GeneratedForm(
                 key: Key(pickedSource.runtimeType.toString()),
                 items: pickedSource!.combinedAppSpecificSettingFormItems,
@@ -470,11 +468,15 @@ class _AddAppPageState extends State<AddAppPage> {
                       const SizedBox(
                         height: 16,
                       ),
-                      if (shouldShowSearchBar())
-                        const SizedBox(
-                          height: 16,
-                        ),
+                      if (pickedSourceOverride != null ||
+                          (pickedSource != null &&
+                              pickedSource.runtimeType.toString() ==
+                                  HTML().runtimeType.toString()))
+                        getHTMLSourceOverrideDropdown(),
                       if (shouldShowSearchBar()) getSearchBarRow(),
+                      const SizedBox(
+                        height: 16,
+                      ),
                       if (pickedSource != null)
                         getAdditionalOptsCol()
                       else
