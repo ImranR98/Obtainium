@@ -228,6 +228,7 @@
     "dontShowAgain": "دوباره این را نشان نده",
     "dontShowTrackOnlyWarnings": "هشدار 'فقط ردیابی' را نشان ندهید",
     "dontShowAPKOriginWarnings": "هشدارهای منبع APK را نشان ندهید",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

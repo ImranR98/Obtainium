@@ -227,7 +227,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('useBlackTheme')),
+                                Flexible(child: Text(tr('useBlackTheme'))),
                                 Switch(
                                     value: settingsProvider.useBlackTheme,
                                     onChanged: (value) {
@@ -254,7 +254,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('showWebInAppView')),
+                                Flexible(child: Text(tr('showWebInAppView'))),
                                 Switch(
                                     value: settingsProvider.showAppWebpage,
                                     onChanged: (value) {
@@ -266,7 +266,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('pinUpdates')),
+                                Flexible(child: Text(tr('pinUpdates'))),
                                 Switch(
                                     value: settingsProvider.pinUpdates,
                                     onChanged: (value) {
@@ -278,7 +278,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('groupByCategory')),
+                                Flexible(
+                                    child: Text(
+                                        tr('moveNonInstalledAppsToBottom'))),
+                                Switch(
+                                    value: settingsProvider.buryNonInstalled,
+                                    onChanged: (value) {
+                                      settingsProvider.buryNonInstalled = value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('groupByCategory'))),
                                 Switch(
                                     value: settingsProvider.groupByCategory,
                                     onChanged: (value) {
@@ -290,7 +304,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('dontShowTrackOnlyWarnings')),
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowTrackOnlyWarnings'))),
                                 Switch(
                                     value:
                                         settingsProvider.hideTrackOnlyWarning,
@@ -304,7 +320,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('dontShowAPKOriginWarnings')),
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowAPKOriginWarnings'))),
                                 Switch(
                                     value:
                                         settingsProvider.hideAPKOriginWarning,

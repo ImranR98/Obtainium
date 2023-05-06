@@ -228,6 +228,7 @@
     "dontShowAgain": "No mostrar de nuevo",
     "dontShowTrackOnlyWarnings": "No mostrar avisos de 'Solo Seguimiento'",
     "dontShowAPKOriginWarnings": "No mostrar avisos de las fuentes de las APks",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"

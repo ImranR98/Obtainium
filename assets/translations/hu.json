@@ -227,6 +227,7 @@
     "dontShowAgain": "Ne mutassa ezt újra",
     "dontShowTrackOnlyWarnings": "Ne jelenítsen meg 'Csak nyomon követés' figyelmeztetést",
     "dontShowAPKOriginWarnings": "Ne jelenítsen meg az APK eredetére vonatkozó figyelmeztetéseket",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

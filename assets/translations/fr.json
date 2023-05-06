@@ -228,6 +228,7 @@
     "dontShowAgain": "Don't show this again",
     "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
     "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"
