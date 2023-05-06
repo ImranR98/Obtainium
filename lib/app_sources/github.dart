@@ -35,7 +35,7 @@ class GitHub extends AppSource {
           hint: tr('githubPATFormat'),
           belowWidgets: [
             const SizedBox(
-              height: 8,
+              height: 4,
             ),
             GestureDetector(
                 onTap: () {
@@ -44,10 +44,13 @@ class GitHub extends AppSource {
                       mode: LaunchMode.externalApplication);
                 },
                 child: Text(
-                  tr('githubPATLinkText'),
+                  tr('about'),
                   style: const TextStyle(
                       decoration: TextDecoration.underline, fontSize: 12),
-                ))
+                )),
+            const SizedBox(
+              height: 4,
+            ),
           ])
     ];
 

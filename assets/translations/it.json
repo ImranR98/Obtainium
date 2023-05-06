@@ -20,7 +20,6 @@
     "githubPATLabel": "GitHub Personal Access Token (diminuisce limite di traffico)",
     "githubPATHint": "PAT deve seguire questo formato: username:token",
     "githubPATFormat": "username:token",
-    "githubPATLinkText": "Informazioni su GitHub PAT",
     "includePrereleases": "Includi prerelease",
     "fallbackToOlderReleases": "Ripiega su release precedenti",
     "filterReleaseTitlesByRegEx": "Filtra release con espressioni regolari",
@@ -229,6 +228,9 @@
     "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
     "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "Rimuovere l'App?",
         "other": "Rimuovere le App?"

@@ -205,6 +205,10 @@ class _SettingsPageState extends State<SettingsPage> {
       height: 16,
     );
 
+    const height32 = SizedBox(
+      height: 32,
+    );
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -218,8 +222,25 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              tr('updates'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            intervalDropdown,
+                            height32,
+                            Text(
+                              tr('sourceSpecific'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            ...sourceSpecificFields,
+                            height32,
+                            Text(
                               tr('appearance'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             themeDropdown,
@@ -332,31 +353,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            const Divider(
-                              height: 16,
-                            ),
-                            height16,
-                            Text(
-                              tr('updates'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
-                            ),
-                            intervalDropdown,
-                            const Divider(
-                              height: 48,
-                            ),
-                            Text(
-                              tr('sourceSpecific'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
-                            ),
-                            ...sourceSpecificFields,
-                            const Divider(
-                              height: 48,
-                            ),
+                            height32,
                             Text(
                               tr('categories'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,

@@ -20,7 +20,6 @@
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
     "githubPATHint": "PATは次の形式でなければなりません: ユーザー名:トークン",
     "githubPATFormat": "ユーザー名:トークン",
-    "githubPATLinkText": "GitHub PATsについて",
     "includePrereleases": "プレリリースを含む",
     "fallbackToOlderReleases": "旧リリースへのフォールバック",
     "filterReleaseTitlesByRegEx": "正規表現でリリースタイトルを絞り込む",
@@ -229,6 +228,9 @@
     "dontShowTrackOnlyWarnings": "「追跡のみ」の警告を表示しない",
     "dontShowAPKOriginWarnings": "APK Originの警告を表示しない",
     "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

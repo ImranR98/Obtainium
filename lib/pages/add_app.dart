@@ -248,9 +248,18 @@ class _AddAppPageState extends State<AddAppPage> {
         searching = true;
       });
       try {
-        var results = await Future.wait(sourceProvider.sources
-            .where((e) => e.canSearch)
-            .map((e) => e.search(searchQuery)));
+        var results = await Future.wait(
+            sourceProvider.sources.where((e) => e.canSearch).map((e) async {
+          try {
+            return await e.search(searchQuery);
+          } catch (err) {
+            if (err is! CredsNeededError) {
+              rethrow;
+            } else {
+              return <String, List<String>>{};
+            }
+          }
+        }));
 
         // .then((results) async {
         // Interleave results instead of simple reduce

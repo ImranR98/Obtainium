@@ -73,7 +73,8 @@ class FDroid extends AppSource {
 
   @override
   Future<Map<String, List<String>>> search(String query) async {
-    Response res = await sourceRequest('https://search.$host/?q=$query');
+    Response res = await sourceRequest(
+        'https://search.$host/?q=${Uri.encodeQueryComponent(query)}');
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       parse(res.body).querySelectorAll('.package-header').forEach((e) {

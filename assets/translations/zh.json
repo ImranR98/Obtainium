@@ -20,7 +20,6 @@
     "githubPATLabel": "GitHub 个人访问令牌（提升 API 请求限额）",
     "githubPATHint": "个人访问令牌必须为“username:token”的格式",
     "githubPATFormat": "username:token",
-    "githubPATLinkText": "关于 GitHub 个人访问令牌",
     "includePrereleases": "包含预发行版",
     "fallbackToOlderReleases": "将旧发行版作为备选",
     "filterReleaseTitlesByRegEx": "使用正则表达式筛选发行标题",
@@ -229,6 +228,9 @@
     "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
     "dontShowAPKOriginWarnings": "Don't Show APK Origin Warnings",
     "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
