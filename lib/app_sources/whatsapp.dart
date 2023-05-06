@@ -14,21 +14,21 @@ class WhatsApp extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl) async {
-    Response res = await get(Uri.parse('https://www.whatsapp.com/android'));
+  Future<String> apkUrlPrefetchModifier(
+      String apkUrl, String standardUrl) async {
+    Response res = await sourceRequest('https://www.whatsapp.com/android');
     if (res.statusCode == 200) {
       var targetLinks = parse(res.body)
           .querySelectorAll('a')
-          .map((e) => e.attributes['href'])
-          .where((e) => e != null)
+          .map((e) => e.attributes['href'] ?? '')
+          .where((e) => e.isNotEmpty)
           .where((e) =>
-              e!.contains('scontent.whatsapp.net') &&
-              e.contains('WhatsApp.apk'))
+              e.contains('content.whatsapp.net') && e.contains('WhatsApp.apk'))
           .toList();
       if (targetLinks.isEmpty) {
         throw NoAPKError();
       }
-      return targetLinks[0]!;
+      return targetLinks[0];
     } else {
       throw getObtainiumHttpError(res);
     }
@@ -39,7 +39,7 @@ class WhatsApp extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('https://www.whatsapp.com/android'));
+    Response res = await sourceRequest('https://www.whatsapp.com/android');
     if (res.statusCode == 200) {
       var targetElements = parse(res.body)
           .querySelectorAll('p')

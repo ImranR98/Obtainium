@@ -78,7 +78,7 @@ class NeutronCode extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse(standardUrl));
+    Response res = await sourceRequest(standardUrl);
     if (res.statusCode == 200) {
       var http = parse(res.body);
       var name = http.querySelector('.pd-title')?.innerHtml;

@@ -20,7 +20,6 @@
     "githubPATLabel": "GitHub személyes hozzáférési token (megnöveli a díjkorlátot)",
     "githubPATHint": "A PAT-nak a következő formátumban kell lennie: felhasználónév:token",
     "githubPATFormat": "felhasználónév:token",
-    "githubPATLinkText": "A GitHub PAT-okról",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "fallbackToOlderReleases": "Visszatérés a régebbi kiadásokhoz",
     "filterReleaseTitlesByRegEx": "A kiadás címeinek szűrése reguláris kifejezéssel",
@@ -227,6 +226,10 @@
     "dontShowAgain": "Ne mutassa ezt újra",
     "dontShowTrackOnlyWarnings": "Ne jelenítsen meg 'Csak nyomon követés' figyelmeztetést",
     "dontShowAPKOriginWarnings": "Ne jelenítsen meg az APK eredetére vonatkozó figyelmeztetéseket",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

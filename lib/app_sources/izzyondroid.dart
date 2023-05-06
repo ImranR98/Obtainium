@@ -31,8 +31,8 @@ class IzzyOnDroid extends AppSource {
   ) async {
     String? appId = tryInferringAppId(standardUrl);
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
-        await get(
-            Uri.parse('https://apt.izzysoft.de/fdroid/api/v1/packages/$appId')),
+        await sourceRequest(
+            'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId'),
         'https://android.izzysoft.de/frepo/$appId',
         standardUrl);
   }

@@ -15,7 +15,9 @@ Currently supported App sources:
 - [Mullvad](https://mullvad.net/en/)
 - [Signal](https://signal.org/)
 - [SourceForge](https://sourceforge.net/)
+- [SourceHut](https://git.sr.ht/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
+- [APKPure](https://apkpure.com/)
 - Third Party F-Droid Repos
 - Jenkins Jobs
 - [Steam](https://store.steampowered.com/mobile)

@@ -154,6 +154,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get buryNonInstalled {
+    return prefs?.getBool('buryNonInstalled') ?? false;
+  }
+
+  set buryNonInstalled(bool show) {
+    prefs?.setBool('buryNonInstalled', show);
+    notifyListeners();
+  }
+
   bool get groupByCategory {
     return prefs?.getBool('groupByCategory') ?? false;
   }

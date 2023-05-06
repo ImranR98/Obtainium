@@ -205,6 +205,10 @@ class _SettingsPageState extends State<SettingsPage> {
       height: 16,
     );
 
+    const height32 = SizedBox(
+      height: 32,
+    );
+
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: CustomScrollView(slivers: <Widget>[
@@ -218,8 +222,25 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              tr('updates'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            intervalDropdown,
+                            height32,
+                            Text(
+                              tr('sourceSpecific'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            ...sourceSpecificFields,
+                            height32,
+                            Text(
                               tr('appearance'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             themeDropdown,
@@ -227,7 +248,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('useBlackTheme')),
+                                Flexible(child: Text(tr('useBlackTheme'))),
                                 Switch(
                                     value: settingsProvider.useBlackTheme,
                                     onChanged: (value) {
@@ -254,7 +275,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('showWebInAppView')),
+                                Flexible(child: Text(tr('showWebInAppView'))),
                                 Switch(
                                     value: settingsProvider.showAppWebpage,
                                     onChanged: (value) {
@@ -266,7 +287,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('pinUpdates')),
+                                Flexible(child: Text(tr('pinUpdates'))),
                                 Switch(
                                     value: settingsProvider.pinUpdates,
                                     onChanged: (value) {
@@ -278,7 +299,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('groupByCategory')),
+                                Flexible(
+                                    child: Text(
+                                        tr('moveNonInstalledAppsToBottom'))),
+                                Switch(
+                                    value: settingsProvider.buryNonInstalled,
+                                    onChanged: (value) {
+                                      settingsProvider.buryNonInstalled = value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('groupByCategory'))),
                                 Switch(
                                     value: settingsProvider.groupByCategory,
                                     onChanged: (value) {
@@ -290,7 +325,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('dontShowTrackOnlyWarnings')),
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowTrackOnlyWarnings'))),
                                 Switch(
                                     value:
                                         settingsProvider.hideTrackOnlyWarning,
@@ -304,7 +341,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('dontShowAPKOriginWarnings')),
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowAPKOriginWarnings'))),
                                 Switch(
                                     value:
                                         settingsProvider.hideAPKOriginWarning,
@@ -314,31 +353,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            const Divider(
-                              height: 16,
-                            ),
-                            height16,
-                            Text(
-                              tr('updates'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
-                            ),
-                            intervalDropdown,
-                            const Divider(
-                              height: 48,
-                            ),
-                            Text(
-                              tr('sourceSpecific'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
-                            ),
-                            ...sourceSpecificFields,
-                            const Divider(
-                              height: 48,
-                            ),
+                            height32,
                             Text(
                               tr('categories'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,

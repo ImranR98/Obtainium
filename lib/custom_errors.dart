@@ -25,6 +25,11 @@ class InvalidURLError extends ObtainiumError {
       : super(tr('invalidURLForSource', args: [sourceName]));
 }
 
+class CredsNeededError extends ObtainiumError {
+  CredsNeededError(String sourceName)
+      : super(tr('requiresCredentialsInSettings', args: [sourceName]));
+}
+
 class NoReleasesError extends ObtainiumError {
   NoReleasesError() : super(tr('noReleaseFound'));
 }

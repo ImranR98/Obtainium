@@ -20,7 +20,6 @@
     "githubPATLabel": "Token de Acceso Personal de GitHub (Reduce tiempos de espera)",
     "githubPATHint": "El TAP debe tener este formato: nombre_de_usuario:token",
     "githubPATFormat": "nombre_de_usuario:token",
-    "githubPATLinkText": "Sobre los TAP de GitHub",
     "includePrereleases": "Incluir versiones preliminares",
     "fallbackToOlderReleases": "Retorceder a versiones previas",
     "filterReleaseTitlesByRegEx": "Filtra Títulos de Versiones mediantes Expresiones Regulares",
@@ -228,6 +227,10 @@
     "dontShowAgain": "No mostrar de nuevo",
     "dontShowTrackOnlyWarnings": "No mostrar avisos de 'Solo Seguimiento'",
     "dontShowAPKOriginWarnings": "No mostrar avisos de las fuentes de las APks",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"

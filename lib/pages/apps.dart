@@ -185,6 +185,18 @@ class AppsPageState extends State<AppsPage> {
       listedApps = [...temp, ...listedApps];
     }
 
+    if (settingsProvider.buryNonInstalled) {
+      var temp = [];
+      listedApps = listedApps.where((sa) {
+        if (sa.app.installedVersion == null) {
+          temp.add(sa);
+          return false;
+        }
+        return true;
+      }).toList();
+      listedApps = [...listedApps, ...temp];
+    }
+
     var tempPinned = [];
     var tempNotPinned = [];
     for (var a in listedApps) {

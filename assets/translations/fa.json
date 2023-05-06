@@ -20,7 +20,6 @@
     "githubPATLabel": "توکن دسترسی شخصی گیت هاب(محدودیت نرخ را افزایش میدهد)",
     "githubPATHint": "PAT باید در این قالب باشد: username:token",
     "githubPATFormat": "username:token",
-    "githubPATLinkText": "درباره گیتهاب PATs",
     "includePrereleases": "شامل نسخه های اولیه",
     "fallbackToOlderReleases": "بازگشت به نسخه های قدیمی تر",
     "filterReleaseTitlesByRegEx": "عناوین انتشار را با بیان منظم فیلتر کنید",
@@ -228,6 +227,10 @@
     "dontShowAgain": "دوباره این را نشان نده",
     "dontShowTrackOnlyWarnings": "هشدار 'فقط ردیابی' را نشان ندهید",
     "dontShowAPKOriginWarnings": "هشدارهای منبع APK را نشان ندهید",
+    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
+    "about": "About",
+    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
