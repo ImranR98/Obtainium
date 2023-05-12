@@ -283,6 +283,9 @@ class _AddAppPageState extends State<AddAppPage> {
           }
           si++;
         }
+        if (res.isEmpty) {
+          throw ObtainiumError(tr('noResults'));
+        }
         List<String>? selectedUrls = res.isEmpty
             ? []
             // ignore: use_build_context_synchronously
@@ -377,13 +380,15 @@ class _AddAppPageState extends State<AddAppPage> {
             const SizedBox(
               width: 16,
             ),
-            ElevatedButton(
-                onPressed: searchQuery.isEmpty || doingSomething
-                    ? null
-                    : () {
-                        runSearch();
-                      },
-                child: Text(tr('search')))
+            searching
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: searchQuery.isEmpty || doingSomething
+                        ? null
+                        : () {
+                            runSearch();
+                          },
+                    child: Text(tr('search')))
           ],
         );
 

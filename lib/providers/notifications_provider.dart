@@ -167,7 +167,8 @@ class NotificationsProvider {
                 progress: progPercent ?? 0,
                 maxProgress: 100,
                 showProgress: progPercent != null,
-                onlyAlertOnce: onlyAlertOnce)));
+                onlyAlertOnce: onlyAlertOnce,
+                indeterminate: progPercent != null && progPercent < 0)));
   }
 
   Future<void> notify(ObtainiumNotification notif,

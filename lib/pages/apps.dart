@@ -542,8 +542,12 @@ class AppsPageState extends State<AppsPage> {
                 ? SizedBox(
                     width: 110,
                     child: Text(tr('percentProgress', args: [
-                      listedApps[index].downloadProgress?.toInt().toString() ??
-                          '100'
+                      listedApps[index].downloadProgress! >= 0
+                          ? listedApps[index]
+                              .downloadProgress!
+                              .toInt()
+                              .toString()
+                          : tr('pleaseWait')
                     ])))
                 : trailingRow,
             onTap: () {
