@@ -121,12 +121,12 @@
     "followSystem": "System folgen",
     "obtainium": "Obtainium",
     "materialYou": "Material You",
-    "useBlackTheme": "Use Pure Black Dark Theme",
+    "useBlackTheme": "Verwende Pure Black Dark Theme",
     "appSortBy": "App sortieren nach",
     "authorName": "Autor/Name",
     "nameAuthor": "Name/Autor",
     "asAdded": "Wie hinzugefügt",
-    "appSortOrder": "App Sortierung nach",
+    "appSortOrder": "App sortieren nach",
     "ascending": "Aufsteigend",
     "descending": "Absteigend",
     "bgUpdateCheckInterval": "Prüfintervall für Hintergrundaktualisierung",
@@ -207,7 +207,7 @@
     "addCategory": "Kategorie hinzufügen",
     "label": "Bezeichnung",
     "language": "Sprache",
-    "copiedToClipboard": "Copied to Clipboard",
+    "copiedToClipboard": "In die Zwischenablage kopiert",
     "storagePermissionDenied": "Speicherberechtigung verweigert",
     "selectedCategorizeWarning": "Dadurch werden alle bestehenden Kategorieeinstellungen für die ausgewählten Apps ersetzt.",
     "filterAPKsByRegEx": "APKs nach regulärem Ausdruck filtern",
@@ -218,7 +218,7 @@
     "releaseDateAsVersionExplanation": "Diese Option sollte nur für Apps verwendet werden, bei denen die Versionserkennung nicht korrekt funktioniert, aber ein Veröffentlichungsdatum verfügbar ist.",
     "changes": "Änderungen",
     "releaseDate": "Veröffentlichungsdatum",
-    "importFromURLsInFile": "Importieren von URLs aus Datei ( z.B. OPML)",
+    "importFromURLsInFile": "Importieren von URLs aus Datei (z. B. OPML)",
     "versionDetection": "Versionserkennung",
     "standardVersionDetection": "Standardversionserkennung",
     "groupByCategory": "Nach Kategorie gruppieren",
@@ -227,11 +227,11 @@
     "dontShowAgain": "Nicht noch einmal zeigen",
     "dontShowTrackOnlyWarnings": "Warnung für 'Nur Nachverfolgen' nicht anzeigen",
     "dontShowAPKOriginWarnings": "Warnung für APK-Herkunft nicht anzeigen",
-    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
-    "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
-    "about": "About",
-    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
-    "checkOnStart": "Check Once on Start",
+    "moveNonInstalledAppsToBottom": "Nicht installierte Apps ans Ende der Apps Ansicht verschieben",
+    "gitlabPATLabel": "GitLab Personal Access Token (Aktiviert Suche)",
+    "about": "Über",
+    "requiresCredentialsInSettings": "Benötigt zusätzliche Anmeldedaten (in den Einstellungen)",
+    "checkOnStart": "Überprüfe einmalig beim Start",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
@@ -258,7 +258,7 @@
     },
     "minute": {
         "one": "{} Minute",
-        "other": "{} Minutes"
+        "other": "{} Minuten"
     },
     "hour": {
         "one": "{} Stunde",
