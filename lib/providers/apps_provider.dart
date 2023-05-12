@@ -122,10 +122,13 @@ class AppsProvider with ChangeNotifier {
       // Load Apps into memory (in background, this is done later instead of in the constructor)
       await loadApps();
       // Delete any partial APKs
+      var cutoff = DateTime.now().subtract(const Duration(days: 7));
       (await getExternalCacheDirectories())
           ?.first
           .listSync()
-          .where((element) => element.path.endsWith('.apk.part'))
+          .where((element) =>
+              element.path.endsWith('.part') ||
+              element.statSync().modified.isBefore(cutoff))
           .forEach((partialApk) {
         partialApk.delete();
       });
@@ -786,11 +789,18 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> removeApps(List<String> appIds) async {
+    var apkFiles = (await getExternalCacheDirectories())?.first.listSync();
     for (var appId in appIds) {
       File file = File('${(await getAppsDir()).path}/$appId.json');
       if (file.existsSync()) {
         file.deleteSync();
       }
+      apkFiles
+          ?.where(
+              (element) => element.path.split('/').last.startsWith('$appId-'))
+          .forEach((element) {
+        element.delete();
+      });
       if (apps.containsKey(appId)) {
         apps.remove(appId);
       }
