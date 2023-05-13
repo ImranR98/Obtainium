@@ -145,7 +145,8 @@ class AppsProvider with ChangeNotifier {
     }
     var client = Client();
     StreamedResponse response = await client.send(req);
-    var ext = response.headers['content-disposition']!.split('.').last;
+    String ext =
+        response.headers['content-disposition']?.split('.').last ?? 'apk';
     if (ext.endsWith('"') || ext.endsWith("other")) {
       ext = ext.substring(0, ext.length - 1);
     }
