@@ -83,12 +83,12 @@ class GitLab extends AppSource {
     }
     var json = jsonDecode(res.body) as List<dynamic>;
     Map<String, List<String>> results = {};
-    json.forEach((element) {
+    for (var element in json) {
       results['https://$host/${element['path_with_namespace']}'] = [
         element['name_with_namespace'],
         element['description'] ?? tr('noDescription')
       ];
-    });
+    }
     return results;
   }
 

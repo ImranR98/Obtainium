@@ -71,6 +71,7 @@ class AppsPageState extends State<AppsPage> {
       });
       return appsProvider.checkUpdates().catchError((e) {
         showError(e, context);
+        return <App>[];
       }).whenComplete(() {
         setState(() {
           refreshingSince = null;
@@ -379,6 +380,7 @@ class AppsPageState extends State<AppsPage> {
                       [listedApps[appIndex].app.id],
                       globalNavigatorKey.currentContext).catchError((e) {
                     showError(e, context);
+                    return <String>[];
                   });
                 },
           icon: Icon(
@@ -681,6 +683,7 @@ class AppsPageState extends State<AppsPage> {
                           settingsProvider: settingsProvider)
                       .catchError((e) {
                     showError(e, context);
+                    return <String>[];
                   });
                 }
               });

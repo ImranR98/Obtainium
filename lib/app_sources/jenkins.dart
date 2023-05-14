@@ -10,7 +10,6 @@ class Jenkins extends AppSource {
     overrideVersionDetectionFormDefault('releaseDateAsVersion', true);
   }
 
-  @override
   String trimJobUrl(String url) {
     RegExp standardUrlRegEx = RegExp('.*/job/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
