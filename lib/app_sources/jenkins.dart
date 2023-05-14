@@ -6,11 +6,9 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Jenkins extends AppSource {
   Jenkins() {
-    overrideEligible = true;
     overrideVersionDetectionFormDefault('releaseDateAsVersion', true);
   }
 
-  @override
   String trimJobUrl(String url) {
     RegExp standardUrlRegEx = RegExp('.*/job/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);

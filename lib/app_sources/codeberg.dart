@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -9,7 +7,6 @@ import 'package:obtainium/providers/source_provider.dart';
 class Codeberg extends AppSource {
   Codeberg() {
     host = 'codeberg.org';
-    overrideEligible = true;
 
     additionalSourceSpecificSettingFormItems = [];
 
@@ -58,10 +55,10 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return gh.getLatestAPKDetailsCommon(
-        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100',
-        standardUrl,
-        additionalSettings);
+    return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
+        (bool useTagUrl) async {
+      return 'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+    }, null);
   }
 
   AppNames getAppNames(String standardUrl) {

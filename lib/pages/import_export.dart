@@ -323,8 +323,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                         ],
                       ),
                       if (importInProgress)
-                        Column(
-                          children: const [
+                        const Column(
+                          children: [
                             SizedBox(
                               height: 14,
                             ),

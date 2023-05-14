@@ -85,10 +85,6 @@ bool _isNumeric(String s) {
 }
 
 class HTML extends AppSource {
-  HTML() {
-    overrideEligible = true;
-  }
-
   @override
   // TODO: implement requestHeaders choice, hardcoded for now
   Map<String, String>? get requestHeaders => {

@@ -32,6 +32,7 @@ class _AppPageState extends State<AppPage> {
     getUpdate(String id) {
       appsProvider.checkUpdate(id).catchError((e) {
         showError(e, context);
+        return null;
       });
     }
 

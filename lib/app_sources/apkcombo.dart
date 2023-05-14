@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -85,7 +84,6 @@ class APKCombo extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String appId = tryInferringAppId(standardUrl)!;
-    String host = Uri.parse(standardUrl).host;
     var preres = await sourceRequest(standardUrl);
     if (preres.statusCode != 200) {
       throw getObtainiumHttpError(preres);

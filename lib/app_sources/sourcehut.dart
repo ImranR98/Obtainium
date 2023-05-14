@@ -1,6 +1,5 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -10,7 +9,6 @@ import 'package:easy_localization/easy_localization.dart';
 class SourceHut extends AppSource {
   SourceHut() {
     host = 'git.sr.ht';
-    overrideEligible = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [
@@ -58,11 +56,19 @@ class SourceHut extends AppSource {
           throw NoVersionError();
         }
         String? releaseDateString = entry.querySelector('pubDate')?.innerHtml;
-        var link = entry.querySelector('link');
         String releasePage = '$standardUrl/refs/$version';
-        DateTime? releaseDate = releaseDateString != null
-            ? DateFormat('EEE, dd MMM yyyy HH:mm:ss Z').parse(releaseDateString)
-            : null;
+        DateTime? releaseDate;
+        try {
+          releaseDate = releaseDateString != null
+              ? DateFormat('E, dd MMM yyyy HH:mm:ss Z').parse(releaseDateString)
+              : null;
+          releaseDate = releaseDateString != null
+              ? DateFormat('EEE, dd MMM yyyy HH:mm:ss Z')
+                  .parse(releaseDateString)
+              : null;
+        } catch (e) {
+          // ignore
+        }
         var res2 = await sourceRequest(releasePage);
         List<MapEntry<String, String>> apkUrls = [];
         if (res2.statusCode == 200) {
