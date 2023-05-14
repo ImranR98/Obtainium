@@ -443,37 +443,35 @@ class AppsPageState extends State<AppsPage> {
                   width: 10,
                 )
               : const SizedBox.shrink(),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                    constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width / 4),
-                    child: Text(
-                      getVersionText(index),
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                    )),
-              ]),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+          GestureDetector(
+              onTap: showChangesFn,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  GestureDetector(
-                      onTap: showChangesFn,
-                      child: Text(
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width / 4),
+                        child: Text(getVersionText(index),
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end)),
+                  ]),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
                         getChangesButtonString(index, showChangesFn != null),
                         style: TextStyle(
                             fontStyle: FontStyle.italic,
                             decoration: showChangesFn != null
                                 ? TextDecoration.underline
                                 : TextDecoration.none),
-                      ))
+                      )
+                    ],
+                  ),
                 ],
-              ),
-            ],
-          )
+              ))
         ],
       );
 
@@ -542,15 +540,20 @@ class AppsPageState extends State<AppsPage> {
                         : FontWeight.normal)),
             trailing: listedApps[index].downloadProgress != null
                 ? SizedBox(
-                    width: 110,
-                    child: Text(listedApps[index].downloadProgress! >= 0
-                        ? tr('percentProgress', args: [
-                            listedApps[index]
-                                .downloadProgress!
-                                .toInt()
-                                .toString()
-                          ])
-                        : tr('pleaseWait')))
+                    width: 90,
+                    child: Text(
+                      listedApps[index].downloadProgress! >= 0
+                          ? tr('percentProgress', args: [
+                              listedApps[index]
+                                  .downloadProgress!
+                                  .toInt()
+                                  .toString()
+                            ])
+                          : tr('pleaseWait'),
+                      textAlign: (listedApps[index].downloadProgress! >= 0)
+                          ? TextAlign.start
+                          : TextAlign.end,
+                    ))
                 : trailingRow,
             onTap: () {
               if (selectedAppIds.isNotEmpty) {
