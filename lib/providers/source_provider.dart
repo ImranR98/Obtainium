@@ -317,7 +317,6 @@ abstract class AppSource {
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
-  bool overrideEligible = false;
 
   AppSource() {
     name = runtimeType.toString();

@@ -14,7 +14,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 class GitLab extends AppSource {
   GitLab() {
     host = 'gitlab.com';
-    overrideEligible = true;
     canSearch = true;
 
     additionalSourceSpecificSettingFormItems = [

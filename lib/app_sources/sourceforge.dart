@@ -6,7 +6,6 @@ import 'package:obtainium/providers/source_provider.dart';
 class SourceForge extends AppSource {
   SourceForge() {
     host = 'sourceforge.net';
-    overrideEligible = true;
   }
 
   @override

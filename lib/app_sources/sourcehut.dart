@@ -9,7 +9,6 @@ import 'package:easy_localization/easy_localization.dart';
 class SourceHut extends AppSource {
   SourceHut() {
     host = 'git.sr.ht';
-    overrideEligible = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [

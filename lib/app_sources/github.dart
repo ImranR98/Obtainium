@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
-    overrideEligible = true;
 
     additionalSourceSpecificSettingFormItems = [
       GeneratedFormTextField('github-creds',

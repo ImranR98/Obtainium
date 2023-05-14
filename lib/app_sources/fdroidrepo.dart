@@ -7,7 +7,6 @@ import 'package:obtainium/providers/source_provider.dart';
 class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
-    overrideEligible = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [
