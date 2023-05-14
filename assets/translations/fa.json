@@ -180,6 +180,7 @@
     "yesMarkUpdated": "بله، علامت گذاری به عنوان به روز شده",
     "fdroid": "F-Droid Official",
     "appIdOrName": "شناسه یا نام برنامه",
+    "appId": "App ID",
     "appWithIdOrNameNotFound": "هیچ برنامه ای با آن شناسه یا نام یافت نشد",
     "reposHaveMultipleApps": "مخازن ممکن است شامل چندین برنامه باشد",
     "fdroidThirdPartyRepo": "مخازن شخص ثالث F-Droid",

@@ -129,6 +129,11 @@ class AppsPageState extends State<AppsPage> {
           }
         }
       }
+      if (filter.idFilter.isNotEmpty) {
+        if (!app.app.id.contains(filter.idFilter)) {
+          return false;
+        }
+      }
       if (filter.categoryFilter.isNotEmpty &&
           filter.categoryFilter
               .intersection(app.app.categories.toSet())
@@ -942,6 +947,12 @@ class AppsPageState extends State<AppsPage> {
                       defaultValue: vals['author'])
                 ],
                 [
+                  GeneratedFormTextField('appId',
+                      label: tr('appId'),
+                      required: false,
+                      defaultValue: vals['appId'])
+                ],
+                [
                   GeneratedFormSwitch('upToDateApps',
                       label: tr('upToDateApps'),
                       defaultValue: vals['upToDateApps'])
@@ -1072,6 +1083,7 @@ class AppsPageState extends State<AppsPage> {
 class AppsFilter {
   late String nameFilter;
   late String authorFilter;
+  late String idFilter;
   late bool includeUptodate;
   late bool includeNonInstalled;
   late Set<String> categoryFilter;
@@ -1080,6 +1092,7 @@ class AppsFilter {
   AppsFilter(
       {this.nameFilter = '',
       this.authorFilter = '',
+      this.idFilter = '',
       this.includeUptodate = true,
       this.includeNonInstalled = true,
       this.categoryFilter = const {},
@@ -1089,6 +1102,7 @@ class AppsFilter {
     return {
       'appName': nameFilter,
       'author': authorFilter,
+      'appId': idFilter,
       'upToDateApps': includeUptodate,
       'nonInstalledApps': includeNonInstalled,
       'sourceFilter': sourceFilter
@@ -1098,6 +1112,7 @@ class AppsFilter {
   setFormValuesFromMap(Map<String, dynamic> values) {
     nameFilter = values['appName']!;
     authorFilter = values['author']!;
+    idFilter = values['appId']!;
     includeUptodate = values['upToDateApps'];
     includeNonInstalled = values['nonInstalledApps'];
     sourceFilter = values['sourceFilter'];
@@ -1106,6 +1121,7 @@ class AppsFilter {
   bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
       authorFilter.trim() == other.authorFilter.trim() &&
       nameFilter.trim() == other.nameFilter.trim() &&
+      idFilter.trim() == other.idFilter.trim() &&
       includeUptodate == other.includeUptodate &&
       includeNonInstalled == other.includeNonInstalled &&
       settingsProvider.setEqual(categoryFilter, other.categoryFilter) &&
