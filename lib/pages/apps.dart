@@ -61,8 +61,6 @@ class AppsPageState extends State<AppsPage> {
     var settingsProvider = context.watch<SettingsProvider>();
     var sourceProvider = SourceProvider();
     var listedApps = appsProvider.getAppValues().toList();
-    var currentFilterIsUpdatesOnly =
-        filter.isIdenticalTo(updatesOnlyFilter, settingsProvider);
 
     refresh() {
       HapticFeedback.lightImpact();
@@ -887,44 +885,41 @@ class AppsPageState extends State<AppsPage> {
           });
     }
 
-    getMainBottomButtonsRow() {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          IconButton(
+    getMainBottomButtons() {
+      return [
+        IconButton(
             visualDensity: VisualDensity.compact,
-            onPressed: selectedAppIds.isEmpty
-                ? null
-                : () {
-                    appsProvider.removeAppsWithModal(
-                        context, selectedApps.toList());
-                  },
-            tooltip: tr('removeSelectedApps'),
-            icon: const Icon(Icons.delete_outline_outlined),
-          ),
-          IconButton(
-              visualDensity: VisualDensity.compact,
-              onPressed: getMassObtainFunction(),
-              tooltip: selectedAppIds.isEmpty
-                  ? tr('installUpdateApps')
-                  : tr('installUpdateSelectedApps'),
-              icon: const Icon(
-                Icons.file_download_outlined,
-              )),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: selectedAppIds.isEmpty ? null : launchCategorizeDialog(),
-            tooltip: tr('categorize'),
-            icon: const Icon(Icons.category_outlined),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: selectedAppIds.isEmpty ? null : showMoreOptionsDialog,
-            tooltip: tr('more'),
-            icon: const Icon(Icons.more_horiz),
-          ),
-        ],
-      );
+            onPressed: getMassObtainFunction(),
+            tooltip: selectedAppIds.isEmpty
+                ? tr('installUpdateApps')
+                : tr('installUpdateSelectedApps'),
+            icon: const Icon(
+              Icons.file_download_outlined,
+            )),
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: selectedAppIds.isEmpty
+              ? null
+              : () {
+                  appsProvider.removeAppsWithModal(
+                      context, selectedApps.toList());
+                },
+          tooltip: tr('removeSelectedApps'),
+          icon: const Icon(Icons.delete_outline_outlined),
+        ),
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: selectedAppIds.isEmpty ? null : launchCategorizeDialog(),
+          tooltip: tr('categorize'),
+          icon: const Icon(Icons.category_outlined),
+        ),
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: selectedAppIds.isEmpty ? null : showMoreOptionsDialog,
+          tooltip: tr('more'),
+          icon: const Icon(Icons.more_horiz),
+        ),
+      ];
     }
 
     showFilterDialog() async {
@@ -997,50 +992,33 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getFilterButtonsRow() {
+      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
       return Row(
         children: [
           getSelectAllButton(),
+          IconButton(
+              color: Theme.of(context).colorScheme.primary,
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              tooltip: isFilterOff ? tr('filter') : tr('filterActive'),
+              onPressed: isFilterOff
+                  ? showFilterDialog
+                  : () {
+                      setState(() {
+                        filter = AppsFilter();
+                      });
+                    },
+              icon: Icon(isFilterOff
+                  ? Icons.filter_list_rounded
+                  : Icons.filter_list_off_rounded)),
+          const SizedBox(
+            width: 10,
+          ),
           const VerticalDivider(),
           Expanded(
-              child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: getMainBottomButtonsRow())),
-          const VerticalDivider(),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              setState(() {
-                if (currentFilterIsUpdatesOnly) {
-                  filter = AppsFilter();
-                } else {
-                  filter = updatesOnlyFilter;
-                }
-              });
-            },
-            tooltip: currentFilterIsUpdatesOnly
-                ? tr('removeOutdatedFilter')
-                : tr('showOutdatedOnly'),
-            icon: Icon(
-              currentFilterIsUpdatesOnly
-                  ? Icons.update_disabled_rounded
-                  : Icons.update_rounded,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          TextButton.icon(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              label: Text(
-                filter.isIdenticalTo(neutralFilter, settingsProvider)
-                    ? tr('filter')
-                    : tr('filterActive'),
-                style: TextStyle(
-                    fontWeight:
-                        filter.isIdenticalTo(neutralFilter, settingsProvider)
-                            ? FontWeight.normal
-                            : FontWeight.bold),
-              ),
-              onPressed: showFilterDialog,
-              icon: const Icon(Icons.filter_list_rounded))
+              child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: getMainBottomButtons(),
+          )),
         ],
       );
     }
