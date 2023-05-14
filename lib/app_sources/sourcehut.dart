@@ -58,9 +58,18 @@ class SourceHut extends AppSource {
         }
         String? releaseDateString = entry.querySelector('pubDate')?.innerHtml;
         String releasePage = '$standardUrl/refs/$version';
-        DateTime? releaseDate = releaseDateString != null
-            ? DateFormat('EEE, dd MMM yyyy HH:mm:ss Z').parse(releaseDateString)
-            : null;
+        DateTime? releaseDate;
+        try {
+          releaseDate = releaseDateString != null
+              ? DateFormat('E, dd MMM yyyy HH:mm:ss Z').parse(releaseDateString)
+              : null;
+          releaseDate = releaseDateString != null
+              ? DateFormat('EEE, dd MMM yyyy HH:mm:ss Z')
+                  .parse(releaseDateString)
+              : null;
+        } catch (e) {
+          // ignore
+        }
         var res2 = await sourceRequest(releasePage);
         List<MapEntry<String, String>> apkUrls = [];
         if (res2.statusCode == 200) {
