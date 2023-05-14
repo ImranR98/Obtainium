@@ -180,6 +180,7 @@
     "yesMarkUpdated": "Ja, als aktualisiert markieren",
     "fdroid": "F-Droid Official",
     "appIdOrName": "App ID oder Name",
+    "appId": "App ID",
     "appWithIdOrNameNotFound": "Es wurde keine App mit dieser ID oder diesem Namen gefunden",
     "reposHaveMultipleApps": "Repos können mehrere Apps enthalten",
     "fdroidThirdPartyRepo": "F-Droid Third-Party Repo",

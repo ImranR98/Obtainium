@@ -180,6 +180,7 @@
     "yesMarkUpdated": "是，标记为已更新",
     "fdroid": "F-Droid 官方存储库",
     "appIdOrName": "应用 ID 或名称",
+    "appId": "App ID",
     "appWithIdOrNameNotFound": "未找到符合此 ID 或名称的应用",
     "reposHaveMultipleApps": "存储库中可能包含多个应用",
     "fdroidThirdPartyRepo": "F-Droid 第三方存储库",
