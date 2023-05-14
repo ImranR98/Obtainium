@@ -56,10 +56,10 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return gh.getLatestAPKDetailsCommon(
-        'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100',
-        standardUrl,
-        additionalSettings);
+    return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
+        (bool useTagUrl) async {
+      return 'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+    }, null);
   }
 
   AppNames getAppNames(String standardUrl) {

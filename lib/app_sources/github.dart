@@ -143,15 +143,17 @@ class GitHub extends AppSource {
         } else if (b == null) {
           return 1;
         } else {
-          var stdFormats = findStandardFormatsForVersion(a['tag_name'], true)
-              .intersection(findStandardFormatsForVersion(b['tag_name'], true));
+          var nameA = a['tag_name'] ?? a['name'];
+          var nameB = b['tag_name'] ?? b['name'];
+          var stdFormats = findStandardFormatsForVersion(nameA, true)
+              .intersection(findStandardFormatsForVersion(nameB, true));
           if (stdFormats.isNotEmpty) {
             var reg = RegExp(stdFormats.first);
-            var matchA = reg.firstMatch(a['tag_name']);
-            var matchB = reg.firstMatch(b['tag_name']);
+            var matchA = reg.firstMatch(nameA);
+            var matchB = reg.firstMatch(nameB);
             return compareAlphaNumeric(
-                (a['tag_name'] as String).substring(matchA!.start, matchA.end),
-                (b['tag_name'] as String).substring(matchB!.start, matchB.end));
+                (nameA as String).substring(matchA!.start, matchA.end),
+                (nameB as String).substring(matchB!.start, matchB.end));
           } else {
             return getReleaseDateFromRelease(a)!
                 .compareTo(getReleaseDateFromRelease(b)!);
@@ -191,7 +193,7 @@ class GitHub extends AppSource {
       if (targetRelease == null) {
         throw NoReleasesError();
       }
-      String? version = targetRelease['tag_name'];
+      String? version = targetRelease['tag_name'] ?? targetRelease['name'];
       DateTime? releaseDate = getReleaseDateFromRelease(targetRelease);
       if (version == null) {
         throw NoVersionError();
@@ -211,15 +213,35 @@ class GitHub extends AppSource {
     }
   }
 
+  getLatestAPKDetailsCommon2(
+      String standardUrl,
+      Map<String, dynamic> additionalSettings,
+      Future<String> Function(bool) reqUrlGenerator,
+      dynamic Function(Response)? onHttpErrorCode) async {
+    try {
+      return await getLatestAPKDetailsCommon(
+          await reqUrlGenerator(false), standardUrl, additionalSettings,
+          onHttpErrorCode: onHttpErrorCode);
+    } catch (err) {
+      if (err is NoReleasesError && additionalSettings['trackOnly'] == true) {
+        return await getLatestAPKDetailsCommon(
+            await reqUrlGenerator(true), standardUrl, additionalSettings,
+            onHttpErrorCode: onHttpErrorCode);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return getLatestAPKDetailsCommon(
-        'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/releases?per_page=100',
-        standardUrl,
-        additionalSettings, onHttpErrorCode: (Response res) {
+    return await getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
+        (bool useTagUrl) async {
+      return 'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+    }, (Response res) {
       rateLimitErrorCheck(res);
     });
   }
