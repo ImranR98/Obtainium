@@ -130,7 +130,7 @@ class AppsProvider with ChangeNotifier {
               element.path.endsWith('.part') ||
               element.statSync().modified.isBefore(cutoff))
           .forEach((partialApk) {
-        partialApk.delete();
+        partialApk.delete(recursive: true);
       });
     }();
   }
@@ -154,7 +154,7 @@ class AppsProvider with ChangeNotifier {
     if (!(downloadedFile.existsSync() && useExisting)) {
       File tempDownloadedFile = File('${downloadedFile.path}.part');
       if (tempDownloadedFile.existsSync()) {
-        tempDownloadedFile.deleteSync();
+        tempDownloadedFile.deleteSync(recursive: true);
       }
       var length = response.contentLength;
       var received = 0;
@@ -174,7 +174,7 @@ class AppsProvider with ChangeNotifier {
         onProgress(progress);
       }
       if (response.statusCode != 200) {
-        tempDownloadedFile.deleteSync();
+        tempDownloadedFile.deleteSync(recursive: true);
         throw response.reasonPhrase ?? tr('unexpectedError');
       }
       tempDownloadedFile.renameSync(downloadedFile.path);
@@ -266,7 +266,7 @@ class AppsProvider with ChangeNotifier {
         if (fn.startsWith('${app.id}-') &&
             FileSystemEntity.isFileSync(file.path) &&
             file.path != downloadedFile.path) {
-          file.delete();
+          file.delete(recursive: true);
         }
       }
       if (isAPK) {
@@ -349,7 +349,7 @@ class AppsProvider with ChangeNotifier {
                 silent: silent);
       }
       if (somethingInstalled) {
-        dir.file.delete();
+        dir.file.delete(recursive: true);
       }
     } finally {
       dir.extracted.delete(recursive: true);
@@ -379,7 +379,7 @@ class AppsProvider with ChangeNotifier {
       installed = true;
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
-      file.file.delete();
+      file.file.delete(recursive: true);
     }
     await saveApps([apps[file.appId]!.app]);
     return installed;
@@ -703,41 +703,30 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = true;
     notifyListeners();
-    List<App> newApps = (await getAppsDir())
-        .listSync()
-        .where((item) => item.path.toLowerCase().endsWith('.json'))
-        .map((e) {
-          try {
-            return App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
-          } catch (err) {
-            if (err is FormatException) {
-              logs.add('Corrupt JSON when loading App (will be ignored): $e');
-              e.renameSync('${e.path}.corrupt');
-              return App(
-                  '', '', '', '', '', '', [], 0, {}, DateTime.now(), false);
-            } else {
-              rethrow;
-            }
-          }
-        })
-        .where((element) => element.id.isNotEmpty)
-        .toList();
-    var idsToDelete = apps.values
-        .map((e) => e.app.id)
-        .toSet()
-        .difference(newApps.map((e) => e.id).toSet());
-    for (var id in idsToDelete) {
-      apps.remove(id);
-    }
     var sp = SourceProvider();
     List<List<String>> errors = [];
-    for (int i = 0; i < newApps.length; i++) {
-      var info = await getInstalledInfo(newApps[i].id);
+    List<FileSystemEntity> newApps = (await getAppsDir())
+        .listSync()
+        .where((item) => item.path.toLowerCase().endsWith('.json'))
+        .toList();
+    for (var e in newApps) {
       try {
-        sp.getSource(newApps[i].url, overrideSource: newApps[i].overrideSource);
-        apps[newApps[i].id] = AppInMemory(newApps[i], null, info);
-      } catch (e) {
-        errors.add([newApps[i].id, newApps[i].finalName, e.toString()]);
+        var app = App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
+        try {
+          var info = await getInstalledInfo(app.id);
+          sp.getSource(app.url, overrideSource: app.overrideSource);
+          apps[app.id] = AppInMemory(app, null, info);
+          notifyListeners();
+        } catch (e) {
+          errors.add([app.id, app.finalName, e.toString()]);
+        }
+      } catch (err) {
+        if (err is FormatException) {
+          logs.add('Corrupt JSON when loading App (will be ignored): $e');
+          e.renameSync('${e.path}.corrupt');
+        } else {
+          rethrow;
+        }
       }
     }
     if (errors.isNotEmpty) {
@@ -798,13 +787,13 @@ class AppsProvider with ChangeNotifier {
     for (var appId in appIds) {
       File file = File('${(await getAppsDir()).path}/$appId.json');
       if (file.existsSync()) {
-        file.deleteSync();
+        file.deleteSync(recursive: true);
       }
       apkFiles
           ?.where(
               (element) => element.path.split('/').last.startsWith('$appId-'))
           .forEach((element) {
-        element.delete();
+        element.delete(recursive: true);
       });
       if (apps.containsKey(appId)) {
         apps.remove(appId);
