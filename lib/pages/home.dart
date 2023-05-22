@@ -27,6 +27,7 @@ class NavigationPageItem {
 class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
   int prevAppCount = -1;
+  bool prevIsLoading = true;
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(tr('appsString'), Icons.apps,
@@ -64,13 +65,15 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    if (prevAppCount >= 0 &&
+    if (!prevIsLoading &&
+        prevAppCount >= 0 &&
         appsProvider.apps.length > prevAppCount &&
         selectedIndexHistory.isNotEmpty &&
         selectedIndexHistory.last == 1) {
       switchToPage(0);
     }
     prevAppCount = appsProvider.apps.length;
+    prevIsLoading = appsProvider.loadingApps;
 
     return WillPopScope(
         child: Scaffold(

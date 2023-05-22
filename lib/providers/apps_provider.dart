@@ -116,7 +116,7 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) await loadApps();
+      if (isForeground) await refreshInstallStatuses();
     });
     () async {
       // Load Apps into memory (in background, this is done later instead of in the constructor)
@@ -747,6 +747,10 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = false;
     notifyListeners();
+    refreshInstallStatuses();
+  }
+
+  Future<void> refreshInstallStatuses() async {
     if (await doesInstalledAppsPluginWork()) {
       List<App> modifiedApps = [];
       for (var app in apps.values) {
