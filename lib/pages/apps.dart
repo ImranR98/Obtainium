@@ -322,28 +322,28 @@ class AppsPageState extends State<AppsPage> {
 
     getLoadingWidgets() {
       return [
-        if (appsProvider.loadingApps || listedApps.isEmpty)
+        if (listedApps.isEmpty)
           SliverFillRemaining(
               child: Center(
-                  child: appsProvider.loadingApps
-                      ? const CircularProgressIndicator()
-                      : Text(
-                          appsProvider.apps.isEmpty
-                              ? tr('noApps')
-                              : tr('noAppsForFilter'),
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ))),
-        if (refreshingSince != null)
+                  child: Text(
+            appsProvider.apps.isEmpty ? tr('noApps') : tr('noAppsForFilter'),
+            style: Theme.of(context).textTheme.headlineMedium,
+            textAlign: TextAlign.center,
+          ))),
+        if (refreshingSince != null || appsProvider.loadingApps)
           SliverToBoxAdapter(
             child: LinearProgressIndicator(
-              value: appsProvider
-                      .getAppValues()
-                      .where((element) => !(element.app.lastUpdateCheck
-                              ?.isBefore(refreshingSince!) ??
-                          true))
-                      .length /
-                  (appsProvider.apps.isNotEmpty ? appsProvider.apps.length : 1),
+              value: appsProvider.loadingApps
+                  ? null
+                  : appsProvider
+                          .getAppValues()
+                          .where((element) => !(element.app.lastUpdateCheck
+                                  ?.isBefore(refreshingSince!) ??
+                              true))
+                          .length /
+                      (appsProvider.apps.isNotEmpty
+                          ? appsProvider.apps.length
+                          : 1),
             ),
           )
       ];

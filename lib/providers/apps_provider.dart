@@ -108,6 +108,7 @@ class AppsProvider with ChangeNotifier {
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
+  late Directory APKDir;
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
@@ -116,21 +117,29 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) await loadApps();
+      if (isForeground) await refreshInstallStatuses();
     });
     () async {
+      var cacheDirs = await getExternalCacheDirectories();
+      if (cacheDirs?.isNotEmpty ?? false) {
+        APKDir = cacheDirs!.first;
+      } else {
+        APKDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/apks');
+        if (!APKDir.existsSync()) {
+          APKDir.createSync();
+        }
+      }
       // Load Apps into memory (in background, this is done later instead of in the constructor)
       await loadApps();
       // Delete any partial APKs
       var cutoff = DateTime.now().subtract(const Duration(days: 7));
-      (await getExternalCacheDirectories())
-          ?.first
-          .listSync()
+      APKDir.listSync()
           .where((element) =>
               element.path.endsWith('.part') ||
               element.statSync().modified.isBefore(cutoff))
           .forEach((partialApk) {
-        partialApk.delete();
+        partialApk.delete(recursive: true);
       });
     }();
   }
@@ -138,7 +147,7 @@ class AppsProvider with ChangeNotifier {
   Future<File> downloadFile(
       String url, String fileNameNoExt, Function? onProgress,
       {bool useExisting = true, Map<String, String>? headers}) async {
-    var destDir = (await getExternalCacheDirectories())!.first.path;
+    var destDir = APKDir.path;
     var req = Request('GET', Uri.parse(url));
     if (headers != null) {
       req.headers.addAll(headers);
@@ -154,7 +163,7 @@ class AppsProvider with ChangeNotifier {
     if (!(downloadedFile.existsSync() && useExisting)) {
       File tempDownloadedFile = File('${downloadedFile.path}.part');
       if (tempDownloadedFile.existsSync()) {
-        tempDownloadedFile.deleteSync();
+        tempDownloadedFile.deleteSync(recursive: true);
       }
       var length = response.contentLength;
       var received = 0;
@@ -174,7 +183,7 @@ class AppsProvider with ChangeNotifier {
         onProgress(progress);
       }
       if (response.statusCode != 200) {
-        tempDownloadedFile.deleteSync();
+        tempDownloadedFile.deleteSync(recursive: true);
         throw response.reasonPhrase ?? tr('unexpectedError');
       }
       tempDownloadedFile.renameSync(downloadedFile.path);
@@ -266,7 +275,7 @@ class AppsProvider with ChangeNotifier {
         if (fn.startsWith('${app.id}-') &&
             FileSystemEntity.isFileSync(file.path) &&
             file.path != downloadedFile.path) {
-          file.delete();
+          file.delete(recursive: true);
         }
       }
       if (isAPK) {
@@ -349,7 +358,7 @@ class AppsProvider with ChangeNotifier {
                 silent: silent);
       }
       if (somethingInstalled) {
-        dir.file.delete();
+        dir.file.delete(recursive: true);
       }
     } finally {
       dir.extracted.delete(recursive: true);
@@ -379,7 +388,7 @@ class AppsProvider with ChangeNotifier {
       installed = true;
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
-      file.file.delete();
+      file.file.delete(recursive: true);
     }
     await saveApps([apps[file.appId]!.app]);
     return installed;
@@ -703,41 +712,30 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = true;
     notifyListeners();
-    List<App> newApps = (await getAppsDir())
-        .listSync()
-        .where((item) => item.path.toLowerCase().endsWith('.json'))
-        .map((e) {
-          try {
-            return App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
-          } catch (err) {
-            if (err is FormatException) {
-              logs.add('Corrupt JSON when loading App (will be ignored): $e');
-              e.renameSync('${e.path}.corrupt');
-              return App(
-                  '', '', '', '', '', '', [], 0, {}, DateTime.now(), false);
-            } else {
-              rethrow;
-            }
-          }
-        })
-        .where((element) => element.id.isNotEmpty)
-        .toList();
-    var idsToDelete = apps.values
-        .map((e) => e.app.id)
-        .toSet()
-        .difference(newApps.map((e) => e.id).toSet());
-    for (var id in idsToDelete) {
-      apps.remove(id);
-    }
     var sp = SourceProvider();
     List<List<String>> errors = [];
-    for (int i = 0; i < newApps.length; i++) {
-      var info = await getInstalledInfo(newApps[i].id);
+    List<FileSystemEntity> newApps = (await getAppsDir())
+        .listSync()
+        .where((item) => item.path.toLowerCase().endsWith('.json'))
+        .toList();
+    for (var e in newApps) {
       try {
-        sp.getSource(newApps[i].url, overrideSource: newApps[i].overrideSource);
-        apps[newApps[i].id] = AppInMemory(newApps[i], null, info);
-      } catch (e) {
-        errors.add([newApps[i].id, newApps[i].finalName, e.toString()]);
+        var app = App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
+        try {
+          var info = await getInstalledInfo(app.id);
+          sp.getSource(app.url, overrideSource: app.overrideSource);
+          apps[app.id] = AppInMemory(app, null, info);
+          notifyListeners();
+        } catch (e) {
+          errors.add([app.id, app.finalName, e.toString()]);
+        }
+      } catch (err) {
+        if (err is FormatException) {
+          logs.add('Corrupt JSON when loading App (will be ignored): $e');
+          e.renameSync('${e.path}.corrupt');
+        } else {
+          rethrow;
+        }
       }
     }
     if (errors.isNotEmpty) {
@@ -747,6 +745,10 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = false;
     notifyListeners();
+    refreshInstallStatuses();
+  }
+
+  Future<void> refreshInstallStatuses() async {
     if (await doesInstalledAppsPluginWork()) {
       List<App> modifiedApps = [];
       for (var app in apps.values) {
@@ -790,17 +792,17 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> removeApps(List<String> appIds) async {
-    var apkFiles = (await getExternalCacheDirectories())?.first.listSync();
+    var apkFiles = APKDir.listSync();
     for (var appId in appIds) {
       File file = File('${(await getAppsDir()).path}/$appId.json');
       if (file.existsSync()) {
-        file.deleteSync();
+        file.deleteSync(recursive: true);
       }
       apkFiles
-          ?.where(
+          .where(
               (element) => element.path.split('/').last.startsWith('$appId-'))
           .forEach((element) {
-        element.delete();
+        element.delete(recursive: true);
       });
       if (apps.containsKey(appId)) {
         apps.remove(appId);
