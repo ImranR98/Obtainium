@@ -5,18 +5,18 @@ packages:
     dependency: "direct main"
     description:
       name: android_alarm_manager_plus
-      sha256: ed5fb34f8befc382fb4800b02aa86a34d279b911e1c05752f702d12fcfe26e0e
+      sha256: "80f963d47cb7ab0818144c7b0668aea4c038f9cb8626626e89a4ea77375defb7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.0"
+    version: "3.0.1"
   android_intent_plus:
     dependency: "direct main"
     description:
       name: android_intent_plus
-      sha256: f79fbb8ccb64b5584d19caa9c3d15613bf21cfbd829a6ca7f089fb5dfd43f8aa
+      sha256: "2c87d8330ba5deef5fe20e77f4d178190b3b24531dce08368030ab4be40a9d4e"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.0"
+    version: "4.0.1"
   android_package_installer:
     dependency: "direct main"
     description:
@@ -158,10 +158,10 @@ packages:
     dependency: "direct main"
     description:
       name: device_info_plus
-      sha256: "9b1a0c32b2a503f8fe9f8764fac7b5fcd4f6bd35d8f49de5350bccf9e2a33b8a"
+      sha256: "499c61743e13909c13374a8c209075385858c614b9c0f2487b5f9995eeaf7369"
       url: "https://pub.dev"
     source: hosted
-    version: "9.0.0"
+    version: "9.0.1"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -174,18 +174,18 @@ packages:
     dependency: "direct main"
     description:
       name: dynamic_color
-      sha256: bbebb1b7ebed819e0ec83d4abdc2a8482d934f6a85289ffc1c6acf7589fa2aad
+      sha256: "74dff1435a695887ca64899b8990004f8d1232b0e84bfc4faa1fdda7c6f57cc1"
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.3"
+    version: "1.6.5"
   easy_localization:
     dependency: "direct main"
     description:
       name: easy_localization
-      sha256: f30e9b20ed4d1b890171c30241d9b9c43efe21fee55dee7bd68f94daf269ea75
+      sha256: "30ebf25448ffe169e0bd9bc4b5da94faa8398967a2ad2ca09f438be8b6953645"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.2-dev.2"
+    version: "3.0.2"
   easy_logger:
     dependency: transitive
     description:
@@ -259,10 +259,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_local_notifications
-      sha256: ee6ee56855aa920899b68586b538474d086c149932220b47b92502cbfb5ba5e5
+      sha256: "12f8abacca8bf29c042ec50c554f967da4c6f88ec99fc215e0325e5b43a25188"
       url: "https://pub.dev"
     source: hosted
-    version: "14.0.0+2"
+    version: "14.1.0"
   flutter_local_notifications_linux:
     dependency: transitive
     description:
@@ -296,10 +296,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_plugin_android_lifecycle
-      sha256: "96af49aa6b57c10a312106ad6f71deed5a754029c24789bbf620ba784f0bd0b0"
+      sha256: "950e77c2bbe1692bc0874fc7fb491b96a4dc340457f4ea1641443d0a6c1ea360"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.14"
+    version: "2.0.15"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -330,10 +330,10 @@ packages:
     dependency: "direct main"
     description:
       name: http
-      sha256: "5895291c13fa8a3bd82e76d5627f69e0d85ca6a30dcac95c4ea19a5d555879c2"
+      sha256: "4c3f04bfb64d3efd508d06b41b825542f08122d30bda4933fb95c069d22a4fa3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.6"
+    version: "1.0.0"
   http_parser:
     dependency: transitive
     description:
@@ -522,10 +522,10 @@ packages:
     dependency: transitive
     description:
       name: permission_handler_android
-      sha256: "8028362b40c4a45298f1cbfccd227c8dd6caf0e27088a69f2ba2ab15464159e2"
+      sha256: d8cc6a62ded6d0f49c6eac337e080b066ee3bce4d405bd9439a61e1f1927bfe8
       url: "https://pub.dev"
     source: hosted
-    version: "10.2.0"
+    version: "10.2.1"
   permission_handler_apple:
     dependency: transitive
     description:
@@ -602,10 +602,10 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: "322a1ec9d9fe07e2e2252c098ce93d12dbd06133cc4c00ffe6a4ef505c295c17"
+      sha256: "44fc0bc2d35a8fafa1b564e1c6888bdc4fbb2d0197e4a4c21bac0e66123be9cd"
       url: "https://pub.dev"
     source: hosted
-    version: "7.0.0"
+    version: "7.0.1"
   share_plus_platform_interface:
     dependency: transitive
     description:
@@ -687,10 +687,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqflite
-      sha256: "3a82c9a216b46b88617e3714dd74227eaca20c501c4abcc213e56db26b9caa00"
+      sha256: b4d6710e1200e96845747e37338ea8a819a12b51689a3bcf31eff0003b37a0b9
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.8+2"
+    version: "2.2.8+4"
   sqflite_common:
     dependency: transitive
     description:
@@ -775,10 +775,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_android
-      sha256: "7aac14be5f4731b923cc697ae2d42043945076cd0dbb8806baecc92c1dc88891"
+      sha256: "1a5848f598acc5b7d8f7c18b8cb834ab667e59a13edc3c93e9d09cf38cc6bc87"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.33"
+    version: "6.0.34"
   url_launcher_ios:
     dependency: transitive
     description:
@@ -916,5 +916,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.0.0-417 <4.0.0"
+  dart: ">=3.0.0 <4.0.0"
   flutter: ">=3.4.0-17.0.pre"
