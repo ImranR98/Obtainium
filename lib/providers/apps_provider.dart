@@ -108,6 +108,7 @@ class AppsProvider with ChangeNotifier {
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
+  late Directory APKDir;
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
@@ -119,13 +120,21 @@ class AppsProvider with ChangeNotifier {
       if (isForeground) await refreshInstallStatuses();
     });
     () async {
+      var cacheDirs = await getExternalCacheDirectories();
+      if (cacheDirs?.isNotEmpty ?? false) {
+        APKDir = cacheDirs!.first;
+      } else {
+        APKDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/apks');
+        if (!APKDir.existsSync()) {
+          APKDir.createSync();
+        }
+      }
       // Load Apps into memory (in background, this is done later instead of in the constructor)
       await loadApps();
       // Delete any partial APKs
       var cutoff = DateTime.now().subtract(const Duration(days: 7));
-      (await getExternalCacheDirectories())
-          ?.first
-          .listSync()
+      APKDir.listSync()
           .where((element) =>
               element.path.endsWith('.part') ||
               element.statSync().modified.isBefore(cutoff))
@@ -138,7 +147,7 @@ class AppsProvider with ChangeNotifier {
   Future<File> downloadFile(
       String url, String fileNameNoExt, Function? onProgress,
       {bool useExisting = true, Map<String, String>? headers}) async {
-    var destDir = (await getExternalCacheDirectories())!.first.path;
+    var destDir = APKDir.path;
     var req = Request('GET', Uri.parse(url));
     if (headers != null) {
       req.headers.addAll(headers);
@@ -783,14 +792,14 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> removeApps(List<String> appIds) async {
-    var apkFiles = (await getExternalCacheDirectories())?.first.listSync();
+    var apkFiles = APKDir.listSync();
     for (var appId in appIds) {
       File file = File('${(await getAppsDir()).path}/$appId.json');
       if (file.existsSync()) {
         file.deleteSync(recursive: true);
       }
       apkFiles
-          ?.where(
+          .where(
               (element) => element.path.split('/').last.startsWith('$appId-'))
           .forEach((element) {
         element.delete(recursive: true);
