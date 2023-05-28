@@ -24,8 +24,8 @@ class APKPure extends AppSource {
   }
 
   @override
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
@@ -34,7 +34,7 @@ class APKPure extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = tryInferringAppId(standardUrl)!;
+    String appId = (await tryInferringAppId(standardUrl))!;
     String host = Uri.parse(standardUrl).host;
     var res = await sourceRequest('$standardUrl/download');
     if (res.statusCode == 200) {

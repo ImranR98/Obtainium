@@ -434,8 +434,8 @@ abstract class AppSource {
     throw NotImplementedError();
   }
 
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
     return null;
   }
 }
@@ -592,7 +592,7 @@ class SourceProvider {
         : apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
     return App(
         currentApp?.id ??
-            source.tryInferringAppId(standardUrl,
+            await source.tryInferringAppId(standardUrl,
                 additionalSettings: additionalSettings) ??
             generateTempID(standardUrl, additionalSettings),
         standardUrl,

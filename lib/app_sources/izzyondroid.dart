@@ -18,8 +18,8 @@ class IzzyOnDroid extends AppSource {
   }
 
   @override
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
     return FDroid().tryInferringAppId(standardUrl);
   }
 
@@ -28,7 +28,7 @@ class IzzyOnDroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = tryInferringAppId(standardUrl);
+    String? appId = await tryInferringAppId(standardUrl);
     return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
             'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId'),
