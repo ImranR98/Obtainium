@@ -233,6 +233,7 @@
     "about": "概要",
     "requiresCredentialsInSettings": "これには追加の認証が必要です (設定にて)",
     "checkOnStart": "Check Once on Start",
+    "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

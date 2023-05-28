@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
+    appIdInferIsOptional = true;
 
     additionalSourceSpecificSettingFormItems = [
       GeneratedFormTextField('github-creds',

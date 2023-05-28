@@ -33,6 +33,7 @@ class _AddAppPageState extends State<AddAppPage> {
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
+  bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
   int searchnum = 0;
   SourceProvider sourceProvider = SourceProvider();
@@ -78,6 +79,7 @@ class _AddAppPageState extends State<AddAppPage> {
             additionalSettingsValid = source != null
                 ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
                 : true;
+            inferAppIdIfOptional = true;
           }
         });
       }
@@ -147,7 +149,8 @@ class _AddAppPageState extends State<AddAppPage> {
           app = await sourceProvider.getApp(
               pickedSource!, userInput, additionalSettings,
               trackOnlyOverride: trackOnly,
-              overrideSource: pickedSourceOverride);
+              overrideSource: pickedSourceOverride,
+              inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
           if (sourceProvider.isTempId(app) &&
               app.additionalSettings['trackOnly'] != true) {
@@ -428,6 +431,23 @@ class _AddAppPageState extends State<AddAppPage> {
                     }),
               ],
             ),
+            if (pickedSource != null && pickedSource!.appIdInferIsOptional)
+              GeneratedForm(
+                  key: const Key('inferAppIdIfOptional'),
+                  items: [
+                    [
+                      GeneratedFormSwitch('inferAppIdIfOptional',
+                          label: tr('tryInferAppIdFromCode'),
+                          defaultValue: inferAppIdIfOptional)
+                    ]
+                  ],
+                  onValueChanges: (values, valid, isBuilding) {
+                    if (!isBuilding) {
+                      setState(() {
+                        inferAppIdIfOptional = values['inferAppIdIfOptional'];
+                      });
+                    }
+                  }),
           ],
         );
 

@@ -233,6 +233,7 @@
     "about": "Über",
     "requiresCredentialsInSettings": "Benötigt zusätzliche Anmeldedaten (in den Einstellungen)",
     "checkOnStart": "Überprüfe einmalig beim Start",
+    "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

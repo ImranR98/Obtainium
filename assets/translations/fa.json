@@ -233,6 +233,7 @@
     "about": "About",
     "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
     "checkOnStart": "Check Once on Start",
+    "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

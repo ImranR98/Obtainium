@@ -232,6 +232,7 @@
     "about": "Rólunk",
     "requiresCredentialsInSettings": "Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
     "checkOnStart": "Egyszer az indításkor",
+    "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
