@@ -19,8 +19,8 @@ class APKCombo extends AppSource {
   }
 
   @override
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
@@ -83,7 +83,7 @@ class APKCombo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = tryInferringAppId(standardUrl)!;
+    String appId = (await tryInferringAppId(standardUrl))!;
     var preres = await sourceRequest(standardUrl);
     if (preres.statusCode != 200) {
       throw getObtainiumHttpError(preres);

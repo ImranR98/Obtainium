@@ -6,6 +6,7 @@ import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -13,6 +14,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 class GitHub extends AppSource {
   GitHub() {
     host = 'github.com';
+    appIdInferIsOptional = true;
 
     additionalSourceSpecificSettingFormItems = [
       GeneratedFormTextField('github-creds',
@@ -80,6 +82,44 @@ class GitHub extends AppSource {
   }
 
   @override
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
+    const possibleBuildGradleLocations = [
+      '/app/build.gradle',
+      'android/app/build.gradle',
+      'src/app/build.gradle'
+    ];
+    for (var path in possibleBuildGradleLocations) {
+      try {
+        var res = await sourceRequest(
+            '${await convertStandardUrlToAPIUrl(standardUrl)}/contents/$path');
+        if (res.statusCode == 200) {
+          try {
+            var body = jsonDecode(res.body);
+            var appId = utf8
+                .decode(base64
+                    .decode(body['content'].toString().split('\n').join('')))
+                .split('\n')
+                .map((e) => e.trim())
+                .where((l) => l.startsWith('applicationId "'))
+                .first
+                .split('"')[1];
+            if (appId.isNotEmpty) {
+              return appId;
+            }
+          } catch (err) {
+            LogsProvider().add(
+                'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}');
+          }
+        }
+      } catch (err) {
+        // Ignore - ID will be extracted from the APK
+      }
+    }
+    return null;
+  }
+
+  @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
@@ -96,6 +136,12 @@ class GitHub extends AppSource {
         .getSettingString(additionalSourceSpecificSettingFormItems[0].key);
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
+
+  Future<String> getAPIHost() async =>
+      'https://${await getCredentialPrefixIfAny()}api.$host';
+
+  Future<String> convertStandardUrlToAPIUrl(String standardUrl) async =>
+      '${await getAPIHost()}/repos${standardUrl.substring('https://$host'.length)}';
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
@@ -239,7 +285,7 @@ class GitHub extends AppSource {
   ) async {
     return await getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
         (bool useTagUrl) async {
-      return 'https://${await getCredentialPrefixIfAny()}api.$host/repos${standardUrl.substring('https://$host'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+      return '${await convertStandardUrlToAPIUrl(standardUrl)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
     }, (Response res) {
       rateLimitErrorCheck(res);
     });
@@ -281,7 +327,7 @@ class GitHub extends AppSource {
   Future<Map<String, List<String>>> search(String query) async {
     return searchCommon(
         query,
-        'https://${await getCredentialPrefixIfAny()}api.$host/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
+        '${await getAPIHost()}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
         'items', onHttpErrorCode: (Response res) {
       rateLimitErrorCheck(res);
     });

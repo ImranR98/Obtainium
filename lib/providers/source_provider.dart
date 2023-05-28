@@ -317,6 +317,7 @@ abstract class AppSource {
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
+  bool appIdInferIsOptional = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -434,8 +435,8 @@ abstract class AppSource {
     throw NotImplementedError();
   }
 
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
     return null;
   }
 }
@@ -552,7 +553,8 @@ class SourceProvider {
       AppSource source, String url, Map<String, dynamic> additionalSettings,
       {App? currentApp,
       bool trackOnlyOverride = false,
-      String? overrideSource}) async {
+      String? overrideSource,
+      bool inferAppIdIfOptional = false}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
@@ -592,8 +594,11 @@ class SourceProvider {
         : apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
     return App(
         currentApp?.id ??
-            source.tryInferringAppId(standardUrl,
-                additionalSettings: additionalSettings) ??
+            ((!source.appIdInferIsOptional ||
+                    (source.appIdInferIsOptional && inferAppIdIfOptional))
+                ? await source.tryInferringAppId(standardUrl,
+                    additionalSettings: additionalSettings)
+                : null) ??
             generateTempID(standardUrl, additionalSettings),
         standardUrl,
         apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
