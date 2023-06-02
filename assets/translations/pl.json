@@ -4,8 +4,8 @@
     "okay": "Okej",
     "appId": "ID aplikacji",
     "bgUpdateGotErrorRetryInMinutes": {
-        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minutę",
-        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} min"
+        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} min.",
+        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} min."
     },
     "invalidURLForSource": "Nieprawidłowy adres URL aplikacji {}",
     "noReleaseFound": "Nie można znaleźć odpowiedniego wydania",
@@ -19,10 +19,10 @@
     "unexpectedError": "Nieoczekiwany błąd",
     "ok": "Okej",
     "and": "i",
-    "startedBgUpdateTask": "Rozpoczęto sprawdzanie aktualizacji w tle",
+    "startedBgUpdateTask": "Rozpoczęto zadanie sprawdzania aktualizacji w tle",
     "bgUpdateIgnoreAfterIs": "Parametr ignoreAfter aktualizacji w tle to {}",
     "startedActualBGUpdateCheck": "Rozpoczęto sprawdzanie aktualizacji w tle",
-    "bgUpdateTaskFinished": "Zakończono sprawdzanie aktualizacji w tle",
+    "bgUpdateTaskFinished": "Zakończono zadanie sprawdzania aktualizacji w tle",
     "firstRun": "Jest to pierwsze uruchomienie Obtainium",
     "settingUpdateCheckIntervalTo": "Ustawianie interwału aktualizacji na {}",
     "githubPATLabel": "Osobisty Token Dostępu GitHub (zwiększa limit zapytań)",
@@ -155,16 +155,16 @@
     "warning": "Uwaga",
     "sourceIsXButPackageFromYPrompt": "Źródłem aplikacji jest '{}', ale pakiet wydania pochodzi z '{}'. Kontynuować?",
     "updatesAvailable": "Dostępne aktualizacje",
-    "updatesAvailableNotifDescription": "Powiadamia użytkownika, że dostępne są aktualizacje dla jednej lub więcej aplikacji obserwowanych przez Obtainium",
+    "updatesAvailableNotifDescription": "Powiadamia użytkownika o dostępności aktualizacji dla jednej lub więcej aplikacji obserwowanych przez Obtainium",
     "noNewUpdates": "Brak nowych aktualizacji.",
     "xHasAnUpdate": "{} ma aktualizację.",
     "appsUpdated": "Zaktualizowane aplikacje",
-    "appsUpdatedNotifDescription": "Powiadamia użytkownika, że aktualizacje jednej lub więcej aplikacji zostały zastosowane w tle",
+    "appsUpdatedNotifDescription": "Powiadamia użytkownika, gdy jedna lub więcej aplikacji zostało zaktualizowanych w tle",
     "xWasUpdatedToY": "{} zaktualizowano do {}.",
     "errorCheckingUpdates": "Sprawdzanie błędów aktualizacji",
     "errorCheckingUpdatesNotifDescription": "Powiadomienie wyświetlane, gdy sprawdzanie aktualizacji w tle nie powiedzie się",
     "appsRemoved": "Usunięte aplikacje",
-    "appsRemovedNotifDescription": "Powiadamia użytkownika, że jedna lub więcej aplikacji zostało usuniętych z powodu błędów podczas ich wczytywania",
+    "appsRemovedNotifDescription": "Powiadamia użytkownika, gdy jedna lub więcej aplikacji zostało usuniętych z powodu błędów wczytywania",
     "xWasRemovedDueToErrorY": "Usunięto {} z powodu błędu: {}",
     "completeAppInstallation": "Ukończenie instalacji aplikacji",
     "obtainiumMustBeOpenToInstallApps": "Aby zainstalować aplikacje, Obtainium musi być otwarte",
@@ -202,7 +202,7 @@
     "downloadNotifDescription": "Powiadamia użytkownika o postępach w pobieraniu aplikacji",
     "noAPKFound": "Nie znaleziono pakietu APK",
     "noVersionDetection": "Bez wykrywania wersji",
-    "categorize": "Skategoryzuj",
+    "categorize": "Kategoryzuj",
     "categories": "Kategorie",
     "category": "Kategoria",
     "noCategory": "Bez kategorii",
@@ -233,7 +233,7 @@
     "dontShowTrackOnlyWarnings": "Nie wyświetlaj ostrzeżeń „Tylko obserwowana”",
     "dontShowAPKOriginWarnings": "Nie pokazuj ostrzeżeń o pochodzeniu APK",
     "moveNonInstalledAppsToBottom": "Przenieś niezainstalowane aplikacje na dół widoku aplikacji",
-    "gitlabPATLabel": "Osobisty token dostępu GitLab (umożliwia wyszukiwanie)",
+    "gitlabPATLabel": "Osobisty Token Dostępu GitLab (umożliwia wyszukiwanie)",
     "about": "Więcej informacji",
     "requiresCredentialsInSettings": "Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
     "checkOnStart": "Sprawdź raz przy starcie",
@@ -243,24 +243,24 @@
         "other": "Usunąć aplikacje?"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minutę",
-        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} min"
+        "one": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} min.",
+        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} min."
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "Sprawdzanie aktualizacji w tle wykryło {} aktualizację - w razie potrzeby powiadomi użytkownika",
-        "other": "Sprawdzanie aktualizacji w tle wykryło {} aktualizacje/i - w razie potrzeby powiadomi użytkownika"
+        "one": "Podczas sprawdzania aktualizacji w tle znaleziono {} aktualizację - w razie potrzeby użytkownik zostanie o tym powiadomiony",
+        "other": "Podczas sprawdzania aktualizacji w tle znaleziono {} akt. - w razie potrzeby użytkownik zostanie o tym powiadomiony"
     },
     "apps": {
-        "one": "{} aplikacja",
-        "other": "{} aplikacji"
+        "one": "{} aplik.",
+        "other": "{} aplik."
     },
     "url": {
         "one": "{} adres URL",
-        "other": "{} adresów URL"
+        "other": "{} adr. URL"
     },
     "minute": {
-        "one": "{} min",
-        "other": "{} min"
+        "one": "{} min.",
+        "other": "{} min."
     },
     "hour": {
         "one": "{} godz.",
@@ -272,14 +272,14 @@
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Wyczyszczono {n} log (przed = {before}, po = {after})",
-        "other": "Wyczyszczono {n} logów (przed = {before}, po = {after})"
+        "other": "Wyczyszczono logi: {n} (przed = {before}, po = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} i jeszcze 1 aplikacja mają aktualizacje.",
-        "other": "{} i {} aplikacje/i otrzymało aktualizacje."
+        "other": "{} i {} aplik. otrzymało aktualizacje."
     },
     "xAndNMoreUpdatesInstalled": {
         "one": "Zaktualizowano {} i jeszcze 1 aplikację.",
-        "other": "Zaktualizowano {} i {} aplikacje/i."
+        "other": "Zaktualizowano {} i {} aplik."
     }
 }
