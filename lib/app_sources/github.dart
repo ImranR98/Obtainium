@@ -96,14 +96,22 @@ class GitHub extends AppSource {
         if (res.statusCode == 200) {
           try {
             var body = jsonDecode(res.body);
-            var appId = utf8
+            var trimmedLines = utf8
                 .decode(base64
                     .decode(body['content'].toString().split('\n').join('')))
                 .split('\n')
-                .map((e) => e.trim())
+                .map((e) => e.trim());
+            var appId = trimmedLines
                 .where((l) => l.startsWith('applicationId "'))
                 .first
                 .split('"')[1];
+            if (appId.startsWith('\${') && appId.endsWith('}')) {
+              appId = trimmedLines
+                  .where((l) => l.startsWith(
+                      'def ${appId.substring(2, appId.length - 1)}'))
+                  .first
+                  .split('"')[1];
+            }
             if (appId.isNotEmpty) {
               return appId;
             }
