@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.13.6';
+const String currentVersion = '0.13.7';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -37,6 +37,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('fa'), 'فارسی'),
   MapEntry(Locale('fr'), 'Français'),
   MapEntry(Locale('es'), 'Español'),
+  MapEntry(Locale('pl'), 'Polski'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';

@@ -159,6 +159,9 @@ class AppsProvider with ChangeNotifier {
     if (ext.endsWith('"') || ext.endsWith("other")) {
       ext = ext.substring(0, ext.length - 1);
     }
+    if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+      ext = 'apk';
+    }
     File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
     if (!(downloadedFile.existsSync() && useExisting)) {
       File tempDownloadedFile = File('${downloadedFile.path}.part');
