@@ -27,7 +27,7 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 
 class AppInMemory {
   late App app;
@@ -335,20 +335,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   void unzipFile(String filePath, String destinationPath) {
-    final bytes = File(filePath).readAsBytesSync();
-    final archive = ZipDecoder().decodeBytes(bytes);
-
-    for (final file in archive) {
-      final filename = '$destinationPath/${file.name}';
-      if (file.isFile) {
-        final data = file.content as List<int>;
-        File(filename)
-          ..createSync(recursive: true)
-          ..writeAsBytesSync(data);
-      } else {
-        Directory(filename).create(recursive: true);
-      }
-    }
+    final inputStream = InputFileStream(filePath);
+    final archive = ZipDecoder().decodeBuffer(inputStream);
+    extractArchiveToDisk(archive, destinationPath);
   }
 
   Future<void> installXApkDir(DownloadedXApkDir dir,
