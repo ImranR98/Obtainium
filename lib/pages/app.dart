@@ -329,7 +329,8 @@ class _AppPageState extends State<AppPage> {
                 try {
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
-                      [app!.app.id], globalNavigatorKey.currentContext);
+                      app?.app.id != null ? [app!.app.id] : [],
+                      globalNavigatorKey.currentContext);
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();
                   }
@@ -426,8 +427,10 @@ class _AppPageState extends State<AppPage> {
                         onPressed: app?.downloadProgress != null
                             ? null
                             : () {
-                                appsProvider.removeAppsWithModal(
-                                    context, [app!.app]).then((value) {
+                                appsProvider
+                                    .removeAppsWithModal(
+                                        context, app != null ? [app.app] : [])
+                                    .then((value) {
                                   if (value == true) {
                                     Navigator.of(context).pop();
                                   }

@@ -163,6 +163,7 @@ class App {
   late DateTime? releaseDate;
   late String? changeLog;
   late String? overrideSource;
+  bool allowIdChange = false;
   App(
       this.id,
       this.url,
@@ -178,7 +179,8 @@ class App {
       {this.categories = const [],
       this.releaseDate,
       this.changeLog,
-      this.overrideSource});
+      this.overrideSource,
+      this.allowIdChange = false});
 
   @override
   String toString() {
@@ -209,7 +211,8 @@ class App {
       categories: categories,
       changeLog: changeLog,
       releaseDate: releaseDate,
-      overrideSource: overrideSource);
+      overrideSource: overrideSource,
+      allowIdChange: allowIdChange);
 
   factory App.fromJson(Map<String, dynamic> json) {
     json = appJSONCompatibilityModifiers(json);
@@ -241,7 +244,8 @@ class App {
             : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
         changeLog:
             json['changeLog'] == null ? null : json['changeLog'] as String,
-        overrideSource: json['overrideSource']);
+        overrideSource: json['overrideSource'],
+        allowIdChange: json['allowIdChange'] ?? false);
   }
 
   Map<String, dynamic> toJson() => {
@@ -259,7 +263,8 @@ class App {
         'categories': categories,
         'releaseDate': releaseDate?.microsecondsSinceEpoch,
         'changeLog': changeLog,
-        'overrideSource': overrideSource
+        'overrideSource': overrideSource,
+        'allowIdChange': allowIdChange
       };
 }
 
@@ -613,7 +618,11 @@ class SourceProvider {
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
         changeLog: apk.changeLog,
-        overrideSource: overrideSource ?? currentApp?.overrideSource);
+        overrideSource: overrideSource ?? currentApp?.overrideSource,
+        allowIdChange: currentApp?.allowIdChange ??
+            source.appIdInferIsOptional &&
+                inferAppIdIfOptional // Optional ID inferring may be incorrect - allow correction on first install
+        );
   }
 
   // Returns errors in [results, errors] instead of throwing them
