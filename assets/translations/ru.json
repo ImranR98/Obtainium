@@ -24,7 +24,7 @@
     "fallbackToOlderReleases": "Откатиться к более старым версиям",
     "filterReleaseTitlesByRegEx": "Фильтровать заголовки релизов с помощью регулярного выражения",
     "invalidRegEx": "Неверное регулярное выражение",
-    "noDescription": "Нет описания"
+    "noDescription": "Нет описания",
     "cancel": "Отмена",
     "continue": "Продолжить",
     "requiredInBrackets": "(Обязательно)",
@@ -68,7 +68,7 @@
     "removeSelectedAppsQuestion": "Удалить выбранные приложения?",
     "removeSelectedApps": "Удалить выбранные приложения",
     "updateX": "Обновить {}",
-    "installX": "Установить {}"
+    "installX": "Установить {}",
     "markXTrackOnlyAsUpdated": "Отметить {}\n(Только для отслеживания)\nкак обновленное",
     "changeX": "Изменить {}",
     "installUpdateApps": "Установить/Обновить приложения",
@@ -90,7 +90,7 @@
     "filterActive": "Фильтр *",
     "filterApps": "Фильтровать приложения",
     "appName": "Название приложения",
-    "author": "Автор"
+    "author": "Автор",
     "upToDateApps": "Приложения со свежими обновлениями",
     "nonInstalledApps": "Неустановленные приложения",
     "importExport": "Импорт/экспорт",
@@ -207,7 +207,7 @@
     "categoryDeleteWarning": "Все приложения в удаленных категориях будут помечены как без категории.",
     "addCategory": "Добавить категорию",
     "label": "Метка",
-    "language": "Язык"
+    "language": "Язык",
     "copiedToClipboard": "Скопировано в буфер обмена",
     "storagePermissionDenied": "Отказано в доступе к хранилищу",
     "selectedCategorizeWarning": "Это заменит все текущие настройки категорий для выбранных приложений.",
