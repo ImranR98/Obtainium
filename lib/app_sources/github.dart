@@ -102,15 +102,18 @@ class GitHub extends AppSource {
                 .split('\n')
                 .map((e) => e.trim());
             var appId = trimmedLines
-                .where((l) => l.startsWith('applicationId "'))
-                .first
-                .split('"')[1];
+                .where((l) =>
+                    l.startsWith('applicationId "') ||
+                    l.startsWith('applicationId \''))
+                .first;
+            appId = appId
+                .split(appId.startsWith('applicationId "') ? '"' : '\'')[1];
             if (appId.startsWith('\${') && appId.endsWith('}')) {
               appId = trimmedLines
                   .where((l) => l.startsWith(
                       'def ${appId.substring(2, appId.length - 1)}'))
-                  .first
-                  .split('"')[1];
+                  .first;
+              appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
             }
             if (appId.isNotEmpty) {
               return appId;
