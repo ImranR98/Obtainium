@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,20 +84,20 @@ class _AppPageState extends State<AppPage> {
             const SizedBox(
               height: 32,
             ),
-            Text(
-              tr('latestVersionX',
-                  args: [app?.app.latestVersion ?? tr('unknown')]),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            Text(
-              '${tr('installedVersionX', args: [
-                    app?.app.installedVersion ?? tr('none')
-                  ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
-                      tr('app')
-                    ])}' : ''}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
+            Column(
+              children: [
+                Text(
+                  '${tr('latestVersionX', args: [
+                        app?.app.latestVersion ?? tr('unknown')
+                      ])}\n${tr('installedVersionX', args: [
+                        app?.app.installedVersion ?? tr('none')
+                      ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
+                          tr('app')
+                        ])}' : ''}',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.bodyLarge!,
+                ),
+              ],
             ),
             if (app?.app.installedVersion != null &&
                 !isVersionDetectionStandard)
@@ -329,7 +331,8 @@ class _AppPageState extends State<AppPage> {
                 try {
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
-                      [app!.app.id], globalNavigatorKey.currentContext);
+                      app?.app.id != null ? [app!.app.id] : [],
+                      globalNavigatorKey.currentContext);
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();
                   }
@@ -426,8 +429,10 @@ class _AppPageState extends State<AppPage> {
                         onPressed: app?.downloadProgress != null
                             ? null
                             : () {
-                                appsProvider.removeAppsWithModal(
-                                    context, [app!.app]).then((value) {
+                                appsProvider
+                                    .removeAppsWithModal(
+                                        context, app != null ? [app.app] : [])
+                                    .then((value) {
                                   if (value == true) {
                                     Navigator.of(context).pop();
                                   }

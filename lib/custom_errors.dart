@@ -56,7 +56,7 @@ class InstallError extends ObtainiumError {
 }
 
 class IDChangedError extends ObtainiumError {
-  IDChangedError() : super(tr('appIdMismatch'));
+  IDChangedError(String newId) : super('${tr('appIdMismatch')} - $newId');
 }
 
 class NotImplementedError extends ObtainiumError {
