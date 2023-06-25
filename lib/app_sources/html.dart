@@ -111,8 +111,7 @@ class HTML extends AppSource {
           .where((element) =>
               Uri.parse(element).path.toLowerCase().endsWith('.apk'))
           .toList();
-      links.sort(
-          (a, b) => compareAlphaNumeric(a.split('/').last, b.split('/').last));
+      links.sort((a, b) => compareAlphaNumeric(a, b));
       if (additionalSettings['apkFilterRegEx'] != null) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);
         links = links.where((element) => reg.hasMatch(element)).toList();
@@ -121,12 +120,11 @@ class HTML extends AppSource {
         throw NoReleasesError();
       }
       var rel = links.last;
-      var apkName = rel.split('/').last;
-      var version = apkName.substring(0, apkName.length - 4);
+      var version = rel.hashCode.toString();
       List<String> apkUrls =
           [rel].map((e) => ensureAbsoluteUrl(e, uri)).toList();
-      return APKDetails(
-          version, getApkUrlsFromUrls(apkUrls), AppNames(uri.host, tr('app')));
+      return APKDetails(version, apkUrls.map((e) => MapEntry(e, e)).toList(),
+          AppNames(uri.host, tr('app')));
     } else {
       throw getObtainiumHttpError(res);
     }
