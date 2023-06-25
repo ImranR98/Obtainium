@@ -344,12 +344,14 @@ class AppsProvider with ChangeNotifier {
       {bool silent = false}) async {
     try {
       var somethingInstalled = false;
-      for (var apk in dir.extracted
-          .listSync()
-          .where((f) => f is File && f.path.toLowerCase().endsWith('.apk'))) {
-        somethingInstalled = somethingInstalled ||
-            await installApk(DownloadedApk(dir.appId, apk as File),
-                silent: silent);
+      for (var file in dir.extracted.listSync(recursive: true, followLinks: true).whereType<File>()) {
+        if (file.path.toLowerCase().endsWith('.apk')) {
+          somethingInstalled = somethingInstalled ||
+              await installApk(DownloadedApk(dir.appId, file), silent: silent);
+        }
+        else if (file.path.toLowerCase().endsWith('.obb')) {
+          moveObbFile(file, dir.appId);
+        }
       }
       if (somethingInstalled) {
         dir.file.delete(recursive: true);
@@ -386,6 +388,18 @@ class AppsProvider with ChangeNotifier {
     }
     await saveApps([apps[file.appId]!.app]);
     return installed;
+  }
+
+  void moveObbFile(File file, String appId) async {
+    if(!file.path.toLowerCase().endsWith('.obb')) return;
+
+    // REQUEST_INSTALL_PACKAGES is required to access Android/obb
+    // But it seems impossible to check if obb access has been explicitly granted
+    String obbDirPath = "/storage/emulated/0/Android/obb/$appId";
+    Directory(obbDirPath).createSync();
+
+    String obbFileName = file.path.split("/").last;
+    await file.copy("$obbDirPath/$obbFileName");
   }
 
   void uninstallApp(String appId) async {
