@@ -350,7 +350,7 @@ class AppsProvider with ChangeNotifier {
               await installApk(DownloadedApk(dir.appId, file), silent: silent);
         }
         else if (file.path.toLowerCase().endsWith('.obb')) {
-          moveObbFile(file, dir.appId);
+          await moveObbFile(file, dir.appId);
         }
       }
       if (somethingInstalled) {
@@ -390,7 +390,7 @@ class AppsProvider with ChangeNotifier {
     return installed;
   }
 
-  void moveObbFile(File file, String appId) async {
+  Future<void> moveObbFile(File file, String appId) async {
     if(!file.path.toLowerCase().endsWith('.obb')) return;
 
     // TODO: Does not support Android 11+
