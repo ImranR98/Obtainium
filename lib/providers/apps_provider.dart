@@ -344,7 +344,7 @@ class AppsProvider with ChangeNotifier {
       {bool silent = false}) async {
     try {
       var somethingInstalled = false;
-      for (var file in dir.extracted.listSync(recursive: true, followLinks: true).whereType<File>()) {
+      for (var file in dir.extracted.listSync(recursive: true, followLinks: false).whereType<File>()) {
         if (file.path.toLowerCase().endsWith('.apk')) {
           somethingInstalled = somethingInstalled ||
               await installApk(DownloadedApk(dir.appId, file), silent: silent);
@@ -396,7 +396,7 @@ class AppsProvider with ChangeNotifier {
     // REQUEST_INSTALL_PACKAGES is required to access Android/obb
     // But it seems impossible to check if obb access has been explicitly granted
     String obbDirPath = "/storage/emulated/0/Android/obb/$appId";
-    Directory(obbDirPath).createSync();
+    Directory(obbDirPath).createSync(recursive: true);
 
     String obbFileName = file.path.split("/").last;
     await file.copy("$obbDirPath/$obbFileName");
