@@ -393,8 +393,11 @@ class AppsProvider with ChangeNotifier {
   void moveObbFile(File file, String appId) async {
     if(!file.path.toLowerCase().endsWith('.obb')) return;
 
-    // REQUEST_INSTALL_PACKAGES is required to access Android/obb
-    // But it seems impossible to check if obb access has been explicitly granted
+    // TODO: Does not support Android 11+
+    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
+      await Permission.storage.request();
+    }
+
     String obbDirPath = "/storage/emulated/0/Android/obb/$appId";
     Directory(obbDirPath).createSync(recursive: true);
 
