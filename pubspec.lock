@@ -35,7 +35,7 @@ packages:
     source: hosted
     version: "2.0.7"
   archive:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: archive
       sha256: "0c8368c9b3f0abbc193b9d6133649a614204b528982bebc7026372d61677ce3a"
@@ -231,6 +231,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_archive:
+    dependency: "direct main"
+    description:
+      name: flutter_archive
+      sha256: aec85d1da65e5b33a529db00a86df0b8e92bda78088a7cfaeeba5187701d0d85
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.0"
   flutter_fgbg:
     dependency: "direct main"
     description:

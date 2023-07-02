@@ -63,7 +63,7 @@ dependencies:
   easy_localization: ^3.0.1
   android_intent_plus: ^4.0.0
   flutter_markdown: ^0.6.14
-  archive: ^3.3.7
+  flutter_archive: ^5.0.0
 
 
 dev_dependencies:
