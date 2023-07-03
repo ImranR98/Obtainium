@@ -902,7 +902,7 @@ class AppsProvider with ChangeNotifier {
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }
-    await saveApps([newApp]);
+    if (apps.containsKey(appId)) await saveApps([newApp]);
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
