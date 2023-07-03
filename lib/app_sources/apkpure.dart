@@ -37,8 +37,10 @@ class APKPure extends AppSource {
     String appId = (await tryInferringAppId(standardUrl))!;
     String host = Uri.parse(standardUrl).host;
     var res = await sourceRequest('$standardUrl/download');
-    if (res.statusCode == 200) {
+    var resChangelog = await sourceRequest(standardUrl);
+    if (res.statusCode == 200 && resChangelog.statusCode == 200) {
       var html = parse(res.body);
+      var htmlAbout = parse(resChangelog.body);
       String? version = html.querySelector('span.info-sdk span')?.text.trim();
       if (version == null) {
         throw NoVersionError();
@@ -68,8 +70,11 @@ class APKPure extends AppSource {
           Uri.parse(standardUrl).pathSegments.reversed.last;
       String appName =
           html.querySelector('h1.info-title')?.text.trim() ?? appId;
+      String? changeLog = htmlAbout.querySelector("div.whats-new-info p:not(.date)")?.innerHtml
+          .trim().replaceAll("<br>", "  \n");
       return APKDetails(version, apkUrls, AppNames(author, appName),
-          releaseDate: releaseDate);
+          releaseDate: releaseDate,
+          changeLog: changeLog);
     } else {
       throw getObtainiumHttpError(res);
     }
