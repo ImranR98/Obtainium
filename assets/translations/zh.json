@@ -135,7 +135,7 @@
     "showWebInAppView": "在应用详情页显示来源网页",
     "pinUpdates": "将待更新应用置顶",
     "updates": "更新",
-    "sourceSpecific": "来源相关",
+    "sourceSpecific": "来源",
     "appSource": "源代码",
     "noLogs": "无日志",
     "appLogs": "日志",
@@ -229,11 +229,11 @@
     "dontShowTrackOnlyWarnings": "不显示“仅追踪”模式警告",
     "dontShowAPKOriginWarnings": "不显示 APK 文件来源警告",
     "moveNonInstalledAppsToBottom": "将未安装应用置底",
-    "gitlabPATLabel": "GitLab 个人访问令牌（用于搜索）",
+    "gitlabPATLabel": "GitLab 个人访问令牌（用于搜索应用）",
     "about": "相关文档",
     "requiresCredentialsInSettings": "此功能需要额外的凭据（在“设置”中添加）",
     "checkOnStart": "启动时进行一次检查",
-    "tryInferAppIdFromCode": "Try inferring App ID from source code",
+    "tryInferAppIdFromCode": "尝试从源代码推断应用 ID",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
