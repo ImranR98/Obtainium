@@ -787,8 +787,10 @@ class AppsProvider with ChangeNotifier {
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
-      File('${(await getAppsDir()).path}/${app.id}.json')
-          .writeAsStringSync(jsonEncode(app.toJson()));
+      if (!onlyIfExists || this.apps.containsKey(app.id)) {
+        File('${(await getAppsDir()).path}/${app.id}.json')
+            .writeAsStringSync(jsonEncode(app.toJson()));
+      }
       try {
         this.apps.update(
             app.id, (value) => AppInMemory(app, value.downloadProgress, info),
@@ -902,7 +904,7 @@ class AppsProvider with ChangeNotifier {
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp.preferredApkIndex = currentApp.preferredApkIndex;
     }
-    if (apps.containsKey(appId)) await saveApps([newApp]);
+    await saveApps([newApp]);
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
