@@ -785,8 +785,10 @@ class AppsProvider with ChangeNotifier {
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
-      File('${(await getAppsDir()).path}/${app.id}.json')
-          .writeAsStringSync(jsonEncode(app.toJson()));
+      if (!onlyIfExists || this.apps.containsKey(app.id)) {
+        File('${(await getAppsDir()).path}/${app.id}.json')
+            .writeAsStringSync(jsonEncode(app.toJson()));
+      }
       try {
         this.apps.update(
             app.id, (value) => AppInMemory(app, value.downloadProgress, info),
