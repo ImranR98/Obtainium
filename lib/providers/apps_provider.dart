@@ -27,7 +27,7 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:archive/archive_io.dart';
+import 'package:flutter_archive/flutter_archive.dart';
 
 class AppInMemory {
   late App app;
@@ -264,7 +264,7 @@ class AppsProvider with ChangeNotifier {
       } else {
         // Assume XAPK
         String xapkDirPath = '${downloadedFile.path}-dir';
-        unzipFile(downloadedFile.path, '${downloadedFile.path}-dir');
+        await unzipFile(downloadedFile.path, '${downloadedFile.path}-dir');
         xapkDir = Directory(xapkDirPath);
         var apks = xapkDir
             .listSync()
@@ -334,10 +334,8 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  void unzipFile(String filePath, String destinationPath) {
-    final inputStream = InputFileStream(filePath);
-    final archive = ZipDecoder().decodeBuffer(inputStream);
-    extractArchiveToDisk(archive, destinationPath);
+  Future<void> unzipFile(String filePath, String destinationPath) async {
+    await ZipFile.extractToDirectory(zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
   Future<void> installXApkDir(DownloadedXApkDir dir,
