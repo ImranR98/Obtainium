@@ -229,7 +229,7 @@
     "dontShowTrackOnlyWarnings": "「追跡のみ」の警告を表示しない",
     "dontShowAPKOriginWarnings": "APK Originの警告を表示しない",
     "moveNonInstalledAppsToBottom": "未インストールのアプリをアプリ一覧の下部に移動させる",
-    "gitlabPATLabel": "GitLab パーソナルアクセストークン (検索を有効化する)",
+    "gitlabPATLabel": "GitLab パーソナルアクセストークン\n(検索を有効化する and Better APK Discovery)",
     "about": "概要",
     "requiresCredentialsInSettings": "これには追加の認証が必要です (設定にて)",
     "checkOnStart": "Check for updates on startup",

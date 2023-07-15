@@ -233,7 +233,7 @@
     "dontShowTrackOnlyWarnings": "Nie wyświetlaj ostrzeżeń „Tylko obserwowana”",
     "dontShowAPKOriginWarnings": "Nie pokazuj ostrzeżeń o pochodzeniu APK",
     "moveNonInstalledAppsToBottom": "Przenieś niezainstalowane aplikacje na dół widoku aplikacji",
-    "gitlabPATLabel": "Osobisty Token Dostępu GitLab (umożliwia wyszukiwanie)",
+    "gitlabPATLabel": "Osobisty Token Dostępu GitLab\n(umożliwia wyszukiwanie and Better APK Discovery)",
     "about": "Więcej informacji",
     "requiresCredentialsInSettings": "Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
     "checkOnStart": "Sprawdź raz przy starcie",
