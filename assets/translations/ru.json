@@ -229,7 +229,7 @@
     "dontShowTrackOnlyWarnings": "Не показывать предупреждения о только отслеживаемых приложениях",
     "dontShowAPKOriginWarnings": "Не показывать предупреждения об источнике APK-файлов",
     "moveNonInstalledAppsToBottom": "Переместить неустановленные приложения вниз списка",
-    "gitlabPATLabel": "Персональный токен доступа GitLab\n(Включает поиск and Better APK Discovery)",
+    "gitlabPATLabel": "Персональный токен доступа GitLab\n(Включает поиск и улучшает обнаружение APK)",
     "about": "О приложении",
     "requiresCredentialsInSettings": "Для этого требуются дополнительные учетные данные (в настройках)",
     "checkOnStart": "Проверять наличие обновлений при запуске",
