@@ -273,4 +273,13 @@ class SettingsProvider with ChangeNotifier {
       context.deleteSaveLocale();
     }
   }
+
+  bool get removeOnExternalUninstall {
+    return prefs?.getBool('removeOnExternalUninstall') ?? false;
+  }
+
+  set removeOnExternalUninstall(bool show) {
+    prefs?.setBool('removeOnExternalUninstall', show);
+    notifyListeners();
+  }
 }

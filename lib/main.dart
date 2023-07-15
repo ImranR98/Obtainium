@@ -226,9 +226,9 @@ class _ObtainiumState extends State<Obtainium> {
       if (!supportedLocales
               .map((e) => e.key.languageCode)
               .contains(context.locale.languageCode) ||
-          settingsProvider.forcedLocale == null &&
+          (settingsProvider.forcedLocale == null &&
               context.deviceLocale.languageCode !=
-                  context.locale.languageCode) {
+                  context.locale.languageCode)) {
         settingsProvider.resetLocaleSafe(context);
       }
       // Register the background update task according to the user's setting

@@ -325,6 +325,22 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Flexible(
+                                    child:
+                                        Text(tr('removeOnExternalUninstall'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .removeOnExternalUninstall,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                          .removeOnExternalUninstall = value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
                                 Flexible(child: Text(tr('groupByCategory'))),
                                 Switch(
                                     value: settingsProvider.groupByCategory,

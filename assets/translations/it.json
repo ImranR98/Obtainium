@@ -234,6 +234,7 @@
     "requiresCredentialsInSettings": "Servono credenziali aggiuntive (in Impostazioni)",
     "checkOnStart": "Controlla una volta all'avvio",
     "tryInferAppIdFromCode": "Prova a dedurre l'ID dell'app dal codice sorgente",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

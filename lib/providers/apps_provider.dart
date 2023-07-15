@@ -335,19 +335,21 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> unzipFile(String filePath, String destinationPath) async {
-    await ZipFile.extractToDirectory(zipFile: File(filePath), destinationDir: Directory(destinationPath));
+    await ZipFile.extractToDirectory(
+        zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
   Future<void> installXApkDir(DownloadedXApkDir dir,
       {bool silent = false}) async {
     try {
       var somethingInstalled = false;
-      for (var file in dir.extracted.listSync(recursive: true, followLinks: false).whereType<File>()) {
+      for (var file in dir.extracted
+          .listSync(recursive: true, followLinks: false)
+          .whereType<File>()) {
         if (file.path.toLowerCase().endsWith('.apk')) {
           somethingInstalled = somethingInstalled ||
               await installApk(DownloadedApk(dir.appId, file), silent: silent);
-        }
-        else if (file.path.toLowerCase().endsWith('.obb')) {
+        } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
         }
       }
@@ -389,7 +391,7 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> moveObbFile(File file, String appId) async {
-    if(!file.path.toLowerCase().endsWith('.obb')) return;
+    if (!file.path.toLowerCase().endsWith('.obb')) return;
 
     // TODO: Does not support Android 11+
     if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
@@ -754,21 +756,37 @@ class AppsProvider with ChangeNotifier {
     }
     loadingApps = false;
     notifyListeners();
-    refreshInstallStatuses();
+
+    refreshInstallStatuses(useExistingInstalledInfo: true);
   }
 
-  Future<void> refreshInstallStatuses() async {
+  Future<void> refreshInstallStatuses(
+      {bool useExistingInstalledInfo = false}) async {
     if (await doesInstalledAppsPluginWork()) {
       List<App> modifiedApps = [];
       for (var app in apps.values) {
-        var moddedApp =
-            getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
+        var moddedApp = getCorrectedInstallStatusAppIfPossible(
+            app.app,
+            useExistingInstalledInfo
+                ? app.installedInfo
+                : await getInstalledInfo(app.app.id));
         if (moddedApp != null) {
           modifiedApps.add(moddedApp);
         }
       }
       if (modifiedApps.isNotEmpty) {
         await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
+        var removedAppIds = modifiedApps
+            .where((a) => a.installedVersion == null)
+            .map((e) => e.id)
+            .toList();
+        if (removedAppIds.isNotEmpty) {
+          var settingsProvider = SettingsProvider();
+          await settingsProvider.initializeSettings();
+          if (settingsProvider.removeOnExternalUninstall) {
+            await removeApps(removedAppIds);
+          }
+        }
       }
     }
   }

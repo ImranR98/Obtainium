@@ -238,6 +238,7 @@
     "requiresCredentialsInSettings": "Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
     "checkOnStart": "Sprawdź raz przy starcie",
     "tryInferAppIdFromCode": "Spróbuj wywnioskować identyfikator aplikacji z kodu źródłowego",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"

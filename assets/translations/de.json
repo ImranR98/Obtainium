@@ -234,6 +234,7 @@
     "requiresCredentialsInSettings": "Benötigt zusätzliche Anmeldedaten (in den Einstellungen)",
     "checkOnStart": "Überprüfe einmalig beim Start",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

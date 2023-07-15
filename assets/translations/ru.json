@@ -234,6 +234,7 @@
     "requiresCredentialsInSettings": "Для этого требуются дополнительные учетные данные (в настройках)",
     "checkOnStart": "Проверить один раз при запуске",
     "tryInferAppIdFromCode": "Попытаться определить ID приложения из исходного кода",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

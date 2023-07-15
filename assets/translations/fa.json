@@ -234,6 +234,7 @@
     "requiresCredentialsInSettings": "این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
     "checkOnStart": "بررسی در شروع",
     "tryInferAppIdFromCode": "شناسه برنامه را از کد منبع استنباط کنید",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
