@@ -232,10 +232,11 @@
     "gitlabPATLabel": "GitLab パーソナルアクセストークン (検索を有効化する)",
     "about": "概要",
     "requiresCredentialsInSettings": "これには追加の認証が必要です (設定にて)",
-    "checkOnStart": "Check Once on Start",
+    "checkOnStart": "Check for updates on startup",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "pickHighestVersionCode": "Auto-select highest version code APK",
+    "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

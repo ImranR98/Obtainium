@@ -44,7 +44,10 @@ class _AppPageState extends State<AppPage> {
         ? sourceProvider.getSource(app.app.url,
             overrideSource: app.app.overrideSource)
         : null;
-    if (!areDownloadsRunning && prevApp == null && app != null) {
+    if (!areDownloadsRunning &&
+        prevApp == null &&
+        app != null &&
+        settingsProvider.checkUpdateOnDetailPage) {
       prevApp = app;
       getUpdate(app.app.id);
     }

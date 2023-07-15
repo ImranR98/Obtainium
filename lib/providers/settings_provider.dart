@@ -282,4 +282,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('removeOnExternalUninstall', show);
     notifyListeners();
   }
+
+  bool get checkUpdateOnDetailPage {
+    return prefs?.getBool('checkUpdateOnDetailPage') ?? true;
+  }
+
+  set checkUpdateOnDetailPage(bool show) {
+    prefs?.setBool('checkUpdateOnDetailPage', show);
+    notifyListeners();
+  }
 }

@@ -240,6 +240,21 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('checkUpdateOnDetailPage'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .checkUpdateOnDetailPage,
+                                    onChanged: (value) {
+                                      settingsProvider.checkUpdateOnDetailPage =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),

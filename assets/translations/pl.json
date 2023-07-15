@@ -240,6 +240,7 @@
     "tryInferAppIdFromCode": "Spróbuj wywnioskować identyfikator aplikacji z kodu źródłowego",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
     "pickHighestVersionCode": "Auto-select highest version code APK",
+    "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
