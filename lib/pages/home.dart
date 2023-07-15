@@ -26,6 +26,7 @@ class NavigationPageItem {
 
 class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
+  bool isReversing = false;
   int prevAppCount = -1;
   bool prevIsLoading = true;
 
@@ -42,7 +43,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     AppsProvider appsProvider = context.watch<AppsProvider>();
 
+    setIsReversing(int targetIndex) {
+      bool reversing = selectedIndexHistory.isNotEmpty &&
+          selectedIndexHistory.last > targetIndex;
+      setState(() {
+        isReversing = reversing;
+      });
+    }
+
     switchToPage(int index) async {
+      setIsReversing(index);
       if (index == 0) {
         while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
             null) {
@@ -79,6 +89,7 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: PageTransitionSwitcher(
+            reverse: isReversing,
             transitionBuilder: (
               Widget child,
               Animation<double> animation,
@@ -104,13 +115,16 @@ class _HomePageState extends State<HomePage> {
                 .toList(),
             onDestinationSelected: (int index) async {
               HapticFeedback.selectionClick();
-              await switchToPage(index);
+              switchToPage(index);
             },
             selectedIndex:
                 selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,
           ),
         ),
         onWillPop: () async {
+          setIsReversing(selectedIndexHistory.length >= 2
+              ? selectedIndexHistory.reversed.toList()[1]
+              : 0);
           if (selectedIndexHistory.isNotEmpty) {
             setState(() {
               selectedIndexHistory.removeLast();
