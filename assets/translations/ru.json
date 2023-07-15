@@ -234,7 +234,7 @@
     "requiresCredentialsInSettings": "Для этого требуются дополнительные учетные данные (в настройках)",
     "checkOnStart": "Проверять наличие обновлений при запуске",
     "tryInferAppIdFromCode": "Попытаться определить ID приложения из исходного кода",
-    "removeOnExternalUninstall": "Автоматически удалять удаленные извне приложения",
+    "removeOnExternalUninstall": "Автоматически убирать из списка удаленные извне приложения",
     "pickHighestVersionCode": "Автовыбор кода наивысшей версии APK",
     "checkUpdateOnDetailPage": "Проверять наличие обновлений при открытии страницы представления приложения",
     "removeAppQuestion": {
