@@ -273,4 +273,22 @@ class SettingsProvider with ChangeNotifier {
       context.deleteSaveLocale();
     }
   }
+
+  bool get removeOnExternalUninstall {
+    return prefs?.getBool('removeOnExternalUninstall') ?? false;
+  }
+
+  set removeOnExternalUninstall(bool show) {
+    prefs?.setBool('removeOnExternalUninstall', show);
+    notifyListeners();
+  }
+
+  bool get checkUpdateOnDetailPage {
+    return prefs?.getBool('checkUpdateOnDetailPage') ?? true;
+  }
+
+  set checkUpdateOnDetailPage(bool show) {
+    prefs?.setBool('checkUpdateOnDetailPage', show);
+    notifyListeners();
+  }
 }

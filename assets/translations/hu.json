@@ -233,6 +233,9 @@
     "requiresCredentialsInSettings": "Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
     "checkOnStart": "Egyszer az indításkor",
     "tryInferAppIdFromCode": "Próbálja kikövetkeztetni az app azonosítót a forráskódból",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
+    "pickHighestVersionCode": "Auto-select highest version code APK",
+    "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

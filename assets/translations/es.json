@@ -228,12 +228,15 @@
     "dontShowAgain": "No mostrar de nuevo",
     "dontShowTrackOnlyWarnings": "No mostrar avisos de 'Solo Seguimiento'",
     "dontShowAPKOriginWarnings": "No mostrar avisos de las fuentes de las APks",
-    "moveNonInstalledAppsToBottom": "Move Non-Installed Apps to Bottom of Apps View",
+    "moveNonInstalledAppsToBottom": "Move non-installed Apps to bottom of Apps view",
     "gitlabPATLabel": "GitLab Personal Access Token (Enables Search)",
     "about": "About",
     "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
-    "checkOnStart": "Check Once on Start",
+    "checkOnStart": "Check for updates on startup",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
+    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
+    "pickHighestVersionCode": "Auto-select highest version code APK",
+    "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"
