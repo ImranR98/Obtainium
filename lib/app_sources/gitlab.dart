@@ -102,11 +102,53 @@ class GitLab extends AppSource {
   ) async {
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    Response res = await sourceRequest('$standardUrl/-/tags?format=atom');
-    if (res.statusCode == 200) {
+    String? PAT = await getPATIfAny();
+    Iterable<APKDetails> apkDetailsList = [];
+    if (PAT != null) {
+      var names = GitHub().getAppNames(standardUrl);
+      Response res = await sourceRequest(
+          'https://$host/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT');
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
+      }
+      var json = jsonDecode(res.body) as List<dynamic>;
+      apkDetailsList = json.map((e) {
+        var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
+            .map((e) {
+              return (e['direct_asset_url'] ?? e['url'] ?? '') as String;
+            })
+            .where((s) => s.isNotEmpty)
+            .toList();
+        List<String> uploadedAPKsFromDescription =
+            ((e['description'] ?? '') as String)
+                .split('](')
+                .join('\n')
+                .split('.apk)')
+                .join('.apk\n')
+                .split('\n')
+                .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
+                .map((s) => '$standardUrl$s')
+                .toList();
+        var apkUrlsSet = apkUrlsFromAssets.toSet();
+        apkUrlsSet.addAll(uploadedAPKsFromDescription);
+        var releaseDateString = e['released_at'] ?? e['created_at'];
+        DateTime? releaseDate = releaseDateString != null
+            ? DateTime.parse(releaseDateString)
+            : null;
+        return APKDetails(
+            e['tag_name'] ?? e['name'],
+            getApkUrlsFromUrls(apkUrlsSet.toList()),
+            GitHub().getAppNames(standardUrl),
+            releaseDate: releaseDate);
+      });
+    } else {
+      Response res = await sourceRequest('$standardUrl/-/tags?format=atom');
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
+      }
       var standardUri = Uri.parse(standardUrl);
       var parsedHtml = parse(res.body);
-      var apkDetailsList = parsedHtml.querySelectorAll('entry').map((entry) {
+      apkDetailsList = parsedHtml.querySelectorAll('entry').map((entry) {
         var entryContent = parse(
             parseFragment(entry.querySelector('content')!.innerHtml).text);
         var apkUrls = [
@@ -124,7 +166,6 @@ class GitLab extends AppSource {
               .where((element) => Uri.parse(element).host != '')
               .toList()
         ];
-
         var entryId = entry.querySelector('id')?.innerHtml;
         var version =
             entryId == null ? null : Uri.parse(entryId).pathSegments.last;
@@ -139,21 +180,19 @@ class GitLab extends AppSource {
             GitHub().getAppNames(standardUrl),
             releaseDate: releaseDate);
       });
+    }
+    if (apkDetailsList.isEmpty) {
+      throw NoReleasesError();
+    }
+    if (fallbackToOlderReleases) {
+      if (additionalSettings['trackOnly'] != true) {
+        apkDetailsList =
+            apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
+      }
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();
       }
-      if (fallbackToOlderReleases) {
-        if (additionalSettings['trackOnly'] != true) {
-          apkDetailsList =
-              apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
-        }
-        if (apkDetailsList.isEmpty) {
-          throw NoReleasesError();
-        }
-      }
-      return apkDetailsList.first;
-    } else {
-      throw getObtainiumHttpError(res);
     }
+    return apkDetailsList.first;
   }
 }

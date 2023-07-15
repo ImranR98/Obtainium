@@ -229,7 +229,7 @@
     "dontShowTrackOnlyWarnings": "Non mostrare gli avvisi 'Solo-Monitoraggio'",
     "dontShowAPKOriginWarnings": "Non mostrare gli avvisi di origine dell'APK",
     "moveNonInstalledAppsToBottom": "Sposta le app non installate in fondo alla lista",
-    "gitlabPATLabel": "GitLab Personal Access Token (attiva la ricerca)",
+    "gitlabPATLabel": "GitLab Personal Access Token\n(attiva la ricerca and Better APK Discovery)",
     "about": "Informazioni",
     "requiresCredentialsInSettings": "Servono credenziali aggiuntive (in Impostazioni)",
     "checkOnStart": "Controlla una volta all'avvio",
