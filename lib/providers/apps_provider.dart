@@ -117,7 +117,7 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) await refreshInstallStatuses();
+      if (isForeground) await loadApps();
     });
     () async {
       var cacheDirs = await getExternalCacheDirectories();
@@ -744,47 +744,35 @@ class AppsProvider with ChangeNotifier {
       // Put Apps into memory to list them (fast)
       if (app != null) {
         try {
-          apps[app.id] = AppInMemory(app, null, null);
+          sp.getSource(app.url, overrideSource: app.overrideSource);
+          apps.update(
+              app.id,
+              (value) =>
+                  AppInMemory(app, value.downloadProgress, value.installedInfo),
+              ifAbsent: () => AppInMemory(app, null, null));
         } catch (e) {
           errors.add([app.id, app.finalName, e.toString()]);
         }
       }
     }
     notifyListeners();
-    for (var app in newApps) {
-      // Check install status for each App (slow)
-      if (app != null) {
-        try {
-          apps[app.id]?.installedInfo = await getInstalledInfo(app.id);
-          sp.getSource(app.url, overrideSource: app.overrideSource);
-        } catch (e) {
-          apps.remove(app.id);
-          errors.add([app.id, app.finalName, e.toString()]);
-        }
-        notifyListeners();
-      }
-    }
     if (errors.isNotEmpty) {
       removeApps(errors.map((e) => e[0]).toList());
       NotificationsProvider().notify(
           AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
-    loadingApps = false;
-    notifyListeners();
 
-    refreshInstallStatuses(useExistingInstalledInfo: true);
-  }
-
-  Future<void> refreshInstallStatuses(
-      {bool useExistingInstalledInfo = false}) async {
     if (await doesInstalledAppsPluginWork()) {
+      for (var app in apps.values) {
+        // Check install status for each App (slow)
+        apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
+        notifyListeners();
+      }
+      // Reconcile version differences
       List<App> modifiedApps = [];
       for (var app in apps.values) {
-        var moddedApp = getCorrectedInstallStatusAppIfPossible(
-            app.app,
-            useExistingInstalledInfo
-                ? app.installedInfo
-                : await getInstalledInfo(app.app.id));
+        var moddedApp =
+            getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
         if (moddedApp != null) {
           modifiedApps.add(moddedApp);
         }
@@ -795,6 +783,7 @@ class AppsProvider with ChangeNotifier {
             .where((a) => a.installedVersion == null)
             .map((e) => e.id)
             .toList();
+        // After reconciliation, delete externally uninstalled Apps if needed
         if (removedAppIds.isNotEmpty) {
           var settingsProvider = SettingsProvider();
           await settingsProvider.initializeSettings();
@@ -804,6 +793,9 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }
+
+    loadingApps = false;
+    notifyListeners();
   }
 
   Future<void> saveApps(List<App> apps,
