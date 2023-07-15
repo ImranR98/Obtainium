@@ -725,21 +725,12 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
     var sp = SourceProvider();
     List<List<String>> errors = [];
-    List<FileSystemEntity> newApps = (await getAppsDir())
+    List<App?> newApps = (await getAppsDir()) // Parse Apps from JSON
         .listSync()
         .where((item) => item.path.toLowerCase().endsWith('.json'))
-        .toList();
-    for (var e in newApps) {
+        .map((e) {
       try {
-        var app = App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
-        try {
-          var info = await getInstalledInfo(app.id);
-          sp.getSource(app.url, overrideSource: app.overrideSource);
-          apps[app.id] = AppInMemory(app, null, info);
-          notifyListeners();
-        } catch (e) {
-          errors.add([app.id, app.finalName, e.toString()]);
-        }
+        return App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
       } catch (err) {
         if (err is FormatException) {
           logs.add('Corrupt JSON when loading App (will be ignored): $e');
@@ -747,6 +738,30 @@ class AppsProvider with ChangeNotifier {
         } else {
           rethrow;
         }
+      }
+    }).toList();
+    for (var app in newApps) {
+      // Put Apps into memory to list them (fast)
+      if (app != null) {
+        try {
+          apps[app.id] = AppInMemory(app, null, null);
+        } catch (e) {
+          errors.add([app.id, app.finalName, e.toString()]);
+        }
+      }
+    }
+    notifyListeners();
+    for (var app in newApps) {
+      // Check install status for each App (slow)
+      if (app != null) {
+        try {
+          apps[app.id]?.installedInfo = await getInstalledInfo(app.id);
+          sp.getSource(app.url, overrideSource: app.overrideSource);
+        } catch (e) {
+          apps.remove(app.id);
+          errors.add([app.id, app.finalName, e.toString()]);
+        }
+        notifyListeners();
       }
     }
     if (errors.isNotEmpty) {
