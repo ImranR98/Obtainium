@@ -7,7 +7,7 @@
     "appIdMismatch": "ID загруженного пакета не совпадает с существующим ID приложения",
     "functionNotImplemented": "Этот класс не реализовал эту функцию",
     "placeholder": "Заполнитель",
-    "someErrors": "Произошли некоторые ошибки",
+    "someErrors": "Возникли некоторые ошибки",
     "unexpectedError": "Неожиданная ошибка",
     "ok": "Окей",
     "and": "и",
@@ -121,7 +121,7 @@
     "followSystem": "Следовать системе",
     "obtainium": "Obtainium",
     "materialYou": "Material You",
-    "useBlackTheme": "Использовать темную тему",
+    "useBlackTheme": "Использовать чёрную тему",
     "appSortBy": "Сортировка приложений по",
     "authorName": "Автор/Название",
     "nameAuthor": "Название/Автор",
@@ -132,7 +132,7 @@
     "bgUpdateCheckInterval": "Интервал проверки обновлений в фоновом режиме",
     "neverManualOnly": "Никогда - Только вручную",
     "appearance": "Внешний вид",
-    "showWebInAppView": "Показывать веб-страницу источника в представлении приложения",
+    "showWebInAppView": "Показывать исходную веб-страницу в представлении приложения",
     "pinUpdates": "Закрепить обновления сверху списка приложений",
     "updates": "Обновления",
     "sourceSpecific": "Специфика источника",
@@ -232,11 +232,11 @@
     "gitlabPATLabel": "Персональный токен доступа GitLab (Включает поиск)",
     "about": "О приложении",
     "requiresCredentialsInSettings": "Для этого требуются дополнительные учетные данные (в настройках)",
-    "checkOnStart": "Проверить один раз при запуске",
+    "checkOnStart": "Проверять наличие обновлений при запуске",
     "tryInferAppIdFromCode": "Попытаться определить ID приложения из исходного кода",
-    "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
-    "pickHighestVersionCode": "Auto-select highest version code APK",
-    "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
+    "removeOnExternalUninstall": "Автоматически удалять удаленные извне приложения",
+    "pickHighestVersionCode": "Автовыбор кода наивысшей версии APK",
+    "checkUpdateOnDetailPage": "Проверять наличие обновлений при открытии страницы представления приложения",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"
@@ -278,11 +278,11 @@
         "other": "Очищено {n} журналов (до = {before}, после = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "У {} и еще 1 приложения есть обновления.",
-        "other": "{} and {} more apps have updates."
+        "one": "У {} и еще 1 приложения есть обновление.",
+        "other": "У {} и ещё {} приложений есть обновления."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} and 1 more app were updated.",
-        "other": "У {} и еще {} приложений есть обновления."
+        "one": "{} и еще 1 приложение были обновлены.",
+        "other": "{} и еще {} приложений были обновлены."
     }
 }
