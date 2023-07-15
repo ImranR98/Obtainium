@@ -14,6 +14,10 @@ class FDroidRepo extends AppSource {
             label: tr('appIdOrName'),
             hint: tr('reposHaveMultipleApps'),
             required: true)
+      ],
+      [
+        GeneratedFormSwitch('pickHighestVersionCode',
+            label: tr('pickHighestVersionCode'), defaultValue: false)
       ]
     ];
   }
@@ -24,6 +28,7 @@ class FDroidRepo extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appIdOrName = additionalSettings['appIdOrName'];
+    bool pickHighestVersionCode = additionalSettings['pickHighestVersionCode'];
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
@@ -62,10 +67,19 @@ class FDroidRepo extends AppSource {
       if (latestVersion == null) {
         throw NoVersionError();
       }
-      List<String> apkUrls = releases
+      var latestVersionReleases = releases
           .where((element) =>
               element.querySelector('version')?.innerHtml == latestVersion &&
               element.querySelector('apkname') != null)
+          .toList();
+      if (latestVersionReleases.length > 1 && pickHighestVersionCode) {
+        latestVersionReleases.sort((e1, e2) {
+          return int.parse(e2.querySelector('versioncode')!.innerHtml)
+              .compareTo(int.parse(e1.querySelector('versioncode')!.innerHtml));
+        });
+        latestVersionReleases = [latestVersionReleases[0]];
+      }
+      List<String> apkUrls = latestVersionReleases
           .map((e) => '$standardUrl/${e.querySelector('apkname')!.innerHtml}')
           .toList();
       return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),

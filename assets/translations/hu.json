@@ -234,6 +234,7 @@
     "checkOnStart": "Egyszer az indításkor",
     "tryInferAppIdFromCode": "Próbálja kikövetkeztetni az app azonosítót a forráskódból",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
+    "pickHighestVersionCode": "Auto-select highest version code APK",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

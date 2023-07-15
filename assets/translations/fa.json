@@ -235,6 +235,7 @@
     "checkOnStart": "بررسی در شروع",
     "tryInferAppIdFromCode": "شناسه برنامه را از کد منبع استنباط کنید",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
+    "pickHighestVersionCode": "Auto-select highest version code APK",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

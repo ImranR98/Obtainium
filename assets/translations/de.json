@@ -235,6 +235,7 @@
     "checkOnStart": "Überprüfe einmalig beim Start",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
+    "pickHighestVersionCode": "Auto-select highest version code APK",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
