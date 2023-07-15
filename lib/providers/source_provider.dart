@@ -594,9 +594,7 @@ class SourceProvider {
     }
     String apkVersion = apk.version.replaceAll('/', '-');
     var name = currentApp != null ? currentApp.name.trim() : '';
-    name = name.isNotEmpty
-        ? name
-        : apk.names.name[0].toUpperCase() + apk.names.name.substring(1);
+    name = name.isNotEmpty ? name : apk.names.name;
     return App(
         currentApp?.id ??
             ((!source.appIdInferIsOptional ||
@@ -606,7 +604,7 @@ class SourceProvider {
                 : null) ??
             generateTempID(standardUrl, additionalSettings),
         standardUrl,
-        apk.names.author[0].toUpperCase() + apk.names.author.substring(1),
+        apk.names.author,
         name,
         currentApp?.installedVersion,
         apkVersion,
