@@ -57,6 +57,11 @@ class _AppPageState extends State<AppPage> {
         app?.app.additionalSettings['versionDetection'] ==
             'standardVersionDetection';
 
+    bool installedVersionIsEstimate = trackOnly ||
+        (app?.app.installedVersion != null &&
+            app?.app.additionalSettings['versionDetection'] ==
+                'noVersionDetection');
+
     getInfoColumn() => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -92,9 +97,7 @@ class _AppPageState extends State<AppPage> {
                         app?.app.latestVersion ?? tr('unknown')
                       ])}\n${tr('installedVersionX', args: [
                         app?.app.installedVersion ?? tr('none')
-                      ])}${trackOnly ? ' ${tr('estimateInBrackets')}\n\n${tr('xIsTrackOnly', args: [
-                          tr('app')
-                        ])}' : ''}',
+                      ])}${installedVersionIsEstimate ? '\n${tr('estimateInBrackets')}' : ''}',
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge!,
                 ),
@@ -105,11 +108,14 @@ class _AppPageState extends State<AppPage> {
               Column(
                 children: [
                   const SizedBox(
-                    height: 4,
+                    height: 16,
                   ),
                   Text(
-                    tr('noVersionDetection'),
+                    '${trackOnly ? '${tr('xIsTrackOnly', args: [
+                            tr('app')
+                          ])}\n' : ''}${tr('noVersionDetection')}',
                     style: Theme.of(context).textTheme.labelSmall,
+                    textAlign: TextAlign.center,
                   )
                 ],
               ),
