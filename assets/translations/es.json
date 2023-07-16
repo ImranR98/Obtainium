@@ -238,6 +238,7 @@
     "pickHighestVersionCode": "Auto-select highest version code APK",
     "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "disablePageTransitions": "Disable page transition animations",
+    "reversePageTransitions": "Reverse page transition animations",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"

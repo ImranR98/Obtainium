@@ -94,7 +94,9 @@ class _HomePageState extends State<HomePage> {
             duration: Duration(
                 milliseconds:
                     settingsProvider.disablePageTransitions ? 0 : 300),
-            reverse: isReversing,
+            reverse: settingsProvider.reversePageTransitions
+                ? !isReversing
+                : isReversing,
             transitionBuilder: (
               Widget child,
               Animation<double> animation,

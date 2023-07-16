@@ -411,6 +411,21 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('reversePageTransitions'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.reversePageTransitions,
+                                    onChanged: (value) {
+                                      settingsProvider.reversePageTransitions =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('categories'),

@@ -300,4 +300,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('disablePageTransitions', show);
     notifyListeners();
   }
+
+  bool get reversePageTransitions {
+    return prefs?.getBool('reversePageTransitions') ?? false;
+  }
+
+  set reversePageTransitions(bool show) {
+    prefs?.setBool('reversePageTransitions', show);
+    notifyListeners();
+  }
 }
