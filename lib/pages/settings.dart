@@ -396,6 +396,21 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('disablePageTransitions'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.disablePageTransitions,
+                                    onChanged: (value) {
+                                      settingsProvider.disablePageTransitions =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('categories'),

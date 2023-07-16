@@ -291,4 +291,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('checkUpdateOnDetailPage', show);
     notifyListeners();
   }
+
+  bool get disablePageTransitions {
+    return prefs?.getBool('disablePageTransitions') ?? false;
+  }
+
+  set disablePageTransitions(bool show) {
+    prefs?.setBool('disablePageTransitions', show);
+    notifyListeners();
+  }
 }

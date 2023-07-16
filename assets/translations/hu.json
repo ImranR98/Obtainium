@@ -236,6 +236,7 @@
     "removeOnExternalUninstall": "A külsőleg eltávolított appok auto. eltávolítása",
     "pickHighestVersionCode": "A legmagasabb verziószámú APK auto. kiválasztása",
     "checkUpdateOnDetailPage": "Frissítések keresése az app részleteit tartalmazó oldal megnyitásakor",
+    "disablePageTransitions": "Disable page transition animations",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
