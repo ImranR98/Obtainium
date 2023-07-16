@@ -341,20 +341,33 @@ class AppsProvider with ChangeNotifier {
 
   Future<void> installXApkDir(DownloadedXApkDir dir,
       {bool silent = false}) async {
+    // We don't know which APKs in an XAPK are supported by the user's device
+    // So we try installing all of them and assume success if at least one installed
+    // If 0 APKs installed, throw the first install error encountered
     try {
       var somethingInstalled = false;
+      var firstError = null;
       for (var file in dir.extracted
           .listSync(recursive: true, followLinks: false)
           .whereType<File>()) {
         if (file.path.toLowerCase().endsWith('.apk')) {
-          somethingInstalled = somethingInstalled ||
-              await installApk(DownloadedApk(dir.appId, file), silent: silent);
+          try {
+            somethingInstalled = somethingInstalled ||
+                await installApk(DownloadedApk(dir.appId, file),
+                    silent: silent);
+          } catch (e) {
+            logs.add(
+                'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
+            firstError ??= e;
+          }
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
         }
       }
       if (somethingInstalled) {
         dir.file.delete(recursive: true);
+      } else if (firstError) {
+        throw firstError;
       }
     } finally {
       dir.extracted.delete(recursive: true);

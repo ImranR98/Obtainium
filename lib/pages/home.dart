@@ -7,6 +7,7 @@ import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     AppsProvider appsProvider = context.watch<AppsProvider>();
+    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
     setIsReversing(int targetIndex) {
       bool reversing = selectedIndexHistory.isNotEmpty &&
@@ -89,7 +91,12 @@ class _HomePageState extends State<HomePage> {
         child: Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           body: PageTransitionSwitcher(
-            reverse: isReversing,
+            duration: Duration(
+                milliseconds:
+                    settingsProvider.disablePageTransitions ? 0 : 300),
+            reverse: settingsProvider.reversePageTransitions
+                ? !isReversing
+                : isReversing,
             transitionBuilder: (
               Widget child,
               Animation<double> animation,

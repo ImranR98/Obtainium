@@ -237,6 +237,8 @@
     "removeOnExternalUninstall": "Автоматически убирать из списка удаленные извне приложения",
     "pickHighestVersionCode": "Автовыбор кода наивысшей версии APK",
     "checkUpdateOnDetailPage": "Проверять наличие обновлений при открытии страницы представления приложения",
+    "disablePageTransitions": "Disable page transition animations",
+    "reversePageTransitions": "Reverse page transition animations",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

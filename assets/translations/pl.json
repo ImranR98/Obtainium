@@ -241,6 +241,8 @@
     "removeOnExternalUninstall": "Automatyczne usuń odinstalowane zewnętrznie aplikacje",
     "pickHighestVersionCode": "Automatycznie wybierz najwyższy kod wersji APK",
     "checkUpdateOnDetailPage": "Sprawdzaj aktualizacje podczas otwierania strony szczegółów aplikacji",
+    "disablePageTransitions": "Disable page transition animations",
+    "reversePageTransitions": "Reverse page transition animations",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
