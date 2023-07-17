@@ -211,8 +211,8 @@ class GitHub extends AppSource {
                 (nameA as String).substring(matchA!.start, matchA.end),
                 (nameB as String).substring(matchB!.start, matchB.end));
           } else {
-            return getReleaseDateFromRelease(a)!
-                .compareTo(getReleaseDateFromRelease(b)!);
+            return (getReleaseDateFromRelease(a) ?? DateTime(1))
+                .compareTo(getReleaseDateFromRelease(b) ?? DateTime(0));
           }
         }
       });
