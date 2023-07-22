@@ -370,6 +370,36 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     }) ??
                     [const SizedBox.shrink()],
                 (values[widget.items[r][e].key]
+                as Map<String, MapEntry<int, bool>>?)
+                    ?.values
+                    .where((e) => e.value)
+                    .length == 1
+                    ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          var temp = values[widget.items[r][e].key]
+                              as Map<String, MapEntry<int, bool>>;
+                          // get selected category str where bool is true
+                          final oldEntry = temp.entries.firstWhere((entry) => entry.value.value);
+                          // generate new color, ensure it is not the same
+                          int newColor = oldEntry.value.key;
+                          while(oldEntry.value.key == newColor) {
+                            newColor = generateRandomLightColor().value;
+                          }
+                          // Update entry with new color, remain selected
+                          temp.update(oldEntry.key, (old) => MapEntry(newColor, old.value));
+                          values[widget.items[r][e].key] = temp;
+                          someValueChanged();
+                        });
+                      },
+                      icon: const Icon(Icons.format_color_fill_rounded),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: tr('colour'),
+                    ))
+                    : const SizedBox.shrink(),
+                (values[widget.items[r][e].key]
                                 as Map<String, MapEntry<int, bool>>?)
                             ?.values
                             .where((e) => e.value)
