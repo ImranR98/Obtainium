@@ -39,7 +39,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('es'), 'Español'),
   MapEntry(Locale('pl'), 'Polski'),
   MapEntry(Locale('ru'), 'Русский язык'),
-  MapEntry(Locale('bs'), 'Bosanski'),
+  MapEntry(Locale('bs'), 'Bosanski'),Z
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
