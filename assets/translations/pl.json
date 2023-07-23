@@ -12,7 +12,7 @@
     "noVersionFound": "Nie można określić wersji wydania",
     "urlMatchesNoSource": "Adres URL nie pasuje do znanego źródła",
     "cantInstallOlderVersion": "Nie można zainstalować starszej wersji aplikacji",
-    "appIdMismatch": "Pobrany identyfikator pakietu nie pasuje do istniejącego identyfikatora aplikacji",
+    "appIdMismatch": "Pobrane ID pakietu nie pasuje do istniejącego ID aplikacji",
     "functionNotImplemented": "Ta klasa nie zaimplementowała tej funkcji",
     "placeholder": "Placeholder",
     "someErrors": "Wystąpiły pewne błędy",
@@ -230,7 +230,7 @@
     "autoApkFilterByArch": "Spróbuj filtrować pliki APK według architektury procesora, jeśli to możliwe",
     "overrideSource": "Nadpisz źródło",
     "dontShowAgain": "Nie pokazuj tego ponownie",
-    "dontShowTrackOnlyWarnings": "Nie wyświetlaj ostrzeżeń „Tylko obserwowana”",
+    "dontShowTrackOnlyWarnings": "Nie pokazuj ostrzeżeń „Tylko obserwowana”",
     "dontShowAPKOriginWarnings": "Nie pokazuj ostrzeżeń o pochodzeniu APK",
     "moveNonInstalledAppsToBottom": "Przenieś niezainstalowane aplikacje na dół widoku aplikacji",
     "gitlabPATLabel": "Osobisty token dostępu GitLab\n(Umożliwia wyszukiwanie i lepsze wykrywanie APK)",
@@ -241,8 +241,8 @@
     "removeOnExternalUninstall": "Automatyczne usuń odinstalowane zewnętrznie aplikacje",
     "pickHighestVersionCode": "Automatycznie wybierz najwyższy kod wersji APK",
     "checkUpdateOnDetailPage": "Sprawdzaj aktualizacje podczas otwierania strony szczegółów aplikacji",
-    "disablePageTransitions": "Disable page transition animations",
-    "reversePageTransitions": "Reverse page transition animations",
+    "disablePageTransitions": "Wyłącz animacje przejścia między stronami",
+    "reversePageTransitions": "Odwróć animacje przejścia pomiędzy stronami",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
