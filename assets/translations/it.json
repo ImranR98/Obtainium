@@ -239,6 +239,7 @@
     "checkUpdateOnDetailPage": "Check for updates on opening an App detail page",
     "disablePageTransitions": "Disable page transition animations",
     "reversePageTransitions": "Reverse page transition animations",
+    "minStarCount": "Minimum Star Count",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

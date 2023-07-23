@@ -72,7 +72,8 @@ class FDroid extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query,
+      {Map<String, dynamic> querySettings = const {}}) async {
     Response res = await sourceRequest(
         'https://search.$host/?q=${Uri.encodeQueryComponent(query)}');
     if (res.statusCode == 200) {

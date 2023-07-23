@@ -69,7 +69,8 @@ class GitLab extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query,
+      {Map<String, dynamic> querySettings = const {}}) async {
     String? PAT = await getPATIfAny();
     if (PAT == null) {
       throw CredsNeededError(name);

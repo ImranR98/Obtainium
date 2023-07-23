@@ -436,7 +436,9 @@ abstract class AppSource {
   }
 
   bool canSearch = false;
-  Future<Map<String, List<String>>> search(String query) {
+  List<GeneratedFormItem> searchQuerySettingFormItems = [];
+  Future<Map<String, List<String>>> search(String query,
+      {Map<String, dynamic> querySettings = const {}}) {
     throw NotImplementedError();
   }
 
