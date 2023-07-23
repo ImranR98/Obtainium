@@ -239,7 +239,7 @@
     "checkUpdateOnDetailPage": "Проверять наличие обновлений при открытии страницы представления приложения",
     "disablePageTransitions": "Отключить анимацию перехода между страницами",
     "reversePageTransitions": "Реверс анимации перехода между страницами",
-    "minStarCount": "Minimum Star Count",
+    "minStarCount": "Минимальное количество звёзд",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"
