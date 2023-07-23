@@ -326,6 +326,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.2.2"
+  hsluv:
+    dependency: "direct main"
+    description:
+      name: hsluv
+      sha256: f33e63b0c24ceee0f6492874424aa8edc671ef9a20cc889e4b969284d8f02eb1
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.3"
   html:
     dependency: "direct main"
     description:

@@ -237,8 +237,8 @@
     "removeOnExternalUninstall": "外部でアンインストールされたアプリを自動的に削除する",
     "pickHighestVersionCode": "最も高いバージョンコードのAPKを自動的に選択する",
     "checkUpdateOnDetailPage": "アプリの詳細ページを開く際にアップデートを確認する",
-    "disablePageTransitions": "Disable page transition animations",
-    "reversePageTransitions": "Reverse page transition animations",
+    "disablePageTransitions": "ページ遷移アニメーションを無効化する",
+    "reversePageTransitions": "ページ遷移アニメーションを反転する",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
