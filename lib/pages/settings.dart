@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -19,21 +17,6 @@ class SettingsPage extends StatefulWidget {
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
-}
-
-// Generates a random light color
-// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
-Color generateRandomLightColor() {
-  // Create a random number generator
-  final Random random = Random();
-
-  // Generate random hue, saturation, and value values
-  final double hue = random.nextDouble() * 360;
-  final double saturation = 0.5 + random.nextDouble() * 0.5;
-  final double value = 0.9 + random.nextDouble() * 0.1;
-
-  // Create a HSV color with the random values
-  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
