@@ -144,6 +144,24 @@ class AppsProvider with ChangeNotifier {
     }();
   }
 
+  Future<File> downloadFileWithRetry(
+      String url, String fileNameNoExt, Function? onProgress,
+      {bool useExisting = true,
+      Map<String, String>? headers,
+      int retries = 3}) async {
+    try {
+      return await downloadFile(url, fileNameNoExt, onProgress,
+          useExisting: useExisting, headers: headers);
+    } catch (e) {
+      if (retries > 0 && e is ClientException) {
+        return await downloadFileWithRetry(url, fileNameNoExt, onProgress,
+            useExisting: useExisting, headers: headers, retries: (retries - 1));
+      } else {
+        rethrow;
+      }
+    }
+  }
+
   Future<File> downloadFile(
       String url, String fileNameNoExt, Function? onProgress,
       {bool useExisting = true, Map<String, String>? headers}) async {
@@ -236,8 +254,9 @@ class AppsProvider with ChangeNotifier {
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
-      var downloadedFile = await downloadFile(downloadUrl, fileNameNoExt,
-          headers: source.requestHeaders, (double? progress) {
+      var downloadedFile = await downloadFileWithRetry(
+          downloadUrl, fileNameNoExt, headers: source.requestHeaders,
+          (double? progress) {
         int? prog = progress?.ceil();
         if (apps[app.id] != null) {
           apps[app.id]!.downloadProgress = progress;
