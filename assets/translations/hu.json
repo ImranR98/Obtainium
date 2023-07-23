@@ -236,9 +236,9 @@
     "removeOnExternalUninstall": "A külsőleg eltávolított appok auto. eltávolítása",
     "pickHighestVersionCode": "A legmagasabb verziószámú APK auto. kiválasztása",
     "checkUpdateOnDetailPage": "Frissítések keresése az app részleteit tartalmazó oldal megnyitásakor",
-    "disablePageTransitions": "Disable page transition animations",
-    "reversePageTransitions": "Reverse page transition animations",
-    "minStarCount": "Minimum Star Count",
+    "disablePageTransitions": "Lap áttűnési animációk tiltása",
+    "reversePageTransitions": "Fordított lap áttűnési animációk",
+    "minStarCount": "Minimális csillag szám",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
