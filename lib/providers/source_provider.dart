@@ -449,8 +449,11 @@ abstract class AppSource {
 }
 
 ObtainiumError getObtainiumHttpError(Response res) {
-  return ObtainiumError(res.reasonPhrase ??
-      tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
+  return ObtainiumError((res.reasonPhrase != null &&
+          res.reasonPhrase != null &&
+          res.reasonPhrase!.isNotEmpty)
+      ? res.reasonPhrase!
+      : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
 }
 
 abstract class MassAppUrlSource {
