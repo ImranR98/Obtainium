@@ -346,7 +346,7 @@ class AppsProvider with ChangeNotifier {
     // If 0 APKs installed, throw the first install error encountered
     try {
       var somethingInstalled = false;
-      var firstError = null;
+      Object? firstError;
       for (var file in dir.extracted
           .listSync(recursive: true, followLinks: false)
           .whereType<File>()) {
@@ -366,7 +366,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (somethingInstalled) {
         dir.file.delete(recursive: true);
-      } else if (firstError) {
+      } else if (firstError != null) {
         throw firstError;
       }
     } finally {
