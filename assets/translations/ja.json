@@ -239,6 +239,7 @@
     "checkUpdateOnDetailPage": "アプリの詳細ページを開く際にアップデートを確認する",
     "disablePageTransitions": "ページ遷移アニメーションを無効化する",
     "reversePageTransitions": "ページ遷移アニメーションを反転する",
+    "minStarCount": "Minimum Star Count",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

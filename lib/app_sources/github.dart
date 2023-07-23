@@ -79,6 +79,21 @@ class GitHub extends AppSource {
     ];
 
     canSearch = true;
+    searchQuerySettingFormItems = [
+      GeneratedFormTextField('minStarCount',
+          label: tr('minStarCount'),
+          defaultValue: '0',
+          additionalValidators: [
+            (value) {
+              try {
+                int.parse(value ?? '0');
+              } catch (e) {
+                return tr('invalidInput');
+              }
+              return null;
+            }
+          ])
+    ];
   }
 
   @override
@@ -211,8 +226,8 @@ class GitHub extends AppSource {
                 (nameA as String).substring(matchA!.start, matchA.end),
                 (nameB as String).substring(matchB!.start, matchB.end));
           } else {
-            return getReleaseDateFromRelease(a)!
-                .compareTo(getReleaseDateFromRelease(b)!);
+            return (getReleaseDateFromRelease(a) ?? DateTime(1))
+                .compareTo(getReleaseDateFromRelease(b) ?? DateTime(0));
           }
         }
       });
@@ -310,20 +325,26 @@ class GitHub extends AppSource {
 
   Future<Map<String, List<String>>> searchCommon(
       String query, String requestUrl, String rootProp,
-      {Function(Response)? onHttpErrorCode}) async {
+      {Function(Response)? onHttpErrorCode,
+      Map<String, dynamic> querySettings = const {}}) async {
     Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
+      int minStarCount = querySettings['minStarCount'] != null
+          ? int.parse(querySettings['minStarCount'])
+          : 0;
       Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {
-        urlsWithDescriptions.addAll({
-          e['html_url'] as String: [
-            e['full_name'] as String,
-            ((e['archived'] == true ? '[ARCHIVED] ' : '') +
-                (e['description'] != null
-                    ? e['description'] as String
-                    : tr('noDescription')))
-          ]
-        });
+        if ((e['stargazers_count'] ?? e['stars_count'] ?? 0) >= minStarCount) {
+          urlsWithDescriptions.addAll({
+            e['html_url'] as String: [
+              e['full_name'] as String,
+              ((e['archived'] == true ? '[ARCHIVED] ' : '') +
+                  (e['description'] != null
+                      ? e['description'] as String
+                      : tr('noDescription')))
+            ]
+          });
+        }
       }
       return urlsWithDescriptions;
     } else {
@@ -335,13 +356,14 @@ class GitHub extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query,
+      {Map<String, dynamic> querySettings = const {}}) async {
     return searchCommon(
         query,
         '${await getAPIHost()}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
         'items', onHttpErrorCode: (Response res) {
       rateLimitErrorCheck(res);
-    });
+    }, querySettings: querySettings);
   }
 
   rateLimitErrorCheck(Response res) {

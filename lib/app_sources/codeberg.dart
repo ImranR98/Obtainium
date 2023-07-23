@@ -5,6 +5,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Codeberg extends AppSource {
+  GitHub gh = GitHub();
   Codeberg() {
     host = 'codeberg.org';
 
@@ -32,9 +33,8 @@ class Codeberg extends AppSource {
     ];
 
     canSearch = true;
+    searchQuerySettingFormItems = gh.searchQuerySettingFormItems;
   }
-
-  var gh = GitHub();
 
   @override
   String sourceSpecificStandardizeURL(String url) {
@@ -68,10 +68,12 @@ class Codeberg extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query) async {
+  Future<Map<String, List<String>>> search(String query,
+      {Map<String, dynamic> querySettings = const {}}) async {
     return gh.searchCommon(
         query,
         'https://$host/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
-        'data');
+        'data',
+        querySettings: querySettings);
   }
 }

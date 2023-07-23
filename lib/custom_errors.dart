@@ -1,6 +1,7 @@
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -101,7 +102,14 @@ showError(dynamic e, BuildContext context) {
             title: Text(e is MultiAppMultiError
                 ? tr('someErrors')
                 : tr('unexpectedError')),
-            content: Text(e.toString()),
+            content: GestureDetector(
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: e.toString()));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(tr('copiedToClipboard')),
+                  ));
+                },
+                child: Text(e.toString())),
             actions: [
               TextButton(
                   onPressed: () {

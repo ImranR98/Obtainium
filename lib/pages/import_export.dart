@@ -182,7 +182,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   [
                     GeneratedFormTextField('searchQuery',
                         label: tr('searchQuery'))
-                  ]
+                  ],
+                  ...source.searchQuerySettingFormItems.map((e) => [e])
                 ],
               );
             });
@@ -191,8 +192,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
           setState(() {
             importInProgress = true;
           });
-          var urlsWithDescriptions =
-              await source.search(values['searchQuery'] as String);
+          var urlsWithDescriptions = await source
+              .search(values['searchQuery'] as String, querySettings: values);
           if (urlsWithDescriptions.isNotEmpty) {
             var selectedUrls =
                 // ignore: use_build_context_synchronously

@@ -239,6 +239,7 @@
    "checkUpdateOnDetailPage": "Provjerite ima li novosti pri otvaranju stranice s detaljima aplikacije",
    "disablePageTransitions": "Ugasite animaciju prijelaza stranice",
    "reversePageTransitions": "Reverzne animacije prijelaza stranice",
+   "minStarCount": "Minimum Star Count",
    "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"
