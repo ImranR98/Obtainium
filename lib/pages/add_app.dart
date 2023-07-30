@@ -41,6 +41,7 @@ class _AddAppPageState extends State<AddAppPage> {
   @override
   Widget build(BuildContext context) {
     AppsProvider appsProvider = context.read<AppsProvider>();
+    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
     bool doingSomething = gettingAppInfo || searching;
 
@@ -85,8 +86,7 @@ class _AddAppPageState extends State<AddAppPage> {
       }
     }
 
-    Future<bool> getTrackOnlyConfirmationIfNeeded(
-        bool userPickedTrackOnly, SettingsProvider settingsProvider,
+    Future<bool> getTrackOnlyConfirmationIfNeeded(bool userPickedTrackOnly,
         {bool ignoreHideSetting = false}) async {
       var useTrackOnly = userPickedTrackOnly || pickedSource!.enforceTrackOnly;
       if (useTrackOnly &&
@@ -138,11 +138,9 @@ class _AddAppPageState extends State<AddAppPage> {
         gettingAppInfo = true;
       });
       try {
-        var settingsProvider = context.read<SettingsProvider>();
         var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
         App? app;
-        if ((await getTrackOnlyConfirmationIfNeeded(
-                userPickedTrackOnly, settingsProvider)) &&
+        if ((await getTrackOnlyConfirmationIfNeeded(userPickedTrackOnly)) &&
             (await getReleaseDateAsVersionConfirmationIfNeeded(
                 userPickedTrackOnly))) {
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
@@ -410,7 +408,13 @@ class _AddAppPageState extends State<AddAppPage> {
             ),
             GeneratedForm(
                 key: Key(pickedSource.runtimeType.toString()),
-                items: pickedSource!.combinedAppSpecificSettingFormItems,
+                items: [
+                  ...pickedSource!.combinedAppSpecificSettingFormItems,
+                  ...(pickedSourceOverride != null
+                      ? pickedSource!.sourceConfigSettingFormItems
+                          .map((e) => [e])
+                      : [])
+                ],
                 onValueChanges: (values, valid, isBuilding) {
                   if (!isBuilding) {
                     setState(() {
@@ -504,6 +508,18 @@ class _AddAppPageState extends State<AddAppPage> {
                                   HTML().runtimeType.toString()))
                         getHTMLSourceOverrideDropdown(),
                       if (shouldShowSearchBar()) getSearchBarRow(),
+                      if (pickedSource != null)
+                        FutureBuilder(
+                            builder: (ctx, val) {
+                              return val.data != null && val.data!.isNotEmpty
+                                  ? Text(
+                                      val.data!,
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    )
+                                  : const SizedBox();
+                            },
+                            future: pickedSource?.getSourceNote()),
                       const SizedBox(
                         height: 16,
                       ),

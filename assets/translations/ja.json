@@ -240,6 +240,10 @@
     "disablePageTransitions": "ページ遷移アニメーションを無効化する",
     "reversePageTransitions": "ページ遷移アニメーションを反転する",
     "minStarCount": "Minimum Star Count",
+    "addInfoBelow": "Add this info below.",
+    "addInfoInSettings": "Add this info in the Settings.",
+    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
+    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

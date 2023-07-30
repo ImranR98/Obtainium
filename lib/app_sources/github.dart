@@ -16,7 +16,7 @@ class GitHub extends AppSource {
     host = 'github.com';
     appIdInferIsOptional = true;
 
-    additionalSourceSpecificSettingFormItems = [
+    sourceConfigSettingFormItems = [
       GeneratedFormTextField('github-creds',
           label: tr('githubPATLabel'),
           password: true,
@@ -107,7 +107,7 @@ class GitHub extends AppSource {
     for (var path in possibleBuildGradleLocations) {
       try {
         var res = await sourceRequest(
-            '${await convertStandardUrlToAPIUrl(standardUrl)}/contents/$path');
+            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path');
         if (res.statusCode == 200) {
           try {
             var body = jsonDecode(res.body);
@@ -155,19 +155,30 @@ class GitHub extends AppSource {
     return url.substring(0, match.end);
   }
 
-  Future<String> getCredentialPrefixIfAny() async {
+  Future<String> getCredentialPrefixIfAny(
+      Map<String, dynamic> additionalSettings) async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    String? creds = settingsProvider
-        .getSettingString(additionalSourceSpecificSettingFormItems[0].key);
+    var sourceConfig =
+        await getSourceConfigValues(additionalSettings, settingsProvider);
+    String? creds = sourceConfig['github-creds'];
     return creds != null && creds.isNotEmpty ? '$creds@' : '';
   }
 
-  Future<String> getAPIHost() async =>
-      'https://${await getCredentialPrefixIfAny()}api.$host';
+  @override
+  Future<String?> getSourceNote() async {
+    if (!hostChanged && (await getCredentialPrefixIfAny({})).isEmpty) {
+      return '${tr('githubSourceNote')} ${hostChanged ? tr('addInfoBelow') : tr('addInfoInSettings')}';
+    }
+    return null;
+  }
 
-  Future<String> convertStandardUrlToAPIUrl(String standardUrl) async =>
-      '${await getAPIHost()}/repos${standardUrl.substring('https://$host'.length)}';
+  Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
+      'https://${await getCredentialPrefixIfAny(additionalSettings)}api.$host';
+
+  Future<String> convertStandardUrlToAPIUrl(
+          String standardUrl, Map<String, dynamic> additionalSettings) async =>
+      '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://$host'.length)}';
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
@@ -311,7 +322,7 @@ class GitHub extends AppSource {
   ) async {
     return await getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
         (bool useTagUrl) async {
-      return '${await convertStandardUrlToAPIUrl(standardUrl)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+      return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
     }, (Response res) {
       rateLimitErrorCheck(res);
     });
@@ -360,7 +371,7 @@ class GitHub extends AppSource {
       {Map<String, dynamic> querySettings = const {}}) async {
     return searchCommon(
         query,
-        '${await getAPIHost()}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
+        '${await getAPIHost({})}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
         'items', onHttpErrorCode: (Response res) {
       rateLimitErrorCheck(res);
     }, querySettings: querySettings);
