@@ -431,8 +431,7 @@ class _AppPageState extends State<AppPage> {
                               ? getResetInstallStatusButton()
                               : getInstallOrUpdateButton()),
                       const SizedBox(width: 16.0),
-                      Expanded(
-                          child: TextButton(
+                      IconButton(
                         onPressed: app?.downloadProgress != null
                             ? null
                             : () {
@@ -445,13 +444,9 @@ class _AppPageState extends State<AppPage> {
                                   }
                                 });
                               },
-                        style: TextButton.styleFrom(
-                            foregroundColor:
-                                Theme.of(context).colorScheme.error,
-                            surfaceTintColor:
-                                Theme.of(context).colorScheme.error),
-                        child: Text(tr('remove')),
-                      )),
+                        tooltip: tr('remove'),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
                     ])),
             if (app?.downloadProgress != null)
               Padding(
