@@ -244,10 +244,10 @@
     "disablePageTransitions": "Wyłącz animacje przejścia między stronami",
     "reversePageTransitions": "Odwróć animacje przejścia pomiędzy stronami",
     "minStarCount": "Minimalna ilość gwiazdek",
-    "addInfoBelow": "Add this info below.",
-    "addInfoInSettings": "Add this info in the Settings.",
-    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
-    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
+    "addInfoBelow": "Dodaj tę informację poniżej.",
+    "addInfoInSettings": "Dodaj tę informację w Ustawieniach.",
+    "githubSourceNote": "Limit żądań GitHub można ominąć za pomocą klucza API.",
+    "gitlabSourceNote": "Pozyskiwanie pliku APK z GitLab może nie działać bez klucza API.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
