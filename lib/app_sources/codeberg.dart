@@ -9,8 +9,6 @@ class Codeberg extends AppSource {
   Codeberg() {
     host = 'codeberg.org';
 
-    additionalSourceSpecificSettingFormItems = [];
-
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormSwitch('includePrereleases',
