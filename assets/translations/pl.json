@@ -244,6 +244,10 @@
     "disablePageTransitions": "Wyłącz animacje przejścia między stronami",
     "reversePageTransitions": "Odwróć animacje przejścia pomiędzy stronami",
     "minStarCount": "Minimalna ilość gwiazdek",
+    "addInfoBelow": "Add this info below.",
+    "addInfoInSettings": "Add this info in the Settings.",
+    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
+    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"

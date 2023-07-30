@@ -239,6 +239,10 @@
     "disablePageTransitions": "Lap áttűnési animációk tiltása",
     "reversePageTransitions": "Fordított lap áttűnési animációk",
     "minStarCount": "Minimális csillag szám",
+    "addInfoBelow": "Add this info below.",
+    "addInfoInSettings": "Add this info in the Settings.",
+    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
+    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
