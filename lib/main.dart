@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -101,10 +102,15 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       await appsProvider.checkUpdates(
           ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
     } catch (e) {
-      if (e is RateLimitError || e is SocketException) {
+      if (e is RateLimitError || e is ClientException) {
         var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
-        logs.add(plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes,
-            args: [e.toString(), remainingMinutes.toString()]));
+        logs.add(
+            plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes, args: [
+          e is ClientException
+              ? '${(e).message}, ${e.uri?.path}'
+              : e.toString(),
+          remainingMinutes.toString()
+        ]));
         AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
             Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
           'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
