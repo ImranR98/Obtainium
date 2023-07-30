@@ -240,6 +240,10 @@
     "disablePageTransitions": "禁用页面过渡动画效果",
     "reversePageTransitions": "反转页面过渡动画效果",
     "minStarCount": "最小星标数",
+    "addInfoBelow": "Add this info below.",
+    "addInfoInSettings": "Add this info in the Settings.",
+    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
+    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

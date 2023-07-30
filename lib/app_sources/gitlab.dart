@@ -16,7 +16,7 @@ class GitLab extends AppSource {
     host = 'gitlab.com';
     canSearch = true;
 
-    additionalSourceSpecificSettingFormItems = [
+    sourceConfigSettingFormItems = [
       GeneratedFormTextField('gitlab-creds',
           label: tr('gitlabPATLabel'),
           password: true,
@@ -60,18 +60,27 @@ class GitLab extends AppSource {
     return url.substring(0, match.end);
   }
 
-  Future<String?> getPATIfAny() async {
+  Future<String?> getPATIfAny(Map<String, dynamic> additionalSettings) async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    String? creds = settingsProvider
-        .getSettingString(additionalSourceSpecificSettingFormItems[0].key);
+    var sourceConfig =
+        await getSourceConfigValues(additionalSettings, settingsProvider);
+    String? creds = sourceConfig['gitlab-creds'];
     return creds != null && creds.isNotEmpty ? creds : null;
+  }
+
+  @override
+  Future<String?> getSourceNote() async {
+    if ((await getPATIfAny({})) == null) {
+      return '${tr('gitlabSourceNote')} ${hostChanged ? tr('addInfoBelow') : tr('addInfoInSettings')}';
+    }
+    return null;
   }
 
   @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
-    String? PAT = await getPATIfAny();
+    String? PAT = await getPATIfAny({});
     if (PAT == null) {
       throw CredsNeededError(name);
     }
@@ -103,7 +112,7 @@ class GitLab extends AppSource {
   ) async {
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    String? PAT = await getPATIfAny();
+    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
     Iterable<APKDetails> apkDetailsList = [];
     if (PAT != null) {
       var names = GitHub().getAppNames(standardUrl);

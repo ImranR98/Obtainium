@@ -154,6 +154,7 @@ class AppsProvider with ChangeNotifier {
           useExisting: useExisting, headers: headers);
     } catch (e) {
       if (retries > 0 && e is ClientException) {
+        await Future.delayed(const Duration(seconds: 5));
         return await downloadFileWithRetry(url, fileNameNoExt, onProgress,
             useExisting: useExisting, headers: headers, retries: (retries - 1));
       } else {

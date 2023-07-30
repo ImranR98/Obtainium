@@ -28,6 +28,7 @@ import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
   late String author;
@@ -424,9 +425,28 @@ abstract class AppSource {
   }
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
-  List<GeneratedFormItem> additionalSourceSpecificSettingFormItems = [];
+  // If the source has been overridden, we expect the user to define one-time values as additional settings - don't use the stored values
+  List<GeneratedFormItem> sourceConfigSettingFormItems = [];
+  Future<Map<String, String>> getSourceConfigValues(
+      Map<String, dynamic> additionalSettings,
+      SettingsProvider settingsProvider) async {
+    Map<String, String> results = {};
+    sourceConfigSettingFormItems.forEach((e) {
+      var val = hostChanged
+          ? additionalSettings[e.key]
+          : settingsProvider.getSettingString(e.key);
+      if (val != null) {
+        results[e.key] = val;
+      }
+    });
+    return results;
+  }
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
+    return null;
+  }
+
+  Future<String?> getSourceNote() async {
     return null;
   }
 

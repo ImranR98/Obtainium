@@ -166,9 +166,9 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sourceSpecificFields = sourceProvider.sources.map((e) {
-      if (e.additionalSourceSpecificSettingFormItems.isNotEmpty) {
+      if (e.sourceConfigSettingFormItems.isNotEmpty) {
         return GeneratedForm(
-            items: e.additionalSourceSpecificSettingFormItems.map((e) {
+            items: e.sourceConfigSettingFormItems.map((e) {
               e.defaultValue = settingsProvider.getSettingString(e.key);
               return [e];
             }).toList(),
