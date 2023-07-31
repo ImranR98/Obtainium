@@ -239,11 +239,11 @@
     "checkUpdateOnDetailPage": "アプリの詳細ページを開く際にアップデートを確認する",
     "disablePageTransitions": "ページ遷移アニメーションを無効化する",
     "reversePageTransitions": "ページ遷移アニメーションを反転する",
-    "minStarCount": "Minimum Star Count",
-    "addInfoBelow": "Add this info below.",
-    "addInfoInSettings": "Add this info in the Settings.",
-    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
-    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
+    "minStarCount": "最小スター数",
+    "addInfoBelow": "下部でこの情報を追加してください。",
+    "addInfoInSettings": "設定でこの情報を追加してください。",
+    "githubSourceNote": "GitHubのレート制限はAPIキーを使うことで回避できます。",
+    "gitlabSourceNote": "GitLabのAPK抽出はAPIキーがないと動作しない場合があります。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
