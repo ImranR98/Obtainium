@@ -245,6 +245,7 @@
     "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
     "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

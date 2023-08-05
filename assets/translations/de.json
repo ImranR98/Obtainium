@@ -245,6 +245,7 @@
     "githubSourceNote": "Die GitHub-Ratenbegrenzung kann mit einem API-Schlüssel umgangen werden.",
     "gitlabSourceNote": "GitLab APK-Extraktion funktioniert möglicherweise nicht ohne API-Schlüssel",
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

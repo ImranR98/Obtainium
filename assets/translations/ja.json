@@ -245,6 +245,7 @@
     "githubSourceNote": "GitHubのレート制限はAPIキーを使うことで回避できます。",
     "gitlabSourceNote": "GitLabのAPK抽出はAPIキーがないと動作しない場合があります。",
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

@@ -244,6 +244,7 @@
     "githubSourceNote": "A GitHub értékelési korlátozása elkerülhető API-kulcs használatával.",
     "gitlabSourceNote": "Előfordulhat, hogy a GitLab APK kibontása nem működik API-kulcs nélkül.",
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
