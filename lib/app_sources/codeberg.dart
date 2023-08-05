@@ -1,6 +1,4 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/app_sources/github.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -9,26 +7,8 @@ class Codeberg extends AppSource {
   Codeberg() {
     host = 'codeberg.org';
 
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch('includePrereleases',
-            label: tr('includePrereleases'), defaultValue: false)
-      ],
-      [
-        GeneratedFormSwitch('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'), defaultValue: true)
-      ],
-      [
-        GeneratedFormTextField('filterReleaseTitlesByRegEx',
-            label: tr('filterReleaseTitlesByRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              }
-            ])
-      ]
-    ];
+    additionalSourceAppSpecificSettingFormItems =
+        gh.additionalSourceAppSpecificSettingFormItems;
 
     canSearch = true;
     searchQuerySettingFormItems = gh.searchQuerySettingFormItems;

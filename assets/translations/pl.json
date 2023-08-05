@@ -248,6 +248,8 @@
     "addInfoInSettings": "Dodaj tę informację w Ustawieniach.",
     "githubSourceNote": "Limit żądań GitHub można ominąć za pomocą klucza API.",
     "gitlabSourceNote": "Pozyskiwanie pliku APK z GitLab może nie działać bez klucza API.",
+    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"

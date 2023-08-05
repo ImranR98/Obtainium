@@ -403,10 +403,13 @@ class _SettingsPageState extends State<SettingsPage> {
                                 Switch(
                                     value:
                                         settingsProvider.reversePageTransitions,
-                                    onChanged: (value) {
-                                      settingsProvider.reversePageTransitions =
-                                          value;
-                                    })
+                                    onChanged: settingsProvider
+                                            .disablePageTransitions
+                                        ? null
+                                        : (value) {
+                                            settingsProvider
+                                                .reversePageTransitions = value;
+                                          })
                               ],
                             ),
                             height32,

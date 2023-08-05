@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -85,6 +86,15 @@ bool _isNumeric(String s) {
 }
 
 class HTML extends AppSource {
+  HTML() {
+    additionalSourceAppSpecificSettingFormItems = [
+      [
+        GeneratedFormSwitch('sortByFileNamesNotLinks',
+            label: tr('sortByFileNamesNotLinks'))
+      ]
+    ];
+  }
+
   @override
   // TODO: implement requestHeaders choice, hardcoded for now
   Map<String, String>? get requestHeaders => {
@@ -111,7 +121,9 @@ class HTML extends AppSource {
           .where((element) =>
               Uri.parse(element).path.toLowerCase().endsWith('.apk'))
           .toList();
-      links.sort((a, b) => compareAlphaNumeric(a, b));
+      links.sort((a, b) => additionalSettings['sortByFileNamesNotLinks'] == true
+          ? compareAlphaNumeric(a.split('/').last, b.split('/').last)
+          : compareAlphaNumeric(a, b));
       if (additionalSettings['apkFilterRegEx'] != null) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);
         links = links.where((element) => reg.hasMatch(element)).toList();

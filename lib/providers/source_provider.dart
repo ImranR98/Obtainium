@@ -431,14 +431,14 @@ abstract class AppSource {
       Map<String, dynamic> additionalSettings,
       SettingsProvider settingsProvider) async {
     Map<String, String> results = {};
-    sourceConfigSettingFormItems.forEach((e) {
+    for (var e in sourceConfigSettingFormItems) {
       var val = hostChanged
           ? additionalSettings[e.key]
           : settingsProvider.getSettingString(e.key);
       if (val != null) {
         results[e.key] = val;
       }
-    });
+    }
     return results;
   }
 

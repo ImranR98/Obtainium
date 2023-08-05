@@ -45,7 +45,7 @@
     "addApp": "Ajouter une application",
     "appSourceURL": "URL de la source de l'application",
     "error": "Erreur",
-    "add": "Ajoutée",
+    "add": "Ajouter",
     "searchSomeSourcesLabel": "Rechercher (certaines sources uniquement)",
     "search": "Rechercher",
     "additionalOptsFor": "Options supplémentaires pour {}",
@@ -244,6 +244,8 @@
     "addInfoInSettings": "Add this info in the Settings.",
     "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
     "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
+    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
+    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

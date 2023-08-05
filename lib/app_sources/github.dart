@@ -75,6 +75,16 @@ class GitHub extends AppSource {
                 return regExValidator(value);
               }
             ])
+      ],
+      [
+        GeneratedFormTextField('filterReleaseNotesByRegEx',
+            label: tr('filterReleaseNotesByRegEx'),
+            required: false,
+            additionalValidators: [
+              (value) {
+                return regExValidator(value);
+              }
+            ])
       ]
     ];
 
@@ -196,6 +206,12 @@ class GitHub extends AppSource {
                 true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
+    String? regexNotesFilter =
+        (additionalSettings['filterReleaseNotesByRegEx'] as String?)
+                    ?.isNotEmpty ==
+                true
+            ? additionalSettings['filterReleaseNotesByRegEx']
+            : null;
     Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
@@ -262,6 +278,11 @@ class GitHub extends AppSource {
         }
         if (regexFilter != null &&
             !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
+          continue;
+        }
+        if (regexNotesFilter != null &&
+            !RegExp(regexNotesFilter)
+                .hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);

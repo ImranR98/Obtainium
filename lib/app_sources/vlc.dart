@@ -38,16 +38,14 @@ class VLC extends AppSource {
       }
       String? targetUrl = 'https://$dwUrlBase/$version/';
       Response res2 = await sourceRequest(targetUrl);
-      String mirrorDwBase =
-          'https://plug-mirror.rcac.purdue.edu/vlc/vlc-android/$version/';
       List<String> apkUrls = [];
       if (res2.statusCode == 200) {
         apkUrls = parse(res2.body)
             .querySelectorAll('a')
-            .map((e) => e.attributes['href'])
+            .map((e) => e.attributes['href']?.split('/').last)
             .where((h) =>
                 h != null && h.isNotEmpty && h.toLowerCase().endsWith('.apk'))
-            .map((e) => mirrorDwBase + e!)
+            .map((e) => targetUrl + e!)
             .toList();
       } else {
         throw getObtainiumHttpError(res2);
@@ -55,6 +53,22 @@ class VLC extends AppSource {
 
       return APKDetails(
           version, getApkUrlsFromUrls(apkUrls), AppNames('VideoLAN', 'VLC'));
+    } else {
+      throw getObtainiumHttpError(res);
+    }
+  }
+
+  @override
+  Future<String> apkUrlPrefetchModifier(
+      String apkUrl, String standardUrl) async {
+    Response res = await sourceRequest(apkUrl);
+    if (res.statusCode == 200) {
+      String? apkUrl =
+          parse(res.body).querySelector('#alt_link')?.attributes['href'];
+      if (apkUrl == null) {
+        throw NoAPKError();
+      }
+      return apkUrl;
     } else {
       throw getObtainiumHttpError(res);
     }
