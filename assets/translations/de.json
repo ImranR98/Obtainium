@@ -240,10 +240,10 @@
     "disablePageTransitions": "Animationen für Seitenübergänge deaktivieren",
     "reversePageTransitions": "Umgekehrte Animationen für Seitenübergänge",
     "minStarCount": "Minimale Anzahl von Sternen",
-    "addInfoBelow": "Add this info below.",
-    "addInfoInSettings": "Add this info in the Settings.",
-    "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
-    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
+    "addInfoBelow": "Fügen Sie diese Informationen unten hinzu.",
+    "addInfoInSettings": "Fügen Sie diese Info in den Einstellungen hinzu.",
+    "githubSourceNote": "Die GitHub-Ratenbegrenzung kann mit einem API-Schlüssel umgangen werden.",
+    "gitlabSourceNote": "GitLab APK-Extraktion funktioniert möglicherweise nicht ohne API-Schlüssel",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
