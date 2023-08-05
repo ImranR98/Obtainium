@@ -244,6 +244,7 @@
     "addInfoInSettings": "Добавьте эту информацию в Настройки.",
     "githubSourceNote": "Лимит запросов GitHub можно обойти, используя ключ API.",
     "gitlabSourceNote": "Извлечение APK из GitLab может не работать без ключа API.",
+    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"
