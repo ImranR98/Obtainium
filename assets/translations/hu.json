@@ -245,6 +245,7 @@
     "gitlabSourceNote": "Előfordulhat, hogy a GitLab APK kibontása nem működik API-kulcs nélkül.",
     "sortByFileNamesNotLinks": "Fájlnevek szerinti elrendezés teljes linkek helyett",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",
+    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
