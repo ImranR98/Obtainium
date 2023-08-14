@@ -22,7 +22,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: f09c79eee5be3c60b04760143eb954a13fdd07f1
+      resolved-ref: "2edf5dbbfeeb33257d526861f2a992aee5d97bb4"
       url: "https://github.com/ImranR98/android_package_installer"
     source: git
     version: "0.0.1"
@@ -206,10 +206,10 @@ packages:
     dependency: transitive
     description:
       name: ffi
-      sha256: ed5337a5660c506388a9f012be0288fb38b49020ce2b45fe1f8b8323fe429f99
+      sha256: "7bf0adc28a23d395f19f3f1eb21dd7cfd1dd9f8e1c50051c069122e6853bc878"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "2.1.0"
   file:
     dependency: transitive
     description:
@@ -296,10 +296,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_markdown
-      sha256: "4b1bfbb802d76320a1a46d9ce984106135093efd9d969765d07c2125af107bdf"
+      sha256: "2b206d397dd7836ea60035b2d43825c8a303a76a5098e66f42d55a753e18d431"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.17"
+    version: "0.6.17+1"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -482,10 +482,10 @@ packages:
     dependency: "direct main"
     description:
       name: path_provider
-      sha256: "3087813781ab814e4157b172f1a11c46be20179fcc9bea043e0fba36bc0acaa2"
+      sha256: "909b84830485dbcd0308edf6f7368bc8fd76afa26a270420f34cabea2a6467a0"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.15"
+    version: "2.1.0"
   path_provider_android:
     dependency: transitive
     description:
@@ -642,10 +642,10 @@ packages:
     dependency: transitive
     description:
       name: shared_preferences_foundation
-      sha256: f39696b83e844923b642ce9dd4bd31736c17e697f6731a5adf445b1274cf3cd4
+      sha256: d29753996d8eb8f7619a1f13df6ce65e34bc107bef6330739ed76f18b22310ef
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.2"
+    version: "2.3.3"
   shared_preferences_linux:
     dependency: transitive
     description:
@@ -783,10 +783,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_android
-      sha256: "78cb6dea3e93148615109e58e42c35d1ffbf5ef66c44add673d0ab75f12ff3af"
+      sha256: "3dd2388cc0c42912eee04434531a26a82512b9cb1827e0214430c9bcbddfe025"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.37"
+    version: "6.0.38"
   url_launcher_ios:
     dependency: transitive
     description:
@@ -863,10 +863,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: d936a09fbfd08cb78f7329e0bbacf6158fbdfe24ffc908b22444c07d295eb193
+      sha256: bca797abba472868655b5f1a6029c1132385685ee9db4713cb0e7f33076210c6
       url: "https://pub.dev"
     source: hosted
-    version: "3.9.2"
+    version: "3.9.3"
   webview_flutter_platform_interface:
     dependency: transitive
     description:
@@ -879,10 +879,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_wkwebview
-      sha256: "5fa098f28b606f699e8ca52d9e4e11edbbfef65189f5f77ae92703ba5408fd25"
+      sha256: ed749f94ac9e814d04a258a9255cf69cfa4cc6006ff59542aea7fb4590144972
       url: "https://pub.dev"
     source: hosted
-    version: "3.7.2"
+    version: "3.7.3"
   win32:
     dependency: transitive
     description:
@@ -903,10 +903,10 @@ packages:
     dependency: transitive
     description:
       name: xdg_directories
-      sha256: e0b1147eec179d3911f1f19b59206448f78195ca1d20514134e10641b7d7fbff
+      sha256: f0c26453a2d47aa4c2570c6a033246a3fc62da2fe23c7ffdd0a7495086dc0247
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   xml:
     dependency: transitive
     description:
