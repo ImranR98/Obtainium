@@ -91,7 +91,18 @@ class HTML extends AppSource {
       [
         GeneratedFormSwitch('sortByFileNamesNotLinks',
             label: tr('sortByFileNamesNotLinks'))
-      ]
+      ],
+      [
+        GeneratedFormTextField('customLinkFilterRegex',
+            label: tr('customLinkFilterRegex'),
+            hint: 'download/(.*/)?(android|apk|mobile)',
+            required: false,
+            additionalValidators: [
+              (value) {
+                return regExValidator(value);
+              }
+            ])
+      ],
     ];
   }
 
@@ -99,7 +110,7 @@ class HTML extends AppSource {
   // TODO: implement requestHeaders choice, hardcoded for now
   Map<String, String>? get requestHeaders => {
         "User-Agent":
-            "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0"
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
       };
 
   @override
@@ -115,16 +126,29 @@ class HTML extends AppSource {
     var uri = Uri.parse(standardUrl);
     Response res = await sourceRequest(standardUrl);
     if (res.statusCode == 200) {
-      List<String> links = parse(res.body)
+      var html = parse(res.body);
+      List<String> allLinks = html
           .querySelectorAll('a')
           .map((element) => element.attributes['href'] ?? '')
-          .where((element) =>
-              Uri.parse(element).path.toLowerCase().endsWith('.apk'))
           .toList();
+      List<String> links = [];
+      if ((additionalSettings['customLinkFilterRegex'] as String?)
+              ?.isNotEmpty ==
+          true) {
+        var reg = RegExp(additionalSettings['customLinkFilterRegex']);
+        links = allLinks.where((element) => reg.hasMatch(element)).toList();
+      } else {
+        links = allLinks
+            .where((element) =>
+                Uri.parse(element).path.toLowerCase().endsWith('.apk'))
+            .toList();
+      }
       links.sort((a, b) => additionalSettings['sortByFileNamesNotLinks'] == true
-          ? compareAlphaNumeric(a.split('/').last, b.split('/').last)
+          ? compareAlphaNumeric(a.split('/').where((e) => e.isNotEmpty).last,
+              b.split('/').where((e) => e.isNotEmpty).last)
           : compareAlphaNumeric(a, b));
-      if (additionalSettings['apkFilterRegEx'] != null) {
+      if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty ==
+          true) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);
         links = links.where((element) => reg.hasMatch(element)).toList();
       }
