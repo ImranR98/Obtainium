@@ -110,7 +110,7 @@ class HTML extends AppSource {
   // TODO: implement requestHeaders choice, hardcoded for now
   Map<String, String>? get requestHeaders => {
         "User-Agent":
-            "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0"
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
       };
 
   @override
