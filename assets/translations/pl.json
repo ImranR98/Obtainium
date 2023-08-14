@@ -250,7 +250,7 @@
     "gitlabSourceNote": "Pozyskiwanie pliku APK z GitLab może nie działać bez klucza API.",
     "sortByFileNamesNotLinks": "Sortuj wg nazw plików zamiast pełnych linków",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
-    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "customLinkFilterRegex": "Niestandardowy filtr linków wg. wyrażenia regularnego (domyślnie \".apk$\")",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
