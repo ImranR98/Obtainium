@@ -643,15 +643,15 @@ class AppsPageState extends State<AppsPage> {
                     label: tr('installX', args: [
                       plural('apps', newInstallIdsAllOrSelected.length)
                     ]),
-                    defaultValue: existingUpdateIdsAllOrSelected.isNotEmpty));
+                    defaultValue: existingUpdateIdsAllOrSelected.isEmpty));
               }
               if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
                 formItems.add(GeneratedFormSwitch('trackonlies',
                     label: tr('markXTrackOnlyAsUpdated', args: [
                       plural('apps', trackOnlyUpdateIdsAllOrSelected.length)
                     ]),
-                    defaultValue: existingUpdateIdsAllOrSelected.isNotEmpty ||
-                        newInstallIdsAllOrSelected.isNotEmpty));
+                    defaultValue: existingUpdateIdsAllOrSelected.isEmpty &&
+                        newInstallIdsAllOrSelected.isEmpty));
               }
               showDialog<Map<String, dynamic>?>(
                   context: context,
