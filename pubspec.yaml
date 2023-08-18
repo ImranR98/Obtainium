@@ -1,5 +1,5 @@
 name: obtainium
-description: A new Flutter project.
+description: Get Android App Updates Directly From the Source.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -55,9 +55,13 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_installer
       ref: main
+  android_package_manager:
+    git:
+        url: https://github.com/ImranR98/android_package_manager
+        ref: master
   share_plus: ^7.0.0
-  installed_apps: ^1.3.1
-  package_archive_info: ^0.1.0
+  installed_apps: ^1.3.1 # TODO: Remove when android_package_manager supports getting icon as UInt8List and versionCode
+  package_archive_info: ^0.1.0 # TODO: Remove when android_package_manager supports getting versionCode
   android_alarm_manager_plus: ^3.0.0
   sqflite: ^2.2.0+3
   easy_localization: ^3.0.1

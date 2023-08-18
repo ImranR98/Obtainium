@@ -26,6 +26,15 @@ packages:
       url: "https://github.com/ImranR98/android_package_installer"
     source: git
     version: "0.0.1"
+  android_package_manager:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "5f58196561734d0f499bb844cdb43e7762a8f019"
+      url: "https://github.com/ImranR98/android_package_manager"
+    source: git
+    version: "0.5.4"
   animations:
     dependency: "direct main"
     description:

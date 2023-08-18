@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:android_intent_plus/flag.dart';
 import 'package:android_package_installer/android_package_installer.dart';
+import 'package:android_package_manager/android_package_manager.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,8 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+
+final pm = AndroidPackageManager();
 
 class AppInMemory {
   late App app;
@@ -322,16 +325,39 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    return false;
-    // TODO: Uncomment the below if silent updates are ever figured out
-    // // NOTE: This is unreliable - try to get from OS in the future
-    // if (app.apkUrls.length > 1) {
-    //    return false;
-    // }
-    // var osInfo = await DeviceInfoPlugin().androidInfo;
-    // return app.installedVersion != null &&
-    //     osInfo.version.sdkInt >= 30 &&
-    //     osInfo.version.release.compareTo('12') >= 0;
+    if (app.apkUrls.length > 1) {
+      // Manual API selection means silent install is not possible
+      return false;
+    }
+
+    var osInfo = await DeviceInfoPlugin().androidInfo;
+    String? installerPackageName;
+    try {
+      installerPackageName = osInfo.version.sdkInt >= 30
+          ? (await pm.getInstallSourceInfo(packageName: app.id))
+              ?.installingPackageName
+          : (await pm.getInstallerPackageName(packageName: app.id));
+    } catch (e) {
+      // Probably not installed - ignore
+    }
+    if (installerPackageName != obtainiumId) {
+      // If we did not install the app (or it isn't installed), silent install is not possible
+      return false;
+    }
+    var targetSDK;
+    try {
+      targetSDK = (await pm.getPackageInfo(packageName: app.id))
+          ?.applicationInfo
+          ?.targetSdkVersion;
+    } catch (e) {
+      // Weird if you get here - ignore
+    }
+
+    // The OS must also be new enough and the APK should target a new enough API
+    return osInfo.version.sdkInt >= 30 &&
+        targetSDK != null &&
+        targetSDK >= // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+            (osInfo.version.sdkInt - 3);
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
@@ -359,8 +385,7 @@ class AppsProvider with ChangeNotifier {
         zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
-  Future<void> installXApkDir(DownloadedXApkDir dir,
-      {bool silent = false}) async {
+  Future<void> installXApkDir(DownloadedXApkDir dir) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
@@ -373,8 +398,7 @@ class AppsProvider with ChangeNotifier {
         if (file.path.toLowerCase().endsWith('.apk')) {
           try {
             somethingInstalled = somethingInstalled ||
-                await installApk(DownloadedApk(dir.appId, file),
-                    silent: silent);
+                await installApk(DownloadedApk(dir.appId, file));
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
@@ -394,8 +418,7 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> installApk(DownloadedApk file, {bool silent = false}) async {
-    // TODO: Use 'silent' when/if ever possible
+  Future<bool> installApk(DownloadedApk file) async {
     var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
     AppInfo? appInfo;
     try {
@@ -571,7 +594,6 @@ class AppsProvider with ChangeNotifier {
         }
         bool willBeSilent = await canInstallSilently(
             apps[downloadedFile?.appId ?? downloadedDir!.appId]!.app);
-        willBeSilent = false; // TODO: Remove this when silent updates work
         if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
             true)) {
           throw ObtainiumError(tr('cancelled'));
@@ -584,9 +606,9 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (downloadedFile != null) {
-            await installApk(downloadedFile, silent: willBeSilent);
+            await installApk(downloadedFile);
           } else {
-            await installXApkDir(downloadedDir!, silent: willBeSilent);
+            await installXApkDir(downloadedDir!);
           }
         } finally {
           apps[id]?.downloadProgress = null;
