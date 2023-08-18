@@ -31,7 +31,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "5f58196561734d0f499bb844cdb43e7762a8f019"
+      resolved-ref: "6e68991ef9c6232695abce2eef345d3cca2f52ac"
       url: "https://github.com/ImranR98/android_package_manager"
     source: git
     version: "0.5.4"
@@ -587,10 +587,10 @@ packages:
     dependency: transitive
     description:
       name: platform
-      sha256: "4a451831508d7d6ca779f7ac6e212b4023dd5a7d08a27a63da33756410e32b76"
+      sha256: "57c07bf82207aee366dfaa3867b3164e4f03a238a461a11b0e8a3a510d51203d"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.0"
+    version: "3.1.1"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -880,10 +880,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_platform_interface
-      sha256: "564ef378cafc1a0e29f1d76ce175ef517a0a6115875dff7b43fccbef2b0aeb30"
+      sha256: "0ca3cfcc6781a7de701d580917af4a9efc4e3e129f8ead95a80587f0a749480a"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.0"
+    version: "2.5.0"
   webview_flutter_wkwebview:
     dependency: transitive
     description:
