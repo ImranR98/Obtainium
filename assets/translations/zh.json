@@ -244,9 +244,9 @@
     "addInfoInSettings": "在“设置”中添加此凭据。",
     "githubSourceNote": "使用访问令牌可避免触发 GitHub 的 API 请求限制。",
     "gitlabSourceNote": "未使用访问令牌时可能无法从 GitLab 获取 APK 文件。",
-    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
-    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
-    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "sortByFileNamesNotLinks": "根据文件名而不是完整链接来排序",
+    "filterReleaseNotesByRegEx": "用正则表达式筛选发布说明",
+    "customLinkFilterRegex": "用正则表达式自定义链接筛选（默认 '.apk$'）",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
