@@ -22,7 +22,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "2edf5dbbfeeb33257d526861f2a992aee5d97bb4"
+      resolved-ref: ba2aa7a11edc2649d1d80c25ed9291521262f714
       url: "https://github.com/ImranR98/android_package_installer"
     source: git
     version: "0.0.1"
