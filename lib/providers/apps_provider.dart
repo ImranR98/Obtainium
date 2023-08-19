@@ -391,7 +391,7 @@ class AppsProvider with ChangeNotifier {
     // If 0 APKs installed, throw the first install error encountered
     try {
       var somethingInstalled = false;
-      Object? firstError;
+      MultiAppMultiError errors = MultiAppMultiError();
       for (var file in dir.extracted
           .listSync(recursive: true, followLinks: false)
           .whereType<File>()) {
@@ -402,7 +402,7 @@ class AppsProvider with ChangeNotifier {
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
-            firstError ??= e;
+            errors.add(dir.appId, e.toString());
           }
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
@@ -410,8 +410,8 @@ class AppsProvider with ChangeNotifier {
       }
       if (somethingInstalled) {
         dir.file.delete(recursive: true);
-      } else if (firstError != null) {
-        throw firstError;
+      } else if (errors.content.isNotEmpty) {
+        throw errors;
       }
     } finally {
       dir.extracted.delete(recursive: true);
