@@ -14,6 +14,7 @@ import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
+import 'package:obtainium/app_sources/huaweiappgallery.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
@@ -355,10 +356,14 @@ abstract class AppSource {
 
   Map<String, String>? get requestHeaders => null;
 
-  Future<Response> sourceRequest(String url) async {
-    if (requestHeaders != null) {
+  Future<Response> sourceRequest(String url,
+      {bool followRedirects = true}) async {
+    if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
-      req.headers.addAll(requestHeaders!);
+      req.followRedirects = followRedirects;
+      if (requestHeaders != null) {
+        req.headers.addAll(requestHeaders!);
+      }
       return Response.fromStream(await Client().send(req));
     } else {
       return get(Uri.parse(url));
@@ -508,6 +513,7 @@ class SourceProvider {
         SourceHut(),
         APKMirror(),
         APKPure(),
+        HuaweiAppGallery(),
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),

@@ -18,6 +18,7 @@ Currently supported App sources:
 - [SourceHut](https://git.sr.ht/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
 - [APKPure](https://apkpure.com/)
+- [Huawei AppGallery](https://appgallery.huawei.com/)
 - Third Party F-Droid Repos
 - Jenkins Jobs
 - [Steam](https://store.steampowered.com/mobile)
