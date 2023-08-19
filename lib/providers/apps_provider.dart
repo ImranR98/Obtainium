@@ -344,7 +344,7 @@ class AppsProvider with ChangeNotifier {
       // If we did not install the app (or it isn't installed), silent install is not possible
       return false;
     }
-    var targetSDK;
+    int? targetSDK;
     try {
       targetSDK = (await pm.getPackageInfo(packageName: app.id))
           ?.applicationInfo

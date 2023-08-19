@@ -22,7 +22,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.13.25';
+const String currentVersion = '0.13.26';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -299,7 +299,9 @@ class _ObtainiumState extends State<Obtainium> {
                   ? lightColorScheme
                   : darkColorScheme,
               fontFamily: 'Metropolis'),
-          home: const HomePage());
+          home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
+            LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+          }, child: const HomePage()));
     });
   }
 }
