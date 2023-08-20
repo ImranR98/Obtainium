@@ -12,15 +12,12 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:installed_apps/app_info.dart';
-import 'package:installed_apps/installed_apps.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:package_archive_info/package_archive_info.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -35,13 +32,14 @@ final pm = AndroidPackageManager();
 class AppInMemory {
   late App app;
   double? downloadProgress;
-  AppInfo? installedInfo;
+  PackageInfo? installedInfo;
+  Uint8List? icon;
 
-  AppInMemory(this.app, this.downloadProgress, this.installedInfo);
+  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon);
   AppInMemory deepCopy() =>
-      AppInMemory(app.deepCopy(), downloadProgress, installedInfo);
+      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon);
 
-  String get name => app.overrideName ?? installedInfo?.name ?? app.finalName;
+  String get name => app.overrideName ?? app.finalName;
 }
 
 class DownloadedApk {
@@ -218,19 +216,19 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
-  Future<File> handleAPKIDChange(App app, PackageArchiveInfo newInfo,
+  Future<File> handleAPKIDChange(App app, PackageInfo newInfo,
       File downloadedFile, String downloadUrl) async {
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
     // The former case should be handled (give the App its real ID), the latter is a security issue
     if (app.id != newInfo.packageName) {
       var isTempId = SourceProvider().isTempId(app);
       if (apps[app.id] != null && !isTempId && !app.allowIdChange) {
-        throw IDChangedError(newInfo.packageName);
+        throw IDChangedError(newInfo.packageName!);
       }
       var idChangeWasAllowed = app.allowIdChange;
       app.allowIdChange = false;
       var originalAppId = app.id;
-      app.id = newInfo.packageName;
+      app.id = newInfo.packageName!;
       downloadedFile = downloadedFile.renameSync(
           '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
       if (apps[originalAppId] != null) {
@@ -279,11 +277,12 @@ class AppsProvider with ChangeNotifier {
         notif = DownloadNotification(app.finalName, -1);
         notificationsProvider?.notify(notif);
       }
-      PackageArchiveInfo? newInfo;
+      PackageInfo? newInfo;
       var isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
       Directory? xapkDir;
       if (isAPK) {
-        newInfo = await PackageArchiveInfo.fromPath(downloadedFile.path);
+        newInfo = await pm.getPackageArchiveInfo(
+            archiveFilePath: downloadedFile.path);
       } else {
         // Assume XAPK
         String xapkDirPath = '${downloadedFile.path}-dir';
@@ -293,10 +292,11 @@ class AppsProvider with ChangeNotifier {
             .listSync()
             .where((e) => e.path.toLowerCase().endsWith('.apk'))
             .toList();
-        newInfo = await PackageArchiveInfo.fromPath(apks.first.path);
+        newInfo =
+            await pm.getPackageArchiveInfo(archiveFilePath: apks.first.path);
       }
       downloadedFile =
-          await handleAPKIDChange(app, newInfo, downloadedFile, downloadUrl);
+          await handleAPKIDChange(app, newInfo!, downloadedFile, downloadUrl);
       // Delete older versions of the file if any
       for (var file in downloadedFile.parent.listSync()) {
         var fn = file.path.split('/').last;
@@ -344,14 +344,8 @@ class AppsProvider with ChangeNotifier {
       // If we did not install the app (or it isn't installed), silent install is not possible
       return false;
     }
-    int? targetSDK;
-    try {
-      targetSDK = (await pm.getPackageInfo(packageName: app.id))
-          ?.applicationInfo
-          ?.targetSdkVersion;
-    } catch (e) {
-      // Weird if you get here - ignore
-    }
+    int? targetSDK =
+        (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
 
     // The OS must also be new enough and the APK should target a new enough API
     return osInfo.version.sdkInt >= 30 &&
@@ -371,14 +365,8 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> canDowngradeApps() async {
-    try {
-      await InstalledApps.getAppInfo('com.berdik.letmedowngrade');
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
+  Future<bool> canDowngradeApps() async =>
+      (await getInstalledInfo('com.berdik.letmedowngrade')) != null;
 
   Future<void> unzipFile(String filePath, String destinationPath) async {
     await ZipFile.extractToDirectory(
@@ -419,15 +407,11 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<bool> installApk(DownloadedApk file) async {
-    var newInfo = await PackageArchiveInfo.fromPath(file.file.path);
-    AppInfo? appInfo;
-    try {
-      appInfo = await InstalledApps.getAppInfo(apps[file.appId]!.app.id);
-    } catch (e) {
-      // OK
-    }
+    var newInfo =
+        await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
+    PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
     if (appInfo != null &&
-        int.parse(newInfo.buildNumber) < appInfo.versionCode! &&
+        newInfo!.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
@@ -638,25 +622,15 @@ class AppsProvider with ChangeNotifier {
     return appsDir;
   }
 
-  Future<AppInfo?> getInstalledInfo(String? packageName) async {
+  Future<PackageInfo?> getInstalledInfo(String? packageName) async {
     if (packageName != null) {
       try {
-        return await InstalledApps.getAppInfo(packageName);
+        return await pm.getPackageInfo(packageName: packageName);
       } catch (e) {
-        // OK
+        print(e); // OK
       }
     }
     return null;
-  }
-
-  Future<bool> doesInstalledAppsPluginWork() async {
-    bool res = false;
-    try {
-      res = (await InstalledApps.getAppInfo(obtainiumId)).versionName != null;
-    } catch (e) {
-      //
-    }
-    return res;
   }
 
   bool isVersionDetectionPossible(AppInMemory? app) {
@@ -672,7 +646,8 @@ class AppsProvider with ChangeNotifier {
 
   // Given an App and it's on-device info...
   // Reconcile unexpected differences between its reported installed version, real installed version, and reported latest version
-  App? getCorrectedInstallStatusAppIfPossible(App app, AppInfo? installedInfo) {
+  App? getCorrectedInstallStatusAppIfPossible(
+      App app, PackageInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
     var noVersionDetection = app.additionalSettings['versionDetection'] !=
@@ -718,7 +693,8 @@ class AppsProvider with ChangeNotifier {
     if (installedInfo != null &&
         app.additionalSettings['versionDetection'] ==
             'standardVersionDetection' &&
-        !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
+        !isVersionDetectionPossible(
+            AppInMemory(app, null, installedInfo, null))) {
       app.additionalSettings['versionDetection'] = 'noVersionDetection';
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
@@ -802,9 +778,9 @@ class AppsProvider with ChangeNotifier {
           sp.getSource(app.url, overrideSource: app.overrideSource);
           apps.update(
               app.id,
-              (value) =>
-                  AppInMemory(app, value.downloadProgress, value.installedInfo),
-              ifAbsent: () => AppInMemory(app, null, null));
+              (value) => AppInMemory(
+                  app, value.downloadProgress, value.installedInfo, value.icon),
+              ifAbsent: () => AppInMemory(app, null, null, null));
         } catch (e) {
           errors.add([app.id, app.finalName, e.toString()]);
         }
@@ -817,34 +793,39 @@ class AppsProvider with ChangeNotifier {
           AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
 
-    if (await doesInstalledAppsPluginWork()) {
-      for (var app in apps.values) {
-        // Check install status for each App (slow)
-        apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
-        notifyListeners();
+    for (var app in apps.values) {
+      // Get install status and other OS info for each App (slow)
+      apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
+      apps[app.app.id]?.icon =
+          await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
+      apps[app.app.id]?.app.name = await (apps[app.app.id]
+              ?.installedInfo
+              ?.applicationInfo
+              ?.getAppLabel()) ??
+          app.name;
+      notifyListeners();
+    }
+    // Reconcile version differences
+    List<App> modifiedApps = [];
+    for (var app in apps.values) {
+      var moddedApp =
+          getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
+      if (moddedApp != null) {
+        modifiedApps.add(moddedApp);
       }
-      // Reconcile version differences
-      List<App> modifiedApps = [];
-      for (var app in apps.values) {
-        var moddedApp =
-            getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
-        if (moddedApp != null) {
-          modifiedApps.add(moddedApp);
-        }
-      }
-      if (modifiedApps.isNotEmpty) {
-        await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
-        var removedAppIds = modifiedApps
-            .where((a) => a.installedVersion == null)
-            .map((e) => e.id)
-            .toList();
-        // After reconciliation, delete externally uninstalled Apps if needed
-        if (removedAppIds.isNotEmpty) {
-          var settingsProvider = SettingsProvider();
-          await settingsProvider.initializeSettings();
-          if (settingsProvider.removeOnExternalUninstall) {
-            await removeApps(removedAppIds);
-          }
+    }
+    if (modifiedApps.isNotEmpty) {
+      await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
+      var removedAppIds = modifiedApps
+          .where((a) => a.installedVersion == null)
+          .map((e) => e.id)
+          .toList();
+      // After reconciliation, delete externally uninstalled Apps if needed
+      if (removedAppIds.isNotEmpty) {
+        var settingsProvider = SettingsProvider();
+        await settingsProvider.initializeSettings();
+        if (settingsProvider.removeOnExternalUninstall) {
+          await removeApps(removedAppIds);
         }
       }
     }
@@ -856,12 +837,12 @@ class AppsProvider with ChangeNotifier {
   Future<void> saveApps(List<App> apps,
       {bool attemptToCorrectInstallStatus = true,
       bool onlyIfExists = true}) async {
-    attemptToCorrectInstallStatus =
-        attemptToCorrectInstallStatus && (await doesInstalledAppsPluginWork());
+    attemptToCorrectInstallStatus = attemptToCorrectInstallStatus;
     for (var a in apps) {
       var app = a.deepCopy();
-      AppInfo? info = await getInstalledInfo(app.id);
-      app.name = info?.name ?? app.name;
+      PackageInfo? info = await getInstalledInfo(app.id);
+      var icon = await info?.applicationInfo?.getAppIcon();
+      app.name = await (info?.applicationInfo?.getAppLabel()) ?? app.name;
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
@@ -870,9 +851,10 @@ class AppsProvider with ChangeNotifier {
             .writeAsStringSync(jsonEncode(app.toJson()));
       }
       try {
-        this.apps.update(
-            app.id, (value) => AppInMemory(app, value.downloadProgress, info),
-            ifAbsent: onlyIfExists ? null : () => AppInMemory(app, null, info));
+        this.apps.update(app.id,
+            (value) => AppInMemory(app, value.downloadProgress, info, icon),
+            ifAbsent:
+                onlyIfExists ? null : () => AppInMemory(app, null, info, icon));
       } catch (e) {
         if (e is! ArgumentError || e.name != 'key') {
           rethrow;

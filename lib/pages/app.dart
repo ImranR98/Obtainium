@@ -153,10 +153,10 @@ class _AppPageState extends State<AppPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 125),
-            app?.installedInfo != null
+            app?.icon != null
                 ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Image.memory(
-                      app!.installedInfo!.icon!,
+                      app!.icon!,
                       height: 150,
                       gaplessPlayback: true,
                     )

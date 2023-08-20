@@ -393,9 +393,9 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getAppIcon(int appIndex) {
-      return listedApps[appIndex].installedInfo != null
+      return listedApps[appIndex].icon != null
           ? Image.memory(
-              listedApps[appIndex].installedInfo!.icon!,
+              listedApps[appIndex].icon!,
               gaplessPlayback: true,
             )
           : Row(
