@@ -594,21 +594,21 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (downloadedFile != null) {
-            if (willBeSilent) {
+            if (willBeSilent && context == null) {
               // Would await forever - workaround - TODO
               installApk(downloadedFile);
             } else {
               await installApk(downloadedFile);
             }
           } else {
-            if (willBeSilent) {
+            if (willBeSilent && context == null) {
               // Would await forever - workaround - TODO
               installXApkDir(downloadedDir!);
             } else {
               await installXApkDir(downloadedDir!);
             }
           }
-          if (willBeSilent) {
+          if (willBeSilent && context == null) {
             notificationsProvider?.notify(SilentUpdateAttemptNotification(
                 [apps[appId]!.app],
                 id: appId.hashCode));
