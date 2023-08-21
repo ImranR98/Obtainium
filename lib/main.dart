@@ -88,10 +88,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       : null;
   logs.add(tr('bgUpdateIgnoreAfterIs', args: [ignoreAfter.toString()]));
   var notificationsProvider = NotificationsProvider();
-  await notificationsProvider.notify(checkingUpdatesNotification);
   try {
     var appsProvider = AppsProvider();
-    await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
     await appsProvider.loadApps();
     List<String> existingUpdateIds =
         appsProvider.findExistingUpdates(installedOnly: true);
@@ -100,7 +98,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     try {
       logs.add(tr('startedActualBGUpdateCheck'));
       await appsProvider.checkUpdates(
-          ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
+          ignoreAppsCheckedAfter: ignoreAfter,
+          throwErrorsForRetry: true,
+          notificationsProvider: notificationsProvider);
     } catch (e) {
       if (e is RateLimitError || e is ClientException) {
         var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
@@ -124,34 +124,29 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
         .where((id) => !existingUpdateIds.contains(id))
         .map((e) => appsProvider.apps[e]!.app)
         .toList();
-
-    // TODO: This silent update code doesn't work yet
-    // List<String> silentlyUpdated = await appsProvider
-    //     .downloadAndInstallLatestApp(
-    //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
-    // if (silentlyUpdated.isNotEmpty) {
-    //   newUpdates = newUpdates
-    //       .where((element) => !silentlyUpdated.contains(element.id))
-    //       .toList();
-    //   notificationsProvider.notify(
-    //       SilentUpdateNotification(
-    //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
-    //       cancelExisting: true);
-    // }
-    logs.add(
-        plural('bgCheckFoundUpdatesWillNotifyIfNeeded', newUpdates.length));
-    if (newUpdates.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(newUpdates));
+    List<App> nonSilentUpdates = [];
+    List<App> silentUpdates = [];
+    for (var a in newUpdates) {
+      if (await appsProvider.canInstallSilently(a)) {
+        silentUpdates.add(a);
+      } else {
+        nonSilentUpdates.add(a);
+      }
     }
+    if (silentUpdates.isNotEmpty) {
+      await appsProvider.downloadAndInstallLatestApps(
+          silentUpdates.map((e) => e.id).toList(), null,
+          notificationsProvider: notificationsProvider);
+    }
+    logs.add(plural(
+        'bgCheckFoundUpdatesWillNotifyIfNeeded', nonSilentUpdates.length));
     if (err != null) {
       throw err;
     }
   } catch (e) {
-    notificationsProvider
-        .notify(ErrorCheckingUpdatesNotification(e.toString()));
+    logs.add('${tr('errorCheckingUpdates')}: ${e.toString()}');
   } finally {
     logs.add(tr('bgUpdateTaskFinished'));
-    await notificationsProvider.cancel(checkingUpdatesNotification.id);
   }
 }
 

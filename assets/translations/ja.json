@@ -247,6 +247,9 @@
     "sortByFileNamesNotLinks": "フルのリンクではなくファイル名でソートする",
     "filterReleaseNotesByRegEx": "正規表現でリリースノートをフィルタリングする",
     "customLinkFilterRegex": "正規表現によるカスタムリンクフィルター (デフォルト '.apk$')",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -294,5 +297,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} とさらに {} 個のアプリがアップデートされました",
         "other": "{} とさらに {} 個のアプリがアップデートされました"
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "Attempts were made to update {} and 1 more app.",
+        "other": "Attempts were made to update {} and {} more apps."
     }
 }

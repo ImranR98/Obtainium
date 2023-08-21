@@ -246,6 +246,9 @@
     "sortByFileNamesNotLinks": "Fájlnevek szerinti elrendezés teljes linkek helyett",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
@@ -293,5 +296,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "A(z) {} és 1 további alkalmazás frissítve.",
         "other": "{} és {} további alkalmazás frissítve."
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "Attempts were made to update {} and 1 more app.",
+        "other": "Attempts were made to update {} and {} more apps."
     }
 }

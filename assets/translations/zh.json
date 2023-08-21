@@ -247,6 +247,9 @@
     "sortByFileNamesNotLinks": "根据文件名而不是完整链接来排序",
     "filterReleaseNotesByRegEx": "用正则表达式筛选发布说明",
     "customLinkFilterRegex": "用正则表达式自定义链接筛选（默认 '.apk$'）",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
@@ -294,5 +297,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} 和另外 1 个应用已更新。",
         "other": "{} 和另外 {} 个应用已更新。"
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "Attempts were made to update {} and 1 more app.",
+        "other": "Attempts were made to update {} and {} more apps."
     }
 }

@@ -247,6 +247,9 @@
     "sortByFileNamesNotLinks": "مرتب سازی بر اساس نام فایل به جای پیوندهای کامل",
     "filterReleaseNotesByRegEx": "یادداشت های انتشار را با بیان منظم فیلتر کنید",
     "customLinkFilterRegex": "فیلتر پیوند سفارشی بر اساس عبارت منظم (پیش‌فرض '.apk$')",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
@@ -294,5 +297,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} و 1 برنامه دیگر به روز شدند.",
         "other": "{} و {} برنامه دیگر به روز شدند."
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "Attempts were made to update {} and 1 more app.",
+        "other": "Attempts were made to update {} and {} more apps."
     }
 }

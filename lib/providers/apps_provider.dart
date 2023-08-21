@@ -239,9 +239,8 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
-  Future<Object> downloadApp(App app, BuildContext? context) async {
-    NotificationsProvider? notificationsProvider =
-        context?.read<NotificationsProvider>();
+  Future<Object> downloadApp(App app, BuildContext? context,
+      {NotificationsProvider? notificationsProvider}) async {
     var notifId = DownloadNotification(app.finalName, 0).id;
     if (apps[app.id] != null) {
       apps[app.id]!.downloadProgress = 0;
@@ -507,7 +506,10 @@ class AppsProvider with ChangeNotifier {
   // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
   Future<List<String>> downloadAndInstallLatestApps(
       List<String> appIds, BuildContext? context,
-      {SettingsProvider? settingsProvider}) async {
+      {SettingsProvider? settingsProvider,
+      NotificationsProvider? notificationsProvider}) async {
+    notificationsProvider =
+        notificationsProvider ?? context?.read<NotificationsProvider>();
     List<String> appsToInstall = [];
     List<String> trackOnlyAppsToUpdate = [];
     // For all specified Apps, filter out those for which:
@@ -567,8 +569,10 @@ class AppsProvider with ChangeNotifier {
 
     for (var id in appsToInstall) {
       try {
-        // ignore: use_build_context_synchronously
-        var downloadedArtifact = await downloadApp(apps[id]!.app, context);
+        var downloadedArtifact =
+            // ignore: use_build_context_synchronously
+            await downloadApp(apps[id]!.app, context,
+                notificationsProvider: notificationsProvider);
         DownloadedApk? downloadedFile;
         DownloadedXApkDir? downloadedDir;
         if (downloadedArtifact is DownloadedApk) {
@@ -576,8 +580,8 @@ class AppsProvider with ChangeNotifier {
         } else {
           downloadedDir = downloadedArtifact as DownloadedXApkDir;
         }
-        bool willBeSilent = await canInstallSilently(
-            apps[downloadedFile?.appId ?? downloadedDir!.appId]!.app);
+        var appId = downloadedFile?.appId ?? downloadedDir!.appId;
+        bool willBeSilent = await canInstallSilently(apps[appId]!.app);
         if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
             true)) {
           throw ObtainiumError(tr('cancelled'));
@@ -590,9 +594,24 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (downloadedFile != null) {
-            await installApk(downloadedFile);
+            if (willBeSilent) {
+              // Would await forever - workaround - TODO
+              installApk(downloadedFile);
+            } else {
+              await installApk(downloadedFile);
+            }
           } else {
-            await installXApkDir(downloadedDir!);
+            if (willBeSilent) {
+              // Would await forever - workaround - TODO
+              installXApkDir(downloadedDir!);
+            } else {
+              await installXApkDir(downloadedDir!);
+            }
+          }
+          if (willBeSilent) {
+            notificationsProvider?.notify(SilentUpdateAttemptNotification(
+                [apps[appId]!.app],
+                id: appId.hashCode));
           }
         } finally {
           apps[id]?.downloadProgress = null;
@@ -607,8 +626,6 @@ class AppsProvider with ChangeNotifier {
     if (errors.content.isNotEmpty) {
       throw errors;
     }
-
-    NotificationsProvider().cancel(UpdateNotification([]).id);
 
     return installedIds;
   }
@@ -971,7 +988,8 @@ class AppsProvider with ChangeNotifier {
 
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAppsCheckedAfter,
-      bool throwErrorsForRetry = false}) async {
+      bool throwErrorsForRetry = false,
+      NotificationsProvider? notificationsProvider}) async {
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
     if (!gettingUpdates) {
@@ -998,9 +1016,14 @@ class AppsProvider with ChangeNotifier {
               rethrow;
             }
             errors.add(appIds[i], e.toString());
+            notificationsProvider?.notify(ErrorCheckingUpdatesNotification(
+                '${appIds[i]}: ${e.toString()}',
+                id: appIds[i].hashCode));
           }
           if (newApp != null) {
             updates.add(newApp);
+            notificationsProvider
+                ?.notify(UpdateNotification([newApp], id: newApp.id.hashCode));
           }
         }
       } finally {

@@ -247,6 +247,9 @@
    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+   "appsPossiblyUpdated": "App Updates Attempted",
+   "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+   "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
    "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"
@@ -294,5 +297,9 @@
    "xAndNMoreUpdatesInstalled": {
       "one": "{} i još 1 aplikacija je ažurirana.",
       "other": "{} i još {} aplikacija je ažurirano."
+   },
+   "xAndNMoreUpdatesPossiblyInstalled": {
+       "one": "Attempts were made to update {} and 1 more app.",
+       "other": "Attempts were made to update {} and {} more apps."
    }
 }
