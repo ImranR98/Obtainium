@@ -708,17 +708,6 @@ class AppsProvider with ChangeNotifier {
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }
-    // if (app.installedVersion != null &&
-    //     app.additionalSettings['versionDetection'] ==
-    //         'standardVersionDetection') {
-    //   var correctedInstalledVersion =
-    //       reconcileVersionDifferences(app.installedVersion!, app.latestVersion);
-    //   if (correctedInstalledVersion == null) {
-    //     app.additionalSettings['versionDetection'] = 'noVersionDetection';
-    //     logs.add('Could not reconcile version formats for: ${app.id}');
-    //     modded = true;
-    //   }
-    // }
 
     return modded ? app : null;
   }
