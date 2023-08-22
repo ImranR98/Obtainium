@@ -105,6 +105,12 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
   AppsProvider appsProvider = AppsProvider();
 
   String appId = params!['appId'];
+  params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
+  int maxAttempts = 5;
+  if (params['attemptCount'] > 1) {
+    logs.add(
+        'BG update check for $appId: Note this is attempt #${params['attemptCount']} of $maxAttempts');
+  }
   try {
     await appsProvider.loadApps(singleId: appId);
     AppInMemory app = appsProvider.apps[appId]!;
@@ -117,7 +123,8 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
         newApp = await appsProvider.checkUpdate(appId);
       } catch (e) {
         logs.add('BG update check for $appId got error \'${e.toString()}\'.');
-        if (e is RateLimitError || e is ClientException) {
+        if (e is RateLimitError ||
+            e is ClientException && params['attemptCount'] < maxAttempts) {
           var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
           logs.add(
               'BG update check for $appId will be retried in $remainingMinutes minutes.');
