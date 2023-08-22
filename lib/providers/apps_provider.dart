@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -555,17 +556,8 @@ class AppsProvider with ChangeNotifier {
     List<String> installedIds = [];
 
     // Move Obtainium to the end of the line (let all other apps update first)
-    String? temp;
-    appsToInstall.removeWhere((element) {
-      bool res = element == obtainiumId || element == obtainiumTempId;
-      if (res) {
-        temp = element;
-      }
-      return res;
-    });
-    if (temp != null) {
-      appsToInstall = [...appsToInstall, temp!];
-    }
+    appsToInstall =
+        moveStrToEnd(appsToInstall, obtainiumId, strB: obtainiumTempId);
 
     for (var id in appsToInstall) {
       try {

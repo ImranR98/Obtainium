@@ -71,31 +71,23 @@ Future<void> loadTranslations() async {
       fallbackTranslations: controller.fallbackTranslations);
 }
 
-@pragma('vm:entry-point')
-Future<void> bgUpdateCheckApps(int taskId, Map<String, dynamic>? params) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
-  await AndroidAlarmManager.initialize();
-  await loadTranslations();
-
-  LogsProvider logs = LogsProvider();
-  AppsProvider appsProvider = AppsProvider();
-  await appsProvider.loadApps();
-
-  logs.add('BG update parent task started.');
-  var appIds = appsProvider.getAppsSortedByUpdateCheckTime();
-  for (var id in appIds) {
-    AndroidAlarmManager.oneShot(
-        const Duration(minutes: 0), id.hashCode, bgUpdateCheckApp,
-        params: {'appId': id});
-    await Future.delayed(const Duration(seconds: 1));
+moveStrToEnd(List<String> arr, String str, {String? strB}) {
+  String? temp;
+  arr.removeWhere((element) {
+    bool res = element == str || element == strB;
+    if (res) {
+      temp = element;
+    }
+    return res;
+  });
+  if (temp != null) {
+    arr = [...arr, temp!];
   }
-  logs.add(
-      'BG update parent task ended (${appIds.length} child task(s) started).');
+  return arr;
 }
 
 @pragma('vm:entry-point')
-Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
+Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await AndroidAlarmManager.initialize();
@@ -104,31 +96,50 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
   LogsProvider logs = LogsProvider();
   NotificationsProvider notificationsProvider = NotificationsProvider();
   AppsProvider appsProvider = AppsProvider();
+  await appsProvider.loadApps();
 
-  String appId = params!['appId'];
-  params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
   int maxAttempts = 5;
+
+  params ??= {};
+  params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
+  params['toCheck'] =
+      params['toCheck'] ?? appsProvider.getAppsSortedByUpdateCheckTime();
+  params['toInstall'] = params['toInstall'] ?? [];
+
+  List<String> toCheck = params['toCheck'];
+  List<String> toInstall = params['toCheck'];
+
   logs.add(
-      'BG update task for $appId started (attempt #${params['attemptCount']}).');
-  try {
-    await appsProvider.loadApps(singleId: appId);
-    AppInMemory app = appsProvider.apps[appId]!;
-    App? newApp;
-    if (app.app.installedVersion == app.app.latestVersion &&
-        app.app.installedVersion != null) {
+      'BG update task $taskId started - ${toCheck.length} to check and ${toInstall.length} to install${params['attemptCount'] > 1 ? ' (attempt #${params['attemptCount']})' : ''}.');
+
+  if (toCheck.isNotEmpty) {
+    String appId = toCheck.removeAt(0);
+    AppInMemory? app = appsProvider.apps[appId];
+    if (app?.app.installedVersion != null) {
       try {
         notificationsProvider.notify(checkingUpdatesNotification,
             cancelExisting: true);
-        newApp = await appsProvider.checkUpdate(appId);
+        App? newApp = await appsProvider.checkUpdate(appId);
+        if (newApp != null) {
+          if (!(await appsProvider.canInstallSilently(app!.app))) {
+            notificationsProvider.notify(
+                UpdateNotification([newApp], id: newApp.id.hashCode * 10));
+          } else {
+            toInstall.add(appId);
+          }
+        }
       } catch (e) {
-        logs.add('BG update check for $appId got error \'${e.toString()}\'.');
+        logs.add(
+            'BG update check got error on checking for $appId \'${e.toString()}\'.');
         if (e is RateLimitError ||
             e is ClientException && params['attemptCount'] < maxAttempts) {
           var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
           logs.add(
-              'BG update check for $appId will be retried in $remainingMinutes minutes.');
+              'BG update task $taskId will be retried in $remainingMinutes minutes (with $appId moved to the end of the line).');
+          toCheck = toInstall = []; // So the next task will not start
+          params['toCheck'] = moveStrToEnd(params['toCheck'], appId);
           AndroidAlarmManager.oneShot(
-              Duration(minutes: remainingMinutes), taskId, bgUpdateCheckApp,
+              Duration(minutes: remainingMinutes), taskId + 1, bgUpdateCheck,
               params: params);
         } else {
           rethrow;
@@ -137,24 +148,20 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
         notificationsProvider.cancel(checkingUpdatesNotification.id);
       }
     }
-    if (newApp != null) {
-      var canInstallSilently = await appsProvider.canInstallSilently(app.app);
-      if (!canInstallSilently) {
-        notificationsProvider
-            .notify(UpdateNotification([newApp], id: newApp.id.hashCode * 10));
-      } else {
-        logs.add('Attempting to update $appId in the background.');
-        await appsProvider.downloadAndInstallLatestApps([appId], null,
-            notificationsProvider: notificationsProvider);
-      }
-    }
-  } catch (e) {
-    notificationsProvider.notify(ErrorCheckingUpdatesNotification(
-        '$appId: ${e.toString()}',
-        id: appId.hashCode * 20));
-  } finally {
-    logs.add(
-        'BG update task for $appId ended (attempt #${params['attemptCount']}).');
+  } else if (toInstall.isNotEmpty) {
+    toInstall = moveStrToEnd(toInstall, obtainiumId);
+    String appId = toInstall.removeAt(0);
+    logs.add('Attempting to update $appId in the background.');
+    await appsProvider.downloadAndInstallLatestApps([appId], null,
+        notificationsProvider: notificationsProvider);
+  }
+
+  logs.add('BG update task $taskId ended.');
+
+  if (toCheck.isNotEmpty || toInstall.isNotEmpty) {
+    AndroidAlarmManager.oneShot(Duration(seconds: toCheck.isNotEmpty ? 1 : 5),
+        taskId + 1, bgUpdateCheck,
+        params: {'toCheck': toCheck, 'toInstall': toInstall});
   }
 }
 
@@ -254,7 +261,7 @@ class _ObtainiumState extends State<Obtainium> {
           AndroidAlarmManager.periodic(
               Duration(minutes: existingUpdateInterval),
               bgUpdateCheckAlarmId,
-              bgUpdateCheckApps,
+              bgUpdateCheck,
               rescheduleOnReboot: true,
               wakeup: true);
         }
