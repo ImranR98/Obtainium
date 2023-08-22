@@ -11,12 +11,6 @@
     "unexpectedError": "خطای غیرمنتظره",
     "ok": "باشه",
     "and": "و",
-    "startedBgUpdateTask": "شروع بررسی بروزرسانی BG",
-    "bgUpdateIgnoreAfterIs": "نادیده گرفتن بروزرسانی BG بعد از {} است",
-    "startedActualBGUpdateCheck": "بررسی به‌روزرسانی واقعی BG آغاز شد",
-    "bgUpdateTaskFinished": "کار بررسی به‌روزرسانی BG تمام شد",
-    "firstRun": "این اولین اجرای Obtainium است",
-    "settingUpdateCheckIntervalTo": "تنظیم فاصله به‌روزرسانی روی {}",
     "githubPATLabel": "توکن دسترسی شخصی گیت هاب(محدودیت نرخ را افزایش میدهد)",
     "githubPATHint": "PAT باید در این قالب باشد: username:token",
     "githubPATFormat": "username:token",
@@ -249,7 +243,7 @@
     "customLinkFilterRegex": "فیلتر پیوند سفارشی بر اساس عبارت منظم (پیش‌فرض '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
@@ -299,7 +293,7 @@
         "other": "{} و {} برنامه دیگر به روز شدند."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

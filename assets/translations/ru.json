@@ -11,12 +11,6 @@
     "unexpectedError": "Неожиданная ошибка",
     "ok": "Окей",
     "and": "и",
-    "startedBgUpdateTask": "Запущена задача фоновой проверки обновлений",
-    "bgUpdateIgnoreAfterIs": "Параметр игнорирования фоновых обновлений: {}",
-    "startedActualBGUpdateCheck": "Запущена фактическая проверка фоновых обновлений",
-    "bgUpdateTaskFinished": "Завершена задача фоновой проверки обновлений",
-    "firstRun": "Это первый запуск Obtainium",
-    "settingUpdateCheckIntervalTo": "Установка интервала проверки обновлений: {}",
     "githubPATLabel": "Персональный токен доступа GitHub (увеличивает лимит запросов)",
     "githubPATHint": "Токен доступа должен быть в формате: имя_пользователя:токен",
     "githubPATFormat": "имя_пользователя:токен",
@@ -249,7 +243,7 @@
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"
@@ -299,7 +293,7 @@
         "other": "{} и еще {} приложений были обновлены."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

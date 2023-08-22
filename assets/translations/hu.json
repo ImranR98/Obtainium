@@ -11,12 +11,6 @@
     "unexpectedError": "Váratlan hiba",
     "ok": "Oké",
     "and": "és",
-    "startedBgUpdateTask": "Háttérfrissítés ellenőrzési feladat elindítva",
-    "bgUpdateIgnoreAfterIs": "Háttérfrissítés ignoreAfter a következő: {}",
-    "startedActualBGUpdateCheck": "Elkezdődött a tényleges háttérfrissítés ellenőrzése",
-    "bgUpdateTaskFinished": "A háttérfrissítés ellenőrzési feladat befejeződött",
-    "firstRun": "Ez az Obtainium első futása",
-    "settingUpdateCheckIntervalTo": "A frissítési intervallum beállítása erre: {}",
     "githubPATLabel": "GitHub Personal Access Token (megnöveli a díjkorlátot)",
     "githubPATHint": "A PAT-nak a következő formátumban kell lennie: felhasználónév:token",
     "githubPATFormat": "felhasználónév:token",
@@ -248,7 +242,7 @@
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
@@ -298,7 +292,7 @@
         "other": "{} és {} további alkalmazás frissítve."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

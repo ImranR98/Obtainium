@@ -11,12 +11,6 @@
     "unexpectedError": "予期せぬエラーが発生しました",
     "ok": "OK",
     "and": "と",
-    "startedBgUpdateTask": "バックグラウンドのアップデート確認タスクを開始",
-    "bgUpdateIgnoreAfterIs": "Bg update ignoreAfter is {}",
-    "startedActualBGUpdateCheck": "実際のバックグラウンドのアップデート確認を開始",
-    "bgUpdateTaskFinished": "バックグラウンドのアップデート確認タスクを終了",
-    "firstRun": "これがObtainiumの最初の実行です",
-    "settingUpdateCheckIntervalTo": "確認間隔を{}に設定する",
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
     "githubPATHint": "PATは次の形式でなければなりません: ユーザー名:トークン",
     "githubPATFormat": "ユーザー名:トークン",
@@ -249,7 +243,7 @@
     "customLinkFilterRegex": "正規表現によるカスタムリンクフィルター (デフォルト '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -299,7 +293,7 @@
         "other": "{} とさらに {} 個のアプリがアップデートされました"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

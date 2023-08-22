@@ -11,12 +11,6 @@
     "unexpectedError": "Unerwarteter Fehler",
     "ok": "Okay",
     "and": "und",
-    "startedBgUpdateTask": "Hintergrundaktualisierungsprüfung gestartet",
-    "bgUpdateIgnoreAfterIs": "Hintergrundaktualisierung 'ignoreAfter' ist {}",
-    "startedActualBGUpdateCheck": "Überprüfung der Hintergrundaktualisierung gestartet",
-    "bgUpdateTaskFinished": "Hintergrundaktualisierungsprüfung abgeschlossen",
-    "firstRun": "Dies ist der erste Start von Obtainium überhaupt",
-    "settingUpdateCheckIntervalTo": "Aktualisierungsintervall auf {} stellen",
     "githubPATLabel": "GitHub Personal Access Token (Erhöht das Ratenlimit)",
     "githubPATHint": "PAT muss in diesem Format sein: Benutzername:Token",
     "githubPATFormat": "Benutzername:Token",
@@ -249,7 +243,7 @@
     "customLinkFilterRegex": "Benutzerdefinierter Link Filter nach Regulärem Ausdruck (Standard '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
@@ -299,7 +293,7 @@
         "other": "{} und {} weitere Anwendungen wurden aktualisiert."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

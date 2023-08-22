@@ -765,7 +765,7 @@ class AppsProvider with ChangeNotifier {
         : false;
   }
 
-  Future<void> loadApps() async {
+  Future<void> loadApps({String? singleId}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
     }
@@ -776,6 +776,10 @@ class AppsProvider with ChangeNotifier {
     List<App?> newApps = (await getAppsDir()) // Parse Apps from JSON
         .listSync()
         .where((item) => item.path.toLowerCase().endsWith('.json'))
+        .where((item) =>
+            singleId == null ||
+            item.path.split('/').last.toLowerCase() ==
+                '${singleId.toLowerCase()}.json')
         .map((e) {
       try {
         return App.fromJson(jsonDecode(File(e.path).readAsStringSync()));
@@ -986,26 +990,32 @@ class AppsProvider with ChangeNotifier {
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
+  List<String> getAppsSortedByUpdateCheckTime(
+      {DateTime? ignoreAppsCheckedAfter}) {
+    List<String> appIds = apps.values
+        .where((app) =>
+            app.app.lastUpdateCheck == null ||
+            ignoreAppsCheckedAfter == null ||
+            app.app.lastUpdateCheck!.isBefore(ignoreAppsCheckedAfter))
+        .map((e) => e.app.id)
+        .toList();
+    appIds.sort((a, b) =>
+        (apps[a]!.app.lastUpdateCheck ?? DateTime.fromMicrosecondsSinceEpoch(0))
+            .compareTo(apps[b]!.app.lastUpdateCheck ??
+                DateTime.fromMicrosecondsSinceEpoch(0)));
+    return appIds;
+  }
+
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAppsCheckedAfter,
-      bool throwErrorsForRetry = false,
-      NotificationsProvider? notificationsProvider}) async {
+      bool throwErrorsForRetry = false}) async {
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
     if (!gettingUpdates) {
       gettingUpdates = true;
       try {
-        List<String> appIds = apps.values
-            .where((app) =>
-                app.app.lastUpdateCheck == null ||
-                ignoreAppsCheckedAfter == null ||
-                app.app.lastUpdateCheck!.isBefore(ignoreAppsCheckedAfter))
-            .map((e) => e.app.id)
-            .toList();
-        appIds.sort((a, b) => (apps[a]!.app.lastUpdateCheck ??
-                DateTime.fromMicrosecondsSinceEpoch(0))
-            .compareTo(apps[b]!.app.lastUpdateCheck ??
-                DateTime.fromMicrosecondsSinceEpoch(0)));
+        List<String> appIds = getAppsSortedByUpdateCheckTime(
+            ignoreAppsCheckedAfter: ignoreAppsCheckedAfter);
         for (int i = 0; i < appIds.length; i++) {
           App? newApp;
           try {
@@ -1016,14 +1026,9 @@ class AppsProvider with ChangeNotifier {
               rethrow;
             }
             errors.add(appIds[i], e.toString());
-            notificationsProvider?.notify(ErrorCheckingUpdatesNotification(
-                '${appIds[i]}: ${e.toString()}',
-                id: appIds[i].hashCode));
           }
           if (newApp != null) {
             updates.add(newApp);
-            notificationsProvider
-                ?.notify(UpdateNotification([newApp], id: newApp.id.hashCode));
           }
         }
       } finally {

@@ -11,12 +11,6 @@
     "unexpectedError": "Error Inesperado",
     "ok": "Correcto",
     "and": "y",
-    "startedBgUpdateTask": "Empezada la tarea de comprobación de actualizaciones en segundo plano",
-    "bgUpdateIgnoreAfterIs": "El parámetro ignoreAfter de la actualización en segundo plano es  {}",
-    "startedActualBGUpdateCheck": "Ha comenzado la comprobación de actualizaciones en segundo plano",
-    "bgUpdateTaskFinished": "Ha finalizado la comprobación de actualizaciones en segundo plano",
-    "firstRun": "Esta es la primera ejecución de Obtainium",
-    "settingUpdateCheckIntervalTo": "Cambiando intervalo de actualización a {}",
     "githubPATLabel": "Token de Acceso Personal de GitHub (Reduce tiempos de espera)",
     "githubPATHint": "El TAP debe tener este formato: nombre_de_usuario:token",
     "githubPATFormat": "nombre_de_usuario:token",
@@ -249,7 +243,7 @@
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "An attempt was made to update {} to {}.",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"
@@ -299,7 +293,7 @@
         "other": "{} y {} aplicaciones más han sido actualizadas."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "Attempts were made to update {} and 1 more app.",
-        "other": "Attempts were made to update {} and {} more apps."
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }
