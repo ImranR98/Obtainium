@@ -330,4 +330,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setInt('lastBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
   }
+
+  bool get showDebugOpts {
+    return prefs?.getBool('showDebugOpts') ?? false;
+  }
+
+  set showDebugOpts(bool val) {
+    prefs?.setBool('showDebugOpts', val);
+    notifyListeners();
+  }
 }

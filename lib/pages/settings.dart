@@ -1,3 +1,4 @@
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -508,7 +509,44 @@ class _SettingsPageState extends State<SettingsPage> {
                         label: Text(tr('appLogs'))),
                   ],
                 ),
-                height16,
+                const Divider(
+                  height: 32,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Flexible(child: Text('Debug Menu')),
+                        Switch(
+                            value: settingsProvider.showDebugOpts,
+                            onChanged: (value) {
+                              settingsProvider.showDebugOpts = value;
+                            })
+                      ],
+                    ),
+                    if (settingsProvider.showDebugOpts)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          height16,
+                          TextButton(
+                              onPressed: () {
+                                AndroidAlarmManager.oneShot(
+                                    const Duration(seconds: 0),
+                                    bgUpdateCheckAlarmId + 200,
+                                    bgUpdateCheck);
+                                showError(
+                                    'Background task started - check logs.',
+                                    context);
+                              },
+                              child:
+                                  const Text('Run Background Update Check Now'))
+                        ],
+                      ),
+                  ]),
+                ),
               ],
             ),
           )
