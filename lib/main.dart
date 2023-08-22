@@ -157,9 +157,11 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     toInstall = moveStrToEnd(toInstall, obtainiumId);
     String appId = toInstall.removeAt(0);
     logs.add(
-        'BG update task $taskId: Attempting to update $appId in the background.');
+        'BG update task $taskId: Attempting to download $appId in the background.');
     await appsProvider.downloadAndInstallLatestApps([appId], null,
         notificationsProvider: notificationsProvider);
+    logs.add(
+        'BG update task $taskId: Attempting to update $appId in the background.');
   }
 
   if (toCheck.isNotEmpty || toInstall.isNotEmpty) {
@@ -264,11 +266,11 @@ class _ObtainiumState extends State<Obtainium> {
           var settingChanged = existingUpdateInterval != -1;
           var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
               settingsProvider.lastBGCheckTime
-                  .add(Duration(seconds: actualUpdateInterval + 60))
+                  .add(Duration(minutes: actualUpdateInterval + 60))
                   .isBefore(DateTime.now());
           if (settingChanged || lastCheckWasTooLongAgo) {
             logs.add(
-                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was too long ago or never'}).');
+                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
             AndroidAlarmManager.periodic(
                 Duration(minutes: actualUpdateInterval),
                 bgUpdateCheckAlarmId,
