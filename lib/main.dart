@@ -21,7 +21,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.13.26';
+const String currentVersion = '0.13.27';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -82,7 +82,7 @@ Future<void> bgUpdateCheckApps(int taskId, Map<String, dynamic>? params) async {
   AppsProvider appsProvider = AppsProvider();
   await appsProvider.loadApps();
 
-  logs.add('BG update master task started.');
+  logs.add('BG update parent task started.');
   var appIds = appsProvider.getAppsSortedByUpdateCheckTime();
   for (var id in appIds) {
     AndroidAlarmManager.oneShot(
@@ -90,7 +90,8 @@ Future<void> bgUpdateCheckApps(int taskId, Map<String, dynamic>? params) async {
         params: {'appId': id});
     await Future.delayed(const Duration(seconds: 1));
   }
-  logs.add('BG update master task - all $appIds child tasks started.');
+  logs.add(
+      'BG update parent task ended (${appIds.length} child task(s) started).');
 }
 
 @pragma('vm:entry-point')
@@ -107,10 +108,8 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
   String appId = params!['appId'];
   params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
   int maxAttempts = 5;
-  if (params['attemptCount'] > 1) {
-    logs.add(
-        'BG update check for $appId: Note this is attempt #${params['attemptCount']} of $maxAttempts');
-  }
+  logs.add(
+      'BG update task for $appId started (attempt #${params['attemptCount']}).');
   try {
     await appsProvider.loadApps(singleId: appId);
     AppInMemory app = appsProvider.apps[appId]!;
@@ -153,6 +152,9 @@ Future<void> bgUpdateCheckApp(int taskId, Map<String, dynamic>? params) async {
     notificationsProvider.notify(ErrorCheckingUpdatesNotification(
         '$appId: ${e.toString()}',
         id: appId.hashCode * 20));
+  } finally {
+    logs.add(
+        'BG update task for $appId ended (attempt #${params['attemptCount']}).');
   }
 }
 
@@ -253,7 +255,6 @@ class _ObtainiumState extends State<Obtainium> {
               Duration(minutes: existingUpdateInterval),
               bgUpdateCheckAlarmId,
               bgUpdateCheckApps,
-              allowWhileIdle: true,
               rescheduleOnReboot: true,
               wakeup: true);
         }
