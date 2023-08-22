@@ -328,7 +328,11 @@ class AppsProvider with ChangeNotifier {
       .where((element) => element.downloadProgress != null)
       .isNotEmpty;
 
-  Future<bool> canInstallSilently(App app) async {
+  Future<bool> canInstallSilently(
+      App app, SettingsProvider settingsProvider) async {
+    if (!settingsProvider.enableBackgroundUpdates) {
+      return false;
+    }
     if (app.apkUrls.length > 1) {
       // Manual API selection means silent install is not possible
       return false;
@@ -509,10 +513,9 @@ class AppsProvider with ChangeNotifier {
   // If no BuildContext is provided, apps that require user interaction are ignored
   // If user input is needed and the App is in the background, a notification is sent to get the user's attention
   // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
-  Future<List<String>> downloadAndInstallLatestApps(
-      List<String> appIds, BuildContext? context,
-      {SettingsProvider? settingsProvider,
-      NotificationsProvider? notificationsProvider}) async {
+  Future<List<String>> downloadAndInstallLatestApps(List<String> appIds,
+      BuildContext? context, SettingsProvider settingsProvider,
+      {NotificationsProvider? notificationsProvider}) async {
     notificationsProvider =
         notificationsProvider ?? context?.read<NotificationsProvider>();
     List<String> appsToInstall = [];
@@ -540,7 +543,8 @@ class AppsProvider with ChangeNotifier {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApps([apps[id]!.app]);
         }
-        if (context != null || await canInstallSilently(apps[id]!.app)) {
+        if (context != null ||
+            await canInstallSilently(apps[id]!.app, settingsProvider)) {
           appsToInstall.add(id);
         }
       }
@@ -577,9 +581,9 @@ class AppsProvider with ChangeNotifier {
           downloadedDir = downloadedArtifact as DownloadedXApkDir;
         }
         var appId = downloadedFile?.appId ?? downloadedDir!.appId;
-        bool willBeSilent = await canInstallSilently(apps[appId]!.app);
-        if (!(await settingsProvider?.getInstallPermission(enforce: false) ??
-            true)) {
+        bool willBeSilent =
+            await canInstallSilently(apps[appId]!.app, settingsProvider);
+        if (!(await settingsProvider.getInstallPermission(enforce: false))) {
           throw ObtainiumError(tr('cancelled'));
         }
         if (!willBeSilent && context != null) {

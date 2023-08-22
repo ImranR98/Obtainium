@@ -339,7 +339,8 @@ class _AppPageState extends State<AppPage> {
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
                       app?.app.id != null ? [app!.app.id] : [],
-                      globalNavigatorKey.currentContext);
+                      globalNavigatorKey.currentContext,
+                      settingsProvider);
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();
                   }

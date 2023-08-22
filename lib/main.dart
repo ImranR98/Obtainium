@@ -147,7 +147,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               cancelExisting: true);
           App? newApp = await appsProvider.checkUpdate(appId);
           if (newApp != null) {
-            if (!(await appsProvider.canInstallSilently(app!.app))) {
+            if (!(await appsProvider.canInstallSilently(
+                app!.app, settingsProvider))) {
               notificationsProvider.notify(
                   UpdateNotification([newApp], id: newApp.id.hashCode - 1));
             } else {
@@ -198,7 +199,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       try {
         logs.add(
             'BG update task $taskId: Attempting to update $appId in the background.');
-        await appsProvider.downloadAndInstallLatestApps([appId], null,
+        await appsProvider.downloadAndInstallLatestApps(
+            [appId], null, settingsProvider,
             notificationsProvider: notificationsProvider);
       } catch (e) {
         logs.add(
