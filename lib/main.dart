@@ -86,6 +86,24 @@ moveStrToEnd(List<String> arr, String str, {String? strB}) {
   return arr;
 }
 
+/// Background updater function
+///
+/// @param List<String>? toCheck: The appIds to check for updates (default to all apps sorted by last update check time)
+///
+/// @param List<String>? toInstall: The appIds to attempt to update (defaults to an empty array)
+///
+/// @param int? attemptCount: The number of times the function has failed up to this point (defaults to 0)
+///
+/// When toCheck is empty, the function is in "install mode" (else it is in "update mode").
+/// In update mode, all apps in toCheck are checked for updates.
+/// If an update is available, the appId is either added to toInstall (if a background update is possible) or the user is notified.
+/// If there is an error, the function tries to continue after a few minutes (duration depends on the error), up to a maximum of 5 tries.
+///
+/// Once all update checks are complete, the function is called again in install mode.
+/// In this mode, all apps in toInstall are downloaded and installed in the background (install result is unknown).
+/// If there is an error, the function tries to continue after a few minutes (duration depends on the error), up to a maximum of 5 tries.
+///
+/// In either mode, if the function fails after the maximum number of tries, the user is notified.
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,71 +124,104 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   if (params['toCheck'] == null) {
     settingsProvider.lastBGCheckTime = DateTime.now();
   }
-  params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
-  params['toCheck'] =
-      params['toCheck'] ?? appsProvider.getAppsSortedByUpdateCheckTime();
-  params['toInstall'] = params['toInstall'] ?? (<String>[]);
+  int attemptCount = (params['attemptCount'] ?? 0) + 1;
+  List<String> toCheck = <String>[
+    ...(params['toCheck'] ?? appsProvider.getAppsSortedByUpdateCheckTime())
+  ];
+  List<String> toInstall = <String>[...(params['toInstall'] ?? (<String>[]))];
 
-  List<String> toCheck = <String>[...params['toCheck']];
-  List<String> toInstall = <String>[...params['toInstall']];
+  bool installMode = toCheck.isEmpty && toInstall.isNotEmpty;
 
   logs.add(
-      'BG update task $taskId: Started [${toCheck.length},${toInstall.length}]${params['attemptCount'] > 1 ? '. ${params['attemptCount'] - 1} consecutive fail(s)' : ''}.');
+      'BG update task $taskId: Started in ${installMode ? 'install' : 'update'} mode${attemptCount > 1 ? '. ${attemptCount - 1} consecutive fail(s)' : ''}.');
 
-  if (toCheck.isNotEmpty) {
-    String appId = toCheck.removeAt(0);
-    AppInMemory? app = appsProvider.apps[appId];
-    if (app?.app.installedVersion != null) {
-      try {
-        notificationsProvider.notify(checkingUpdatesNotification,
-            cancelExisting: true);
-        App? newApp = await appsProvider.checkUpdate(appId);
-        if (newApp != null) {
-          if (!(await appsProvider.canInstallSilently(app!.app))) {
-            notificationsProvider.notify(
-                UpdateNotification([newApp], id: newApp.id.hashCode - 1));
-          } else {
-            toInstall.add(appId);
+  if (!installMode) {
+    var didCompleteChecking = false;
+    for (int i = 0; i < toCheck.length; i++) {
+      var appId = toCheck[i];
+      AppInMemory? app = appsProvider.apps[appId];
+      if (app?.app.installedVersion != null) {
+        try {
+          logs.add('BG update task $taskId: Checking for updates for $appId.');
+          notificationsProvider.notify(checkingUpdatesNotification,
+              cancelExisting: true);
+          App? newApp = await appsProvider.checkUpdate(appId);
+          if (newApp != null) {
+            if (!(await appsProvider.canInstallSilently(app!.app))) {
+              notificationsProvider.notify(
+                  UpdateNotification([newApp], id: newApp.id.hashCode - 1));
+            } else {
+              toInstall.add(appId);
+            }
           }
-        }
-      } catch (e) {
-        logs.add(
-            'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
-        if (e is RateLimitError ||
-            e is ClientException && params['attemptCount'] < maxAttempts) {
-          var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
+          if (i == (toCheck.length - 1)) {
+            didCompleteChecking = true;
+          }
+        } catch (e) {
           logs.add(
-              'BG update task $taskId: Next task will start in $remainingMinutes minutes (with $appId moved to the end of the line).');
-          toCheck = toInstall = []; // So the next task will not start
-          params['toCheck'] = moveStrToEnd(params['toCheck'], appId);
-          AndroidAlarmManager.oneShot(
-              Duration(minutes: remainingMinutes), taskId + 1, bgUpdateCheck,
-              params: params);
-        } else {
-          rethrow;
+              'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
+          if (attemptCount < maxAttempts) {
+            var remainingSeconds = e is RateLimitError
+                ? (e.remainingMinutes * 60)
+                : e is ClientException
+                    ? (15 * 60)
+                    : 1;
+            logs.add(
+                'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
+            var remainingToCheck = moveStrToEnd(toCheck.sublist(i), appId);
+            AndroidAlarmManager.oneShot(
+                Duration(seconds: remainingSeconds), taskId, bgUpdateCheck,
+                params: {
+                  'toCheck': remainingToCheck,
+                  'toInstall': toInstall,
+                  'attemptCount': attemptCount
+                });
+            break;
+          } else {
+            notificationsProvider
+                .notify(ErrorCheckingUpdatesNotification(e.toString()));
+          }
+        } finally {
+          notificationsProvider.cancel(checkingUpdatesNotification.id);
         }
-      } finally {
-        notificationsProvider.cancel(checkingUpdatesNotification.id);
       }
     }
-  } else if (toInstall.isNotEmpty) {
-    toInstall = moveStrToEnd(toInstall, obtainiumId);
-    String appId = toInstall.removeAt(0);
-    logs.add(
-        'BG update task $taskId: Attempting to download $appId in the background.');
-    await appsProvider.downloadAndInstallLatestApps([appId], null,
-        notificationsProvider: notificationsProvider);
-    logs.add(
-        'BG update task $taskId: Attempting to update $appId in the background.');
-  }
-
-  if (toCheck.isNotEmpty || toInstall.isNotEmpty) {
-    logs.add('BG update task $taskId: Ended. Next task will start soon.');
-    AndroidAlarmManager.oneShot(
-        const Duration(seconds: 0), taskId + 1, bgUpdateCheck,
-        params: {'toCheck': toCheck, 'toInstall': toInstall});
+    if (didCompleteChecking && toInstall.isNotEmpty) {
+      AndroidAlarmManager.oneShot(
+          const Duration(minutes: 0), taskId + 1, bgUpdateCheck,
+          params: {'toCheck': [], 'toInstall': toInstall});
+    }
   } else {
-    logs.add('BG update task $taskId: Ended.');
+    toInstall = moveStrToEnd(toInstall, obtainiumId);
+    for (var i = 0; i < toInstall.length; i++) {
+      String appId = toInstall[i];
+      try {
+        logs.add(
+            'BG update task $taskId: Attempting to update $appId in the background.');
+        await appsProvider.downloadAndInstallLatestApps([appId], null,
+            notificationsProvider: notificationsProvider);
+      } catch (e) {
+        logs.add(
+            'BG update task $taskId: Got error on updating $appId \'${e.toString()}\'.');
+        if (attemptCount < maxAttempts) {
+          var remainingSeconds = 1;
+          logs.add(
+              'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
+          var remainingToInstall = moveStrToEnd(toInstall.sublist(i), appId);
+          AndroidAlarmManager.oneShot(
+              Duration(seconds: remainingSeconds), taskId, bgUpdateCheck,
+              params: {
+                'toCheck': toCheck,
+                'toInstall': remainingToInstall,
+                'attemptCount': attemptCount
+              });
+          break;
+        } else {
+          notificationsProvider
+              .notify(ErrorCheckingUpdatesNotification(e.toString()));
+        }
+      }
+    }
   }
 }
 
