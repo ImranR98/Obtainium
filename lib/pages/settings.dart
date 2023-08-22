@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -184,6 +185,10 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
 
+    const height8 = SizedBox(
+      height: 8,
+    );
+
     const height16 = SizedBox(
       height: 16,
     );
@@ -211,6 +216,47 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             intervalDropdown,
+                            FutureBuilder(
+                                builder: (ctx, val) {
+                                  return (val.data?.version.sdkInt ?? 0) >= 30
+                                      ? Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            height16,
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Flexible(
+                                                    child: Text(tr(
+                                                        'enableBackgroundUpdates'))),
+                                                Switch(
+                                                    value: settingsProvider
+                                                        .enableBackgroundUpdates,
+                                                    onChanged: (value) {
+                                                      settingsProvider
+                                                              .enableBackgroundUpdates =
+                                                          value;
+                                                    })
+                                              ],
+                                            ),
+                                            height8,
+                                            Text(tr('backgroundUpdateReqsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            Text(tr('backgroundUpdateLimitsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            height8
+                                          ],
+                                        )
+                                      : const SizedBox.shrink();
+                                },
+                                future: DeviceInfoPlugin().androidInfo),
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

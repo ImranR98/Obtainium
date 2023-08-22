@@ -309,4 +309,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('reversePageTransitions', show);
     notifyListeners();
   }
+
+  bool get enableBackgroundUpdates {
+    return prefs?.getBool('enableBackgroundUpdates') ?? true;
+  }
+
+  set enableBackgroundUpdates(bool val) {
+    prefs?.setBool('enableBackgroundUpdates', val);
+    notifyListeners();
+  }
 }
