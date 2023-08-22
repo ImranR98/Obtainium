@@ -113,7 +113,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
 
   LogsProvider logs = LogsProvider();
   NotificationsProvider notificationsProvider = NotificationsProvider();
-  AppsProvider appsProvider = AppsProvider();
+  AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
   var settingsProvider = SettingsProvider();
   await settingsProvider.initializeSettings();

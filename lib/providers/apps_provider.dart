@@ -114,7 +114,7 @@ class AppsProvider with ChangeNotifier {
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
-  AppsProvider() {
+  AppsProvider({isBg = false}) {
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -132,17 +132,21 @@ class AppsProvider with ChangeNotifier {
           APKDir.createSync();
         }
       }
-      // Load Apps into memory (in background, this is done later instead of in the constructor)
-      await loadApps();
-      // Delete any partial APKs
-      var cutoff = DateTime.now().subtract(const Duration(days: 7));
-      APKDir.listSync()
-          .where((element) =>
-              element.path.endsWith('.part') ||
-              element.statSync().modified.isBefore(cutoff))
-          .forEach((partialApk) {
-        partialApk.delete(recursive: true);
-      });
+      if (!isBg) {
+        // Load Apps into memory (in background processes, this is done later instead of in the constructor)
+        await loadApps();
+        // Delete any partial APKs (if safe to do so)
+        var cutoff = DateTime.now().subtract(const Duration(days: 7));
+        APKDir.listSync()
+            .where((element) =>
+                element.path.endsWith('.part') ||
+                element.statSync().modified.isBefore(cutoff))
+            .forEach((partialApk) {
+          if (!areDownloadsRunning()) {
+            partialApk.delete(recursive: true);
+          }
+        });
+      }
     }();
   }
 
