@@ -318,4 +318,16 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('enableBackgroundUpdates', val);
     notifyListeners();
   }
+
+  DateTime get lastBGCheckTime {
+    int? temp = prefs?.getInt('lastBGCheckTime');
+    return temp != null
+        ? DateTime.fromMillisecondsSinceEpoch(temp)
+        : DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  set lastBGCheckTime(DateTime val) {
+    prefs?.setInt('lastBGCheckTime', val.millisecondsSinceEpoch);
+    notifyListeners();
+  }
 }

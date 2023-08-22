@@ -97,10 +97,15 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   NotificationsProvider notificationsProvider = NotificationsProvider();
   AppsProvider appsProvider = AppsProvider();
   await appsProvider.loadApps();
+  var settingsProvider = SettingsProvider();
+  await settingsProvider.initializeSettings();
 
   int maxAttempts = 5;
 
   params ??= {};
+  if (params['toCheck'] == null) {
+    settingsProvider.lastBGCheckTime = DateTime.now();
+  }
   params['attemptCount'] = (params['attemptCount'] ?? 0) + 1;
   params['toCheck'] =
       params['toCheck'] ?? appsProvider.getAppsSortedByUpdateCheckTime();
@@ -251,22 +256,28 @@ class _ObtainiumState extends State<Obtainium> {
         settingsProvider.resetLocaleSafe(context);
       }
       // Register the background update task according to the user's setting
-      if (existingUpdateInterval != settingsProvider.updateInterval) {
-        if (existingUpdateInterval != -1) {
-          logs.add(
-              'Setting update interval to ${settingsProvider.updateInterval.toString()}');
-        }
-        existingUpdateInterval = settingsProvider.updateInterval;
-        if (existingUpdateInterval == 0) {
+      var actualUpdateInterval = settingsProvider.updateInterval;
+      if (existingUpdateInterval != actualUpdateInterval) {
+        if (actualUpdateInterval == 0) {
           AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
         } else {
-          AndroidAlarmManager.periodic(
-              Duration(minutes: existingUpdateInterval),
-              bgUpdateCheckAlarmId,
-              bgUpdateCheck,
-              rescheduleOnReboot: true,
-              wakeup: true);
+          var settingChanged = existingUpdateInterval != -1;
+          var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
+              settingsProvider.lastBGCheckTime
+                  .add(Duration(seconds: actualUpdateInterval + 60))
+                  .isBefore(DateTime.now());
+          if (settingChanged || lastCheckWasTooLongAgo) {
+            logs.add(
+                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was too long ago or never'}).');
+            AndroidAlarmManager.periodic(
+                Duration(minutes: actualUpdateInterval),
+                bgUpdateCheckAlarmId,
+                bgUpdateCheck,
+                rescheduleOnReboot: true,
+                wakeup: true);
+          }
         }
+        existingUpdateInterval = actualUpdateInterval;
       }
     }
 
