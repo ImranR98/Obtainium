@@ -133,7 +133,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   bool installMode = toCheck.isEmpty && toInstall.isNotEmpty;
 
   logs.add(
-      'BG update task $taskId: Started in ${installMode ? 'install' : 'update'} mode${attemptCount > 1 ? '. ${attemptCount - 1} consecutive fail(s)' : ''}.');
+      'BG ${installMode ? 'install' : 'update'} task $taskId: Started${attemptCount > 1 ? '. ${attemptCount - 1} consecutive fail(s)' : ''}.');
 
   if (!installMode) {
     var didCompleteChecking = false;
@@ -188,6 +188,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       }
     }
     if (didCompleteChecking && toInstall.isNotEmpty) {
+      logs.add(
+          'BG update task $taskId: Scheduling install task to run immediately.');
       AndroidAlarmManager.oneShot(
           const Duration(minutes: 0), taskId + 1, bgUpdateCheck,
           params: {'toCheck': [], 'toInstall': toInstall});
@@ -198,17 +200,20 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       String appId = toInstall[i];
       try {
         logs.add(
-            'BG update task $taskId: Attempting to update $appId in the background.');
+            'BG install task $taskId: Attempting to update $appId in the background.');
         await appsProvider.downloadAndInstallLatestApps(
             [appId], null, settingsProvider,
             notificationsProvider: notificationsProvider);
+        await Future.delayed(const Duration(
+            seconds:
+                5)); // Just in case task ending causes install fail (not clear)
       } catch (e) {
         logs.add(
-            'BG update task $taskId: Got error on updating $appId \'${e.toString()}\'.');
+            'BG install task $taskId: Got error on updating $appId \'${e.toString()}\'.');
         if (attemptCount < maxAttempts) {
           var remainingSeconds = 1;
           logs.add(
-              'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
+              'BG install task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
           var remainingToInstall = moveStrToEnd(toInstall.sublist(i), appId);
           AndroidAlarmManager.oneShot(
               Duration(seconds: remainingSeconds), taskId + 1, bgUpdateCheck,
@@ -225,6 +230,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       }
     }
   }
+  logs.add('BG ${installMode ? 'install' : 'update'} task $taskId: Done.');
 }
 
 void main() async {
