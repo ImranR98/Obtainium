@@ -171,7 +171,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
             var remainingToCheck = moveStrToEnd(toCheck.sublist(i), appId);
             AndroidAlarmManager.oneShot(
-                Duration(seconds: remainingSeconds), taskId, bgUpdateCheck,
+                Duration(seconds: remainingSeconds), taskId + 1, bgUpdateCheck,
                 params: {
                   'toCheck': remainingToCheck,
                   'toInstall': toInstall,
@@ -211,7 +211,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
           var remainingToInstall = moveStrToEnd(toInstall.sublist(i), appId);
           AndroidAlarmManager.oneShot(
-              Duration(seconds: remainingSeconds), taskId, bgUpdateCheck,
+              Duration(seconds: remainingSeconds), taskId + 1, bgUpdateCheck,
               params: {
                 'toCheck': toCheck,
                 'toInstall': remainingToInstall,
