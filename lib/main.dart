@@ -118,7 +118,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   var settingsProvider = SettingsProvider();
   await settingsProvider.initializeSettings();
 
-  int maxAttempts = 5;
+  int maxAttempts = 4;
 
   params ??= {};
   if (params['toCheck'] == null) {
@@ -137,13 +137,14 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
 
   if (!installMode) {
     var didCompleteChecking = false;
+    CheckingUpdatesNotification? notif;
     for (int i = 0; i < toCheck.length; i++) {
       var appId = toCheck[i];
       AppInMemory? app = appsProvider.apps[appId];
       if (app?.app.installedVersion != null) {
         try {
-          logs.add('BG update task $taskId: Checking for updates for $appId.');
-          notificationsProvider.notify(checkingUpdatesNotification,
+          notificationsProvider.notify(
+              notif = CheckingUpdatesNotification(app?.name ?? appId),
               cancelExisting: true);
           App? newApp = await appsProvider.checkUpdate(appId);
           if (newApp != null) {
@@ -166,7 +167,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 ? (e.remainingMinutes * 60)
                 : e is ClientException
                     ? (15 * 60)
-                    : 1;
+                    : (attemptCount ^ 2);
             logs.add(
                 'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
             var remainingToCheck = moveStrToEnd(toCheck.sublist(i), appId);
@@ -183,18 +184,23 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 .notify(ErrorCheckingUpdatesNotification(e.toString()));
           }
         } finally {
-          notificationsProvider.cancel(checkingUpdatesNotification.id);
+          if (notif != null) {
+            notificationsProvider.cancel(notif.id);
+          }
         }
       }
     }
     if (didCompleteChecking && toInstall.isNotEmpty) {
       logs.add(
-          'BG update task $taskId: Scheduling install task to run immediately.');
+          'BG update task $taskId: Done. Scheduling install task to run immediately.');
       AndroidAlarmManager.oneShot(
           const Duration(minutes: 0), taskId + 1, bgUpdateCheck,
           params: {'toCheck': [], 'toInstall': toInstall});
+    } else if (didCompleteChecking) {
+      logs.add('BG install task $taskId: Done.');
     }
   } else {
+    var didCompleteInstalling = false;
     toInstall = moveStrToEnd(toInstall, obtainiumId);
     for (var i = 0; i < toInstall.length; i++) {
       String appId = toInstall[i];
@@ -207,11 +213,14 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
         await Future.delayed(const Duration(
             seconds:
                 5)); // Just in case task ending causes install fail (not clear)
+        if (i == (toCheck.length - 1)) {
+          didCompleteInstalling = true;
+        }
       } catch (e) {
         logs.add(
             'BG install task $taskId: Got error on updating $appId \'${e.toString()}\'.');
         if (attemptCount < maxAttempts) {
-          var remainingSeconds = 1;
+          var remainingSeconds = attemptCount;
           logs.add(
               'BG install task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
           var remainingToInstall = moveStrToEnd(toInstall.sublist(i), appId);
@@ -228,9 +237,11 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               .notify(ErrorCheckingUpdatesNotification(e.toString()));
         }
       }
+      if (didCompleteInstalling) {
+        logs.add('BG install task $taskId: Done.');
+      }
     }
   }
-  logs.add('BG ${installMode ? 'install' : 'update'} task $taskId: Done.');
 }
 
 void main() async {

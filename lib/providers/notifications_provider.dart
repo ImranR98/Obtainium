@@ -117,14 +117,17 @@ final completeInstallationNotification = ObtainiumNotification(
     tr('completeAppInstallationNotifDescription'),
     Importance.max);
 
-final checkingUpdatesNotification = ObtainiumNotification(
-    4,
-    tr('checkingForUpdates'),
-    '',
-    'BG_UPDATE_CHECK',
-    tr('checkingForUpdates'),
-    tr('checkingForUpdatesNotifDescription'),
-    Importance.min);
+class CheckingUpdatesNotification extends ObtainiumNotification {
+  CheckingUpdatesNotification(String appName)
+      : super(
+            4,
+            tr('checkingForUpdates'),
+            appName,
+            'BG_UPDATE_CHECK',
+            tr('checkingForUpdates'),
+            tr('checkingForUpdatesNotifDescription'),
+            Importance.min);
+}
 
 class NotificationsProvider {
   FlutterLocalNotificationsPlugin notifications =
