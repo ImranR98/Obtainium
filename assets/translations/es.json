@@ -11,12 +11,6 @@
     "unexpectedError": "Error Inesperado",
     "ok": "Correcto",
     "and": "y",
-    "startedBgUpdateTask": "Empezada la tarea de comprobación de actualizaciones en segundo plano",
-    "bgUpdateIgnoreAfterIs": "El parámetro ignoreAfter de la actualización en segundo plano es  {}",
-    "startedActualBGUpdateCheck": "Ha comenzado la comprobación de actualizaciones en segundo plano",
-    "bgUpdateTaskFinished": "Ha finalizado la comprobación de actualizaciones en segundo plano",
-    "firstRun": "Esta es la primera ejecución de Obtainium",
-    "settingUpdateCheckIntervalTo": "Cambiando intervalo de actualización a {}",
     "githubPATLabel": "Token de Acceso Personal de GitHub (Reduce tiempos de espera)",
     "githubPATHint": "El TAP debe tener este formato: nombre_de_usuario:token",
     "githubPATFormat": "nombre_de_usuario:token",
@@ -247,6 +241,11 @@
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
     "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
+    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
+    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"
@@ -294,5 +293,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} y 1 aplicación más han sido actualizadas.",
         "other": "{} y {} aplicaciones más han sido actualizadas."
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

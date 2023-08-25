@@ -309,4 +309,34 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('reversePageTransitions', show);
     notifyListeners();
   }
+
+  bool get enableBackgroundUpdates {
+    return prefs?.getBool('enableBackgroundUpdates') ?? true;
+  }
+
+  set enableBackgroundUpdates(bool val) {
+    prefs?.setBool('enableBackgroundUpdates', val);
+    notifyListeners();
+  }
+
+  DateTime get lastBGCheckTime {
+    int? temp = prefs?.getInt('lastBGCheckTime');
+    return temp != null
+        ? DateTime.fromMillisecondsSinceEpoch(temp)
+        : DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  set lastBGCheckTime(DateTime val) {
+    prefs?.setInt('lastBGCheckTime', val.millisecondsSinceEpoch);
+    notifyListeners();
+  }
+
+  bool get showDebugOpts {
+    return prefs?.getBool('showDebugOpts') ?? false;
+  }
+
+  set showDebugOpts(bool val) {
+    prefs?.setBool('showDebugOpts', val);
+    notifyListeners();
+  }
 }

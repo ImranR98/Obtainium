@@ -153,10 +153,10 @@ class _AppPageState extends State<AppPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 125),
-            app?.installedInfo != null
+            app?.icon != null
                 ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Image.memory(
-                      app!.installedInfo!.icon!,
+                      app!.icon!,
                       height: 150,
                       gaplessPlayback: true,
                     )
@@ -339,7 +339,8 @@ class _AppPageState extends State<AppPage> {
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
                       app?.app.id != null ? [app!.app.id] : [],
-                      globalNavigatorKey.currentContext);
+                      globalNavigatorKey.currentContext,
+                      settingsProvider);
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();
                   }

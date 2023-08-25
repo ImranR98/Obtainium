@@ -19,12 +19,6 @@
     "unexpectedError": "Nieoczekiwany błąd",
     "ok": "Okej",
     "and": "i",
-    "startedBgUpdateTask": "Rozpoczęto zadanie sprawdzania aktualizacji w tle",
-    "bgUpdateIgnoreAfterIs": "Parametr ignoreAfter aktualizacji w tle to {}",
-    "startedActualBGUpdateCheck": "Rozpoczęto sprawdzanie aktualizacji w tle",
-    "bgUpdateTaskFinished": "Zakończono zadanie sprawdzania aktualizacji w tle",
-    "firstRun": "Jest to pierwsze uruchomienie Obtainium",
-    "settingUpdateCheckIntervalTo": "Ustawianie interwału aktualizacji na {}",
     "githubPATLabel": "Osobisty token dostępu GitHub (zwiększa limit zapytań)",
     "githubPATHint": "Wymagany format: użytkownik:token",
     "githubPATFormat": "użytkownik:token",
@@ -251,6 +245,11 @@
     "sortByFileNamesNotLinks": "Sortuj wg nazw plików zamiast pełnych linków",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
     "customLinkFilterRegex": "Niestandardowy filtr linków wg. wyrażenia regularnego (domyślnie \".apk$\")",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
+    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
+    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
@@ -294,5 +293,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "Zaktualizowano {} i jeszcze 1 aplikację.",
         "other": "Zaktualizowano {} i {} aplik."
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

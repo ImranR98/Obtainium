@@ -22,9 +22,9 @@ class ObtainiumNotification {
 }
 
 class UpdateNotification extends ObtainiumNotification {
-  UpdateNotification(List<App> updates)
+  UpdateNotification(List<App> updates, {int? id})
       : super(
-            2,
+            id ?? 2,
             tr('updatesAvailable'),
             '',
             'UPDATES_AVAILABLE',
@@ -41,8 +41,8 @@ class UpdateNotification extends ObtainiumNotification {
 }
 
 class SilentUpdateNotification extends ObtainiumNotification {
-  SilentUpdateNotification(List<App> updates)
-      : super(3, tr('appsUpdated'), '', 'APPS_UPDATED', tr('appsUpdated'),
+  SilentUpdateNotification(List<App> updates, {int? id})
+      : super(id ?? 3, tr('appsUpdated'), '', 'APPS_UPDATED', tr('appsUpdated'),
             tr('appsUpdatedNotifDescription'), Importance.defaultImportance) {
     message = updates.length == 1
         ? tr('xWasUpdatedToY',
@@ -52,10 +52,28 @@ class SilentUpdateNotification extends ObtainiumNotification {
   }
 }
 
-class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
-  ErrorCheckingUpdatesNotification(String error)
+class SilentUpdateAttemptNotification extends ObtainiumNotification {
+  SilentUpdateAttemptNotification(List<App> updates, {int? id})
       : super(
-            5,
+            id ?? 3,
+            tr('appsPossiblyUpdated'),
+            '',
+            'APPS_POSSIBLY_UPDATED',
+            tr('appsPossiblyUpdated'),
+            tr('appsPossiblyUpdatedNotifDescription'),
+            Importance.defaultImportance) {
+    message = updates.length == 1
+        ? tr('xWasPossiblyUpdatedToY',
+            args: [updates[0].finalName, updates[0].latestVersion])
+        : plural('xAndNMoreUpdatesPossiblyInstalled', updates.length - 1,
+            args: [updates[0].finalName, (updates.length - 1).toString()]);
+  }
+}
+
+class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
+  ErrorCheckingUpdatesNotification(String error, {int? id})
+      : super(
+            id ?? 5,
             tr('errorCheckingUpdates'),
             error,
             'BG_UPDATE_CHECK_ERROR',
@@ -99,14 +117,17 @@ final completeInstallationNotification = ObtainiumNotification(
     tr('completeAppInstallationNotifDescription'),
     Importance.max);
 
-final checkingUpdatesNotification = ObtainiumNotification(
-    4,
-    tr('checkingForUpdates'),
-    '',
-    'BG_UPDATE_CHECK',
-    tr('checkingForUpdates'),
-    tr('checkingForUpdatesNotifDescription'),
-    Importance.min);
+class CheckingUpdatesNotification extends ObtainiumNotification {
+  CheckingUpdatesNotification(String appName)
+      : super(
+            4,
+            tr('checkingForUpdates'),
+            appName,
+            'BG_UPDATE_CHECK',
+            tr('checkingForUpdates'),
+            tr('checkingForUpdatesNotifDescription'),
+            Importance.min);
+}
 
 class NotificationsProvider {
   FlutterLocalNotificationsPlugin notifications =

@@ -1,4 +1,4 @@
- {
+{
    "invalidURLForSource": "Nije važeći URL aplikacije {}",
    "noReleaseFound": "Nije moguće pronaći odgovarajuće izdanje",
    "noVersionFound": "Nije moguće odrediti verziju izdanja",
@@ -11,12 +11,6 @@
    "unexpectedError": "Neočekivana greška",
    "ok": "Dobro",
    "and": "i",
-   "startedBgUpdateTask": "Započeo je pozadinski zadatak provjere ažuriranja",
-   "bgUpdateIgnoreAfterIs": "ignoreAfter pozadinskog zadataka je  {}",
-   "startedActualBGUpdateCheck": "Započela je stvarna provjera ažuriranja",
-   "bgUpdateTaskFinished": "Završen zadatak provjere ažuriranja",
-   "firstRun": "Ovo je prvi put da pokrećete Obtainium",
-   "settingUpdateCheckIntervalTo": "Podešavanje intervala ažuriranja na {}",
    "githubPATLabel": "GitHub token za lični pristup (eng. PAT, povećava ograničenje stope)",
    "githubPATHint": "PAT mora biti u ovom formatu: korisničko_ime:token",
    "githubPATFormat": "korisničko_ime:token",
@@ -247,6 +241,11 @@
    "sortByFileNamesNotLinks": "Sort by file names instead of full links",
    "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+   "appsPossiblyUpdated": "App Updates Attempted",
+   "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+   "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
+   "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
+   "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
    "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"
@@ -294,5 +293,9 @@
    "xAndNMoreUpdatesInstalled": {
       "one": "{} i još 1 aplikacija je ažurirana.",
       "other": "{} i još {} aplikacija je ažurirano."
+   },
+   "xAndNMoreUpdatesPossiblyInstalled": {
+      "one": "{} and 1 more app may have been updated.",
+      "other": "{} and {} more apps may have been updated."
    }
 }

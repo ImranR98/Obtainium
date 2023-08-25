@@ -11,12 +11,6 @@
     "unexpectedError": "意外错误",
     "ok": "好的",
     "and": "和",
-    "startedBgUpdateTask": "后台更新检查任务已启动",
-    "bgUpdateIgnoreAfterIs": "后台更新检查间隔为 {}",
-    "startedActualBGUpdateCheck": "开始后台更新检查",
-    "bgUpdateTaskFinished": "后台更新检查任务已完成",
-    "firstRun": "这是 Obtainium 首次启动",
-    "settingUpdateCheckIntervalTo": "更新检查间隔设置为 {}",
     "githubPATLabel": "GitHub 个人访问令牌（提升 API 请求限额）",
     "githubPATHint": "个人访问令牌必须为“username:token”的格式",
     "githubPATFormat": "username:token",
@@ -247,6 +241,11 @@
     "sortByFileNamesNotLinks": "根据文件名而不是完整链接来排序",
     "filterReleaseNotesByRegEx": "用正则表达式筛选发布说明",
     "customLinkFilterRegex": "用正则表达式自定义链接筛选（默认 '.apk$'）",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
+    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
+    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
@@ -294,5 +293,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} 和另外 1 个应用已更新。",
         "other": "{} 和另外 {} 个应用已更新。"
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

@@ -381,7 +381,8 @@ class AppsPageState extends State<AppsPage> {
               : () {
                   appsProvider.downloadAndInstallLatestApps(
                       [listedApps[appIndex].app.id],
-                      globalNavigatorKey.currentContext).catchError((e) {
+                      globalNavigatorKey.currentContext,
+                      settingsProvider).catchError((e) {
                     showError(e, context);
                     return <String>[];
                   });
@@ -393,9 +394,9 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getAppIcon(int appIndex) {
-      return listedApps[appIndex].installedInfo != null
+      return listedApps[appIndex].icon != null
           ? Image.memory(
-              listedApps[appIndex].installedInfo!.icon!,
+              listedApps[appIndex].icon!,
               gaplessPlayback: true,
             )
           : Row(
@@ -683,9 +684,8 @@ class AppsPageState extends State<AppsPage> {
                     toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
                   }
                   appsProvider
-                      .downloadAndInstallLatestApps(
-                          toInstall, globalNavigatorKey.currentContext,
-                          settingsProvider: settingsProvider)
+                      .downloadAndInstallLatestApps(toInstall,
+                          globalNavigatorKey.currentContext, settingsProvider)
                       .catchError((e) {
                     showError(e, context);
                     return <String>[];

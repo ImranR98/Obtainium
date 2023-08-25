@@ -1,3 +1,5 @@
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -184,6 +186,10 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
 
+    const height8 = SizedBox(
+      height: 8,
+    );
+
     const height16 = SizedBox(
       height: 16,
     );
@@ -211,6 +217,47 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             intervalDropdown,
+                            FutureBuilder(
+                                builder: (ctx, val) {
+                                  return (val.data?.version.sdkInt ?? 0) >= 30
+                                      ? Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            height16,
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Flexible(
+                                                    child: Text(tr(
+                                                        'enableBackgroundUpdates'))),
+                                                Switch(
+                                                    value: settingsProvider
+                                                        .enableBackgroundUpdates,
+                                                    onChanged: (value) {
+                                                      settingsProvider
+                                                              .enableBackgroundUpdates =
+                                                          value;
+                                                    })
+                                              ],
+                                            ),
+                                            height8,
+                                            Text(tr('backgroundUpdateReqsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            Text(tr('backgroundUpdateLimitsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            height8
+                                          ],
+                                        )
+                                      : const SizedBox.shrink();
+                                },
+                                future: DeviceInfoPlugin().androidInfo),
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -462,7 +509,44 @@ class _SettingsPageState extends State<SettingsPage> {
                         label: Text(tr('appLogs'))),
                   ],
                 ),
-                height16,
+                const Divider(
+                  height: 32,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Flexible(child: Text('Debug Menu')),
+                        Switch(
+                            value: settingsProvider.showDebugOpts,
+                            onChanged: (value) {
+                              settingsProvider.showDebugOpts = value;
+                            })
+                      ],
+                    ),
+                    if (settingsProvider.showDebugOpts)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          height16,
+                          TextButton(
+                              onPressed: () {
+                                AndroidAlarmManager.oneShot(
+                                    const Duration(seconds: 0),
+                                    bgUpdateCheckAlarmId + 200,
+                                    bgUpdateCheck);
+                                showError(
+                                    'Background task started - check logs.',
+                                    context);
+                              },
+                              child:
+                                  const Text('Run Background Update Check Now'))
+                        ],
+                      ),
+                  ]),
+                ),
               ],
             ),
           )

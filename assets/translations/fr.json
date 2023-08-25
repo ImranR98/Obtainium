@@ -11,12 +11,6 @@
     "unexpectedError": "Erreur inattendue",
     "ok": "Okay",
     "and": "et",
-    "startedBgUpdateTask": "Démarrage de la tâche de vérification de mise à jour en arrière-plan",
-    "bgUpdateIgnoreAfterIs": "Mise à jour en arrière-plan est ignoré après  {}",
-    "startedActualBGUpdateCheck": "Démarrage de la vérification de la mise à jour en arrière-plan",
-    "bgUpdateTaskFinished": "Tâche de vérification de la mise à jour en arrière-plan terminée",
-    "firstRun": "Il s'agit de la toute première exécution d'Obtainium",
-    "settingUpdateCheckIntervalTo": "Définition de l'intervalle de mise à jour sur {}",
     "githubPATLabel": "Jeton d'Accès Personnel GitHub (Augmente la limite de débit)",
     "githubPATHint": "Le JAP doit être dans ce format : username:token",
     "githubPATFormat": "username:token",
@@ -247,6 +241,11 @@
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
     "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "appsPossiblyUpdated": "App Updates Attempted",
+    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
+    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
+    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
+    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"
@@ -294,5 +293,9 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} et 1 autre application ont été mises à jour.",
         "other": "{} et {} autres applications ont été mises à jour."
+    },
+    "xAndNMoreUpdatesPossiblyInstalled": {
+        "one": "{} and 1 more app may have been updated.",
+        "other": "{} and {} more apps may have been updated."
     }
 }

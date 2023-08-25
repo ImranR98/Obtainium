@@ -1,10 +1,7 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart';
-import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -22,7 +19,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.13.26';
+const String currentVersion = '0.13.27';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -70,89 +67,6 @@ Future<void> loadTranslations() async {
   Localization.load(controller.locale,
       translations: controller.translations,
       fallbackTranslations: controller.fallbackTranslations);
-}
-
-@pragma('vm:entry-point')
-Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
-
-  await loadTranslations();
-
-  LogsProvider logs = LogsProvider();
-  logs.add(tr('startedBgUpdateTask'));
-  int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
-  await AndroidAlarmManager.initialize();
-  DateTime? ignoreAfter = ignoreAfterMicroseconds != null
-      ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
-      : null;
-  logs.add(tr('bgUpdateIgnoreAfterIs', args: [ignoreAfter.toString()]));
-  var notificationsProvider = NotificationsProvider();
-  await notificationsProvider.notify(checkingUpdatesNotification);
-  try {
-    var appsProvider = AppsProvider();
-    await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    await appsProvider.loadApps();
-    List<String> existingUpdateIds =
-        appsProvider.findExistingUpdates(installedOnly: true);
-    DateTime nextIgnoreAfter = DateTime.now();
-    String? err;
-    try {
-      logs.add(tr('startedActualBGUpdateCheck'));
-      await appsProvider.checkUpdates(
-          ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
-    } catch (e) {
-      if (e is RateLimitError || e is ClientException) {
-        var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
-        logs.add(
-            plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes, args: [
-          e is ClientException
-              ? '${(e).message}, ${e.uri?.path}'
-              : e.toString(),
-          remainingMinutes.toString()
-        ]));
-        AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
-            Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
-          'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
-        });
-      } else {
-        err = e.toString();
-      }
-    }
-    List<App> newUpdates = appsProvider
-        .findExistingUpdates(installedOnly: true)
-        .where((id) => !existingUpdateIds.contains(id))
-        .map((e) => appsProvider.apps[e]!.app)
-        .toList();
-
-    // TODO: This silent update code doesn't work yet
-    // List<String> silentlyUpdated = await appsProvider
-    //     .downloadAndInstallLatestApp(
-    //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
-    // if (silentlyUpdated.isNotEmpty) {
-    //   newUpdates = newUpdates
-    //       .where((element) => !silentlyUpdated.contains(element.id))
-    //       .toList();
-    //   notificationsProvider.notify(
-    //       SilentUpdateNotification(
-    //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
-    //       cancelExisting: true);
-    // }
-    logs.add(
-        plural('bgCheckFoundUpdatesWillNotifyIfNeeded', newUpdates.length));
-    if (newUpdates.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(newUpdates));
-    }
-    if (err != null) {
-      throw err;
-    }
-  } catch (e) {
-    notificationsProvider
-        .notify(ErrorCheckingUpdatesNotification(e.toString()));
-  } finally {
-    logs.add(tr('bgUpdateTaskFinished'));
-    await notificationsProvider.cancel(checkingUpdatesNotification.id);
-  }
 }
 
 void main() async {
@@ -212,7 +126,7 @@ class _ObtainiumState extends State<Obtainium> {
     } else {
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
-        logs.add(tr('firstRun'));
+        logs.add('This is the first ever run of Obtainium.');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         appsProvider.saveApps([
@@ -239,22 +153,28 @@ class _ObtainiumState extends State<Obtainium> {
         settingsProvider.resetLocaleSafe(context);
       }
       // Register the background update task according to the user's setting
-      if (existingUpdateInterval != settingsProvider.updateInterval) {
-        if (existingUpdateInterval != -1) {
-          logs.add(tr('settingUpdateCheckIntervalTo',
-              args: [settingsProvider.updateInterval.toString()]));
-        }
-        existingUpdateInterval = settingsProvider.updateInterval;
-        if (existingUpdateInterval == 0) {
+      var actualUpdateInterval = settingsProvider.updateInterval;
+      if (existingUpdateInterval != actualUpdateInterval) {
+        if (actualUpdateInterval == 0) {
           AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
         } else {
-          AndroidAlarmManager.periodic(
-              Duration(minutes: existingUpdateInterval),
-              bgUpdateCheckAlarmId,
-              bgUpdateCheck,
-              rescheduleOnReboot: true,
-              wakeup: true);
+          var settingChanged = existingUpdateInterval != -1;
+          var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
+              settingsProvider.lastBGCheckTime
+                  .add(Duration(minutes: actualUpdateInterval + 60))
+                  .isBefore(DateTime.now());
+          if (settingChanged || lastCheckWasTooLongAgo) {
+            logs.add(
+                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
+            AndroidAlarmManager.periodic(
+                Duration(minutes: actualUpdateInterval),
+                bgUpdateCheckAlarmId,
+                bgUpdateCheck,
+                rescheduleOnReboot: true,
+                wakeup: true);
+          }
         }
+        existingUpdateInterval = actualUpdateInterval;
       }
     }
 
