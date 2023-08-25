@@ -245,11 +245,11 @@
     "sortByFileNamesNotLinks": "Sortuj wg nazw plików zamiast pełnych linków",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
     "customLinkFilterRegex": "Niestandardowy filtr linków wg. wyrażenia regularnego (domyślnie \".apk$\")",
-    "appsPossiblyUpdated": "App Updates Attempted",
-    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
-    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
-    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
+    "appsPossiblyUpdated": "Informuj o próbach aktualizacji",
+    "appsPossiblyUpdatedNotifDescription": "Powiadamiaj o potencjalnym zastosowaniu w tle aktualizacji jednej lub większej ilości aplikacji",
+    "xWasPossiblyUpdatedToY": "{} mógł zostać zaktualizowany do {}.",
+    "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
+    "backgroundUpdateLimitsExplanation": "Powodzenie instalacji w tle można określić dopiero po otwarciu Obtainium.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
@@ -291,11 +291,12 @@
         "other": "{} i {} aplik. otrzymało aktualizacje."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "Zaktualizowano {} i jeszcze 1 aplikację.",
+        "one": "{} i jeszcze 1 apka zostały zaktualizowane.",
         "other": "Zaktualizowano {} i {} aplik."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
-    }
+        "one": "{} i jeszcze 1 apka mogły zostać zaktualizowane.",
+        "other": "{} i {} innych apek mogło zostać zaktualizowanych."
+    },
+    "enableBackgroundUpdates": "Włącz aktualizacje w tle"
 }
