@@ -85,6 +85,10 @@ class GitHub extends AppSource {
                 return regExValidator(value);
               }
             ])
+      ],
+      [
+        GeneratedFormSwitch('verifyLatestTag',
+            label: tr('verifyLatestTag'), defaultValue: false)
       ]
     ];
 
@@ -212,6 +216,21 @@ class GitHub extends AppSource {
                 true
             ? additionalSettings['filterReleaseNotesByRegEx']
             : null;
+    bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
+    String? latestTag;
+    if (verifyLatestTag) {
+      var temp = requestUrl.split('?');
+      Response res = await sourceRequest(
+          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}');
+      if (res.statusCode != 200) {
+        if (onHttpErrorCode != null) {
+          onHttpErrorCode(res);
+        }
+        throw getObtainiumHttpError(res);
+      }
+      var jsres = jsonDecode(res.body);
+      latestTag = jsres['tag_name'] ?? jsres['name'];
+    }
     Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
@@ -258,6 +277,17 @@ class GitHub extends AppSource {
           }
         }
       });
+      if (latestTag != null &&
+          releases.isNotEmpty &&
+          latestTag !=
+              (releases[releases.length - 1]['tag_name'] ??
+                  releases[0]['name'])) {
+        var ind = releases.indexWhere(
+            (element) => latestTag == (element['tag_name'] ?? element['name']));
+        if (ind >= 0) {
+          releases.add(releases.removeAt(ind));
+        }
+      }
       releases = releases.reversed.toList();
       dynamic targetRelease;
       var prerrelsSkipped = 0;

@@ -246,6 +246,7 @@
     "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
     "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
+    "verifyLatestTag": "Verify the 'latest' tag",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
