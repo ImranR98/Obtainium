@@ -241,19 +241,20 @@
     "sortByFileNamesNotLinks": "フルのリンクではなくファイル名でソートする",
     "filterReleaseNotesByRegEx": "正規表現でリリースノートをフィルタリングする",
     "customLinkFilterRegex": "正規表現によるカスタムリンクフィルター (デフォルト '.apk$')",
-    "appsPossiblyUpdated": "App Updates Attempted",
-    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
-    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
-    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
-    "verifyLatestTag": "Verify the 'latest' tag",
+    "appsPossiblyUpdated": "アプリのアップデートが試みられました",
+    "appsPossiblyUpdatedNotifDescription": "1つまたは複数のアプリのアップデートがバックグラウンドで適用された可能性があることをユーザーに通知",
+    "xWasPossiblyUpdatedToY": "{} が {} にアップデートされた可能性があります",
+    "enableBackgroundUpdates": "バックグラウンドアップデートを有効化する",
+    "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで可能とは限りません。",
+    "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
+    "verifyLatestTag": "'latest'タグを確認する",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "リクエストが多すぎます（レート制限）- {}分後に再試行してください",
-        "other": "リクエストが多すぎます（レート制限）- {}分後に再試行してください"
+        "one": "リクエストが多すぎます（レート制限）- {} 分後に再試行してください",
+        "other": "リクエストが多すぎます（レート制限）- {} 分後に再試行してください"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "バックグラウンドでのアップデート確認で {} の問題が発生, {} 分後に再試行します",
@@ -264,28 +265,28 @@
         "other": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します"
     },
     "apps": {
-        "one": "{}個のアプリ",
-        "other": "{}個のアプリ"
+        "one": "{} 個のアプリ",
+        "other": "{} 個のアプリ"
     },
     "url": {
-        "one": "{}個のURL",
-        "other": "{}個のURL"
+        "one": "{} 個のURL",
+        "other": "{} 個のURL"
     },
     "minute": {
-        "one": "{}分",
-        "other": "{}分"
+        "one": "{} 分",
+        "other": "{} 分"
     },
     "hour": {
-        "one": "{}時間",
-        "other": "{}時間"
+        "one": "{} 時間",
+        "other": "{} 時間"
     },
     "day": {
-        "one": "{}日",
-        "other": "{}日"
+        "one": "{} 日",
+        "other": "{} 日"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "{n}個のログをクリアしました (前 = {before}, 後 = {after})",
-        "other": "{n}個のログをクリアしました (前 = {before}, 後 = {after})"
+        "one": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})",
+        "other": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} とさらに {} 個のアプリのアップデートが利用可能です",
@@ -296,7 +297,7 @@
         "other": "{} とさらに {} 個のアプリがアップデートされました"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
+        "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります",
+        "other": "{} とさらに {} 個のアプリがアップデートされた化膿性があります"
     }
 }
