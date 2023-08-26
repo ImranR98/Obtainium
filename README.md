@@ -34,8 +34,9 @@ Currently supported App sources:
     alt="Get it on GitHub"
     height="80">](https://github.com/ImranR98/Obtainium/releases)
 
+[PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index)
+
 ## Limitations
-- Auto (unattended) updates are unsupported due to a lack of any capable Flutter plugin.
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
 ## Screenshots
