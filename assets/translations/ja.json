@@ -244,6 +244,7 @@
     "appsPossiblyUpdated": "アプリのアップデートが試みられました",
     "appsPossiblyUpdatedNotifDescription": "1つまたは複数のアプリのアップデートがバックグラウンドで適用された可能性があることをユーザーに通知",
     "xWasPossiblyUpdatedToY": "{} が {} にアップデートされた可能性があります",
+    "enableBackgroundUpdates": "バックグラウンドアップデートを有効化する",
     "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで可能とは限りません。",
     "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
     "verifyLatestTag": "'latest'タグを確認する",
