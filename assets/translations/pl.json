@@ -250,6 +250,7 @@
     "xWasPossiblyUpdatedToY": "{} mógł zostać zaktualizowany do {}.",
     "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
     "backgroundUpdateLimitsExplanation": "Powodzenie instalacji w tle można określić dopiero po otwarciu Obtainium.",
+    "verifyLatestTag": "Verify the 'latest' tag",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "other": "Usunąć aplikacje?"
