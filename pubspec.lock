@@ -29,12 +29,11 @@ packages:
   android_package_manager:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: c7c2f992a9dc452393c94d96cdf2b1f5a5ce7c80
-      url: "https://github.com/ImranR98/android_package_manager"
-    source: git
-    version: "0.5.4"
+      name: android_package_manager
+      sha256: b873fe5856f7c442aca9751dac05d117285be9e4de08eb15d1ffb811fd1b688d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
   animations:
     dependency: "direct main"
     description:

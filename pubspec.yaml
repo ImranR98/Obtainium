@@ -55,10 +55,7 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_installer
       ref: main
-  android_package_manager:
-    git:
-        url: https://github.com/ImranR98/android_package_manager
-        ref: master
+  android_package_manager: ^0.6.0
   share_plus: ^7.0.0
   android_alarm_manager_plus: ^3.0.0
   sqflite: ^2.2.0+3
