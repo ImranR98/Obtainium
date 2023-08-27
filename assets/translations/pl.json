@@ -4,8 +4,10 @@
     "okay": "Okej",
     "appId": "ID aplikacji",
     "bgUpdateGotErrorRetryInMinutes": {
-        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} min.",
-        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} min."
+        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minutę",
+        "few": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty",
+        "many": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minut",
+        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty"
     },
     "invalidURLForSource": "Nieprawidłowy adres URL aplikacji {}",
     "noReleaseFound": "Nie można znaleźć odpowiedniego wydania",
@@ -247,57 +249,81 @@
     "customLinkFilterRegex": "Niestandardowy filtr linków wg. wyrażenia regularnego (domyślnie \".apk$\")",
     "appsPossiblyUpdated": "Informuj o próbach aktualizacji",
     "appsPossiblyUpdatedNotifDescription": "Powiadamiaj o potencjalnym zastosowaniu w tle aktualizacji jednej lub większej ilości aplikacji",
-    "xWasPossiblyUpdatedToY": "{} mógł zostać zaktualizowany do {}.",
+    "xWasPossiblyUpdatedToY": "{} być może zaktualizowano do {}.",
     "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
     "backgroundUpdateLimitsExplanation": "Powodzenie instalacji w tle można określić dopiero po otwarciu Obtainium.",
-    "verifyLatestTag": "Verify the 'latest' tag",
+    "verifyLatestTag": "Zweryfikuj najnowszy tag",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
+        "few": "Usunąć aplikacje?",
+        "many": "Usunąć aplikacje?",
         "other": "Usunąć aplikacje?"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} min.",
-        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} min."
+        "one": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minutę",
+        "few": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minuty",
+        "many": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minut",
+        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minuty"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "Podczas sprawdzania aktualizacji w tle znaleziono {} aktualizację - w razie potrzeby użytkownik zostanie o tym powiadomiony",
-        "other": "Podczas sprawdzania aktualizacji w tle znaleziono {} akt. - w razie potrzeby użytkownik zostanie o tym powiadomiony"
+        "one": "W tle znaleziono {} aktualizację - w razie potrzeby użytkownik zostanie o tym powiadomiony",
+        "few": "W tle znaleziono {} aktualizacje - w razie potrzeby użytkownik zostanie o tym powiadomiony",
+        "many": "W tle znaleziono {} aktualizacji - w razie potrzeby użytkownik zostanie o tym powiadomiony",
+        "other": "W tle znaleziono {} aktualizacje - w razie potrzeby użytkownik zostanie o tym powiadomiony"
     },
     "apps": {
-        "one": "{} aplik.",
-        "other": "{} aplik."
+        "one": "{} apkę",
+        "few": "{} apki",
+        "many": "{} apek",
+        "other": "{} apki"
     },
     "url": {
         "one": "{} adres URL",
-        "other": "{} adr. URL"
+        "few": "{} adresy URL",
+        "many": "{} adresów URL",
+        "other": "{} adresy URL"
     },
     "minute": {
-        "one": "{} min.",
-        "other": "{} min."
+        "one": "{} minuta",
+        "few": "{} minuty",
+        "many": "{} minut",
+        "other": "{} minuty"
     },
     "hour": {
-        "one": "{} godz.",
-        "other": "{} godz."
+        "one": "{} godzina",
+        "few": "{} godziny",
+        "many": "{} godzin",
+        "other": "{} godziny"
     },
     "day": {
         "one": "{} dzień",
+        "few": "{} dni",
+        "many": "{} dni",
         "other": "{} dni"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Wyczyszczono {n} log (przed = {before}, po = {after})",
-        "other": "Wyczyszczono logi: {n} (przed = {before}, po = {after})"
+        "few": "Wyczyszczono {n} logi (przed = {before}, po = {after})",
+        "many": "Wyczyszczono {n} logów (przed = {before}, po = {after})",
+        "other": "Wyczyszczono {n} logi (przed = {before}, po = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} i jeszcze 1 aplikacja mają aktualizacje.",
-        "other": "{} i {} aplik. otrzymało aktualizacje."
+        "one": "{} i 1 inna apka mają aktualizacje.",
+        "few": "{} i {} inne apki mają aktualizacje.",
+        "many": "{} i {} innych apek ma aktualizacje.",
+        "other": "{} i {} inne apki mają aktualizacje."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} i jeszcze 1 apka zostały zaktualizowane.",
-        "other": "Zaktualizowano {} i {} aplik."
+        "one": "Zaktualizowano {} i 1 inną apkę.",
+        "few": "{} i {} inne apki zostały zaktualizowane.",
+        "many": "{} i {} innych apek zostało zaktualizowanych.",
+        "other": "{} i {} inne apki zostały zaktualizowane."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} i jeszcze 1 apka mogły zostać zaktualizowane.",
-        "other": "{} i {} innych apek mogło zostać zaktualizowanych."
+        "one": "{} i 1 inna apka mogły zostać zaktualizowane.",
+        "few": "{} i {} inne apki mogły zostać zaktualizowane.",
+        "many": "{} i {} innych apek mogło zostać zaktualizowanych.",
+        "other": "{} i {} inne apki mogły zostać zaktualizowane."
     },
     "enableBackgroundUpdates": "Włącz aktualizacje w tle"
 }
