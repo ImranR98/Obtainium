@@ -40,7 +40,7 @@
     "appSourceURL": "来源 URL",
     "error": "错误",
     "add": "添加",
-    "searchSomeSourcesLabel": "搜索（仅部分来源）",
+    "searchSomeSourcesLabel": "搜索（仅支持部分来源）",
     "search": "搜索",
     "additionalOptsFor": "{} 的更多选项",
     "supportedSourcesBelow": "支持的来源：",
@@ -144,16 +144,16 @@
     "warning": "警告",
     "sourceIsXButPackageFromYPrompt": "此应用的来源是“{}”，但 APK 文件来自“{}”。是否继续？",
     "updatesAvailable": "更新可用",
-    "updatesAvailableNotifDescription": "Obtainium 追踪的应用有更新时发出通知",
+    "updatesAvailableNotifDescription": "Obtainium 追踪的应用有更新时发送通知",
     "noNewUpdates": "全部应用已是最新。",
     "xHasAnUpdate": "{} 可以更新了。",
     "appsUpdated": "应用已更新",
-    "appsUpdatedNotifDescription": "当应用在后台安装更新时发出通知",
+    "appsUpdatedNotifDescription": "当应用在后台安装更新时发送通知",
     "xWasUpdatedToY": "{} 已更新至 {}。",
     "errorCheckingUpdates": "检查更新出错",
     "errorCheckingUpdatesNotifDescription": "当后台检查更新失败时显示的通知",
     "appsRemoved": "应用已删除",
-    "appsRemovedNotifDescription": "当应用因加载出错而被删除时发出通知",
+    "appsRemovedNotifDescription": "当应用因加载出错而被删除时发送通知",
     "xWasRemovedDueToErrorY": "{} 由于以下错误被删除：{}",
     "completeAppInstallation": "完成应用安装",
     "obtainiumMustBeOpenToInstallApps": "必须启动 Obtainium 才能安装应用",
@@ -174,7 +174,7 @@
     "yesMarkUpdated": "是，标记为已更新",
     "fdroid": "F-Droid 官方存储库",
     "appIdOrName": "应用 ID 或名称",
-    "appId": "App ID",
+    "appId": "应用 ID",
     "appWithIdOrNameNotFound": "未找到符合此 ID 或名称的应用",
     "reposHaveMultipleApps": "存储库中可能包含多个应用",
     "fdroidThirdPartyRepo": "F-Droid 第三方存储库",
@@ -238,15 +238,16 @@
     "addInfoInSettings": "在“设置”中添加此凭据。",
     "githubSourceNote": "使用访问令牌可避免触发 GitHub 的 API 请求限制。",
     "gitlabSourceNote": "未使用访问令牌时可能无法从 GitLab 获取 APK 文件。",
-    "sortByFileNamesNotLinks": "根据文件名而不是完整链接来排序",
-    "filterReleaseNotesByRegEx": "用正则表达式筛选发布说明",
-    "customLinkFilterRegex": "用正则表达式自定义链接筛选（默认 '.apk$'）",
-    "appsPossiblyUpdated": "App Updates Attempted",
-    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
-    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
-    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
-    "verifyLatestTag": "Verify the 'latest' tag",
+    "sortByFileNamesNotLinks": "使用文件名代替链接进行排序",
+    "filterReleaseNotesByRegEx": "使用正则表达式筛选发行说明",
+    "customLinkFilterRegex": "使用正则表达式自定义链接筛选（默认模式为“.apk$”）",
+    "appsPossiblyUpdated": "已尝试更新应用",
+    "appsPossiblyUpdatedNotifDescription": "当应用已尝试在后台更新时发送通知",
+    "xWasPossiblyUpdatedToY": "已尝试将 {} 更新至 {}。",
+    "enableBackgroundUpdates": "启用后台更新",
+    "backgroundUpdateReqsExplanation": "后台更新未必适用于所有的应用。",
+    "backgroundUpdateLimitsExplanation": "只有在启动 Obtainium 时才能确认安装是否成功。",
+    "verifyLatestTag": "验证“Latest”标签",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
@@ -260,8 +261,8 @@
         "other": "后台更新检查遇到了“{}”问题，预定于 {} 分钟后重试"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "后台检查发现 {} 个应用更新 - 如有需要将发出通知",
-        "other": "后台检查发现 {} 个应用更新 - 如有需要将发出通知"
+        "one": "后台检查发现 {} 个应用更新 - 如有需要将发送通知",
+        "other": "后台检查发现 {} 个应用更新 - 如有需要将发送通知"
     },
     "apps": {
         "one": "{} 个应用",
@@ -296,7 +297,7 @@
         "other": "{} 和另外 {} 个应用已更新。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
+        "one": "{} 和另外 1 个应用已尝试更新。",
+        "other": "{} 和另外 {} 个应用已尝试更新。"
     }
 }
