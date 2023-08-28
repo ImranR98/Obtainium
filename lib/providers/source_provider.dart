@@ -329,16 +329,23 @@ abstract class AppSource {
     name = runtimeType.toString();
   }
 
-  overrideVersionDetectionFormDefault(String vd, bool disableStandard) {
+  overrideVersionDetectionFormDefault(String vd,
+      {bool disableStandard = false, bool disableRelDate = false}) {
     additionalAppSpecificSourceAgnosticSettingFormItems =
         additionalAppSpecificSourceAgnosticSettingFormItems.map((e) {
       return e.map((e2) {
         if (e2.key == 'versionDetection') {
           var item = e2 as GeneratedFormDropdown;
           item.defaultValue = vd;
+          item.disabledOptKeys = [];
           if (disableStandard) {
-            item.disabledOptKeys = ['standardVersionDetection'];
+            item.disabledOptKeys?.add('standardVersionDetection');
           }
+          if (disableRelDate) {
+            item.disabledOptKeys?.add('releaseDateAsVersion');
+          }
+          item.disabledOptKeys =
+              item.disabledOptKeys?.where((element) => element != vd).toList();
         }
         return e2;
       }).toList();
