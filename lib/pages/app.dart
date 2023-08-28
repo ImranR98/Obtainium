@@ -341,10 +341,15 @@ class _AppPageState extends State<AppPage> {
                       app?.app.id != null ? [app!.app.id] : [],
                       globalNavigatorKey.currentContext,
                       settingsProvider);
+                  if (app?.app.installedVersion != null && !trackOnly) {
+                    // ignore: use_build_context_synchronously
+                    showError(tr('appsUpdated'), context);
+                  }
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();
                   }
                 } catch (e) {
+                  // ignore: use_build_context_synchronously
                   showError(e, context);
                 }
               }

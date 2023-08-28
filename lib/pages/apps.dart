@@ -689,6 +689,10 @@ class AppsPageState extends State<AppsPage> {
                       .catchError((e) {
                     showError(e, context);
                     return <String>[];
+                  }).then((value) {
+                    if (shouldInstallUpdates) {
+                      showError(tr('appsUpdated'), context);
+                    }
                   });
                 }
               });
