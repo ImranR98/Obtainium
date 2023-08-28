@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
@@ -41,27 +42,59 @@ class VLC extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? version = await getLatestVersion(standardUrl);
-    if (version == null) {
-      throw NoVersionError();
-    }
-    String? targetUrl = '$dwUrlBase$version/';
-    Response res = await sourceRequest(targetUrl);
-    List<String> apkUrls = [];
+    Response res = await get(
+        Uri.parse('https://www.videolan.org/vlc/download-android.html'));
     if (res.statusCode == 200) {
-      apkUrls = parse(res.body)
+      var dwUrlBase = 'get.videolan.org/vlc-android';
+      var dwLinks = parse(res.body)
           .querySelectorAll('a')
-          .map((e) => e.attributes['href']?.split('/').last)
-          .where((h) =>
-              h != null && h.isNotEmpty && h.toLowerCase().endsWith('.apk'))
-          .map((e) => targetUrl + e!)
+          .where((element) =>
+              element.attributes['href']?.contains(dwUrlBase) ?? false)
           .toList();
+      String? version = dwLinks.isNotEmpty
+          ? dwLinks.first.attributes['href']
+              ?.split('/')
+              .where((s) => s.isNotEmpty)
+              .last
+          : null;
+      if (version == null) {
+        throw NoVersionError();
+      }
+
+      String? targetUrl = 'https://$dwUrlBase/$version/';
+      Response res2 = await get(Uri.parse(targetUrl));
+      List<String> apkUrls = [];
+      if (res2.statusCode == 200) {
+        apkUrls = parse(res2.body)
+            .querySelectorAll('a')
+            .map((e) => e.attributes['href']?.split('/').last)
+            .where((h) =>
+                h != null && h.isNotEmpty && h.toLowerCase().endsWith('.apk'))
+            .map((e) => targetUrl + e!)
+            .toList();
+      } else if (res2.statusCode == 500 &&
+          res2.body.toLowerCase().indexOf('mirror') > 0) {
+        var html = parse(res2.body);
+        var err = '';
+        html.body?.nodes.forEach((element) {
+          if (element.text != null) {
+            err += '${element.text}\n';
+          }
+        });
+        err = err.trim();
+        if (err.isEmpty) {
+          err = tr('err');
+        }
+        throw ObtainiumError(err);
+      } else {
+        throw getObtainiumHttpError(res2);
+      }
+
+      return APKDetails(
+          version, getApkUrlsFromUrls(apkUrls), AppNames('VideoLAN', 'VLC'));
     } else {
       throw getObtainiumHttpError(res);
     }
-
-    return APKDetails(
-        version, getApkUrlsFromUrls(apkUrls), AppNames('VideoLAN', 'VLC'));
   }
 
   @override

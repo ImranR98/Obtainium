@@ -25,6 +25,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -523,7 +524,7 @@ class SourceProvider {
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
-        // VLC(), // As of 2023-08-26 this site randomly messes up the 'latest' version (one minute it's 3.5.4, next minute back to 3.5.3)
+        VLC(), // As of 2023-08-26 this site randomly messes up the 'latest' version (one minute it's 3.5.4, next minute back to 3.5.3)
         // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
         TelegramApp(),
         SteamMobile(),
