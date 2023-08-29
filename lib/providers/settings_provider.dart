@@ -319,6 +319,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get bgUpdatesOnWiFiOnly {
+    return prefs?.getBool('bgUpdatesOnWiFiOnly') ?? false;
+  }
+
+  set bgUpdatesOnWiFiOnly(bool val) {
+    prefs?.setBool('bgUpdatesOnWiFiOnly', val);
+    notifyListeners();
+  }
+
   DateTime get lastBGCheckTime {
     int? temp = prefs?.getInt('lastBGCheckTime');
     return temp != null

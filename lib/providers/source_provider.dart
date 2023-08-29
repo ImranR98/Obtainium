@@ -25,6 +25,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -329,16 +330,23 @@ abstract class AppSource {
     name = runtimeType.toString();
   }
 
-  overrideVersionDetectionFormDefault(String vd, bool disableStandard) {
+  overrideVersionDetectionFormDefault(String vd,
+      {bool disableStandard = false, bool disableRelDate = false}) {
     additionalAppSpecificSourceAgnosticSettingFormItems =
         additionalAppSpecificSourceAgnosticSettingFormItems.map((e) {
       return e.map((e2) {
         if (e2.key == 'versionDetection') {
           var item = e2 as GeneratedFormDropdown;
           item.defaultValue = vd;
+          item.disabledOptKeys = [];
           if (disableStandard) {
-            item.disabledOptKeys = ['standardVersionDetection'];
+            item.disabledOptKeys?.add('standardVersionDetection');
           }
+          if (disableRelDate) {
+            item.disabledOptKeys?.add('releaseDateAsVersion');
+          }
+          item.disabledOptKeys =
+              item.disabledOptKeys?.where((element) => element != vd).toList();
         }
         return e2;
       }).toList();
@@ -417,7 +425,11 @@ abstract class AppSource {
       GeneratedFormSwitch('autoApkFilterByArch',
           label: tr('autoApkFilterByArch'), defaultValue: true)
     ],
-    [GeneratedFormTextField('appName', label: tr('appName'), required: false)]
+    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
+    [
+      GeneratedFormSwitch('exemptFromBackgroundUpdates',
+          label: tr('exemptFromBackgroundUpdates'))
+    ]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -516,7 +528,7 @@ class SourceProvider {
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
-        // VLC(), // As of 2023-08-26 this site randomly messes up the 'latest' version (one minute it's 3.5.4, next minute back to 3.5.3)
+        VLC(), // As of 2023-08-26 this site randomly messes up the 'latest' version (one minute it's 3.5.4, next minute back to 3.5.3)
         // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
         TelegramApp(),
         SteamMobile(),

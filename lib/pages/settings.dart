@@ -252,7 +252,32 @@ class _SettingsPageState extends State<SettingsPage> {
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .labelSmall),
-                                            height8
+                                            height8,
+                                            if (settingsProvider
+                                                .enableBackgroundUpdates)
+                                              Column(
+                                                children: [
+                                                  height16,
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                          child: Text(tr(
+                                                              'bgUpdatesOnWiFiOnly'))),
+                                                      Switch(
+                                                          value: settingsProvider
+                                                              .bgUpdatesOnWiFiOnly,
+                                                          onChanged: (value) {
+                                                            settingsProvider
+                                                                    .bgUpdatesOnWiFiOnly =
+                                                                value;
+                                                          })
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                           ],
                                         )
                                       : const SizedBox.shrink();

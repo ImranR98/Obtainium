@@ -103,7 +103,16 @@ class HTML extends AppSource {
               }
             ])
       ],
+      [
+        GeneratedFormTextField('intermediateLinkRegex',
+            label: tr('intermediateLinkRegex'),
+            hint: '([0-9]+\.)*[0-9]+/\$',
+            required: false,
+            additionalValidators: [(value) => regExValidator(value)])
+      ]
     ];
+    overrideVersionDetectionFormDefault('noVersionDetection',
+        disableStandard: true, disableRelDate: true);
   }
 
   @override
@@ -132,6 +141,21 @@ class HTML extends AppSource {
           .map((element) => element.attributes['href'] ?? '')
           .toList();
       List<String> links = [];
+      if ((additionalSettings['intermediateLinkRegex'] as String?)
+              ?.isNotEmpty ==
+          true) {
+        var reg = RegExp(additionalSettings['intermediateLinkRegex']);
+        links = allLinks.where((element) => reg.hasMatch(element)).toList();
+        links.sort((a, b) => compareAlphaNumeric(a, b));
+        if (links.isEmpty) {
+          throw ObtainiumError(tr('intermediateLinkNotFound'));
+        }
+        Map<String, dynamic> additionalSettingsTemp =
+            Map.from(additionalSettings);
+        additionalSettingsTemp['intermediateLinkRegex'] = null;
+        return getLatestAPKDetails(
+            ensureAbsoluteUrl(links.last, uri), additionalSettingsTemp);
+      }
       if ((additionalSettings['customLinkFilterRegex'] as String?)
               ?.isNotEmpty ==
           true) {

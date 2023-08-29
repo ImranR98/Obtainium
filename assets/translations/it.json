@@ -240,13 +240,15 @@
     "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "sortByFileNamesNotLinks": "Sort by file names instead of full links",
     "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
-    "customLinkFilterRegex": "Custom Link Filter by Regular Expression (Default '.apk$')",
+    "customLinkFilterRegex": "Custom APK Link Filter by Regular Expression (Default '.apk$')",
     "appsPossiblyUpdated": "App Updates Attempted",
     "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
     "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
     "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
     "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "verifyLatestTag": "Verify the 'latest' tag",
+    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
+    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

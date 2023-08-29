@@ -253,6 +253,8 @@
     "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
     "backgroundUpdateLimitsExplanation": "Powodzenie instalacji w tle można określić dopiero po otwarciu Obtainium.",
     "verifyLatestTag": "Zweryfikuj najnowszy tag",
+    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
+    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",
