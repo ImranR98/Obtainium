@@ -248,13 +248,17 @@
     "backgroundUpdateReqsExplanation": "Atualizações em segundo plano podem não ser possíveis para todos os Apps.",
     "backgroundUpdateLimitsExplanation": "O sucesso de uma instalação em segundo plano só pode ser determinado quando o Obtainium é aberto.",
     "verifyLatestTag": "Verifique a 'ultima' etiqueta",
+    "intermediateLinkRegex": "Filtre por um Link 'Intermediário' para Visitar Primeiro",
+    "intermediateLinkNotFound": "Link intermediário não encontrado",
+    "exemptFromBackgroundUpdates": "Isento de atualizações em segundo plano (se ativadas)",
+    "bgUpdatesOnWiFiOnly": "Desative atualizações em segundo plano quando não estiver em WiFi",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Muitas solicitações (taxa limitada) - tente novamente em {} minuto",
-        "other": "Muitas solicitações (taxa limitada) - tente novamente em {} minutos",
+        "other": "Muitas solicitações (taxa limitada) - tente novamente em {} minutos"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minuto",
