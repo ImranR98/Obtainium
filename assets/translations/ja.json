@@ -248,6 +248,7 @@
     "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで可能とは限りません。",
     "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
     "verifyLatestTag": "'latest'タグを確認する",
+    "examptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

@@ -425,7 +425,11 @@ abstract class AppSource {
       GeneratedFormSwitch('autoApkFilterByArch',
           label: tr('autoApkFilterByArch'), defaultValue: true)
     ],
-    [GeneratedFormTextField('appName', label: tr('appName'), required: false)]
+    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
+    [
+      GeneratedFormSwitch('examptFromBackgroundUpdates',
+          label: tr('examptFromBackgroundUpdates'))
+    ]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage

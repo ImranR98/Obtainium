@@ -247,6 +247,7 @@
     "enableBackgroundUpdates": "启用后台更新",
     "backgroundUpdateReqsExplanation": "后台更新未必适用于所有的应用。",
     "backgroundUpdateLimitsExplanation": "只有在启动 Obtainium 时才能确认安装是否成功。",
+    "examptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "verifyLatestTag": "验证“Latest”标签",
     "removeAppQuestion": {
         "one": "是否删除应用？",

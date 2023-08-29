@@ -250,6 +250,7 @@
     "verifyLatestTag": "Verify the 'latest' tag",
     "intermediateLinkRegex": "Filter for an 'Intermediate' Link to Visit First",
     "intermediateLinkNotFound": "Intermediate link not found",
+    "examptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

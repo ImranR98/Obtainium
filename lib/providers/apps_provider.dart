@@ -366,6 +366,9 @@ class AppsProvider with ChangeNotifier {
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
+    if (app.additionalSettings['examptFromBackgroundUpdates'] == true) {
+      return false;
+    }
     if (app.apkUrls.length > 1) {
       // Manual API selection means silent install is not possible
       return false;
