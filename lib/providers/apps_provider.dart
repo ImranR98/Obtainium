@@ -9,6 +9,7 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:android_package_manager/android_package_manager.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -366,7 +367,7 @@ class AppsProvider with ChangeNotifier {
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
-    if (app.additionalSettings['examptFromBackgroundUpdates'] == true) {
+    if (app.additionalSettings['exemptFromBackgroundUpdates'] == true) {
       return false;
     }
     if (app.apkUrls.length > 1) {
@@ -1323,6 +1324,12 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     // If in update mode...
     var didCompleteChecking = false;
     CheckingUpdatesNotification? notif;
+    var networkRestricted = false;
+    if (settingsProvider.bgUpdatesOnWiFiOnly) {
+      var netResult = await (Connectivity().checkConnectivity());
+      networkRestricted = (netResult != ConnectivityResult.wifi) &&
+          (netResult != ConnectivityResult.ethernet);
+    }
     // Loop through all updates and check each
     for (int i = 0; i < toCheck.length; i++) {
       var appId = toCheck[i].key;
@@ -1335,8 +1342,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               cancelExisting: true);
           App? newApp = await appsProvider.checkUpdate(appId);
           if (newApp != null) {
-            if (!(await appsProvider.canInstallSilently(
-                app!.app, settingsProvider))) {
+            if (networkRestricted ||
+                !(await appsProvider.canInstallSilently(
+                    app!.app, settingsProvider))) {
               notificationsProvider.notify(
                   UpdateNotification([newApp], id: newApp.id.hashCode - 1));
             } else {

@@ -427,8 +427,8 @@ abstract class AppSource {
     ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
     [
-      GeneratedFormSwitch('examptFromBackgroundUpdates',
-          label: tr('examptFromBackgroundUpdates'))
+      GeneratedFormSwitch('exemptFromBackgroundUpdates',
+          label: tr('exemptFromBackgroundUpdates'))
     ]
   ];
 
