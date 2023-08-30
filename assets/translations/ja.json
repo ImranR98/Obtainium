@@ -248,8 +248,8 @@
     "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで可能とは限りません。",
     "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
     "verifyLatestTag": "'latest'タグを確認する",
-    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
-    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
+    "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合，バックグラウンドアップデートを無効にする",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -300,6 +300,6 @@
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります",
-        "other": "{} とさらに {} 個のアプリがアップデートされた化膿性があります"
+        "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります"
     }
 }
