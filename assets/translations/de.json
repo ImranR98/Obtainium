@@ -240,15 +240,15 @@
     "gitlabSourceNote": "GitLab APK-Extraktion funktioniert möglicherweise nicht ohne API-Schlüssel",
     "sortByFileNamesNotLinks": "Sortiere nach Dateinamen, anstelle von ganzen Links",
     "filterReleaseNotesByRegEx": "Versionshinweise nach regulärem Ausdruck filtern",
-    "customLinkFilterRegex": "Benutzerdefinierter Link Filter nach Regulärem Ausdruck (Standard '.apk$')",
-    "appsPossiblyUpdated": "App Updates Attempted",
-    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
-    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
-    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
-    "verifyLatestTag": "Verify the 'latest' tag",
-    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
-    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "customLinkFilterRegex": "Benutzerdefinierter APK Link Filter nach Regulärem Ausdruck (Standard '.apk$')",
+    "appsPossiblyUpdated": "App Aktualisierungen wurden versucht",
+    "appsPossiblyUpdatedNotifDescription": "Benachrichtigt den Benutzer, dass Updates für eine oder mehrere Apps möglicherweise im Hintergrund durchgeführt wurden",
+    "xWasPossiblyUpdatedToY": "{} wurde möglicherweise aktualisiert auf {}.",
+    "backgroundUpdateReqsExplanation": "Die Hintergrundaktualisierung ist möglicherweise nicht für alle Apps möglich.",
+    "backgroundUpdateLimitsExplanation": "Der Erfolg einer Hintergrundinstallation kann nur festgestellt werden, wenn Obtainium geöffnet wird.",
+    "verifyLatestTag": "Überprüfe das 'latest' Tag",
+    "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
+    "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
@@ -298,7 +298,7 @@
         "other": "{} und {} weitere Anwendungen wurden aktualisiert."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
+        "one": "{} und 1 weitere Anwendung wurden möglicherweise aktualisiert.",
+        "other": "{} und {} weitere Anwendungen wurden möglicherweise aktualisiert."
     }
 }
