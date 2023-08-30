@@ -60,36 +60,10 @@ class VLC extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-
       String? targetUrl = 'https://$dwUrlBase/$version/';
-      Response res2 = await get(Uri.parse(targetUrl));
-      List<String> apkUrls = [];
-      if (res2.statusCode == 200) {
-        apkUrls = parse(res2.body)
-            .querySelectorAll('a')
-            .map((e) => e.attributes['href']?.split('/').last)
-            .where((h) =>
-                h != null && h.isNotEmpty && h.toLowerCase().endsWith('.apk'))
-            .map((e) => targetUrl + e!)
-            .toList();
-      } else if (res2.statusCode == 500 &&
-          res2.body.toLowerCase().indexOf('mirror') > 0) {
-        var html = parse(res2.body);
-        var err = '';
-        html.body?.nodes.forEach((element) {
-          if (element.text != null) {
-            err += '${element.text}\n';
-          }
-        });
-        err = err.trim();
-        if (err.isEmpty) {
-          err = tr('err');
-        }
-        throw ObtainiumError(err);
-      } else {
-        throw getObtainiumHttpError(res2);
-      }
-
+      var apkUrls = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']
+          .map((e) => '${targetUrl}VLC-Android-$version-$e.apk')
+          .toList();
       return APKDetails(
           version, getApkUrlsFromUrls(apkUrls), AppNames('VideoLAN', 'VLC'));
     } else {
@@ -108,6 +82,20 @@ class VLC extends AppSource {
         throw NoAPKError();
       }
       return apkUrl;
+    } else if (res.statusCode == 500 &&
+        res.body.toLowerCase().indexOf('mirror') > 0) {
+      var html = parse(res.body);
+      var err = '';
+      html.body?.nodes.forEach((element) {
+        if (element.text != null) {
+          err += '${element.text}\n';
+        }
+      });
+      err = err.trim();
+      if (err.isEmpty) {
+        err = tr('err');
+      }
+      throw ObtainiumError(err);
     } else {
       throw getObtainiumHttpError(res);
     }
