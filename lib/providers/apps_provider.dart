@@ -364,6 +364,9 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> canInstallSilently(
       App app, SettingsProvider settingsProvider) async {
+    if (app.id == obtainiumId) {
+      return false;
+    }
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
