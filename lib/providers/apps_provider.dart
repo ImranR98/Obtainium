@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -116,16 +117,19 @@ moveStrToEnd(List<String> arr, String str, {String? strB}) {
   return arr;
 }
 
-moveStrToEndMapEntryWithCount(
+List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
     List<MapEntry<String, int>> arr, MapEntry<String, int> str,
     {MapEntry<String, int>? strB}) {
   MapEntry<String, int>? temp;
   arr.removeWhere((element) {
-    bool res = element.key == str.key || element.key == strB?.key;
-    if (res) {
-      temp = element;
+    bool resA = element.key == str.key;
+    bool resB = element.key == strB?.key;
+    if (resA) {
+      temp = str;
+    } else if (resB) {
+      temp = strB;
     }
-    return res;
+    return resA || resB;
   });
   if (temp != null) {
     arr = [...arr, temp!];
@@ -1338,7 +1342,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     try {
       for (int i = 0; i < toCheck.length; i++) {
         var appId = toCheck[i].key;
-        var retryCount = toCheck[i].value;
+        var attemptCount = toCheck[i].value + 1;
         AppInMemory? app = appsProvider.apps[appId];
         if (app?.app.installedVersion != null) {
           try {
@@ -1362,16 +1366,16 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
             logs.add(
                 'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
-            if (retryCount < maxAttempts) {
+            if (attemptCount < maxAttempts) {
               var remainingSeconds = e is RateLimitError
                   ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
                   : e is ClientException
                       ? (15 * 60)
-                      : (retryCount ^ 2);
+                      : pow(attemptCount, 2).toInt();
               logs.add(
                   'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
               var remainingToCheck = moveStrToEndMapEntryWithCount(
-                  toCheck.sublist(i), MapEntry(appId, retryCount + 1));
+                  toCheck.sublist(i), MapEntry(appId, attemptCount));
               AndroidAlarmManager.oneShot(Duration(seconds: remainingSeconds),
                   taskId + 1, bgUpdateCheck,
                   params: {
