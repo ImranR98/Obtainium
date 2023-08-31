@@ -393,7 +393,7 @@ class AppsProvider with ChangeNotifier {
         (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
 
     // The OS must also be new enough and the APK should target a new enough API
-    return osInfo.version.sdkInt >= 30 &&
+    return osInfo.version.sdkInt >= 31 &&
         targetSDK != null &&
         targetSDK >= // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
             (osInfo.version.sdkInt - 3);
