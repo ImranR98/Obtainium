@@ -1334,66 +1334,74 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
           (netResult != ConnectivityResult.ethernet);
     }
     // Loop through all updates and check each
-    for (int i = 0; i < toCheck.length; i++) {
-      var appId = toCheck[i].key;
-      var retryCount = toCheck[i].value;
-      AppInMemory? app = appsProvider.apps[appId];
-      if (app?.app.installedVersion != null) {
-        try {
-          notificationsProvider.notify(
-              notif = CheckingUpdatesNotification(app?.name ?? appId),
-              cancelExisting: true);
-          App? newApp = await appsProvider.checkUpdate(appId);
-          if (newApp != null) {
-            if (networkRestricted ||
-                !(await appsProvider.canInstallSilently(
-                    app!.app, settingsProvider))) {
-              notificationsProvider.notify(
-                  UpdateNotification([newApp], id: newApp.id.hashCode - 1));
+    List<App> toNotify = [];
+    try {
+      for (int i = 0; i < toCheck.length; i++) {
+        var appId = toCheck[i].key;
+        var retryCount = toCheck[i].value;
+        AppInMemory? app = appsProvider.apps[appId];
+        if (app?.app.installedVersion != null) {
+          try {
+            notificationsProvider.notify(
+                notif = CheckingUpdatesNotification(app?.name ?? appId),
+                cancelExisting: true);
+            App? newApp = await appsProvider.checkUpdate(appId);
+            if (newApp != null) {
+              if (networkRestricted ||
+                  !(await appsProvider.canInstallSilently(
+                      app!.app, settingsProvider))) {
+                toNotify.add(newApp);
+              } else {
+                toInstall.add(MapEntry(appId, 0));
+              }
+            }
+            if (i == (toCheck.length - 1)) {
+              didCompleteChecking = true;
+            }
+          } catch (e) {
+            // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
+            logs.add(
+                'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
+            if (retryCount < maxAttempts) {
+              var remainingSeconds = e is RateLimitError
+                  ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
+                  : e is ClientException
+                      ? (15 * 60)
+                      : (retryCount ^ 2);
+              logs.add(
+                  'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
+              var remainingToCheck = moveStrToEndMapEntryWithCount(
+                  toCheck.sublist(i), MapEntry(appId, retryCount + 1));
+              AndroidAlarmManager.oneShot(Duration(seconds: remainingSeconds),
+                  taskId + 1, bgUpdateCheck,
+                  params: {
+                    'toCheck': remainingToCheck
+                        .map(
+                            (entry) => {'key': entry.key, 'value': entry.value})
+                        .toList(),
+                    'toInstall': toInstall
+                        .map(
+                            (entry) => {'key': entry.key, 'value': entry.value})
+                        .toList(),
+                  });
+              break;
             } else {
-              toInstall.add(MapEntry(appId, 0));
+              // If the offender has reached its fail limit, notify the user and remove it from the list (task can continue)
+              toCheck.removeAt(i);
+              i--;
+              notificationsProvider
+                  .notify(ErrorCheckingUpdatesNotification(e.toString()));
+            }
+          } finally {
+            if (notif != null) {
+              notificationsProvider.cancel(notif.id);
             }
           }
-          if (i == (toCheck.length - 1)) {
-            didCompleteChecking = true;
-          }
-        } catch (e) {
-          // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
-          logs.add(
-              'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
-          if (retryCount < maxAttempts) {
-            var remainingSeconds = e is RateLimitError
-                ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
-                : e is ClientException
-                    ? (15 * 60)
-                    : (retryCount ^ 2);
-            logs.add(
-                'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
-            var remainingToCheck = moveStrToEndMapEntryWithCount(
-                toCheck.sublist(i), MapEntry(appId, retryCount + 1));
-            AndroidAlarmManager.oneShot(
-                Duration(seconds: remainingSeconds), taskId + 1, bgUpdateCheck,
-                params: {
-                  'toCheck': remainingToCheck
-                      .map((entry) => {'key': entry.key, 'value': entry.value})
-                      .toList(),
-                  'toInstall': toInstall
-                      .map((entry) => {'key': entry.key, 'value': entry.value})
-                      .toList(),
-                });
-            break;
-          } else {
-            // If the offender has reached its fail limit, notify the user and remove it from the list (task can continue)
-            toCheck.removeAt(i);
-            i--;
-            notificationsProvider
-                .notify(ErrorCheckingUpdatesNotification(e.toString()));
-          }
-        } finally {
-          if (notif != null) {
-            notificationsProvider.cancel(notif.id);
-          }
         }
+      }
+    } finally {
+      if (toNotify.isNotEmpty) {
+        notificationsProvider.notify(UpdateNotification(toNotify));
       }
     }
     // If you're done checking and found some silently installable updates, schedule another task which will run in install mode
