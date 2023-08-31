@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -116,16 +117,19 @@ moveStrToEnd(List<String> arr, String str, {String? strB}) {
   return arr;
 }
 
-moveStrToEndMapEntryWithCount(
+List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
     List<MapEntry<String, int>> arr, MapEntry<String, int> str,
     {MapEntry<String, int>? strB}) {
   MapEntry<String, int>? temp;
   arr.removeWhere((element) {
-    bool res = element.key == str.key || element.key == strB?.key;
-    if (res) {
-      temp = element;
+    bool resA = element.key == str.key;
+    bool resB = element.key == strB?.key;
+    if (resA) {
+      temp = str;
+    } else if (resB) {
+      temp = strB;
     }
-    return res;
+    return resA || resB;
   });
   if (temp != null) {
     arr = [...arr, temp!];
@@ -364,6 +368,9 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> canInstallSilently(
       App app, SettingsProvider settingsProvider) async {
+    if (app.id == obtainiumId) {
+      return false;
+    }
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
@@ -393,7 +400,7 @@ class AppsProvider with ChangeNotifier {
         (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
 
     // The OS must also be new enough and the APK should target a new enough API
-    return osInfo.version.sdkInt >= 30 &&
+    return osInfo.version.sdkInt >= 31 &&
         targetSDK != null &&
         targetSDK >= // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
             (osInfo.version.sdkInt - 3);
@@ -1331,66 +1338,74 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
           (netResult != ConnectivityResult.ethernet);
     }
     // Loop through all updates and check each
-    for (int i = 0; i < toCheck.length; i++) {
-      var appId = toCheck[i].key;
-      var retryCount = toCheck[i].value;
-      AppInMemory? app = appsProvider.apps[appId];
-      if (app?.app.installedVersion != null) {
-        try {
-          notificationsProvider.notify(
-              notif = CheckingUpdatesNotification(app?.name ?? appId),
-              cancelExisting: true);
-          App? newApp = await appsProvider.checkUpdate(appId);
-          if (newApp != null) {
-            if (networkRestricted ||
-                !(await appsProvider.canInstallSilently(
-                    app!.app, settingsProvider))) {
-              notificationsProvider.notify(
-                  UpdateNotification([newApp], id: newApp.id.hashCode - 1));
+    List<App> toNotify = [];
+    try {
+      for (int i = 0; i < toCheck.length; i++) {
+        var appId = toCheck[i].key;
+        var attemptCount = toCheck[i].value + 1;
+        AppInMemory? app = appsProvider.apps[appId];
+        if (app?.app.installedVersion != null) {
+          try {
+            notificationsProvider.notify(
+                notif = CheckingUpdatesNotification(app?.name ?? appId),
+                cancelExisting: true);
+            App? newApp = await appsProvider.checkUpdate(appId);
+            if (newApp != null) {
+              if (networkRestricted ||
+                  !(await appsProvider.canInstallSilently(
+                      app!.app, settingsProvider))) {
+                toNotify.add(newApp);
+              } else {
+                toInstall.add(MapEntry(appId, 0));
+              }
+            }
+            if (i == (toCheck.length - 1)) {
+              didCompleteChecking = true;
+            }
+          } catch (e) {
+            // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
+            logs.add(
+                'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
+            if (attemptCount < maxAttempts) {
+              var remainingSeconds = e is RateLimitError
+                  ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
+                  : e is ClientException
+                      ? (15 * 60)
+                      : pow(attemptCount, 2).toInt();
+              logs.add(
+                  'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
+              var remainingToCheck = moveStrToEndMapEntryWithCount(
+                  toCheck.sublist(i), MapEntry(appId, attemptCount));
+              AndroidAlarmManager.oneShot(Duration(seconds: remainingSeconds),
+                  taskId + 1, bgUpdateCheck,
+                  params: {
+                    'toCheck': remainingToCheck
+                        .map(
+                            (entry) => {'key': entry.key, 'value': entry.value})
+                        .toList(),
+                    'toInstall': toInstall
+                        .map(
+                            (entry) => {'key': entry.key, 'value': entry.value})
+                        .toList(),
+                  });
+              break;
             } else {
-              toInstall.add(MapEntry(appId, 0));
+              // If the offender has reached its fail limit, notify the user and remove it from the list (task can continue)
+              toCheck.removeAt(i);
+              i--;
+              notificationsProvider
+                  .notify(ErrorCheckingUpdatesNotification(e.toString()));
+            }
+          } finally {
+            if (notif != null) {
+              notificationsProvider.cancel(notif.id);
             }
           }
-          if (i == (toCheck.length - 1)) {
-            didCompleteChecking = true;
-          }
-        } catch (e) {
-          // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
-          logs.add(
-              'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
-          if (retryCount < maxAttempts) {
-            var remainingSeconds = e is RateLimitError
-                ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
-                : e is ClientException
-                    ? (15 * 60)
-                    : (retryCount ^ 2);
-            logs.add(
-                'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
-            var remainingToCheck = moveStrToEndMapEntryWithCount(
-                toCheck.sublist(i), MapEntry(appId, retryCount + 1));
-            AndroidAlarmManager.oneShot(
-                Duration(seconds: remainingSeconds), taskId + 1, bgUpdateCheck,
-                params: {
-                  'toCheck': remainingToCheck
-                      .map((entry) => {'key': entry.key, 'value': entry.value})
-                      .toList(),
-                  'toInstall': toInstall
-                      .map((entry) => {'key': entry.key, 'value': entry.value})
-                      .toList(),
-                });
-            break;
-          } else {
-            // If the offender has reached its fail limit, notify the user and remove it from the list (task can continue)
-            toCheck.removeAt(i);
-            i--;
-            notificationsProvider
-                .notify(ErrorCheckingUpdatesNotification(e.toString()));
-          }
-        } finally {
-          if (notif != null) {
-            notificationsProvider.cancel(notif.id);
-          }
         }
+      }
+    } finally {
+      if (toNotify.isNotEmpty) {
+        notificationsProvider.notify(UpdateNotification(toNotify));
       }
     }
     // If you're done checking and found some silently installable updates, schedule another task which will run in install mode
