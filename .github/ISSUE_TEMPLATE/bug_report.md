@@ -1,11 +1,14 @@
 ---
 name: Bug report
-about: Something isn't working right
+about: Something isn't working right.
 title: ''
 labels: bug, To Check
 assignees: ''
 
 ---
+
+**Prerequisites**
+Please ensure your request is not part of an existing issue.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -13,7 +16,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
-2. Click on '....'
+2. Tap on '....'
 3. Scroll down to '....'
 4. See error
 
