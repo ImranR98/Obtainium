@@ -13,7 +13,12 @@ Please ensure your request is not part of an existing issue.
 **Describe the feature**
 A clear and concise description of what you want to happen.
 
-For new Sources, it's preferable (not required) if you suggest how an App ID (or any release-specific identifier), App version, and APK URL(s) could be scraped from the Source.
+For new Sources, it's preferable (not required) if you suggest how the following details can be extracted from the Source in a reliable way (like an API or through web scraping):
+- The App version (or any release-specific identifier - a "pseudo-version") for the latest release
+- One or more APK URL(s) for the latest release
+- Above details for previous releases (optional)
+
+Note that the Web scraper cannot deal with JavaScript-enabled content.
 
 **Describe alternatives you've considered (if applicable)**
 A clear and concise description of any alternative solutions or features you've considered.
