@@ -1,0 +1,29 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+
+---
+
+**Describe the bug**
+A clear and concise description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
+
+**Screenshots and Logs**
+If applicable, add screenshots, logs, and any other artifacts (like some/all files under `/Android/data/dev.imranr.obtainium/`) that you think may help troubleshoot the issue.
+
+**Please complete the following information:**
+ - Device: [e.g. Pixel 7]
+ - OS: [e.g. GrapheneOS]
+ - Obtainium Version [e.g. 0.14.6-beta]
+
+**Additional context**
+Add any other context about the problem here.
