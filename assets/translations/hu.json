@@ -87,7 +87,7 @@
     "author": "Szerző",
     "upToDateApps": "Naprakész appok",
     "nonInstalledApps": "Nem telepített appok",
-    "importExport": "Importálás/Exportálás",
+    "importExport": "Import/Export",
     "settings": "Beállítások",
     "exportedTo": "Exportálva ide {}",
     "obtainiumExport": "Obtainium Adat Exportálás",
@@ -137,7 +137,7 @@
     "share": "Megosztás",
     "appNotFound": "App nem található",
     "obtainiumExportHyphenatedLowercase": "obtainium-export",
-    "pickAnAPK": "Válasszon egy APK-ot",
+    "pickAnAPK": "Válasszon egy APK-t",
     "appHasMoreThanOnePackage": "A(z) {} egynél több csomaggal rendelkezik:",
     "deviceSupportsXArch": "Eszköze támogatja a {} CPU architektúrát.",
     "deviceSupportsFollowingArchs": "Az eszköze a következő CPU architektúrákat támogatja:",
@@ -204,7 +204,7 @@
     "copiedToClipboard": "Másolva a vágólapra",
     "storagePermissionDenied": "Tárhely engedély megtagadva",
     "selectedCategorizeWarning": "Ez felváltja a kiválasztott alkalmazások meglévő kategória-beállításait.",
-    "filterAPKsByRegEx": "Az APK-ok szűrése reguláris kifejezéssel",
+    "filterAPKsByRegEx": "Az APK-k szűrése reguláris kifejezéssel",
     "removeFromObtainium": "Eltávolítás az Obtainiumból",
     "uninstallFromDevice": "Eltávolítás a készülékről",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verzióérzékelés le van tiltva.",
@@ -239,15 +239,15 @@
     "gitlabSourceNote": "Előfordulhat, hogy a GitLab APK kibontása nem működik API-kulcs nélkül.",
     "sortByFileNamesNotLinks": "Fájlnevek szerinti elrendezés teljes linkek helyett",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",
-    "customLinkFilterRegex": "Custom APK Link Filter by Regular Expression (Default '.apk$')",
-    "appsPossiblyUpdated": "App Updates Attempted",
-    "appsPossiblyUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were potentially applied in the background",
-    "xWasPossiblyUpdatedToY": "{} may have been updated to {}.",
-    "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
-    "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
-    "verifyLatestTag": "Verify the 'latest' tag",
-    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
-    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "customLinkFilterRegex": "Egyéni APK hivatkozásszűrő reguláris kifejezéssel (Alapérték '.apk$')",
+    "appsPossiblyUpdated": "App frissítési kísérlet",
+    "appsPossiblyUpdatedNotifDescription": "Értesíti a felhasználót, hogy egy vagy több alkalmazás frissítése lehetséges a háttérben",
+    "xWasPossiblyUpdatedToY": "{} frissítve lehet erre {}.",
+    "backgroundUpdateReqsExplanation": "Előfordulhat, hogy nem minden appnál lehetséges a háttérbeli frissítés.",
+    "backgroundUpdateLimitsExplanation": "A háttérben történő telepítés sikeressége csak az Obtainium megnyitásakor állapítható meg.",
+    "verifyLatestTag": "Ellenőrizze a „legújabb” címkét",
+    "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",
+    "bgUpdatesOnWiFiOnly": "Tiltsa le a háttérben frissítéseket, ha nincs Wi-Fi-n",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
@@ -297,7 +297,7 @@
         "other": "{} és {} további alkalmazás frissítve."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
+        "one": "{} és 1 további alkalmazás is frissült.",
+        "other": "{} és {} további alkalmazás is frissült."
     }
 }
