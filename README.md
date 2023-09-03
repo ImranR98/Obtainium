@@ -16,6 +16,7 @@ Currently supported App sources:
 - [Signal](https://signal.org/)
 - [SourceForge](https://sourceforge.net/)
 - [SourceHut](https://git.sr.ht/)
+- [Aptoide](https://aptoide.com/)
 - [APKMirror](https://apkmirror.com/) (Track-Only)
 - [APKPure](https://apkpure.com/)
 - [Huawei AppGallery](https://appgallery.huawei.com/)
