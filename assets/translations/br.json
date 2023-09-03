@@ -252,6 +252,7 @@
     "intermediateLinkNotFound": "Link intermediário não encontrado",
     "exemptFromBackgroundUpdates": "Isento de atualizações em segundo plano (se ativadas)",
     "bgUpdatesOnWiFiOnly": "Desative atualizações em segundo plano quando não estiver em WiFi",
+    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"

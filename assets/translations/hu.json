@@ -248,6 +248,7 @@
     "verifyLatestTag": "Ellenőrizze a „legújabb” címkét",
     "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",
     "bgUpdatesOnWiFiOnly": "Tiltsa le a háttérben frissítéseket, ha nincs Wi-Fi-n",
+    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

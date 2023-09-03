@@ -249,6 +249,7 @@
     "verifyLatestTag": "Verify the 'latest' tag",
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
