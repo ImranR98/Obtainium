@@ -9,6 +9,7 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
+import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
@@ -325,6 +326,7 @@ abstract class AppSource {
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
   bool appIdInferIsOptional = false;
+  bool allowSubDomains = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -522,13 +524,14 @@ class SourceProvider {
         Jenkins(),
         SourceForge(),
         SourceHut(),
+        Aptoide(),
         APKMirror(),
         APKPure(),
         HuaweiAppGallery(),
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
-        VLC(), // As of 2023-08-26 this site randomly messes up the 'latest' version (one minute it's 3.5.4, next minute back to 3.5.3)
+        VLC(),
         // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
         TelegramApp(),
         SteamMobile(),
@@ -554,7 +557,9 @@ class SourceProvider {
     }
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
-      if (RegExp('://${s.host}(/|\\z)?').hasMatch(url)) {
+      if (RegExp(
+              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : ''}${s.host}(/|\\z)?')
+          .hasMatch(url)) {
         source = s;
         break;
       }
