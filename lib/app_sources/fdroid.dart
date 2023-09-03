@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -11,6 +12,12 @@ class FDroid extends AppSource {
     host = 'f-droid.org';
     name = tr('fdroid');
     canSearch = true;
+    additionalSourceAppSpecificSettingFormItems = [
+      [
+        GeneratedFormSwitch('autoSelectHighestVersionCode',
+            label: tr('autoSelectHighestVersionCode'))
+      ]
+    ];
   }
 
   @override
@@ -37,7 +44,8 @@ class FDroid extends AppSource {
   }
 
   APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
-      Response res, String apkUrlPrefix, String standardUrl) {
+      Response res, String apkUrlPrefix, String standardUrl,
+      {bool autoSelectHighestVersionCode = false}) {
     if (res.statusCode == 200) {
       List<dynamic> releases = jsonDecode(res.body)['packages'] ?? [];
       if (releases.isEmpty) {
@@ -47,8 +55,12 @@ class FDroid extends AppSource {
       if (latestVersion == null) {
         throw NoVersionError();
       }
-      List<String> apkUrls = releases
-          .where((element) => element['versionName'] == latestVersion)
+      Iterable<dynamic> latestReleases =
+          releases.where((element) => element['versionName'] == latestVersion);
+      if (latestReleases.length > 1 && autoSelectHighestVersionCode) {
+        latestReleases = [latestReleases.first];
+      }
+      List<String> apkUrls = latestReleases
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
       return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
@@ -68,7 +80,9 @@ class FDroid extends AppSource {
     return getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest('https://$host/api/v1/packages/$appId'),
         'https://$host/repo/$appId',
-        standardUrl);
+        standardUrl,
+        autoSelectHighestVersionCode:
+            additionalSettings['autoSelectHighestVersionCode'] == true);
   }
 
   @override

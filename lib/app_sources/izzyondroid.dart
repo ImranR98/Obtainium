@@ -3,8 +3,13 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class IzzyOnDroid extends AppSource {
+  late FDroid fd;
+
   IzzyOnDroid() {
     host = 'android.izzysoft.de';
+    fd = FDroid();
+    additionalSourceAppSpecificSettingFormItems =
+        fd.additionalSourceAppSpecificSettingFormItems;
   }
 
   @override
@@ -20,7 +25,7 @@ class IzzyOnDroid extends AppSource {
   @override
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
-    return FDroid().tryInferringAppId(standardUrl);
+    return fd.tryInferringAppId(standardUrl);
   }
 
   @override
@@ -29,10 +34,12 @@ class IzzyOnDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
-    return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
+    return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
             'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId'),
         'https://android.izzysoft.de/frepo/$appId',
-        standardUrl);
+        standardUrl,
+        autoSelectHighestVersionCode:
+            additionalSettings['autoSelectHighestVersionCode'] == true);
   }
 }

@@ -252,6 +252,7 @@
     "intermediateLinkNotFound": "Intermediate link not found",
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

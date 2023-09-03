@@ -249,6 +249,7 @@
     "verifyLatestTag": "Überprüfe das 'latest' Tag",
     "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
+    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
