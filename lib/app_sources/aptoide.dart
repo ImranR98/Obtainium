@@ -26,14 +26,10 @@ class Aptoide extends AppSource {
   @override
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
-    return (await getLatestAPKDetails(standardUrl, additionalSettings)).version;
+    return (await getAppDetailsJSON(standardUrl))['package'];
   }
 
-  @override
-  Future<APKDetails> getLatestAPKDetails(
-    String standardUrl,
-    Map<String, dynamic> additionalSettings,
-  ) async {
+  Future<Map<String, dynamic>> getAppDetailsJSON(String standardUrl) async {
     var res = await sourceRequest(standardUrl);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -50,12 +46,20 @@ class Aptoide extends AppSource {
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var appDetails = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
-    String appName = appDetails?['name'] ?? tr('app');
-    String author = appDetails?['developer']?['name'] ?? name;
-    String? dateStr = appDetails?['updated'];
-    String? version = appDetails?['file']?['vername'];
-    String? apkUrl = appDetails?['file']?['path'];
+    return jsonDecode(res2.body)?['nodes']?['meta']?['data'];
+  }
+
+  @override
+  Future<APKDetails> getLatestAPKDetails(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    var appDetails = await getAppDetailsJSON(standardUrl);
+    String appName = appDetails['name'] ?? tr('app');
+    String author = appDetails['developer']?['name'] ?? name;
+    String? dateStr = appDetails['updated'];
+    String? version = appDetails['file']?['vername'];
+    String? apkUrl = appDetails['file']?['path'];
     if (version == null) {
       throw NoVersionError();
     }
