@@ -22,8 +22,6 @@
     "ok": "Okej",
     "and": "i",
     "githubPATLabel": "Osobisty token dostępu GitHub (zwiększa limit zapytań)",
-    "githubPATHint": "Wymagany format: użytkownik:token",
-    "githubPATFormat": "użytkownik:token",
     "includePrereleases": "Uwzględnij wersje wstępne",
     "fallbackToOlderReleases": "Powracaj do starszych wersji",
     "filterReleaseTitlesByRegEx": "Filtruj tytuły wydań wg. wyrażeń regularnych",

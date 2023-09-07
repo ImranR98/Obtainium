@@ -12,7 +12,12 @@ class VLC extends AppSource {
   get dwUrlBase => 'https://get.$host/vlc-android/';
 
   @override
-  Map<String, String>? get requestHeaders => HTML().requestHeaders;
+  Future<Map<String, String>?> getRequestHeaders(
+          {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+          bool forAPKDownload = false}) =>
+      HTML().getRequestHeaders(
+          additionalSettings: additionalSettings,
+          forAPKDownload: forAPKDownload);
 
   @override
   String sourceSpecificStandardizeURL(String url) {

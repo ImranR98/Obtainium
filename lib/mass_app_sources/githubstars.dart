@@ -15,8 +15,10 @@ class GitHubStars implements MassAppUrlSource {
 
   Future<Map<String, List<String>>> getOnePageOfUserStarredUrlsWithDescriptions(
       String username, int page) async {
-    Response res = await get(Uri.parse(
-        'https://${await GitHub().getCredentialPrefixIfAny({})}api.github.com/users/$username/starred?per_page=100&page=$page'));
+    Response res = await get(
+        Uri.parse(
+            'https://api.github.com/users/$username/starred?per_page=100&page=$page'),
+        headers: await GitHub().getRequestHeaders());
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body) as List<dynamic>)) {

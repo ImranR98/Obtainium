@@ -12,8 +12,6 @@
     "ok": "Va bene",
     "and": "e",
     "githubPATLabel": "GitHub Personal Access Token (diminuisce limite di traffico)",
-    "githubPATHint": "PAT deve seguire questo formato: nomeutente:token",
-    "githubPATFormat": "nomeutente:token",
     "includePrereleases": "Includi prerelease",
     "fallbackToOlderReleases": "Ripiega su release precedenti",
     "filterReleaseTitlesByRegEx": "Filtra release con espressioni regolari",

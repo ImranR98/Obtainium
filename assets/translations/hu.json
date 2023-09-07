@@ -12,8 +12,6 @@
     "ok": "Oké",
     "and": "és",
     "githubPATLabel": "GitHub Personal Access Token (megnöveli a díjkorlátot)",
-    "githubPATHint": "A PAT-nak a következő formátumban kell lennie: felhasználónév:token",
-    "githubPATFormat": "felhasználónév:token",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "fallbackToOlderReleases": "Visszatérés a régebbi kiadásokhoz",
     "filterReleaseTitlesByRegEx": "A kiadás címeinek szűrése reguláris kifejezéssel",

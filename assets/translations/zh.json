@@ -12,8 +12,6 @@
     "ok": "好的",
     "and": "和",
     "githubPATLabel": "GitHub 个人访问令牌（提升 API 请求限额）",
-    "githubPATHint": "个人访问令牌必须为“username:token”的格式",
-    "githubPATFormat": "username:token",
     "includePrereleases": "包含预发行版",
     "fallbackToOlderReleases": "将旧发行版作为备选",
     "filterReleaseTitlesByRegEx": "使用正则表达式筛选发行标题",

@@ -116,11 +116,14 @@ class HTML extends AppSource {
   }
 
   @override
-  // TODO: implement requestHeaders choice, hardcoded for now
-  Map<String, String>? get requestHeaders => {
-        "User-Agent":
-            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
-      };
+  Future<Map<String, String>?> getRequestHeaders(
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    return {
+      "User-Agent":
+          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+    };
+  }
 
   @override
   String sourceSpecificStandardizeURL(String url) {

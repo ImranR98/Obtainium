@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -215,7 +216,7 @@ class AppsProvider with ChangeNotifier {
     if (headers != null) {
       req.headers.addAll(headers);
     }
-    var client = Client();
+    var client = http.Client();
     StreamedResponse response = await client.send(req);
     String ext =
         response.headers['content-disposition']?.split('.').last ?? 'apk';
@@ -298,9 +299,11 @@ class AppsProvider with ChangeNotifier {
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
+      var headers = await source.getRequestHeaders(
+          additionalSettings: app.additionalSettings, forAPKDownload: true);
       var downloadedFile = await downloadFileWithRetry(
-          downloadUrl, fileNameNoExt, headers: source.requestHeaders,
-          (double? progress) {
+          downloadUrl, fileNameNoExt,
+          headers: headers, (double? progress) {
         int? prog = progress?.ceil();
         if (apps[app.id] != null) {
           apps[app.id]!.downloadProgress = progress;

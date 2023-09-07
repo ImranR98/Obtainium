@@ -363,15 +363,23 @@ abstract class AppSource {
     return url;
   }
 
-  Map<String, String>? get requestHeaders => null;
+  Future<Map<String, String>?> getRequestHeaders(
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    return null;
+  }
 
   Future<Response> sourceRequest(String url,
-      {bool followRedirects = true}) async {
+      {bool followRedirects = true,
+      Map<String, dynamic> additionalSettings =
+          const <String, dynamic>{}}) async {
+    var requestHeaders =
+        await getRequestHeaders(additionalSettings: additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
       if (requestHeaders != null) {
-        req.headers.addAll(requestHeaders!);
+        req.headers.addAll(requestHeaders);
       }
       return Response.fromStream(await Client().send(req));
     } else {

@@ -12,8 +12,6 @@
     "ok": "Okay",
     "and": "und",
     "githubPATLabel": "GitHub Personal Access Token (Erhöht das Ratenlimit)",
-    "githubPATHint": "PAT muss in diesem Format sein: Benutzername:Token",
-    "githubPATFormat": "Benutzername:Token",
     "includePrereleases": "Vorabversionen einbeziehen",
     "fallbackToOlderReleases": "Fallback auf ältere Versionen",
     "filterReleaseTitlesByRegEx": "Release-Titel nach regulärem Ausdruck\nfiltern",

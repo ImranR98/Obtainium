@@ -12,8 +12,6 @@
     "ok": "OK",
     "and": "と",
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
-    "githubPATHint": "PATは次の形式でなければなりません: ユーザー名:トークン",
-    "githubPATFormat": "ユーザー名:トークン",
     "includePrereleases": "プレリリースを含む",
     "fallbackToOlderReleases": "旧リリースへのフォールバック",
     "filterReleaseTitlesByRegEx": "正規表現でリリースタイトルをフィルタリングする",

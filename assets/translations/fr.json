@@ -12,8 +12,6 @@
     "ok": "Okay",
     "and": "et",
     "githubPATLabel": "Jeton d'Accès Personnel GitHub (Augmente la limite de débit)",
-    "githubPATHint": "Le JAP doit être dans ce format : username:token",
-    "githubPATFormat": "username:token",
     "includePrereleases": "Inclure les avant-premières",
     "fallbackToOlderReleases": "Retour aux anciennes versions",
     "filterReleaseTitlesByRegEx": "Filtrer les titres de version par expression régulière",

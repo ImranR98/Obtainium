@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -21,20 +22,6 @@ class GitHub extends AppSource {
           label: tr('githubPATLabel'),
           password: true,
           required: false,
-          additionalValidators: [
-            (value) {
-              if (value != null && value.trim().isNotEmpty) {
-                if (value
-                        .split(':')
-                        .where((element) => element.trim().isNotEmpty)
-                        .length !=
-                    2) {
-                  return tr('githubPATHint');
-                }
-              }
-              return null;
-            }
-          ],
           hint: tr('githubPATFormat'),
           belowWidgets: [
             const SizedBox(
@@ -169,26 +156,53 @@ class GitHub extends AppSource {
     return url.substring(0, match.end);
   }
 
-  Future<String> getCredentialPrefixIfAny(
-      Map<String, dynamic> additionalSettings) async {
+  @override
+  Future<Map<String, String>?> getRequestHeaders(
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    var token = await getTokenIfAny(additionalSettings);
+    var headers = <String, String>{};
+    if (token != null) {
+      headers[HttpHeaders.authorizationHeader] = 'Token $token';
+    }
+    if (forAPKDownload == true) {
+      headers[HttpHeaders.acceptHeader] = 'octet-stream';
+    }
+    if (headers.isNotEmpty) {
+      return headers;
+    } else {
+      return null;
+    }
+  }
+
+  Future<String?> getTokenIfAny(Map<String, dynamic> additionalSettings) async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
     var sourceConfig =
         await getSourceConfigValues(additionalSettings, settingsProvider);
     String? creds = sourceConfig['github-creds'];
-    return creds != null && creds.isNotEmpty ? '$creds@' : '';
+    if (creds != null) {
+      var userNameEndIndex = creds.indexOf(':');
+      if (userNameEndIndex > 0) {
+        creds = creds.substring(
+            userNameEndIndex + 1); // For old username-included token inputs
+      }
+      return creds;
+    } else {
+      return null;
+    }
   }
 
   @override
   Future<String?> getSourceNote() async {
-    if (!hostChanged && (await getCredentialPrefixIfAny({})).isEmpty) {
+    if (!hostChanged && (await getTokenIfAny({})) == null) {
       return '${tr('githubSourceNote')} ${hostChanged ? tr('addInfoBelow') : tr('addInfoInSettings')}';
     }
     return null;
   }
 
   Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
-      'https://${await getCredentialPrefixIfAny(additionalSettings)}api.$host';
+      'https://api.$host';
 
   Future<String> convertStandardUrlToAPIUrl(
           String standardUrl, Map<String, dynamic> additionalSettings) async =>
@@ -238,7 +252,9 @@ class GitHub extends AppSource {
       List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
               ?.map((e) {
-                return e['name'] != null && e['browser_download_url'] != null
+                return e['name'] != null &&
+                        e['browser_download_url'] !=
+                            null // TODO: Figure out how to use 'url' here to enable private repos
                     ? MapEntry(e['name'] as String,
                         e['browser_download_url'] as String)
                     : const MapEntry('', '');

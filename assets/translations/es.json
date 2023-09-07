@@ -12,8 +12,6 @@
     "ok": "Correcto",
     "and": "y",
     "githubPATLabel": "Token de Acceso Personal de GitHub (Reduce tiempos de espera)",
-    "githubPATHint": "El TAP debe tener este formato: nombre_de_usuario:token",
-    "githubPATFormat": "nombre_de_usuario:token",
     "includePrereleases": "Incluir versiones preliminares",
     "fallbackToOlderReleases": "Retorceder a versiones previas",
     "filterReleaseTitlesByRegEx": "Filtra Títulos de Versiones mediantes Expresiones Regulares",

@@ -12,8 +12,6 @@
    "ok": "Dobro",
    "and": "i",
    "githubPATLabel": "GitHub token za lični pristup (eng. PAT, povećava ograničenje stope)",
-   "githubPATHint": "PAT mora biti u ovom formatu: korisničko_ime:token",
-   "githubPATFormat": "korisničko_ime:token",
    "includePrereleases": "Uključi preliminarna izdanja",
    "fallbackToOlderReleases": "Povratak na starija izdanja",
    "filterReleaseTitlesByRegEx": "Filtrirajte naslove izdanja prema regularnom izrazu",

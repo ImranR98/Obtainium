@@ -25,12 +25,16 @@ class APKCombo extends AppSource {
   }
 
   @override
-  Map<String, String> get requestHeaders => {
-        "User-Agent": "curl/8.0.1",
-        "Accept": "*/*",
-        "Connection": "keep-alive",
-        "Host": "$host"
-      };
+  Future<Map<String, String>?> getRequestHeaders(
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    return {
+      "User-Agent": "curl/8.0.1",
+      "Accept": "*/*",
+      "Connection": "keep-alive",
+      "Host": "$host"
+    };
+  }
 
   Future<List<MapEntry<String, String>>> getApkUrls(String standardUrl) async {
     var res = await sourceRequest('$standardUrl/download/apk');
