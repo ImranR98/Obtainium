@@ -11,6 +11,7 @@ import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,8 @@ class _AddAppPageState extends State<AddAppPage> {
   Widget build(BuildContext context) {
     AppsProvider appsProvider = context.read<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    NotificationsProvider notificationsProvider =
+        context.read<NotificationsProvider>();
 
     bool doingSomething = gettingAppInfo || searching;
 
@@ -161,7 +164,8 @@ class _AddAppPageState extends State<AddAppPage> {
                 app.apkUrls.map((e) => e.value).toList().indexOf(apkUrl.value);
             // ignore: use_build_context_synchronously
             var downloadedArtifact = await appsProvider.downloadApp(
-                app, globalNavigatorKey.currentContext);
+                app, globalNavigatorKey.currentContext,
+                notificationsProvider: notificationsProvider);
             DownloadedApk? downloadedFile;
             DownloadedXApkDir? downloadedDir;
             if (downloadedArtifact is DownloadedApk) {
