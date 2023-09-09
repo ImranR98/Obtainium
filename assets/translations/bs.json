@@ -250,6 +250,7 @@
    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
    "versionExtractionRegEx": "Version Extraction RegEx",
    "matchGroupToUse": "Match Group to Use",
+   "highlightTouchTargets": "Highlight less obvious touch targets",
    "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"

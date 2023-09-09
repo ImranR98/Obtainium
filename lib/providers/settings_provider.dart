@@ -348,4 +348,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('showDebugOpts', val);
     notifyListeners();
   }
+
+  bool get highlightTouchTargets {
+    return prefs?.getBool('highlightTouchTargets') ?? false;
+  }
+
+  set highlightTouchTargets(bool val) {
+    prefs?.setBool('highlightTouchTargets', val);
+    notifyListeners();
+  }
 }
