@@ -26,6 +26,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -527,15 +528,16 @@ class SourceProvider {
         GitLab(),
         Codeberg(),
         FDroid(),
-        IzzyOnDroid(),
         FDroidRepo(),
-        Jenkins(),
+        IzzyOnDroid(),
         SourceForge(),
         SourceHut(),
-        Aptoide(),
-        APKMirror(),
         APKPure(),
+        Aptoide(),
+        Uptodown(),
+        APKMirror(),
         HuaweiAppGallery(),
+        Jenkins(),
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
