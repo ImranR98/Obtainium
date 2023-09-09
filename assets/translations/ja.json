@@ -249,6 +249,8 @@
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合，バックグラウンドアップデートを無効にする",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

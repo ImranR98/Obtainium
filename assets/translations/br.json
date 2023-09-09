@@ -251,6 +251,8 @@
     "exemptFromBackgroundUpdates": "Isento de atualizações em segundo plano (se ativadas)",
     "bgUpdatesOnWiFiOnly": "Desative atualizações em segundo plano quando não estiver em WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"

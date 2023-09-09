@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -109,6 +110,26 @@ class HTML extends AppSource {
             hint: '([0-9]+\.)*[0-9]+/\$',
             required: false,
             additionalValidators: [(value) => regExValidator(value)])
+      ],
+      [
+        GeneratedFormTextField('versionExtractionRegEx',
+            label: tr('versionExtractionRegEx'),
+            required: false,
+            additionalValidators: [(value) => regExValidator(value)]),
+        GeneratedFormTextField('matchGroupToUse',
+            label: tr('matchGroupToUse'),
+            required: false,
+            hint: '1',
+            textInputType: const TextInputType.numberWithOptions(),
+            additionalValidators: [
+              (value) {
+                value ??= '1';
+                if (int.tryParse(value) == null) {
+                  return tr('invalidInput');
+                }
+                return null;
+              }
+            ])
       ]
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
@@ -183,10 +204,23 @@ class HTML extends AppSource {
         throw NoReleasesError();
       }
       var rel = links.last;
-      var version = rel.hashCode.toString();
+      String? version = rel.hashCode.toString();
+      var versionExtractionRegEx =
+          additionalSettings['versionExtractionRegEx'] as String?;
+      if (versionExtractionRegEx?.isNotEmpty == true) {
+        var match = RegExp(versionExtractionRegEx!).allMatches(rel);
+        if (match.isEmpty) {
+          throw NoVersionError();
+        }
+        version = match.last
+            .group(int.parse(additionalSettings['matchGroupToUse'] as String));
+        if (version?.isEmpty == true) {
+          throw NoVersionError();
+        }
+      }
       List<String> apkUrls =
           [rel].map((e) => ensureAbsoluteUrl(e, uri)).toList();
-      return APKDetails(version, apkUrls.map((e) => MapEntry(e, e)).toList(),
+      return APKDetails(version!, apkUrls.map((e) => MapEntry(e, e)).toList(),
           AppNames(uri.host, tr('app')));
     } else {
       throw getObtainiumHttpError(res);
