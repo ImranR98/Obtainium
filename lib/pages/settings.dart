@@ -484,6 +484,21 @@ class _SettingsPageState extends State<SettingsPage> {
                                           })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('highlightTouchTargets'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.highlightTouchTargets,
+                                    onChanged: (value) {
+                                      settingsProvider.highlightTouchTargets =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('categories'),
