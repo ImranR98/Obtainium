@@ -166,7 +166,7 @@ class GitHub extends AppSource {
       headers[HttpHeaders.authorizationHeader] = 'Token $token';
     }
     if (forAPKDownload == true) {
-      headers[HttpHeaders.acceptHeader] = 'octet-stream';
+      headers[HttpHeaders.acceptHeader] = 'application/octet-stream';
     }
     if (headers.isNotEmpty) {
       return headers;
@@ -252,11 +252,8 @@ class GitHub extends AppSource {
       List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
               ?.map((e) {
-                return e['name'] != null &&
-                        e['browser_download_url'] !=
-                            null // TODO: Figure out how to use 'url' here to enable private repos
-                    ? MapEntry(e['name'] as String,
-                        e['browser_download_url'] as String)
+                return e['name'] != null && e['url'] != null
+                    ? MapEntry(e['name'] as String, e['url'] as String)
                     : const MapEntry('', '');
               })
               .where((element) => element.key.toLowerCase().endsWith('.apk'))
