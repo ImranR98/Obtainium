@@ -25,6 +25,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late int max;
   late String? hint;
   late bool password;
+  late TextInputType? textInputType;
 
   GeneratedFormTextField(String key,
       {String label = 'Input',
@@ -34,7 +35,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       this.required = true,
       this.max = 1,
       this.hint,
-      this.password = false})
+      this.password = false,
+      this.textInputType})
       : super(key,
             label: label,
             belowWidgets: belowWidgets,
@@ -144,7 +146,8 @@ Color generateRandomLightColor() {
   // Map from HPLuv color space to RGB, use constant saturation=100, lightness=70
   final List<double> rgbValuesDbl = Hsluv.hpluvToRgb([hue, 100, 70]);
   // Map RBG values from 0-1 to 0-255:
-  final List<int> rgbValues = rgbValuesDbl.map((rgb) => (rgb * 255).toInt()).toList();
+  final List<int> rgbValues =
+      rgbValuesDbl.map((rgb) => (rgb * 255).toInt()).toList();
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
@@ -190,6 +193,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         if (formItem is GeneratedFormTextField) {
           final formFieldKey = GlobalKey<FormFieldState>();
           return TextFormField(
+            keyboardType: formItem.textInputType,
             obscureText: formItem.password,
             autocorrect: !formItem.password,
             enableSuggestions: !formItem.password,
@@ -370,34 +374,37 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     }) ??
                     [const SizedBox.shrink()],
                 (values[widget.items[r][e].key]
-                as Map<String, MapEntry<int, bool>>?)
-                    ?.values
-                    .where((e) => e.value)
-                    .length == 1
+                                as Map<String, MapEntry<int, bool>>?)
+                            ?.values
+                            .where((e) => e.value)
+                            .length ==
+                        1
                     ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          var temp = values[widget.items[r][e].key]
-                              as Map<String, MapEntry<int, bool>>;
-                          // get selected category str where bool is true
-                          final oldEntry = temp.entries.firstWhere((entry) => entry.value.value);
-                          // generate new color, ensure it is not the same
-                          int newColor = oldEntry.value.key;
-                          while(oldEntry.value.key == newColor) {
-                            newColor = generateRandomLightColor().value;
-                          }
-                          // Update entry with new color, remain selected
-                          temp.update(oldEntry.key, (old) => MapEntry(newColor, old.value));
-                          values[widget.items[r][e].key] = temp;
-                          someValueChanged();
-                        });
-                      },
-                      icon: const Icon(Icons.format_color_fill_rounded),
-                      visualDensity: VisualDensity.compact,
-                      tooltip: tr('colour'),
-                    ))
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              var temp = values[widget.items[r][e].key]
+                                  as Map<String, MapEntry<int, bool>>;
+                              // get selected category str where bool is true
+                              final oldEntry = temp.entries
+                                  .firstWhere((entry) => entry.value.value);
+                              // generate new color, ensure it is not the same
+                              int newColor = oldEntry.value.key;
+                              while (oldEntry.value.key == newColor) {
+                                newColor = generateRandomLightColor().value;
+                              }
+                              // Update entry with new color, remain selected
+                              temp.update(oldEntry.key,
+                                  (old) => MapEntry(newColor, old.value));
+                              values[widget.items[r][e].key] = temp;
+                              someValueChanged();
+                            });
+                          },
+                          icon: const Icon(Icons.format_color_fill_rounded),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: tr('colour'),
+                        ))
                     : const SizedBox.shrink(),
                 (values[widget.items[r][e].key]
                                 as Map<String, MapEntry<int, bool>>?)

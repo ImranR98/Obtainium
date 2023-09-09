@@ -3,6 +3,21 @@ import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+parseDateTimeMMMddCommayyyy(String? dateString) {
+  DateTime? releaseDate;
+  try {
+    releaseDate = dateString != null
+        ? DateFormat('MMM dd, yyyy').parse(dateString)
+        : null;
+    releaseDate = dateString != null && releaseDate == null
+        ? DateFormat('MMMM dd, yyyy').parse(dateString)
+        : releaseDate;
+  } catch (err) {
+    // ignore
+  }
+  return releaseDate;
+}
+
 class APKPure extends AppSource {
   APKPure() {
     host = 'apkpure.com';
@@ -47,17 +62,7 @@ class APKPure extends AppSource {
       }
       String? dateString =
           html.querySelector('span.info-other span.date')?.text.trim();
-      DateTime? releaseDate;
-      try {
-        releaseDate = dateString != null
-            ? DateFormat('MMM dd, yyyy').parse(dateString)
-            : null;
-        releaseDate = dateString != null && releaseDate == null
-            ? DateFormat('MMMM dd, yyyy').parse(dateString)
-            : null;
-      } catch (err) {
-        // ignore
-      }
+      DateTime? releaseDate = parseDateTimeMMMddCommayyyy(dateString);
       String type = html.querySelector('a.info-tag')?.text.trim() ?? 'APK';
       List<MapEntry<String, String>> apkUrls = [
         MapEntry('$appId.apk', 'https://d.$host/b/$type/$appId?version=latest')
@@ -70,11 +75,13 @@ class APKPure extends AppSource {
           Uri.parse(standardUrl).pathSegments.reversed.last;
       String appName =
           html.querySelector('h1.info-title')?.text.trim() ?? appId;
-      String? changeLog = htmlChangelog.querySelector("div.whats-new-info p:not(.date)")?.innerHtml
-          .trim().replaceAll("<br>", "  \n");
+      String? changeLog = htmlChangelog
+          .querySelector("div.whats-new-info p:not(.date)")
+          ?.innerHtml
+          .trim()
+          .replaceAll("<br>", "  \n");
       return APKDetails(version, apkUrls, AppNames(author, appName),
-          releaseDate: releaseDate,
-          changeLog: changeLog);
+          releaseDate: releaseDate, changeLog: changeLog);
     } else {
       throw getObtainiumHttpError(res);
     }

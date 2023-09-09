@@ -12,8 +12,6 @@
     "ok": "Ok",
     "and": "e",
     "githubPATLabel": "Token de Acceso Pessoal do GitHub (Reduz tempos de espera)",
-    "githubPATHint": "O TAP deve estar nesse formato: usuario:token",
-    "githubPATFormat": "usuario:token",
     "includePrereleases": "Incluir pré-lançamentos",
     "fallbackToOlderReleases": "Retornar para versões anteriores",
     "filterReleaseTitlesByRegEx": "Filtrar Titulos de Versões por Expressão Regular",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "Procurar (Apenas Algumas Fontes)",
     "search": "Procurar",
     "additionalOptsFor": "Opções Adicionais para {}",
-    "supportedSourcesBelow": "Fontes Compatíveis:",
+    "supportedSources": "Fontes Compatíveis",
     "trackOnlyInBrackets": "(Apenas Seguir)",
     "searchableInBrackets": "(Pesquisável)",
     "appsString": "Apps",
@@ -253,6 +251,8 @@
     "exemptFromBackgroundUpdates": "Isento de atualizações em segundo plano (se ativadas)",
     "bgUpdatesOnWiFiOnly": "Desative atualizações em segundo plano quando não estiver em WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"

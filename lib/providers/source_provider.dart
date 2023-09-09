@@ -26,6 +26,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -363,15 +364,23 @@ abstract class AppSource {
     return url;
   }
 
-  Map<String, String>? get requestHeaders => null;
+  Future<Map<String, String>?> getRequestHeaders(
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    return null;
+  }
 
   Future<Response> sourceRequest(String url,
-      {bool followRedirects = true}) async {
+      {bool followRedirects = true,
+      Map<String, dynamic> additionalSettings =
+          const <String, dynamic>{}}) async {
+    var requestHeaders =
+        await getRequestHeaders(additionalSettings: additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
       if (requestHeaders != null) {
-        req.headers.addAll(requestHeaders!);
+        req.headers.addAll(requestHeaders);
       }
       return Response.fromStream(await Client().send(req));
     } else {
@@ -519,15 +528,16 @@ class SourceProvider {
         GitLab(),
         Codeberg(),
         FDroid(),
-        IzzyOnDroid(),
         FDroidRepo(),
-        Jenkins(),
+        IzzyOnDroid(),
         SourceForge(),
         SourceHut(),
-        Aptoide(),
-        APKMirror(),
         APKPure(),
+        Aptoide(),
+        Uptodown(),
+        APKMirror(),
         HuaweiAppGallery(),
+        Jenkins(),
         // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),

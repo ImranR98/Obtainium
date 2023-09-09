@@ -12,8 +12,6 @@
    "ok": "Dobro",
    "and": "i",
    "githubPATLabel": "GitHub token za lični pristup (eng. PAT, povećava ograničenje stope)",
-   "githubPATHint": "PAT mora biti u ovom formatu: korisničko_ime:token",
-   "githubPATFormat": "korisničko_ime:token",
    "includePrereleases": "Uključi preliminarna izdanja",
    "fallbackToOlderReleases": "Povratak na starija izdanja",
    "filterReleaseTitlesByRegEx": "Filtrirajte naslove izdanja prema regularnom izrazu",
@@ -43,7 +41,7 @@
    "searchSomeSourcesLabel": "Pretraživanje (samo neki izvori)",
    "search": "Pretraživanje",
    "additionalOptsFor": "Dodatne opcije za {}",
-   "supportedSourcesBelow": "Podržani izvori:",
+   "supportedSources": "Podržani izvori",
    "trackOnlyInBrackets": "(Samo za praćenje)",
    "searchableInBrackets": "(Može se pretraživati)",
    "appsString": "Aplikacije",
@@ -250,6 +248,8 @@
    "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
    "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+   "versionExtractionRegEx": "Version Extraction RegEx",
+   "matchGroupToUse": "Match Group to Use",
    "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"

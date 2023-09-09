@@ -2,31 +2,36 @@
 
 Get Android App Updates Directly From the Source.
 
-Obtainium allows you to install and update Open-Source Apps directly from their releases pages, and receive notifications when new releases are made available.
+Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.
 
 Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
 
 Currently supported App sources:
-- [GitHub](https://github.com/)
-- [GitLab](https://gitlab.com/)
-- [Codeberg](https://codeberg.org/)
-- [F-Droid](https://f-droid.org/)
-- [IzzyOnDroid](https://android.izzysoft.de/)
-- [Mullvad](https://mullvad.net/en/)
-- [Signal](https://signal.org/)
-- [SourceForge](https://sourceforge.net/)
-- [SourceHut](https://git.sr.ht/)
-- [Aptoide](https://aptoide.com/)
-- [APKMirror](https://apkmirror.com/) (Track-Only)
-- [APKPure](https://apkpure.com/)
-- [Huawei AppGallery](https://appgallery.huawei.com/)
-- Third Party F-Droid Repos
-- Jenkins Jobs
-- [Steam](https://store.steampowered.com/mobile)
-- [Telegram App](https://telegram.org)
-- [Neutron Code](https://neutroncode.com)
-- "HTML" (Fallback)
-  - Any other URL that returns an HTML page with links to APK files (if multiple, the last file alphabetically is picked)
+- Open Source - General:
+  - [GitHub](https://github.com/)
+  - [GitLab](https://gitlab.com/)
+  - [Codeberg](https://codeberg.org/)
+  - [F-Droid](https://f-droid.org/)
+  - Third Party F-Droid Repos
+  - [IzzyOnDroid](https://android.izzysoft.de/)
+  - [SourceForge](https://sourceforge.net/)
+  - [SourceHut](https://git.sr.ht/)
+- Other - General:
+  - [APKPure](https://apkpure.com/)
+  - [Aptoide](https://aptoide.com/)
+  - [Uptodown](https://uptodown.com/)
+  - [APKMirror](https://apkmirror.com/) (Track-Only)
+  - [Huawei AppGallery](https://appgallery.huawei.com/)
+  - Jenkins Jobs
+- Open Source - App-Specific:
+  - [Mullvad](https://mullvad.net/en/)
+  - [Signal](https://signal.org/)
+  - [VLC](https://videolan.org/)
+- Other - App-Specific:
+  - [Telegram App](https://telegram.org)
+  - [Steam Mobile Apps](https://store.steampowered.com/mobile)
+  - [Neutron Code](https://neutroncode.com)
+- "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
 
 ## Installation
 

@@ -449,33 +449,40 @@ class AppsPageState extends State<AppsPage> {
               : const SizedBox.shrink(),
           GestureDetector(
               onTap: showChangesFn,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Container(
-                        constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width / 4),
-                        child: Text(getVersionText(index),
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.end)),
-                  ]),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+              child: Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Theme.of(context).primaryColor.withAlpha(20)),
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        getChangesButtonString(index, showChangesFn != null),
-                        style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            decoration: showChangesFn != null
-                                ? TextDecoration.underline
-                                : TextDecoration.none),
-                      )
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(
+                            constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(context).size.width / 4),
+                            child: Text(getVersionText(index),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end)),
+                      ]),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            getChangesButtonString(
+                                index, showChangesFn != null),
+                            style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                decoration: showChangesFn != null
+                                    ? TextDecoration.underline
+                                    : TextDecoration.none),
+                          )
+                        ],
+                      ),
                     ],
-                  ),
-                ],
-              ))
+                  )))
         ],
       );
 

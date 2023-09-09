@@ -12,8 +12,6 @@
     "ok": "Va bene",
     "and": "e",
     "githubPATLabel": "GitHub Personal Access Token (diminuisce limite di traffico)",
-    "githubPATHint": "PAT deve seguire questo formato: nomeutente:token",
-    "githubPATFormat": "nomeutente:token",
     "includePrereleases": "Includi prerelease",
     "fallbackToOlderReleases": "Ripiega su release precedenti",
     "filterReleaseTitlesByRegEx": "Filtra release con espressioni regolari",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "Cerca (solo per alcune fonti)",
     "search": "Cerca",
     "additionalOptsFor": "Opzioni aggiuntive per {}",
-    "supportedSourcesBelow": "Fonti supportate:",
+    "supportedSources": "Fonti supportate",
     "trackOnlyInBrackets": "(Solo-Monitoraggio)",
     "searchableInBrackets": "(ricercabile)",
     "appsString": "App",
@@ -250,6 +248,8 @@
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

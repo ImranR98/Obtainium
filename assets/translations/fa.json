@@ -12,8 +12,6 @@
     "ok": "باشه",
     "and": "و",
     "githubPATLabel": "توکن دسترسی شخصی گیت هاب(محدودیت نرخ را افزایش میدهد)",
-    "githubPATHint": "PAT باید در این قالب باشد: username:token",
-    "githubPATFormat": "username:token",
     "includePrereleases": "شامل نسخه های اولیه",
     "fallbackToOlderReleases": "بازگشت به نسخه های قدیمی تر",
     "filterReleaseTitlesByRegEx": "عناوین انتشار را با بیان منظم فیلتر کنید",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "جستجو (فقط برخی منابع)",
     "search": "جستجو کردن",
     "additionalOptsFor": "گزینه های اضافی برای {}",
-    "supportedSourcesBelow": "منابع پشتیبانی شده:",
+    "supportedSources": "منابع پشتیبانی شده",
     "trackOnlyInBrackets": "«فقط ردیابی»",
     "searchableInBrackets": "(قابل جستجو)",
     "appsString": "برنامه ها",
@@ -250,6 +248,8 @@
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

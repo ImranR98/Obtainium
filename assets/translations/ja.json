@@ -12,8 +12,6 @@
     "ok": "OK",
     "and": "と",
     "githubPATLabel": "GitHub パーソナルアクセストークン (レート制限の引き上げ)",
-    "githubPATHint": "PATは次の形式でなければなりません: ユーザー名:トークン",
-    "githubPATFormat": "ユーザー名:トークン",
     "includePrereleases": "プレリリースを含む",
     "fallbackToOlderReleases": "旧リリースへのフォールバック",
     "filterReleaseTitlesByRegEx": "正規表現でリリースタイトルをフィルタリングする",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "検索 (一部ソースのみ)",
     "search": "検索",
     "additionalOptsFor": "{}の追加オプション",
-    "supportedSourcesBelow": "対応するソース:",
+    "supportedSources": "対応するソース",
     "trackOnlyInBrackets": "(追跡のみ)",
     "searchableInBrackets": "(検索可能)",
     "appsString": "アプリ",
@@ -251,6 +249,8 @@
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合，バックグラウンドアップデートを無効にする",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

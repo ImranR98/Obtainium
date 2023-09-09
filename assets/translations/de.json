@@ -12,8 +12,6 @@
     "ok": "Okay",
     "and": "und",
     "githubPATLabel": "GitHub Personal Access Token (Erhöht das Ratenlimit)",
-    "githubPATHint": "PAT muss in diesem Format sein: Benutzername:Token",
-    "githubPATFormat": "Benutzername:Token",
     "includePrereleases": "Vorabversionen einbeziehen",
     "fallbackToOlderReleases": "Fallback auf ältere Versionen",
     "filterReleaseTitlesByRegEx": "Release-Titel nach regulärem Ausdruck\nfiltern",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "Suche (nur bestimmte Quellen)",
     "search": "Suchen",
     "additionalOptsFor": "Zusatzoptionen für {}",
-    "supportedSourcesBelow": "Unterstützte Quellen:",
+    "supportedSources": "Unterstützte Quellen",
     "trackOnlyInBrackets": "(Nur Nachverfolgen)",
     "searchableInBrackets": "(Durchsuchbar)",
     "appsString": "Apps",
@@ -250,6 +248,8 @@
     "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

@@ -12,8 +12,6 @@
     "ok": "Окей",
     "and": "и",
     "githubPATLabel": "Персональный токен доступа GitHub (увеличивает лимит запросов)",
-    "githubPATHint": "Токен доступа должен быть в формате: имя_пользователя:токен",
-    "githubPATFormat": "имя_пользователя:токен",
     "includePrereleases": "Включить предварительные релизы",
     "fallbackToOlderReleases": "Откатиться к более старым версиям",
     "filterReleaseTitlesByRegEx": "Фильтровать заголовки релизов\nс помощью регулярного выражения",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "Поиск (только в некоторых источниках)",
     "search": "Поиск",
     "additionalOptsFor": "Дополнительные опции для {}",
-    "supportedSourcesBelow": "Поддерживаемые источники:",
+    "supportedSources": "Поддерживаемые источники",
     "trackOnlyInBrackets": "(Только для отслеживания)",
     "searchableInBrackets": "(Поиск)",
     "appsString": "Приложения",
@@ -250,6 +248,8 @@
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

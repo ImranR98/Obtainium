@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -74,35 +72,5 @@ class Aptoide extends AppSource {
     return APKDetails(
         version, getApkUrlsFromUrls([apkUrl]), AppNames(author, appName),
         releaseDate: relDate);
-  }
-
-  @override
-  Future<Map<String, List<String>>> search(String query,
-      {Map<String, dynamic> querySettings = const {}}) async {
-    Response res = await sourceRequest(
-        'https://search.$host/?q=${Uri.encodeQueryComponent(query)}');
-    if (res.statusCode == 200) {
-      Map<String, List<String>> urlsWithDescriptions = {};
-      parse(res.body).querySelectorAll('.package-header').forEach((e) {
-        String? url = e.attributes['href'];
-        if (url != null) {
-          try {
-            standardizeUrl(url);
-          } catch (e) {
-            url = null;
-          }
-        }
-        if (url != null) {
-          urlsWithDescriptions[url] = [
-            e.querySelector('.package-name')?.text.trim() ?? '',
-            e.querySelector('.package-summary')?.text.trim() ??
-                tr('noDescription')
-          ];
-        }
-      });
-      return urlsWithDescriptions;
-    } else {
-      throw getObtainiumHttpError(res);
-    }
   }
 }

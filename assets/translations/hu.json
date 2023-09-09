@@ -12,8 +12,6 @@
     "ok": "Oké",
     "and": "és",
     "githubPATLabel": "GitHub Personal Access Token (megnöveli a díjkorlátot)",
-    "githubPATHint": "A PAT-nak a következő formátumban kell lennie: felhasználónév:token",
-    "githubPATFormat": "felhasználónév:token",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "fallbackToOlderReleases": "Visszatérés a régebbi kiadásokhoz",
     "filterReleaseTitlesByRegEx": "A kiadás címeinek szűrése reguláris kifejezéssel",
@@ -43,7 +41,7 @@
     "searchSomeSourcesLabel": "Keresés (csak egyes források)",
     "search": "Keresés",
     "additionalOptsFor": "További lehetőségek a következőhöz: {}",
-    "supportedSourcesBelow": "Támogatott források:",
+    "supportedSources": "Támogatott források",
     "trackOnlyInBrackets": "(Csak nyomonkövetés)",
     "searchableInBrackets": "(Kereshető)",
     "appsString": "Appok",
@@ -249,6 +247,8 @@
     "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",
     "bgUpdatesOnWiFiOnly": "Tiltsa le a háttérben frissítéseket, ha nincs Wi-Fi-n",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
+    "versionExtractionRegEx": "Version Extraction RegEx",
+    "matchGroupToUse": "Match Group to Use",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
