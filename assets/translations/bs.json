@@ -41,7 +41,7 @@
    "searchSomeSourcesLabel": "Pretraživanje (samo neki izvori)",
    "search": "Pretraživanje",
    "additionalOptsFor": "Dodatne opcije za {}",
-   "supportedSourcesBelow": "Podržani izvori:",
+   "supportedSources": "Podržani izvori",
    "trackOnlyInBrackets": "(Samo za praćenje)",
    "searchableInBrackets": "(Može se pretraživati)",
    "appsString": "Aplikacije",

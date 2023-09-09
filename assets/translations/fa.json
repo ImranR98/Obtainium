@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "جستجو (فقط برخی منابع)",
     "search": "جستجو کردن",
     "additionalOptsFor": "گزینه های اضافی برای {}",
-    "supportedSourcesBelow": "منابع پشتیبانی شده:",
+    "supportedSources": "منابع پشتیبانی شده",
     "trackOnlyInBrackets": "«فقط ردیابی»",
     "searchableInBrackets": "(قابل جستجو)",
     "appsString": "برنامه ها",

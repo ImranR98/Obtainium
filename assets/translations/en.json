@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "Search (Some Sources Only)",
     "search": "Search",
     "additionalOptsFor": "Additional Options for {}",
-    "supportedSourcesBelow": "Supported Sources:",
+    "supportedSources": "Supported Sources",
     "trackOnlyInBrackets": "(Track-Only)",
     "searchableInBrackets": "(Searchable)",
     "appsString": "Apps",

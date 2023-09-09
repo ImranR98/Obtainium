@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "Keresés (csak egyes források)",
     "search": "Keresés",
     "additionalOptsFor": "További lehetőségek a következőhöz: {}",
-    "supportedSourcesBelow": "Támogatott források:",
+    "supportedSources": "Támogatott források",
     "trackOnlyInBrackets": "(Csak nyomonkövetés)",
     "searchableInBrackets": "(Kereshető)",
     "appsString": "Appok",

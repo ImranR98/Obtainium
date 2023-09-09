@@ -50,7 +50,7 @@
     "searchSomeSourcesLabel": "Szukaj (tylko niektóre źródła)",
     "search": "Szukaj",
     "additionalOptsFor": "Dodatkowe opcje dla {}",
-    "supportedSourcesBelow": "Obsługiwane źródła:",
+    "supportedSources": "Obsługiwane źródła",
     "trackOnlyInBrackets": "(tylko obserwowane)",
     "searchableInBrackets": "(Wyszukiwalne)",
     "appsString": "Aplikacje",

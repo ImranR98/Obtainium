@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "Поиск (только в некоторых источниках)",
     "search": "Поиск",
     "additionalOptsFor": "Дополнительные опции для {}",
-    "supportedSourcesBelow": "Поддерживаемые источники:",
+    "supportedSources": "Поддерживаемые источники",
     "trackOnlyInBrackets": "(Только для отслеживания)",
     "searchableInBrackets": "(Поиск)",
     "appsString": "Приложения",

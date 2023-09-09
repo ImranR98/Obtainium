@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "検索 (一部ソースのみ)",
     "search": "検索",
     "additionalOptsFor": "{}の追加オプション",
-    "supportedSourcesBelow": "対応するソース:",
+    "supportedSources": "対応するソース",
     "trackOnlyInBrackets": "(追跡のみ)",
     "searchableInBrackets": "(検索可能)",
     "appsString": "アプリ",

@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "Procurar (Apenas Algumas Fontes)",
     "search": "Procurar",
     "additionalOptsFor": "Opções Adicionais para {}",
-    "supportedSourcesBelow": "Fontes Compatíveis:",
+    "supportedSources": "Fontes Compatíveis",
     "trackOnlyInBrackets": "(Apenas Seguir)",
     "searchableInBrackets": "(Pesquisável)",
     "appsString": "Apps",

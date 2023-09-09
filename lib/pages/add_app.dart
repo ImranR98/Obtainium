@@ -463,14 +463,12 @@ class _AddAppPageState extends State<AddAppPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 48,
-              ),
               Text(
-                tr('supportedSourcesBelow'),
+                tr('supportedSources'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(
-                height: 8,
+                height: 16,
               ),
               ...sourceProvider.sources
                   .map((e) => GestureDetector(
@@ -524,15 +522,17 @@ class _AddAppPageState extends State<AddAppPage> {
                                   : const SizedBox();
                             },
                             future: pickedSource?.getSourceNote()),
-                      const SizedBox(
-                        height: 16,
+                      SizedBox(
+                        height: pickedSource != null ? 16 : 96,
                       ),
-                      if (pickedSource != null)
-                        getAdditionalOptsCol()
-                      else
-                        getSourcesListWidget(),
-                      const SizedBox(
-                        height: 8,
+                      if (pickedSource != null) getAdditionalOptsCol(),
+                      if (pickedSource == null)
+                        const Divider(
+                          height: 48,
+                        ),
+                      if (pickedSource == null) getSourcesListWidget(),
+                      SizedBox(
+                        height: pickedSource != null ? 8 : 2,
                       ),
                     ])),
           )

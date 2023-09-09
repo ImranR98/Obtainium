@@ -41,7 +41,7 @@
     "searchSomeSourcesLabel": "搜索（仅支持部分来源）",
     "search": "搜索",
     "additionalOptsFor": "{} 的更多选项",
-    "supportedSourcesBelow": "支持的来源：",
+    "supportedSources": "支持的来源",
     "trackOnlyInBrackets": "(仅追踪)",
     "searchableInBrackets": "(可搜索)",
     "appsString": "应用列表",
