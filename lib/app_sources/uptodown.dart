@@ -35,11 +35,11 @@ class Uptodown extends AppSource {
     String? version = html.querySelector('div.version')?.innerHtml;
     String? apkUrl =
         html.querySelector('#detail-download-button')?.attributes['data-url'];
-    String? name = html.querySelector('#detail-app-name')?.innerHtml;
-    String? author = html.querySelector('#author-link')?.innerHtml;
+    String? name = html.querySelector('#detail-app-name')?.innerHtml.trim();
+    String? author = html.querySelector('#author-link')?.innerHtml.trim();
     var detailElements = html.querySelectorAll('#technical-information td');
-    String? appId = (detailElements.elementAtOrNull(2))?.innerHtml;
-    String? dateStr = (detailElements.elementAtOrNull(29))?.innerHtml;
+    String? appId = (detailElements.elementAtOrNull(2))?.innerHtml.trim();
+    String? dateStr = (detailElements.elementAtOrNull(29))?.innerHtml.trim();
     return Map.fromEntries([
       MapEntry('version', version),
       MapEntry('apkUrl', apkUrl),
