@@ -459,7 +459,9 @@ class AppsPageState extends State<AppsPage> {
                                   : Theme.of(context).primaryColorLight)
                               .withAlpha(20)
                           : null),
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  padding: settingsProvider.highlightTouchTargets
+                      ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
+                      : const EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
