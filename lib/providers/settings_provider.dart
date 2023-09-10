@@ -1,6 +1,7 @@
 // Exposes functions used to save/load app settings
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
 String obtainiumId = 'dev.imranr.obtainium';
@@ -35,6 +38,7 @@ List<int> updateIntervals = [15, 30, 60, 120, 180, 360, 720, 1440, 4320, 0]
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
+  String? defaultAppDir;
   bool justStarted = true;
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
@@ -42,6 +46,7 @@ class SettingsProvider with ChangeNotifier {
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    defaultAppDir = (await getExternalStorageDirectory())!.path;
     notifyListeners();
   }
 
@@ -356,5 +361,54 @@ class SettingsProvider with ChangeNotifier {
   set highlightTouchTargets(bool val) {
     prefs?.setBool('highlightTouchTargets', val);
     notifyListeners();
+  }
+
+  Future<String> getAppDir() async {
+    return prefs?.getString('appDir') ?? defaultAppDir!;
+  }
+
+  pickAppDir({bool useDefault = false}) async {
+    var existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
+    var currentAppDir = await getAppDir();
+    if (currentAppDir != defaultAppDir) {
+      currentAppDir = currentAppDir.replaceFirst(
+          '/storage/emulated/0/', '/tree/primary%3A');
+    }
+    String? newAppDir;
+    if (!useDefault) {
+      var target = (await saf.openDocumentTree());
+      if (target != null) {
+        newAppDir = target.path
+            .replaceFirst('/tree/primary%3A', '/storage/emulated/0/');
+      }
+    } else {
+      newAppDir = defaultAppDir;
+    }
+    newAppDir ??= defaultAppDir;
+    if (currentAppDir != newAppDir) {
+      moveDirectoryContents(Directory(currentAppDir), Directory(newAppDir!));
+      prefs?.setString('appDir', newAppDir);
+      notifyListeners();
+    }
+    for (var e in existingSAFPerms) {
+      await saf.releasePersistableUriPermission(e.uri);
+    }
+  }
+}
+
+void moveDirectoryContents(Directory sourceDir, Directory destinationDir) {
+  if (!destinationDir.existsSync()) {
+    destinationDir.createSync(recursive: true);
+  }
+  List<FileSystemEntity> contents = sourceDir.listSync();
+  for (FileSystemEntity entity in contents) {
+    String newPath = '${destinationDir.path}/${entity.uri.pathSegments.last}';
+    if (entity is File) {
+      entity.renameSync(newPath);
+    } else if (entity is Directory) {
+      Directory newDestinationDir = Directory(newPath);
+      moveDirectoryContents(entity, newDestinationDir);
+      entity.deleteSync(recursive: true);
+    }
   }
 }
