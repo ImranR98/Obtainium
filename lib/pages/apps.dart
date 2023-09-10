@@ -452,11 +452,13 @@ class AppsPageState extends State<AppsPage> {
               child: Container(
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      color: Theme.of(context).primaryColor.withAlpha(
-                          (settingsProvider.highlightTouchTargets &&
-                                  showChangesFn != null)
-                              ? 20
-                              : 0)),
+                      color: settingsProvider.highlightTouchTargets &&
+                              showChangesFn != null
+                          ? (Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(context).primaryColor
+                                  : Theme.of(context).primaryColorLight)
+                              .withAlpha(20)
+                          : null),
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

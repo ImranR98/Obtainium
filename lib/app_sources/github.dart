@@ -252,8 +252,10 @@ class GitHub extends AppSource {
       List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
               ?.map((e) {
-                return e['name'] != null && e['url'] != null
-                    ? MapEntry(e['name'] as String, e['url'] as String)
+                return (e['name'] != null) &&
+                        ((e['url'] ?? e['browser_download_url']) != null)
+                    ? MapEntry(e['name'] as String,
+                        (e['url'] ?? e['browser_download_url']) as String)
                     : const MapEntry('', '');
               })
               .where((element) => element.key.toLowerCase().endsWith('.apk'))
