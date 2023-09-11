@@ -253,7 +253,7 @@
     "matchGroupToUse": "Match Group to Use",
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Pick Export Directory",
-    "autoExportOnUpdateCheckKeepNum": "Auto-export on update check (keep last N auto-exports)",
+    "autoExportOnChanges": "Auto-export on changes",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

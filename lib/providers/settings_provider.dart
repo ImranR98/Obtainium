@@ -391,12 +391,12 @@ class SettingsProvider with ChangeNotifier {
     }
   }
 
-  int get autoExportOnUpdateCheckKeepNum {
-    return prefs?.getInt('autoExportOnUpdateCheckKeepNum') ?? 0;
+  bool get autoExportOnChanges {
+    return prefs?.getBool('autoExportOnChanges') ?? false;
   }
 
-  set autoExportOnUpdateCheckKeepNum(int val) {
-    prefs?.setInt('autoExportOnUpdateCheckKeepNum', val);
+  set autoExportOnChanges(bool val) {
+    prefs?.setBool('autoExportOnChanges', val);
     notifyListeners();
   }
 }

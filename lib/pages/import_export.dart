@@ -337,36 +337,19 @@ class _ImportExportPageState extends State<ImportExportPage> {
                             GeneratedForm(
                                 items: [
                                   [
-                                    GeneratedFormTextField(
-                                        'autoExportOnUpdateCheckKeepNum',
-                                        label: tr(
-                                            'autoExportOnUpdateCheckKeepNum'),
-                                        required: false,
-                                        defaultValue: settingsProvider
-                                            .autoExportOnUpdateCheckKeepNum
-                                            .toString(),
-                                        textInputType: const TextInputType
-                                            .numberWithOptions(),
-                                        additionalValidators: [
-                                          (value) {
-                                            value ??= settingsProvider
-                                                .autoExportOnUpdateCheckKeepNum
-                                                .toString();
-                                            return intValidator(value,
-                                                positive: true);
-                                          }
-                                        ])
+                                    GeneratedFormSwitch(
+                                      'autoExportOnChanges',
+                                      label: tr('autoExportOnChanges'),
+                                      defaultValue:
+                                          settingsProvider.autoExportOnChanges,
+                                    )
                                   ]
                                 ],
                                 onValueChanges: (value, valid, isBuilding) {
                                   if (valid && !isBuilding) {
-                                    if (value[
-                                            'autoExportOnUpdateCheckKeepNum'] !=
-                                        null) {
-                                      settingsProvider
-                                              .autoExportOnUpdateCheckKeepNum =
-                                          int.parse(value[
-                                              'autoExportOnUpdateCheckKeepNum']);
+                                    if (value['autoExportOnChanges'] != null) {
+                                      settingsProvider.autoExportOnChanges =
+                                          value['autoExportOnChanges'] == true;
                                     }
                                   }
                                 }),

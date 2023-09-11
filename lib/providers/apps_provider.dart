@@ -16,7 +16,6 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -917,6 +916,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+    await exportApps(isAuto: true);
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -938,6 +938,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appIds.isNotEmpty) {
       notifyListeners();
+      await exportApps(isAuto: true);
     }
   }
 
@@ -1097,6 +1098,17 @@ class AppsProvider with ChangeNotifier {
   Future<String?> exportApps({bool pickOnly = false, isAuto = false}) async {
     if (isAuto) {
       logs.add('Started auto-export.');
+      var exportDir = settingsProvider.exportDir;
+      if (exportDir != null) {
+        var files = await saf.listFiles(exportDir,
+            columns: [saf.DocumentFileColumn.id]).toList();
+        if (files.isNotEmpty) {
+          for (var f in files) {
+            saf.delete(f.uri);
+          }
+          logs.add('Previous auto-export deleted.');
+        }
+      }
     }
     var exportDir = settingsProvider.exportDir;
     if (exportDir == null || pickOnly) {
@@ -1120,32 +1132,6 @@ class AppsProvider with ChangeNotifier {
           exportDir.pathSegments.join('/').replaceFirst('tree/primary:', '');
     }
     return returnPath;
-  }
-
-  Future<void> trimAutoExports() async {
-    var exportDir = settingsProvider.exportDir;
-    if (exportDir != null) {
-      var files = await saf
-          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id]).toList();
-      var maxCount = settingsProvider.autoExportOnUpdateCheckKeepNum;
-      if (files.length > maxCount) {
-        files.sort((a, b) {
-          if (a.name == null) {
-            return -1;
-          } else if (b.name == null) {
-            return 1;
-          } else {
-            return compareAlphaNumeric(a.name!, b.name!);
-          }
-        });
-        files = files.reversed.toList();
-        logs.add(
-            'Deleting auto-exports older than ${files[maxCount - 1].uri.pathSegments.last}.');
-        files.sublist(maxCount).forEach((f) {
-          saf.delete(f.uri);
-        });
-      }
-    }
   }
 
   Future<int> importApps(String appsJSON) async {
@@ -1430,10 +1416,6 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     } finally {
       if (toNotify.isNotEmpty) {
         notificationsProvider.notify(UpdateNotification(toNotify));
-      }
-      if (appsProvider.settingsProvider.autoExportOnUpdateCheckKeepNum > 0) {
-        await appsProvider.exportApps(isAuto: true);
-        await appsProvider.trimAutoExports();
       }
     }
     // If you're done checking and found some silently installable updates, schedule another task which will run in install mode
