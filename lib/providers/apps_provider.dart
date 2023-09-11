@@ -916,7 +916,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     notifyListeners();
-    await exportApps(isAuto: true);
+    exportApps(isAuto: true);
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -938,7 +938,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appIds.isNotEmpty) {
       notifyListeners();
-      await exportApps(isAuto: true);
+      exportApps(isAuto: true);
     }
   }
 
