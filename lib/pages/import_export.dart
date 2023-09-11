@@ -28,8 +28,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
   @override
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
-    var appsProvider = context.read<AppsProvider>();
-    var settingsProvider = context.read<SettingsProvider>();
+    var appsProvider = context.watch<AppsProvider>();
+    var settingsProvider = context.watch<SettingsProvider>();
 
     var outlineButtonStyle = ButtonStyle(
       shape: MaterialStateProperty.all(
@@ -102,10 +102,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
       });
     }
 
-    runObtainiumExport() {
+    runObtainiumExport() async {
       HapticFeedback.selectionClick();
       appsProvider
-          .exportApps(pickOnly: settingsProvider.exportDir == null)
+          .exportApps(
+              pickOnly: (await settingsProvider.getExportDir()) == null,
+              sp: settingsProvider)
           .then((String? result) {
         if (result != null) {
           showError(tr('exportedTo', args: [result]), context);
@@ -305,56 +307,69 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                              child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: appsProvider.apps.isEmpty ||
-                                          importInProgress
-                                      ? null
-                                      : runObtainiumExport,
-                                  child: Text(tr(
-                                      settingsProvider.exportDir != null
-                                          ? 'obtainiumExport'
-                                          : 'pickExportDirKeepLastN')))),
-                          const SizedBox(
-                            width: 16,
-                          ),
-                          Expanded(
-                              child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : runObtainiumImport,
-                                  child: Text(tr('obtainiumImport'))))
-                        ],
-                      ),
-                      if (settingsProvider.exportDir != null)
-                        Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            GeneratedForm(
-                                items: [
-                                  [
-                                    GeneratedFormSwitch(
-                                      'autoExportOnChanges',
-                                      label: tr('autoExportOnChanges'),
-                                      defaultValue:
-                                          settingsProvider.autoExportOnChanges,
-                                    )
-                                  ]
+                      FutureBuilder(
+                        future: settingsProvider.getExportDir(),
+                        builder: (context, snapshot) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                      child: TextButton(
+                                    style: outlineButtonStyle,
+                                    onPressed: appsProvider.apps.isEmpty ||
+                                            importInProgress
+                                        ? null
+                                        : runObtainiumExport,
+                                    child: Text(tr(snapshot.data != null
+                                        ? 'obtainiumExport'
+                                        : 'pickExportDir')),
+                                  )),
+                                  const SizedBox(
+                                    width: 16,
+                                  ),
+                                  Expanded(
+                                      child: TextButton(
+                                          style: outlineButtonStyle,
+                                          onPressed: importInProgress
+                                              ? null
+                                              : runObtainiumImport,
+                                          child: Text(tr('obtainiumImport'))))
                                 ],
-                                onValueChanges: (value, valid, isBuilding) {
-                                  if (valid && !isBuilding) {
-                                    if (value['autoExportOnChanges'] != null) {
-                                      settingsProvider.autoExportOnChanges =
-                                          value['autoExportOnChanges'] == true;
-                                    }
-                                  }
-                                }),
-                          ],
-                        ),
+                              ),
+                              if (snapshot.data != null)
+                                Column(
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    GeneratedForm(
+                                        items: [
+                                          [
+                                            GeneratedFormSwitch(
+                                              'autoExportOnChanges',
+                                              label: tr('autoExportOnChanges'),
+                                              defaultValue: settingsProvider
+                                                  .autoExportOnChanges,
+                                            )
+                                          ]
+                                        ],
+                                        onValueChanges:
+                                            (value, valid, isBuilding) {
+                                          if (valid && !isBuilding) {
+                                            if (value['autoExportOnChanges'] !=
+                                                null) {
+                                              settingsProvider
+                                                  .autoExportOnChanges = value[
+                                                      'autoExportOnChanges'] ==
+                                                  true;
+                                            }
+                                          }
+                                        }),
+                                  ],
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       if (importInProgress)
                         const Column(
                           children: [

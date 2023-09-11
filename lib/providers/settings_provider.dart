@@ -362,18 +362,25 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Uri? get exportDir {
+  Future<Uri?> getExportDir() async {
     var uriString = prefs?.getString('exportDir');
     if (uriString != null) {
-      return Uri.parse(uriString);
+      Uri? uri = Uri.parse(uriString);
+      if (!(await saf.canRead(uri) ?? false) ||
+          !(await saf.canWrite(uri) ?? false)) {
+        uri = null;
+        prefs?.remove('exportDir');
+        notifyListeners();
+      }
+      return uri;
     } else {
       return null;
     }
   }
 
-  Future<void> pickExportDirKeepLastN({bool remove = false}) async {
+  Future<void> pickExportDir({bool remove = false}) async {
     var existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
-    var currentOneWayDataSyncDir = exportDir;
+    var currentOneWayDataSyncDir = await getExportDir();
     Uri? newOneWayDataSyncDir;
     if (!remove) {
       newOneWayDataSyncDir = (await saf.openDocumentTree());

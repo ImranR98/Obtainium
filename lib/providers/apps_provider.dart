@@ -1095,8 +1095,10 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
-  Future<String?> exportApps({bool pickOnly = false, isAuto = false}) async {
-    var exportDir = settingsProvider.exportDir;
+  Future<String?> exportApps(
+      {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
+    SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
       if (exportDir == null) {
         logs.add('Skipping auto-export as dir is not set.');
@@ -1112,13 +1114,12 @@ class AppsProvider with ChangeNotifier {
         logs.add('Previous auto-export deleted.');
       }
     }
-    exportDir = settingsProvider.exportDir;
     if (exportDir == null || pickOnly) {
-      await settingsProvider.pickExportDirKeepLastN();
-      exportDir = settingsProvider.exportDir;
+      await settingsProvider.pickExportDir();
+      exportDir = await settingsProvider.getExportDir();
     }
     if (exportDir == null) {
-      throw ObtainiumError(tr('unexpectedError'));
+      return null;
     }
     String? returnPath;
     if (!pickOnly) {
