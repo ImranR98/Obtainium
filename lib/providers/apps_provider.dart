@@ -1106,7 +1106,9 @@ class AppsProvider with ChangeNotifier {
       }
       logs.add('Started auto-export.');
       var files = await saf
-          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id]).toList();
+          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
+          .where((f) => f.uri.pathSegments.last.endsWith('-auto.json'))
+          .toList();
       if (files.isNotEmpty) {
         for (var f in files) {
           saf.delete(f.uri);
@@ -1132,7 +1134,7 @@ class AppsProvider with ChangeNotifier {
         throw ObtainiumError(tr('unexpectedError'));
       }
       returnPath =
-          exportDir.pathSegments.join('/').replaceFirst('tree/primary:', '');
+          exportDir.pathSegments.join('/').replaceFirst('tree/primary:', '/');
     }
     return returnPath;
   }
