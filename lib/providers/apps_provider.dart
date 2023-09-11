@@ -16,6 +16,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -31,6 +32,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 final pm = AndroidPackageManager();
 
@@ -167,7 +169,8 @@ class AppsProvider with ChangeNotifier {
       if (cacheDirs?.isNotEmpty ?? false) {
         APKDir = cacheDirs!.first;
       } else {
-        APKDir = Directory('${await settingsProvider.getAppDir()}/apks');
+        APKDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/apks');
         if (!APKDir.existsSync()) {
           APKDir.createSync();
         }
@@ -676,7 +679,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<Directory> getAppsDir() async {
     Directory appsDir =
-        Directory('${await settingsProvider.getAppDir()}/app_data');
+        Directory('${(await getExternalStorageDirectory())!.path}/app_data');
     if (!appsDir.existsSync()) {
       appsDir.createSync();
     }
@@ -1091,32 +1094,58 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
-  Future<String> exportApps() async {
-    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
-      if (await Permission.storage.isDenied) {
-        await Permission.storage.request();
+  Future<String?> exportApps({bool pickOnly = false, isAuto = false}) async {
+    if (isAuto) {
+      logs.add('Started auto-export.');
+    }
+    var exportDir = settingsProvider.exportDir;
+    if (exportDir == null || pickOnly) {
+      await settingsProvider.pickExportDirKeepLastN();
+      exportDir = settingsProvider.exportDir;
+    }
+    if (exportDir == null) {
+      throw ObtainiumError(tr('unexpectedError'));
+    }
+    String? returnPath;
+    if (!pickOnly) {
+      var result = await saf.createFile(exportDir,
+          displayName:
+              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
+          mimeType: 'application/json',
+          content: jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
+      if (result == null) {
+        throw ObtainiumError(tr('unexpectedError'));
       }
-      if (await Permission.storage.isDenied) {
-        throw ObtainiumError(tr('storagePermissionDenied'));
+      returnPath =
+          exportDir.pathSegments.join('/').replaceFirst('tree/primary:', '');
+    }
+    return returnPath;
+  }
+
+  Future<void> trimAutoExports() async {
+    var exportDir = settingsProvider.exportDir;
+    if (exportDir != null) {
+      var files = await saf
+          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id]).toList();
+      var maxCount = settingsProvider.autoExportOnUpdateCheckKeepNum;
+      if (files.length > maxCount) {
+        files.sort((a, b) {
+          if (a.name == null) {
+            return -1;
+          } else if (b.name == null) {
+            return 1;
+          } else {
+            return compareAlphaNumeric(a.name!, b.name!);
+          }
+        });
+        files = files.reversed.toList();
+        logs.add(
+            'Deleting auto-exports older than ${files[maxCount - 1].uri.pathSegments.last}.');
+        files.sublist(maxCount).forEach((f) {
+          saf.delete(f.uri);
+        });
       }
     }
-    Directory? exportDir = Directory('/storage/emulated/0/Download');
-    String path = 'Downloads'; // TODO: See if hardcoding this can be avoided
-    var downloadsAccessible = false;
-    try {
-      downloadsAccessible = exportDir.existsSync();
-    } catch (e) {
-      logs.add('Error accessing Downloads (will use fallback): $e');
-    }
-    if (!downloadsAccessible) {
-      exportDir = Directory(await settingsProvider.getAppDir());
-      path = exportDir.path;
-    }
-    File export = File(
-        '${exportDir.path}/${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().millisecondsSinceEpoch}.json');
-    export.writeAsStringSync(
-        jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
-    return path;
   }
 
   Future<int> importApps(String appsJSON) async {
@@ -1401,6 +1430,10 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     } finally {
       if (toNotify.isNotEmpty) {
         notificationsProvider.notify(UpdateNotification(toNotify));
+      }
+      if (appsProvider.settingsProvider.autoExportOnUpdateCheckKeepNum > 0) {
+        await appsProvider.exportApps(isAuto: true);
+        await appsProvider.trimAutoExports();
       }
     }
     // If you're done checking and found some silently installable updates, schedule another task which will run in install mode

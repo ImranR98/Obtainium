@@ -251,6 +251,8 @@
     "versionExtractionRegEx": "Version Extraction RegEx",
     "matchGroupToUse": "Match Group to Use",
     "highlightTouchTargets": "Highlight less obvious touch targets",
+    "pickExportDir": "Pick Export Directory",
+    "autoExportOnUpdateCheckKeepNum": "Auto-export on update check (keep last N auto-exports)",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

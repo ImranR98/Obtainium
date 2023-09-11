@@ -74,6 +74,11 @@ class AppsPageState extends State<AppsPage> {
         setState(() {
           refreshingSince = null;
         });
+        if (settingsProvider.autoExportOnUpdateCheckKeepNum > 0) {
+          appsProvider.exportApps(isAuto: true).then((value) {
+            appsProvider.trimAutoExports();
+          });
+        }
       });
     }
 

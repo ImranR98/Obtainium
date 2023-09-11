@@ -521,6 +521,20 @@ regExValidator(String? value) {
   return null;
 }
 
+intValidator(String? value, {bool positive = false}) {
+  if (value == null) {
+    return tr('invalidInput');
+  }
+  var num = int.tryParse(value);
+  if (num == null) {
+    return tr('invalidInput');
+  }
+  if (positive && num <= 0) {
+    return tr('invalidInput');
+  }
+  return null;
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [

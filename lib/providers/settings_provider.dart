@@ -1,7 +1,6 @@
 // Exposes functions used to save/load app settings
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -363,52 +362,41 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> getAppDir() async {
-    return prefs?.getString('appDir') ?? defaultAppDir!;
+  Uri? get exportDir {
+    var uriString = prefs?.getString('exportDir');
+    if (uriString != null) {
+      return Uri.parse(uriString);
+    } else {
+      return null;
+    }
   }
 
-  pickAppDir({bool useDefault = false}) async {
+  Future<void> pickExportDirKeepLastN({bool remove = false}) async {
     var existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
-    var currentAppDir = await getAppDir();
-    if (currentAppDir != defaultAppDir) {
-      currentAppDir = currentAppDir.replaceFirst(
-          '/storage/emulated/0/', '/tree/primary%3A');
+    var currentOneWayDataSyncDir = exportDir;
+    Uri? newOneWayDataSyncDir;
+    if (!remove) {
+      newOneWayDataSyncDir = (await saf.openDocumentTree());
     }
-    String? newAppDir;
-    if (!useDefault) {
-      var target = (await saf.openDocumentTree());
-      if (target != null) {
-        newAppDir = target.path
-            .replaceFirst('/tree/primary%3A', '/storage/emulated/0/');
+    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
+      if (newOneWayDataSyncDir == null) {
+        prefs?.remove('exportDir');
+      } else {
+        prefs?.setString('exportDir', newOneWayDataSyncDir.toString());
       }
-    } else {
-      newAppDir = defaultAppDir;
-    }
-    newAppDir ??= defaultAppDir;
-    if (currentAppDir != newAppDir) {
-      moveDirectoryContents(Directory(currentAppDir), Directory(newAppDir!));
-      prefs?.setString('appDir', newAppDir);
       notifyListeners();
     }
     for (var e in existingSAFPerms) {
       await saf.releasePersistableUriPermission(e.uri);
     }
   }
-}
 
-void moveDirectoryContents(Directory sourceDir, Directory destinationDir) {
-  if (!destinationDir.existsSync()) {
-    destinationDir.createSync(recursive: true);
+  int get autoExportOnUpdateCheckKeepNum {
+    return prefs?.getInt('autoExportOnUpdateCheckKeepNum') ?? 0;
   }
-  List<FileSystemEntity> contents = sourceDir.listSync();
-  for (FileSystemEntity entity in contents) {
-    String newPath = '${destinationDir.path}/${entity.uri.pathSegments.last}';
-    if (entity is File) {
-      entity.renameSync(newPath);
-    } else if (entity is Directory) {
-      Directory newDestinationDir = Directory(newPath);
-      moveDirectoryContents(entity, newDestinationDir);
-      entity.deleteSync(recursive: true);
-    }
+
+  set autoExportOnUpdateCheckKeepNum(int val) {
+    prefs?.setInt('autoExportOnUpdateCheckKeepNum', val);
+    notifyListeners();
   }
 }

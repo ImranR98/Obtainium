@@ -104,8 +104,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
 
     runObtainiumExport() {
       HapticFeedback.selectionClick();
-      appsProvider.exportApps().then((String path) {
-        showError(tr('exportedTo', args: [path]), context);
+      appsProvider
+          .exportApps(pickOnly: settingsProvider.exportDir == null)
+          .then((String? result) {
+        if (result != null) {
+          showError(tr('exportedTo', args: [result]), context);
+        }
       }).catchError((e) {
         showError(e, context);
       });
@@ -310,7 +314,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           importInProgress
                                       ? null
                                       : runObtainiumExport,
-                                  child: Text(tr('obtainiumExport')))),
+                                  child: Text(tr(
+                                      settingsProvider.exportDir != null
+                                          ? 'obtainiumExport'
+                                          : 'pickExportDirKeepLastN')))),
                           const SizedBox(
                             width: 16,
                           ),
@@ -323,6 +330,48 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                   child: Text(tr('obtainiumImport'))))
                         ],
                       ),
+                      if (settingsProvider.exportDir != null)
+                        Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            GeneratedForm(
+                                items: [
+                                  [
+                                    GeneratedFormTextField(
+                                        'autoExportOnUpdateCheckKeepNum',
+                                        label: tr(
+                                            'autoExportOnUpdateCheckKeepNum'),
+                                        required: false,
+                                        defaultValue: settingsProvider
+                                            .autoExportOnUpdateCheckKeepNum
+                                            .toString(),
+                                        textInputType: const TextInputType
+                                            .numberWithOptions(),
+                                        additionalValidators: [
+                                          (value) {
+                                            value ??= settingsProvider
+                                                .autoExportOnUpdateCheckKeepNum
+                                                .toString();
+                                            return intValidator(value,
+                                                positive: true);
+                                          }
+                                        ])
+                                  ]
+                                ],
+                                onValueChanges: (value, valid, isBuilding) {
+                                  if (valid && !isBuilding) {
+                                    if (value[
+                                            'autoExportOnUpdateCheckKeepNum'] !=
+                                        null) {
+                                      settingsProvider
+                                              .autoExportOnUpdateCheckKeepNum =
+                                          int.parse(value[
+                                              'autoExportOnUpdateCheckKeepNum']);
+                                    }
+                                  }
+                                }),
+                          ],
+                        ),
                       if (importInProgress)
                         const Column(
                           children: [
@@ -399,7 +448,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               fontStyle: FontStyle.italic, fontSize: 12)),
                       const SizedBox(
                         height: 8,
-                      )
+                      ),
                     ],
                   )))
         ]));

@@ -124,10 +124,7 @@ class HTML extends AppSource {
             additionalValidators: [
               (value) {
                 value ??= '1';
-                if (int.tryParse(value) == null) {
-                  return tr('invalidInput');
-                }
-                return null;
+                return intValidator(value);
               }
             ])
       ]
