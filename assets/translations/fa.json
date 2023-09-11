@@ -251,6 +251,8 @@
     "versionExtractionRegEx": "Version Extraction RegEx",
     "matchGroupToUse": "Match Group to Use",
     "highlightTouchTargets": "Highlight less obvious touch targets",
+    "pickExportDir": "Pick Export Directory",
+    "autoExportOnChanges": "Auto-export on changes",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

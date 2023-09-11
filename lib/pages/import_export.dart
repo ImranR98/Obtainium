@@ -28,8 +28,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
   @override
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
-    var appsProvider = context.read<AppsProvider>();
-    var settingsProvider = context.read<SettingsProvider>();
+    var appsProvider = context.watch<AppsProvider>();
+    var settingsProvider = context.watch<SettingsProvider>();
 
     var outlineButtonStyle = ButtonStyle(
       shape: MaterialStateProperty.all(
@@ -102,10 +102,16 @@ class _ImportExportPageState extends State<ImportExportPage> {
       });
     }
 
-    runObtainiumExport() {
+    runObtainiumExport() async {
       HapticFeedback.selectionClick();
-      appsProvider.exportApps().then((String path) {
-        showError(tr('exportedTo', args: [path]), context);
+      appsProvider
+          .exportApps(
+              pickOnly: (await settingsProvider.getExportDir()) == null,
+              sp: settingsProvider)
+          .then((String? result) {
+        if (result != null) {
+          showError(tr('exportedTo', args: [result]), context);
+        }
       }).catchError((e) {
         showError(e, context);
       });
@@ -301,27 +307,68 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                              child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: appsProvider.apps.isEmpty ||
-                                          importInProgress
-                                      ? null
-                                      : runObtainiumExport,
-                                  child: Text(tr('obtainiumExport')))),
-                          const SizedBox(
-                            width: 16,
-                          ),
-                          Expanded(
-                              child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : runObtainiumImport,
-                                  child: Text(tr('obtainiumImport'))))
-                        ],
+                      FutureBuilder(
+                        future: settingsProvider.getExportDir(),
+                        builder: (context, snapshot) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                      child: TextButton(
+                                    style: outlineButtonStyle,
+                                    onPressed: appsProvider.apps.isEmpty ||
+                                            importInProgress
+                                        ? null
+                                        : runObtainiumExport,
+                                    child: Text(tr(snapshot.data != null
+                                        ? 'obtainiumExport'
+                                        : 'pickExportDir')),
+                                  )),
+                                  const SizedBox(
+                                    width: 16,
+                                  ),
+                                  Expanded(
+                                      child: TextButton(
+                                          style: outlineButtonStyle,
+                                          onPressed: importInProgress
+                                              ? null
+                                              : runObtainiumImport,
+                                          child: Text(tr('obtainiumImport'))))
+                                ],
+                              ),
+                              if (snapshot.data != null)
+                                Column(
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    GeneratedForm(
+                                        items: [
+                                          [
+                                            GeneratedFormSwitch(
+                                              'autoExportOnChanges',
+                                              label: tr('autoExportOnChanges'),
+                                              defaultValue: settingsProvider
+                                                  .autoExportOnChanges,
+                                            )
+                                          ]
+                                        ],
+                                        onValueChanges:
+                                            (value, valid, isBuilding) {
+                                          if (valid && !isBuilding) {
+                                            if (value['autoExportOnChanges'] !=
+                                                null) {
+                                              settingsProvider
+                                                  .autoExportOnChanges = value[
+                                                      'autoExportOnChanges'] ==
+                                                  true;
+                                            }
+                                          }
+                                        }),
+                                  ],
+                                ),
+                            ],
+                          );
+                        },
                       ),
                       if (importInProgress)
                         const Column(
@@ -399,7 +446,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               fontStyle: FontStyle.italic, fontSize: 12)),
                       const SizedBox(
                         height: 8,
-                      )
+                      ),
                     ],
                   )))
         ]));

@@ -381,8 +381,7 @@ class AppsPageState extends State<AppsPage> {
               : () {
                   appsProvider.downloadAndInstallLatestApps(
                       [listedApps[appIndex].app.id],
-                      globalNavigatorKey.currentContext,
-                      settingsProvider).catchError((e) {
+                      globalNavigatorKey.currentContext).catchError((e) {
                     showError(e, context);
                     return <String>[];
                   });
@@ -459,7 +458,9 @@ class AppsPageState extends State<AppsPage> {
                                   : Theme.of(context).primaryColorLight)
                               .withAlpha(20)
                           : null),
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  padding: settingsProvider.highlightTouchTargets
+                      ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
+                      : const EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -697,8 +698,8 @@ class AppsPageState extends State<AppsPage> {
                     toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
                   }
                   appsProvider
-                      .downloadAndInstallLatestApps(toInstall,
-                          globalNavigatorKey.currentContext, settingsProvider)
+                      .downloadAndInstallLatestApps(
+                          toInstall, globalNavigatorKey.currentContext)
                       .catchError((e) {
                     showError(e, context);
                     return <String>[];

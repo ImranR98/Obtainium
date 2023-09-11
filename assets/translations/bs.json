@@ -111,7 +111,7 @@
    "dark": "Tamna",
    "light": "Svijetla",
    "followSystem": "Pratite sistem",
-   "obtainium": "Obtainium",
+    "obtainium": "Obtainium",
    "materialYou": "Material You",
    "useBlackTheme": "Koristite čisto crnu tamnu temu",
    "appSortBy": "Aplikacije sortirane po",
@@ -251,7 +251,9 @@
    "versionExtractionRegEx": "Version Extraction RegEx",
    "matchGroupToUse": "Match Group to Use",
    "highlightTouchTargets": "Highlight less obvious touch targets",
-   "removeAppQuestion": {
+   "pickExportDir": "Pick Export Directory",
+   "autoExportOnChanges": "Auto-export on changes",
+     "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"
    },

@@ -31,6 +31,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 final pm = AndroidPackageManager();
 
@@ -150,6 +151,7 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
   late Directory APKDir;
+  late SettingsProvider settingsProvider = SettingsProvider();
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
@@ -161,6 +163,7 @@ class AppsProvider with ChangeNotifier {
       if (isForeground) await loadApps();
     });
     () async {
+      await settingsProvider.initializeSettings();
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         APKDir = cacheDirs!.first;
@@ -369,8 +372,7 @@ class AppsProvider with ChangeNotifier {
       .where((element) => element.downloadProgress != null)
       .isNotEmpty;
 
-  Future<bool> canInstallSilently(
-      App app, SettingsProvider settingsProvider) async {
+  Future<bool> canInstallSilently(App app) async {
     if (app.id == obtainiumId) {
       return false;
     }
@@ -539,7 +541,6 @@ class AppsProvider with ChangeNotifier {
         getHost(apkUrl.value) != getHost(app.url) &&
         context != null) {
       // ignore: use_build_context_synchronously
-      var settingsProvider = context.read<SettingsProvider>();
       if (!(settingsProvider.hideAPKOriginWarning) &&
           // ignore: use_build_context_synchronously
           await showDialog(
@@ -560,8 +561,8 @@ class AppsProvider with ChangeNotifier {
   // If no BuildContext is provided, apps that require user interaction are ignored
   // If user input is needed and the App is in the background, a notification is sent to get the user's attention
   // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
-  Future<List<String>> downloadAndInstallLatestApps(List<String> appIds,
-      BuildContext? context, SettingsProvider settingsProvider,
+  Future<List<String>> downloadAndInstallLatestApps(
+      List<String> appIds, BuildContext? context,
       {NotificationsProvider? notificationsProvider}) async {
     notificationsProvider =
         notificationsProvider ?? context?.read<NotificationsProvider>();
@@ -590,8 +591,7 @@ class AppsProvider with ChangeNotifier {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApps([apps[id]!.app]);
         }
-        if (context != null ||
-            await canInstallSilently(apps[id]!.app, settingsProvider)) {
+        if (context != null || await canInstallSilently(apps[id]!.app)) {
           appsToInstall.add(id);
         }
       }
@@ -628,8 +628,7 @@ class AppsProvider with ChangeNotifier {
           downloadedDir = downloadedArtifact as DownloadedXApkDir;
         }
         var appId = downloadedFile?.appId ?? downloadedDir!.appId;
-        bool willBeSilent =
-            await canInstallSilently(apps[appId]!.app, settingsProvider);
+        bool willBeSilent = await canInstallSilently(apps[appId]!.app);
         if (!(await settingsProvider.getInstallPermission(enforce: false))) {
           throw ObtainiumError(tr('cancelled'));
         }
@@ -678,8 +677,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<Directory> getAppsDir() async {
-    Directory appsDir = Directory(
-        '${(await getExternalStorageDirectory())?.path as String}/app_data');
+    Directory appsDir =
+        Directory('${(await getExternalStorageDirectory())!.path}/app_data');
     if (!appsDir.existsSync()) {
       appsDir.createSync();
     }
@@ -879,8 +878,6 @@ class AppsProvider with ChangeNotifier {
           .toList();
       // After reconciliation, delete externally uninstalled Apps if needed
       if (removedAppIds.isNotEmpty) {
-        var settingsProvider = SettingsProvider();
-        await settingsProvider.initializeSettings();
         if (settingsProvider.removeOnExternalUninstall) {
           await removeApps(removedAppIds);
         }
@@ -919,6 +916,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+    await exportApps(isAuto: true);
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -940,6 +938,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appIds.isNotEmpty) {
       notifyListeners();
+      await exportApps(isAuto: true);
     }
   }
 
@@ -1096,32 +1095,48 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
-  Future<String> exportApps() async {
-    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
-      if (await Permission.storage.isDenied) {
-        await Permission.storage.request();
+  Future<String?> exportApps(
+      {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
+    SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    var exportDir = await settingsProvider.getExportDir();
+    if (isAuto) {
+      if (exportDir == null) {
+        logs.add('Skipping auto-export as dir is not set.');
+        return null;
       }
-      if (await Permission.storage.isDenied) {
-        throw ObtainiumError(tr('storagePermissionDenied'));
+      logs.add('Started auto-export.');
+      var files = await saf
+          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
+          .where((f) => f.uri.pathSegments.last.endsWith('-auto.json'))
+          .toList();
+      if (files.isNotEmpty) {
+        for (var f in files) {
+          saf.delete(f.uri);
+        }
+        logs.add('Previous auto-export deleted.');
       }
     }
-    Directory? exportDir = Directory('/storage/emulated/0/Download');
-    String path = 'Downloads'; // TODO: See if hardcoding this can be avoided
-    var downloadsAccessible = false;
-    try {
-      downloadsAccessible = exportDir.existsSync();
-    } catch (e) {
-      logs.add('Error accessing Downloads (will use fallback): $e');
+    if (exportDir == null || pickOnly) {
+      await settingsProvider.pickExportDir();
+      exportDir = await settingsProvider.getExportDir();
     }
-    if (!downloadsAccessible) {
-      exportDir = await getExternalStorageDirectory();
-      path = exportDir!.path;
+    if (exportDir == null) {
+      return null;
     }
-    File export = File(
-        '${exportDir.path}/${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().millisecondsSinceEpoch}.json');
-    export.writeAsStringSync(
-        jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
-    return path;
+    String? returnPath;
+    if (!pickOnly) {
+      var result = await saf.createFile(exportDir,
+          displayName:
+              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
+          mimeType: 'application/json',
+          content: jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
+      if (result == null) {
+        throw ObtainiumError(tr('unexpectedError'));
+      }
+      returnPath =
+          exportDir.pathSegments.join('/').replaceFirst('tree/primary:', '/');
+    }
+    return returnPath;
   }
 
   Future<int> importApps(String appsJSON) async {
@@ -1298,14 +1313,12 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   NotificationsProvider notificationsProvider = NotificationsProvider();
   AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
-  var settingsProvider = SettingsProvider();
-  await settingsProvider.initializeSettings();
 
   int maxAttempts = 4;
 
   params ??= {};
   if (params['toCheck'] == null) {
-    settingsProvider.lastBGCheckTime = DateTime.now();
+    appsProvider.settingsProvider.lastBGCheckTime = DateTime.now();
   }
   List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
     ...(params['toCheck']
@@ -1335,7 +1348,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     var didCompleteChecking = false;
     CheckingUpdatesNotification? notif;
     var networkRestricted = false;
-    if (settingsProvider.bgUpdatesOnWiFiOnly) {
+    if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
       var netResult = await (Connectivity().checkConnectivity());
       networkRestricted = (netResult != ConnectivityResult.wifi) &&
           (netResult != ConnectivityResult.ethernet);
@@ -1355,8 +1368,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             App? newApp = await appsProvider.checkUpdate(appId);
             if (newApp != null) {
               if (networkRestricted ||
-                  !(await appsProvider.canInstallSilently(
-                      app!.app, settingsProvider))) {
+                  !(await appsProvider.canInstallSilently(app!.app))) {
                 toNotify.add(newApp);
               } else {
                 toInstall.add(MapEntry(appId, 0));
@@ -1442,8 +1454,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       try {
         logs.add(
             'BG install task $taskId: Attempting to update $appId in the background.');
-        await appsProvider.downloadAndInstallLatestApps(
-            [appId], null, settingsProvider,
+        await appsProvider.downloadAndInstallLatestApps([appId], null,
             notificationsProvider: notificationsProvider);
         await Future.delayed(const Duration(
             seconds:

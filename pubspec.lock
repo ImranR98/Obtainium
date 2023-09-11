@@ -686,6 +686,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
+  shared_storage:
+    dependency: "direct main"
+    description:
+      name: shared_storage
+      sha256: "7c65a9d64f0f5521256be974cfd74010af12196657cec9f9fb7b03b2f11bcaf6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.0"
   sky_engine:
     dependency: transitive
     description: flutter

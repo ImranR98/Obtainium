@@ -9,8 +9,10 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
 String obtainiumId = 'dev.imranr.obtainium';
@@ -35,6 +37,7 @@ List<int> updateIntervals = [15, 30, 60, 120, 180, 360, 720, 1440, 4320, 0]
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
+  String? defaultAppDir;
   bool justStarted = true;
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
@@ -42,6 +45,7 @@ class SettingsProvider with ChangeNotifier {
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    defaultAppDir = (await getExternalStorageDirectory())!.path;
     notifyListeners();
   }
 
@@ -355,6 +359,51 @@ class SettingsProvider with ChangeNotifier {
 
   set highlightTouchTargets(bool val) {
     prefs?.setBool('highlightTouchTargets', val);
+    notifyListeners();
+  }
+
+  Future<Uri?> getExportDir() async {
+    var uriString = prefs?.getString('exportDir');
+    if (uriString != null) {
+      Uri? uri = Uri.parse(uriString);
+      if (!(await saf.canRead(uri) ?? false) ||
+          !(await saf.canWrite(uri) ?? false)) {
+        uri = null;
+        prefs?.remove('exportDir');
+        notifyListeners();
+      }
+      return uri;
+    } else {
+      return null;
+    }
+  }
+
+  Future<void> pickExportDir({bool remove = false}) async {
+    var existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
+    var currentOneWayDataSyncDir = await getExportDir();
+    Uri? newOneWayDataSyncDir;
+    if (!remove) {
+      newOneWayDataSyncDir = (await saf.openDocumentTree());
+    }
+    if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
+      if (newOneWayDataSyncDir == null) {
+        prefs?.remove('exportDir');
+      } else {
+        prefs?.setString('exportDir', newOneWayDataSyncDir.toString());
+      }
+      notifyListeners();
+    }
+    for (var e in existingSAFPerms) {
+      await saf.releasePersistableUriPermission(e.uri);
+    }
+  }
+
+  bool get autoExportOnChanges {
+    return prefs?.getBool('autoExportOnChanges') ?? false;
+  }
+
+  set autoExportOnChanges(bool val) {
+    prefs?.setBool('autoExportOnChanges', val);
     notifyListeners();
   }
 }
