@@ -916,7 +916,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     notifyListeners();
-    await exportApps(isAuto: true);
+    exportApps(isAuto: true);
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -938,7 +938,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appIds.isNotEmpty) {
       notifyListeners();
-      await exportApps(isAuto: true);
+      exportApps(isAuto: true);
     }
   }
 
@@ -1100,6 +1100,9 @@ class AppsProvider with ChangeNotifier {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
+      if (settingsProvider.autoExportOnChanges != true) {
+        return null;
+      }
       if (exportDir == null) {
         logs.add('Skipping auto-export as dir is not set.');
         return null;
