@@ -1096,21 +1096,23 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<String?> exportApps({bool pickOnly = false, isAuto = false}) async {
+    var exportDir = settingsProvider.exportDir;
     if (isAuto) {
+      if (exportDir == null) {
+        logs.add('Skipping auto-export as dir is not set.');
+        return null;
+      }
       logs.add('Started auto-export.');
-      var exportDir = settingsProvider.exportDir;
-      if (exportDir != null) {
-        var files = await saf.listFiles(exportDir,
-            columns: [saf.DocumentFileColumn.id]).toList();
-        if (files.isNotEmpty) {
-          for (var f in files) {
-            saf.delete(f.uri);
-          }
-          logs.add('Previous auto-export deleted.');
+      var files = await saf
+          .listFiles(exportDir, columns: [saf.DocumentFileColumn.id]).toList();
+      if (files.isNotEmpty) {
+        for (var f in files) {
+          saf.delete(f.uri);
         }
+        logs.add('Previous auto-export deleted.');
       }
     }
-    var exportDir = settingsProvider.exportDir;
+    exportDir = settingsProvider.exportDir;
     if (exportDir == null || pickOnly) {
       await settingsProvider.pickExportDirKeepLastN();
       exportDir = settingsProvider.exportDir;
