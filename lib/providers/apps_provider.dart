@@ -1100,6 +1100,9 @@ class AppsProvider with ChangeNotifier {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
+      if (settingsProvider.autoExportOnChanges != true) {
+        return null;
+      }
       if (exportDir == null) {
         logs.add('Skipping auto-export as dir is not set.');
         return null;
