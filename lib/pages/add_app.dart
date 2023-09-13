@@ -202,7 +202,7 @@ class _AddAppPageState extends State<AddAppPage> {
       }
     }
 
-  Widget getUrlInputRow() => Row(
+    Widget getUrlInputRow() => Row(
           children: [
             Expanded(
                 child: GeneratedForm(
