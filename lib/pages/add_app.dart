@@ -202,7 +202,7 @@ class _AddAppPageState extends State<AddAppPage> {
       }
     }
 
-    Widget getUrlInputRow() => Row(
+Widget getUrlInputRow() => Row(
           children: [
             Expanded(
                 child: GeneratedForm(
@@ -214,11 +214,12 @@ class _AddAppPageState extends State<AddAppPage> {
                             defaultValue: userInput,
                             additionalValidators: [
                               (value) {
+                                String trimmedValue = (value ?? '').trim();
                                 try {
                                   sourceProvider
-                                      .getSource(value ?? '',
+                                      .getSource(trimmedValue,
                                           overrideSource: pickedSourceOverride)
-                                      .standardizeUrl(value ?? '');
+                                      .standardizeUrl(trimmedValue);
                                 } catch (e) {
                                   return e is String
                                       ? e
@@ -233,7 +234,7 @@ class _AddAppPageState extends State<AddAppPage> {
                     ],
                     onValueChanges: (values, valid, isBuilding) {
                       changeUserInput(
-                          values['appSourceURL']!, valid, isBuilding);
+                          values['appSourceURL']!.trim(), valid, isBuilding);
                     })),
             const SizedBox(
               width: 16,
