@@ -46,10 +46,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: "49b1fad315e57ab0bbc15bcbb874e83116a1d78f77ebd500a4af6c9407d6b28e"
+      sha256: e0902a06f0e00414e4e3438a084580161279f137aeb862274710f29ec10cf01e
       url: "https://pub.dev"
     source: hosted
-    version: "3.3.8"
+    version: "3.3.9"
   args:
     dependency: transitive
     description:
@@ -320,10 +320,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_markdown
-      sha256: d4a1cb250c4e059586af0235f32e02882860a508e189b61f2b31b8810c1e1330
+      sha256: a10979814c5f4ddbe2b6143fba25d927599e21e3ba65b3862995960606fae78f
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.17+2"
+    version: "0.6.17+3"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -538,18 +538,18 @@ packages:
     dependency: "direct main"
     description:
       name: permission_handler
-      sha256: bc56bfe9d3f44c3c612d8d393bd9b174eb796d706759f9b495ac254e4294baa5
+      sha256: ad65ba9af42a3d067203641de3fd9f547ded1410bad3b84400c2b4899faede70
       url: "https://pub.dev"
     source: hosted
-    version: "10.4.5"
+    version: "11.0.0"
   permission_handler_android:
     dependency: transitive
     description:
       name: permission_handler_android
-      sha256: "59c6322171c29df93a22d150ad95f3aa19ed86542eaec409ab2691b8f35f9a47"
+      sha256: f23cfe9af0d49c6b9fd8a8b09f7b3301ca7e346204939b5afef4404d36d2608f
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.6"
+    version: "11.0.1"
   permission_handler_apple:
     dependency: transitive
     description:
