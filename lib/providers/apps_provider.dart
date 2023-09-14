@@ -1132,7 +1132,8 @@ class AppsProvider with ChangeNotifier {
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          content: jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
+          bytes: Uint8List.fromList(utf8.encode(
+              jsonEncode(apps.values.map((e) => e.app.toJson()).toList()))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }
