@@ -14,9 +14,23 @@ class FDroid extends AppSource {
     canSearch = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
+        GeneratedFormTextField('filterVersionsByRegEx',
+            label: tr('filterVersionsByRegEx'),
+            required: false,
+            additionalValidators: [
+              (value) {
+                return regExValidator(value);
+              }
+            ])
+      ],
+      [
+        GeneratedFormSwitch('trySelectingSuggestedVersionCode',
+            label: tr('trySelectingSuggestedVersionCode'), defaultValue: true)
+      ],
+      [
         GeneratedFormSwitch('autoSelectHighestVersionCode',
             label: tr('autoSelectHighestVersionCode'))
-      ]
+      ],
     ];
   }
 
@@ -45,25 +59,73 @@ class FDroid extends AppSource {
 
   APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
       Response res, String apkUrlPrefix, String standardUrl,
-      {bool autoSelectHighestVersionCode = false}) {
+      {bool autoSelectHighestVersionCode = false,
+      bool trySelectingSuggestedVersionCode = false,
+      String? filterVersionsByRegEx}) {
     if (res.statusCode == 200) {
-      List<dynamic> releases = jsonDecode(res.body)['packages'] ?? [];
+      var response = jsonDecode(res.body);
+      List<dynamic> releases = response['packages'] ?? [];
       if (releases.isEmpty) {
         throw NoReleasesError();
       }
-      String? latestVersion = releases[0]['versionName'];
-      if (latestVersion == null) {
+      String? version;
+      Iterable<dynamic> releaseChoices = [];
+      // Grab the versionCode suggested if the user chose to do that
+      // Only do so at this stage if the user has no release filter
+      if (trySelectingSuggestedVersionCode &&
+          response['suggestedVersionCode'] != null &&
+          filterVersionsByRegEx == null) {
+        var suggestedReleases = releases.where((element) =>
+            element['versionCode'] == response['suggestedVersionCode']);
+        if (suggestedReleases.isNotEmpty) {
+          releaseChoices = suggestedReleases;
+          version = suggestedReleases.first['versionName'];
+        }
+      }
+      // Apply the release filter if any
+      if (filterVersionsByRegEx != null) {
+        version = null;
+        releaseChoices = [];
+        for (var i = 0; i < releases.length; i++) {
+          if (RegExp(filterVersionsByRegEx)
+              .hasMatch(releases[i]['versionName'])) {
+            version = releases[i]['versionName'];
+          }
+        }
+        if (version == null) {
+          throw NoVersionError();
+        }
+      }
+      // Default to the highest version
+      version ??= releases[0]['versionName'];
+      if (version == null) {
         throw NoVersionError();
       }
-      Iterable<dynamic> latestReleases =
-          releases.where((element) => element['versionName'] == latestVersion);
-      if (latestReleases.length > 1 && autoSelectHighestVersionCode) {
-        latestReleases = [latestReleases.first];
+      // If a suggested release was not already picked, pick all those with the selected version
+      if (releaseChoices.isEmpty) {
+        releaseChoices =
+            releases.where((element) => element['versionName'] == version);
       }
-      List<String> apkUrls = latestReleases
+      // For the remaining releases, use the toggles to auto-select one if possible
+      if (releaseChoices.length > 1) {
+        if (autoSelectHighestVersionCode) {
+          releaseChoices = [releaseChoices.first];
+        } else if (trySelectingSuggestedVersionCode &&
+            response['suggestedVersionCode'] != null) {
+          var suggestedReleases = releaseChoices.where((element) =>
+              element['versionCode'] == response['suggestedVersionCode']);
+          if (suggestedReleases.isNotEmpty) {
+            releaseChoices = suggestedReleases;
+          }
+        }
+      }
+      if (releaseChoices.isEmpty) {
+        throw NoReleasesError();
+      }
+      List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
-      return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
+      return APKDetails(version, getApkUrlsFromUrls(apkUrls),
           AppNames(name, Uri.parse(standardUrl).pathSegments.last));
     } else {
       throw getObtainiumHttpError(res);
@@ -82,7 +144,15 @@ class FDroid extends AppSource {
         'https://$host/repo/$appId',
         standardUrl,
         autoSelectHighestVersionCode:
-            additionalSettings['autoSelectHighestVersionCode'] == true);
+            additionalSettings['autoSelectHighestVersionCode'] == true,
+        trySelectingSuggestedVersionCode:
+            additionalSettings['trySelectingSuggestedVersionCode'] == true,
+        filterVersionsByRegEx:
+            (additionalSettings['filterVersionsByRegEx'] as String?)
+                        ?.isNotEmpty ==
+                    true
+                ? additionalSettings['filterVersionsByRegEx']
+                : null);
   }
 
   @override

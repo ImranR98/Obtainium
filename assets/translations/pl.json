@@ -259,6 +259,8 @@
     "highlightTouchTargets": "Wyróżnij mniej oczywiste elementy dotykowe",
     "pickExportDir": "Wybierz katalog eksportu",
     "autoExportOnChanges": "Automatyczny eksport po wprowadzeniu zmian",
+    "filterVersionsByRegEx": "Filter Versions by Regular Expression",
+    "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

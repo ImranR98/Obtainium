@@ -430,7 +430,8 @@ class AppsProvider with ChangeNotifier {
         zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
-  Future<void> installXApkDir(DownloadedXApkDir dir) async {
+  Future<void> installXApkDir(
+      DownloadedXApkDir dir, BuildContext? context) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
@@ -443,7 +444,7 @@ class AppsProvider with ChangeNotifier {
         if (file.path.toLowerCase().endsWith('.apk')) {
           try {
             somethingInstalled = somethingInstalled ||
-                await installApk(DownloadedApk(dir.appId, file));
+                await installApk(DownloadedApk(dir.appId, file), context);
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
@@ -463,7 +464,7 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> installApk(DownloadedApk file) async {
+  Future<bool> installApk(DownloadedApk file, BuildContext? context) async {
     var newInfo =
         await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
@@ -472,8 +473,16 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    int? code =
-        await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    int? code;
+    if (context == null) {
+      // In background installs, 'installApk' never returns so don't wait for it
+      // TODO: Find a fix to make this work synchronously without context
+      AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+      code = 0; // Be optimistic (ver. det. will get most wrong ones anyways)
+    } else {
+      code =
+          await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
       throw InstallError(code);
@@ -640,19 +649,11 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (downloadedFile != null) {
-            if (willBeSilent && context == null) {
-              // Would await forever - workaround - TODO
-              installApk(downloadedFile);
-            } else {
-              await installApk(downloadedFile);
-            }
+            // ignore: use_build_context_synchronously
+            await installApk(downloadedFile, context);
           } else {
-            if (willBeSilent && context == null) {
-              // Would await forever - workaround - TODO
-              installXApkDir(downloadedDir!);
-            } else {
-              await installXApkDir(downloadedDir!);
-            }
+            // ignore: use_build_context_synchronously
+            await installXApkDir(downloadedDir!, context);
           }
           if (willBeSilent && context == null) {
             notificationsProvider?.notify(SilentUpdateAttemptNotification(
@@ -1132,7 +1133,8 @@ class AppsProvider with ChangeNotifier {
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          content: jsonEncode(apps.values.map((e) => e.app.toJson()).toList()));
+          bytes: Uint8List.fromList(utf8.encode(
+              jsonEncode(apps.values.map((e) => e.app.toJson()).toList()))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }

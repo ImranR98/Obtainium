@@ -148,7 +148,7 @@ class _AddAppPageState extends State<AddAppPage> {
                 userPickedTrackOnly))) {
           var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           app = await sourceProvider.getApp(
-              pickedSource!, userInput, additionalSettings,
+              pickedSource!, userInput.trim(), additionalSettings,
               trackOnlyOverride: trackOnly,
               overrideSource: pickedSourceOverride,
               inferAppIdIfOptional: inferAppIdIfOptional);

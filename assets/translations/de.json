@@ -253,6 +253,8 @@
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Pick Export Directory",
     "autoExportOnChanges": "Auto-export on changes",
+    "filterVersionsByRegEx": "Filter Versions by Regular Expression",
+    "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
