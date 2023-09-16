@@ -22,7 +22,6 @@ class GitHub extends AppSource {
           label: tr('githubPATLabel'),
           password: true,
           required: false,
-          hint: tr('githubPATFormat'),
           belowWidgets: [
             const SizedBox(
               height: 4,
