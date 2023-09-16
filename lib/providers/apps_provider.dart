@@ -430,8 +430,8 @@ class AppsProvider with ChangeNotifier {
         zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
-  Future<void> installXApkDir(
-      DownloadedXApkDir dir, BuildContext? context) async {
+  Future<void> installXApkDir(DownloadedXApkDir dir,
+      {bool needsBGWorkaround = false}) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
@@ -444,7 +444,8 @@ class AppsProvider with ChangeNotifier {
         if (file.path.toLowerCase().endsWith('.apk')) {
           try {
             somethingInstalled = somethingInstalled ||
-                await installApk(DownloadedApk(dir.appId, file), context);
+                await installApk(DownloadedApk(dir.appId, file),
+                    needsBGWorkaround: needsBGWorkaround);
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
@@ -464,7 +465,8 @@ class AppsProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> installApk(DownloadedApk file, BuildContext? context) async {
+  Future<bool> installApk(DownloadedApk file,
+      {bool needsBGWorkaround = false}) async {
     var newInfo =
         await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
@@ -473,16 +475,19 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    int? code;
-    if (context == null) {
-      // In background installs, 'installApk' never returns so don't wait for it
-      // TODO: Find a fix to make this work synchronously without context
-      AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
-      code = 0; // Be optimistic (ver. det. will get most wrong ones anyways)
-    } else {
-      code =
-          await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    if (needsBGWorkaround) {
+      // The below 'await' will never return if we are in a background process
+      // To work around this, we should assume the install will be successful
+      // So we update the app's installed version first as we will never get to the later code
+      // We can't conditionally get rid of the 'await' as this causes install fails (BG process times out) - see #896
+      // TODO: When fixed, update this function and the calls to it accordingly
+      apps[file.appId]!.app.installedVersion =
+          apps[file.appId]!.app.latestVersion;
+      await saveApps([apps[file.appId]!.app],
+          attemptToCorrectInstallStatus: false);
     }
+    int? code =
+        await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
       throw InstallError(code);
@@ -649,11 +654,17 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (downloadedFile != null) {
-            // ignore: use_build_context_synchronously
-            await installApk(downloadedFile, context);
+            if (willBeSilent && context == null) {
+              installApk(downloadedFile, needsBGWorkaround: true);
+            } else {
+              await installApk(downloadedFile);
+            }
           } else {
-            // ignore: use_build_context_synchronously
-            await installXApkDir(downloadedDir!, context);
+            if (willBeSilent && context == null) {
+              installXApkDir(downloadedDir!, needsBGWorkaround: true);
+            } else {
+              await installXApkDir(downloadedDir!);
+            }
           }
           if (willBeSilent && context == null) {
             notificationsProvider?.notify(SilentUpdateAttemptNotification(
