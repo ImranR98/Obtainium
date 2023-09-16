@@ -463,9 +463,18 @@ class _AppPageState extends State<AppPage> {
                           : null))
           ],
         ));
+    
+    appScreenAppBar() => AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    );
 
     return Scaffold(
-        appBar: settingsProvider.showAppWebpage ? AppBar() : null,
+        appBar: settingsProvider.showAppWebpage ? AppBar() : appScreenAppBar(),
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: RefreshIndicator(
             child: settingsProvider.showAppWebpage
