@@ -123,6 +123,9 @@ class HTML extends AppSource {
             textInputType: const TextInputType.numberWithOptions(),
             additionalValidators: [
               (value) {
+                if (value?.isEmpty == true) {
+                  value = null;
+                }
                 value ??= '1';
                 return intValidator(value);
               }
