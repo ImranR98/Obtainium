@@ -152,7 +152,7 @@ class _AppPageState extends State<AppPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 125),
+            const SizedBox(height: 20),
             app?.icon != null
                 ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Image.memory(
