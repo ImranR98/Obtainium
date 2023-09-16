@@ -144,7 +144,7 @@
     "updatesAvailable": "アップデートが利用可能",
     "updatesAvailableNotifDescription": "Obtainiumが追跡している1つまたは複数のアプリのアップデートが利用可能であることをユーザーに通知する",
     "noNewUpdates": "新しいアップデートはありません",
-    "xHasAnUpdate": "{} のアップデートが利用可能です",
+    "xHasAnUpdate": "{} のアップデートが利用可能です。",
     "appsUpdated": "アプリをアップデートしました",
     "appsUpdatedNotifDescription": "1つまたは複数のAppのアップデートがバックグラウンドで適用されたことをユーザーに通知する",
     "xWasUpdatedToY": "{} が {} にアップデートされました",
@@ -241,21 +241,23 @@
     "customLinkFilterRegex": "正規表現によるカスタムリンクフィルター (デフォルト '.apk$')",
     "appsPossiblyUpdated": "アプリのアップデートを試行",
     "appsPossiblyUpdatedNotifDescription": "1つまたは複数のアプリのアップデートがバックグラウンドで適用された可能性があることをユーザーに通知する",
-    "xWasPossiblyUpdatedToY": "{} が {} にアップデートされた可能性があります",
+    "xWasPossiblyUpdatedToY": "{} が {} にアップデートされた可能性があります。",
     "enableBackgroundUpdates": "バックグラウンドアップデートを有効化する",
     "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで可能とは限りません。",
     "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
     "verifyLatestTag": "'latest'タグを確認する",
+    "intermediateLinkRegex": "最初にアクセスする「中間」リンクをフィルタリングする",
+    "intermediateLinkNotFound": "中間リンクが見つかりませんでした",
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合，バックグラウンドアップデートを無効にする",
-    "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
-    "versionExtractionRegEx": "Version Extraction RegEx",
-    "matchGroupToUse": "Match Group to Use",
-    "highlightTouchTargets": "Highlight less obvious touch targets",
-    "pickExportDir": "Pick Export Directory",
-    "autoExportOnChanges": "Auto-export on changes",
-    "filterVersionsByRegEx": "Filter Versions by Regular Expression",
-    "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
+    "autoSelectHighestVersionCode": "最も高いバージョンコードのAPKを自動で選択する",
+    "versionExtractionRegEx": "バージョン抽出の正規表現",
+    "matchGroupToUse": "使用するマッチしたグループ",
+    "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
+    "pickExportDir": "エクスポートディレクトリを選択",
+    "autoExportOnChanges": "変更があった際に自動でエクスポートする",
+    "filterVersionsByRegEx": "正規表現でバージョンをフィルタリングする",
+    "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -297,15 +299,15 @@
         "other": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} とさらに {} 個のアプリのアップデートが利用可能です",
-        "other": "{} とさらに {} 個のアプリのアップデートが利用可能です"
+        "one": "{} とさらに {} 個のアプリのアップデートが利用可能です。",
+        "other": "{} とさらに {} 個のアプリのアップデートが利用可能です。"
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} とさらに {} 個のアプリがアップデートされました",
-        "other": "{} とさらに {} 個のアプリがアップデートされました"
+        "one": "{} とさらに {} 個のアプリがアップデートされました。",
+        "other": "{} とさらに {} 個のアプリがアップデートされました。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります",
-        "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります"
+        "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",
+        "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります。"
     }
 }
