@@ -27,7 +27,7 @@ const int bgUpdateCheckAlarmId = 666;
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
-  MapEntry(Locale('zh'), '汉语'),
+  MapEntry(Locale('zh'), '简体中文'),
   MapEntry(Locale('it'), 'Italiano'),
   MapEntry(Locale('ja'), '日本語'),
   MapEntry(Locale('hu'), 'Magyar'),
