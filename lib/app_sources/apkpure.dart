@@ -26,12 +26,14 @@ class APKPure extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB = RegExp('^https?://m.$host/+[^/]+/+[^/]+');
+    RegExp standardUrlRegExB =
+        RegExp('^https?://m.$host/+[^/]+/+[^/]+(/+[^/]+)?');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
       url = 'https://$host${Uri.parse(url).path}';
     }
-    RegExp standardUrlRegExA = RegExp('^https?://$host/+[^/]+/+[^/]+');
+    RegExp standardUrlRegExA =
+        RegExp('^https?://$host/+[^/]+/+[^/]+(/+[^/]+)?');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
