@@ -269,6 +269,8 @@ class GitHub extends AppSource {
               ? DateTime.parse(rel['published_at'])
               : null;
       if (dontSortReleasesList) {
+        releases = releases.reversed.toList();
+      } else {
         releases.sort((a, b) {
           // See #478 and #534
           if (a == b) {
