@@ -93,6 +93,7 @@ class HTML extends AppSource {
         GeneratedFormSwitch('sortByFileNamesNotLinks',
             label: tr('sortByFileNamesNotLinks'))
       ],
+      [GeneratedFormSwitch('reverseSort', label: tr('reverseSort'))],
       [
         GeneratedFormTextField('customLinkFilterRegex',
             label: tr('customLinkFilterRegex'),
@@ -195,6 +196,9 @@ class HTML extends AppSource {
           ? compareAlphaNumeric(a.split('/').where((e) => e.isNotEmpty).last,
               b.split('/').where((e) => e.isNotEmpty).last)
           : compareAlphaNumeric(a, b));
+      if (additionalSettings['reverseSort'] == true) {
+        links = links.reversed.toList();
+      }
       if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty ==
           true) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);

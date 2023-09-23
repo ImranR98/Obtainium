@@ -259,6 +259,10 @@
     "filterVersionsByRegEx": "Filtrovat verze podle regulárního výrazu",
     "trySelectingSuggestedVersionCode": "Zkusit vybrat navrhovaný kód verze APK",
     "dontSortReleasesList": "Retain release order from API",
+    "reverseSort": "Reverse sorting",
+    "debugMenu": "Debug Menu",
+    "bgTaskStarted": "Background task started - check logs.",
+    "runBgCheckNow": "Run Background Update Check Now",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

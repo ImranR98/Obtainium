@@ -256,6 +256,10 @@
     "filterVersionsByRegEx": "Versionen nach regulären Ausdrücken filtern",
     "trySelectingSuggestedVersionCode": "Versuchen, die vorgeschlagene APK-Code-Version auszuwählen",
     "dontSortReleasesList": "Retain release order from API",
+    "reverseSort": "Reverse sorting",
+    "debugMenu": "Debug Menu",
+    "bgTaskStarted": "Background task started - check logs.",
+    "runBgCheckNow": "Run Background Update Check Now",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

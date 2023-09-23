@@ -558,7 +558,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Flexible(child: Text('Debug Menu')),
+                        Flexible(child: Text(tr('debugMenu'))),
                         Switch(
                             value: settingsProvider.showDebugOpts,
                             onChanged: (value) {
@@ -577,12 +577,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                     const Duration(seconds: 0),
                                     bgUpdateCheckAlarmId + 200,
                                     bgUpdateCheck);
-                                showError(
-                                    'Background task started - check logs.',
-                                    context);
+                                showError(tr('bgTaskStarted'), context);
                               },
-                              child:
-                                  const Text('Run Background Update Check Now'))
+                              child: Text(tr('runBgCheckNow')))
                         ],
                       ),
                   ]),

@@ -259,6 +259,10 @@
     "filterVersionsByRegEx": "正規表現でバージョンをフィルタリングする",
     "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
     "dontSortReleasesList": "Retain release order from API",
+    "reverseSort": "Reverse sorting",
+    "debugMenu": "Debug Menu",
+    "bgTaskStarted": "Background task started - check logs.",
+    "runBgCheckNow": "Run Background Update Check Now",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

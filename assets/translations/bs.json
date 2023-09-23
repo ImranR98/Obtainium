@@ -256,6 +256,10 @@
    "filterVersionsByRegEx": "Filter Versions by Regular Expression",
    "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
    "dontSortReleasesList": "Retain release order from API",
+   "reverseSort": "Reverse sorting",
+   "debugMenu": "Debug Menu",
+   "bgTaskStarted": "Background task started - check logs.",
+   "runBgCheckNow": "Run Background Update Check Now",
      "removeAppQuestion": {
       "one": "Želite li ukloniti aplikaciju?",
       "other": "Želite li ukloniti aplikacije?"
