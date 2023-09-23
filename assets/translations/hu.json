@@ -254,11 +254,11 @@
     "autoExportOnChanges": "Auto-exportálás a változások után",
     "filterVersionsByRegEx": "Verziók szűrése reguláris kifejezéssel",
     "trySelectingSuggestedVersionCode": "Próbálja ki a javasolt verziókódú APK-t",
-    "dontSortReleasesList": "Retain release order from API",
-    "reverseSort": "Reverse sorting",
-    "debugMenu": "Debug Menu",
-    "bgTaskStarted": "Background task started - check logs.",
-    "runBgCheckNow": "Run Background Update Check Now",
+    "dontSortReleasesList": "Az API-ból származó kiadási sorrend megőrzése",
+    "reverseSort": "Fordított rendezés",
+    "debugMenu": "Hibakereső menü",
+    "bgTaskStarted": "A háttérfeladat elindult – ellenőrizze a naplókat.",
+    "runBgCheckNow": "Futtassa a Háttérben frissítés ellenőrzését most",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
