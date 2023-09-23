@@ -21,6 +21,7 @@ parseDateTimeMMMddCommayyyy(String? dateString) {
 class APKPure extends AppSource {
   APKPure() {
     host = 'apkpure.com';
+    allowSubDomains = true;
   }
 
   @override
@@ -28,7 +29,7 @@ class APKPure extends AppSource {
     RegExp standardUrlRegExB = RegExp('^https?://m.$host/+[^/]+/+[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
-      url = 'https://$host/${Uri.parse(url).path}';
+      url = 'https://$host${Uri.parse(url).path}';
     }
     RegExp standardUrlRegExA = RegExp('^https?://$host/+[^/]+/+[^/]+');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
