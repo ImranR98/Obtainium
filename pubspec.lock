@@ -546,10 +546,10 @@ packages:
     dependency: transitive
     description:
       name: permission_handler_android
-      sha256: f2543a236584a5e8be79076f858022f100ce690e31530e6fa4c32ac94f276d3a
+      sha256: f23cfe9af0d49c6b9fd8a8b09f7b3301ca7e346204939b5afef4404d36d2608f
       url: "https://pub.dev"
     source: hosted
-    version: "11.0.3"
+    version: "11.0.1"
   permission_handler_apple:
     dependency: transitive
     description:
