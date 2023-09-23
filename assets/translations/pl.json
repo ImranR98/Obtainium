@@ -261,6 +261,7 @@
     "autoExportOnChanges": "Automatyczny eksport po wprowadzeniu zmian",
     "filterVersionsByRegEx": "Filtruj wersje według wyrażenia regularnego",
     "trySelectingSuggestedVersionCode": "Spróbuj wybierać sugerowany kod wersji APK",
+    "dontSortReleasesList": "Retain release order from API",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

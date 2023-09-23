@@ -254,6 +254,7 @@
     "autoExportOnChanges": "Auto-exportálás a változások után",
     "filterVersionsByRegEx": "Verziók szűrése reguláris kifejezéssel",
     "trySelectingSuggestedVersionCode": "Próbálja ki a javasolt verziókódú APK-t",
+    "dontSortReleasesList": "Retain release order from API",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

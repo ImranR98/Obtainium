@@ -258,6 +258,7 @@
     "autoExportOnChanges": "変更があった際に自動でエクスポートする",
     "filterVersionsByRegEx": "正規表現でバージョンをフィルタリングする",
     "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
+    "dontSortReleasesList": "Retain release order from API",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

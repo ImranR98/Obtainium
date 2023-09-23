@@ -107,7 +107,7 @@ class HTML extends AppSource {
       [
         GeneratedFormTextField('intermediateLinkRegex',
             label: tr('intermediateLinkRegex'),
-            hint: '([0-9]+\.)*[0-9]+/\$',
+            hint: '([0-9]+.)*[0-9]+/\$',
             required: false,
             additionalValidators: [(value) => regExValidator(value)])
       ],

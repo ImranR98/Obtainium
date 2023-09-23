@@ -255,6 +255,7 @@
     "autoExportOnChanges": "Auto-export on changes",
     "filterVersionsByRegEx": "Filter Versions by Regular Expression",
     "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
+    "dontSortReleasesList": "Retain release order from API",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

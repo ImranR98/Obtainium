@@ -258,6 +258,7 @@
     "autoExportOnChanges": "Automatický export při změnách",
     "filterVersionsByRegEx": "Filtrovat verze podle regulárního výrazu",
     "trySelectingSuggestedVersionCode": "Zkusit vybrat navrhovaný kód verze APK",
+    "dontSortReleasesList": "Retain release order from API",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
