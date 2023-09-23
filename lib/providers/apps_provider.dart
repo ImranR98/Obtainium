@@ -1119,7 +1119,6 @@ class AppsProvider with ChangeNotifier {
         logs.add('Skipping auto-export as dir is not set.');
         return null;
       }
-      logs.add('Started auto-export.');
       var files = await saf
           .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
           .where((f) => f.uri.pathSegments.last.endsWith('-auto.json'))
@@ -1128,7 +1127,6 @@ class AppsProvider with ChangeNotifier {
         for (var f in files) {
           saf.delete(f.uri);
         }
-        logs.add('Previous auto-export deleted.');
       }
     }
     if (exportDir == null || pickOnly) {
