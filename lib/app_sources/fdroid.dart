@@ -57,81 +57,6 @@ class FDroid extends AppSource {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
-  APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
-      Response res, String apkUrlPrefix, String standardUrl,
-      {bool autoSelectHighestVersionCode = false,
-      bool trySelectingSuggestedVersionCode = false,
-      String? filterVersionsByRegEx}) {
-    if (res.statusCode == 200) {
-      var response = jsonDecode(res.body);
-      List<dynamic> releases = response['packages'] ?? [];
-      if (releases.isEmpty) {
-        throw NoReleasesError();
-      }
-      String? version;
-      Iterable<dynamic> releaseChoices = [];
-      // Grab the versionCode suggested if the user chose to do that
-      // Only do so at this stage if the user has no release filter
-      if (trySelectingSuggestedVersionCode &&
-          response['suggestedVersionCode'] != null &&
-          filterVersionsByRegEx == null) {
-        var suggestedReleases = releases.where((element) =>
-            element['versionCode'] == response['suggestedVersionCode']);
-        if (suggestedReleases.isNotEmpty) {
-          releaseChoices = suggestedReleases;
-          version = suggestedReleases.first['versionName'];
-        }
-      }
-      // Apply the release filter if any
-      if (filterVersionsByRegEx != null) {
-        version = null;
-        releaseChoices = [];
-        for (var i = 0; i < releases.length; i++) {
-          if (RegExp(filterVersionsByRegEx)
-              .hasMatch(releases[i]['versionName'])) {
-            version = releases[i]['versionName'];
-          }
-        }
-        if (version == null) {
-          throw NoVersionError();
-        }
-      }
-      // Default to the highest version
-      version ??= releases[0]['versionName'];
-      if (version == null) {
-        throw NoVersionError();
-      }
-      // If a suggested release was not already picked, pick all those with the selected version
-      if (releaseChoices.isEmpty) {
-        releaseChoices =
-            releases.where((element) => element['versionName'] == version);
-      }
-      // For the remaining releases, use the toggles to auto-select one if possible
-      if (releaseChoices.length > 1) {
-        if (autoSelectHighestVersionCode) {
-          releaseChoices = [releaseChoices.first];
-        } else if (trySelectingSuggestedVersionCode &&
-            response['suggestedVersionCode'] != null) {
-          var suggestedReleases = releaseChoices.where((element) =>
-              element['versionCode'] == response['suggestedVersionCode']);
-          if (suggestedReleases.isNotEmpty) {
-            releaseChoices = suggestedReleases;
-          }
-        }
-      }
-      if (releaseChoices.isEmpty) {
-        throw NoReleasesError();
-      }
-      List<String> apkUrls = releaseChoices
-          .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
-          .toList();
-      return APKDetails(version, getApkUrlsFromUrls(apkUrls),
-          AppNames(name, Uri.parse(standardUrl).pathSegments.last));
-    } else {
-      throw getObtainiumHttpError(res);
-    }
-  }
-
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
@@ -143,6 +68,7 @@ class FDroid extends AppSource {
         await sourceRequest('https://$host/api/v1/packages/$appId'),
         'https://$host/repo/$appId',
         standardUrl,
+        name,
         autoSelectHighestVersionCode:
             additionalSettings['autoSelectHighestVersionCode'] == true,
         trySelectingSuggestedVersionCode:
@@ -183,5 +109,80 @@ class FDroid extends AppSource {
     } else {
       throw getObtainiumHttpError(res);
     }
+  }
+}
+
+APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
+    Response res, String apkUrlPrefix, String standardUrl, String sourceName,
+    {bool autoSelectHighestVersionCode = false,
+    bool trySelectingSuggestedVersionCode = false,
+    String? filterVersionsByRegEx}) {
+  if (res.statusCode == 200) {
+    var response = jsonDecode(res.body);
+    List<dynamic> releases = response['packages'] ?? [];
+    if (releases.isEmpty) {
+      throw NoReleasesError();
+    }
+    String? version;
+    Iterable<dynamic> releaseChoices = [];
+    // Grab the versionCode suggested if the user chose to do that
+    // Only do so at this stage if the user has no release filter
+    if (trySelectingSuggestedVersionCode &&
+        response['suggestedVersionCode'] != null &&
+        filterVersionsByRegEx == null) {
+      var suggestedReleases = releases.where((element) =>
+          element['versionCode'] == response['suggestedVersionCode']);
+      if (suggestedReleases.isNotEmpty) {
+        releaseChoices = suggestedReleases;
+        version = suggestedReleases.first['versionName'];
+      }
+    }
+    // Apply the release filter if any
+    if (filterVersionsByRegEx != null) {
+      version = null;
+      releaseChoices = [];
+      for (var i = 0; i < releases.length; i++) {
+        if (RegExp(filterVersionsByRegEx)
+            .hasMatch(releases[i]['versionName'])) {
+          version = releases[i]['versionName'];
+        }
+      }
+      if (version == null) {
+        throw NoVersionError();
+      }
+    }
+    // Default to the highest version
+    version ??= releases[0]['versionName'];
+    if (version == null) {
+      throw NoVersionError();
+    }
+    // If a suggested release was not already picked, pick all those with the selected version
+    if (releaseChoices.isEmpty) {
+      releaseChoices =
+          releases.where((element) => element['versionName'] == version);
+    }
+    // For the remaining releases, use the toggles to auto-select one if possible
+    if (releaseChoices.length > 1) {
+      if (autoSelectHighestVersionCode) {
+        releaseChoices = [releaseChoices.first];
+      } else if (trySelectingSuggestedVersionCode &&
+          response['suggestedVersionCode'] != null) {
+        var suggestedReleases = releaseChoices.where((element) =>
+            element['versionCode'] == response['suggestedVersionCode']);
+        if (suggestedReleases.isNotEmpty) {
+          releaseChoices = suggestedReleases;
+        }
+      }
+    }
+    if (releaseChoices.isEmpty) {
+      throw NoReleasesError();
+    }
+    List<String> apkUrls = releaseChoices
+        .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
+        .toList();
+    return APKDetails(version, getApkUrlsFromUrls(apkUrls),
+        AppNames(sourceName, Uri.parse(standardUrl).pathSegments.last));
+  } else {
+    throw getObtainiumHttpError(res);
   }
 }

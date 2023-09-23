@@ -6,16 +6,22 @@ class IzzyOnDroid extends AppSource {
   late FDroid fd;
 
   IzzyOnDroid() {
-    host = 'android.izzysoft.de';
+    host = 'izzysoft.de';
     fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =
         fd.additionalSourceAppSpecificSettingFormItems;
+    allowSubDomains = true;
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExA = RegExp('^https?://android.$host/repo/apk/[^/]+');
+    RegExpMatch? match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    if (match == null) {
+      RegExp standardUrlRegExB =
+          RegExp('^https?://apt.$host/fdroid/index/apk/[^/]+');
+      match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    }
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -34,11 +40,12 @@ class IzzyOnDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
-    return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
+    return getAPKUrlsFromFDroidPackagesAPIResponse(
         await sourceRequest(
             'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId'),
         'https://android.izzysoft.de/frepo/$appId',
         standardUrl,
+        name,
         autoSelectHighestVersionCode:
             additionalSettings['autoSelectHighestVersionCode'] == true,
         trySelectingSuggestedVersionCode:
