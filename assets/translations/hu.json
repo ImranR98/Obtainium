@@ -258,6 +258,7 @@
     "reverseSort": "Fordított rendezés",
     "debugMenu": "Hibakereső menü",
     "bgTaskStarted": "A háttérfeladat elindult – ellenőrizze a naplókat.",
+    "enableBackgroundUpdates": "Frissítések a háttérben",
     "runBgCheckNow": "Futtassa a Háttérben frissítés ellenőrzését most",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
