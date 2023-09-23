@@ -72,9 +72,10 @@ class GitHub extends AppSource {
               }
             ])
       ],
+      [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
       [
-        GeneratedFormSwitch('verifyLatestTag',
-            label: tr('verifyLatestTag'), defaultValue: false)
+        GeneratedFormSwitch('dontSortReleasesList',
+            label: tr('dontSortReleasesList'))
       ]
     ];
 
@@ -230,6 +231,8 @@ class GitHub extends AppSource {
             ? additionalSettings['filterReleaseNotesByRegEx']
             : null;
     bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
+    bool dontSortReleasesList =
+        additionalSettings['dontSortReleasesList'] == true;
     String? latestTag;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
@@ -265,32 +268,34 @@ class GitHub extends AppSource {
           rel?['published_at'] != null
               ? DateTime.parse(rel['published_at'])
               : null;
-      releases.sort((a, b) {
-        // See #478 and #534
-        if (a == b) {
-          return 0;
-        } else if (a == null) {
-          return -1;
-        } else if (b == null) {
-          return 1;
-        } else {
-          var nameA = a['tag_name'] ?? a['name'];
-          var nameB = b['tag_name'] ?? b['name'];
-          var stdFormats = findStandardFormatsForVersion(nameA, true)
-              .intersection(findStandardFormatsForVersion(nameB, true));
-          if (stdFormats.isNotEmpty) {
-            var reg = RegExp(stdFormats.first);
-            var matchA = reg.firstMatch(nameA);
-            var matchB = reg.firstMatch(nameB);
-            return compareAlphaNumeric(
-                (nameA as String).substring(matchA!.start, matchA.end),
-                (nameB as String).substring(matchB!.start, matchB.end));
+      if (dontSortReleasesList) {
+        releases.sort((a, b) {
+          // See #478 and #534
+          if (a == b) {
+            return 0;
+          } else if (a == null) {
+            return -1;
+          } else if (b == null) {
+            return 1;
           } else {
-            return (getReleaseDateFromRelease(a) ?? DateTime(1))
-                .compareTo(getReleaseDateFromRelease(b) ?? DateTime(0));
+            var nameA = a['tag_name'] ?? a['name'];
+            var nameB = b['tag_name'] ?? b['name'];
+            var stdFormats = findStandardFormatsForVersion(nameA, true)
+                .intersection(findStandardFormatsForVersion(nameB, true));
+            if (stdFormats.isNotEmpty) {
+              var reg = RegExp(stdFormats.first);
+              var matchA = reg.firstMatch(nameA);
+              var matchB = reg.firstMatch(nameB);
+              return compareAlphaNumeric(
+                  (nameA as String).substring(matchA!.start, matchA.end),
+                  (nameB as String).substring(matchB!.start, matchB.end));
+            } else {
+              return (getReleaseDateFromRelease(a) ?? DateTime(1))
+                  .compareTo(getReleaseDateFromRelease(b) ?? DateTime(0));
+            }
           }
-        }
-      });
+        });
+      }
       if (latestTag != null &&
           releases.isNotEmpty &&
           latestTag !=
