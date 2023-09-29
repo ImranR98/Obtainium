@@ -102,11 +102,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
       });
     }
 
-    runObtainiumExport() async {
+    runObtainiumExport({bool pickOnly = false}) async {
       HapticFeedback.selectionClick();
       appsProvider
           .exportApps(
-              pickOnly: (await settingsProvider.getExportDir()) == null,
+              pickOnly:
+                  pickOnly || (await settingsProvider.getExportDir()) == null,
               sp: settingsProvider)
           .then((String? result) {
         if (result != null) {
@@ -320,21 +321,38 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                     onPressed: appsProvider.apps.isEmpty ||
                                             importInProgress
                                         ? null
-                                        : runObtainiumExport,
-                                    child: Text(tr(snapshot.data != null
-                                        ? 'obtainiumExport'
-                                        : 'pickExportDir')),
+                                        : () {
+                                            runObtainiumExport(pickOnly: true);
+                                          },
+                                    child: Text(tr('pickExportDir')),
                                   )),
                                   const SizedBox(
                                     width: 16,
                                   ),
                                   Expanded(
                                       child: TextButton(
+                                    style: outlineButtonStyle,
+                                    onPressed: appsProvider.apps.isEmpty ||
+                                            importInProgress ||
+                                            snapshot.data == null
+                                        ? null
+                                        : runObtainiumExport,
+                                    child: Text(tr('obtainiumExport')),
+                                  )),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                      child: TextButton(
                                           style: outlineButtonStyle,
                                           onPressed: importInProgress
                                               ? null
                                               : runObtainiumImport,
-                                          child: Text(tr('obtainiumImport'))))
+                                          child: Text(tr('obtainiumImport')))),
                                 ],
                               ),
                               if (snapshot.data != null)
