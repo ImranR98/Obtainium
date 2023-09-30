@@ -8,6 +8,7 @@ class Uptodown extends AppSource {
   Uptodown() {
     host = 'uptodown.com';
     allowSubDomains = true;
+    naiveStandardVersionDetection = true;
   }
 
   @override
