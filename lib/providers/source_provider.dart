@@ -328,6 +328,7 @@ abstract class AppSource {
   bool changeLogIfAnyIsMarkDown = true;
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
+  bool naiveStandardVersionDetection = false;
 
   AppSource() {
     name = runtimeType.toString();

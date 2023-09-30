@@ -709,14 +709,21 @@ class AppsProvider with ChangeNotifier {
   }
 
   bool isVersionDetectionPossible(AppInMemory? app) {
-    return app?.app.additionalSettings['trackOnly'] != true &&
-        app?.app.additionalSettings['versionDetection'] !=
+    if (app?.app == null) {
+      return false;
+    }
+    var naiveStandardVersionDetection = SourceProvider()
+        .getSource(app!.app.url, overrideSource: app.app.overrideSource)
+        .naiveStandardVersionDetection;
+    return app.app.additionalSettings['trackOnly'] != true &&
+        app.app.additionalSettings['versionDetection'] !=
             'releaseDateAsVersion' &&
-        app?.installedInfo?.versionName != null &&
-        app?.app.installedVersion != null &&
-        reconcileVersionDifferences(
-                app!.installedInfo!.versionName!, app.app.installedVersion!) !=
-            null;
+        app.installedInfo?.versionName != null &&
+        app.app.installedVersion != null &&
+        (reconcileVersionDifferences(app.installedInfo!.versionName!,
+                    app.app.installedVersion!) !=
+                null ||
+            naiveStandardVersionDetection);
   }
 
   // Given an App and it's on-device info...
@@ -725,8 +732,13 @@ class AppsProvider with ChangeNotifier {
       App app, PackageInfo? installedInfo) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
-    var noVersionDetection = app.additionalSettings['versionDetection'] !=
-        'standardVersionDetection';
+    var versionDetectionIsStandard =
+        app.additionalSettings['versionDetection'] ==
+            'standardVersionDetection';
+    var naiveStandardVersionDetection = SourceProvider()
+        .getSource(app.url, overrideSource: app.overrideSource)
+        .naiveStandardVersionDetection;
+    ;
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
@@ -741,7 +753,7 @@ class AppsProvider with ChangeNotifier {
     // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
     if (installedInfo?.versionName != null &&
         installedInfo!.versionName != app.installedVersion &&
-        !noVersionDetection) {
+        versionDetectionIsStandard) {
       // App's reported version and real version don't match (and it uses standard version detection)
       // If they share a standard format (and are still different under it), update the reported version accordingly
       var correctedInstalledVersion = reconcileVersionDifferences(
@@ -749,12 +761,15 @@ class AppsProvider with ChangeNotifier {
       if (correctedInstalledVersion?.key == false) {
         app.installedVersion = correctedInstalledVersion!.value;
         modded = true;
+      } else if (naiveStandardVersionDetection) {
+        app.installedVersion = installedInfo.versionName;
+        modded = true;
       }
     }
     // THIRD, RECONCILE THE APP'S REPORTED INSTALLED AND LATEST VERSIONS
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion &&
-        !noVersionDetection) {
+        versionDetectionIsStandard) {
       // App's reported installed and latest versions don't match (and it uses standard version detection)
       // If they share a standard format, make sure the App's reported installed version uses that format
       var correctedInstalledVersion =
@@ -766,8 +781,7 @@ class AppsProvider with ChangeNotifier {
     }
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
     if (installedInfo != null &&
-        app.additionalSettings['versionDetection'] ==
-            'standardVersionDetection' &&
+        versionDetectionIsStandard &&
         !isVersionDetectionPossible(
             AppInMemory(app, null, installedInfo, null))) {
       app.additionalSettings['versionDetection'] = 'noVersionDetection';
