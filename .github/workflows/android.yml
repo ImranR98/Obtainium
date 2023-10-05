@@ -34,11 +34,17 @@ jobs:
           done
           rm apksign.keystore
         
+      - name: Extract Version
+        id: extract_version      
+        run: |
+           VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
+           echo "::set-output name=version::$VERSION"
+      
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GAT }}
-          tag: "v${{ steps.compare_versions.outputs.version }}-beta"
+          tag: "v${{ steps.extract_version.outputs.version }}-beta"
           artifacts: ./build/app/outputs/flutter-apk/*-signed*.apk          
         continue-on-error: true
          
