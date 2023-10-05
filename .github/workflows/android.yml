@@ -70,7 +70,7 @@ jobs:
         uses: ClementTsang/delete-tag-and-release@v0.3.1
         with:
            delete_release: true
-           tag_name: "v${{ steps.compare_versions.outputs.version }}-beta"
+           tag_name: "v${{ steps.extract_version.outputs.version }}-beta"
         env:
            GITHUB_TOKEN: ${{ secrets.GAT }}
         if: steps.check_for_apk.outputs.delete_latest_release == 'true'
