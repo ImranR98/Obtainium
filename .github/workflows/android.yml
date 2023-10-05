@@ -1,0 +1,76 @@
+name: android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - uses: actions/checkout@v3
+        
+      - uses: subosito/flutter-action@v2
+
+      - name: Build APKs
+        run: |
+          sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
+          flutter build apk && flutter build apk --split-per-abi
+        
+      - name: Sign APKs
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+          for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
+            out=${apk/-release/-release-signed}
+            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${out}" "${apk}"
+            echo "$(sha256sum ${out})"
+          done
+          rm apksign.keystore
+        
+      - name: Create Release And Upload APKs
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GAT }}
+          tag: "v${{ steps.compare_versions.outputs.version }}-beta"
+          artifacts: ./build/app/outputs/flutter-apk/*-signed*.apk          
+        continue-on-error: true
+         
+      - name: Wait For 10 Seconds
+        run: sleep 10
+        
+      - name: Verify If APKs Have Been Uploaded
+        id: check_for_apk
+        run: |
+          release_info=$(curl -s "https://api.github.com/repos/ImranR98/Obtainium/releases/latest" -H "Authorization: Bearer ${{ secrets.GAT }}")
+          apk_asset_count=$(echo $release_info | jq '.assets | length')
+          release_id=$(echo $release_info | jq -r '.id')
+          if [[ $apk_asset_count -eq 0 ]]; then
+            echo "Deleting the release $release_id"
+            echo "::set-output name=delete_latest_release::true"
+          else
+            echo "APK found. Not deleting the release $release_id"
+            echo "::set-output name=delete_latest_release::false"
+          fi
+        
+      - name: Delete The Latest Release If No APKs Found
+        uses: ClementTsang/delete-tag-and-release@v0.3.1
+        with:
+           delete_release: true
+           tag_name: "v${{ steps.compare_versions.outputs.version }}-beta"
+        env:
+           GITHUB_TOKEN: ${{ secrets.GAT }}
+        if: steps.check_for_apk.outputs.delete_latest_release == 'true'
+        
+      - name: Archive Reports For Job
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: '*/build/reports'
+        if: ${{ always() }}
