@@ -45,6 +45,7 @@ jobs:
         with:
           token: ${{ secrets.GAT }}
           tag: "v${{ steps.extract_version.outputs.version }}-beta"
+          prerelease: true
           artifacts: ./build/app/outputs/flutter-apk/*-signed*.apk          
         continue-on-error: true
          
