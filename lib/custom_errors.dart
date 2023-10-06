@@ -66,27 +66,29 @@ class NotImplementedError extends ObtainiumError {
 
 class MultiAppMultiError extends ObtainiumError {
   Map<String, dynamic> rawErrors = {};
-  Map<String, List<String>> content = {};
+  Map<String, List<String>> idsByErrorString = {};
+  Map<String, String> appIdNames = {};
 
   MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
-  add(String appId, dynamic error) {
+  add(String appId, dynamic error, {String? appName}) {
     rawErrors[appId] = error;
     var string = error.toString();
-    var tempIds = content.remove(string);
+    var tempIds = idsByErrorString.remove(string);
     tempIds ??= [];
     tempIds.add(appId);
-    content.putIfAbsent(string, () => tempIds!);
+    idsByErrorString.putIfAbsent(string, () => tempIds!);
+    if (appName != null) {
+      appIdNames[appId] = appName;
+    }
   }
 
+  String errorString(String appId) =>
+      '${appIdNames.containsKey(appId) ? '${appIdNames[appId]} ($appId)' : appId}: ${rawErrors[appId].toString()}';
+
   @override
-  String toString() {
-    String finalString = '';
-    for (var e in content.keys) {
-      finalString += '$e: ${content[e].toString()}\n\n';
-    }
-    return finalString;
-  }
+  String toString() =>
+      idsByErrorString.keys.map((e) => errorString(e)).join('\n\n');
 }
 
 showError(dynamic e, BuildContext context) {

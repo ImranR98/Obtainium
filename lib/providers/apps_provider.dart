@@ -449,7 +449,7 @@ class AppsProvider with ChangeNotifier {
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
-            errors.add(dir.appId, e);
+            errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
           }
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
@@ -457,7 +457,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (somethingInstalled) {
         dir.file.delete(recursive: true);
-      } else if (errors.content.isNotEmpty) {
+      } else if (errors.idsByErrorString.isNotEmpty) {
         throw errors;
       }
     } finally {
@@ -677,11 +677,11 @@ class AppsProvider with ChangeNotifier {
         }
         installedIds.add(id);
       } catch (e) {
-        errors.add(id, e);
+        errors.add(id, e, appName: apps[id]?.name);
       }
     }
 
-    if (errors.content.isNotEmpty) {
+    if (errors.idsByErrorString.isNotEmpty) {
       throw errors;
     }
 
@@ -1090,7 +1090,7 @@ class AppsProvider with ChangeNotifier {
                 throwErrorsForRetry) {
               rethrow;
             }
-            errors.add(appId, e);
+            errors.add(appId, e, appName: apps[appId]?.name);
           }
           if (newApp != null) {
             updates.add(newApp);
@@ -1100,7 +1100,7 @@ class AppsProvider with ChangeNotifier {
         gettingUpdates = false;
       }
     }
-    if (errors.content.isNotEmpty) {
+    if (errors.idsByErrorString.isNotEmpty) {
       var res = Map<String, dynamic>();
       res['errors'] = errors;
       res['updates'] = updates;
@@ -1392,15 +1392,16 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     List<App> toNotify = [];
     List<MapEntry<String, int>> toRetry = [];
     var retryAfterXSeconds = 0;
-    List<MapEntry<String, dynamic>> toThrow = [];
+    List<String> toThrow = [];
     var networkRestricted = false;
     if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
       var netResult = await (Connectivity().checkConnectivity());
       networkRestricted = (netResult != ConnectivityResult.wifi) &&
           (netResult != ConnectivityResult.ethernet);
     }
+    MultiAppMultiError? errors;
     CheckingUpdatesNotification notif =
-        CheckingUpdatesNotification(plural('app', toCheck.length));
+        CheckingUpdatesNotification(plural('apps', toCheck.length));
 
     try {
       // Check for updates
@@ -1411,8 +1412,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       // If there were errors, group them into toRetry and toThrow
       if (e is Map) {
         updates = e['updates'];
-        MultiAppMultiError errors = e['errors'];
-        errors.rawErrors.forEach((key, err) {
+        errors = e['errors'];
+        errors!.rawErrors.forEach((key, err) {
           logs.add(
               'BG update task $taskId: Got error on checking for $key \'${err.toString()}\'.');
           var toCheckApp = toCheck.where((element) => element.key == key).first;
@@ -1422,12 +1423,12 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 ? (err.remainingMinutes * 60)
                 : e is ClientException
                     ? (15 * 60)
-                    : pow(toCheckApp.value, 2).toInt();
+                    : pow(toCheckApp.value + 1, 2).toInt();
             if (minRetryIntervalForThisApp > retryAfterXSeconds) {
               retryAfterXSeconds = minRetryIntervalForThisApp;
             }
           } else {
-            toThrow.add(MapEntry(key, err));
+            toThrow.add(key);
           }
         });
       } else {
@@ -1456,9 +1457,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
 
     // Send the error notifications
     if (toThrow.isNotEmpty) {
-      for (var element in toThrow) {
+      for (var appId in toThrow) {
         notificationsProvider.notify(ErrorCheckingUpdatesNotification(
-            '${element.key}: ${element.value.toString()}',
+            errors!.errorString(appId),
             id: Random().nextInt(10000)));
       }
     }

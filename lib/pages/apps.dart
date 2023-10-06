@@ -833,7 +833,7 @@ class AppsPageState extends State<AppsPage> {
                 items: const [],
                 initValid: true,
                 message: tr('installStatusOfXWillBeResetExplanation',
-                    args: [plural('app', selectedAppIds.length)]),
+                    args: [plural('apps', selectedAppIds.length)]),
               );
             });
         if (values != null) {
