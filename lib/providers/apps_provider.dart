@@ -1458,7 +1458,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     if (toThrow.isNotEmpty) {
       for (var element in toThrow) {
         notificationsProvider.notify(ErrorCheckingUpdatesNotification(
-            '${element.key}: ${element.value.toString()}'));
+            '${element.key}: ${element.value.toString()}',
+            id: Random().nextInt(10000)));
       }
     }
 
@@ -1469,7 +1470,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       AndroidAlarmManager.oneShot(
           Duration(seconds: retryAfterXSeconds), taskId + 1, bgUpdateCheck,
           params: {
-            'toCheck': toRetry,
+            'toCheck': toRetry
+                .map((entry) => {'key': entry.key, 'value': entry.value})
+                .toList(),
             'toInstall': toInstall
                 .map((entry) => {'key': entry.key, 'value': entry.value})
                 .toList(),
