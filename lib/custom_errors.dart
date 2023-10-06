@@ -65,11 +65,14 @@ class NotImplementedError extends ObtainiumError {
 }
 
 class MultiAppMultiError extends ObtainiumError {
+  Map<String, dynamic> rawErrors = {};
   Map<String, List<String>> content = {};
 
   MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
-  add(String appId, String string) {
+  add(String appId, dynamic error) {
+    rawErrors[appId] = error;
+    var string = error.toString();
     var tempIds = content.remove(string);
     tempIds ??= [];
     tempIds.add(appId);

@@ -68,7 +68,7 @@ class AppsPageState extends State<AppsPage> {
         refreshingSince = DateTime.now();
       });
       return appsProvider.checkUpdates().catchError((e) {
-        showError(e, context);
+        showError(e is Map ? e['errors'] : e, context);
         return <App>[];
       }).whenComplete(() {
         setState(() {
