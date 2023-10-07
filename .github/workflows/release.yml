@@ -24,7 +24,7 @@ jobs:
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
           # export GPG_TTY=$(tty)
           echo 'abc' > ./abc
-          gpg --sign --detach-sig ./abc
+          gpg --batch  --pinentry-mode loopback --passphrase "ABCDFML" --sign --detach-sig ./abc
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
 
