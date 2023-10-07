@@ -9,9 +9,9 @@ jobs:
 
     steps:
       
-      #- uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         
-      #- uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
 
       - name: Import GPG key
         id: import_pgp_key
