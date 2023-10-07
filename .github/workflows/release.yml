@@ -16,9 +16,9 @@ jobs:
       - name: Temp
         env:
           PGP_KEY_BASE64: ${{ secrets.PGP_KEY_BASE64 }}
-          PGP_KEY_PASSPHRASE: ${{ secrets.PGP_KEY_PASSPHRASE }}
         run: |
           echo "$PGP_KEY_BASE64" | base64 -d | gpg --import --passphrase "$PGP_KEY_PASSPHRASE"
+          echo A
           PGP_KEY_FINGERPRINT="$(gpg --list-keys --with-colon "$(echo "$PGP_KEY_BASE64" | base64 -d | gpg --with-fingerprint --list-packets | grep 'user ID' | awk -F'"' '{print $2}')" | awk -F: '/^pub:/ { print $5 }')"
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
