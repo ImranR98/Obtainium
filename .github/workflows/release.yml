@@ -9,9 +9,9 @@ jobs:
 
     steps:
       
-      - uses: actions/checkout@v3
+      #- uses: actions/checkout@v3
         
-      - uses: subosito/flutter-action@v2
+      #- uses: subosito/flutter-action@v2
 
       - name: Import GPG key
         id: import_pgp_key
@@ -22,9 +22,9 @@ jobs:
       - name: Temp
         run: |
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
-          export GPG_TTY=$(tty)
+          # export GPG_TTY=$(tty)
           echo 'abc' > ./abc
-          gpg --sign --detach-sig ./abc
+          gpg --batch --sign --detach-sig --pinentry-mode loopback ./abc
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
 
