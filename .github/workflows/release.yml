@@ -22,10 +22,10 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_KEY: ${{ secrets.PGP_KEY_BASE64 }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
-          echo "$GPG_KEY" | gpg --import
+          echo "$GPG_KEY" | base64 -d | gpg --import
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
