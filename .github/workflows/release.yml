@@ -23,6 +23,8 @@ jobs:
         run: |
           sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
           flutter build apk && flutter build apk --split-per-abi
+          rm ./build/app/outputs/flutter-apk/*.sha1
+          ls -l ./build/app/outputs/flutter-apk/
         
       - name: Sign APKs
         env:
@@ -35,9 +37,9 @@ jobs:
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
             ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedFn}"
-            ls -l ./build/app/outputs/flutter-apk/
-            # sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
-            gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha1
+            rm "$apk".idsig
+            sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
+            gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
