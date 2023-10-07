@@ -56,10 +56,10 @@ jobs:
            echo "::set-output name=beta::$BETA"
 
       - name: Create Tag
-        uses: laputansoft/github-tag-action@v4.6
+        uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          tag: "${{ steps.extract_version.outputs.tag }}"
+          custom_tag: "${{ steps.extract_version.outputs.tag }}"
       
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
