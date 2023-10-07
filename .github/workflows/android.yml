@@ -1,0 +1,56 @@
+name: android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - uses: actions/checkout@v3
+        
+      - uses: subosito/flutter-action@v2
+
+      - name: Build APKs
+        run: |
+          sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
+          flutter build apk && flutter build apk --split-per-abi
+        
+      - name: Sign APKs
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+          for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
+            out=${apk/-release/-release-signed}
+            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${out}" "${apk}"
+            echo "$(sha256sum ${out})"
+          done
+          rm apksign.keystore
+        
+      - name: Extract Version
+        id: extract_version      
+        run: |
+           VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
+           echo "::set-output name=version::$VERSION"
+      
+      - name: Create Release And Upload APKs
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GAT }}
+          tag: "v${{ steps.extract_version.outputs.version }}-beta"
+          prerelease: true
+          artifacts: ./build/app/outputs/flutter-apk/*-signed*.apk          
+                  
+      - name: Archive Reports For Job
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: '*/build/reports'
+        if: ${{ always() }}
