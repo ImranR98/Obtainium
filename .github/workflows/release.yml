@@ -28,14 +28,13 @@ jobs:
       - name: Sign APKs
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
-            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${apk}" "${unsignedFn}"
+            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --out "${apk}" "${unsignedFn}"
             sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
             gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
           done
