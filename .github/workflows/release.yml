@@ -57,7 +57,7 @@ jobs:
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
           tag: "${{ steps.extract_version.outputs.tag }}"
           prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
