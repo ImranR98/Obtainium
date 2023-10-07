@@ -21,7 +21,7 @@ jobs:
 
       - name: Temp
         run: |
-          echo -n "Hello, World!" | gpg --clearsign
+          echo -n "Hello, World!" | gpg --batch --pinentry-mode loopback --clearsign
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
