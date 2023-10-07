@@ -1,4 +1,4 @@
-name: Release (Manual/Draft)
+name: Release (as Draft)
 
 on:
   workflow_dispatch:
@@ -10,7 +10,6 @@ jobs:
     steps:
       
       - uses: actions/checkout@v3
-        
       - uses: subosito/flutter-action@v2
 
       - name: Import GPG key
@@ -54,6 +53,12 @@ jobs:
            echo "::set-output name=tag::$TAG"
            if [ -n "$(echo $TAG | grep -oP '\-beta$')" ]; then BETA=true; else BETA=false; fi
            echo "::set-output name=beta::$BETA"
+
+      - name: Create Tag
+        uses: laputansoft/github-tag-action@v4.6
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          tag: "${{ steps.extract_version.outputs.tag }}"
       
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
