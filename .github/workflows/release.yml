@@ -20,17 +20,6 @@ jobs:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
           passphrase: ${{ secrets.PGP_PASSPHRASE }}
 
-      - name: Temp
-        env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        run: |
-          PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
-          # export GPG_TTY=$(tty)
-          echo 'abc' > ./abc
-          gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig ./abc
-          gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
-          gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
-
       - name: Build APKs
         run: |
           sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
@@ -40,6 +29,7 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
@@ -47,7 +37,7 @@ jobs:
             mv "$apk" "$unsignedFn"
             ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${apk}" "${unsignedFn}"
             sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
-            gpg --sign --detach-sig "$apk".sha256
+            gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
