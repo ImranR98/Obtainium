@@ -1,4 +1,4 @@
-name: Release (as Draft)
+name: Build and Release
 
 on:
   workflow_dispatch:
@@ -68,4 +68,3 @@ jobs:
           prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
           generateReleaseNotes: true
-          draft: true
