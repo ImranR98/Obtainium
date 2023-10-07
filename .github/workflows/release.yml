@@ -37,7 +37,6 @@ jobs:
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
             ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedFn}"
-            rm "$apk".idsig
             sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
             gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
           done
