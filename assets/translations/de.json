@@ -122,15 +122,15 @@
     "ascending": "Aufsteigend",
     "descending": "Absteigend",
     "bgUpdateCheckInterval": "Prüfintervall für Hintergrundaktualisierung",
-    "neverManualOnly": "Nie - nur manuell",
+    "neverManualOnly": "Nie – nur manuell",
     "appearance": "Aussehen",
     "showWebInAppView": "Quellwebseite in der App-Ansicht anzeigen",
     "pinUpdates": "Apps mit Aktualisierungen oben anheften",
     "updates": "Aktualisierungen",
     "sourceSpecific": "Quellenspezifisch",
     "appSource": "App-Quelle",
-    "noLogs": "Keine Protokolle",
-    "appLogs": "App Protokolle",
+    "noLogs": "Keine Logs",
+    "appLogs": "App-Logs",
     "close": "Schließen",
     "share": "Teilen",
     "appNotFound": "App nicht gefunden",
@@ -256,25 +256,25 @@
     "filterVersionsByRegEx": "Versionen nach regulären Ausdrücken filtern",
     "trySelectingSuggestedVersionCode": "Versuchen, die vorgeschlagene APK-Code-Version auszuwählen",
     "dontSortReleasesList": "Retain release order from API",
-    "reverseSort": "Reverse sorting",
-    "debugMenu": "Debug Menu",
-    "bgTaskStarted": "Background task started - check logs.",
-    "runBgCheckNow": "Run Background Update Check Now",
+    "reverseSort": "Umgekehrtes Sortieren",
+    "debugMenu": "Debug Menü",
+    "bgTaskStarted": "Hintergrundaufgabe gestartet – Logs prüfen.",
+    "runBgCheckNow": "Hintergrundaktualisierungsprüfung jetzt durchführen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minute erneut",
-        "other": "Zu viele Anfragen (Rate begrenzt) - versuchen Sie es in {} Minuten erneut"
+        "one": "Zu viele Anfragen (Rate begrenzt) – versuchen Sie es in {} Minute erneut",
+        "other": "Zu viele Anfragen (Rate begrenzt) – versuchen Sie es in {} Minuten erneut"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "Bei der Aktualisierungsprüfung im Hintergrund wurde ein {} festgestellt, eine erneute Prüfung wird in {} Minute geplant",
         "other": "Bei der Aktualisierungsprüfung im Hintergrund wurde ein {} festgestellt, eine erneute Prüfung wird in {} Minuten geplant"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "Hintergrundaktualisierungsprüfung fand {} Aktualisierung - benachrichtigt den Benutzer, falls erforderlich",
-        "other": "Hintergrundaktualisierungsprüfung fand {} Aktualisierungen - benachrichtigt den Benutzer, falls erforderlich"
+        "one": "Die Hintergrundaktualisierungsprüfung fand {} Aktualisierung – benachrichtigt den Benutzer, falls erforderlich",
+        "other": "Die Hintergrundaktualisierungsprüfung fand {} Aktualisierungen – benachrichtigt den Benutzer, falls erforderlich"
     },
     "apps": {
         "one": "{} App",
@@ -297,8 +297,8 @@
         "other": "{} Tage"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "{n} Protokoll gelöscht (vorher = {vorher}, nachher = {nachher})",
-        "other": "{n} Protokolle gelöscht (vorher = {vorher}, nachher = {nachher})"
+        "one": "{n} Log gelöscht (vorher = {vorher}, nachher = {nachher})",
+        "other": "{n} Logs gelöscht (vorher = {vorher}, nachher = {nachher})"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} und 1 weitere App haben Aktualisierungen.",
