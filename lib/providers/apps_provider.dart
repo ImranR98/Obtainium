@@ -738,7 +738,6 @@ class AppsProvider with ChangeNotifier {
     var naiveStandardVersionDetection = SourceProvider()
         .getSource(app.url, overrideSource: app.overrideSource)
         .naiveStandardVersionDetection;
-    ;
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
@@ -1101,7 +1100,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     if (errors.idsByErrorString.isNotEmpty) {
-      var res = Map<String, dynamic>();
+      var res = <String, dynamic>{};
       res['errors'] = errors;
       res['updates'] = updates;
       throw res;
