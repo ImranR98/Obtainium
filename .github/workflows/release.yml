@@ -22,7 +22,8 @@ jobs:
       - name: Temp
         run: |
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
-          echo -n "Hello, World!" | gpg --batch --clearsign --local-user "$PGP_KEY_FINGERPRINT"
+          export GPG_TTY=$(tty)
+          echo -n "Hello, World!" | gpg --batch --clearsign --pinentry-mode loopback --passphrase "" --local-user "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
 
