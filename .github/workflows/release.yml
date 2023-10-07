@@ -20,10 +20,9 @@ jobs:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
 
       - name: Temp
-        env:
-          PGP_KEY_BASE64: ${{ secrets.PGP_KEY_BASE64 }}
         run: |
-          PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.tag }}"
+          echo -n "Hello, World!" | gpg --clearsign
+          PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
 
@@ -36,12 +35,8 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          PGP_KEY_BASE64: ${{ secrets.PGP_KEY_BASE64 }}
-          PGP_KEY_PASSPHRASE: ${{ secrets.PGP_KEY_PASSPHRASE }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
-          echo "$PGP_KEY_BASE64" | base64 -d | gpg --import --passphrase "$PGP_KEY_PASSPHRASE"
-          PGP_KEY_FINGERPRINT="$(gpg --list-keys --with-colon "$(echo "$PGP_KEY_BASE64" | base64 -d | gpg --with-fingerprint --list-packets | grep 'user ID' | awk -F'"' '{print $2}')" | awk -F: '/^pub:/ { print $5 }')"
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
@@ -50,6 +45,7 @@ jobs:
             gpg --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
+          PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
         
