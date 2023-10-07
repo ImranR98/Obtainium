@@ -80,4 +80,20 @@ class Uptodown extends AppSource {
         version, getApkUrlsFromUrls([apkUrl]), AppNames(author, appName),
         releaseDate: relDate);
   }
+
+  @override
+  Future<String> apkUrlPrefetchModifier(
+      String apkUrl, String standardUrl) async {
+    var res = await sourceRequest(apkUrl);
+    if (res.statusCode != 200) {
+      throw getObtainiumHttpError(res);
+    }
+    var html = parse(res.body);
+    var finalUrl =
+        (html.querySelector('.post-download')?.attributes['data-url']);
+    if (finalUrl == null) {
+      throw NoAPKError();
+    }
+    return finalUrl;
+  }
 }
