@@ -18,14 +18,16 @@ jobs:
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
-          passphrase: "ABCDFML"
+          passphrase: ${{ secrets.PGP_PASSPHRASE }}
 
       - name: Temp
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         run: |
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
           # export GPG_TTY=$(tty)
           echo 'abc' > ./abc
-          gpg --batch  --pinentry-mode loopback --passphrase "ABCDFML" --sign --detach-sig ./abc
+          gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig ./abc
           gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
           gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
 
