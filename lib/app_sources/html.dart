@@ -120,14 +120,14 @@ class HTML extends AppSource {
         GeneratedFormTextField('matchGroupToUse',
             label: tr('matchGroupToUse'),
             required: false,
-            hint: '1',
+            hint: '0',
             textInputType: const TextInputType.numberWithOptions(),
             additionalValidators: [
               (value) {
                 if (value?.isEmpty == true) {
                   value = null;
                 }
-                value ??= '1';
+                value ??= '0';
                 return intValidator(value);
               }
             ])
@@ -216,8 +216,12 @@ class HTML extends AppSource {
         if (match.isEmpty) {
           throw NoVersionError();
         }
-        version = match.last
-            .group(int.parse(additionalSettings['matchGroupToUse'] as String));
+        String matchGroupString =
+            (additionalSettings['matchGroupToUse'] as String).trim();
+        if (matchGroupString.isEmpty) {
+          matchGroupString = "0";
+        }
+        version = match.last.group(int.parse(matchGroupString));
         if (version?.isEmpty == true) {
           throw NoVersionError();
         }

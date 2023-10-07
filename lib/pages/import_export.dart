@@ -217,7 +217,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
               if (errors.isEmpty) {
                 // ignore: use_build_context_synchronously
                 showError(
-                    tr('importedX', args: [plural('app', selectedUrls.length)]),
+                    tr('importedX',
+                        args: [plural('apps', selectedUrls.length)]),
                     context);
               } else {
                 // ignore: use_build_context_synchronously
@@ -274,7 +275,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
             if (errors.isEmpty) {
               // ignore: use_build_context_synchronously
               showError(
-                  tr('importedX', args: [plural('app', selectedUrls.length)]),
+                  tr('importedX', args: [plural('apps', selectedUrls.length)]),
                   context);
             } else {
               // ignore: use_build_context_synchronously
