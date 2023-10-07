@@ -60,6 +60,7 @@ jobs:
         with:
           github_token: ${{ secrets.GH_ACCESS_TOKEN }}
           custom_tag: "${{ steps.extract_version.outputs.tag }}"
+          tag_prefix: ""
       
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
@@ -68,6 +69,7 @@ jobs:
           tag: "${{ steps.extract_version.outputs.tag }}"
           prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
+          body: ${{ steps.tag_version.outputs.changelog }}
           draft: true
                   
       - name: Archive Reports For Job
