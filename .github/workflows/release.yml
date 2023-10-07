@@ -1,4 +1,4 @@
-name: android
+name: Release (Manual/Draft)
 
 on:
   workflow_dispatch:
@@ -25,12 +25,16 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          GPG_KEY: ${{ secrets.GPG_KEY }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+          echo "$GPG_KEY" | gpg --import
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
-            out=${apk/-release/-release-signed}
-            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${out}" "${apk}"
-            echo "$(sha256sum ${out})"
+            unsignedFn=${apk/-release/-unsigned}
+            mv "$apk" "$unsignedFn"
+            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${apk}" "${unsignedFn}"
+            sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
+            gpg --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
         
@@ -39,14 +43,19 @@ jobs:
         run: |
            VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
            echo "::set-output name=version::$VERSION"
+           TAG=$(grep -oP "'.*\\\$currentVersion.*'" lib/main.dart | head -c -2 | tail -c +2 | sed "s/\$currentVersion/$VERSION/g")
+           echo "::set-output name=tag::$TAG"
+           if [ -n "$(echo $TAG | grep -oP '\-beta$')" ]; then BETA=true; else BETA=false; fi
+           echo "::set-output name=beta::$BETA"
       
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GAT }}
-          tag: "v${{ steps.extract_version.outputs.version }}-beta"
-          prerelease: true
-          artifacts: ./build/app/outputs/flutter-apk/*-signed*.apk          
+          tag: "${{ steps.extract_version.outputs.tag }}"
+          prerelease: "${{ steps.extract_version.outputs.beta }}"
+          artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
+          draft: true
                   
       - name: Archive Reports For Job
         uses: actions/upload-artifact@v3
