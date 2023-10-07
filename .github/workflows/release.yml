@@ -69,7 +69,7 @@ jobs:
           tag: "${{ steps.extract_version.outputs.tag }}"
           prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
-          body: ${{ steps.tag_version.outputs.changelog }}
+          generateReleaseNotes: true
           draft: true
                   
       - name: Archive Reports For Job
