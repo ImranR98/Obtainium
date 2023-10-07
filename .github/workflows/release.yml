@@ -13,6 +13,16 @@ jobs:
         
       - uses: subosito/flutter-action@v2
 
+      - name: Temp
+        env:
+          PGP_KEY_BASE64: ${{ secrets.PGP_KEY_BASE64 }}
+          PGP_KEY_PASSPHRASE: ${{ secrets.PGP_KEY_PASSPHRASE }}
+        run: |
+          echo "$PGP_KEY_BASE64" | base64 -d | gpg --import --passphrase "$PGP_KEY_PASSPHRASE"
+          PGP_KEY_FINGERPRINT="$(gpg --list-keys --with-colon "$(echo "$PGP_KEY_BASE64" | base64 -d | gpg --with-fingerprint --list-packets | grep 'user ID' | awk -F'"' '{print $2}')" | awk -F: '/^pub:/ { print $5 }')"
+          gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
+          gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
+
       - name: Build APKs
         run: |
           sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
@@ -22,10 +32,12 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-          GPG_KEY: ${{ secrets.PGP_KEY_BASE64 }}
+          PGP_KEY_BASE64: ${{ secrets.PGP_KEY_BASE64 }}
+          PGP_KEY_PASSPHRASE: ${{ secrets.PGP_KEY_PASSPHRASE }}
         run: |
           echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
-          echo "$GPG_KEY" | base64 -d | gpg --import
+          echo "$PGP_KEY_BASE64" | base64 -d | gpg --import --passphrase "$PGP_KEY_PASSPHRASE"
+          PGP_KEY_FINGERPRINT="$(gpg --list-keys --with-colon "$(echo "$PGP_KEY_BASE64" | base64 -d | gpg --with-fingerprint --list-packets | grep 'user ID' | awk -F'"' '{print $2}')" | awk -F: '/^pub:/ { print $5 }')"
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
@@ -34,6 +46,8 @@ jobs:
             gpg --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
+          gpg --batch --yes --delete-secret-keys "$PGP_KEY_FINGERPRINT"
+          gpg --batch --yes --delete-keys "$PGP_KEY_FINGERPRINT"
         
       - name: Extract Version
         id: extract_version      
@@ -48,7 +62,7 @@ jobs:
       - name: Create Release And Upload APKs
         uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.GAT }}
+          token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
           tag: "${{ steps.extract_version.outputs.tag }}"
           prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
