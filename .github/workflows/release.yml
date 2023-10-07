@@ -18,6 +18,7 @@ jobs:
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
+          passphrase: "ABCDFML"
 
       - name: Temp
         run: |
