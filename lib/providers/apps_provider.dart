@@ -1375,6 +1375,30 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   logs.add(
       'BG ${installMode ? 'install' : 'update'} task $taskId: Started (${installMode ? toInstall.length : toCheck.length}).');
 
+  var netResult = await (Connectivity().checkConnectivity());
+
+  if (netResult == ConnectivityResult.none) {
+    var networkBasedRetryInterval = 15;
+    var nextRegularCheck = appsProvider.settingsProvider.lastBGCheckTime
+        .add(Duration(minutes: appsProvider.settingsProvider.updateInterval));
+    var potentialNetworkRetryCheck =
+        DateTime.now().add(Duration(minutes: networkBasedRetryInterval));
+    var shouldRetry = potentialNetworkRetryCheck.isBefore(nextRegularCheck);
+    logs.add(
+        'BG update task $taskId: No network. Will ${shouldRetry ? 'retry in $networkBasedRetryInterval minutes' : 'not retry'}.');
+    AndroidAlarmManager.oneShot(
+        const Duration(minutes: 15), taskId + 1, bgUpdateCheck,
+        params: {
+          'toCheck': toCheck
+              .map((entry) => {'key': entry.key, 'value': entry.value})
+              .toList(),
+          'toInstall': toInstall
+              .map((entry) => {'key': entry.key, 'value': entry.value})
+              .toList(),
+        });
+    return;
+  }
+
   if (!installMode) {
     // If in update mode, we check for updates.
     // We divide the results into 4 groups:
@@ -1391,7 +1415,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     List<App> toNotify = [];
     List<MapEntry<String, int>> toRetry = [];
     var retryAfterXSeconds = 0;
-    List<String> toThrow = [];
+    MultiAppMultiError toThrow = MultiAppMultiError();
     var networkRestricted = false;
     if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
       var netResult = await (Connectivity().checkConnectivity());
@@ -1427,7 +1451,7 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               retryAfterXSeconds = minRetryIntervalForThisApp;
             }
           } else {
-            toThrow.add(key);
+            toThrow.add(key, err, appName: errors?.appIdNames[key]);
           }
         });
       } else {
@@ -1455,10 +1479,10 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
     }
 
     // Send the error notifications
-    if (toThrow.isNotEmpty) {
-      for (var appId in toThrow) {
+    if (toThrow.rawErrors.isNotEmpty) {
+      for (var element in toThrow.idsByErrorString.entries) {
         notificationsProvider.notify(ErrorCheckingUpdatesNotification(
-            errors!.errorString(appId),
+            errors!.errorsAppsString(element.key, element.value),
             id: Random().nextInt(10000)));
       }
     }
