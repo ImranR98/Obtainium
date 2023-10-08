@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +74,9 @@ class MultiAppMultiError extends ObtainiumError {
   MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
   add(String appId, dynamic error, {String? appName}) {
+    if (error is SocketException) {
+      error = error.message;
+    }
     rawErrors[appId] = error;
     var string = error.toString();
     var tempIds = idsByErrorString.remove(string);
@@ -83,12 +88,17 @@ class MultiAppMultiError extends ObtainiumError {
     }
   }
 
-  String errorString(String appId) =>
-      '${appIdNames.containsKey(appId) ? '${appIdNames[appId]} ($appId)' : appId}: ${rawErrors[appId].toString()}';
+  String errorString(String appId, {bool includeIdsWithNames = false}) =>
+      '${appIdNames.containsKey(appId) ? '${appIdNames[appId]}${includeIdsWithNames ? ' ($appId)' : ''}' : appId}: ${rawErrors[appId].toString()}';
+
+  String errorsAppsString(String errString, List<String> appIds,
+          {bool includeIdsWithNames = false}) =>
+      '$errString [${list2FriendlyString(appIds.map((id) => appIdNames.containsKey(id) == true ? '${appIdNames[id]}${includeIdsWithNames ? ' ($id)' : ''}' : id).toList())}]';
 
   @override
-  String toString() =>
-      idsByErrorString.keys.map((e) => errorString(e)).join('\n\n');
+  String toString() => idsByErrorString.entries
+      .map((e) => errorsAppsString(e.key, e.value))
+      .join('\n\n');
 }
 
 showError(dynamic e, BuildContext context) {
