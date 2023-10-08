@@ -11,6 +11,7 @@ class FDroid extends AppSource {
   FDroid() {
     host = 'f-droid.org';
     name = tr('fdroid');
+    naiveStandardVersionDetection = true;
     canSearch = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
