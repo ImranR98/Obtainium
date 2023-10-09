@@ -245,7 +245,7 @@
     "sortByFileNamesNotLinks": "Sortuj wg nazw plików zamiast pełnych linków",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
     "customLinkFilterRegex": "Filtruj linki APK według wyrażenia regularnego (domyślnie \".apk$\")",
-    "appsPossiblyUpdated": "Informuj o próbach aktualizacji",
+    "appsPossiblyUpdated": "Próbowano zaktualizować aplikację",
     "appsPossiblyUpdatedNotifDescription": "Powiadamiaj o potencjalnym zastosowaniu w tle aktualizacji jednej lub większej ilości aplikacji",
     "xWasPossiblyUpdatedToY": "{} być może zaktualizowano do {}.",
     "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
