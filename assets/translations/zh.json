@@ -265,6 +265,7 @@
     "runBgCheckNow": "立即进行后台更新检查",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
+    "skipUpdateNotifications": "Skip update notifications",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

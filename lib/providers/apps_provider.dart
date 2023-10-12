@@ -1439,7 +1439,10 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             if (newApp != null) {
               if (networkRestricted ||
                   !(await appsProvider.canInstallSilently(app!.app))) {
-                toNotify.add(newApp);
+                if (newApp.additionalSettings['skipUpdateNotifications'] !=
+                    true) {
+                  toNotify.add(newApp);
+                }
               }
             }
             if (i == (toCheck.length - 1)) {

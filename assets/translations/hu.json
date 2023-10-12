@@ -265,6 +265,7 @@
     "runBgCheckNow": "Futtassa a Háttérben frissítés ellenőrzését most",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
+    "skipUpdateNotifications": "Skip update notifications",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
