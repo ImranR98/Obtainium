@@ -117,6 +117,8 @@ class HTML extends AppSource {
             label: tr('versionExtractionRegEx'),
             required: false,
             additionalValidators: [(value) => regExValidator(value)]),
+      ],
+      [
         GeneratedFormTextField('matchGroupToUse',
             label: tr('matchGroupToUse'),
             required: false,
@@ -131,6 +133,10 @@ class HTML extends AppSource {
                 return intValidator(value);
               }
             ])
+      ],
+      [
+        GeneratedFormSwitch('versionExtractWholePage',
+            label: tr('versionExtractWholePage'))
       ]
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
@@ -212,7 +218,8 @@ class HTML extends AppSource {
       var versionExtractionRegEx =
           additionalSettings['versionExtractionRegEx'] as String?;
       if (versionExtractionRegEx?.isNotEmpty == true) {
-        var match = RegExp(versionExtractionRegEx!).allMatches(rel);
+        var match = RegExp(versionExtractionRegEx!).allMatches(
+            res.body.split('\r\n').join('\n').split('\n').join('\\n'));
         if (match.isEmpty) {
           throw NoVersionError();
         }

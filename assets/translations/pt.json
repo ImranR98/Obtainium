@@ -263,6 +263,7 @@
     "debugMenu": "Menu Debug",
     "bgTaskStarted": "Tarefa em segundo plano iniciada - verifique os logs.",
     "runBgCheckNow": "Execute a verificação de atualização em segundo plano agora",
+    "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"

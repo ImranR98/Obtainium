@@ -263,6 +263,7 @@
     "debugMenu": "Меню Отладки",
     "bgTaskStarted": "Фоновая задача начата - проверьте журналы.",
     "runBgCheckNow": "Запустить проверку фонового обновления сейчас",
+    "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

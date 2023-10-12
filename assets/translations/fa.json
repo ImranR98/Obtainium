@@ -263,6 +263,7 @@
     "debugMenu": "Debug Menu",
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Run Background Update Check Now",
+    "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
