@@ -266,6 +266,14 @@
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
     "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "アップデートが利用可能",
+    "appsUpdatedNotifChannel": "アプリをアップデートしました",
+    "appsPossiblyUpdatedNotifChannel": "アプリのアップデートを試行",
+    "errorCheckingUpdatesNotifChannel": "アップデート確認中のエラー",
+    "appsRemovedNotifChannel": "削除されたアプリ",
+    "downloadingXNotifChannel": "{} をダウンロード中",
+    "completeAppInstallationNotifChannel": "アプリのインストールを完了する",
+    "checkingForUpdatesNotifChannel": "アップデートを確認中",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

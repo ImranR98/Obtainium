@@ -266,6 +266,14 @@
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
     "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "Updates Available",
+    "appsUpdatedNotifChannel": "Apps Updated",
+    "appsPossiblyUpdatedNotifChannel": "App Updates Attempted",
+    "errorCheckingUpdatesNotifChannel": "Error Checking for Updates",
+    "appsRemovedNotifChannel": "Apps Removed",
+    "downloadingXNotifChannel": "Downloading {}",
+    "completeAppInstallationNotifChannel": "Complete App Installation",
+    "checkingForUpdatesNotifChannel": "Checking for Updates",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

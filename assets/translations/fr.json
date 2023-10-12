@@ -266,6 +266,14 @@
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
     "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "Mises à jour disponibles",
+    "appsUpdatedNotifChannel": "Applications mises à jour",
+    "appsPossiblyUpdatedNotifChannel": "App Updates Attempted",
+    "errorCheckingUpdatesNotifChannel": "Erreur lors de la vérification des mises à jour",
+    "appsRemovedNotifChannel": "Applications supprimées",
+    "downloadingXNotifChannel": "Téléchargement {}",
+    "completeAppInstallationNotifChannel": "Installation complète de l'application",
+    "checkingForUpdatesNotifChannel": "Vérification des mises à jour",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

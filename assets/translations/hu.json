@@ -266,6 +266,14 @@
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
     "installing": "Installing",
     "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "Frissítések érhetők el",
+    "appsUpdatedNotifChannel": "Alkalmazások frissítve",
+    "appsPossiblyUpdatedNotifChannel": "App frissítési kísérlet",
+    "errorCheckingUpdatesNotifChannel": "Hiba a frissítések keresésekor",
+    "appsRemovedNotifChannel": "Alkalmazások eltávolítva",
+    "downloadingXNotifChannel": "{} letöltés",
+    "completeAppInstallationNotifChannel": "Teljes app telepítés",
+    "checkingForUpdatesNotifChannel": "Frissítések keresése",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
