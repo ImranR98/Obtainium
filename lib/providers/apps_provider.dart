@@ -1415,6 +1415,30 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   logs.add(
       'BG ${installMode ? 'install' : 'update'} task $taskId: Started (${installMode ? toInstall.length : toCheck.length}).');
 
+  var netResult = await (Connectivity().checkConnectivity());
+
+  if (netResult == ConnectivityResult.none) {
+    var networkBasedRetryInterval = 15;
+    var nextRegularCheck = appsProvider.settingsProvider.lastBGCheckTime
+        .add(Duration(minutes: appsProvider.settingsProvider.updateInterval));
+    var potentialNetworkRetryCheck =
+        DateTime.now().add(Duration(minutes: networkBasedRetryInterval));
+    var shouldRetry = potentialNetworkRetryCheck.isBefore(nextRegularCheck);
+    logs.add(
+        'BG update task $taskId: No network. Will ${shouldRetry ? 'retry in $networkBasedRetryInterval minutes' : 'not retry'}.');
+    AndroidAlarmManager.oneShot(
+        const Duration(minutes: 15), taskId + 1, bgUpdateCheck,
+        params: {
+          'toCheck': toCheck
+              .map((entry) => {'key': entry.key, 'value': entry.value})
+              .toList(),
+          'toInstall': toInstall
+              .map((entry) => {'key': entry.key, 'value': entry.value})
+              .toList(),
+        });
+    return;
+  }
+
   if (!installMode) {
     // If in update mode...
     var didCompleteChecking = false;
@@ -1479,6 +1503,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             if (notif != null) {
               notificationsProvider.cancel(notif.id);
             }
+          } else {
+            toThrow.add(key, err, appName: errors?.appIdNames[key]);
           }
         }
       }

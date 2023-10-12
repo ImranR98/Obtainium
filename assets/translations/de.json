@@ -242,9 +242,12 @@
     "appsPossiblyUpdated": "App Aktualisierungen wurden versucht",
     "appsPossiblyUpdatedNotifDescription": "Benachrichtigt den Benutzer, dass Updates für eine oder mehrere Apps möglicherweise im Hintergrund durchgeführt wurden",
     "xWasPossiblyUpdatedToY": "{} wurde möglicherweise aktualisiert auf {}.",
+    "enableBackgroundUpdates": "Aktiviere Hintergrundaktualisierungen",
     "backgroundUpdateReqsExplanation": "Die Hintergrundaktualisierung ist möglicherweise nicht für alle Apps möglich.",
     "backgroundUpdateLimitsExplanation": "Der Erfolg einer Hintergrundinstallation kann nur festgestellt werden, wenn Obtainium geöffnet wird.",
     "verifyLatestTag": "Überprüfe das „latest“ Tag",
+    "intermediateLinkRegex": "Filter für einen \"Zwischen\"-Link, der zuerst besucht werden soll",
+    "intermediateLinkNotFound": "Zwischenlink nicht gefunden",
     "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
     "autoSelectHighestVersionCode": "Automatisch höchste APK-Code-Version auswählen",
@@ -297,8 +300,8 @@
         "other": "{} Tage"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "{n} Log gelöscht (vorher = {vorher}, nachher = {nachher})",
-        "other": "{n} Logs gelöscht (vorher = {vorher}, nachher = {nachher})"
+        "one": "{n} Log gelöscht (vorher = {before}, nachher = {after})",
+        "other": "{n} Logs gelöscht (vorher = {before}, nachher = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} und 1 weitere App haben Aktualisierungen.",
