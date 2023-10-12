@@ -1136,7 +1136,6 @@ class AppsProvider with ChangeNotifier {
         return null;
       }
       if (exportDir == null) {
-        logs.add('Skipping auto-export as dir is not set.');
         return null;
       }
       var files = await saf
