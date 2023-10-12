@@ -263,25 +263,29 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
-  Future<File> handleAPKIDChange(App app, PackageInfo newInfo,
+  Future<File> handleAPKIDChange(App app, PackageInfo? newInfo,
       File downloadedFile, String downloadUrl) async {
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
     // The former case should be handled (give the App its real ID), the latter is a security issue
-    if (app.id != newInfo.packageName) {
-      var isTempId = SourceProvider().isTempId(app);
-      if (apps[app.id] != null && !isTempId && !app.allowIdChange) {
-        throw IDChangedError(newInfo.packageName!);
+    var isTempId = SourceProvider().isTempId(app);
+    if (newInfo != null) {
+      if (app.id != newInfo.packageName) {
+        if (apps[app.id] != null && !isTempId && !app.allowIdChange) {
+          throw IDChangedError(newInfo.packageName!);
+        }
+        var idChangeWasAllowed = app.allowIdChange;
+        app.allowIdChange = false;
+        var originalAppId = app.id;
+        app.id = newInfo.packageName!;
+        downloadedFile = downloadedFile.renameSync(
+            '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
+        if (apps[originalAppId] != null) {
+          await removeApps([originalAppId]);
+          await saveApps([app], onlyIfExists: !isTempId && !idChangeWasAllowed);
+        }
       }
-      var idChangeWasAllowed = app.allowIdChange;
-      app.allowIdChange = false;
-      var originalAppId = app.id;
-      app.id = newInfo.packageName!;
-      downloadedFile = downloadedFile.renameSync(
-          '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
-      if (apps[originalAppId] != null) {
-        await removeApps([originalAppId]);
-        await saveApps([app], onlyIfExists: !isTempId && !idChangeWasAllowed);
-      }
+    } else if (isTempId) {
+      throw ObtainiumError('Could not get ID from APK');
     }
     return downloadedFile;
   }
@@ -344,7 +348,7 @@ class AppsProvider with ChangeNotifier {
             await pm.getPackageArchiveInfo(archiveFilePath: apks.first.path);
       }
       downloadedFile =
-          await handleAPKIDChange(app, newInfo!, downloadedFile, downloadUrl);
+          await handleAPKIDChange(app, newInfo, downloadedFile, downloadUrl);
       // Delete older versions of the file if any
       for (var file in downloadedFile.parent.listSync()) {
         var fn = file.path.split('/').last;
@@ -1435,7 +1439,10 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
             if (newApp != null) {
               if (networkRestricted ||
                   !(await appsProvider.canInstallSilently(app!.app))) {
-                toNotify.add(newApp);
+                if (newApp.additionalSettings['skipUpdateNotifications'] !=
+                    true) {
+                  toNotify.add(newApp);
+                }
               }
             }
             if (i == (toCheck.length - 1)) {

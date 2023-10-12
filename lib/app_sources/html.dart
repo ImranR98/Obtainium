@@ -22,7 +22,7 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
   } else if (ambiguousUrl.split('/').where((e) => e.isNotEmpty).length == 1) {
     return '${referenceAbsoluteUrl.origin}/${currPathSegments.join('/')}/$ambiguousUrl';
   } else {
-    return '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - 1).join('/')}/$ambiguousUrl';
+    return '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - (currPathSegments.last.contains('.') ? 1 : 0)).join('/')}/$ambiguousUrl';
   }
 }
 
@@ -117,6 +117,8 @@ class HTML extends AppSource {
             label: tr('versionExtractionRegEx'),
             required: false,
             additionalValidators: [(value) => regExValidator(value)]),
+      ],
+      [
         GeneratedFormTextField('matchGroupToUse',
             label: tr('matchGroupToUse'),
             required: false,
@@ -131,6 +133,10 @@ class HTML extends AppSource {
                 return intValidator(value);
               }
             ])
+      ],
+      [
+        GeneratedFormSwitch('versionExtractWholePage',
+            label: tr('versionExtractWholePage'))
       ]
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
@@ -212,7 +218,8 @@ class HTML extends AppSource {
       var versionExtractionRegEx =
           additionalSettings['versionExtractionRegEx'] as String?;
       if (versionExtractionRegEx?.isNotEmpty == true) {
-        var match = RegExp(versionExtractionRegEx!).allMatches(rel);
+        var match = RegExp(versionExtractionRegEx!).allMatches(
+            res.body.split('\r\n').join('\n').split('\n').join('\\n'));
         if (match.isEmpty) {
           throw NoVersionError();
         }

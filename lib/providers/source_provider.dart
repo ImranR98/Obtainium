@@ -442,6 +442,10 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',
           label: tr('exemptFromBackgroundUpdates'))
+    ],
+    [
+      GeneratedFormSwitch('skipUpdateNotifications',
+          label: tr('skipUpdateNotifications'))
     ]
   ];
 

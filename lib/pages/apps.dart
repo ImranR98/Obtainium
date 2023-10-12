@@ -566,7 +566,7 @@ class AppsPageState extends State<AppsPage> {
                                 .toInt()
                                 .toString()
                           ])
-                        : tr('pleaseWait'),
+                        : tr('installing'),
                     textAlign: (listedApps[index].downloadProgress! >= 0)
                         ? TextAlign.start
                         : TextAlign.end,

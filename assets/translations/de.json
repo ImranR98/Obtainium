@@ -263,6 +263,17 @@
     "debugMenu": "Debug Menü",
     "bgTaskStarted": "Hintergrundaufgabe gestartet – Logs prüfen.",
     "runBgCheckNow": "Hintergrundaktualisierungsprüfung jetzt durchführen",
+    "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
+    "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "Aktualisierungen verfügbar",
+    "appsUpdatedNotifChannel": "Apps aktualisiert",
+    "appsPossiblyUpdatedNotifChannel": "App Aktualisierungen wurden versucht",
+    "errorCheckingUpdatesNotifChannel": "Fehler beim Prüfen auf Aktualisierungen",
+    "appsRemovedNotifChannel": "Apps entfernt",
+    "downloadingXNotifChannel": "Lade {} herunter",
+    "completeAppInstallationNotifChannel": "App Installation abschließen",
+    "checkingForUpdatesNotifChannel": "Nach Aktualisierungen suchen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
