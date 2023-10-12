@@ -1,14 +1,4 @@
 {
-    "noDescription": "Brak opisu",
-    "no": "Nie",
-    "okay": "Okej",
-    "appId": "ID aplikacji",
-    "bgUpdateGotErrorRetryInMinutes": {
-        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minutę",
-        "few": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty",
-        "many": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minut",
-        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty"
-    },
     "invalidURLForSource": "Nieprawidłowy adres URL aplikacji {}",
     "noReleaseFound": "Nie można znaleźć odpowiedniego wydania",
     "noVersionFound": "Nie można określić wersji wydania",
@@ -26,6 +16,7 @@
     "fallbackToOlderReleases": "Powracaj do starszych wersji",
     "filterReleaseTitlesByRegEx": "Filtruj tytuły wydań wg. wyrażeń regularnych",
     "invalidRegEx": "Nieprawidłowe wyrażenie regularne",
+    "noDescription": "Brak opisu",								  
     "cancel": "Anuluj",
     "continue": "Kontynuuj",
     "requiredInBrackets": "(Wymagane)",
@@ -75,6 +66,7 @@
     "installUpdateApps": "Instaluj/aktualizuj aplikacje",
     "installUpdateSelectedApps": "Zainstaluj/zaktualizuj wybrane aplikacje",
     "markXSelectedAppsAsUpdated": "Oznaczyć {} wybranych aplikacji jako zaktualizowane?",
+    "no": "Nie",		   
     "yes": "Tak",
     "markSelectedAppsUpdated": "Oznacz wybrane aplikacje jako zaktualizowane",
     "pinToTop": "Przypnij",
@@ -111,6 +103,7 @@
     "importErrors": "Błędy importowania",
     "importedXOfYApps": "Zaimportowano {} z {} aplikacji.",
     "followingURLsHadErrors": "Następujące adresy URL zawierały błędy:",
+    "okay": "Okej",
     "selectURL": "Wybierz adres URL",
     "selectURLs": "Wybierz adresy URL",
     "pick": "Wybierz",
@@ -179,6 +172,7 @@
     "yesMarkUpdated": "Tak, oznacz jako zaktualizowane",
     "fdroid": "Oficjalny F-Droid",
     "appIdOrName": "ID aplikacji lub nazwa",
+    "appId": "ID aplikacji",				  
     "appWithIdOrNameNotFound": "Nie znaleziono aplikacji o tym identyfikatorze lub nazwie",
     "reposHaveMultipleApps": "Repozytoria mogą zawierać wiele aplikacji",
     "fdroidThirdPartyRepo": "Zewnętrzne repo F-Droid",
@@ -248,12 +242,15 @@
     "appsPossiblyUpdated": "Próbowano zaktualizować aplikację",
     "appsPossiblyUpdatedNotifDescription": "Powiadamiaj o potencjalnym zastosowaniu w tle aktualizacji jednej lub większej ilości aplikacji",
     "xWasPossiblyUpdatedToY": "{} być może zaktualizowano do {}.",
-    "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
+    "enableBackgroundUpdates": "Włącz aktualizacje w tle",
+    "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",		  
     "backgroundUpdateLimitsExplanation": "Powodzenie instalacji w tle można określić dopiero po otwarciu Obtainium.",
     "verifyLatestTag": "Zweryfikuj najnowszy tag",
+    "intermediateLinkRegex": "Filtr linków \"pośrednich\" do odwiedzenia w pierwszej kolejności",
+    "intermediateLinkNotFound": "Nie znaleziono linku pośredniego"
     "exemptFromBackgroundUpdates": "Wyklucz z uaktualnień w tle (jeśli są włączone)",
     "bgUpdatesOnWiFiOnly": "Wyłącz aktualizacje w tle, gdy nie ma połączenia z Wi-Fi",
-    "autoSelectHighestVersionCode": "Automatycznie wybierz najwyższy kod wersji APK",
+    "autoSelectHighestVersionCode": "Automatycznie wybierz najwyższy kod wersji APK",  
     "versionExtractionRegEx": "Wyrażenie regularne wyodrębniające wersję",
     "matchGroupToUse": "Dopasuj grupę do użycia",
     "highlightTouchTargets": "Wyróżnij mniej oczywiste elementy dotykowe",
@@ -276,7 +273,13 @@
         "one": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minutę",
         "few": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minuty",
         "many": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minut",
-        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minuty"
+        "other": "Zbyt wiele żądań (ograniczona częstotliwość) - spróbuj ponownie za {} minuty"				 
+    },
+        "bgUpdateGotErrorRetryInMinutes": {
+        "one": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minutę",
+        "few": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty",
+        "many": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minut",
+        "other": "Sprawdzanie aktualizacji w tle napotkało {}, zaplanuje ponowne sprawdzenie za {} minuty"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "W tle znaleziono {} aktualizację - w razie potrzeby użytkownik zostanie o tym powiadomiony",
@@ -337,8 +340,4 @@
         "few": "{} i {} inne apki mogły zostać zaktualizowane.",
         "many": "{} i {} innych apek mogło zostać zaktualizowanych.",
         "other": "{} i {} inne apki mogły zostać zaktualizowane."
-    },
-    "enableBackgroundUpdates": "Włącz aktualizacje w tle",
-    "intermediateLinkRegex": "Filtr linków \"pośrednich\" do odwiedzenia w pierwszej kolejności",
-    "intermediateLinkNotFound": "Nie znaleziono linku pośredniego"
-}
+    }
