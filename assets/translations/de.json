@@ -264,6 +264,7 @@
     "bgTaskStarted": "Hintergrundaufgabe gestartet – Logs prüfen.",
     "runBgCheckNow": "Hintergrundaktualisierungsprüfung jetzt durchführen",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

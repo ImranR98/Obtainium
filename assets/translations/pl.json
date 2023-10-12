@@ -264,6 +264,7 @@
     "bgTaskStarted": "Uruchomiono zadanie w tle - sprawdź logi.",
     "runBgCheckNow": "Wymuś sprawdzenie aktualizacji w tle",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

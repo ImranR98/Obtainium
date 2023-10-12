@@ -264,6 +264,7 @@
     "bgTaskStarted": "后台任务已启动 - 详见日志",
     "runBgCheckNow": "立即进行后台更新检查",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

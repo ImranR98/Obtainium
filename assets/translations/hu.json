@@ -264,6 +264,7 @@
     "enableBackgroundUpdates": "Frissítések a háttérben",
     "runBgCheckNow": "Futtassa a Háttérben frissítés ellenőrzését most",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

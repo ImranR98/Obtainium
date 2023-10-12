@@ -264,6 +264,7 @@
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Run Background Update Check Now",
     "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
