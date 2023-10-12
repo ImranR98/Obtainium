@@ -35,7 +35,7 @@ class Uptodown extends AppSource {
     var html = parse(res.body);
     String? version = html.querySelector('div.version')?.innerHtml;
     String? apkUrl =
-        html.querySelector('#detail-download-button')?.attributes['data-url'];
+        '${standardUrl.split('/').reversed.toList().sublist(1).reversed.join('/')}/post-download';
     String? name = html.querySelector('#detail-app-name')?.innerHtml.trim();
     String? author = html.querySelector('#author-link')?.innerHtml.trim();
     var detailElements = html.querySelectorAll('#technical-information td');
