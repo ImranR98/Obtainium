@@ -242,7 +242,6 @@
     "appsPossiblyUpdated": "App frissítési kísérlet",
     "appsPossiblyUpdatedNotifDescription": "Értesíti a felhasználót, hogy egy vagy több alkalmazás frissítése lehetséges a háttérben",
     "xWasPossiblyUpdatedToY": "{} frissítve lehet erre {}.",
-    "enableBackgroundUpdates": "Enable background updates",
     "backgroundUpdateReqsExplanation": "Előfordulhat, hogy nem minden appnál lehetséges a háttérbeli frissítés.",
     "backgroundUpdateLimitsExplanation": "A háttérben történő telepítés sikeressége csak az Obtainium megnyitásakor állapítható meg.",
     "verifyLatestTag": "Ellenőrizze a „legújabb” címkét",
