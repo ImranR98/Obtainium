@@ -28,7 +28,7 @@ class UpdateNotification extends ObtainiumNotification {
             tr('updatesAvailable'),
             '',
             'UPDATES_AVAILABLE',
-            tr('updatesAvailable'),
+            tr('updatesAvailableNotifChannel'),
             tr('updatesAvailableNotifDescription'),
             Importance.max) {
     message = updates.isEmpty
@@ -42,8 +42,14 @@ class UpdateNotification extends ObtainiumNotification {
 
 class SilentUpdateNotification extends ObtainiumNotification {
   SilentUpdateNotification(List<App> updates, {int? id})
-      : super(id ?? 3, tr('appsUpdated'), '', 'APPS_UPDATED', tr('appsUpdated'),
-            tr('appsUpdatedNotifDescription'), Importance.defaultImportance) {
+      : super(
+            id ?? 3,
+            tr('appsUpdated'),
+            '',
+            'APPS_UPDATED',
+            tr('appsUpdatedNotifChannel'),
+            tr('appsUpdatedNotifDescription'),
+            Importance.defaultImportance) {
     message = updates.length == 1
         ? tr('xWasUpdatedToY',
             args: [updates[0].finalName, updates[0].latestVersion])
@@ -59,7 +65,7 @@ class SilentUpdateAttemptNotification extends ObtainiumNotification {
             tr('appsPossiblyUpdated'),
             '',
             'APPS_POSSIBLY_UPDATED',
-            tr('appsPossiblyUpdated'),
+            tr('appsPossiblyUpdatedNotifChannel'),
             tr('appsPossiblyUpdatedNotifDescription'),
             Importance.defaultImportance) {
     message = updates.length == 1
@@ -77,15 +83,21 @@ class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
             tr('errorCheckingUpdates'),
             error,
             'BG_UPDATE_CHECK_ERROR',
-            tr('errorCheckingUpdates'),
+            tr('errorCheckingUpdatesNotifChannel'),
             tr('errorCheckingUpdatesNotifDescription'),
             Importance.high);
 }
 
 class AppsRemovedNotification extends ObtainiumNotification {
   AppsRemovedNotification(List<List<String>> namedReasons)
-      : super(6, tr('appsRemoved'), '', 'APPS_REMOVED', tr('appsRemoved'),
-            tr('appsRemovedNotifDescription'), Importance.max) {
+      : super(
+            6,
+            tr('appsRemoved'),
+            '',
+            'APPS_REMOVED',
+            tr('appsRemovedNotifChannel'),
+            tr('appsRemovedNotifDescription'),
+            Importance.max) {
     message = '';
     for (var r in namedReasons) {
       message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
@@ -101,7 +113,7 @@ class DownloadNotification extends ObtainiumNotification {
             tr('downloadingX', args: [appName]),
             '',
             'APP_DOWNLOADING',
-            tr('downloadingX', args: [tr('app')]),
+            tr('downloadingXNotifChannel', args: [tr('app')]),
             tr('downloadNotifDescription'),
             Importance.low,
             onlyAlertOnce: true,
@@ -113,7 +125,7 @@ final completeInstallationNotification = ObtainiumNotification(
     tr('completeAppInstallation'),
     tr('obtainiumMustBeOpenToInstallApps'),
     'COMPLETE_INSTALL',
-    tr('completeAppInstallation'),
+    tr('completeAppInstallationNotifChannel'),
     tr('completeAppInstallationNotifDescription'),
     Importance.max);
 
@@ -124,7 +136,7 @@ class CheckingUpdatesNotification extends ObtainiumNotification {
             tr('checkingForUpdates'),
             appName,
             'BG_UPDATE_CHECK',
-            tr('checkingForUpdates'),
+            tr('checkingForUpdatesNotifChannel'),
             tr('checkingForUpdatesNotifDescription'),
             Importance.min);
 }

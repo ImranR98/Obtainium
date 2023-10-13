@@ -22,7 +22,7 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
   } else if (ambiguousUrl.split('/').where((e) => e.isNotEmpty).length == 1) {
     return '${referenceAbsoluteUrl.origin}/${currPathSegments.join('/')}/$ambiguousUrl';
   } else {
-    return '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - 1).join('/')}/$ambiguousUrl';
+    return '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - (currPathSegments.last.contains('.') ? 1 : 0)).join('/')}/$ambiguousUrl';
   }
 }
 
@@ -117,20 +117,26 @@ class HTML extends AppSource {
             label: tr('versionExtractionRegEx'),
             required: false,
             additionalValidators: [(value) => regExValidator(value)]),
+      ],
+      [
         GeneratedFormTextField('matchGroupToUse',
             label: tr('matchGroupToUse'),
             required: false,
-            hint: '1',
+            hint: '0',
             textInputType: const TextInputType.numberWithOptions(),
             additionalValidators: [
               (value) {
                 if (value?.isEmpty == true) {
                   value = null;
                 }
-                value ??= '1';
+                value ??= '0';
                 return intValidator(value);
               }
             ])
+      ],
+      [
+        GeneratedFormSwitch('versionExtractWholePage',
+            label: tr('versionExtractWholePage'))
       ]
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
@@ -212,12 +218,17 @@ class HTML extends AppSource {
       var versionExtractionRegEx =
           additionalSettings['versionExtractionRegEx'] as String?;
       if (versionExtractionRegEx?.isNotEmpty == true) {
-        var match = RegExp(versionExtractionRegEx!).allMatches(rel);
+        var match = RegExp(versionExtractionRegEx!).allMatches(
+            res.body.split('\r\n').join('\n').split('\n').join('\\n'));
         if (match.isEmpty) {
           throw NoVersionError();
         }
-        version = match.last
-            .group(int.parse(additionalSettings['matchGroupToUse'] as String));
+        String matchGroupString =
+            (additionalSettings['matchGroupToUse'] as String).trim();
+        if (matchGroupString.isEmpty) {
+          matchGroupString = "0";
+        }
+        version = match.last.group(int.parse(matchGroupString));
         if (version?.isEmpty == true) {
           throw NoVersionError();
         }

@@ -28,6 +28,7 @@ import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
+import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -328,6 +329,7 @@ abstract class AppSource {
   bool changeLogIfAnyIsMarkDown = true;
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
+  bool naiveStandardVersionDetection = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -440,6 +442,10 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',
           label: tr('exemptFromBackgroundUpdates'))
+    ],
+    [
+      GeneratedFormSwitch('skipUpdateNotifications',
+          label: tr('skipUpdateNotifications'))
     ]
   ];
 
@@ -556,7 +562,7 @@ class SourceProvider {
         Mullvad(),
         Signal(),
         VLC(),
-        // WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+        WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
         TelegramApp(),
         SteamMobile(),
         NeutronCode(),

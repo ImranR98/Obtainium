@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+
+      - name: Import GPG key
+        id: import_pgp_key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
+          passphrase: ${{ secrets.PGP_PASSPHRASE }}
+
+      - name: Build APKs
+        run: |
+          sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
+          flutter build apk && flutter build apk --split-per-abi
+          rm ./build/app/outputs/flutter-apk/*.sha1
+          ls -l ./build/app/outputs/flutter-apk/
+        
+      - name: Sign APKs
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        run: |
+          echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+          for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
+            unsignedFn=${apk/-release/-unsigned}
+            mv "$apk" "$unsignedFn"
+            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedFn}"
+            sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
+            gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
+          done
+          rm apksign.keystore
+          PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
+        
+      - name: Extract Version
+        id: extract_version      
+        run: |
+           VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
+           echo "version=$VERSION" >> $GITHUB_OUTPUT
+           TAG=$(grep -oP "'.*\\\$currentVersion.*'" lib/main.dart | head -c -2 | tail -c +2 | sed "s/\$currentVersion/$VERSION/g")
+           echo "tag=$TAG" >> $GITHUB_OUTPUT
+           if [ -n "$(echo $TAG | grep -oP '\-beta$')" ]; then BETA=true; else BETA=false; fi
+           echo "beta=$BETA" >> $GITHUB_OUTPUT
+
+      - name: Create Tag
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          custom_tag: "${{ steps.extract_version.outputs.tag }}"
+          tag_prefix: ""
+      
+      - name: Create Release And Upload APKs
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          tag: "${{ steps.extract_version.outputs.tag }}"
+          prerelease: "${{ steps.extract_version.outputs.beta }}"
+          artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
+          generateReleaseNotes: true

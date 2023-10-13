@@ -8,6 +8,7 @@ class Uptodown extends AppSource {
   Uptodown() {
     host = 'uptodown.com';
     allowSubDomains = true;
+    naiveStandardVersionDetection = true;
   }
 
   @override
@@ -34,7 +35,7 @@ class Uptodown extends AppSource {
     var html = parse(res.body);
     String? version = html.querySelector('div.version')?.innerHtml;
     String? apkUrl =
-        html.querySelector('#detail-download-button')?.attributes['data-url'];
+        '${standardUrl.split('/').reversed.toList().sublist(1).reversed.join('/')}/post-download';
     String? name = html.querySelector('#detail-app-name')?.innerHtml.trim();
     String? author = html.querySelector('#author-link')?.innerHtml.trim();
     var detailElements = html.querySelectorAll('#technical-information td');
@@ -78,5 +79,21 @@ class Uptodown extends AppSource {
     return APKDetails(
         version, getApkUrlsFromUrls([apkUrl]), AppNames(author, appName),
         releaseDate: relDate);
+  }
+
+  @override
+  Future<String> apkUrlPrefetchModifier(
+      String apkUrl, String standardUrl) async {
+    var res = await sourceRequest(apkUrl);
+    if (res.statusCode != 200) {
+      throw getObtainiumHttpError(res);
+    }
+    var html = parse(res.body);
+    var finalUrl =
+        (html.querySelector('.post-download')?.attributes['data-url']);
+    if (finalUrl == null) {
+      throw NoAPKError();
+    }
+    return finalUrl;
   }
 }

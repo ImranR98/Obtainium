@@ -68,7 +68,7 @@ class AppsPageState extends State<AppsPage> {
         refreshingSince = DateTime.now();
       });
       return appsProvider.checkUpdates().catchError((e) {
-        showError(e, context);
+        showError(e is Map ? e['errors'] : e, context);
         return <App>[];
       }).whenComplete(() {
         setState(() {
@@ -566,7 +566,7 @@ class AppsPageState extends State<AppsPage> {
                                 .toInt()
                                 .toString()
                           ])
-                        : tr('pleaseWait'),
+                        : tr('installing'),
                     textAlign: (listedApps[index].downloadProgress! >= 0)
                         ? TextAlign.start
                         : TextAlign.end,
@@ -833,7 +833,7 @@ class AppsPageState extends State<AppsPage> {
                 items: const [],
                 initValid: true,
                 message: tr('installStatusOfXWillBeResetExplanation',
-                    args: [plural('app', selectedAppIds.length)]),
+                    args: [plural('apps', selectedAppIds.length)]),
               );
             });
         if (values != null) {

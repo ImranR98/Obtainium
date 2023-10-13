@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.14.20+212 # When changing this, update the tag in main() accordingly
+version: 0.14.27+219 # When changing this, update the tag in main() accordingly
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -38,7 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.5
   path_provider: ^2.0.11
   flutter_fgbg: ^0.3.0 # Try removing reliance on this
-  flutter_local_notifications: ^15.1.0+1
+  flutter_local_notifications: ^16.1.0
   provider: ^6.0.3
   http: ^1.0.0
   webview_flutter: ^4.0.0
@@ -64,7 +64,7 @@ dependencies:
   flutter_markdown: ^0.6.14
   flutter_archive: ^5.0.0
   hsluv: ^1.1.3
-  connectivity_plus: ^4.0.2
+  connectivity_plus: ^5.0.0
   shared_storage: ^0.8.0
 
 dev_dependencies:

@@ -25,7 +25,7 @@
     "githubStarredRepos": "GitHub Starred Repos",
     "uname": "username",
     "wrongArgNum": "Špatný počet předložených argumentů",
-    "xIsTrackOnly":"{} je určeno pouze pro sledování",
+    "xIsTrackOnly": "{} je určeno pouze pro sledování",
     "source": "zdroj",
     "app": "App",
     "appsFromSourceAreTrackOnly": "Aplikace z tohoto zdroje jsou 'Jen sledovány'.",
@@ -56,7 +56,7 @@
     "estimateInBrackets": "(přibližně)",
     "selectAll": "Vybrat Vše",
     "deselectN": "{} deselected",
-    "xWillBeRemovedButRemainInstalled":"{} bude odstraněn z Obtainium, ale zůstane nainstalován v zařízení.",
+    "xWillBeRemovedButRemainInstalled": "{} bude odstraněn z Obtainium, ale zůstane nainstalován v zařízení.",
     "removeSelectedAppsQuestion": "Odebrat vybrané aplikace?",
     "removeSelectedApps": "Odebrat vybrané aplikace",
     "updateX": "Aktualizovat {}",
@@ -101,7 +101,7 @@
     "importX": "Import {}",
     "importedAppsIdDisclaimer": "Importované aplikace mohou být nesprávně zobrazeny jako \"Neinstalované\". Chcete-li to opravit, nainstalujte je znovu prostřednictvím Obtainium. To nemá vliv na data aplikací. Ovlivňuje pouze metody importu URL a třetích stran.",
     "importErrors": "Import Errors",
-    "importedXOfYApps":"{}importováno {}aplikací.",
+    "importedXOfYApps": "{}importováno {}aplikací.",
     "followingURLsHadErrors": "U následujících adres URL došlo k chybám:",
     "okay": "Okay",
     "selectURL": "Select URL",
@@ -136,7 +136,7 @@
     "appNotFound": "App not found",
     "obtainiumExportHyphenatedLowercase": "obtainium-export",
     "pickAnAPK": "Vybrat APK",
-    "appHasMoreThanOnePackage":"{} má více než jeden balíček:",
+    "appHasMoreThanOnePackage": "{} má více než jeden balíček:",
     "deviceSupportsXArch": "Vaše zařízení podporuje architekturu CPU {}.",
     "deviceSupportsFollowingArchs": "Vaše zařízení podporuje následující architektury CPU:",
     "warning": "Varování",
@@ -144,15 +144,15 @@
     "updatesAvailable": "dostupné aktualizace",
     "updatesAvailableNotifDescription": "Upozorňuje uživatele, že jsou k dispozici aktualizace pro jednu nebo více aplikací sledovaných Obtainium",
     "noNewUpdates": "Žádné nové aktualizace.",
-    "xHasAnUpdate":"{} má aktualizaci.",
+    "xHasAnUpdate": "{} má aktualizaci.",
     "appsUpdated": "Aplikace aktualizovány",
     "appsUpdatedNotifDescription": "Upozorňuje uživatele, že byly provedeny aktualizace jedné nebo více aplikací na pozadí",
-    "xWasUpdatedToY":"{} byl aktualizován na {}",
+    "xWasUpdatedToY": "{} byl aktualizován na {}",
     "errorCheckingUpdates": "Chybová kontrola aktualizací",
     "errorCheckingUpdatesNotifDescription": "Oznámení zobrazené při neúspěšné kontrole aktualizací na pozadí",
     "appsRemoved": "Odstraněné aplikace",
     "appsRemovedNotifDescription": "Oznámení uživateli, že jedna nebo více aplikací byly odstraněny z důvodu chyb při načítání",
-    "xWasRemovedDueToErrorY":"{} byla odstraněna z důvodu následující chyby: {}",
+    "xWasRemovedDueToErrorY": "{} byla odstraněna z důvodu následující chyby: {}",
     "completeAppInstallation": "Dokončit instalaci aplikace",
     "obtainiumMustBeOpenToInstallApps": "Obtainium musí být otevřeno, aby bylo možné instalovat aplikace",
     "completeAppInstallationNotifDescription": "Vyzvat uživatele k návratu do Obtainium pro dokončení instalace aplikací",
@@ -241,7 +241,7 @@
     "customLinkFilterRegex": "Vlastní filtr odkazů APK podle regulárního výrazu (výchozí '.apk$')",
     "appsPossiblyUpdated": "Byly provedeny pokusy o aktualizaci aplikací",
     "appsPossiblyUpdatedNotifDescription": "Upozorňuje uživatele, že na pozadí mohly být provedeny aktualizace jedné nebo více aplikací",
-    "xWasPossiblyUpdatedToY":"{} mohlo být aktualizováno na {}.",
+    "xWasPossiblyUpdatedToY": "{} mohlo být aktualizováno na {}.",
     "enableBackgroundUpdates": "Povolit aktualizace na pozadí",
     "backgroundUpdateReqsExplanation": "Aktualizace na pozadí nemusí být možné pro všechny aplikace.",
     "backgroundUpdateLimitsExplanation": "Úspěšnost instalace na pozadí lze určit pouze v případě, že je otevřen Obtainium.",
@@ -263,6 +263,17 @@
     "debugMenu": "Debug Menu",
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Run Background Update Check Now",
+    "versionExtractWholePage": "Apply Version Extraction Regex to Entire Page",
+    "installing": "Installing",
+    "skipUpdateNotifications": "Skip update notifications",
+    "updatesAvailableNotifChannel": "dostupné aktualizace",
+    "appsUpdatedNotifChannel": "Aplikace aktualizovány",
+    "appsPossiblyUpdatedNotifChannel": "Byly provedeny pokusy o aktualizaci aplikací",
+    "errorCheckingUpdatesNotifChannel": "Chybová kontrola aktualizací",
+    "appsRemovedNotifChannel": "Odstraněné aplikace",
+    "downloadingXNotifChannel": "download {}",
+    "completeAppInstallationNotifChannel": "Dokončit instalaci aplikace",
+    "checkingForUpdatesNotifChannel": "Zkontrolovat aktualizace",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
@@ -280,15 +291,15 @@
         "other": "Kontrola aktualizací na pozadí našla {} aktualizací - v případě potřeby upozorní uživatele"
     },
     "apps": {
-        "one":"{} App",
-        "other":"{} apps"
+        "one": "{} App",
+        "other": "{} apps"
     },
     "url": {
         "jedna": "{} URL",
         "other": "{} URLs"
     },
     "minute": {
-        "one":"{} minute",
+        "one": "{} minute",
         "other": "{} minutes"
     },
     "hour": {
@@ -300,20 +311,19 @@
         "other": "{} dny"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one":"{n} log vymazán (před = {před}, po = {po})",
+        "one": "{n} log vymazán (před = {před}, po = {po})",
         "other": "{n} logů vymazáno (před = {před}, po = {po})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one":"{} a 1 další aplikace mají aktualizace.",
-        "other":"{} a {} další aplikace mají aktualizace."
+        "one": "{} a 1 další aplikace mají aktualizace.",
+        "other": "{} a {} další aplikace mají aktualizace."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one":"{} a {} další aplikace mají aktualizace.",
-        "další":"{} a {} další aplikace byly aktualizovány."
+        "one": "{} a {} další aplikace mají aktualizace.",
+        "další": "{} a {} další aplikace byly aktualizovány."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one":"{} a {} další aplikace byly možná aktualizovány",
-        "other":"{} a {} další aplikace mohly být aktualizovány."
+        "one": "{} a {} další aplikace byly možná aktualizovány",
+        "other": "{} a {} další aplikace mohly být aktualizovány."
     }
 }
-
