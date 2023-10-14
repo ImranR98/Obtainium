@@ -281,23 +281,23 @@
     },
     "apps": {
         "one": "{} App",
-        "other": "{} Apps"
+        "other": "{} Appar"
     },
     "url": {
         "one": "{} URL",
-        "other": "{} URLs"
+        "other": "{} URL:er"
     },
     "minute": {
-        "one": "{} Minute",
-        "other": "{} Minutes"
+        "one": "{} Minut",
+        "other": "{} Minuter"
     },
     "hour": {
-        "one": "{} Hour",
-        "other": "{} Hours"
+        "one": "{} Timme",
+        "other": "{} Timmar"
     },
     "day": {
-        "one": "{} Day",
-        "other": "{} Days"
+        "one": "{} Dag",
+        "other": "{} Dagar"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Cleared {n} log (before = {before}, after = {after})",
