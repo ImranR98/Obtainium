@@ -262,10 +262,10 @@
     "reverseSort": "Reverse sorting",
     "debugMenu": "Debug Menu",
     "bgTaskStarted": "Background task started - check logs.",
-    "runBgCheckNow": "Run Background Update Check Now",
+    "runBgCheckNow": "Kör Bakgrundsuppdateringskoll Nu",
     "removeAppQuestion": {
-        "one": "Remove App?",
-        "other": "Remove Apps?"
+        "one": "Ta Bort App?",
+        "other": "Ta Bort Appar?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Too many requests (rate limited) - try again in {} minute",
@@ -300,19 +300,19 @@
         "other": "{} Dagar"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "Cleared {n} log (before = {before}, after = {after})",
-        "other": "Cleared {n} logs (before = {before}, after = {after})"
+        "one": "Rensade {n} logg (före = {before}, efter = {after})",
+        "other": "Rensade {n} loggar (före = {before}, efter = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} and 1 more app have updates.",
-        "other": "{} and {} more apps have updates."
+        "one": "{} och 1 app till har tillgängliga uppdateringar.",
+        "other": "{} och {} appar till har tillgängliga uppdateringar."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} and 1 more app was updated.",
-        "other": "{} and {} more apps were updated."
+        "one": "{} och 1 till app uppdaterades.",
+        "other": "{} och {} appar till uppdaterades."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} and 1 more app may have been updated.",
-        "other": "{} and {} more apps may have been updated."
+        "one": "{} och 1 till app kan ha uppdaterats.",
+        "other": "{} och {} appar till kan ha uppdaterats."
     }
 }
