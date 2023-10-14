@@ -330,6 +330,7 @@ abstract class AppSource {
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
+  bool neverAutoSelect = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -370,6 +371,10 @@ abstract class AppSource {
       {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
       bool forAPKDownload = false}) async {
     return null;
+  }
+
+  App endOfGetAppChanges(App app) {
+    return app;
   }
 
   Future<Response> sourceRequest(String url,
@@ -541,6 +546,11 @@ intValidator(String? value, {bool positive = false}) {
   return null;
 }
 
+bool isTempId(App app) {
+  // return app.id == generateTempID(app.url, app.additionalSettings);
+  return RegExp('^[0-9]+\$').hasMatch(app.id);
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -595,7 +605,7 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      for (var s in sources.where((element) => element.host == null)) {
+      for (var s in sources.where((element) => element.host == null && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;
@@ -625,11 +635,6 @@ class SourceProvider {
   String generateTempID(
           String standardUrl, Map<String, dynamic> additionalSettings) =>
       (standardUrl + additionalSettings.toString()).hashCode.toString();
-
-  bool isTempId(App app) {
-    // return app.id == generateTempID(app.url, app.additionalSettings);
-    return RegExp('^[0-9]+\$').hasMatch(app.id);
-  }
 
   Future<App> getApp(
       AppSource source, String url, Map<String, dynamic> additionalSettings,
@@ -672,7 +677,7 @@ class SourceProvider {
     String apkVersion = apk.version.replaceAll('/', '-');
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
-    return App(
+    App finalApp = App(
         currentApp?.id ??
             ((!source.appIdInferIsOptional ||
                     (source.appIdInferIsOptional && inferAppIdIfOptional))
@@ -698,6 +703,7 @@ class SourceProvider {
             source.appIdInferIsOptional &&
                 inferAppIdIfOptional // Optional ID inferring may be incorrect - allow correction on first install
         );
+    return source.endOfGetAppChanges(finalApp);
   }
 
   // Returns errors in [results, errors] instead of throwing them

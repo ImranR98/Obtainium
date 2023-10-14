@@ -292,7 +292,7 @@ class _AppPageState extends State<AppPage> {
         if (source?.enforceTrackOnly == true) {
           app.app.additionalSettings['trackOnly'] = true;
           // ignore: use_build_context_synchronously
-          showError(tr('appsFromSourceAreTrackOnly'), context);
+          showMessage(tr('appsFromSourceAreTrackOnly'), context);
         }
         if (app.app.additionalSettings['versionDetection'] ==
             'releaseDateAsVersion') {
@@ -343,7 +343,7 @@ class _AppPageState extends State<AppPage> {
                   );
                   if (app?.app.installedVersion != null && !trackOnly) {
                     // ignore: use_build_context_synchronously
-                    showError(tr('appsUpdated'), context);
+                    showMessage(tr('appsUpdated'), context);
                   }
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();

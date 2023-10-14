@@ -153,7 +153,7 @@ class _AddAppPageState extends State<AddAppPage> {
               overrideSource: pickedSourceOverride,
               inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
-          if (sourceProvider.isTempId(app) &&
+          if (isTempId(app) &&
               app.additionalSettings['trackOnly'] != true) {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
