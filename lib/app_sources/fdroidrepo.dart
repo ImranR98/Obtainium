@@ -8,6 +8,7 @@ class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
     canSearch = true;
+    neverAutoSelect = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [

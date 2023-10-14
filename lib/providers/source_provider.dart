@@ -330,6 +330,7 @@ abstract class AppSource {
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
+  bool neverAutoSelect = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -604,7 +605,7 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      for (var s in sources.where((element) => element.host == null)) {
+      for (var s in sources.where((element) => element.host == null && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;
