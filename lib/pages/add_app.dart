@@ -153,8 +153,7 @@ class _AddAppPageState extends State<AddAppPage> {
               overrideSource: pickedSourceOverride,
               inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
-          if (isTempId(app) &&
-              app.additionalSettings['trackOnly'] != true) {
+          if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
             // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmApkUrl(app, context);
             if (apkUrl == null) {
@@ -260,8 +259,9 @@ class _AddAppPageState extends State<AddAppPage> {
         searching = true;
       });
       try {
-        var results = await Future.wait(
-            sourceProvider.sources.where((e) => e.canSearch).map((e) async {
+        var results = await Future.wait(sourceProvider.sources
+            .where((e) => e.canSearch && !e.excludeFromMassSearch)
+            .map((e) async {
           try {
             return await e.search(searchQuery);
           } catch (err) {

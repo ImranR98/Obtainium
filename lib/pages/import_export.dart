@@ -141,7 +141,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
               }
             });
             appsProvider.addMissingCategories(settingsProvider);
-            showMessage(tr('importedX', args: [plural('apps', value)]), context);
+            showMessage(
+                tr('importedX', args: [plural('apps', value)]), context);
           });
         } else {
           // User canceled the picker

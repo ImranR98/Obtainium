@@ -494,6 +494,7 @@ abstract class AppSource {
   }
 
   bool canSearch = false;
+  bool excludeFromMassSearch = false;
   List<GeneratedFormItem> searchQuerySettingFormItems = [];
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) {
@@ -605,7 +606,8 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      for (var s in sources.where((element) => element.host == null && !element.neverAutoSelect)) {
+      for (var s in sources.where(
+          (element) => element.host == null && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;
