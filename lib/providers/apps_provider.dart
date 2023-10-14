@@ -267,10 +267,10 @@ class AppsProvider with ChangeNotifier {
       File downloadedFile, String downloadUrl) async {
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
     // The former case should be handled (give the App its real ID), the latter is a security issue
-    var isTempId = SourceProvider().isTempId(app);
+    var isTempIdBool = isTempId(app);
     if (newInfo != null) {
       if (app.id != newInfo.packageName) {
-        if (apps[app.id] != null && !isTempId && !app.allowIdChange) {
+        if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
           throw IDChangedError(newInfo.packageName!);
         }
         var idChangeWasAllowed = app.allowIdChange;
@@ -281,10 +281,10 @@ class AppsProvider with ChangeNotifier {
             '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
         if (apps[originalAppId] != null) {
           await removeApps([originalAppId]);
-          await saveApps([app], onlyIfExists: !isTempId && !idChangeWasAllowed);
+          await saveApps([app], onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
         }
       }
-    } else if (isTempId) {
+    } else if (isTempIdBool) {
       throw ObtainiumError('Could not get ID from APK');
     }
     return downloadedFile;

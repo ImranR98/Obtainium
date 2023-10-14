@@ -372,6 +372,10 @@ abstract class AppSource {
     return null;
   }
 
+  App endOfGetAppChanges(App app) {
+    return app;
+  }
+
   Future<Response> sourceRequest(String url,
       {bool followRedirects = true,
       Map<String, dynamic> additionalSettings =
@@ -541,6 +545,11 @@ intValidator(String? value, {bool positive = false}) {
   return null;
 }
 
+bool isTempId(App app) {
+  // return app.id == generateTempID(app.url, app.additionalSettings);
+  return RegExp('^[0-9]+\$').hasMatch(app.id);
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -626,11 +635,6 @@ class SourceProvider {
           String standardUrl, Map<String, dynamic> additionalSettings) =>
       (standardUrl + additionalSettings.toString()).hashCode.toString();
 
-  bool isTempId(App app) {
-    // return app.id == generateTempID(app.url, app.additionalSettings);
-    return RegExp('^[0-9]+\$').hasMatch(app.id);
-  }
-
   Future<App> getApp(
       AppSource source, String url, Map<String, dynamic> additionalSettings,
       {App? currentApp,
@@ -672,7 +676,7 @@ class SourceProvider {
     String apkVersion = apk.version.replaceAll('/', '-');
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
-    return App(
+    App finalApp = App(
         currentApp?.id ??
             ((!source.appIdInferIsOptional ||
                     (source.appIdInferIsOptional && inferAppIdIfOptional))
@@ -698,6 +702,7 @@ class SourceProvider {
             source.appIdInferIsOptional &&
                 inferAppIdIfOptional // Optional ID inferring may be incorrect - allow correction on first install
         );
+    return source.endOfGetAppChanges(finalApp);
   }
 
   // Returns errors in [results, errors] instead of throwing them
