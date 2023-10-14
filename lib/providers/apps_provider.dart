@@ -1325,18 +1325,19 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 ///
 /// @param List<MapEntry<String, int>>? toCheck: The appIds to check for updates (with the number of previous attempts made per appid) (defaults to all apps)
 ///
-/// @param List<String>? toInstall: The appIds to attempt to update (defaults to an empty array)
+/// @param List<String>? toInstall: The appIds to attempt to update (if empty - which is the default - all pending updates are taken)
 ///
 /// When toCheck is empty, the function is in "install mode" (else it is in "update mode").
-/// In update mode, all apps in toCheck are checked for updates.
-/// If an update is available, the appId is either added to toInstall (if a background update is possible) or the user is notified.
-/// If there are errors, the task is run again for the remaining apps after a few minutes (duration depends on the errors), up to a maximum of 5 tries for any app.
+/// In update mode, all apps in toCheck are checked for updates (in parallel).
+/// If an update is available and it cannot be installed silently, the user is notified of the available update.
+/// If there are any errors, the task is run again for the remaining apps after a few minutes (based on the error with the longest retry interval).
+/// Any app that has reached it's retry limit, the user is notified that it could not be checked.
 ///
 /// Once all update checks are complete, the task is run again in install mode.
-/// In this mode, all apps in toInstall are downloaded and installed in the background (install result is unknown).
-/// If there is an error, the function tries to continue after a few minutes (duration depends on the error), up to a maximum of 5 tries.
+/// In this mode, all pending silent updates are downloaded and installed in the background (serially - one at a time).
+/// If there is an error, the offending app is moved to the back of the line of remaining apps, and the task is retried.
+/// If an app repeatedly fails to install up to its retry limit, the user is notified.
 ///
-/// In either mode, if the function fails after the maximum number of tries, the user is notified.
 @pragma('vm:entry-point')
 Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1405,97 +1406,120 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
   bool installMode =
       toCheck.isEmpty; // Task is either in update mode or install mode
 
-  // In install mode, grab all available silent updates unless explicitly told otherwise
-  if (installMode && toInstall.isEmpty && !networkRestricted) {
-    var temp = appsProvider.findExistingUpdates(installedOnly: true);
-    for (var i = 0; i < temp.length; i++) {
-      if (await appsProvider
-          .canInstallSilently(appsProvider.apps[temp[i]]!.app)) {
-        toInstall.add(MapEntry(temp[i], 0));
-      }
-    }
-  }
-
   logs.add(
       'BG ${installMode ? 'install' : 'update'} task $taskId: Started (${installMode ? toInstall.length : toCheck.length}).');
 
   if (!installMode) {
-    // If in update mode...
-    var didCompleteChecking = false;
-    CheckingUpdatesNotification? notif;
-    // Loop through all updates and check each
-    List<App> toNotify = [];
+    // If in update mode, we check for updates.
+    // We divide the results into 4 groups:
+    // - toNotify - Apps with updates that the user will be notified about (can't be silently installed)
+    // - toRetry - Apps with update check errors that will be retried in a while
+    // - toThrow - Apps with update check errors that the user will be notified about (no retry)
+    // After grouping the updates, we take care of toNotify and toThrow first
+    // Then if toRetry is not empty, we schedule another update task to run in a while
+    // If toRetry is empty, we take care of schedule another task that will run in install mode (toCheck is empty)
+
+    // Init. vars.
+    List<App> updates = []; // All updates found (silent and non-silent)
+    List<App> toNotify =
+        []; // All non-silent updates that the user will be notified about
+    List<MapEntry<String, int>> toRetry =
+        []; // All apps that got errors while checking
+    var retryAfterXSeconds =
+        0; // How long to wait until the next attempt (if there are errors)
+    MultiAppMultiError?
+        errors; // All errors including those that will lead to a retry
+    MultiAppMultiError toThrow =
+        MultiAppMultiError(); // All errors that will not lead to a retry, just a notification
+    CheckingUpdatesNotification notif = CheckingUpdatesNotification(
+        plural('apps', toCheck.length)); // The notif. to show while checking
+
+    // Set a bool for when we're no on wifi/wired and the user doesn't want to download apps in that state
+    var networkRestricted = false;
+    if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
+      var netResult = await (Connectivity().checkConnectivity());
+      networkRestricted = (netResult != ConnectivityResult.wifi) &&
+          (netResult != ConnectivityResult.ethernet);
+    }
+
     try {
-      for (int i = 0; i < toCheck.length; i++) {
-        var appId = toCheck[i].key;
-        var attemptCount = toCheck[i].value + 1;
-        AppInMemory? app = appsProvider.apps[appId];
-        if (app?.app.installedVersion != null) {
-          try {
-            notificationsProvider.notify(
-                notif = CheckingUpdatesNotification(app?.name ?? appId),
-                cancelExisting: true);
-            App? newApp = await appsProvider.checkUpdate(appId);
-            if (newApp != null) {
-              if (networkRestricted ||
-                  !(await appsProvider.canInstallSilently(app!.app))) {
-                if (newApp.additionalSettings['skipUpdateNotifications'] !=
-                    true) {
-                  toNotify.add(newApp);
-                }
-              }
+      // Check for updates
+      notificationsProvider.notify(notif, cancelExisting: true);
+      updates = await appsProvider.checkUpdates(
+          specificIds: toCheck.map((e) => e.key).toList());
+    } catch (e) {
+      // If there were errors, group them into toRetry and toThrow based on max retry count per app
+      if (e is Map) {
+        updates = e['updates'];
+        errors = e['errors'];
+        errors!.rawErrors.forEach((key, err) {
+          logs.add(
+              'BG update task $taskId: Got error on checking for $key \'${err.toString()}\'.');
+          var toCheckApp = toCheck.where((element) => element.key == key).first;
+          if (toCheckApp.value < maxAttempts) {
+            toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
+            // Next task interval is based on the error with the longest retry time
+            var minRetryIntervalForThisApp = err is RateLimitError
+                ? (err.remainingMinutes * 60)
+                : e is ClientException
+                    ? (15 * 60)
+                    : pow(toCheckApp.value + 1, 2).toInt();
+            if (minRetryIntervalForThisApp > retryAfterXSeconds) {
+              retryAfterXSeconds = minRetryIntervalForThisApp;
             }
-            if (i == (toCheck.length - 1)) {
-              didCompleteChecking = true;
-            }
-          } catch (e) {
-            // If you got an error, move the offender to the back of the line (increment their fail count) and schedule another task to continue checking shortly
-            logs.add(
-                'BG update task $taskId: Got error on checking for $appId \'${e.toString()}\'.');
-            if (attemptCount < maxAttempts) {
-              var remainingSeconds = e is RateLimitError
-                  ? (i == 0 ? (e.remainingMinutes * 60) : (5 * 60))
-                  : e is ClientException
-                      ? (15 * 60)
-                      : pow(attemptCount, 2).toInt();
-              logs.add(
-                  'BG update task $taskId: Will continue in $remainingSeconds seconds (with $appId moved to the end of the line).');
-              var remainingToCheck = moveStrToEndMapEntryWithCount(
-                  toCheck.sublist(i), MapEntry(appId, attemptCount));
-              AndroidAlarmManager.oneShot(Duration(seconds: remainingSeconds),
-                  taskId + 1, bgUpdateCheck,
-                  params: {
-                    'toCheck': remainingToCheck
-                        .map(
-                            (entry) => {'key': entry.key, 'value': entry.value})
-                        .toList(),
-                    'toInstall': toInstall
-                        .map(
-                            (entry) => {'key': entry.key, 'value': entry.value})
-                        .toList(),
-                  });
-              break;
-            } else {
-              // If the offender has reached its fail limit, notify the user and remove it from the list (task can continue)
-              toCheck.removeAt(i);
-              i--;
-              notificationsProvider
-                  .notify(ErrorCheckingUpdatesNotification(e.toString()));
-            }
-          } finally {
-            if (notif != null) {
-              notificationsProvider.cancel(notif.id);
-            }
+          } else {
+            toThrow.add(key, err, appName: errors?.appIdNames[key]);
           }
-        }
+        });
+      } else {
+        // We don't expect to ever get here in any situation so no need to catch (but log it in case)
+        logs.add('Fatal error in BG update task: ${e.toString()}');
+        rethrow;
       }
     } finally {
-      if (toNotify.isNotEmpty) {
-        notificationsProvider.notify(UpdateNotification(toNotify));
+      notificationsProvider.cancel(notif.id);
+    }
+
+    // Filter out updates that will be installed silently (the rest go into toNotify)
+    for (var i = 0; i < updates.length; i++) {
+      if (networkRestricted ||
+          !(await appsProvider.canInstallSilently(updates[i]))) {
+        if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
+          toNotify.add(updates[i]);
+        }
       }
     }
-    // If you're done checking and found some silently installable updates, schedule another task which will run in install mode
-    if (didCompleteChecking) {
+
+    // Send the update notification
+    if (toNotify.isNotEmpty) {
+      notificationsProvider.notify(UpdateNotification(toNotify));
+    }
+
+    // Send the error notifications (grouped by error string)
+    if (toThrow.rawErrors.isNotEmpty) {
+      for (var element in toThrow.idsByErrorString.entries) {
+        notificationsProvider.notify(ErrorCheckingUpdatesNotification(
+            errors!.errorsAppsString(element.key, element.value),
+            id: Random().nextInt(10000)));
+      }
+    }
+
+    // if there are update checks to retry, schedule a retry task
+    if (toRetry.isNotEmpty) {
+      logs.add(
+          'BG update task $taskId: Will retry in $retryAfterXSeconds seconds.');
+      AndroidAlarmManager.oneShot(
+          Duration(seconds: retryAfterXSeconds), taskId + 1, bgUpdateCheck,
+          params: {
+            'toCheck': toRetry
+                .map((entry) => {'key': entry.key, 'value': entry.value})
+                .toList(),
+            'toInstall': toInstall
+                .map((entry) => {'key': entry.key, 'value': entry.value})
+                .toList(),
+          });
+    } else {
+      // If there are no more update checks, schedule an install task
       logs.add(
           'BG update task $taskId: Done. Scheduling install task to run immediately.');
       AndroidAlarmManager.oneShot(
@@ -1506,11 +1530,19 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 .map((entry) => {'key': entry.key, 'value': entry.value})
                 .toList()
           });
-    } else if (didCompleteChecking) {
-      logs.add('BG update task $taskId: Done.');
     }
   } else {
-    // If in install mode...
+    // In install mode...
+    // If you haven't explicitly been given updates to install (which is the case for new tasks), grab all available silent updates
+    if (toInstall.isEmpty && !networkRestricted) {
+      var temp = appsProvider.findExistingUpdates(installedOnly: true);
+      for (var i = 0; i < temp.length; i++) {
+        if (await appsProvider
+            .canInstallSilently(appsProvider.apps[temp[i]]!.app)) {
+          toInstall.add(MapEntry(temp[i], 0));
+        }
+      }
+    }
     var didCompleteInstalling = false;
     var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
     if (tempObtArr.isNotEmpty) {
@@ -1562,9 +1594,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
               .notify(ErrorCheckingUpdatesNotification(e.toString()));
         }
       }
-      if (didCompleteInstalling) {
-        logs.add('BG install task $taskId: Done.');
-      }
+    }
+    if (didCompleteInstalling || toInstall.isEmpty) {
+      logs.add('BG install task $taskId: Done.');
     }
   }
 }

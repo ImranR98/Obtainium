@@ -535,7 +535,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         onPressed: () {
                           context.read<LogsProvider>().get().then((logs) {
                             if (logs.isEmpty) {
-                              showError(ObtainiumError(tr('noLogs')), context);
+                              showMessage(ObtainiumError(tr('noLogs')), context);
                             } else {
                               showDialog(
                                   context: context,
@@ -577,7 +577,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     const Duration(seconds: 0),
                                     bgUpdateCheckAlarmId + 200,
                                     bgUpdateCheck);
-                                showError(tr('bgTaskStarted'), context);
+                                showMessage(tr('bgTaskStarted'), context);
                               },
                               child: Text(tr('runBgCheckNow')))
                         ],
