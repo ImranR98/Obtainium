@@ -81,7 +81,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           });
           appsProvider.addAppsByURL(urls).then((errors) {
             if (errors.isEmpty) {
-              showError(tr('importedX', args: [plural('apps', urls.length)]),
+              showMessage(tr('importedX', args: [plural('apps', urls.length)]),
                   context);
             } else {
               showDialog(
@@ -111,7 +111,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
               sp: settingsProvider)
           .then((String? result) {
         if (result != null) {
-          showError(tr('exportedTo', args: [result]), context);
+          showMessage(tr('exportedTo', args: [result]), context);
         }
       }).catchError((e) {
         showError(e, context);
@@ -141,7 +141,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
               }
             });
             appsProvider.addMissingCategories(settingsProvider);
-            showError(tr('importedX', args: [plural('apps', value)]), context);
+            showMessage(tr('importedX', args: [plural('apps', value)]), context);
           });
         } else {
           // User canceled the picker
@@ -216,7 +216,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
               var errors = await appsProvider.addAppsByURL(selectedUrls);
               if (errors.isEmpty) {
                 // ignore: use_build_context_synchronously
-                showError(
+                showMessage(
                     tr('importedX',
                         args: [plural('apps', selectedUrls.length)]),
                     context);
@@ -274,7 +274,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
             var errors = await appsProvider.addAppsByURL(selectedUrls);
             if (errors.isEmpty) {
               // ignore: use_build_context_synchronously
-              showError(
+              showMessage(
                   tr('importedX', args: [plural('apps', selectedUrls.length)]),
                   context);
             } else {

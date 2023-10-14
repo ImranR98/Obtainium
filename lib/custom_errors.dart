@@ -101,9 +101,9 @@ class MultiAppMultiError extends ObtainiumError {
       .join('\n\n');
 }
 
-showError(dynamic e, BuildContext context) {
+showMessage(dynamic e, BuildContext context, {bool isError = false}) {
   Provider.of<LogsProvider>(context, listen: false)
-      .add(e.toString(), level: LogLevels.error);
+      .add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.toString())),
@@ -115,8 +115,8 @@ showError(dynamic e, BuildContext context) {
           return AlertDialog(
             scrollable: true,
             title: Text(e is MultiAppMultiError
-                ? tr('someErrors')
-                : tr('unexpectedError')),
+                ? tr(isError ? 'someErrors' : 'updates')
+                : tr(isError ? 'unexpectedError' : 'unknown')),
             content: GestureDetector(
                 onLongPress: () {
                   Clipboard.setData(ClipboardData(text: e.toString()));
@@ -135,6 +135,10 @@ showError(dynamic e, BuildContext context) {
           );
         });
   }
+}
+
+showError(dynamic e, BuildContext context) {
+  showMessage(e, context, isError: true);
 }
 
 String list2FriendlyString(List<String> list) {
