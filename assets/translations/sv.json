@@ -248,7 +248,7 @@
     "verifyLatestTag": "Verifiera 'senaste'-taggen",
     "intermediateLinkRegex": "Filter for an 'Intermediate' Link to Visit First",
     "intermediateLinkNotFound": "Intermediate link not found",
-    "exemptFromBackgroundUpdates": "Unta från bakgrundsuppdaterings (om aktiverar)",
+    "exemptFromBackgroundUpdates": "Undta från bakgrundsuppdateringar (om aktiverad)",
     "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "versionExtractionRegEx": "Version Extraction RegEx",
