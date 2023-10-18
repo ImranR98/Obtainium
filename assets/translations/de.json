@@ -274,6 +274,7 @@
     "downloadingXNotifChannel": "Lade {} herunter",
     "completeAppInstallationNotifChannel": "App Installation abschließen",
     "checkingForUpdatesNotifChannel": "Nach Aktualisierungen suchen",
+    "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

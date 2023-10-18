@@ -281,7 +281,8 @@ class AppsProvider with ChangeNotifier {
             '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
         if (apps[originalAppId] != null) {
           await removeApps([originalAppId]);
-          await saveApps([app], onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
+          await saveApps([app],
+              onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
         }
       }
     } else if (isTempIdBool) {
@@ -716,9 +717,11 @@ class AppsProvider with ChangeNotifier {
     if (app?.app == null) {
       return false;
     }
-    var naiveStandardVersionDetection = SourceProvider()
-        .getSource(app!.app.url, overrideSource: app.app.overrideSource)
-        .naiveStandardVersionDetection;
+    var naiveStandardVersionDetection =
+        app!.app.additionalSettings['naiveStandardVersionDetection'] == true ||
+            SourceProvider()
+                .getSource(app.app.url, overrideSource: app.app.overrideSource)
+                .naiveStandardVersionDetection;
     return app.app.additionalSettings['trackOnly'] != true &&
         app.app.additionalSettings['versionDetection'] !=
             'releaseDateAsVersion' &&
@@ -739,9 +742,11 @@ class AppsProvider with ChangeNotifier {
     var versionDetectionIsStandard =
         app.additionalSettings['versionDetection'] ==
             'standardVersionDetection';
-    var naiveStandardVersionDetection = SourceProvider()
-        .getSource(app.url, overrideSource: app.overrideSource)
-        .naiveStandardVersionDetection;
+    var naiveStandardVersionDetection =
+        app.additionalSettings['naiveStandardVersionDetection'] == true ||
+            SourceProvider()
+                .getSource(app.url, overrideSource: app.overrideSource)
+                .naiveStandardVersionDetection;
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
@@ -1055,12 +1060,21 @@ class AppsProvider with ChangeNotifier {
   }
 
   List<String> getAppsSortedByUpdateCheckTime(
-      {DateTime? ignoreAppsCheckedAfter}) {
+      {DateTime? ignoreAppsCheckedAfter,
+      bool onlyCheckInstalledOrTrackOnlyApps = false}) {
     List<String> appIds = apps.values
         .where((app) =>
             app.app.lastUpdateCheck == null ||
             ignoreAppsCheckedAfter == null ||
             app.app.lastUpdateCheck!.isBefore(ignoreAppsCheckedAfter))
+        .where((app) {
+          if (!onlyCheckInstalledOrTrackOnlyApps) {
+            return true;
+          } else {
+            return app.app.installedVersion != null ||
+                app.app.additionalSettings['trackOnly'] == true;
+          }
+        })
         .map((e) => e.app.id)
         .toList();
     appIds.sort((a, b) =>
@@ -1073,14 +1087,18 @@ class AppsProvider with ChangeNotifier {
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAppsCheckedAfter,
       bool throwErrorsForRetry = false,
-      List<String>? specificIds}) async {
+      List<String>? specificIds,
+      SettingsProvider? sp}) async {
+    SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
     if (!gettingUpdates) {
       gettingUpdates = true;
       try {
         List<String> appIds = getAppsSortedByUpdateCheckTime(
-            ignoreAppsCheckedAfter: ignoreAppsCheckedAfter);
+            ignoreAppsCheckedAfter: ignoreAppsCheckedAfter,
+            onlyCheckInstalledOrTrackOnlyApps:
+                settingsProvider.onlyCheckInstalledOrTrackOnlyApps);
         if (specificIds != null) {
           appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
         }
@@ -1362,7 +1380,9 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
                 entry['key'] as String, entry['value'] as int))
             .toList() ??
         appsProvider
-            .getAppsSortedByUpdateCheckTime()
+            .getAppsSortedByUpdateCheckTime(
+                onlyCheckInstalledOrTrackOnlyApps: appsProvider
+                    .settingsProvider.onlyCheckInstalledOrTrackOnlyApps)
             .map((e) => MapEntry(e, 0)))
   ];
   List<MapEntry<String, int>> toInstall = <MapEntry<String, int>>[
@@ -1446,7 +1466,8 @@ Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
       // Check for updates
       notificationsProvider.notify(notif, cancelExisting: true);
       updates = await appsProvider.checkUpdates(
-          specificIds: toCheck.map((e) => e.key).toList());
+          specificIds: toCheck.map((e) => e.key).toList(),
+          sp: appsProvider.settingsProvider);
     } catch (e) {
       // If there were errors, group them into toRetry and toThrow based on max retry count per app
       if (e is Map) {

@@ -219,7 +219,9 @@ class HTML extends AppSource {
           additionalSettings['versionExtractionRegEx'] as String?;
       if (versionExtractionRegEx?.isNotEmpty == true) {
         var match = RegExp(versionExtractionRegEx!).allMatches(
-            res.body.split('\r\n').join('\n').split('\n').join('\\n'));
+            additionalSettings['versionExtractWholePage'] == true
+                ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
+                : rel);
         if (match.isEmpty) {
           throw NoVersionError();
         }
