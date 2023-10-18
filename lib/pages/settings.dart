@@ -310,6 +310,23 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr(
+                                        'onlyCheckInstalledOrTrackOnlyApps'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .onlyCheckInstalledOrTrackOnlyApps,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                              .onlyCheckInstalledOrTrackOnlyApps =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),
@@ -535,7 +552,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onPressed: () {
                           context.read<LogsProvider>().get().then((logs) {
                             if (logs.isEmpty) {
-                              showMessage(ObtainiumError(tr('noLogs')), context);
+                              showMessage(
+                                  ObtainiumError(tr('noLogs')), context);
                             } else {
                               showDialog(
                                   context: context,

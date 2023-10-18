@@ -676,7 +676,6 @@ class SourceProvider {
         }
       }
     }
-    String apkVersion = apk.version.replaceAll('/', '-');
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
     App finalApp = App(
@@ -691,7 +690,7 @@ class SourceProvider {
         apk.names.author,
         name,
         currentApp?.installedVersion,
-        apkVersion,
+        apk.version,
         apk.apkUrls,
         apk.apkUrls.length - 1 >= 0 ? apk.apkUrls.length - 1 : 0,
         additionalSettings,
