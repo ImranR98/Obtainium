@@ -1,4 +1,4 @@
-import 'package:workmanager/workmanager.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -591,10 +591,10 @@ class _SettingsPageState extends State<SettingsPage> {
                           height16,
                           TextButton(
                               onPressed: () {
-                                Workmanager().registerOneOffTask(
-                                    '$bgUpdateTaskId+Manual', bgUpdateTaskId,
-                                    existingWorkPolicy:
-                                        ExistingWorkPolicy.replace);
+                                AndroidAlarmManager.oneShot(
+                                    const Duration(seconds: 0),
+                                    bgUpdateCheckAlarmId + 200,
+                                    bgUpdateCheck);
                                 showMessage(tr('bgTaskStarted'), context);
                               },
                               child: Text(tr('runBgCheckNow')))

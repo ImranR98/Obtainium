@@ -12,7 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:workmanager/workmanager.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
@@ -23,7 +23,7 @@ const String currentVersion = '0.14.31';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
-const String bgUpdateTaskId = 'bgUpdate';
+const int bgUpdateCheckAlarmId = 666;
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
@@ -71,17 +71,6 @@ Future<void> loadTranslations() async {
       fallbackTranslations: controller.fallbackTranslations);
 }
 
-@pragma('vm:entry-point')
-void bgTaskDispatcher() {
-  Workmanager().executeTask((taskId, params) {
-    if (taskId == bgUpdateTaskId) {
-      return bgUpdateTask(taskId, params);
-    } else {
-      return Future.value(true);
-    }
-  });
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -99,7 +88,7 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
-  await Workmanager().initialize(bgTaskDispatcher);
+  await AndroidAlarmManager.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
@@ -169,7 +158,7 @@ class _ObtainiumState extends State<Obtainium> {
       var actualUpdateInterval = settingsProvider.updateInterval;
       if (existingUpdateInterval != actualUpdateInterval) {
         if (actualUpdateInterval == 0) {
-          Workmanager().cancelByUniqueName(bgUpdateTaskId);
+          AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
         } else {
           var settingChanged = existingUpdateInterval != -1;
           var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
@@ -179,10 +168,12 @@ class _ObtainiumState extends State<Obtainium> {
           if (settingChanged || lastCheckWasTooLongAgo) {
             logs.add(
                 'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
-            Workmanager().registerPeriodicTask(
-                bgUpdateTaskId, "BG Update Main Loop",
-                initialDelay: Duration(minutes: actualUpdateInterval),
-                existingWorkPolicy: ExistingWorkPolicy.replace);
+            AndroidAlarmManager.periodic(
+                Duration(minutes: actualUpdateInterval),
+                bgUpdateCheckAlarmId,
+                bgUpdateCheck,
+                rescheduleOnReboot: true,
+                wakeup: true);
           }
         }
         existingUpdateInterval = actualUpdateInterval;
