@@ -170,7 +170,15 @@ class HTML extends AppSource {
       List<String> allLinks = html
           .querySelectorAll('a')
           .map((element) => element.attributes['href'] ?? '')
+          .where((element) => element.isNotEmpty)
           .toList();
+      if (allLinks.isEmpty) {
+        allLinks = RegExp(
+                r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
+            .allMatches(res.body)
+            .map((match) => match.group(0)!)
+            .toList();
+      }
       List<String> links = [];
       if ((additionalSettings['intermediateLinkRegex'] as String?)
               ?.isNotEmpty ==

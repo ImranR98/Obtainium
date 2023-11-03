@@ -181,7 +181,7 @@ APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
     List<String> apkUrls = releaseChoices
         .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
         .toList();
-    return APKDetails(version, getApkUrlsFromUrls(apkUrls),
+    return APKDetails(version, getApkUrlsFromUrls(apkUrls.toSet().toList()),
         AppNames(sourceName, Uri.parse(standardUrl).pathSegments.last));
   } else {
     throw getObtainiumHttpError(res);

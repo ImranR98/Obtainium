@@ -89,11 +89,11 @@ class Uptodown extends AppSource {
       throw getObtainiumHttpError(res);
     }
     var html = parse(res.body);
-    var finalUrl =
-        (html.querySelector('.post-download')?.attributes['data-url']);
-    if (finalUrl == null) {
+    var finalUrlKey =
+        html.querySelector('.post-download')?.attributes['data-url'];
+    if (finalUrlKey == null) {
       throw NoAPKError();
     }
-    return finalUrl;
+    return 'https://dw.$host/dwn/$finalUrlKey';
   }
 }
