@@ -239,7 +239,7 @@
     "sortByFileNamesNotLinks": "Sortuj wg nazw plików zamiast pełnych linków",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
     "customLinkFilterRegex": "Filtruj linki APK według wyrażenia regularnego (domyślnie \".apk$\")",
-    "appsPossiblyUpdated": "Próbowano zaktualizować aplikację",
+    "appsPossiblyUpdated": "Aplikacje mogły zostać zaktualizowane",
     "appsPossiblyUpdatedNotifDescription": "Powiadamia, gdy co najmniej jedna aktualizacja aplikacji została potencjalnie zastosowana w tle",
     "xWasPossiblyUpdatedToY": "{} być może zaktualizowano do {}.",
     "enableBackgroundUpdates": "Włącz aktualizacje w tle",
@@ -274,7 +274,7 @@
     "downloadingXNotifChannel": "Pobieranie aplikacji",
     "completeAppInstallationNotifChannel": "Ukończenie instalacji aplikacji",
     "checkingForUpdatesNotifChannel": "Sprawdzanie dostępności aktualizacji",
-    "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "onlyCheckInstalledOrTrackOnlyApps": "Sprawdzaj tylko zainstalowane i obserwowane aplikacje pod kątem aktualizacji",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",
