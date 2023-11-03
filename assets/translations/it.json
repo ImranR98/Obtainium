@@ -11,7 +11,7 @@
     "unexpectedError": "Errore imprevisto",
     "ok": "Va bene",
     "and": "e",
-    "githubPATLabel": "GitHub Personal Access Token (riduce limite di traffico)",
+    "githubPATLabel": "GitHub Personal Access Token (aumenta limite di traffico)",
     "includePrereleases": "Includi prerelease",
     "fallbackToOlderReleases": "Ripiega su release precedenti",
     "filterReleaseTitlesByRegEx": "Filtra release con espressioni regolari",
@@ -274,7 +274,7 @@
     "downloadingXNotifChannel": "Scaricamento di {} in corso",
     "completeAppInstallationNotifChannel": "Completa l'installazione dell'app",
     "checkingForUpdatesNotifChannel": "Controllo degli aggiornamenti in corso",
-    "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "onlyCheckInstalledOrTrackOnlyApps": "Cerca aggiornamenti solo per app installate e app in Solo-Monitoraggio",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"
