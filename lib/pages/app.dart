@@ -155,10 +155,13 @@ class _AppPageState extends State<AppPage> {
             const SizedBox(height: 20),
             app?.icon != null
                 ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Image.memory(
-                      app!.icon!,
-                      height: 150,
-                      gaplessPlayback: true,
+                    GestureDetector(
+                      child: Image.memory(
+                        app!.icon!,
+                        height: 150,
+                        gaplessPlayback: true,
+                      ),
+                      onTap: () => pm.openApp(app.app.id),
                     )
                   ])
                 : Container(),
@@ -463,15 +466,15 @@ class _AppPageState extends State<AppPage> {
                           : null))
           ],
         ));
-    
+
     appScreenAppBar() => AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
-    );
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        );
 
     return Scaffold(
         appBar: settingsProvider.showAppWebpage ? AppBar() : appScreenAppBar(),

@@ -108,7 +108,8 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
-    var res = await sourceRequest('$standardUrl/index.xml');
+    var res = await sourceRequest(
+        '$standardUrl${standardUrl.endsWith('/index.xml') ? '' : '/index.xml'}');
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {

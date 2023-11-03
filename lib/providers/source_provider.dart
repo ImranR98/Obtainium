@@ -283,9 +283,6 @@ preStandardizeUrl(String url) {
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  if (url.toLowerCase().indexOf('https://www.') == 0) {
-    url = 'https://${url.substring(12)}';
-  }
   url = url
       .split('/')
       .where((e) => e.isNotEmpty)
@@ -599,7 +596,7 @@ class SourceProvider {
     AppSource? source;
     for (var s in sources.where((element) => element.host != null)) {
       if (RegExp(
-              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : ''}${s.host}(/|\\z)?')
+              '://(${s.allowSubDomains ? '([^\\.]+\\.)*' : ''}|www\\.)${s.host}(/|\\z)?')
           .hasMatch(url)) {
         source = s;
         break;
