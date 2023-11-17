@@ -265,7 +265,7 @@
     "runBgCheckNow": "今すぐバックグラウンドでのアップデート確認を開始する",
     "versionExtractWholePage": "バージョン抽出の正規表現をページ全体に適用する",
     "installing": "インストール中",
-    "skipUpdateNotifications": "アップデート通知をスキップする",
+    "skipUpdateNotifications": "アップデート通知を行わない",
     "updatesAvailableNotifChannel": "アップデートが利用可能",
     "appsUpdatedNotifChannel": "アプリをアップデートしました",
     "appsPossiblyUpdatedNotifChannel": "アプリのアップデートを試行",
