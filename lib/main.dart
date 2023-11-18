@@ -45,6 +45,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
+var fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -133,20 +134,22 @@ class _ObtainiumState extends State<Obtainium> {
         logs.add('This is the first ever run of Obtainium.');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApps([
-          App(
-              obtainiumId,
-              'https://github.com/ImranR98/Obtainium',
-              'ImranR98',
-              'Obtainium',
-              currentReleaseTag,
-              currentReleaseTag,
-              [],
-              0,
-              {'includePrereleases': true},
-              null,
-              false)
-        ], onlyIfExists: false);
+        if (!fdroid) {
+          appsProvider.saveApps([
+            App(
+                obtainiumId,
+                'https://github.com/ImranR98/Obtainium',
+                'ImranR98',
+                'Obtainium',
+                currentReleaseTag,
+                currentReleaseTag,
+                [],
+                0,
+                {'includePrereleases': true},
+                null,
+                false)
+          ], onlyIfExists: false);
+        }
       }
       if (!supportedLocales
               .map((e) => e.key.languageCode)
