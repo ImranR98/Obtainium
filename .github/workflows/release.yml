@@ -22,7 +22,7 @@ jobs:
       - name: Build APKs
         run: |
           flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
-          for file in app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
+          for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
           rm ./build/app/outputs/flutter-apk/*.sha1
           ls -l ./build/app/outputs/flutter-apk/
         
