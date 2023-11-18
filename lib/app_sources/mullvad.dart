@@ -1,5 +1,6 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -9,7 +10,7 @@ class Mullvad extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp('^https?://$host');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
@@ -27,21 +28,39 @@ class Mullvad extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('$standardUrl/en/download/android'));
+    Response res = await sourceRequest('$standardUrl/en/download/android');
     if (res.statusCode == 200) {
-      var version = parse(res.body)
-          .querySelector('p.subtitle.is-6')
-          ?.querySelector('a')
-          ?.attributes['href']
-          ?.split('/')
-          .last;
-      if (version == null) {
+      var versions = parse(res.body)
+          .querySelectorAll('p')
+          .map((e) => e.innerHtml)
+          .where((p) => p.contains('Latest version: '))
+          .map((e) {
+            var match = RegExp('[0-9]+(\\.[0-9]+)*').firstMatch(e);
+            if (match == null) {
+              return '';
+            } else {
+              return e.substring(match.start, match.end);
+            }
+          })
+          .where((element) => element.isNotEmpty)
+          .toList();
+      if (versions.isEmpty) {
         throw NoVersionError();
       }
+      String? changeLog;
+      try {
+        changeLog = (await GitHub().getLatestAPKDetails(
+                'https://github.com/mullvad/mullvadvpn-app',
+                {'fallbackToOlderReleases': true}))
+            .changeLog;
+      } catch (e) {
+        // Ignore
+      }
       return APKDetails(
-          version,
-          ['https://mullvad.net/download/app/apk/latest'],
-          AppNames(name, 'Mullvad-VPN'));
+          versions[0],
+          getApkUrlsFromUrls(['https://mullvad.net/download/app/apk/latest']),
+          AppNames(name, 'Mullvad-VPN'),
+          changeLog: changeLog);
     } else {
       throw getObtainiumHttpError(res);
     }

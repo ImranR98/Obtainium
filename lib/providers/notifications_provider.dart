@@ -22,52 +22,82 @@ class ObtainiumNotification {
 }
 
 class UpdateNotification extends ObtainiumNotification {
-  UpdateNotification(List<App> updates)
+  UpdateNotification(List<App> updates, {int? id})
       : super(
-            2,
+            id ?? 2,
             tr('updatesAvailable'),
             '',
             'UPDATES_AVAILABLE',
-            tr('updatesAvailable'),
+            tr('updatesAvailableNotifChannel'),
             tr('updatesAvailableNotifDescription'),
             Importance.max) {
     message = updates.isEmpty
         ? tr('noNewUpdates')
         : updates.length == 1
-            ? tr('xHasAnUpdate', args: [updates[0].name])
+            ? tr('xHasAnUpdate', args: [updates[0].finalName])
             : plural('xAndNMoreUpdatesAvailable', updates.length - 1,
-                args: [updates[0].name, (updates.length - 1).toString()]);
+                args: [updates[0].finalName, (updates.length - 1).toString()]);
   }
 }
 
 class SilentUpdateNotification extends ObtainiumNotification {
-  SilentUpdateNotification(List<App> updates)
-      : super(3, tr('appsUpdated'), '', 'APPS_UPDATED', tr('appsUpdated'),
-            tr('appsUpdatedNotifDescription'), Importance.defaultImportance) {
+  SilentUpdateNotification(List<App> updates, {int? id})
+      : super(
+            id ?? 3,
+            tr('appsUpdated'),
+            '',
+            'APPS_UPDATED',
+            tr('appsUpdatedNotifChannel'),
+            tr('appsUpdatedNotifDescription'),
+            Importance.defaultImportance) {
     message = updates.length == 1
         ? tr('xWasUpdatedToY',
-            args: [updates[0].name, updates[0].latestVersion])
+            args: [updates[0].finalName, updates[0].latestVersion])
         : plural('xAndNMoreUpdatesInstalled', updates.length - 1,
-            args: [updates[0].name, (updates.length - 1).toString()]);
+            args: [updates[0].finalName, (updates.length - 1).toString()]);
+  }
+}
+
+class SilentUpdateAttemptNotification extends ObtainiumNotification {
+  SilentUpdateAttemptNotification(List<App> updates, {int? id})
+      : super(
+            id ?? 3,
+            tr('appsPossiblyUpdated'),
+            '',
+            'APPS_POSSIBLY_UPDATED',
+            tr('appsPossiblyUpdatedNotifChannel'),
+            tr('appsPossiblyUpdatedNotifDescription'),
+            Importance.defaultImportance) {
+    message = updates.length == 1
+        ? tr('xWasPossiblyUpdatedToY',
+            args: [updates[0].finalName, updates[0].latestVersion])
+        : plural('xAndNMoreUpdatesPossiblyInstalled', updates.length - 1,
+            args: [updates[0].finalName, (updates.length - 1).toString()]);
   }
 }
 
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
-  ErrorCheckingUpdatesNotification(String error)
+  ErrorCheckingUpdatesNotification(String error, {int? id})
       : super(
-            5,
+            id ?? 5,
             tr('errorCheckingUpdates'),
             error,
             'BG_UPDATE_CHECK_ERROR',
-            tr('errorCheckingUpdates'),
+            tr('errorCheckingUpdatesNotifChannel'),
             tr('errorCheckingUpdatesNotifDescription'),
             Importance.high);
 }
 
 class AppsRemovedNotification extends ObtainiumNotification {
   AppsRemovedNotification(List<List<String>> namedReasons)
-      : super(6, tr('appsRemoved'), '', 'APPS_REMOVED', tr('appsRemoved'),
-            tr('appsRemovedNotifDescription'), Importance.max) {
+      : super(
+            6,
+            tr('appsRemoved'),
+            '',
+            'APPS_REMOVED',
+            tr('appsRemovedNotifChannel'),
+            tr('appsRemovedNotifDescription'),
+            Importance.max) {
     message = '';
     for (var r in namedReasons) {
       message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
@@ -83,7 +113,7 @@ class DownloadNotification extends ObtainiumNotification {
             tr('downloadingX', args: [appName]),
             '',
             'APP_DOWNLOADING',
-            tr('downloadingX', args: [tr('app')]),
+            tr('downloadingXNotifChannel', args: [tr('app')]),
             tr('downloadNotifDescription'),
             Importance.low,
             onlyAlertOnce: true,
@@ -95,18 +125,21 @@ final completeInstallationNotification = ObtainiumNotification(
     tr('completeAppInstallation'),
     tr('obtainiumMustBeOpenToInstallApps'),
     'COMPLETE_INSTALL',
-    tr('completeAppInstallation'),
+    tr('completeAppInstallationNotifChannel'),
     tr('completeAppInstallationNotifDescription'),
     Importance.max);
 
-final checkingUpdatesNotification = ObtainiumNotification(
-    4,
-    tr('checkingForUpdates'),
-    '',
-    'BG_UPDATE_CHECK',
-    tr('checkingForUpdates'),
-    tr('checkingForUpdatesNotifDescription'),
-    Importance.min);
+class CheckingUpdatesNotification extends ObtainiumNotification {
+  CheckingUpdatesNotification(String appName)
+      : super(
+            4,
+            tr('checkingForUpdates'),
+            appName,
+            'BG_UPDATE_CHECK',
+            tr('checkingForUpdatesNotifChannel'),
+            tr('checkingForUpdatesNotifDescription'),
+            Importance.min);
+}
 
 class NotificationsProvider {
   FlutterLocalNotificationsPlugin notifications =
@@ -167,7 +200,8 @@ class NotificationsProvider {
                 progress: progPercent ?? 0,
                 maxProgress: 100,
                 showProgress: progPercent != null,
-                onlyAlertOnce: onlyAlertOnce)));
+                onlyAlertOnce: onlyAlertOnce,
+                indeterminate: progPercent != null && progPercent < 0)));
   }
 
   Future<void> notify(ObtainiumNotification notif,

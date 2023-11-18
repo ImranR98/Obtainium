@@ -1,17 +1,27 @@
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class IzzyOnDroid extends AppSource {
+  late FDroid fd;
+
   IzzyOnDroid() {
-    host = 'android.izzysoft.de';
+    host = 'izzysoft.de';
+    fd = FDroid();
+    additionalSourceAppSpecificSettingFormItems =
+        fd.additionalSourceAppSpecificSettingFormItems;
+    allowSubDomains = true;
   }
 
   @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/repo/apk/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+  String sourceSpecificStandardizeURL(String url) {
+    RegExp standardUrlRegExA = RegExp('^https?://android.$host/repo/apk/[^/]+');
+    RegExpMatch? match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    if (match == null) {
+      RegExp standardUrlRegExB =
+          RegExp('^https?://apt.$host/fdroid/index/apk/[^/]+');
+      match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    }
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -19,12 +29,9 @@ class IzzyOnDroid extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
-
-  @override
-  String? tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) {
-    return FDroid().tryInferringAppId(standardUrl);
+  Future<String?> tryInferringAppId(String standardUrl,
+      {Map<String, dynamic> additionalSettings = const {}}) async {
+    return fd.tryInferringAppId(standardUrl);
   }
 
   @override
@@ -32,11 +39,17 @@ class IzzyOnDroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = tryInferringAppId(standardUrl);
-    return FDroid().getAPKUrlsFromFDroidPackagesAPIResponse(
-        await get(
-            Uri.parse('https://apt.izzysoft.de/fdroid/api/v1/packages/$appId')),
+    String? appId = await tryInferringAppId(standardUrl);
+    return getAPKUrlsFromFDroidPackagesAPIResponse(
+        await sourceRequest(
+            'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId'),
         'https://android.izzysoft.de/frepo/$appId',
-        standardUrl);
+        standardUrl,
+        name,
+        autoSelectHighestVersionCode:
+            additionalSettings['autoSelectHighestVersionCode'] == true,
+        trySelectingSuggestedVersionCode:
+            additionalSettings['trySelectingSuggestedVersionCode'] == true,
+        filterVersionsByRegEx: additionalSettings['filterVersionsByRegEx']);
   }
 }

@@ -13,17 +13,22 @@ class GitHubStars implements MassAppUrlSource {
   @override
   late List<String> requiredArgs = [tr('uname')];
 
-  Future<Map<String, String>> getOnePageOfUserStarredUrlsWithDescriptions(
+  Future<Map<String, List<String>>> getOnePageOfUserStarredUrlsWithDescriptions(
       String username, int page) async {
-    Response res = await get(Uri.parse(
-        'https://${await GitHub().getCredentialPrefixIfAny()}api.github.com/users/$username/starred?per_page=100&page=$page'));
+    Response res = await get(
+        Uri.parse(
+            'https://api.github.com/users/$username/starred?per_page=100&page=$page'),
+        headers: await GitHub().getRequestHeaders());
     if (res.statusCode == 200) {
-      Map<String, String> urlsWithDescriptions = {};
+      Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body) as List<dynamic>)) {
         urlsWithDescriptions.addAll({
-          e['html_url'] as String: e['description'] != null
-              ? e['description'] as String
-              : tr('noDescription')
+          e['html_url'] as String: [
+            e['full_name'] as String,
+            e['description'] != null
+                ? e['description'] as String
+                : tr('noDescription')
+          ]
         });
       }
       return urlsWithDescriptions;
@@ -35,11 +40,12 @@ class GitHubStars implements MassAppUrlSource {
   }
 
   @override
-  Future<Map<String, String>> getUrlsWithDescriptions(List<String> args) async {
+  Future<Map<String, List<String>>> getUrlsWithDescriptions(
+      List<String> args) async {
     if (args.length != requiredArgs.length) {
       throw ObtainiumError(tr('wrongArgNum'));
     }
-    Map<String, String> urlsWithDescriptions = {};
+    Map<String, List<String>> urlsWithDescriptions = {};
     var page = 1;
     while (true) {
       var pageUrls =

@@ -1,10 +1,9 @@
-import 'dart:math';
-
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -20,21 +19,6 @@ class SettingsPage extends StatefulWidget {
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
-}
-
-// Generates a random light color
-// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
-Color generateRandomLightColor() {
-  // Create a random number generator
-  final Random random = Random();
-
-  // Generate random hue, saturation, and value values
-  final double hue = random.nextDouble() * 360;
-  final double saturation = 0.5 + random.nextDouble() * 0.5;
-  final double value = 0.9 + random.nextDouble() * 0.1;
-
-  // Create a HSV color with the random values
-  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
@@ -89,6 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sortDropdown = DropdownButtonFormField(
+        isExpanded: true,
         decoration: InputDecoration(labelText: tr('appSortBy')),
         value: settingsProvider.sortColumn,
         items: [
@@ -103,6 +88,10 @@ class _SettingsPageState extends State<SettingsPage> {
           DropdownMenuItem(
             value: SortColumnSettings.added,
             child: Text(tr('asAdded')),
+          ),
+          DropdownMenuItem(
+            value: SortColumnSettings.releaseDate,
+            child: Text(tr('releaseDate')),
           )
         ],
         onChanged: (value) {
@@ -112,6 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var orderDropdown = DropdownButtonFormField(
+        isExpanded: true,
         decoration: InputDecoration(labelText: tr('appSortOrder')),
         value: settingsProvider.sortOrder,
         items: [
@@ -139,8 +129,8 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(tr('followSystem')),
           ),
           ...supportedLocales.map((e) => DropdownMenuItem(
-                value: e.toLanguageTag(),
-                child: Text(e.toLanguageTag().toUpperCase()),
+                value: e.key.toLanguageTag(),
+                child: Text(e.value),
               ))
         ],
         onChanged: (value) {
@@ -148,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
           if (value != null) {
             context.setLocale(Locale(value));
           } else {
-            context.resetLocale();
+            settingsProvider.resetLocaleSafe(context);
           }
         });
 
@@ -178,9 +168,9 @@ class _SettingsPageState extends State<SettingsPage> {
         });
 
     var sourceSpecificFields = sourceProvider.sources.map((e) {
-      if (e.additionalSourceSpecificSettingFormItems.isNotEmpty) {
+      if (e.sourceConfigSettingFormItems.isNotEmpty) {
         return GeneratedForm(
-            items: e.additionalSourceSpecificSettingFormItems.map((e) {
+            items: e.sourceConfigSettingFormItems.map((e) {
               e.defaultValue = settingsProvider.getSettingString(e.key);
               return [e];
             }).toList(),
@@ -196,8 +186,16 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     });
 
+    const height8 = SizedBox(
+      height: 8,
+    );
+
     const height16 = SizedBox(
       height: 16,
+    );
+
+    const height32 = SizedBox(
+      height: 32,
     );
 
     return Scaffold(
@@ -213,12 +211,150 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              tr('updates'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            intervalDropdown,
+                            FutureBuilder(
+                                builder: (ctx, val) {
+                                  return (val.data?.version.sdkInt ?? 0) >= 30
+                                      ? Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            height16,
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Flexible(
+                                                    child: Text(tr(
+                                                        'enableBackgroundUpdates'))),
+                                                Switch(
+                                                    value: settingsProvider
+                                                        .enableBackgroundUpdates,
+                                                    onChanged: (value) {
+                                                      settingsProvider
+                                                              .enableBackgroundUpdates =
+                                                          value;
+                                                    })
+                                              ],
+                                            ),
+                                            height8,
+                                            Text(tr('backgroundUpdateReqsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            Text(tr('backgroundUpdateLimitsExplanation'),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelSmall),
+                                            height8,
+                                            if (settingsProvider
+                                                .enableBackgroundUpdates)
+                                              Column(
+                                                children: [
+                                                  height16,
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                          child: Text(tr(
+                                                              'bgUpdatesOnWiFiOnly'))),
+                                                      Switch(
+                                                          value: settingsProvider
+                                                              .bgUpdatesOnWiFiOnly,
+                                                          onChanged: (value) {
+                                                            settingsProvider
+                                                                    .bgUpdatesOnWiFiOnly =
+                                                                value;
+                                                          })
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                          ],
+                                        )
+                                      : const SizedBox.shrink();
+                                },
+                                future: DeviceInfoPlugin().androidInfo),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('checkOnStart'))),
+                                Switch(
+                                    value: settingsProvider.checkOnStart,
+                                    onChanged: (value) {
+                                      settingsProvider.checkOnStart = value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('checkUpdateOnDetailPage'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .checkUpdateOnDetailPage,
+                                    onChanged: (value) {
+                                      settingsProvider.checkUpdateOnDetailPage =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr(
+                                        'onlyCheckInstalledOrTrackOnlyApps'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .onlyCheckInstalledOrTrackOnlyApps,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                              .onlyCheckInstalledOrTrackOnlyApps =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height32,
+                            Text(
+                              tr('sourceSpecific'),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary),
+                            ),
+                            ...sourceSpecificFields,
+                            height32,
+                            Text(
                               tr('appearance'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             themeDropdown,
                             height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('useBlackTheme'))),
+                                Switch(
+                                    value: settingsProvider.useBlackTheme,
+                                    onChanged: (value) {
+                                      settingsProvider.useBlackTheme = value;
+                                    })
+                              ],
+                            ),
                             colourDropdown,
                             height16,
                             Row(
@@ -238,7 +374,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('showWebInAppView')),
+                                Flexible(child: Text(tr('showWebInAppView'))),
                                 Switch(
                                     value: settingsProvider.showAppWebpage,
                                     onChanged: (value) {
@@ -250,7 +386,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(tr('pinUpdates')),
+                                Flexible(child: Text(tr('pinUpdates'))),
                                 Switch(
                                     value: settingsProvider.pinUpdates,
                                     onChanged: (value) {
@@ -258,31 +394,133 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            const Divider(
-                              height: 16,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(
+                                        tr('moveNonInstalledAppsToBottom'))),
+                                Switch(
+                                    value: settingsProvider.buryNonInstalled,
+                                    onChanged: (value) {
+                                      settingsProvider.buryNonInstalled = value;
+                                    })
+                              ],
                             ),
                             height16,
-                            Text(
-                              tr('updates'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child:
+                                        Text(tr('removeOnExternalUninstall'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .removeOnExternalUninstall,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                          .removeOnExternalUninstall = value;
+                                    })
+                              ],
                             ),
-                            intervalDropdown,
-                            const Divider(
-                              height: 48,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('groupByCategory'))),
+                                Switch(
+                                    value: settingsProvider.groupByCategory,
+                                    onChanged: (value) {
+                                      settingsProvider.groupByCategory = value;
+                                    })
+                              ],
                             ),
-                            Text(
-                              tr('sourceSpecific'),
-                              style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowTrackOnlyWarnings'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.hideTrackOnlyWarning,
+                                    onChanged: (value) {
+                                      settingsProvider.hideTrackOnlyWarning =
+                                          value;
+                                    })
+                              ],
                             ),
-                            ...sourceSpecificFields,
-                            const Divider(
-                              height: 48,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child:
+                                        Text(tr('dontShowAPKOriginWarnings'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.hideAPKOriginWarning,
+                                    onChanged: (value) {
+                                      settingsProvider.hideAPKOriginWarning =
+                                          value;
+                                    })
+                              ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('disablePageTransitions'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.disablePageTransitions,
+                                    onChanged: (value) {
+                                      settingsProvider.disablePageTransitions =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('reversePageTransitions'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.reversePageTransitions,
+                                    onChanged: settingsProvider
+                                            .disablePageTransitions
+                                        ? null
+                                        : (value) {
+                                            settingsProvider
+                                                .reversePageTransitions = value;
+                                          })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(tr('highlightTouchTargets'))),
+                                Switch(
+                                    value:
+                                        settingsProvider.highlightTouchTargets,
+                                    onChanged: (value) {
+                                      settingsProvider.highlightTouchTargets =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height32,
                             Text(
                               tr('categories'),
                               style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             height16,
@@ -314,7 +552,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onPressed: () {
                           context.read<LogsProvider>().get().then((logs) {
                             if (logs.isEmpty) {
-                              showError(ObtainiumError(tr('noLogs')), context);
+                              showMessage(
+                                  ObtainiumError(tr('noLogs')), context);
                             } else {
                               showDialog(
                                   context: context,
@@ -328,7 +567,41 @@ class _SettingsPageState extends State<SettingsPage> {
                         label: Text(tr('appLogs'))),
                   ],
                 ),
-                height16,
+                const Divider(
+                  height: 32,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(child: Text(tr('debugMenu'))),
+                        Switch(
+                            value: settingsProvider.showDebugOpts,
+                            onChanged: (value) {
+                              settingsProvider.showDebugOpts = value;
+                            })
+                      ],
+                    ),
+                    if (settingsProvider.showDebugOpts)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          height16,
+                          TextButton(
+                              onPressed: () {
+                                AndroidAlarmManager.oneShot(
+                                    const Duration(seconds: 0),
+                                    bgUpdateCheckAlarmId + 200,
+                                    bgUpdateCheck);
+                                showMessage(tr('bgTaskStarted'), context);
+                              },
+                              child: Text(tr('runBgCheckNow')))
+                        ],
+                      ),
+                  ]),
+                ),
               ],
             ),
           )
@@ -428,6 +701,7 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
   @override
   Widget build(BuildContext context) {
     var settingsProvider = context.watch<SettingsProvider>();
+    var appsProvider = context.watch<AppsProvider>();
     storedValues = settingsProvider.categories.map((key, value) => MapEntry(
         key,
         MapEntry(value,
@@ -451,8 +725,9 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
           if (!isBuilding) {
             storedValues =
                 values['categories'] as Map<String, MapEntry<int, bool>>;
-            settingsProvider.categories =
-                storedValues.map((key, value) => MapEntry(key, value.key));
+            settingsProvider.setCategories(
+                storedValues.map((key, value) => MapEntry(key, value.key)),
+                appsProvider: appsProvider);
             if (widget.onSelected != null) {
               widget.onSelected!(storedValues.keys
                   .where((k) => storedValues[k]!.value)

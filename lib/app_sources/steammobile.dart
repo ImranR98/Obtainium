@@ -10,32 +10,33 @@ class SteamMobile extends AppSource {
     host = 'store.steampowered.com';
     name = tr('steam');
     additionalSourceAppSpecificSettingFormItems = [
-      [GeneratedFormDropdown('app', apks.entries.toList(), label: tr('app'))]
+      [
+        GeneratedFormDropdown('app', apks.entries.toList(),
+            label: tr('app'), defaultValue: apks.entries.toList()[0].key)
+      ]
     ];
   }
 
   final apks = {'steam': tr('steamMobile'), 'steam-chat-app': tr('steamChat')};
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     return 'https://$host';
   }
-
-  @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('https://$host/mobile'));
+    Response res = await sourceRequest('https://$host/mobile');
     if (res.statusCode == 200) {
       var apkNamePrefix = additionalSettings['app'] as String?;
       if (apkNamePrefix == null) {
         throw NoReleasesError();
       }
-      String apkInURLRegexPattern = '/$apkNamePrefix-[^/]+\\.apk\$';
+      String apkInURLRegexPattern =
+          '/$apkNamePrefix-([0-9]+\\.)*[0-9]+\\.apk\$';
       var links = parse(res.body)
           .querySelectorAll('a')
           .map((e) => e.attributes['href'] ?? '')
@@ -52,7 +53,8 @@ class SteamMobile extends AppSource {
       var version = links[0].substring(
           versionMatch.start + apkNamePrefix.length + 2, versionMatch.end - 4);
       var apkUrls = [links[0]];
-      return APKDetails(version, apkUrls, AppNames(name, apks[apkNamePrefix]!));
+      return APKDetails(version, getApkUrlsFromUrls(apkUrls),
+          AppNames(name, apks[apkNamePrefix]!));
     } else {
       throw getObtainiumHttpError(res);
     }

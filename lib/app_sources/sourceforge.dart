@@ -9,9 +9,15 @@ class SourceForge extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/projects/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+  String sourceSpecificStandardizeURL(String url) {
+    RegExp standardUrlRegExB = RegExp('^https?://$host/p/[^/]+');
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    if (match != null) {
+      url =
+          'https://${Uri.parse(url.substring(0, match.end)).host}/projects/${url.substring(Uri.parse(url.substring(0, match.end)).host.length + '/projects/'.length + 1)}';
+    }
+    RegExp standardUrlRegExA = RegExp('^https?://$host/projects/[^/]+');
+    match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -19,14 +25,11 @@ class SourceForge extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(Uri.parse('$standardUrl/rss?path=/'));
+    Response res = await sourceRequest('$standardUrl/rss?path=/');
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       var allDownloadLinks =
@@ -34,7 +37,8 @@ class SourceForge extends AppSource {
       getVersion(String url) {
         try {
           var tokens = url.split('/');
-          return tokens[tokens.length - 3];
+          var fi = tokens.indexOf('files');
+          return tokens[tokens[fi + 2] == 'download' ? fi - 1 : fi + 1];
         } catch (e) {
           return null;
         }
@@ -53,7 +57,7 @@ class SourceForge extends AppSource {
               .toList();
       return APKDetails(
           version,
-          apkUrlList,
+          getApkUrlsFromUrls(apkUrlList),
           AppNames(
               name, standardUrl.substring(standardUrl.lastIndexOf('/') + 1)));
     } else {

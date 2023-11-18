@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:hsluv/hsluv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -24,6 +25,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late int max;
   late String? hint;
   late bool password;
+  late TextInputType? textInputType;
 
   GeneratedFormTextField(String key,
       {String label = 'Input',
@@ -33,7 +35,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       this.required = true,
       this.max = 1,
       this.hint,
-      this.password = false})
+      this.password = false,
+      this.textInputType})
       : super(key,
             label: label,
             belowWidgets: belowWidgets,
@@ -48,6 +51,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
 
 class GeneratedFormDropdown extends GeneratedFormItem {
   late List<MapEntry<String, String>>? opts;
+  List<String>? disabledOptKeys;
 
   GeneratedFormDropdown(
     String key,
@@ -55,6 +59,7 @@ class GeneratedFormDropdown extends GeneratedFormItem {
     String label = 'Input',
     List<Widget> belowWidgets = const [],
     String defaultValue = '',
+    this.disabledOptKeys,
     List<String? Function(String? value)> additionalValidators = const [],
   }) : super(key,
             label: label,
@@ -130,19 +135,20 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
-// Generates a random light color
-// Courtesy of ChatGPT 😭 (with a bugfix 🥳)
+// Generates a color in the HSLuv (Pastel) color space
+// https://pub.dev/documentation/hsluv/latest/hsluv/Hsluv/hpluvToRgb.html
 Color generateRandomLightColor() {
-  // Create a random number generator
-  final Random random = Random();
-
-  // Generate random hue, saturation, and value values
-  final double hue = random.nextDouble() * 360;
-  final double saturation = 0.5 + random.nextDouble() * 0.5;
-  final double value = 0.9 + random.nextDouble() * 0.1;
-
-  // Create a HSV color with the random values
-  return HSVColor.fromAHSV(1.0, hue, saturation, value).toColor();
+  final randomSeed = Random().nextInt(120);
+  // https://en.wikipedia.org/wiki/Golden_angle
+  final goldenAngle = 180 * (3 - sqrt(5));
+  // Generate next golden angle hue
+  final double hue = randomSeed * goldenAngle;
+  // Map from HPLuv color space to RGB, use constant saturation=100, lightness=70
+  final List<double> rgbValuesDbl = Hsluv.hpluvToRgb([hue, 100, 70]);
+  // Map RBG values from 0-1 to 0-255:
+  final List<int> rgbValues =
+      rgbValuesDbl.map((rgb) => (rgb * 255).toInt()).toList();
+  return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
 class _GeneratedFormState extends State<GeneratedForm> {
@@ -150,6 +156,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   List<List<Widget>> rows = [];
+  String? initKey;
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false}) {
@@ -169,13 +176,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
-  @override
-  void initState() {
-    super.initState();
-
+  initForm() {
+    initKey = widget.key.toString();
     // Initialize form values as all empty
     values.clear();
-    int j = 0;
     for (var row in widget.items) {
       for (var e in row) {
         values[e.key] = e.defaultValue;
@@ -189,6 +193,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         if (formItem is GeneratedFormTextField) {
           final formFieldKey = GlobalKey<FormFieldState>();
           return TextFormField(
+            keyboardType: formItem.textInputType,
             obscureText: formItem.password,
             autocorrect: !formItem.password,
             enableSuggestions: !formItem.password,
@@ -227,10 +232,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
           return DropdownButtonFormField(
               decoration: InputDecoration(labelText: formItem.label),
               value: values[formItem.key],
-              items: formItem.opts!
-                  .map((e2) =>
-                      DropdownMenuItem(value: e2.key, child: Text(e2.value)))
-                  .toList(),
+              items: formItem.opts!.map((e2) {
+                var enabled =
+                    formItem.disabledOptKeys?.contains(e2.key) != true;
+                return DropdownMenuItem(
+                    value: e2.key,
+                    enabled: enabled,
+                    child: Opacity(
+                        opacity: enabled ? 1 : 0.5, child: Text(e2.value)));
+              }).toList(),
               onChanged: (value) {
                 setState(() {
                   values[formItem.key] = value ?? formItem.opts!.first.key;
@@ -246,14 +256,26 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    initForm();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (widget.key.toString() != initKey) {
+      initForm();
+    }
     for (var r = 0; r < formInputs.length; r++) {
       for (var e = 0; e < formInputs[r].length; e++) {
         if (widget.items[r][e] is GeneratedFormSwitch) {
           formInputs[r][e] = Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.items[r][e].label),
+              Flexible(child: Text(widget.items[r][e].label)),
+              const SizedBox(
+                width: 8,
+              ),
               Switch(
                   value: values[widget.items[r][e].key],
                   onChanged: (value) {
@@ -351,6 +373,39 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           ));
                     }) ??
                     [const SizedBox.shrink()],
+                (values[widget.items[r][e].key]
+                                as Map<String, MapEntry<int, bool>>?)
+                            ?.values
+                            .where((e) => e.value)
+                            .length ==
+                        1
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              var temp = values[widget.items[r][e].key]
+                                  as Map<String, MapEntry<int, bool>>;
+                              // get selected category str where bool is true
+                              final oldEntry = temp.entries
+                                  .firstWhere((entry) => entry.value.value);
+                              // generate new color, ensure it is not the same
+                              int newColor = oldEntry.value.key;
+                              while (oldEntry.value.key == newColor) {
+                                newColor = generateRandomLightColor().value;
+                              }
+                              // Update entry with new color, remain selected
+                              temp.update(oldEntry.key,
+                                  (old) => MapEntry(newColor, old.value));
+                              values[widget.items[r][e].key] = temp;
+                              someValueChanged();
+                            });
+                          },
+                          icon: const Icon(Icons.format_color_fill_rounded),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: tr('colour'),
+                        ))
+                    : const SizedBox.shrink(),
                 (values[widget.items[r][e].key]
                                 as Map<String, MapEntry<int, bool>>?)
                             ?.values
@@ -453,10 +508,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
       if (rowInputs.key > 0) {
         rows.add([
           SizedBox(
-            height: widget.items[rowInputs.key][0] is GeneratedFormSwitch &&
-                    widget.items[rowInputs.key - 1][0] is! GeneratedFormSwitch
-                ? 25
-                : 8,
+            height: widget.items[rowInputs.key - 1][0] is GeneratedFormSwitch
+                ? 8
+                : 25,
           )
         ]);
       }
@@ -470,6 +524,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         rowItems.add(Expanded(
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
               rowInput.value,
               ...widget.items[rowInputs.key][rowInput.key].belowWidgets

@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -21,19 +19,29 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.10.4';
+const String currentVersion = '0.14.32';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 const int bgUpdateCheckAlarmId = 666;
 
-const supportedLocales = [
-  Locale('en'),
-  Locale('zh'),
-  Locale('it'),
-  Locale('ja'),
-  Locale('hu'),
-  Locale('de')
+List<MapEntry<Locale, String>> supportedLocales = const [
+  MapEntry(Locale('en'), 'English'),
+  MapEntry(Locale('zh'), '简体中文'),
+  MapEntry(Locale('it'), 'Italiano'),
+  MapEntry(Locale('ja'), '日本語'),
+  MapEntry(Locale('hu'), 'Magyar'),
+  MapEntry(Locale('de'), 'Deutsch'),
+  MapEntry(Locale('fa'), 'فارسی'),
+  MapEntry(Locale('fr'), 'Français'),
+  MapEntry(Locale('es'), 'Español'),
+  MapEntry(Locale('pl'), 'Polski'),
+  MapEntry(Locale('ru'), 'Русский язык'),
+  MapEntry(Locale('bs'), 'Bosanski'),
+  MapEntry(Locale('pt'), 'Brasileiro'),
+  MapEntry(Locale('cs'), 'Česky'),
+  MapEntry(Locale('sv'), 'Svenska'),
+  MapEntry(Locale('nl'), 'Nederlands'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
@@ -51,7 +59,7 @@ Future<void> loadTranslations() async {
     saveLocale: true,
     forceLocale: forceLocale != null ? Locale(forceLocale) : null,
     fallbackLocale: fallbackLocale,
-    supportedLocales: supportedLocales,
+    supportedLocales: supportedLocales.map((e) => e.key).toList(),
     assetLoader: const RootBundleAssetLoader(),
     useOnlyLangCode: true,
     useFallbackTranslations: true,
@@ -66,86 +74,16 @@ Future<void> loadTranslations() async {
       fallbackTranslations: controller.fallbackTranslations);
 }
 
-@pragma('vm:entry-point')
-Future<void> bgUpdateCheck(int taskId, Map<String, dynamic>? params) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
-
-  await loadTranslations();
-
-  LogsProvider logs = LogsProvider();
-  logs.add(tr('startedBgUpdateTask'));
-  int? ignoreAfterMicroseconds = params?['ignoreAfterMicroseconds'];
-  await AndroidAlarmManager.initialize();
-  DateTime? ignoreAfter = ignoreAfterMicroseconds != null
-      ? DateTime.fromMicrosecondsSinceEpoch(ignoreAfterMicroseconds)
-      : null;
-  logs.add(tr('bgUpdateIgnoreAfterIs', args: [ignoreAfter.toString()]));
-  var notificationsProvider = NotificationsProvider();
-  await notificationsProvider.notify(checkingUpdatesNotification);
-  try {
-    var appsProvider = AppsProvider();
-    await notificationsProvider.cancel(ErrorCheckingUpdatesNotification('').id);
-    await appsProvider.loadApps();
-    List<String> existingUpdateIds =
-        appsProvider.findExistingUpdates(installedOnly: true);
-    DateTime nextIgnoreAfter = DateTime.now();
-    String? err;
-    try {
-      logs.add(tr('startedActualBGUpdateCheck'));
-      await appsProvider.checkUpdates(
-          ignoreAppsCheckedAfter: ignoreAfter, throwErrorsForRetry: true);
-    } catch (e) {
-      if (e is RateLimitError || e is SocketException) {
-        var remainingMinutes = e is RateLimitError ? e.remainingMinutes : 15;
-        logs.add(plural('bgUpdateGotErrorRetryInMinutes', remainingMinutes,
-            args: [e.toString(), remainingMinutes.toString()]));
-        AndroidAlarmManager.oneShot(Duration(minutes: remainingMinutes),
-            Random().nextInt(pow(2, 31) as int), bgUpdateCheck, params: {
-          'ignoreAfterMicroseconds': nextIgnoreAfter.microsecondsSinceEpoch
-        });
-      } else {
-        err = e.toString();
-      }
-    }
-    List<App> newUpdates = appsProvider
-        .findExistingUpdates(installedOnly: true)
-        .where((id) => !existingUpdateIds.contains(id))
-        .map((e) => appsProvider.apps[e]!.app)
-        .toList();
-
-    // TODO: This silent update code doesn't work yet
-    // List<String> silentlyUpdated = await appsProvider
-    //     .downloadAndInstallLatestApp(
-    //         [...newUpdates.map((e) => e.id), ...existingUpdateIds], null);
-    // if (silentlyUpdated.isNotEmpty) {
-    //   newUpdates = newUpdates
-    //       .where((element) => !silentlyUpdated.contains(element.id))
-    //       .toList();
-    //   notificationsProvider.notify(
-    //       SilentUpdateNotification(
-    //           silentlyUpdated.map((e) => appsProvider.apps[e]!.app).toList()),
-    //       cancelExisting: true);
-    // }
-    logs.add(
-        plural('bgCheckFoundUpdatesWillNotifyIfNeeded', newUpdates.length));
-    if (newUpdates.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(newUpdates));
-    }
-    if (err != null) {
-      throw err;
-    }
-  } catch (e) {
-    notificationsProvider
-        .notify(ErrorCheckingUpdatesNotification(e.toString()));
-  } finally {
-    logs.add(tr('bgUpdateTaskFinished'));
-    await notificationsProvider.cancel(checkingUpdatesNotification.id);
-  }
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    ByteData data =
+        await PlatformAssetBundle().load('assets/ca/lets-encrypt-r3.pem');
+    SecurityContext.defaultContext
+        .setTrustedCertificatesBytes(data.buffer.asUint8List());
+  } catch (e) {
+    // Already added, do nothing (see #375)
+  }
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -162,7 +100,7 @@ void main() async {
       Provider(create: (context) => LogsProvider())
     ],
     child: EasyLocalization(
-        supportedLocales: supportedLocales,
+        supportedLocales: supportedLocales.map((e) => e.key).toList(),
         path: localeDir,
         fallbackLocale: fallbackLocale,
         useOnlyLangCode: true,
@@ -193,7 +131,7 @@ class _ObtainiumState extends State<Obtainium> {
     } else {
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
-        logs.add(tr('firstRun'));
+        logs.add('This is the first ever run of Obtainium.');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         if (!fdroid) {
@@ -210,26 +148,40 @@ class _ObtainiumState extends State<Obtainium> {
                 {'includePrereleases': true},
                 null,
                 false)
-          ]);
+          ], onlyIfExists: false);
         }
       }
+      if (!supportedLocales
+              .map((e) => e.key.languageCode)
+              .contains(context.locale.languageCode) ||
+          (settingsProvider.forcedLocale == null &&
+              context.deviceLocale.languageCode !=
+                  context.locale.languageCode)) {
+        settingsProvider.resetLocaleSafe(context);
+      }
       // Register the background update task according to the user's setting
-      if (existingUpdateInterval != settingsProvider.updateInterval) {
-        if (existingUpdateInterval != -1) {
-          logs.add(tr('settingUpdateCheckIntervalTo',
-              args: [settingsProvider.updateInterval.toString()]));
-        }
-        existingUpdateInterval = settingsProvider.updateInterval;
-        if (existingUpdateInterval == 0) {
+      var actualUpdateInterval = settingsProvider.updateInterval;
+      if (existingUpdateInterval != actualUpdateInterval) {
+        if (actualUpdateInterval == 0) {
           AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
         } else {
-          AndroidAlarmManager.periodic(
-              Duration(minutes: existingUpdateInterval),
-              bgUpdateCheckAlarmId,
-              bgUpdateCheck,
-              rescheduleOnReboot: true,
-              wakeup: true);
+          var settingChanged = existingUpdateInterval != -1;
+          var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
+              settingsProvider.lastBGCheckTime
+                  .add(Duration(minutes: actualUpdateInterval + 60))
+                  .isBefore(DateTime.now());
+          if (settingChanged || lastCheckWasTooLongAgo) {
+            logs.add(
+                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
+            AndroidAlarmManager.periodic(
+                Duration(minutes: actualUpdateInterval),
+                bgUpdateCheckAlarmId,
+                bgUpdateCheck,
+                rescheduleOnReboot: true,
+                wakeup: true);
+          }
         }
+        existingUpdateInterval = actualUpdateInterval;
       }
     }
 
@@ -248,6 +200,14 @@ class _ObtainiumState extends State<Obtainium> {
         darkColorScheme = ColorScheme.fromSeed(
             seedColor: defaultThemeColour, brightness: Brightness.dark);
       }
+
+      // set the background and surface colors to pure black in the amoled theme
+      if (settingsProvider.useBlackTheme) {
+        darkColorScheme = darkColorScheme
+            .copyWith(background: Colors.black, surface: Colors.black)
+            .harmonized();
+      }
+
       return MaterialApp(
           title: 'Obtainium',
           localizationsDelegates: context.localizationDelegates,
@@ -266,7 +226,9 @@ class _ObtainiumState extends State<Obtainium> {
                   ? lightColorScheme
                   : darkColorScheme,
               fontFamily: 'Metropolis'),
-          home: const HomePage());
+          home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
+            LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+          }, child: const HomePage()));
     });
   }
 }

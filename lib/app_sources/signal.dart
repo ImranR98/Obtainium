@@ -9,12 +9,9 @@ class Signal extends AppSource {
   }
 
   @override
-  String standardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url) {
     return 'https://$host';
   }
-
-  @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => null;
 
   @override
   Future<APKDetails> getLatestAPKDetails(
@@ -22,7 +19,7 @@ class Signal extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     Response res =
-        await get(Uri.parse('https://updates.$host/android/latest.json'));
+        await sourceRequest('https://updates.$host/android/latest.json');
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];
@@ -31,7 +28,8 @@ class Signal extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      return APKDetails(version, apkUrls, AppNames(name, 'Signal'));
+      return APKDetails(
+          version, getApkUrlsFromUrls(apkUrls), AppNames(name, 'Signal'));
     } else {
       throw getObtainiumHttpError(res);
     }
