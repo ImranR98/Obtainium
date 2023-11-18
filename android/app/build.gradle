@@ -58,6 +58,19 @@ android {
         versionName flutterVersionName
     }
     
+    flavorDimensions "flavor"
+
+    productFlavors {
+        normal {
+            dimension "flavor"
+            applicationIdSuffix ""
+        }
+        fdroid {
+            dimension "flavor"
+            applicationIdSuffix ".fdroid"
+        }
+    }
+    
     buildTypes {
         release {
             

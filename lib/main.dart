@@ -19,7 +19,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.14.32';
+const String currentVersion = '0.14.33';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -42,9 +42,12 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('cs'), 'Česky'),
   MapEntry(Locale('sv'), 'Svenska'),
   MapEntry(Locale('nl'), 'Nederlands'),
+  MapEntry(Locale('vi'), 'Tiếng Việt'),
+  MapEntry(Locale('tr'), 'Türkçe'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
+var fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -133,20 +136,22 @@ class _ObtainiumState extends State<Obtainium> {
         logs.add('This is the first ever run of Obtainium.');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApps([
-          App(
-              obtainiumId,
-              'https://github.com/ImranR98/Obtainium',
-              'ImranR98',
-              'Obtainium',
-              currentReleaseTag,
-              currentReleaseTag,
-              [],
-              0,
-              {'includePrereleases': true},
-              null,
-              false)
-        ], onlyIfExists: false);
+        if (!fdroid) {
+          appsProvider.saveApps([
+            App(
+                obtainiumId,
+                'https://github.com/ImranR98/Obtainium',
+                'ImranR98',
+                'Obtainium',
+                currentReleaseTag,
+                currentReleaseTag,
+                [],
+                0,
+                {'includePrereleases': true},
+                null,
+                false)
+          ], onlyIfExists: false);
+        }
       }
       if (!supportedLocales
               .map((e) => e.key.languageCode)

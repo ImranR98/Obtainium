@@ -37,7 +37,7 @@
     "addApp": "Uygulama Ekle",
     "appSourceURL": "Uygulama Kaynak URL'si",
     "error": "Hata",
-    "add": "Ekle"
+    "add": "Ekle",
     "searchSomeSourcesLabel": "Ara (Bazı Kaynaklar Yalnızca)",
     "search": "Ara",
     "additionalOptsFor": "{} İçin Ek Seçenekler",
@@ -226,7 +226,7 @@
     "requiresCredentialsInSettings": "Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
     "checkOnStart": "Başlangıçta güncellemeleri kontrol et",
     "tryInferAppIdFromCode": "Uygulama kimliğini kaynak kodundan çıkarma girişimi",
-    "removeOnExternalUninstall": "Harici kaldırmada otomatik olarak kaldırılan uygulamalar"
+    "removeOnExternalUninstall": "Harici kaldırmada otomatik olarak kaldırılan uygulamalar",
     "pickHighestVersionCode": "Otomatik olarak en yüksek sürüm kodlu APK'yi seç",
     "checkUpdateOnDetailPage": "Uygulama detay sayfasını açarken güncellemeleri kontrol et",
     "disablePageTransitions": "Sayfa geçiş animasyonlarını devre dışı bırak",
@@ -241,7 +241,7 @@
     "customLinkFilterRegex": "Özel APK Bağlantı Filtresi Düzenli İfade ile (Varsayılan '.apk$')",
     "appsPossiblyUpdated": "Uygulama Güncellemeleri Denendi",
     "appsPossiblyUpdatedNotifDescription": "Kullanıcıya bir veya daha fazla uygulamanın arka planda potansiyel olarak güncellendiğini bildiren bildirim",
-    "xWasPossiblyUpdatedToY": "{} muhtemelen {} sürümüne güncellendi."
+    "xWasPossiblyUpdatedToY": "{} muhtemelen {} sürümüne güncellendi.",
     "enableBackgroundUpdates": "Arka plan güncellemelerini etkinleştir",
     "backgroundUpdateReqsExplanation": "Arka plan güncellemeleri tüm uygulamalar için mümkün olmayabilir.",
     "backgroundUpdateLimitsExplanation": "Arka plan kurulumunun başarısı, Obtainium'un açıldığında ancak belirlenebilir.",
@@ -258,7 +258,7 @@
     "autoExportOnChanges": "Değişikliklerde otomatik olarak dışa aktar",
     "filterVersionsByRegEx": "Sürümleri Düzenli İfade ile Filtrele",
     "trySelectingSuggestedVersionCode": "Önerilen sürüm kodunu seçmeyi dene",
-    "dontSortReleasesList": "API'den sıralama düzenini koru"
+    "dontSortReleasesList": "API'den sıralama düzenini koru",
     "reverseSort": "Ters sıralama",
     "debugMenu": "Hata Ayıklama Menüsü",
     "bgTaskStarted": "Arka plan görevi başladı - günlükleri kontrol et.",
@@ -274,10 +274,10 @@
     "downloadingXNotifChannel": "{} İndiriliyor",
     "completeAppInstallationNotifChannel": "Uygulama Kurulumu Tamamlandı",
     "checkingForUpdatesNotifChannel": "Güncellemeler Kontrol Ediliyor",
-    "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme"
-"removeAppQuestion": {
-    "one": "Uygulamayı Kaldır?",
-    "other": "Uygulamaları Kaldır?"
+    "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme",
+    "removeAppQuestion": {
+        "one": "Uygulamayı Kaldır?",
+        "other": "Uygulamaları Kaldır?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Çok fazla istek (hız sınırlı) - {} dakika sonra tekrar deneyin",
@@ -290,7 +290,7 @@
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Arka plan güncelleme kontrolü {} güncelleme buldu - gerektiğinde kullanıcıyı bilgilendirecek",
         "other": "Arka plan güncelleme kontrolü {} güncelleme buldu - gerektiğinde kullanıcıyı bilgilendirecek"
-    }
+    },
     "apps": {
         "one": "{} Uygulama",
         "other": "{} Uygulamalar"

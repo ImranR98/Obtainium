@@ -706,7 +706,8 @@ class SourceProvider {
 
   // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getAppsByURLNaive(List<String> urls,
-      {List<String> alreadyAddedUrls = const []}) async {
+      {List<String> alreadyAddedUrls = const [],
+      AppSource? sourceOverride}) async {
     List<App> apps = [];
     Map<String, dynamic> errors = {};
     for (var url in urls) {
@@ -714,7 +715,7 @@ class SourceProvider {
         if (alreadyAddedUrls.contains(url)) {
           throw ObtainiumError(tr('appAlreadyAdded'));
         }
-        var source = getSource(url);
+        var source = sourceOverride ?? getSource(url);
         apps.add(await getApp(
             source,
             url,
