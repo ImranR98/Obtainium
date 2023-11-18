@@ -11,7 +11,7 @@
     "unexpectedError": "Onverwachte fout",
     "ok": "Ok",
     "and": "en",
-    "githubPATLabel": "GitHub Personal Access Token (Verhoogt limiet aantal verzoeken)",
+    "githubPATLabel": "GitHub Personal Access Token\n(Verhoogt limiet aantal verzoeken)",
     "includePrereleases": "Bevat prereleases",
     "fallbackToOlderReleases": "Terugvallen op oudere releases",
     "filterReleaseTitlesByRegEx": "Filter release-titels met reguliere expressies.",
@@ -244,7 +244,7 @@
     "xWasPossiblyUpdatedToY": "{} mogelijk bijgewerkt naar {}.",
     "enableBackgroundUpdates": "Achtergrondupdates inschakelen",
     "backgroundUpdateReqsExplanation": "Achtergrondupdates zijn mogelijk niet voor alle apps mogelijk.",
-    "backgroundUpdateLimitsExplanation": "THet succes van een installatie in de achtergrond kan alleen worden bepaald wanneer Obtainium is geopend.",
+    "backgroundUpdateLimitsExplanation": "Het succes van een installatie in de achtergrond kan alleen worden bepaald wanneer Obtainium is geopend.",
     "verifyLatestTag": "Verifieer de 'Laatste'-tag",
     "intermediateLinkRegex": "Filter voor een 'tussenliggende' link om eerst te bezoeken",
     "intermediateLinkNotFound": "Tussenliggende link niet gevonden",
@@ -305,7 +305,7 @@
     },
     "hour": {
         "one": "{} uur",
-        "other": "{} uren"
+        "other": "{} uur"
     },
     "day": {
         "one": "{} dag",
