@@ -1217,9 +1217,11 @@ class AppsProvider with ChangeNotifier {
     super.dispose();
   }
 
-  Future<List<List<String>>> addAppsByURL(List<String> urls) async {
+  Future<List<List<String>>> addAppsByURL(List<String> urls,
+      {AppSource? sourceOverride}) async {
     List<dynamic> results = await SourceProvider().getAppsByURLNaive(urls,
-        alreadyAddedUrls: apps.values.map((e) => e.app.url).toList());
+        alreadyAddedUrls: apps.values.map((e) => e.app.url).toList(),
+        sourceOverride: sourceOverride);
     List<App> pps = results[0];
     Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {

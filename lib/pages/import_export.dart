@@ -214,7 +214,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                       );
                     });
             if (selectedUrls != null && selectedUrls.isNotEmpty) {
-              var errors = await appsProvider.addAppsByURL(selectedUrls);
+              var errors = await appsProvider.addAppsByURL(selectedUrls,
+                  sourceOverride: source);
               if (errors.isEmpty) {
                 // ignore: use_build_context_synchronously
                 showMessage(
