@@ -61,7 +61,7 @@ android {
     flavorDimensions "flavor"
 
     productFlavors {
-        github {
+        normal {
             dimension "flavor"
             applicationIdSuffix ""
         }
