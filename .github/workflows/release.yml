@@ -21,7 +21,6 @@ jobs:
 
       - name: Build APKs
         run: |
-          sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
           flutter build apk && flutter build apk --split-per-abi
           rm ./build/app/outputs/flutter-apk/*.sha1
           ls -l ./build/app/outputs/flutter-apk/
