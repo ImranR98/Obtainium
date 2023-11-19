@@ -486,7 +486,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                 : TextDecoration.none,
                             fontStyle: FontStyle.italic),
                       )))
-                  .toList()
+                  
             ]);
 
     return Scaffold(

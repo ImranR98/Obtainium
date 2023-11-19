@@ -503,7 +503,7 @@ class AppsPageState extends State<AppsPage> {
             .entries
             .map((e) =>
                 ((e.key / (listedApps[index].app.categories.length - 1))))
-            .toList(),
+            ,
         1
       ];
       if (stops.length == 2) {
@@ -522,7 +522,7 @@ class AppsPageState extends State<AppsPage> {
                     .map((e) =>
                         Color(settingsProvider.categories[e] ?? transparent)
                             .withAlpha(255))
-                    .toList(),
+                    ,
                 Color(transparent)
               ])),
           child: ListTile(
@@ -984,7 +984,7 @@ class AppsPageState extends State<AppsPage> {
                         ...sourceProvider.sources
                             .map((e) =>
                                 MapEntry(e.runtimeType.toString(), e.name))
-                            .toList()
+                            
                       ])
                 ]
               ],
