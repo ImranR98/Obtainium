@@ -27,21 +27,16 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late bool password;
   late TextInputType? textInputType;
 
-  GeneratedFormTextField(String key,
-      {String label = 'Input',
-      List<Widget> belowWidgets = const [],
-      String defaultValue = '',
-      List<String? Function(String? value)> additionalValidators = const [],
+  GeneratedFormTextField(super.key,
+      {super.label,
+      super.belowWidgets,
+      String super.defaultValue = '',
+      List<String? Function(String? value)> super.additionalValidators = const [],
       this.required = true,
       this.max = 1,
       this.hint,
       this.password = false,
-      this.textInputType})
-      : super(key,
-            label: label,
-            belowWidgets: belowWidgets,
-            defaultValue: defaultValue,
-            additionalValidators: additionalValidators);
+      this.textInputType});
 
   @override
   String ensureType(val) {
@@ -54,18 +49,14 @@ class GeneratedFormDropdown extends GeneratedFormItem {
   List<String>? disabledOptKeys;
 
   GeneratedFormDropdown(
-    String key,
+    super.key,
     this.opts, {
-    String label = 'Input',
-    List<Widget> belowWidgets = const [],
-    String defaultValue = '',
+    super.label,
+    super.belowWidgets,
+    String super.defaultValue = '',
     this.disabledOptKeys,
-    List<String? Function(String? value)> additionalValidators = const [],
-  }) : super(key,
-            label: label,
-            belowWidgets: belowWidgets,
-            defaultValue: defaultValue,
-            additionalValidators: additionalValidators);
+    List<String? Function(String? value)> super.additionalValidators = const [],
+  });
 
   @override
   String ensureType(val) {
@@ -75,16 +66,12 @@ class GeneratedFormDropdown extends GeneratedFormItem {
 
 class GeneratedFormSwitch extends GeneratedFormItem {
   GeneratedFormSwitch(
-    String key, {
-    String label = 'Input',
-    List<Widget> belowWidgets = const [],
-    bool defaultValue = false,
-    List<String? Function(bool value)> additionalValidators = const [],
-  }) : super(key,
-            label: label,
-            belowWidgets: belowWidgets,
-            defaultValue: defaultValue,
-            additionalValidators: additionalValidators);
+    super.key, {
+    super.label,
+    super.belowWidgets,
+    bool super.defaultValue = false,
+    List<String? Function(bool value)> super.additionalValidators = const [],
+  });
 
   @override
   bool ensureType(val) {
@@ -98,22 +85,17 @@ class GeneratedFormTagInput extends GeneratedFormItem {
   late WrapAlignment alignment;
   late String emptyMessage;
   late bool showLabelWhenNotEmpty;
-  GeneratedFormTagInput(String key,
-      {String label = 'Input',
-      List<Widget> belowWidgets = const [],
-      Map<String, MapEntry<int, bool>> defaultValue = const {},
+  GeneratedFormTagInput(super.key,
+      {super.label,
+      super.belowWidgets,
+      Map<String, MapEntry<int, bool>> super.defaultValue = const {},
       List<String? Function(Map<String, MapEntry<int, bool>> value)>
-          additionalValidators = const [],
+          super.additionalValidators = const [],
       this.deleteConfirmationMessage,
       this.singleSelect = false,
       this.alignment = WrapAlignment.start,
       this.emptyMessage = 'Input',
-      this.showLabelWhenNotEmpty = true})
-      : super(key,
-            label: label,
-            belowWidgets: belowWidgets,
-            defaultValue: defaultValue,
-            additionalValidators: additionalValidators);
+      this.showLabelWhenNotEmpty = true});
 
   @override
   Map<String, MapEntry<int, bool>> ensureType(val) {

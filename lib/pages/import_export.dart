@@ -440,7 +440,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         child: Text(
                                             tr('searchX', args: [source.name])))
                                   ]))
-                          .toList(),
+                          ,
                       ...sourceProvider.massUrlSources
                           .map((source) => Column(
                                   crossAxisAlignment:
@@ -456,7 +456,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         child: Text(
                                             tr('importX', args: [source.name])))
                                   ]))
-                          .toList(),
+                          ,
                       const Spacer(),
                       const Divider(
                         height: 32,
@@ -518,7 +518,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
                   style: const TextStyle(fontStyle: FontStyle.italic),
                 )
               ]);
-        }).toList()
+        })
       ]),
       actions: [
         TextButton(

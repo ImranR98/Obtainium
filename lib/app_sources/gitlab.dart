@@ -174,7 +174,7 @@ class GitLab extends AppSource {
           ...getLinksFromParsedHTML(entryContent,
                   RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
               .where((element) => Uri.parse(element).host != '')
-              .toList()
+              
         ];
         var entryId = entry.querySelector('id')?.innerHtml;
         var version =
