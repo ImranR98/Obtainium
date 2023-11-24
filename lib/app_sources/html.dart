@@ -95,7 +95,10 @@ class HTML extends AppSource {
             label: tr('sortByFileNamesNotLinks'))
       ],
       [GeneratedFormSwitch('reverseSort', label: tr('reverseSort'))],
-      [GeneratedFormSwitch('fixedAPKURL', label: tr('fixedAPKURL'))],
+      [
+        GeneratedFormSwitch('supportFixedAPKURL',
+            defaultValue: true, label: tr('supportFixedAPKURL')),
+      ],
       [
         GeneratedFormTextField('customLinkFilterRegex',
             label: tr('customLinkFilterRegex'),
@@ -225,7 +228,7 @@ class HTML extends AppSource {
       }
       var rel = links.last;
       String? version;
-      if (additionalSettings['fixedAPKURL'] != true) {
+      if (additionalSettings['supportFixedAPKURL'] != true) {
         version = rel.hashCode.toString();
       }
       var versionExtractionRegEx =

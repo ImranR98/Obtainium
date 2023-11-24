@@ -275,7 +275,7 @@
     "completeAppInstallationNotifChannel": "Dokončit instalaci aplikace",
     "checkingForUpdatesNotifChannel": "Zkontrolovat aktualizace",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
-    "fixedAPKURL": "APK URL is fixed",
+    "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",

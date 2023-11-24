@@ -275,7 +275,7 @@
     "completeAppInstallationNotifChannel": "完成应用安装",
     "checkingForUpdatesNotifChannel": "正在检查更新",
     "onlyCheckInstalledOrTrackOnlyApps": "只对已安装和“仅追踪”的应用进行更新检查",
-    "fixedAPKURL": "APK URL is fixed",
+    "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "是否删除应用？",

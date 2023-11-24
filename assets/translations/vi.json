@@ -275,7 +275,7 @@
     "completeAppInstallationNotifChannel": "Hoàn tất cài đặt ứng dụng",
     "checkingForUpdatesNotifChannel": "Đang kiểm tra cập nhật",
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra các ứng dụng đã cài đặt và Chỉ-Theo dõi để biết các bản cập nhật",
-    "fixedAPKURL": "APK URL is fixed",
+    "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",

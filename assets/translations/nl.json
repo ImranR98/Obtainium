@@ -275,7 +275,7 @@
     "completeAppInstallationNotifChannel": "Voltooien van de app-installatie",
     "checkingForUpdatesNotifChannel": "Controleren op updates",
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde en Track-Only apps controleren op updates",
-    "fixedAPKURL": "APK URL is fixed",
+    "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "App verwijderen?",
