@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Premjesti neinstalirane aplikacije na dno prikaza aplikacija",
     "gitlabPATLabel": "GitLab token za lični pristup\n(Omogućava pretraživanje i bolje otkrivanje APK-a)",
     "about": "O nama",
-    "requiresCredentialsInSettings": "Za ovo su potrebni dodatni akreditivi (u Postavkama)",
+    "requiresCredentialsInSettings": "{}: Za ovo su potrebni dodatni akreditivi (u Postavkama)",
     "checkOnStart": "Provjerite ima li novosti pri pokretanju",
     "tryInferAppIdFromCode": "Pokušati otkriti ID aplikacije iz izvornog koda",
     "removeOnExternalUninstall": "Automatski ukloni eksterno deinstalirane aplikacije",

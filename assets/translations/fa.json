@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "برنامه های نصب نشده را به نمای پایین برنامه ها منتقل کنید",
     "gitlabPATLabel": "رمز دسترسی شخصی GitLab\n(جستجو و کشف بهتر APK را فعال میکند)",
     "about": "درباره",
-    "requiresCredentialsInSettings": "این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
+    "requiresCredentialsInSettings": "{}: این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
     "checkOnStart": "بررسی در شروع",
     "tryInferAppIdFromCode": "شناسه برنامه را از کد منبع استنباط کنید",
     "removeOnExternalUninstall": "حذف خودکار برنامه های حذف نصب شده خارجی",

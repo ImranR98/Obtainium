@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Di chuyển Ứng dụng chưa được cài đặt xuống cuối chế độ xem Ứng dụng",
     "gitlabPATLabel": "Mã thông báo truy cập cá nhân GitLab\n(Cho phép tìm kiếm và khám phá APK tốt hơn)",
     "about": "Giới thiệu",
-    "requiresCredentialsInSettings": "Điều này cần thông tin xác thực bổ sung (trong Cài đặt)",
+    "requiresCredentialsInSettings": "{}: Điều này cần thông tin xác thực bổ sung (trong Cài đặt)",
     "checkOnStart": "Kiểm tra các bản cập nhật khi khởi động",
     "tryInferAppIdFromCode": "Thử suy ra ID ứng dụng từ mã nguồn",
     "removeOnExternalUninstall": "Tự động xóa ứng dụng đã gỡ cài đặt bên ngoài",

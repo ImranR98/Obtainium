@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Přesunout nenainstalované aplikace na konec zobrazení Aplikace",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Umožňuje vyhledávání a lepší zjišťování APK)",
     "about": "About",
-    "requiresCredentialsInSettings": "Vyžaduje další pověření (v nastavení)",
+    "requiresCredentialsInSettings": "{}: Vyžaduje další pověření (v nastavení)",
     "checkOnStart": "Zkontrolovat jednou při spuštění",
     "tryInferAppIdFromCode": "Pokusit se určit ID aplikace ze zdrojového kódu",
     "removeOnExternalUninstall": "Automaticky odstranit externě odinstalované aplikace",

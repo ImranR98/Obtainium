@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Nicht installierte Apps ans Ende der Apps Ansicht verschieben",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Aktiviert Suche und bessere APK Entdeckung)",
     "about": "Über",
-    "requiresCredentialsInSettings": "Benötigt zusätzliche Anmeldedaten (in den Einstellungen)",
+    "requiresCredentialsInSettings": "{}: Benötigt zusätzliche Anmeldedaten (in den Einstellungen)",
     "checkOnStart": "Überprüfe einmalig beim Start",
     "tryInferAppIdFromCode": "Versuche, die App-ID aus dem Quellcode zu ermitteln",
     "removeOnExternalUninstall": "Automatisches Entfernen von extern deinstallierten Apps",

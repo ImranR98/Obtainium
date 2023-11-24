@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Helyezze át a nem telepített appokat az App nézet aljára",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Engedélyezi a Keresést és jobb APK felfedezés)",
     "about": "Rólunk",
-    "requiresCredentialsInSettings": "Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
+    "requiresCredentialsInSettings": "{}: Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
     "checkOnStart": "Egyszer az alkalmazás indításakor is",
     "tryInferAppIdFromCode": "Próbálja kikövetkeztetni az app azonosítót a forráskódból",
     "removeOnExternalUninstall": "A külsőleg eltávolított appok auto. eltávolítása",

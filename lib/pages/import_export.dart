@@ -208,8 +208,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 await showDialog<List<String>?>(
                     context: context,
                     builder: (BuildContext ctx) {
-                      return UrlSelectionModal(
-                        urlsWithDescriptions: urlsWithDescriptions,
+                      return SelectionModal(
+                        entries: urlsWithDescriptions,
                         selectedByDefault: false,
                       );
                     });
@@ -269,8 +269,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
               await showDialog<List<String>?>(
                   context: context,
                   builder: (BuildContext ctx) {
-                    return UrlSelectionModal(
-                        urlsWithDescriptions: urlsWithDescriptions);
+                    return SelectionModal(entries: urlsWithDescriptions);
                   });
           if (selectedUrls != null) {
             var errors = await appsProvider.addAppsByURL(selectedUrls);
@@ -299,6 +298,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
         });
       });
     }
+
+    var sourceStrings = <String, List<String>>{};
+    sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
+      sourceStrings[s.name] = [s.name];
+    });
 
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -409,6 +413,49 @@ class _ImportExportPageState extends State<ImportExportPage> {
                             const Divider(
                               height: 32,
                             ),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: TextButton(
+                                        onPressed: importInProgress
+                                            ? null
+                                            : () async {
+                                                var searchSourceName =
+                                                    await showDialog<
+                                                                List<String>?>(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext
+                                                                    ctx) {
+                                                              return SelectionModal(
+                                                                entries:
+                                                                    sourceStrings,
+                                                                selectedByDefault:
+                                                                    false,
+                                                                onlyOneSelectionAllowed:
+                                                                    true,
+                                                                titlesAreLinks:
+                                                                    false,
+                                                              );
+                                                            }) ??
+                                                        [];
+                                                var searchSource =
+                                                    sourceProvider.sources
+                                                        .where((e) =>
+                                                            searchSourceName
+                                                                .contains(
+                                                                    e.name))
+                                                        .toList();
+                                                if (searchSource.isNotEmpty) {
+                                                  runSourceSearch(
+                                                      searchSource[0]);
+                                                }
+                                              },
+                                        child: Text(tr('searchX',
+                                            args: [tr('source')])))),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
                             TextButton(
                                 onPressed:
                                     importInProgress ? null : urlListImport,
@@ -424,39 +471,19 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 )),
                           ],
                         ),
-                      ...sourceProvider.sources
-                          .where((element) => element.canSearch)
-                          .map((source) => Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                        onPressed: importInProgress
-                                            ? null
-                                            : () {
-                                                runSourceSearch(source);
-                                              },
-                                        child: Text(
-                                            tr('searchX', args: [source.name])))
-                                  ]))
-                          ,
-                      ...sourceProvider.massUrlSources
-                          .map((source) => Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                        onPressed: importInProgress
-                                            ? null
-                                            : () {
-                                                runMassSourceImport(source);
-                                              },
-                                        child: Text(
-                                            tr('importX', args: [source.name])))
-                                  ]))
-                          ,
+                      ...sourceProvider.massUrlSources.map((source) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: 8),
+                                TextButton(
+                                    onPressed: importInProgress
+                                        ? null
+                                        : () {
+                                            runMassSourceImport(source);
+                                          },
+                                    child: Text(
+                                        tr('importX', args: [source.name])))
+                              ])),
                       const Spacer(),
                       const Divider(
                         height: 32,
@@ -532,38 +559,40 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
 }
 
 // ignore: must_be_immutable
-class UrlSelectionModal extends StatefulWidget {
-  UrlSelectionModal(
+class SelectionModal extends StatefulWidget {
+  SelectionModal(
       {super.key,
-      required this.urlsWithDescriptions,
+      required this.entries,
       this.selectedByDefault = true,
-      this.onlyOneSelectionAllowed = false});
+      this.onlyOneSelectionAllowed = false,
+      this.titlesAreLinks = true});
 
-  Map<String, List<String>> urlsWithDescriptions;
+  Map<String, List<String>> entries;
   bool selectedByDefault;
   bool onlyOneSelectionAllowed;
+  bool titlesAreLinks;
 
   @override
-  State<UrlSelectionModal> createState() => _UrlSelectionModalState();
+  State<SelectionModal> createState() => _SelectionModalState();
 }
 
-class _UrlSelectionModalState extends State<UrlSelectionModal> {
-  Map<MapEntry<String, List<String>>, bool> urlWithDescriptionSelections = {};
+class _SelectionModalState extends State<SelectionModal> {
+  Map<MapEntry<String, List<String>>, bool> entrySelections = {};
   @override
   void initState() {
     super.initState();
-    for (var url in widget.urlsWithDescriptions.entries) {
-      urlWithDescriptionSelections.putIfAbsent(url,
+    for (var url in widget.entries.entries) {
+      entrySelections.putIfAbsent(url,
           () => widget.selectedByDefault && !widget.onlyOneSelectionAllowed);
     }
     if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
-      selectOnlyOne(widget.urlsWithDescriptions.entries.first.key);
+      selectOnlyOne(widget.entries.entries.first.key);
     }
   }
 
   selectOnlyOne(String url) {
-    for (var uwd in urlWithDescriptionSelections.keys) {
-      urlWithDescriptionSelections[uwd] = uwd.key == url;
+    for (var e in entrySelections.keys) {
+      entrySelections[e] = e.key == url;
     }
   }
 
@@ -571,73 +600,88 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: Text(
-          widget.onlyOneSelectionAllowed ? tr('selectURL') : tr('selectURLs')),
+      title: Text(tr('select')),
       content: Column(children: [
-        ...urlWithDescriptionSelections.keys.map((urlWithD) {
+        ...entrySelections.keys.map((entry) {
           selectThis(bool? value) {
             setState(() {
               value ??= false;
               if (value! && widget.onlyOneSelectionAllowed) {
-                selectOnlyOne(urlWithD.key);
+                selectOnlyOne(entry.key);
               } else {
-                urlWithDescriptionSelections[urlWithD] = value!;
+                entrySelections[entry] = value!;
               }
             });
           }
 
           var urlLink = GestureDetector(
-              onTap: () {
-                launchUrlString(urlWithD.key,
-                    mode: LaunchMode.externalApplication);
-              },
+              onTap: !widget.titlesAreLinks
+                  ? null
+                  : () {
+                      launchUrlString(entry.key,
+                          mode: LaunchMode.externalApplication);
+                    },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    urlWithD.value[0],
-                    style: const TextStyle(
-                        decoration: TextDecoration.underline,
+                    entry.value.isEmpty ? entry.key : entry.value[0],
+                    style: TextStyle(
+                        decoration: widget.titlesAreLinks
+                            ? TextDecoration.underline
+                            : null,
                         fontWeight: FontWeight.bold),
                     textAlign: TextAlign.start,
                   ),
-                  Text(
-                    Uri.parse(urlWithD.key).host,
-                    style: const TextStyle(
-                        decoration: TextDecoration.underline, fontSize: 12),
-                  )
+                  if (widget.titlesAreLinks)
+                    Text(
+                      Uri.parse(entry.key).host,
+                      style: const TextStyle(
+                          decoration: TextDecoration.underline, fontSize: 12),
+                    )
                 ],
               ));
 
-          var descriptionText = Text(
-            urlWithD.value[1].length > 128
-                ? '${urlWithD.value[1].substring(0, 128)}...'
-                : urlWithD.value[1],
-            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-          );
+          var descriptionText = entry.value.length <= 1
+              ? const SizedBox.shrink()
+              : Text(
+                  entry.value[1].length > 128
+                      ? '${entry.value[1].substring(0, 128)}...'
+                      : entry.value[1],
+                  style: const TextStyle(
+                      fontStyle: FontStyle.italic, fontSize: 12),
+                );
 
-          var selectedUrlsWithDs = urlWithDescriptionSelections.entries
-              .where((e) => e.value)
-              .toList();
+          var selectedEntries =
+              entrySelections.entries.where((e) => e.value).toList();
 
           var singleSelectTile = ListTile(
-            title: urlLink,
-            subtitle: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectOnlyOne(urlWithD.key);
-                });
-              },
-              child: descriptionText,
-            ),
-            leading: Radio<String>(
-              value: urlWithD.key,
-              groupValue: selectedUrlsWithDs.isEmpty
+            title: GestureDetector(
+              onTap: widget.titlesAreLinks
                   ? null
-                  : selectedUrlsWithDs.first.key.key,
+                  : () {
+                      selectThis(!(entrySelections[entry] ?? false));
+                    },
+              child: urlLink,
+            ),
+            subtitle: entry.value.length <= 1
+                ? null
+                : GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectOnlyOne(entry.key);
+                      });
+                    },
+                    child: descriptionText,
+                  ),
+            leading: Radio<String>(
+              value: entry.key,
+              groupValue: selectedEntries.isEmpty
+                  ? null
+                  : selectedEntries.first.key.key,
               onChanged: (value) {
                 setState(() {
-                  selectOnlyOne(urlWithD.key);
+                  selectOnlyOne(entry.key);
                 });
               },
             ),
@@ -645,7 +689,7 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
 
           var multiSelectTile = Row(children: [
             Checkbox(
-                value: urlWithDescriptionSelections[urlWithD],
+                value: entrySelections[entry],
                 onChanged: (value) {
                   selectThis(value);
                 }),
@@ -657,20 +701,30 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(
-                  height: 8,
+                SizedBox(
+                  height: entry.value.length <= 1 ? 16 : 8,
                 ),
-                urlLink,
                 GestureDetector(
-                  onTap: () {
-                    selectThis(
-                        !(urlWithDescriptionSelections[urlWithD] ?? false));
-                  },
-                  child: descriptionText,
+                  onTap: widget.titlesAreLinks
+                      ? null
+                      : () {
+                          selectThis(!(entrySelections[entry] ?? false));
+                        },
+                  child: urlLink,
                 ),
-                const SizedBox(
-                  height: 8,
-                )
+                entry.value.length <= 1
+                    ? const SizedBox.shrink()
+                    : GestureDetector(
+                        onTap: () {
+                          selectThis(!(entrySelections[entry] ?? false));
+                        },
+                        child: descriptionText,
+                      ),
+                entry.value.length <= 1
+                    ? const SizedBox.shrink()
+                    : const SizedBox(
+                        height: 8,
+                      )
               ],
             ))
           ]);
@@ -687,24 +741,18 @@ class _UrlSelectionModalState extends State<UrlSelectionModal> {
             },
             child: Text(tr('cancel'))),
         TextButton(
-            onPressed:
-                urlWithDescriptionSelections.values.where((b) => b).isEmpty
-                    ? null
-                    : () {
-                        Navigator.of(context).pop(urlWithDescriptionSelections
-                            .entries
-                            .where((entry) => entry.value)
-                            .map((e) => e.key.key)
-                            .toList());
-                      },
+            onPressed: entrySelections.values.where((b) => b).isEmpty
+                ? null
+                : () {
+                    Navigator.of(context).pop(entrySelections.entries
+                        .where((entry) => entry.value)
+                        .map((e) => e.key.key)
+                        .toList());
+                  },
             child: Text(widget.onlyOneSelectionAllowed
                 ? tr('pick')
                 : tr('importX', args: [
-                    plural(
-                        'url',
-                        urlWithDescriptionSelections.values
-                            .where((b) => b)
-                            .length)
+                    plural('url', entrySelections.values.where((b) => b).length)
                   ])))
       ],
     );

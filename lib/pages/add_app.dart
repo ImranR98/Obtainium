@@ -254,13 +254,30 @@ class _AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    runSearch() async {
+    runSearch({bool filtered = true}) async {
       setState(() {
         searching = true;
       });
+      var sourceStrings = <String, List<String>>{};
+      sourceProvider.sources
+          .where((e) => e.canSearch && !e.excludeFromMassSearch)
+          .forEach((s) {
+        sourceStrings[s.name] = [s.name];
+      });
       try {
+        var searchSources = await showDialog<List<String>?>(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return SelectionModal(
+                    entries: sourceStrings,
+                    selectedByDefault: true,
+                    onlyOneSelectionAllowed: false,
+                    titlesAreLinks: false,
+                  );
+                }) ??
+            [];
         var results = await Future.wait(sourceProvider.sources
-            .where((e) => e.canSearch && !e.excludeFromMassSearch)
+            .where((e) => searchSources.contains(e.name))
             .map((e) async {
           try {
             return await e.search(searchQuery);
@@ -268,6 +285,8 @@ class _AddAppPageState extends State<AddAppPage> {
             if (err is! CredsNeededError) {
               rethrow;
             } else {
+              err.unexpected = true;
+              showError(err, context);
               return <String, List<String>>{};
             }
           }
@@ -297,8 +316,8 @@ class _AddAppPageState extends State<AddAppPage> {
             : await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
-                  return UrlSelectionModal(
-                    urlsWithDescriptions: res,
+                  return SelectionModal(
+                    entries: res,
                     selectedByDefault: false,
                     onlyOneSelectionAllowed: true,
                   );
@@ -470,23 +489,21 @@ class _AddAppPageState extends State<AddAppPage> {
               const SizedBox(
                 height: 16,
               ),
-              ...sourceProvider.sources
-                  .map((e) => GestureDetector(
-                      onTap: e.host != null
-                          ? () {
-                              launchUrlString('https://${e.host}',
-                                  mode: LaunchMode.externalApplication);
-                            }
-                          : null,
-                      child: Text(
-                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                        style: TextStyle(
-                            decoration: e.host != null
-                                ? TextDecoration.underline
-                                : TextDecoration.none,
-                            fontStyle: FontStyle.italic),
-                      )))
-                  
+              ...sourceProvider.sources.map((e) => GestureDetector(
+                  onTap: e.host != null
+                      ? () {
+                          launchUrlString('https://${e.host}',
+                              mode: LaunchMode.externalApplication);
+                        }
+                      : null,
+                  child: Text(
+                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                    style: TextStyle(
+                        decoration: e.host != null
+                            ? TextDecoration.underline
+                            : TextDecoration.none,
+                        fontStyle: FontStyle.italic),
+                  )))
             ]);
 
     return Scaffold(

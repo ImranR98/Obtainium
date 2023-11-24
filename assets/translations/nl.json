@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Verplaats niet-geïnstalleerde apps naar de onderkant van de apps-weergave",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Maakt het mogelijk beter te zoeken naar APK's)",
     "about": "Over",
-    "requiresCredentialsInSettings": "Dit vereist aanvullende referenties (in Instellingen)",
+    "requiresCredentialsInSettings": "{}: Dit vereist aanvullende referenties (in Instellingen)",
     "checkOnStart": "Controleren op updates bij opstarten",
     "tryInferAppIdFromCode": "Probeer de app-ID af te leiden uit de broncode",
     "removeOnExternalUninstall": "Automatisch extern verwijderde apps verwijderen",

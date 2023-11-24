@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Yüklenmemiş Uygulamaları Uygulamalar Görünümünün Altına Taşı",
     "gitlabPATLabel": "GitLab Kişisel Erişim Belirteci\n(Arama ve Daha İyi APK Keşfi İçin)",
     "about": "Hakkında",
-    "requiresCredentialsInSettings": "Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
+    "requiresCredentialsInSettings": "{}: Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
     "checkOnStart": "Başlangıçta güncellemeleri kontrol et",
     "tryInferAppIdFromCode": "Uygulama kimliğini kaynak kodundan çıkarma girişimi",
     "removeOnExternalUninstall": "Harici kaldırmada otomatik olarak kaldırılan uygulamalar",

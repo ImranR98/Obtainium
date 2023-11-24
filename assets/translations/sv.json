@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Move non-installed Apps to bottom of Apps view",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Enables Search and Better APK Discovery)",
     "about": "Om",
-    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
+    "requiresCredentialsInSettings": "{}: This needs additional credentials (in Settings)",
     "checkOnStart": "Kolla efter uppdateringar vid start",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",

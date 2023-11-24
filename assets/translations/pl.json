@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Przenieś niezainstalowane aplikacje na dół widoku aplikacji",
     "gitlabPATLabel": "Osobisty token dostępu GitLab\n(Umożliwia wyszukiwanie i lepsze wykrywanie APK)",
     "about": "Więcej informacji",
-    "requiresCredentialsInSettings": "Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
+    "requiresCredentialsInSettings": "{}: Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
     "checkOnStart": "Sprawdź aktualizacje przy uruchomieniu",
     "tryInferAppIdFromCode": "Spróbuj wywnioskować identyfikator aplikacji z kodu źródłowego",
     "removeOnExternalUninstall": "Automatyczne usuń odinstalowane zewnętrznie aplikacje",

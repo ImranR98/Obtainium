@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "将未安装应用置底",
     "gitlabPATLabel": "GitLab 个人访问令牌（启用搜索功能并增强 APK 发现）",
     "about": "相关文档",
-    "requiresCredentialsInSettings": "此功能需要额外的凭据（在“设置”中添加）",
+    "requiresCredentialsInSettings": "{}: 此功能需要额外的凭据（在“设置”中添加）",
     "checkOnStart": "启动时进行一次检查",
     "tryInferAppIdFromCode": "尝试从源代码推断应用 ID",
     "removeOnExternalUninstall": "自动删除已卸载的外部应用",
