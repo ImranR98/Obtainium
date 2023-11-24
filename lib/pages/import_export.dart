@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -189,17 +190,29 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 items: [
                   [
                     GeneratedFormTextField('searchQuery',
-                        label: tr('searchQuery'))
+                        label: tr('searchQuery'),
+                        required: source.name != FDroidRepo().name)
                   ],
-                  ...source.searchQuerySettingFormItems.map((e) => [e])
+                  ...source.searchQuerySettingFormItems.map((e) => [e]),
+                  [
+                    GeneratedFormTextField('url',
+                        label: source.host != null
+                            ? tr('overrideSource')
+                            : plural('url', 1).substring(2),
+                        defaultValue: source.host ?? '',
+                        required: true)
+                  ],
                 ],
               );
             });
-        if (values != null &&
-            (values['searchQuery'] as String?)?.isNotEmpty == true) {
+        if (values != null) {
           setState(() {
             importInProgress = true;
           });
+          if (values['url'] != source.host) {
+            source = sourceProvider.getSource(values['url'],
+                overrideSource: source.runtimeType.toString());
+          }
           var urlsWithDescriptions = await source
               .search(values['searchQuery'] as String, querySettings: values);
           if (urlsWithDescriptions.isNotEmpty) {
