@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "Teljes app telepítés",
     "checkingForUpdatesNotifChannel": "Frissítések keresése",
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak követhető appokat ellenőrizze frissítésekért",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

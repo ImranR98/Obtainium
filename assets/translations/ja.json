@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "アプリのインストールを完了する",
     "checkingForUpdatesNotifChannel": "アップデートを確認中",
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

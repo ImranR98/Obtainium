@@ -66,6 +66,7 @@ dependencies:
   hsluv: ^1.1.3
   connectivity_plus: ^5.0.0
   shared_storage: ^0.8.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

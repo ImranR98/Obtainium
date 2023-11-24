@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "Uygulama Kurulumu Tamamlandı",
     "checkingForUpdatesNotifChannel": "Güncellemeler Kontrol Ediliyor",
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "App Installation abschließen",
     "checkingForUpdatesNotifChannel": "Nach Aktualisierungen suchen",
     "onlyCheckInstalledOrTrackOnlyApps": "Überprüfe nur installierte und mit „nur Nachverfolgen“ markierte Apps nach Aktualisierungen",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

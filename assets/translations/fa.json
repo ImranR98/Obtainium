@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "نصب کامل برنامه",
     "checkingForUpdatesNotifChannel": "بررسی به‌روزرسانی‌ها",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

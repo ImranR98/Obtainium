@@ -275,6 +275,7 @@
     "completeAppInstallationNotifChannel": "Instalación Completa de la Aplicación",
     "checkingForUpdatesNotifChannel": "Buscando Actualizaciones",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "fixedAPKURL": "APK URL is fixed",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"
