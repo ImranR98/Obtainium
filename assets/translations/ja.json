@@ -55,7 +55,7 @@
     "notInstalled": "未インストール",
     "estimateInBrackets": "(推定)",
     "selectAll": "すべて選択",
-    "deselectN": "{}件の選択を解除",
+    "deselectX": "{}件の選択を解除",
     "xWillBeRemovedButRemainInstalled": "{} はObtainiumから削除されますが、デバイスにはインストールされたままです。",
     "removeSelectedAppsQuestion": "選択したアプリを削除しますか？",
     "removeSelectedApps": "選択したアプリを削除する",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "アップデートを確認中",
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

@@ -55,7 +55,7 @@
     "notInstalled": "Nicht installiert",
     "estimateInBrackets": "(Ungefähr)",
     "selectAll": "Alle auswählen",
-    "deselectN": "{} abgewählt",
+    "deselectX": "{} abgewählt",
     "xWillBeRemovedButRemainInstalled": "{} wird aus Obtainium entfernt, bleibt aber auf dem Gerät installiert.",
     "removeSelectedAppsQuestion": "Ausgewählte Apps entfernen?",
     "removeSelectedApps": "Ausgewählte Apps entfernen",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Nach Aktualisierungen suchen",
     "onlyCheckInstalledOrTrackOnlyApps": "Überprüfe nur installierte und mit „nur Nachverfolgen“ markierte Apps nach Aktualisierungen",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

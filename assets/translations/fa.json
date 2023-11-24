@@ -55,7 +55,7 @@
     "notInstalled": "نصب نشده",
     "estimateInBrackets": "(تخمین زدن)",
     "selectAll": "انتخاب همه",
-    "deselectN": "لغو انتخاب {}",
+    "deselectX": "لغو انتخاب {}",
     "xWillBeRemovedButRemainInstalled": "{} از Obtainium حذف می‌شود اما روی دستگاه نصب می‌ماند.",
     "removeSelectedAppsQuestion": "برنامه های انتخابی حذف شود؟",
     "removeSelectedApps": "حذف برنامه های انتخاب شده",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "بررسی به‌روزرسانی‌ها",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

@@ -55,7 +55,7 @@
     "notInstalled": "Yüklenmedi",
     "estimateInBrackets": "(Tahmini)",
     "selectAll": "Hepsini Seç",
-    "deselectN": "{}'yi Seçimden Kaldır",
+    "deselectX": "{}'yi Seçimden Kaldır",
     "xWillBeRemovedButRemainInstalled": "{} Obtainium'dan kaldırılacak ancak cihazınızda yüklü kalacaktır.",
     "removeSelectedAppsQuestion": "Seçilen Uygulamaları Kaldırmak İstiyor musunuz?",
     "removeSelectedApps": "Seçilen Uygulamaları Kaldır",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Güncellemeler Kontrol Ediliyor",
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

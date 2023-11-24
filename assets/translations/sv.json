@@ -55,7 +55,7 @@
     "notInstalled": "Inte Installerad",
     "estimateInBrackets": "(Uppskattning)",
     "selectAll": "Välj Alla",
-    "deselectN": "Avmarkera {}",
+    "deselectX": "Avmarkera {}",
     "xWillBeRemovedButRemainInstalled": "{} kommer tas bort från Obtainium men kommer vara fortsatt installerad på enheten.",
     "removeSelectedAppsQuestion": "Ta bort markerade Appar?",
     "removeSelectedApps": "Ta bort markerade Appar",

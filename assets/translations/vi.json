@@ -55,7 +55,7 @@
     "notInstalled": "Chưa cài đặt",
     "estimateInBrackets": "(Ước lượng)",
     "selectAll": "Chọn tất cả",
-    "deselectN": "Bỏ chọn {}",
+    "deselectX": "Bỏ chọn {}",
     "xWillBeRemovedButRemainInstalled": "{} sẽ bị xóa khỏi Obtainium nhưng vẫn còn cài đặt trên thiết bị.",
     "removeSelectedAppsQuestion": "Xóa ứng dụng đã chọn?",
     "removeSelectedApps": "Xóa ứng dụng đã chọn",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Đang kiểm tra cập nhật",
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra các ứng dụng đã cài đặt và Chỉ-Theo dõi để biết các bản cập nhật",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

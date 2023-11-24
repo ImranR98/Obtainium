@@ -428,6 +428,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                                 (BuildContext
                                                                     ctx) {
                                                               return SelectionModal(
+                                                                title: tr(
+                                                                    'selectX',
+                                                                    args: [
+                                                                      tr('source')
+                                                                    ]),
                                                                 entries:
                                                                     sourceStrings,
                                                                 selectedByDefault:
@@ -565,8 +570,10 @@ class SelectionModal extends StatefulWidget {
       required this.entries,
       this.selectedByDefault = true,
       this.onlyOneSelectionAllowed = false,
-      this.titlesAreLinks = true});
+      this.titlesAreLinks = true,
+      this.title});
 
+  String? title;
   Map<String, List<String>> entries;
   bool selectedByDefault;
   bool onlyOneSelectionAllowed;
@@ -600,7 +607,7 @@ class _SelectionModalState extends State<SelectionModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: Text(tr('select')),
+      title: Text(widget.title ?? tr('pick')),
       content: Column(children: [
         ...entrySelections.keys.map((entry) {
           selectThis(bool? value) {
@@ -701,8 +708,8 @@ class _SelectionModalState extends State<SelectionModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  height: entry.value.length <= 1 ? 16 : 8,
+                const SizedBox(
+                  height: 8,
                 ),
                 GestureDetector(
                   onTap: widget.titlesAreLinks
@@ -720,11 +727,9 @@ class _SelectionModalState extends State<SelectionModal> {
                         },
                         child: descriptionText,
                       ),
-                entry.value.length <= 1
-                    ? const SizedBox.shrink()
-                    : const SizedBox(
-                        height: 8,
-                      )
+                const SizedBox(
+                  height: 8,
+                )
               ],
             ))
           ]);
@@ -751,8 +756,8 @@ class _SelectionModalState extends State<SelectionModal> {
                   },
             child: Text(widget.onlyOneSelectionAllowed
                 ? tr('pick')
-                : tr('importX', args: [
-                    plural('url', entrySelections.values.where((b) => b).length)
+                : tr('selectX', args: [
+                    entrySelections.values.where((b) => b).length.toString()
                   ])))
       ],
     );

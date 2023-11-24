@@ -55,7 +55,7 @@
     "notInstalled": "未安装",
     "estimateInBrackets": "（推测）",
     "selectAll": "全选",
-    "deselectN": "取消选择 {}",
+    "deselectX": "取消选择 {}",
     "xWillBeRemovedButRemainInstalled": "{} 将从 Obtainium 中删除，但仍安装在您的设备中。",
     "removeSelectedAppsQuestion": "是否删除选中的应用？",
     "removeSelectedApps": "删除选中的应用",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "正在检查更新",
     "onlyCheckInstalledOrTrackOnlyApps": "只对已安装和“仅追踪”的应用进行更新检查",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

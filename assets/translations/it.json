@@ -55,7 +55,7 @@
     "notInstalled": "Non installato",
     "estimateInBrackets": "(stimato)",
     "selectAll": "Seleziona tutto",
-    "deselectN": "Deseleziona {}",
+    "deselectX": "Deseleziona {}",
     "xWillBeRemovedButRemainInstalled": "Verà effettuata la rimozione di {}, ma non la disinstallazione.",
     "removeSelectedAppsQuestion": "Rimuovere le app selezionate?",
     "removeSelectedApps": "Rimuovi le app selezionate",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Controllo degli aggiornamenti in corso",
     "onlyCheckInstalledOrTrackOnlyApps": "Cerca aggiornamenti solo per app installate e app in Solo-Monitoraggio",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

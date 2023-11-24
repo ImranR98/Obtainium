@@ -269,6 +269,7 @@ class _AddAppPageState extends State<AddAppPage> {
                 context: context,
                 builder: (BuildContext ctx) {
                   return SelectionModal(
+                    title: tr('selectX', args: [plural('source', 2)]),
                     entries: sourceStrings,
                     selectedByDefault: true,
                     onlyOneSelectionAllowed: false,
@@ -276,54 +277,56 @@ class _AddAppPageState extends State<AddAppPage> {
                   );
                 }) ??
             [];
-        var results = await Future.wait(sourceProvider.sources
-            .where((e) => searchSources.contains(e.name))
-            .map((e) async {
-          try {
-            return await e.search(searchQuery);
-          } catch (err) {
-            if (err is! CredsNeededError) {
-              rethrow;
-            } else {
-              err.unexpected = true;
-              showError(err, context);
-              return <String, List<String>>{};
+        if (searchSources.isNotEmpty) {
+          var results = await Future.wait(sourceProvider.sources
+              .where((e) => searchSources.contains(e.name))
+              .map((e) async {
+            try {
+              return await e.search(searchQuery);
+            } catch (err) {
+              if (err is! CredsNeededError) {
+                rethrow;
+              } else {
+                err.unexpected = true;
+                showError(err, context);
+                return <String, List<String>>{};
+              }
             }
-          }
-        }));
+          }));
 
-        // .then((results) async {
-        // Interleave results instead of simple reduce
-        Map<String, List<String>> res = {};
-        var si = 0;
-        var done = false;
-        while (!done) {
-          done = true;
-          for (var r in results) {
-            if (r.length > si) {
-              done = false;
-              res.addEntries([r.entries.elementAt(si)]);
+          // .then((results) async {
+          // Interleave results instead of simple reduce
+          Map<String, List<String>> res = {};
+          var si = 0;
+          var done = false;
+          while (!done) {
+            done = true;
+            for (var r in results) {
+              if (r.length > si) {
+                done = false;
+                res.addEntries([r.entries.elementAt(si)]);
+              }
             }
+            si++;
           }
-          si++;
-        }
-        if (res.isEmpty) {
-          throw ObtainiumError(tr('noResults'));
-        }
-        List<String>? selectedUrls = res.isEmpty
-            ? []
-            // ignore: use_build_context_synchronously
-            : await showDialog<List<String>?>(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return SelectionModal(
-                    entries: res,
-                    selectedByDefault: false,
-                    onlyOneSelectionAllowed: true,
-                  );
-                });
-        if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          changeUserInput(selectedUrls[0], true, false, isSearch: true);
+          if (res.isEmpty) {
+            throw ObtainiumError(tr('noResults'));
+          }
+          List<String>? selectedUrls = res.isEmpty
+              ? []
+              // ignore: use_build_context_synchronously
+              : await showDialog<List<String>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return SelectionModal(
+                      entries: res,
+                      selectedByDefault: false,
+                      onlyOneSelectionAllowed: true,
+                    );
+                  });
+          if (selectedUrls != null && selectedUrls.isNotEmpty) {
+            changeUserInput(selectedUrls[0], true, false, isSearch: true);
+          }
         }
       } catch (e) {
         showError(e, context);

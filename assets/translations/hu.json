@@ -55,7 +55,7 @@
     "notInstalled": "Nem telepített",
     "estimateInBrackets": "(Becslés)",
     "selectAll": "Mindet kiválaszt",
-    "deselectN": "Törölje {} kijelölését",
+    "deselectX": "Törölje {} kijelölését",
     "xWillBeRemovedButRemainInstalled": "A(z) {} el lesz távolítva az Obtainiumból, de továbbra is telepítve marad az eszközön.",
     "removeSelectedAppsQuestion": "Eltávolítja a kiválasztott appokat?",
     "removeSelectedApps": "Távolítsa el a kiválasztott appokat",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Frissítések keresése",
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak követhető appokat ellenőrizze frissítésekért",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

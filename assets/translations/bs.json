@@ -55,7 +55,7 @@
     "notInstalled": "Nije instalirano",
     "estimateInBrackets": "(Procjena)",
     "selectAll": "Označi sve",
-    "deselectN": "Poništi odabir {}",
+    "deselectX": "Poništi odabir {}",
     "xWillBeRemovedButRemainInstalled": "{} će biti uklonjen iz Obtainiuma, ali će ostati instaliran na uređaju.",
     "removeSelectedAppsQuestion": "Želite li ukloniti odabrane aplikacije?",
     "removeSelectedApps": "Ukloni odabrane aplikacije",
@@ -276,6 +276,7 @@
     "checkingForUpdatesNotifChannel": "Tražim moguće nadogradnje",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
     "fixedAPKURL": "APK URL is fixed",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"
