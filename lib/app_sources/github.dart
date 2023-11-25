@@ -117,22 +117,23 @@ class GitHub extends AppSource {
                     .decode(body['content'].toString().split('\n').join('')))
                 .split('\n')
                 .map((e) => e.trim());
-            var appId = trimmedLines
-                .where((l) =>
-                    l.startsWith('applicationId "') ||
-                    l.startsWith('applicationId \''))
-                .first;
-            appId = appId
-                .split(appId.startsWith('applicationId "') ? '"' : '\'')[1];
-            if (appId.startsWith('\${') && appId.endsWith('}')) {
-              appId = trimmedLines
-                  .where((l) => l.startsWith(
-                      'def ${appId.substring(2, appId.length - 1)}'))
-                  .first;
-              appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
-            }
-            if (appId.isNotEmpty) {
+            var appIds = trimmedLines.where((l) =>
+                l.startsWith('applicationId "') ||
+                l.startsWith('applicationId \''));
+            appIds = appIds.map((appId) => appId
+                .split(appId.startsWith('applicationId "') ? '"' : '\'')[1]);
+            appIds = appIds.map((appId) {
+              if (appId.startsWith('\${') && appId.endsWith('}')) {
+                appId = trimmedLines
+                    .where((l) => l.startsWith(
+                        'def ${appId.substring(2, appId.length - 1)}'))
+                    .first;
+                appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
+              }
               return appId;
+            }).where((appId) => appId.isNotEmpty);
+            if (appIds.length == 1) {
+              return appIds.first;
             }
           } catch (err) {
             LogsProvider().add(
