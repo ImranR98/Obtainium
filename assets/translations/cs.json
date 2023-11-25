@@ -55,7 +55,7 @@
     "notInstalled": "Není nainstalováno",
     "estimateInBrackets": "(přibližně)",
     "selectAll": "Vybrat Vše",
-    "deselectN": "{} deselected",
+    "deselectX": "{} deselected",
     "xWillBeRemovedButRemainInstalled": "{} bude odstraněn z Obtainium, ale zůstane nainstalován v zařízení.",
     "removeSelectedAppsQuestion": "Odebrat vybrané aplikace?",
     "removeSelectedApps": "Odebrat vybrané aplikace",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Přesunout nenainstalované aplikace na konec zobrazení Aplikace",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Umožňuje vyhledávání a lepší zjišťování APK)",
     "about": "About",
-    "requiresCredentialsInSettings": "Vyžaduje další pověření (v nastavení)",
+    "requiresCredentialsInSettings": "{}: Vyžaduje další pověření (v nastavení)",
     "checkOnStart": "Zkontrolovat jednou při spuštění",
     "tryInferAppIdFromCode": "Pokusit se určit ID aplikace ze zdrojového kódu",
     "removeOnExternalUninstall": "Automaticky odstranit externě odinstalované aplikace",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Dokončit instalaci aplikace",
     "checkingForUpdatesNotifChannel": "Zkontrolovat aktualizace",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

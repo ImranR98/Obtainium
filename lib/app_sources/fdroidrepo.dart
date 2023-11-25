@@ -54,17 +54,25 @@ class FDroidRepo extends AppSource {
   @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
-    query = removeQueryParamsFromUrl(standardizeUrl(query));
-    var res = await sourceRequest('$query/index.xml');
+    String? url = querySettings['url'];
+    if (url == null) {
+      throw NoReleasesError();
+    }
+    url = removeQueryParamsFromUrl(standardizeUrl(url));
+    var res = await sourceRequest('$url/index.xml');
     if (res.statusCode == 200) {
       var body = parse(res.body);
       Map<String, List<String>> results = {};
       body.querySelectorAll('application').toList().forEach((app) {
         String appId = app.attributes['id']!;
-        results['$query?appId=$appId'] = [
-          app.querySelector('name')?.innerHtml ?? appId,
-          app.querySelector('desc')?.innerHtml ?? ''
-        ];
+        String appName = app.querySelector('name')?.innerHtml ?? appId;
+        String appDesc = app.querySelector('desc')?.innerHtml ?? '';
+        if (query.isEmpty ||
+            appId.contains(query) ||
+            appName.contains(query) ||
+            appDesc.contains(query)) {
+          results['$url?appId=$appId'] = [appName, appDesc];
+        }
       });
       return results;
     } else {

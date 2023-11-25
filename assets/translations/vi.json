@@ -55,7 +55,7 @@
     "notInstalled": "Chưa cài đặt",
     "estimateInBrackets": "(Ước lượng)",
     "selectAll": "Chọn tất cả",
-    "deselectN": "Bỏ chọn {}",
+    "deselectX": "Bỏ chọn {}",
     "xWillBeRemovedButRemainInstalled": "{} sẽ bị xóa khỏi Obtainium nhưng vẫn còn cài đặt trên thiết bị.",
     "removeSelectedAppsQuestion": "Xóa ứng dụng đã chọn?",
     "removeSelectedApps": "Xóa ứng dụng đã chọn",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Di chuyển Ứng dụng chưa được cài đặt xuống cuối chế độ xem Ứng dụng",
     "gitlabPATLabel": "Mã thông báo truy cập cá nhân GitLab\n(Cho phép tìm kiếm và khám phá APK tốt hơn)",
     "about": "Giới thiệu",
-    "requiresCredentialsInSettings": "Điều này cần thông tin xác thực bổ sung (trong Cài đặt)",
+    "requiresCredentialsInSettings": "{}: Điều này cần thông tin xác thực bổ sung (trong Cài đặt)",
     "checkOnStart": "Kiểm tra các bản cập nhật khi khởi động",
     "tryInferAppIdFromCode": "Thử suy ra ID ứng dụng từ mã nguồn",
     "removeOnExternalUninstall": "Tự động xóa ứng dụng đã gỡ cài đặt bên ngoài",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Hoàn tất cài đặt ứng dụng",
     "checkingForUpdatesNotifChannel": "Đang kiểm tra cập nhật",
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra các ứng dụng đã cài đặt và Chỉ-Theo dõi để biết các bản cập nhật",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

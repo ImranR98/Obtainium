@@ -254,57 +254,79 @@ class _AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    runSearch() async {
+    runSearch({bool filtered = true}) async {
       setState(() {
         searching = true;
       });
+      var sourceStrings = <String, List<String>>{};
+      sourceProvider.sources
+          .where((e) => e.canSearch && !e.excludeFromMassSearch)
+          .forEach((s) {
+        sourceStrings[s.name] = [s.name];
+      });
       try {
-        var results = await Future.wait(sourceProvider.sources
-            .where((e) => e.canSearch && !e.excludeFromMassSearch)
-            .map((e) async {
-          try {
-            return await e.search(searchQuery);
-          } catch (err) {
-            if (err is! CredsNeededError) {
-              rethrow;
-            } else {
-              return <String, List<String>>{};
-            }
-          }
-        }));
-
-        // .then((results) async {
-        // Interleave results instead of simple reduce
-        Map<String, List<String>> res = {};
-        var si = 0;
-        var done = false;
-        while (!done) {
-          done = true;
-          for (var r in results) {
-            if (r.length > si) {
-              done = false;
-              res.addEntries([r.entries.elementAt(si)]);
-            }
-          }
-          si++;
-        }
-        if (res.isEmpty) {
-          throw ObtainiumError(tr('noResults'));
-        }
-        List<String>? selectedUrls = res.isEmpty
-            ? []
-            // ignore: use_build_context_synchronously
-            : await showDialog<List<String>?>(
+        var searchSources = await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
-                  return UrlSelectionModal(
-                    urlsWithDescriptions: res,
-                    selectedByDefault: false,
-                    onlyOneSelectionAllowed: true,
+                  return SelectionModal(
+                    title: tr('selectX', args: [plural('source', 2)]),
+                    entries: sourceStrings,
+                    selectedByDefault: true,
+                    onlyOneSelectionAllowed: false,
+                    titlesAreLinks: false,
                   );
-                });
-        if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          changeUserInput(selectedUrls[0], true, false, isSearch: true);
+                }) ??
+            [];
+        if (searchSources.isNotEmpty) {
+          var results = await Future.wait(sourceProvider.sources
+              .where((e) => searchSources.contains(e.name))
+              .map((e) async {
+            try {
+              return await e.search(searchQuery);
+            } catch (err) {
+              if (err is! CredsNeededError) {
+                rethrow;
+              } else {
+                err.unexpected = true;
+                showError(err, context);
+                return <String, List<String>>{};
+              }
+            }
+          }));
+
+          // .then((results) async {
+          // Interleave results instead of simple reduce
+          Map<String, List<String>> res = {};
+          var si = 0;
+          var done = false;
+          while (!done) {
+            done = true;
+            for (var r in results) {
+              if (r.length > si) {
+                done = false;
+                res.addEntries([r.entries.elementAt(si)]);
+              }
+            }
+            si++;
+          }
+          if (res.isEmpty) {
+            throw ObtainiumError(tr('noResults'));
+          }
+          List<String>? selectedUrls = res.isEmpty
+              ? []
+              // ignore: use_build_context_synchronously
+              : await showDialog<List<String>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return SelectionModal(
+                      entries: res,
+                      selectedByDefault: false,
+                      onlyOneSelectionAllowed: true,
+                    );
+                  });
+          if (selectedUrls != null && selectedUrls.isNotEmpty) {
+            changeUserInput(selectedUrls[0], true, false, isSearch: true);
+          }
         }
       } catch (e) {
         showError(e, context);
@@ -470,23 +492,21 @@ class _AddAppPageState extends State<AddAppPage> {
               const SizedBox(
                 height: 16,
               ),
-              ...sourceProvider.sources
-                  .map((e) => GestureDetector(
-                      onTap: e.host != null
-                          ? () {
-                              launchUrlString('https://${e.host}',
-                                  mode: LaunchMode.externalApplication);
-                            }
-                          : null,
-                      child: Text(
-                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                        style: TextStyle(
-                            decoration: e.host != null
-                                ? TextDecoration.underline
-                                : TextDecoration.none,
-                            fontStyle: FontStyle.italic),
-                      )))
-                  
+              ...sourceProvider.sources.map((e) => GestureDetector(
+                  onTap: e.host != null
+                      ? () {
+                          launchUrlString('https://${e.host}',
+                              mode: LaunchMode.externalApplication);
+                        }
+                      : null,
+                  child: Text(
+                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                    style: TextStyle(
+                        decoration: e.host != null
+                            ? TextDecoration.underline
+                            : TextDecoration.none,
+                        fontStyle: FontStyle.italic),
+                  )))
             ]);
 
     return Scaffold(

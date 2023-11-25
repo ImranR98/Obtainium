@@ -55,7 +55,7 @@
     "notInstalled": "Nije instalirano",
     "estimateInBrackets": "(Procjena)",
     "selectAll": "Označi sve",
-    "deselectN": "Poništi odabir {}",
+    "deselectX": "Poništi odabir {}",
     "xWillBeRemovedButRemainInstalled": "{} će biti uklonjen iz Obtainiuma, ali će ostati instaliran na uređaju.",
     "removeSelectedAppsQuestion": "Želite li ukloniti odabrane aplikacije?",
     "removeSelectedApps": "Ukloni odabrane aplikacije",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Premjesti neinstalirane aplikacije na dno prikaza aplikacija",
     "gitlabPATLabel": "GitLab token za lični pristup\n(Omogućava pretraživanje i bolje otkrivanje APK-a)",
     "about": "O nama",
-    "requiresCredentialsInSettings": "Za ovo su potrebni dodatni akreditivi (u Postavkama)",
+    "requiresCredentialsInSettings": "{}: Za ovo su potrebni dodatni akreditivi (u Postavkama)",
     "checkOnStart": "Provjerite ima li novosti pri pokretanju",
     "tryInferAppIdFromCode": "Pokušati otkriti ID aplikacije iz izvornog koda",
     "removeOnExternalUninstall": "Automatski ukloni eksterno deinstalirane aplikacije",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Dovršite instalaciju aplikacije",
     "checkingForUpdatesNotifChannel": "Tražim moguće nadogradnje",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

@@ -55,7 +55,7 @@
     "notInstalled": "Non installato",
     "estimateInBrackets": "(stimato)",
     "selectAll": "Seleziona tutto",
-    "deselectN": "Deseleziona {}",
+    "deselectX": "Deseleziona {}",
     "xWillBeRemovedButRemainInstalled": "Verà effettuata la rimozione di {}, ma non la disinstallazione.",
     "removeSelectedAppsQuestion": "Rimuovere le app selezionate?",
     "removeSelectedApps": "Rimuovi le app selezionate",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Sposta le app non installate in fondo alla lista",
     "gitlabPATLabel": "GitLab Personal Access Token\n(attiva la ricerca e migliora la rilevazione di apk)",
     "about": "Informazioni",
-    "requiresCredentialsInSettings": "Servono credenziali aggiuntive (in Impostazioni)",
+    "requiresCredentialsInSettings": "{}: Servono credenziali aggiuntive (in Impostazioni)",
     "checkOnStart": "Controlla una volta all'avvio",
     "tryInferAppIdFromCode": "Prova a dedurre l'ID dell'app dal codice sorgente",
     "removeOnExternalUninstall": "Rimuovi automaticamente app disinstallate esternamente",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Completa l'installazione dell'app",
     "checkingForUpdatesNotifChannel": "Controllo degli aggiornamenti in corso",
     "onlyCheckInstalledOrTrackOnlyApps": "Cerca aggiornamenti solo per app installate e app in Solo-Monitoraggio",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

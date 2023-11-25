@@ -48,6 +48,12 @@ class GitLab extends AppSource {
             label: tr('fallbackToOlderReleases'), defaultValue: true)
       ]
     ];
+    searchQuerySettingFormItems = [
+      GeneratedFormTextField('PAT',
+          label: tr('gitlabPATLabel').split('(')[0],
+          password: true,
+          required: false)
+    ];
   }
 
   @override
@@ -80,12 +86,18 @@ class GitLab extends AppSource {
   @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
-    String? PAT = await getPATIfAny({});
-    if (PAT == null) {
-      throw CredsNeededError(name);
+    String? PAT;
+    if (!hostChanged) {
+      PAT = await getPATIfAny({});
+      if (PAT == null) {
+        throw CredsNeededError(name);
+      }
+    }
+    if ((querySettings['PAT'] as String?)?.isNotEmpty == true) {
+      PAT = querySettings['PAT'];
     }
     var url =
-        'https://$host/api/v4/search?private_token=$PAT&scope=projects&search=${Uri.encodeQueryComponent(query)}';
+        'https://$host/api/v4/search?${PAT?.isNotEmpty == true ? 'private_token=$PAT&' : ''}scope=projects&search=${Uri.encodeQueryComponent(query)}';
     var res = await sourceRequest(url);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -174,7 +186,6 @@ class GitLab extends AppSource {
           ...getLinksFromParsedHTML(entryContent,
                   RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
               .where((element) => Uri.parse(element).host != '')
-              
         ];
         var entryId = entry.querySelector('id')?.innerHtml;
         var version =

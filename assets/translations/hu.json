@@ -55,7 +55,7 @@
     "notInstalled": "Nem telepített",
     "estimateInBrackets": "(Becslés)",
     "selectAll": "Mindet kiválaszt",
-    "deselectN": "Törölje {} kijelölését",
+    "deselectX": "Törölje {} kijelölését",
     "xWillBeRemovedButRemainInstalled": "A(z) {} el lesz távolítva az Obtainiumból, de továbbra is telepítve marad az eszközön.",
     "removeSelectedAppsQuestion": "Eltávolítja a kiválasztott appokat?",
     "removeSelectedApps": "Távolítsa el a kiválasztott appokat",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Helyezze át a nem telepített appokat az App nézet aljára",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Engedélyezi a Keresést és jobb APK felfedezés)",
     "about": "Rólunk",
-    "requiresCredentialsInSettings": "Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
+    "requiresCredentialsInSettings": "{}: Ehhez további hitelesítő adatokra van szükség (a Beállításokban)",
     "checkOnStart": "Egyszer az alkalmazás indításakor is",
     "tryInferAppIdFromCode": "Próbálja kikövetkeztetni az app azonosítót a forráskódból",
     "removeOnExternalUninstall": "A külsőleg eltávolított appok auto. eltávolítása",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Teljes app telepítés",
     "checkingForUpdatesNotifChannel": "Frissítések keresése",
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak követhető appokat ellenőrizze frissítésekért",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

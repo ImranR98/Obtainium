@@ -55,7 +55,7 @@
     "notInstalled": "Yüklenmedi",
     "estimateInBrackets": "(Tahmini)",
     "selectAll": "Hepsini Seç",
-    "deselectN": "{}'yi Seçimden Kaldır",
+    "deselectX": "{}'yi Seçimden Kaldır",
     "xWillBeRemovedButRemainInstalled": "{} Obtainium'dan kaldırılacak ancak cihazınızda yüklü kalacaktır.",
     "removeSelectedAppsQuestion": "Seçilen Uygulamaları Kaldırmak İstiyor musunuz?",
     "removeSelectedApps": "Seçilen Uygulamaları Kaldır",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Yüklenmemiş Uygulamaları Uygulamalar Görünümünün Altına Taşı",
     "gitlabPATLabel": "GitLab Kişisel Erişim Belirteci\n(Arama ve Daha İyi APK Keşfi İçin)",
     "about": "Hakkında",
-    "requiresCredentialsInSettings": "Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
+    "requiresCredentialsInSettings": "{}: Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
     "checkOnStart": "Başlangıçta güncellemeleri kontrol et",
     "tryInferAppIdFromCode": "Uygulama kimliğini kaynak kodundan çıkarma girişimi",
     "removeOnExternalUninstall": "Harici kaldırmada otomatik olarak kaldırılan uygulamalar",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Uygulama Kurulumu Tamamlandı",
     "checkingForUpdatesNotifChannel": "Güncellemeler Kontrol Ediliyor",
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

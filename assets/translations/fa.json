@@ -55,7 +55,7 @@
     "notInstalled": "نصب نشده",
     "estimateInBrackets": "(تخمین زدن)",
     "selectAll": "انتخاب همه",
-    "deselectN": "لغو انتخاب {}",
+    "deselectX": "لغو انتخاب {}",
     "xWillBeRemovedButRemainInstalled": "{} از Obtainium حذف می‌شود اما روی دستگاه نصب می‌ماند.",
     "removeSelectedAppsQuestion": "برنامه های انتخابی حذف شود؟",
     "removeSelectedApps": "حذف برنامه های انتخاب شده",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "برنامه های نصب نشده را به نمای پایین برنامه ها منتقل کنید",
     "gitlabPATLabel": "رمز دسترسی شخصی GitLab\n(جستجو و کشف بهتر APK را فعال میکند)",
     "about": "درباره",
-    "requiresCredentialsInSettings": "این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
+    "requiresCredentialsInSettings": "{}: این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
     "checkOnStart": "بررسی در شروع",
     "tryInferAppIdFromCode": "شناسه برنامه را از کد منبع استنباط کنید",
     "removeOnExternalUninstall": "حذف خودکار برنامه های حذف نصب شده خارجی",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "نصب کامل برنامه",
     "checkingForUpdatesNotifChannel": "بررسی به‌روزرسانی‌ها",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

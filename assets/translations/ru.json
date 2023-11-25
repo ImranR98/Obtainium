@@ -55,7 +55,7 @@
     "notInstalled": "Не установлено",
     "estimateInBrackets": "(Оценка)",
     "selectAll": "Выбрать всё",
-    "deselectN": "Отменить выбор {}",
+    "deselectX": "Отменить выбор {}",
     "xWillBeRemovedButRemainInstalled": "{} будет удалено из Obtainium, но останется на устройстве",
     "removeSelectedAppsQuestion": "Удалить выбранные приложения?",
     "removeSelectedApps": "Удалить выбранные приложения",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Отображать неустановленные приложения внизу списка",
     "gitlabPATLabel": "Персональный токен доступа GitLab\n(включает поиск и улучшает обнаружение APK)",
     "about": "Описание",
-    "requiresCredentialsInSettings": "Для этого требуются дополнительные учетные данные (в настройках)",
+    "requiresCredentialsInSettings": "{}: Для этого требуются дополнительные учетные данные (в настройках)",
     "checkOnStart": "Проверять наличие обновлений при запуске",
     "tryInferAppIdFromCode": "Попытаться определить ID приложения из исходного кода",
     "removeOnExternalUninstall": "Автоматически убирать из списка удаленные извне приложения",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Завершение установки приложения",
     "checkingForUpdatesNotifChannel": "Проверка обновлений",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

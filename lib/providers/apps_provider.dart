@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -139,6 +140,100 @@ List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
   return arr;
 }
 
+Future<File> downloadFileWithRetry(
+    String url, String fileNameNoExt, Function? onProgress, String destDir,
+    {bool useExisting = true,
+    Map<String, String>? headers,
+    int retries = 3}) async {
+  try {
+    return await downloadFile(url, fileNameNoExt, onProgress, destDir,
+        useExisting: useExisting, headers: headers);
+  } catch (e) {
+    if (retries > 0 && e is ClientException) {
+      await Future.delayed(const Duration(seconds: 5));
+      return await downloadFileWithRetry(
+          url, fileNameNoExt, onProgress, destDir,
+          useExisting: useExisting, headers: headers, retries: (retries - 1));
+    } else {
+      rethrow;
+    }
+  }
+}
+
+String hashListOfLists(List<List<int>> data) {
+  var bytes = utf8.encode(jsonEncode(data));
+  var digest = sha256.convert(bytes);
+  var hash = digest.toString();
+  return hash.hashCode.toString();
+}
+
+Future<String> checkDownloadHash(String url,
+    {int bytesToGrab = 1024, Map<String, String>? headers}) async {
+  var req = Request('GET', Uri.parse(url));
+  if (headers != null) {
+    req.headers.addAll(headers);
+  }
+  req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
+  var client = http.Client();
+  var response = await client.send(req);
+  if (response.statusCode < 200 || response.statusCode > 299) {
+    throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
+  }
+  List<List<int>> bytes = await response.stream.take(bytesToGrab).toList();
+  return hashListOfLists(bytes);
+}
+
+Future<File> downloadFile(
+    String url, String fileNameNoExt, Function? onProgress, String destDir,
+    {bool useExisting = true, Map<String, String>? headers}) async {
+  var req = Request('GET', Uri.parse(url));
+  if (headers != null) {
+    req.headers.addAll(headers);
+  }
+  var client = http.Client();
+  StreamedResponse response = await client.send(req);
+  String ext =
+      response.headers['content-disposition']?.split('.').last ?? 'apk';
+  if (ext.endsWith('"') || ext.endsWith("other")) {
+    ext = ext.substring(0, ext.length - 1);
+  }
+  if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+    ext = 'apk';
+  }
+  File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
+  if (!(downloadedFile.existsSync() && useExisting)) {
+    File tempDownloadedFile = File('${downloadedFile.path}.part');
+    if (tempDownloadedFile.existsSync()) {
+      tempDownloadedFile.deleteSync(recursive: true);
+    }
+    var length = response.contentLength;
+    var received = 0;
+    double? progress;
+    var sink = tempDownloadedFile.openWrite();
+    await response.stream.map((s) {
+      received += s.length;
+      progress = (length != null ? received / length * 100 : 30);
+      if (onProgress != null) {
+        onProgress(progress);
+      }
+      return s;
+    }).pipe(sink);
+    await sink.close();
+    progress = null;
+    if (onProgress != null) {
+      onProgress(progress);
+    }
+    if (response.statusCode != 200) {
+      tempDownloadedFile.deleteSync(recursive: true);
+      throw response.reasonPhrase ?? tr('unexpectedError');
+    }
+    tempDownloadedFile.renameSync(downloadedFile.path);
+  } else {
+    client.close();
+  }
+  return downloadedFile;
+}
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -190,77 +285,6 @@ class AppsProvider with ChangeNotifier {
         });
       }
     }();
-  }
-
-  Future<File> downloadFileWithRetry(
-      String url, String fileNameNoExt, Function? onProgress,
-      {bool useExisting = true,
-      Map<String, String>? headers,
-      int retries = 3}) async {
-    try {
-      return await downloadFile(url, fileNameNoExt, onProgress,
-          useExisting: useExisting, headers: headers);
-    } catch (e) {
-      if (retries > 0 && e is ClientException) {
-        await Future.delayed(const Duration(seconds: 5));
-        return await downloadFileWithRetry(url, fileNameNoExt, onProgress,
-            useExisting: useExisting, headers: headers, retries: (retries - 1));
-      } else {
-        rethrow;
-      }
-    }
-  }
-
-  Future<File> downloadFile(
-      String url, String fileNameNoExt, Function? onProgress,
-      {bool useExisting = true, Map<String, String>? headers}) async {
-    var destDir = APKDir.path;
-    var req = Request('GET', Uri.parse(url));
-    if (headers != null) {
-      req.headers.addAll(headers);
-    }
-    var client = http.Client();
-    StreamedResponse response = await client.send(req);
-    String ext =
-        response.headers['content-disposition']?.split('.').last ?? 'apk';
-    if (ext.endsWith('"') || ext.endsWith("other")) {
-      ext = ext.substring(0, ext.length - 1);
-    }
-    if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
-      ext = 'apk';
-    }
-    File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
-    if (!(downloadedFile.existsSync() && useExisting)) {
-      File tempDownloadedFile = File('${downloadedFile.path}.part');
-      if (tempDownloadedFile.existsSync()) {
-        tempDownloadedFile.deleteSync(recursive: true);
-      }
-      var length = response.contentLength;
-      var received = 0;
-      double? progress;
-      var sink = tempDownloadedFile.openWrite();
-      await response.stream.map((s) {
-        received += s.length;
-        progress = (length != null ? received / length * 100 : 30);
-        if (onProgress != null) {
-          onProgress(progress);
-        }
-        return s;
-      }).pipe(sink);
-      await sink.close();
-      progress = null;
-      if (onProgress != null) {
-        onProgress(progress);
-      }
-      if (response.statusCode != 200) {
-        tempDownloadedFile.deleteSync(recursive: true);
-        throw response.reasonPhrase ?? tr('unexpectedError');
-      }
-      tempDownloadedFile.renameSync(downloadedFile.path);
-    } else {
-      client.close();
-    }
-    return downloadedFile;
   }
 
   Future<File> handleAPKIDChange(App app, PackageInfo? newInfo,
@@ -322,7 +346,7 @@ class AppsProvider with ChangeNotifier {
           notificationsProvider?.notify(notif);
         }
         prevProg = prog;
-      });
+      }, APKDir.path);
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;

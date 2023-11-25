@@ -4,6 +4,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
@@ -94,6 +95,10 @@ class HTML extends AppSource {
             label: tr('sortByFileNamesNotLinks'))
       ],
       [GeneratedFormSwitch('reverseSort', label: tr('reverseSort'))],
+      [
+        GeneratedFormSwitch('supportFixedAPKURL',
+            defaultValue: true, label: tr('supportFixedAPKURL')),
+      ],
       [
         GeneratedFormTextField('customLinkFilterRegex',
             label: tr('customLinkFilterRegex'),
@@ -222,7 +227,10 @@ class HTML extends AppSource {
         throw NoReleasesError();
       }
       var rel = links.last;
-      String? version = rel.hashCode.toString();
+      String? version;
+      if (additionalSettings['supportFixedAPKURL'] != true) {
+        version = rel.hashCode.toString();
+      }
       var versionExtractionRegEx =
           additionalSettings['versionExtractionRegEx'] as String?;
       if (versionExtractionRegEx?.isNotEmpty == true) {
@@ -243,9 +251,9 @@ class HTML extends AppSource {
           throw NoVersionError();
         }
       }
-      List<String> apkUrls =
-          [rel].map((e) => ensureAbsoluteUrl(e, uri)).toList();
-      return APKDetails(version!, apkUrls.map((e) => MapEntry(e, e)).toList(),
+      rel = ensureAbsoluteUrl(rel, uri);
+      version ??= (await checkDownloadHash(rel)).toString();
+      return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
           AppNames(uri.host, tr('app')));
     } else {
       throw getObtainiumHttpError(res);

@@ -139,11 +139,11 @@ APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
       }
     }
     // Apply the release filter if any
-    if (filterVersionsByRegEx != null) {
+    if (filterVersionsByRegEx?.isNotEmpty == true) {
       version = null;
       releaseChoices = [];
       for (var i = 0; i < releases.length; i++) {
-        if (RegExp(filterVersionsByRegEx)
+        if (RegExp(filterVersionsByRegEx!)
             .hasMatch(releases[i]['versionName'])) {
           version = releases[i]['versionName'];
         }

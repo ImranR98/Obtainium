@@ -55,7 +55,7 @@
     "notInstalled": "Niet geinstalleerd",
     "estimateInBrackets": "(Ongeveer)",
     "selectAll": "Selecteer alles",
-    "deselectN": "Deselecteer {}",
+    "deselectX": "Deselecteer {}",
     "xWillBeRemovedButRemainInstalled": "{} zal worden verwijderd uit Obtainium, maar blijft geïnstalleerd op het apparaat.",
     "removeSelectedAppsQuestion": "Geselecteerde apps verwijderen??",
     "removeSelectedApps": "Geselecteerde apps verwijderen",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Verplaats niet-geïnstalleerde apps naar de onderkant van de apps-weergave",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Maakt het mogelijk beter te zoeken naar APK's)",
     "about": "Over",
-    "requiresCredentialsInSettings": "Dit vereist aanvullende referenties (in Instellingen)",
+    "requiresCredentialsInSettings": "{}: Dit vereist aanvullende referenties (in Instellingen)",
     "checkOnStart": "Controleren op updates bij opstarten",
     "tryInferAppIdFromCode": "Probeer de app-ID af te leiden uit de broncode",
     "removeOnExternalUninstall": "Automatisch extern verwijderde apps verwijderen",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Voltooien van de app-installatie",
     "checkingForUpdatesNotifChannel": "Controleren op updates",
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde en Track-Only apps controleren op updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

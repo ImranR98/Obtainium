@@ -55,7 +55,7 @@
     "notInstalled": "Not Installed",
     "estimateInBrackets": "(Estimate)",
     "selectAll": "Select All",
-    "deselectN": "Deselect {}",
+    "deselectX": "Deselect {}",
     "xWillBeRemovedButRemainInstalled": "{} will be removed from Obtainium but remain installed on device.",
     "removeSelectedAppsQuestion": "Remove Selected Apps?",
     "removeSelectedApps": "Remove Selected Apps",
@@ -223,7 +223,7 @@
     "moveNonInstalledAppsToBottom": "Move non-installed Apps to bottom of Apps view",
     "gitlabPATLabel": "GitLab Personal Access Token\n(Enables Search and Better APK Discovery)",
     "about": "About",
-    "requiresCredentialsInSettings": "This needs additional credentials (in Settings)",
+    "requiresCredentialsInSettings": "{} needs additional credentials (in Settings)",
     "checkOnStart": "Check for updates on startup",
     "tryInferAppIdFromCode": "Try inferring App ID from source code",
     "removeOnExternalUninstall": "Automatically remove externally uninstalled Apps",
@@ -275,6 +275,8 @@
     "completeAppInstallationNotifChannel": "Complete App Installation",
     "checkingForUpdatesNotifChannel": "Checking for Updates",
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
+    "supportFixedAPKURL": "Support fixed APK URLs",
+    "selectX": "Select {}",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
