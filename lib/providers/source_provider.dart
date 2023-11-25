@@ -67,10 +67,11 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       .reduce((value, element) => [...value, ...element]);
   Map<String, dynamic> additionalSettings =
       getDefaultValuesFromFormItems([formItems]);
+  Map<String, dynamic> originalAdditionalSettings = {};
   if (json['additionalSettings'] != null) {
-    additionalSettings.addEntries(
-        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
-            .entries);
+    originalAdditionalSettings =
+        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']));
+    additionalSettings.addEntries(originalAdditionalSettings.entries);
   }
   // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
   if (json['additionalData'] != null) {
@@ -133,6 +134,11 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   // Arch based APK filter option should be disabled if it previously did not exist
   if (additionalSettings['autoApkFilterByArch'] == null) {
     additionalSettings['autoApkFilterByArch'] = false;
+  }
+  // HTML 'fixed URL' support should be disabled if it previously did not exist
+  if (source.runtimeType == HTML().runtimeType &&
+      originalAdditionalSettings['supportFixedAPKURL'] == null) {
+    additionalSettings['supportFixedAPKURL'] = false;
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
