@@ -598,6 +598,7 @@ class SelectionModal extends StatefulWidget {
 
 class _SelectionModalState extends State<SelectionModal> {
   Map<MapEntry<String, List<String>>, bool> entrySelections = {};
+  String filterRegex = '';
   @override
   void initState() {
     super.initState();
@@ -618,11 +619,50 @@ class _SelectionModalState extends State<SelectionModal> {
 
   @override
   Widget build(BuildContext context) {
+    Map<MapEntry<String, List<String>>, bool> filteredEntrySelections = {};
+    entrySelections.forEach((key, value) {
+      var searchableText = key.value.isEmpty ? key.key : key.value[0];
+      if (filterRegex.isEmpty || RegExp(filterRegex).hasMatch(searchableText)) {
+        filteredEntrySelections.putIfAbsent(key, () => value);
+      }
+    });
+    if (filterRegex.isNotEmpty && filteredEntrySelections.isEmpty) {
+      entrySelections.forEach((key, value) {
+        var searchableText = key.value.isEmpty ? key.key : key.value[0];
+        if (filterRegex.isEmpty ||
+            RegExp(filterRegex, caseSensitive: false)
+                .hasMatch(searchableText)) {
+          filteredEntrySelections.putIfAbsent(key, () => value);
+        }
+      });
+    }
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title ?? tr('pick')),
       content: Column(children: [
-        ...entrySelections.keys.map((entry) {
+        GeneratedForm(
+            items: [
+              [
+                GeneratedFormTextField('filter',
+                    label: tr('filter'),
+                    required: false,
+                    additionalValidators: [
+                      (value) {
+                        return regExValidator(value);
+                      }
+                    ])
+              ]
+            ],
+            onValueChanges: (value, valid, isBuilding) {
+              if (valid && !isBuilding) {
+                if (value['filter'] != null) {
+                  setState(() {
+                    filterRegex = value['filter'];
+                  });
+                }
+              }
+            }),
+        ...filteredEntrySelections.keys.map((entry) {
           selectThis(bool? value) {
             setState(() {
               value ??= false;

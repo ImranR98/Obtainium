@@ -145,6 +145,29 @@ class _AppPageState extends State<AppPage> {
                     appsProvider.saveApps([app.app]);
                   }
                 }),
+            if (app?.app.additionalSettings['about'] is String &&
+                app?.app.additionalSettings['about'].isNotEmpty)
+              Column(
+                children: [
+                  const SizedBox(
+                    height: 48,
+                  ),
+                  GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(
+                          text: app?.app.additionalSettings['about'] ?? ''));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(tr('copiedToClipboard')),
+                      ));
+                    },
+                    child: Text(
+                      app?.app.additionalSettings['about'],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  )
+                ],
+              ),
           ],
         );
 
