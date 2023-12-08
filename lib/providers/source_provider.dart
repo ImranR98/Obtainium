@@ -454,7 +454,8 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('skipUpdateNotifications',
           label: tr('skipUpdateNotifications'))
-    ]
+    ],
+    [GeneratedFormTextField('about', label: tr('about'), required: false)]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
