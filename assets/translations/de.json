@@ -276,7 +276,7 @@
     "checkingForUpdatesNotifChannel": "Nach Aktualisierungen suchen",
     "onlyCheckInstalledOrTrackOnlyApps": "Überprüfe nur installierte und mit „nur Nachverfolgen“ markierte Apps auf Aktualisierungen",
     "supportFixedAPKURL": "neuere Version anhand der ersten dreißig Zahlen der Checksumme der APK URL erraten, wenn anderweitig nicht unterstützt",
-    "selectX": "Select {}",
+    "selectX": "Wähle {}",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
