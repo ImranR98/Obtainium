@@ -34,7 +34,9 @@ class CredsNeededError extends ObtainiumError {
 }
 
 class NoReleasesError extends ObtainiumError {
-  NoReleasesError() : super(tr('noReleaseFound'));
+  NoReleasesError({String? note})
+      : super(
+            '${tr('noReleaseFound')}${note?.isNotEmpty == true ? '\n\n$note' : ''}');
 }
 
 class NoAPKError extends ObtainiumError {

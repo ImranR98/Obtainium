@@ -203,7 +203,7 @@ class GitLab extends AppSource {
       });
     }
     if (apkDetailsList.isEmpty) {
-      throw NoReleasesError();
+      throw NoReleasesError(note: tr('gitlabSourceNote'));
     }
     if (fallbackToOlderReleases) {
       if (additionalSettings['trackOnly'] != true) {
@@ -211,7 +211,7 @@ class GitLab extends AppSource {
             apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
       }
       if (apkDetailsList.isEmpty) {
-        throw NoReleasesError();
+        throw NoReleasesError(note: tr('gitlabSourceNote'));
       }
     }
     return apkDetailsList.first;
