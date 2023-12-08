@@ -275,8 +275,8 @@
     "completeAppInstallationNotifChannel": "Ukończenie instalacji aplikacji",
     "checkingForUpdatesNotifChannel": "Sprawdzanie dostępności aktualizacji",
     "onlyCheckInstalledOrTrackOnlyApps": "Sprawdzaj tylko zainstalowane i obserwowane aplikacje pod kątem aktualizacji",
-    "supportFixedAPKURL": "Support fixed APK URLs",
-    "selectX": "Select {}",
+    "supportFixedAPKURL": "Obsługuj stałe adresy URL APK",
+    "selectX": "Wybierz {}",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",
