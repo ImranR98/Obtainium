@@ -215,7 +215,7 @@
     "versionDetection": "Verzió érzékelés",
     "standardVersionDetection": "Alapért. verzió érzékelés",
     "groupByCategory": "Csoportosítás Kategória alapján",
-    "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-okat",
+    "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-kat",
     "overrideSource": "Forrás felülbírálása",
     "dontShowAgain": "Ne mutassa ezt újra",
     "dontShowTrackOnlyWarnings": "Ne jelenítsen meg 'Csak nyomon követés' figyelmeztetést",
@@ -275,8 +275,8 @@
     "completeAppInstallationNotifChannel": "Teljes app telepítés",
     "checkingForUpdatesNotifChannel": "Frissítések keresése",
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak követhető appokat ellenőrizze frissítésekért",
-    "supportFixedAPKURL": "Support fixed APK URLs",
-    "selectX": "Select {}",
+    "supportFixedAPKURL": "Támogatja a rögzített APK URL-eket",
+    "selectX": "Kiválaszt {}",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
