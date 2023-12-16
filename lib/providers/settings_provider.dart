@@ -213,7 +213,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    return prefs?.getString(settingId);
+    String? str = prefs?.getString(settingId);
+    return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
@@ -413,6 +414,15 @@ class SettingsProvider with ChangeNotifier {
 
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
     prefs?.setBool('onlyCheckInstalledOrTrackOnlyApps', val);
+    notifyListeners();
+  }
+
+  bool get exportSettings {
+    return prefs?.getBool('exportSettings') ?? false;
+  }
+
+  set exportSettings(bool val) {
+    prefs?.setBool('exportSettings', val);
     notifyListeners();
   }
 }

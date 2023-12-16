@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Markeer minder voor de hand liggende aanraakdoelen.",
     "pickExportDir": "Kies de exportmap",
     "autoExportOnChanges": "Automatisch exporteren bij wijzigingen",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filter versies met een reguliere expressie",
     "trySelectingSuggestedVersionCode": "Probeer de voorgestelde versiecode APK te selecteren",
     "dontSortReleasesList": "Volgorde van releases behouden vanuit de API",

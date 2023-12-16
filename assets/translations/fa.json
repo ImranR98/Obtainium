@@ -256,6 +256,7 @@
     "highlightTouchTargets": "اهداف لمسی کمتر واضح را برجسته کنید",
     "pickExportDir": "فهرست صادرات را انتخاب کنید",
     "autoExportOnChanges": "صادرات خودکار تغییرات",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "فیلتر کردن نسخه ها با RegEx",
     "trySelectingSuggestedVersionCode": "نسخه پیشنهادی APK نسخه کد را انتخاب کنید",
     "dontSortReleasesList": "حفظ سفارش انتشار از API",

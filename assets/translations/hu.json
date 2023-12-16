@@ -255,6 +255,7 @@
     "highlightTouchTargets": "Emelje ki a kevésbé nyilvánvaló érintési célokat",
     "pickExportDir": "Válassza az Exportálási könyvtárat",
     "autoExportOnChanges": "Auto-exportálás a változások után",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Verziók szűrése reguláris kifejezéssel",
     "trySelectingSuggestedVersionCode": "Próbálja ki a javasolt verziókódú APK-t",
     "dontSortReleasesList": "Az API-ból származó kiadási sorrend megőrzése",

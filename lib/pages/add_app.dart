@@ -21,10 +21,10 @@ class AddAppPage extends StatefulWidget {
   const AddAppPage({super.key});
 
   @override
-  State<AddAppPage> createState() => _AddAppPageState();
+  State<AddAppPage> createState() => AddAppPageState();
 }
 
-class _AddAppPageState extends State<AddAppPage> {
+class AddAppPageState extends State<AddAppPage> {
   bool gettingAppInfo = false;
   bool searching = false;
 
@@ -36,8 +36,61 @@ class _AddAppPageState extends State<AddAppPage> {
   bool additionalSettingsValid = true;
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
-  int searchnum = 0;
+  int urlInputKey = 0;
   SourceProvider sourceProvider = SourceProvider();
+
+  linkFn(String input) {
+    try {
+      if (input.isEmpty) {
+        throw UnsupportedURLError();
+      }
+      sourceProvider.getSource(input);
+      changeUserInput(input, true, false, updateUrlInput: true);
+    } catch (e) {
+      showError(e, context);
+    }
+  }
+
+  changeUserInput(String input, bool valid, bool isBuilding,
+      {bool updateUrlInput = false}) {
+    userInput = input;
+    if (!isBuilding) {
+      setState(() {
+        if (updateUrlInput) {
+          urlInputKey++;
+        }
+        var prevHost = pickedSource?.host;
+        try {
+          var naturalSource =
+              valid ? sourceProvider.getSource(userInput) : null;
+          if (naturalSource != null &&
+              naturalSource.runtimeType.toString() !=
+                  HTML().runtimeType.toString()) {
+            // If input has changed to match a regular source, reset the override
+            pickedSourceOverride = null;
+          }
+        } catch (e) {
+          // ignore
+        }
+        var source = valid
+            ? sourceProvider.getSource(userInput,
+                overrideSource: pickedSourceOverride)
+            : null;
+        if (pickedSource.runtimeType != source.runtimeType ||
+            (prevHost != null && prevHost != source?.host)) {
+          pickedSource = source;
+          additionalSettings = source != null
+              ? getDefaultValuesFromFormItems(
+                  source.combinedAppSpecificSettingFormItems)
+              : {};
+          additionalSettingsValid = source != null
+              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
+              : true;
+          inferAppIdIfOptional = true;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,47 +100,6 @@ class _AddAppPageState extends State<AddAppPage> {
         context.read<NotificationsProvider>();
 
     bool doingSomething = gettingAppInfo || searching;
-
-    changeUserInput(String input, bool valid, bool isBuilding,
-        {bool isSearch = false}) {
-      userInput = input;
-      if (!isBuilding) {
-        setState(() {
-          if (isSearch) {
-            searchnum++;
-          }
-          var prevHost = pickedSource?.host;
-          try {
-            var naturalSource =
-                valid ? sourceProvider.getSource(userInput) : null;
-            if (naturalSource != null &&
-                naturalSource.runtimeType.toString() !=
-                    HTML().runtimeType.toString()) {
-              // If input has changed to match a regular source, reset the override
-              pickedSourceOverride = null;
-            }
-          } catch (e) {
-            // ignore
-          }
-          var source = valid
-              ? sourceProvider.getSource(userInput,
-                  overrideSource: pickedSourceOverride)
-              : null;
-          if (pickedSource.runtimeType != source.runtimeType ||
-              (prevHost != null && prevHost != source?.host)) {
-            pickedSource = source;
-            additionalSettings = source != null
-                ? getDefaultValuesFromFormItems(
-                    source.combinedAppSpecificSettingFormItems)
-                : {};
-            additionalSettingsValid = source != null
-                ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-                : true;
-            inferAppIdIfOptional = true;
-          }
-        });
-      }
-    }
 
     Future<bool> getTrackOnlyConfirmationIfNeeded(bool userPickedTrackOnly,
         {bool ignoreHideSetting = false}) async {
@@ -205,7 +217,7 @@ class _AddAppPageState extends State<AddAppPage> {
           children: [
             Expanded(
                 child: GeneratedForm(
-                    key: Key(searchnum.toString()),
+                    key: Key(urlInputKey.toString()),
                     items: [
                       [
                         GeneratedFormTextField('appSourceURL',
@@ -325,7 +337,7 @@ class _AddAppPageState extends State<AddAppPage> {
                     );
                   });
           if (selectedUrls != null && selectedUrls.isNotEmpty) {
-            changeUserInput(selectedUrls[0], true, false, isSearch: true);
+            changeUserInput(selectedUrls[0], true, false, updateUrlInput: true);
           }
         }
       } catch (e) {

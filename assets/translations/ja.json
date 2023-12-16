@@ -256,6 +256,7 @@
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
     "pickExportDir": "エクスポートディレクトリを選択",
     "autoExportOnChanges": "変更があった際に自動でエクスポートする",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "正規表現でバージョンをフィルタリングする",
     "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
     "dontSortReleasesList": "APIからのリリース順を保持する",

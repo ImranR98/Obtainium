@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Đánh dấu các mục tiêu cảm ứng ít rõ ràng hơn",
     "pickExportDir": "Chọn thư mục xuất",
     "autoExportOnChanges": "Tự động xuất khi thay đổi",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Lọc phiên bản theo biểu thức chính quy",
     "trySelectingSuggestedVersionCode": "Thử chọn APK Mã phiên bản được đề xuất",
     "dontSortReleasesList": "Giữ lại thứ tự phát hành từ API",

@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Resaltar objetivos menos obvios",
     "pickExportDir": "Selecciona el Directorio para Exportar",
     "autoExportOnChanges": "Auto Exportar cuando haya cambios",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filtrar por Versiones",
     "trySelectingSuggestedVersionCode": "Prueba seleccionando la versionCode APK sugerida",
     "dontSortReleasesList": "Mantener el order de publicación desde API",

@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Istaknite manje vidljive touch mete",
     "pickExportDir": "Izaberite datoteku za izvoz",
     "autoExportOnChanges": "Automatski izvezite pri promjenama",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filtrirajte verzije po regulatnom izrazu",
     "trySelectingSuggestedVersionCode": "Probajte izabrati preloženu (verziju) versionCode APK-a",
     "dontSortReleasesList": "Zadrži redosled izdanja iz API-a",
