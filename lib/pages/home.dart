@@ -77,11 +77,11 @@ class _HomePageState extends State<HomePage> {
         } else if (action == 'app') {
           await context
               .read<AppsProvider>()
-              .import('{ apps: [${Uri.decodeComponent(data)}] }');
+              .import('{ "apps": [${Uri.decodeComponent(data)}] }');
         } else if (action == 'apps') {
           await context
               .read<AppsProvider>()
-              .import('{ apps: ${Uri.decodeComponent(data)} }');
+              .import('{ "apps": ${Uri.decodeComponent(data)} }');
         } else {
           throw ObtainiumError(tr('unknown'));
         }
