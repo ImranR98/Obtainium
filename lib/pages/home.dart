@@ -77,11 +77,9 @@ class _HomePageState extends State<HomePage> {
         } else if (action == 'app') {
           await context
               .read<AppsProvider>()
-              .importApps('[${Uri.decodeComponent(data)}]');
+              .import('[${Uri.decodeComponent(data)}]');
         } else if (action == 'apps') {
-          await context
-              .read<AppsProvider>()
-              .importApps(Uri.decodeComponent(data));
+          await context.read<AppsProvider>().import(Uri.decodeComponent(data));
         } else {
           throw ObtainiumError(tr('unknown'));
         }
@@ -145,13 +143,13 @@ class _HomePageState extends State<HomePage> {
     AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    if (!prevIsLoading &&
-        prevAppCount >= 0 &&
-        appsProvider.apps.length > prevAppCount &&
-        selectedIndexHistory.isNotEmpty &&
-        selectedIndexHistory.last == 1) {
-      switchToPage(0);
-    }
+    // if (!prevIsLoading &&
+    //     prevAppCount >= 0 &&
+    //     appsProvider.apps.length > prevAppCount &&
+    //     selectedIndexHistory.isNotEmpty &&
+    //     selectedIndexHistory.last == 1) {
+    //   switchToPage(0);
+    // }
     prevAppCount = appsProvider.apps.length;
     prevIsLoading = appsProvider.loadingApps;
 

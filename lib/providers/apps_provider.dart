@@ -974,7 +974,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     notifyListeners();
-    exportApps(isAuto: true);
+    export(isAuto: true);
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -996,7 +996,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (appIds.isNotEmpty) {
       notifyListeners();
-      exportApps(isAuto: true);
+      export(isAuto: true);
     }
   }
 
@@ -1173,11 +1173,8 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
-  Future<String?> exportApps(
-      {bool pickOnly = false,
-      isAuto = false,
-      SettingsProvider? sp,
-      bool includeSettings = false}) async {
+  Future<String?> export(
+      {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
@@ -1231,10 +1228,11 @@ class AppsProvider with ChangeNotifier {
     return returnPath;
   }
 
-  Future<int> importApps(String appsJSON) async {
+  Future<MapEntry<int, bool>> import(String appsJSON) async {
     var decodedJSON = jsonDecode(appsJSON);
+    var newFormat = !(decodedJSON is List);
     List<App> importedApps =
-        ((decodedJSON['apps'] ?? decodedJSON) as List<dynamic>)
+        ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
             .map((e) => App.fromJson(e))
             .toList();
     while (loadingApps) {
@@ -1247,7 +1245,7 @@ class AppsProvider with ChangeNotifier {
     }
     await saveApps(importedApps, onlyIfExists: false);
     notifyListeners();
-    if (decodedJSON['settings'] != null) {
+    if (newFormat && decodedJSON['settings'] != null) {
       var settingsMap = decodedJSON['settings'] as Map<String, Object?>;
       settingsMap.forEach((key, value) {
         if (value is int) {
@@ -1259,7 +1257,8 @@ class AppsProvider with ChangeNotifier {
         }
       });
     }
-    return importedApps.length;
+    return MapEntry<int, bool>(
+        importedApps.length, newFormat && decodedJSON['settings'] != null);
   }
 
   @override

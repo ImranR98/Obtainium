@@ -106,7 +106,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     runObtainiumExport({bool pickOnly = false}) async {
       HapticFeedback.selectionClick();
       appsProvider
-          .exportApps(
+          .export(
               pickOnly:
                   pickOnly || (await settingsProvider.getExportDir()) == null,
               sp: settingsProvider)
@@ -132,7 +132,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           } catch (e) {
             throw ObtainiumError(tr('invalidInput'));
           }
-          appsProvider.importApps(data).then((value) {
+          appsProvider.import(data).then((value) {
             var cats = settingsProvider.categories;
             appsProvider.apps.forEach((key, value) {
               for (var c in value.app.categories) {
@@ -143,7 +143,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
             });
             appsProvider.addMissingCategories(settingsProvider);
             showMessage(
-                tr('importedX', args: [plural('apps', value)]), context);
+                '${tr('importedX', args: [
+                      plural('apps', value.key)
+                    ])}${value.value ? ' + ${tr('settings')}' : ''}',
+                context);
           });
         } else {
           // User canceled the picker
