@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +36,7 @@ class AddAppPageState extends State<AddAppPage> {
   bool additionalSettingsValid = true;
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
+  int urlInputKey = 0;
   SourceProvider sourceProvider = SourceProvider();
 
   linkFn(String input) {
@@ -46,16 +45,20 @@ class AddAppPageState extends State<AddAppPage> {
         throw UnsupportedURLError();
       }
       sourceProvider.getSource(input);
-      changeUserInput(input, true, false);
+      changeUserInput(input, true, false, updateUrlInput: true);
     } catch (e) {
       showError(e, context);
     }
   }
 
-  changeUserInput(String input, bool valid, bool isBuilding) {
+  changeUserInput(String input, bool valid, bool isBuilding,
+      {bool updateUrlInput = false}) {
     userInput = input;
     if (!isBuilding) {
       setState(() {
+        if (updateUrlInput) {
+          urlInputKey++;
+        }
         var prevHost = pickedSource?.host;
         try {
           var naturalSource =
@@ -214,7 +217,7 @@ class AddAppPageState extends State<AddAppPage> {
           children: [
             Expanded(
                 child: GeneratedForm(
-                    key: Key(Random().nextInt(10000).toString()),
+                    key: Key(urlInputKey.toString()),
                     items: [
                       [
                         GeneratedFormTextField('appSourceURL',
@@ -334,7 +337,7 @@ class AddAppPageState extends State<AddAppPage> {
                     );
                   });
           if (selectedUrls != null && selectedUrls.isNotEmpty) {
-            changeUserInput(selectedUrls[0], true, false);
+            changeUserInput(selectedUrls[0], true, false, updateUrlInput: true);
           }
         }
       } catch (e) {
