@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Destaque areas de toque menos óbvias",
     "pickExportDir": "Escolher Diretorio de Exportação",
     "autoExportOnChanges": "Auto-exportar em mudanças",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filtrar Versões por Expressão Regular",
     "trySelectingSuggestedVersionCode": "Tente selecionar a versão sugerida",
     "dontSortReleasesList": "Reter a ordem de lançamento da API",

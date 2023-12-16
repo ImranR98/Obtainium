@@ -1174,7 +1174,10 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<String?> exportApps(
-      {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
+      {bool pickOnly = false,
+      isAuto = false,
+      SettingsProvider? sp,
+      bool includeSettings = false}) async {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
@@ -1203,12 +1206,22 @@ class AppsProvider with ChangeNotifier {
     }
     String? returnPath;
     if (!pickOnly) {
+      Map<String, dynamic> finalExport = {};
+      finalExport['apps'] = apps.values.map((e) => e.app.toJson()).toList();
+      if (settingsProvider.exportSettings) {
+        finalExport['settings'] = Map<String, Object?>.fromEntries(
+            (settingsProvider.prefs
+                    ?.getKeys()
+                    .map((key) =>
+                        MapEntry(key, settingsProvider.prefs?.get(key)))
+                    .toList()) ??
+                []);
+      }
       var result = await saf.createFile(exportDir,
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          bytes: Uint8List.fromList(utf8.encode(
-              jsonEncode(apps.values.map((e) => e.app.toJson()).toList()))));
+          bytes: Uint8List.fromList(utf8.encode(jsonEncode(finalExport))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }
@@ -1219,9 +1232,11 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<int> importApps(String appsJSON) async {
-    List<App> importedApps = (jsonDecode(appsJSON) as List<dynamic>)
-        .map((e) => App.fromJson(e))
-        .toList();
+    var decodedJSON = jsonDecode(appsJSON);
+    List<App> importedApps =
+        ((decodedJSON['apps'] ?? decodedJSON) as List<dynamic>)
+            .map((e) => App.fromJson(e))
+            .toList();
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
     }
@@ -1232,6 +1247,18 @@ class AppsProvider with ChangeNotifier {
     }
     await saveApps(importedApps, onlyIfExists: false);
     notifyListeners();
+    if (decodedJSON['settings'] != null) {
+      var settingsMap = decodedJSON['settings'] as Map<String, Object?>;
+      settingsMap.forEach((key, value) {
+        if (value is int) {
+          settingsProvider.prefs?.setInt(key, value);
+        } else if (value is bool) {
+          settingsProvider.prefs?.setBool(key, value);
+        } else {
+          settingsProvider.prefs?.setString(key, value as String);
+        }
+      });
+    }
     return importedApps.length;
   }
 

@@ -388,6 +388,14 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                               defaultValue: settingsProvider
                                                   .autoExportOnChanges,
                                             )
+                                          ],
+                                          [
+                                            GeneratedFormSwitch(
+                                              'exportSettings',
+                                              label: tr('includeSettings'),
+                                              defaultValue: settingsProvider
+                                                  .exportSettings,
+                                            )
                                           ]
                                         ],
                                         onValueChanges:
@@ -399,6 +407,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                   .autoExportOnChanges = value[
                                                       'autoExportOnChanges'] ==
                                                   true;
+                                            }
+                                            if (value['exportSettings'] !=
+                                                null) {
+                                              settingsProvider.exportSettings =
+                                                  value['exportSettings'] ==
+                                                      true;
                                             }
                                           }
                                         }),

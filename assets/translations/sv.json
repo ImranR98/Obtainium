@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Välj Exportsökväg",
     "autoExportOnChanges": "Automatisk export vid ändringar",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filter Versions by Regular Expression",
     "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
     "dontSortReleasesList": "Retain release order from API",

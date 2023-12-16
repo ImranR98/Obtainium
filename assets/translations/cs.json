@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Zvýraznit méně zjevné cíle dotyku",
     "pickExportDir": "Vybrat adresář pro export",
     "autoExportOnChanges": "Automatický export při změnách",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filtrovat verze podle regulárního výrazu",
     "trySelectingSuggestedVersionCode": "Zkusit vybrat navrhovaný kód verze APK",
     "dontSortReleasesList": "Retain release order from API",

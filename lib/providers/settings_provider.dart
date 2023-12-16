@@ -416,4 +416,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('onlyCheckInstalledOrTrackOnlyApps', val);
     notifyListeners();
   }
+
+  bool get exportSettings {
+    return prefs?.getBool('exportSettings') ?? false;
+  }
+
+  set exportSettings(bool val) {
+    prefs?.setBool('exportSettings', val);
+    notifyListeners();
+  }
 }

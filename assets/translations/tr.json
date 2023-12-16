@@ -256,6 +256,7 @@
     "highlightTouchTargets": "Daha az belirgin dokunma hedeflerini vurgula",
     "pickExportDir": "Dışa Aktarılacak Klasörü Seç",
     "autoExportOnChanges": "Değişikliklerde otomatik olarak dışa aktar",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Sürümleri Düzenli İfade ile Filtrele",
     "trySelectingSuggestedVersionCode": "Önerilen sürüm kodunu seçmeyi dene",
     "dontSortReleasesList": "API'den sıralama düzenini koru",

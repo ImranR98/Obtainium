@@ -256,6 +256,7 @@
     "highlightTouchTargets": "突出展示不明显的触摸区域",
     "pickExportDir": "选择导出文件夹",
     "autoExportOnChanges": "数据变更时自动导出",
+    "includeSettings": "Include settings",
     "filterVersionsByRegEx": "筛选版本号（正则表达式）",
     "trySelectingSuggestedVersionCode": "尝试选择推荐版本的 APK 文件",
     "dontSortReleasesList": "保持来自 API 的发行顺序",
