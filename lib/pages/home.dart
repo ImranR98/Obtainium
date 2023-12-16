@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/import_export.dart';
@@ -55,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
 
-    goToAddApp(Uri uri) async {
+    goToAddApp(String data) async {
       switchToPage(1);
       while (
           (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState ==
@@ -64,18 +65,40 @@ class _HomePageState extends State<HomePage> {
       }
       (pages[1].widget.key as GlobalKey<AddAppPageState>?)
           ?.currentState
-          ?.linkFn(uri.path.length > 1 ? uri.path.substring(1) : "");
+          ?.linkFn(data);
+    }
+
+    interpretLink(Uri uri) async {
+      var action = uri.host;
+      var data = uri.path.length > 1 ? uri.path.substring(1) : "";
+      try {
+        if (action == 'add') {
+          await goToAddApp(data);
+        } else if (action == 'app') {
+          await context
+              .read<AppsProvider>()
+              .importApps('[${Uri.decodeComponent(data)}]');
+        } else if (action == 'apps') {
+          await context
+              .read<AppsProvider>()
+              .importApps(Uri.decodeComponent(data));
+        } else {
+          throw ObtainiumError(tr('unknown'));
+        }
+      } catch (e) {
+        showError(e, context);
+      }
     }
 
     // Check initial link if app was in cold state (terminated)
     final appLink = await _appLinks.getInitialAppLink();
     if (appLink != null) {
-      await goToAddApp(appLink);
+      await interpretLink(appLink);
     }
 
     // Handle link when app is in warm state (front or background)
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
-      await goToAddApp(uri);
+      await interpretLink(uri);
     });
   }
 
