@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   bool prevIsLoading = true;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+  bool isLinkActivity = false;
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(tr('appsString'), Icons.apps,
@@ -69,6 +70,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     interpretLink(Uri uri) async {
+      isLinkActivity = true;
       var action = uri.host;
       var data = uri.path.length > 1 ? uri.path.substring(1) : "";
       try {
@@ -124,12 +126,6 @@ class _HomePageState extends State<HomePage> {
     } else if (selectedIndexHistory.isEmpty ||
         (selectedIndexHistory.isNotEmpty &&
             selectedIndexHistory.last != index)) {
-      // while (index == 1 &&
-      //     (pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
-      //         null) {
-      //   // Avoid duplicate GlobalKey error
-      //   await Future.delayed(const Duration(microseconds: 1));
-      // }
       setState(() {
         int existingInd = selectedIndexHistory.indexOf(index);
         if (existingInd >= 0) {
@@ -145,13 +141,14 @@ class _HomePageState extends State<HomePage> {
     AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    // if (!prevIsLoading &&
-    //     prevAppCount >= 0 &&
-    //     appsProvider.apps.length > prevAppCount &&
-    //     selectedIndexHistory.isNotEmpty &&
-    //     selectedIndexHistory.last == 1) {
-    //   switchToPage(0);
-    // }
+    if (!prevIsLoading &&
+        prevAppCount >= 0 &&
+        appsProvider.apps.length > prevAppCount &&
+        selectedIndexHistory.isNotEmpty &&
+        selectedIndexHistory.last == 1 &&
+        !isLinkActivity) {
+      switchToPage(0);
+    }
     prevAppCount = appsProvider.apps.length;
     prevIsLoading = appsProvider.loadingApps;
 
@@ -197,6 +194,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         onWillPop: () async {
+          if (isLinkActivity &&
+              selectedIndexHistory.length == 1 &&
+              selectedIndexHistory.last == 1) {
+            return true;
+          }
           setIsReversing(selectedIndexHistory.length >= 2
               ? selectedIndexHistory.reversed.toList()[1]
               : 0);
