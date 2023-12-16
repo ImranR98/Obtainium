@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:animations/animations.dart';
+import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,52 +33,94 @@ class _HomePageState extends State<HomePage> {
   bool isReversing = false;
   int prevAppCount = -1;
   bool prevIsLoading = true;
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(tr('appsString'), Icons.apps,
         AppsPage(key: GlobalKey<AppsPageState>())),
-    NavigationPageItem(tr('addApp'), Icons.add, const AddAppPage()),
+    NavigationPageItem(
+        tr('addApp'), Icons.add, AddAppPage(key: GlobalKey<AddAppPageState>())),
     NavigationPageItem(
         tr('importExport'), Icons.import_export, const ImportExportPage()),
     NavigationPageItem(tr('settings'), Icons.settings, const SettingsPage())
   ];
 
   @override
+  void initState() {
+    super.initState();
+    initDeepLinks();
+  }
+
+  Future<void> initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    goToAddApp(Uri uri) async {
+      switchToPage(1);
+      while (
+          (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState ==
+              null) {
+        await Future.delayed(const Duration(microseconds: 1));
+      }
+      (pages[1].widget.key as GlobalKey<AddAppPageState>?)
+          ?.currentState
+          ?.linkFn(uri.path.length > 1 ? uri.path.substring(1) : "");
+    }
+
+    // Check initial link if app was in cold state (terminated)
+    final appLink = await _appLinks.getInitialAppLink();
+    if (appLink != null) {
+      await goToAddApp(appLink);
+    }
+
+    // Handle link when app is in warm state (front or background)
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
+      await goToAddApp(uri);
+    });
+  }
+
+  setIsReversing(int targetIndex) {
+    bool reversing = selectedIndexHistory.isNotEmpty &&
+        selectedIndexHistory.last > targetIndex;
+    setState(() {
+      isReversing = reversing;
+    });
+  }
+
+  switchToPage(int index) async {
+    setIsReversing(index);
+    if (index == 0) {
+      while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
+          null) {
+        // Avoid duplicate GlobalKey error
+        await Future.delayed(const Duration(microseconds: 1));
+      }
+      setState(() {
+        selectedIndexHistory.clear();
+      });
+    } else if (selectedIndexHistory.isEmpty ||
+        (selectedIndexHistory.isNotEmpty &&
+            selectedIndexHistory.last != index)) {
+      // while (index == 1 &&
+      //     (pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
+      //         null) {
+      //   // Avoid duplicate GlobalKey error
+      //   await Future.delayed(const Duration(microseconds: 1));
+      // }
+      setState(() {
+        int existingInd = selectedIndexHistory.indexOf(index);
+        if (existingInd >= 0) {
+          selectedIndexHistory.removeAt(existingInd);
+        }
+        selectedIndexHistory.add(index);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-
-    setIsReversing(int targetIndex) {
-      bool reversing = selectedIndexHistory.isNotEmpty &&
-          selectedIndexHistory.last > targetIndex;
-      setState(() {
-        isReversing = reversing;
-      });
-    }
-
-    switchToPage(int index) async {
-      setIsReversing(index);
-      if (index == 0) {
-        while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
-            null) {
-          // Avoid duplicate GlobalKey error
-          await Future.delayed(const Duration(microseconds: 1));
-        }
-        setState(() {
-          selectedIndexHistory.clear();
-        });
-      } else if (selectedIndexHistory.isEmpty ||
-          (selectedIndexHistory.isNotEmpty &&
-              selectedIndexHistory.last != index)) {
-        setState(() {
-          int existingInd = selectedIndexHistory.indexOf(index);
-          if (existingInd >= 0) {
-            selectedIndexHistory.removeAt(existingInd);
-          }
-          selectedIndexHistory.add(index);
-        });
-      }
-    }
 
     if (!prevIsLoading &&
         prevAppCount >= 0 &&
@@ -142,5 +187,11 @@ class _HomePageState extends State<HomePage> {
               .currentState
               ?.clearSelected();
         });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _linkSubscription?.cancel();
   }
 }

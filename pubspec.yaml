@@ -67,6 +67,7 @@ dependencies:
   connectivity_plus: ^5.0.0
   shared_storage: ^0.8.0
   crypto: ^3.0.3
+  app_links: ^3.5.0
 
 dev_dependencies:
   flutter_test:
