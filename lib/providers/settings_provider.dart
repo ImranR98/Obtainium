@@ -213,7 +213,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    return prefs?.getString(settingId);
+    String? str = prefs?.getString(settingId);
+    return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
