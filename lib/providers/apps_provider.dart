@@ -1230,7 +1230,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<MapEntry<int, bool>> import(String appsJSON) async {
     var decodedJSON = jsonDecode(appsJSON);
-    var newFormat = !(decodedJSON is List);
+    var newFormat = decodedJSON is! List;
     List<App> importedApps =
         ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
             .map((e) => App.fromJson(e))
