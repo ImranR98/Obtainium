@@ -684,8 +684,9 @@ class SourceProvider {
     name = name.isNotEmpty ? name : apk.names.name;
     App finalApp = App(
         currentApp?.id ??
-            ((!source.appIdInferIsOptional ||
-                    (source.appIdInferIsOptional && inferAppIdIfOptional))
+            (!trackOnly &&
+                    (!source.appIdInferIsOptional ||
+                        (source.appIdInferIsOptional && inferAppIdIfOptional))
                 ? await source.tryInferringAppId(standardUrl,
                     additionalSettings: additionalSettings)
                 : null) ??
@@ -705,8 +706,9 @@ class SourceProvider {
         changeLog: apk.changeLog,
         overrideSource: overrideSource ?? currentApp?.overrideSource,
         allowIdChange: currentApp?.allowIdChange ??
-            source.appIdInferIsOptional &&
-                inferAppIdIfOptional // Optional ID inferring may be incorrect - allow correction on first install
+            trackOnly ||
+                (source.appIdInferIsOptional &&
+                    inferAppIdIfOptional) // Optional ID inferring may be incorrect - allow correction on first install
         );
     return source.endOfGetAppChanges(finalApp);
   }
