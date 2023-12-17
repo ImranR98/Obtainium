@@ -234,7 +234,7 @@ class GitHub extends AppSource {
     bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
     bool dontSortReleasesList =
         additionalSettings['dontSortReleasesList'] == true;
-    String? latestTag;
+    dynamic latestRelease;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
       Response res = await sourceRequest(
@@ -245,12 +245,20 @@ class GitHub extends AppSource {
         }
         throw getObtainiumHttpError(res);
       }
-      var jsres = jsonDecode(res.body);
-      latestTag = jsres['tag_name'] ?? jsres['name'];
+      latestRelease = jsonDecode(res.body);
     }
     Response res = await sourceRequest(requestUrl);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
+      if (latestRelease != null) {
+        var latestTag = latestRelease['tag_name'] ?? latestRelease['name'];
+        if (releases
+            .where((element) =>
+                (element['tag_name'] ?? element['name']) == latestTag)
+            .isEmpty) {
+          releases = [latestRelease, ...releases];
+        }
+      }
 
       List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)
@@ -299,13 +307,13 @@ class GitHub extends AppSource {
           }
         });
       }
-      if (latestTag != null &&
+      if (latestRelease != null &&
           releases.isNotEmpty &&
-          latestTag !=
+          latestRelease !=
               (releases[releases.length - 1]['tag_name'] ??
                   releases[0]['name'])) {
-        var ind = releases.indexWhere(
-            (element) => latestTag == (element['tag_name'] ?? element['name']));
+        var ind = releases.indexWhere((element) =>
+            latestRelease == (element['tag_name'] ?? element['name']));
         if (ind >= 0) {
           releases.add(releases.removeAt(ind));
         }
