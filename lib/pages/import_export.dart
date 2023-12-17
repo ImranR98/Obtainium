@@ -347,7 +347,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                         : () {
                                             runObtainiumExport(pickOnly: true);
                                           },
-                                    child: Text(tr('pickExportDir')),
+                                    child: Text(tr('pickExportDir'),
+                                        textAlign: TextAlign.center),
                                   )),
                                   const SizedBox(
                                     width: 16,
@@ -360,7 +361,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                             snapshot.data == null
                                         ? null
                                         : runObtainiumExport,
-                                    child: Text(tr('obtainiumExport')),
+                                    child: Text(tr('obtainiumExport'),
+                                        textAlign: TextAlign.center),
                                   )),
                                 ],
                               ),
@@ -375,7 +377,8 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                           onPressed: importInProgress
                                               ? null
                                               : runObtainiumImport,
-                                          child: Text(tr('obtainiumImport')))),
+                                          child: Text(tr('obtainiumImport'),
+                                              textAlign: TextAlign.center))),
                                 ],
                               ),
                               if (snapshot.data != null)
