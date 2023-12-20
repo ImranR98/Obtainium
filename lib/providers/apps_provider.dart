@@ -33,6 +33,7 @@ import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+import 'installers_provider.dart';
 
 final pm = AndroidPackageManager();
 
@@ -515,8 +516,14 @@ class AppsProvider with ChangeNotifier {
       await saveApps([apps[file.appId]!.app],
           attemptToCorrectInstallStatus: false);
     }
-    int? code =
-        await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    int? code;
+    if (settingsProvider.installMethod == InstallMethodSettings.normal) {
+      code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    } else if (settingsProvider.installMethod == InstallMethodSettings.shizuku) {
+      code = await Installers.installWithShizuku(apkFilePath: file.file.path);
+    } else if (settingsProvider.installMethod == InstallMethodSettings.root) {
+      code = await Installers.installWithRoot(apkFilePath: file.file.path);
+    }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
       throw InstallError(code);

@@ -90,6 +90,12 @@ flutter {
     source '../..'
 }
 
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    def libsuVersion = '5.2.2'
+    implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
 }
