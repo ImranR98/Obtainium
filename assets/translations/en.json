@@ -278,6 +278,10 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
