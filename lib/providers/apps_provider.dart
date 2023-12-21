@@ -657,7 +657,7 @@ class AppsProvider with ChangeNotifier {
     appsToInstall =
         moveStrToEnd(appsToInstall, obtainiumId, strB: obtainiumTempId);
 
-    for (var id in appsToInstall) {
+    Future<void> updateFn(String id, {bool skipInstalls = false}) async {
       try {
         var downloadedArtifact =
             // ignore: use_build_context_synchronously
@@ -682,23 +682,25 @@ class AppsProvider with ChangeNotifier {
         apps[id]?.downloadProgress = -1;
         notifyListeners();
         try {
-          if (downloadedFile != null) {
-            if (willBeSilent && context == null) {
-              installApk(downloadedFile, needsBGWorkaround: true);
+          if (!skipInstalls) {
+            if (downloadedFile != null) {
+              if (willBeSilent && context == null) {
+                installApk(downloadedFile, needsBGWorkaround: true);
+              } else {
+                await installApk(downloadedFile);
+              }
             } else {
-              await installApk(downloadedFile);
+              if (willBeSilent && context == null) {
+                installXApkDir(downloadedDir!, needsBGWorkaround: true);
+              } else {
+                await installXApkDir(downloadedDir!);
+              }
             }
-          } else {
             if (willBeSilent && context == null) {
-              installXApkDir(downloadedDir!, needsBGWorkaround: true);
-            } else {
-              await installXApkDir(downloadedDir!);
+              notificationsProvider?.notify(SilentUpdateAttemptNotification(
+                  [apps[appId]!.app],
+                  id: appId.hashCode));
             }
-          }
-          if (willBeSilent && context == null) {
-            notificationsProvider?.notify(SilentUpdateAttemptNotification(
-                [apps[appId]!.app],
-                id: appId.hashCode));
           }
         } finally {
           apps[id]?.downloadProgress = null;
@@ -707,6 +709,18 @@ class AppsProvider with ChangeNotifier {
         installedIds.add(id);
       } catch (e) {
         errors.add(id, e, appName: apps[id]?.name);
+      }
+    }
+
+    if (!settingsProvider.parallelDownloads) {
+      for (var id in appsToInstall) {
+        await updateFn(id);
+      }
+    } else {
+      await Future.wait(
+          appsToInstall.map((id) => updateFn(id, skipInstalls: true)));
+      for (var id in appsToInstall) {
+        await updateFn(id);
       }
     }
 

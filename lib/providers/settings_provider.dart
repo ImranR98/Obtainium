@@ -425,4 +425,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('exportSettings', val);
     notifyListeners();
   }
+
+  bool get parallelDownloads {
+    return prefs?.getBool('parallelDownloads') ?? false;
+  }
+
+  set parallelDownloads(bool val) {
+    prefs?.setBool('parallelDownloads', val);
+    notifyListeners();
+  }
 }

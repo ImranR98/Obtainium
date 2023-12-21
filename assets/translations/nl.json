@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Probeer de voorgestelde versiecode APK te selecteren",
     "dontSortReleasesList": "Volgorde van releases behouden vanuit de API",
     "reverseSort": "Sortering omkeren",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Debug menu",
     "bgTaskStarted": "Achtergrondtaak gestart - controleer de logs.",
     "runBgCheckNow": "Voer nu een achtergrondupdatecontrole uit",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde en Track-Only apps controleren op updates",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

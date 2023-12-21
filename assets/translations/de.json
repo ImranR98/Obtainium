@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Versuchen, den vorgeschlagenen APK-Versionscode auszuwählen",
     "dontSortReleasesList": "Freigaberelease von der API ordern",
     "reverseSort": "Umgekehrtes Sortieren",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Debug-Menü",
     "bgTaskStarted": "Hintergrundaufgabe gestartet – Logs prüfen.",
     "runBgCheckNow": "Hintergrundaktualisierungsprüfung jetzt durchführen",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Überprüfe nur installierte und mit „nur Nachverfolgen“ markierte Apps auf Aktualisierungen",
     "supportFixedAPKURL": "neuere Version anhand der ersten dreißig Zahlen der Checksumme der APK URL erraten, wenn anderweitig nicht unterstützt",
     "selectX": "Wähle {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

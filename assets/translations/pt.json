@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Tente selecionar a versão sugerida",
     "dontSortReleasesList": "Reter a ordem de lançamento da API",
     "reverseSort": "Ordenação reversa",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Menu Debug",
     "bgTaskStarted": "Tarefa em segundo plano iniciada - verifique os logs.",
     "runBgCheckNow": "Execute a verificação de atualização em segundo plano agora",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Only check installed and Track-Only apps for updates",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Remover App?",
         "other": "Remover Apps?"

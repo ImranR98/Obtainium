@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "提案されたバージョンコードのAPKを選択する",
     "dontSortReleasesList": "APIからのリリース順を保持する",
     "reverseSort": "逆順ソート",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "デバッグメニュー",
     "bgTaskStarted": "バックグラウンドタスクが開始されました - ログを確認してください。",
     "runBgCheckNow": "今すぐバックグラウンドでのアップデート確認を開始する",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

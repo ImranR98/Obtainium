@@ -261,9 +261,12 @@
     "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
     "dontSortReleasesList": "Retain release order from API",
     "reverseSort": "Omvänd sortering",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Felsökningsmeny",
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Kör Bakgrundsuppdateringskoll Nu",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
