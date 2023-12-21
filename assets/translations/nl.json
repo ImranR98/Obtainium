@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Alleen geïnstalleerde en Track-Only apps controleren op updates",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

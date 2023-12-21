@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "فقط برنامه های نصب شده و فقط ردیابی را برای به روز رسانی بررسی کنید",
     "supportFixedAPKURL": "پشتیبانی از URL های APK ثابت",
     "selectX": "انتخاب کنید {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

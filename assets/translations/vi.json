@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra các ứng dụng đã cài đặt và Chỉ-Theo dõi để biết các bản cập nhật",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

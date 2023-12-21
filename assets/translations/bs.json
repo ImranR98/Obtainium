@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Isključivo provjerite ažuriranje za instalirane i aplikacije 'samo za praćenje'",
     "supportFixedAPKURL": "Podržite fiksne APK URL-ove",
     "selectX": "Izaberite {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

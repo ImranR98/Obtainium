@@ -264,6 +264,7 @@
     "debugMenu": "Felsökningsmeny",
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Kör Bakgrundsuppdateringskoll Nu",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

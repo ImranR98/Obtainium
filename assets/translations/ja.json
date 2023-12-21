@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "インストール済みのアプリと「追跡のみ」のアプリのアップデートのみを確認する",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

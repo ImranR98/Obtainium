@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Yalnızca yüklü ve Yalnızca İzleme Uygulamalarını güncelleme",
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

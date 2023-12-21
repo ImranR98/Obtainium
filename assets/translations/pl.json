@@ -278,6 +278,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Sprawdzaj tylko zainstalowane i obserwowane aplikacje pod kątem aktualizacji",
     "supportFixedAPKURL": "Obsługuj stałe adresy URL APK",
     "selectX": "Wybierz {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",
