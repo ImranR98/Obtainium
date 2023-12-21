@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Tente selecionar a versão sugerida",
     "dontSortReleasesList": "Reter a ordem de lançamento da API",
     "reverseSort": "Ordenação reversa",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Menu Debug",
     "bgTaskStarted": "Tarefa em segundo plano iniciada - verifique os logs.",
     "runBgCheckNow": "Execute a verificação de atualização em segundo plano agora",

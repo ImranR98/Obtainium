@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Probajte izabrati preloženu (verziju) versionCode APK-a",
     "dontSortReleasesList": "Zadrži redosled izdanja iz API-a",
     "reverseSort": "Obrni redosled",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Meni za otkrivanje grešaka",
     "bgTaskStarted": "Rad u pozadini pokrenut - provjerite log-ove.",
     "runBgCheckNow": "Pokrenite pozadinsku provjeru ažuriranja sad",

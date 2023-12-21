@@ -94,7 +94,8 @@ class HTML extends AppSource {
         GeneratedFormSwitch('sortByFileNamesNotLinks',
             label: tr('sortByFileNamesNotLinks'))
       ],
-      [GeneratedFormSwitch('reverseSort', label: tr('reverseSort'))],
+      [GeneratedFormSwitch('skipSort', label: tr('skipSort'))],
+      [GeneratedFormSwitch('reverseSort', label: tr('takeTopLink'))],
       [
         GeneratedFormSwitch('supportFixedAPKURL',
             defaultValue: true, label: tr('supportFixedAPKURL')),
@@ -185,12 +186,15 @@ class HTML extends AppSource {
             .toList();
       }
       List<String> links = [];
+      bool skipSort = additionalSettings['skipSort'] == true;
       if ((additionalSettings['intermediateLinkRegex'] as String?)
               ?.isNotEmpty ==
           true) {
         var reg = RegExp(additionalSettings['intermediateLinkRegex']);
         links = allLinks.where((element) => reg.hasMatch(element)).toList();
-        links.sort((a, b) => compareAlphaNumeric(a, b));
+        if (!skipSort) {
+          links.sort((a, b) => compareAlphaNumeric(a, b));
+        }
         if (links.isEmpty) {
           throw ObtainiumError(tr('intermediateLinkNotFound'));
         }
@@ -211,10 +215,14 @@ class HTML extends AppSource {
                 Uri.parse(element).path.toLowerCase().endsWith('.apk'))
             .toList();
       }
-      links.sort((a, b) => additionalSettings['sortByFileNamesNotLinks'] == true
-          ? compareAlphaNumeric(a.split('/').where((e) => e.isNotEmpty).last,
-              b.split('/').where((e) => e.isNotEmpty).last)
-          : compareAlphaNumeric(a, b));
+      if (!skipSort) {
+        links.sort((a, b) =>
+            additionalSettings['sortByFileNamesNotLinks'] == true
+                ? compareAlphaNumeric(
+                    a.split('/').where((e) => e.isNotEmpty).last,
+                    b.split('/').where((e) => e.isNotEmpty).last)
+                : compareAlphaNumeric(a, b));
+      }
       if (additionalSettings['reverseSort'] == true) {
         links = links.reversed.toList();
       }

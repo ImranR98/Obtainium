@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "尝试选择推荐版本的 APK 文件",
     "dontSortReleasesList": "保持来自 API 的发行顺序",
     "reverseSort": "反转排序",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "调试选项",
     "bgTaskStarted": "后台任务已启动 - 详见日志",
     "runBgCheckNow": "立即进行后台更新检查",

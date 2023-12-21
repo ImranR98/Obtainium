@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Thử chọn APK Mã phiên bản được đề xuất",
     "dontSortReleasesList": "Giữ lại thứ tự phát hành từ API",
     "reverseSort": "Sắp xếp ngược",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Danh sách gỡ lỗi",
     "bgTaskStarted": "Tác vụ nền đã bắt đầu - kiểm tra nhật ký.",
     "runBgCheckNow": "Chạy kiểm tra cập nhật nền ngay bây giờ",

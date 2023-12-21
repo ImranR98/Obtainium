@@ -260,6 +260,8 @@
     "trySelectingSuggestedVersionCode": "Próbálja ki a javasolt verziókódú APK-t",
     "dontSortReleasesList": "Az API-ból származó kiadási sorrend megőrzése",
     "reverseSort": "Fordított rendezés",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Hibakereső menü",
     "bgTaskStarted": "A háttérfeladat elindult – ellenőrizze a naplókat.",
     "enableBackgroundUpdates": "Frissítések a háttérben",

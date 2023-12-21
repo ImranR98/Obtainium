@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Prueba seleccionando la versionCode APK sugerida",
     "dontSortReleasesList": "Mantener el order de publicación desde API",
     "reverseSort": "Orden inverso",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Menu Depurar",
     "bgTaskStarted": "Iniciada tarea en segundo plano - revisa los logs.",
     "runBgCheckNow": "Ejecutar verficiación de actualizaciones en segundo plano",

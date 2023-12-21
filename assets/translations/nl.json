@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Probeer de voorgestelde versiecode APK te selecteren",
     "dontSortReleasesList": "Volgorde van releases behouden vanuit de API",
     "reverseSort": "Sortering omkeren",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Debug menu",
     "bgTaskStarted": "Achtergrondtaak gestart - controleer de logs.",
     "runBgCheckNow": "Voer nu een achtergrondupdatecontrole uit",

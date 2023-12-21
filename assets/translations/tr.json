@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Önerilen sürüm kodunu seçmeyi dene",
     "dontSortReleasesList": "API'den sıralama düzenini koru",
     "reverseSort": "Ters sıralama",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Hata Ayıklama Menüsü",
     "bgTaskStarted": "Arka plan görevi başladı - günlükleri kontrol et.",
     "runBgCheckNow": "Arka Plan Güncelleme Kontrolünü Şimdi Çalıştır",

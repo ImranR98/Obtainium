@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "نسخه پیشنهادی APK نسخه کد را انتخاب کنید",
     "dontSortReleasesList": "حفظ سفارش انتشار از API",
     "reverseSort": "مرتب سازی معکوس",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "منوی اشکال زدایی",
     "bgTaskStarted": "کار پس زمینه شروع شد - لاگ های مربوط را بررسی کنید.",
     "runBgCheckNow": "اکنون به‌روزرسانی پس‌زمینه را بررسی کنید",
