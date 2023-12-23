@@ -740,12 +740,15 @@ class AppsProvider with ChangeNotifier {
     return appsDir;
   }
 
-  Future<PackageInfo?> getInstalledInfo(String? packageName) async {
+  Future<PackageInfo?> getInstalledInfo(String? packageName,
+      {bool printErr = true}) async {
     if (packageName != null) {
       try {
         return await pm.getPackageInfo(packageName: packageName);
       } catch (e) {
-        print(e); // OK
+        if (printErr) {
+          print(e); // OK
+        }
       }
     }
     return null;
@@ -1253,9 +1256,8 @@ class AppsProvider with ChangeNotifier {
       await Future.delayed(const Duration(microseconds: 1));
     }
     for (App a in importedApps) {
-      if (apps[a.id]?.app.installedVersion != null) {
-        a.installedVersion = apps[a.id]?.app.installedVersion;
-      }
+      a.installedVersion =
+          (await getInstalledInfo(a.id, printErr: false))?.versionName;
     }
     await saveApps(importedApps, onlyIfExists: false);
     notifyListeners();
