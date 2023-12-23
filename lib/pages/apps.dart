@@ -496,14 +496,8 @@ class AppsPageState extends State<AppsPage> {
       var transparent =
           Theme.of(context).colorScheme.background.withAlpha(0).value;
       List<double> stops = [
-        ...listedApps[index]
-            .app
-            .categories
-            .asMap()
-            .entries
-            .map((e) =>
-                ((e.key / (listedApps[index].app.categories.length - 1))))
-            ,
+        ...listedApps[index].app.categories.asMap().entries.map(
+            (e) => ((e.key / (listedApps[index].app.categories.length - 1)))),
         1
       ];
       if (stops.length == 2) {
@@ -516,13 +510,9 @@ class AppsPageState extends State<AppsPage> {
                   begin: const Alignment(-1, 0),
                   end: const Alignment(-0.97, 0),
                   colors: [
-                ...listedApps[index]
-                    .app
-                    .categories
-                    .map((e) =>
-                        Color(settingsProvider.categories[e] ?? transparent)
-                            .withAlpha(255))
-                    ,
+                ...listedApps[index].app.categories.map((e) =>
+                    Color(settingsProvider.categories[e] ?? transparent)
+                        .withAlpha(255)),
                 Color(transparent)
               ])),
           child: ListTile(
@@ -881,7 +871,7 @@ class AppsPageState extends State<AppsPage> {
                         onPressed: () {
                           String urls = '';
                           for (var a in selectedApps) {
-                            urls += '${a.url}\n';
+                            urls += 'obtainium://add/${a.url}\n';
                           }
                           urls = urls.substring(0, urls.length - 1);
                           Share.share(urls,
@@ -981,10 +971,8 @@ class AppsPageState extends State<AppsPage> {
                       defaultValue: filter.sourceFilter,
                       [
                         MapEntry('', tr('none')),
-                        ...sourceProvider.sources
-                            .map((e) =>
-                                MapEntry(e.runtimeType.toString(), e.name))
-                            
+                        ...sourceProvider.sources.map(
+                            (e) => MapEntry(e.runtimeType.toString(), e.name))
                       ])
                 ]
               ],
