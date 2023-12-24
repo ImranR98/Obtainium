@@ -30,6 +30,29 @@ class _SettingsPageState extends State<SettingsPage> {
       settingsProvider.initializeSettings();
     }
 
+    var installMethodDropdown = DropdownButtonFormField(
+        decoration: InputDecoration(labelText: tr('installMethod')),
+        value: settingsProvider.installMethod,
+        items: [
+          DropdownMenuItem(
+            value: InstallMethodSettings.normal,
+            child: Text(tr('normal')),
+          ),
+          DropdownMenuItem(
+            value: InstallMethodSettings.shizuku,
+            child: Text(tr('shizuku')),
+          ),
+          DropdownMenuItem(
+            value: InstallMethodSettings.root,
+            child: Text(tr('root')),
+          )
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.installMethod = value;
+          }
+        });
+
     var themeDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('theme')),
         value: settingsProvider.theme,
@@ -327,6 +350,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            installMethodDropdown,
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

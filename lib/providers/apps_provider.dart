@@ -33,6 +33,7 @@ import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+import 'installers_provider.dart';
 
 final pm = AndroidPackageManager();
 
@@ -504,7 +505,8 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    if (needsBGWorkaround) {
+    if (needsBGWorkaround &&
+        settingsProvider.installMethod == InstallMethodSettings.normal) {
       // The below 'await' will never return if we are in a background process
       // To work around this, we should assume the install will be successful
       // So we update the app's installed version first as we will never get to the later code
@@ -515,8 +517,15 @@ class AppsProvider with ChangeNotifier {
       await saveApps([apps[file.appId]!.app],
           attemptToCorrectInstallStatus: false);
     }
-    int? code =
-        await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    int? code;
+    switch (settingsProvider.installMethod) {
+      case InstallMethodSettings.normal:
+        code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+      case InstallMethodSettings.shizuku:
+        code = (await Installers.installWithShizuku(apkFileUri: file.file.uri.toString())) ? 0 : 1;
+      case InstallMethodSettings.root:
+        code = (await Installers.installWithRoot(apkFilePath: file.file.path)) ? 0 : 1;
+    }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
       throw InstallError(code);
@@ -672,8 +681,22 @@ class AppsProvider with ChangeNotifier {
         }
         var appId = downloadedFile?.appId ?? downloadedDir!.appId;
         bool willBeSilent = await canInstallSilently(apps[appId]!.app);
-        if (!(await settingsProvider.getInstallPermission(enforce: false))) {
-          throw ObtainiumError(tr('cancelled'));
+        switch (settingsProvider.installMethod) {
+          case InstallMethodSettings.normal:
+            if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+              throw ObtainiumError(tr('cancelled'));
+            }
+          case InstallMethodSettings.shizuku:
+            int code = await Installers.checkPermissionShizuku();
+            if (code == -1) {
+              throw ObtainiumError(tr('shizukuBinderNotFound'));
+            } else if (code == 0) {
+              throw ObtainiumError(tr('cancelled'));
+            }
+          case InstallMethodSettings.root:
+            if (!(await Installers.checkPermissionRoot())) {
+              throw ObtainiumError(tr('cancelled'));
+            }
         }
         if (!willBeSilent && context != null) {
           // ignore: use_build_context_synchronously

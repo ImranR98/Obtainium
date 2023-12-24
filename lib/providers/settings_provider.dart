@@ -17,6 +17,8 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
 String obtainiumId = 'dev.imranr.obtainium';
 
+enum InstallMethodSettings { normal, shizuku, root }
+
 enum ThemeSettings { system, light, dark }
 
 enum ColourSettings { basic, materialYou }
@@ -46,6 +48,16 @@ class SettingsProvider with ChangeNotifier {
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     defaultAppDir = (await getExternalStorageDirectory())!.path;
+    notifyListeners();
+  }
+
+  InstallMethodSettings get installMethod {
+    return InstallMethodSettings
+        .values[prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];
+  }
+
+  set installMethod(InstallMethodSettings t) {
+    prefs?.setInt('installMethod', t.index);
     notifyListeners();
   }
 
