@@ -1,10 +1,5 @@
 package dev.imranr.obtainium
 
-import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.Result
-import androidx.annotation.NonNull
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.IPackageInstaller
@@ -15,119 +10,95 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Process
-import rikka.shizuku.Shizuku
-import rikka.shizuku.Shizuku.OnBinderDeadListener
-import rikka.shizuku.Shizuku.OnBinderReceivedListener
-import rikka.shizuku.Shizuku.OnRequestPermissionResultListener
-import rikka.shizuku.ShizukuBinderWrapper
+import androidx.annotation.NonNull
+import com.topjohnwu.superuser.Shell
 import dev.imranr.obtainium.util.IIntentSenderAdaptor
 import dev.imranr.obtainium.util.IntentSenderUtils
 import dev.imranr.obtainium.util.PackageInstallerUtils
 import dev.imranr.obtainium.util.ShizukuSystemServerApi
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.Result
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
-import com.topjohnwu.superuser.Shell
+import rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku.OnRequestPermissionResultListener
+import rikka.shizuku.ShizukuBinderWrapper
 
 class MainActivity: FlutterActivity() {
-    private val installersChannel = "installers"
-    private val SHIZUKU_PERMISSION_REQUEST_CODE = 839  // random num
-    private var shizukuBinderAlive = false
-    private var shizukuPermissionGranted = false
+    private var installersChannel: MethodChannel? = null
+    private val SHIZUKU_PERMISSION_REQUEST_CODE = (10..200).random()
 
-    private val shizukuBinderReceivedListener = OnBinderReceivedListener {
-        if(!Shizuku.isPreV11()) {  // pre 11 unsupported
-            shizukuBinderAlive = true
+    private fun shizukuCheckPermission() {
+        try {
+            if (Shizuku.isPreV11()) {  // Unsupported
+                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to -1))
+            } else if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to 1))
+            } else if (Shizuku.shouldShowRequestPermissionRationale()) {  // Deny and don't ask again
+                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to 0))
+            } else {
+                Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
+            }
+        } catch (_: Exception) {  // If shizuku not running
+            installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to -1))
         }
     }
-
-    private val shizukuBinderDeadListener = OnBinderDeadListener { shizukuBinderAlive = false }
 
     private val shizukuRequestPermissionResultListener = OnRequestPermissionResultListener {
             requestCode: Int, grantResult: Int ->
-        if(requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
-            shizukuPermissionGranted = grantResult == PackageManager.PERMISSION_GRANTED
+        if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
+            val res = if (grantResult == PackageManager.PERMISSION_GRANTED) 1 else 0
+            installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to res))
         }
     }
 
-    private fun shizukuCheckPermission() {
-        if(Shizuku.isPreV11()) {
-            shizukuPermissionGranted = false
-        } else if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-            shizukuPermissionGranted = true
-        } else if (Shizuku.shouldShowRequestPermissionRationale()) {  // Deny and don't ask again
-            shizukuPermissionGranted = false
-        } else {
-            Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
-        }
-    }
-
-    private fun shizukuInstallApk(uri: Uri) {
-        val packageInstaller: PackageInstaller
+    private fun shizukuInstallApk(apkFileUri: String, result: Result) {
+        val uri = Uri.parse(apkFileUri)
+        var res = false
         var session: PackageInstaller.Session? = null
-        val cr = contentResolver
-        val res = StringBuilder()
-        val installerPackageName: String
-        var installerAttributionTag: String? = null
-        val userId: Int
-        val isRoot: Boolean
         try {
-            val _packageInstaller: IPackageInstaller =
+            val iPackageInstaller: IPackageInstaller =
                 ShizukuSystemServerApi.PackageManager_getPackageInstaller()
-            isRoot = Shizuku.getUid() == 0
-
-            // the reason for use "com.android.shell" as installer package under adb is that getMySessions will check installer package's owner
-            installerPackageName = if (isRoot) packageName else "com.android.shell"
+            val isRoot = Shizuku.getUid() == 0
+            // The reason for use "com.android.shell" as installer package under adb
+            // is that getMySessions will check installer package's owner
+            val installerPackageName = if (isRoot) packageName else "com.android.shell"
+            var installerAttributionTag: String? = null
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 installerAttributionTag = attributionTag
             }
-            userId = if (isRoot) Process.myUserHandle().hashCode() else 0
-            packageInstaller = PackageInstallerUtils.createPackageInstaller(
-                _packageInstaller,
-                installerPackageName,
-                installerAttributionTag,
-                userId
-            )
-            val sessionId: Int
-            res.append("createSession: ")
+            val userId = if (isRoot) Process.myUserHandle().hashCode() else 0
+            val packageInstaller = PackageInstallerUtils.createPackageInstaller(
+                iPackageInstaller, installerPackageName, installerAttributionTag, userId)
             val params =
                 PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             var installFlags: Int = PackageInstallerUtils.getInstallFlags(params)
-            installFlags =
-                installFlags or (0x00000004 /*PackageManager.INSTALL_ALLOW_TEST*/ or 0x00000002) /*PackageManager.INSTALL_REPLACE_EXISTING*/
+            installFlags = installFlags or 0x00000004  // PackageManager.INSTALL_ALLOW_TEST
             PackageInstallerUtils.setInstallFlags(params, installFlags)
-            sessionId = packageInstaller.createSession(params)
-            res.append(sessionId).append('\n')
-            res.append('\n').append("write: ")
-            val _session = IPackageInstallerSession.Stub.asInterface(
-                ShizukuBinderWrapper(
-                    _packageInstaller.openSession(sessionId).asBinder()
-                )
-            )
-            session = PackageInstallerUtils.createSession(_session)
-            val name = "apk.apk"
-            val `is` = cr.openInputStream(uri)
-            val os = session.openWrite(name, 0, -1)
-            val buf = ByteArray(8192)
-            var len: Int
+            val sessionId = packageInstaller.createSession(params)
+            val iSession = IPackageInstallerSession.Stub.asInterface(
+                ShizukuBinderWrapper(iPackageInstaller.openSession(sessionId).asBinder()))
+            session = PackageInstallerUtils.createSession(iSession)
+            val inputStream = contentResolver.openInputStream(uri)
+            val openedSession = session.openWrite("apk.apk", 0, -1)
+            val buffer = ByteArray(8192)
+            var length: Int
             try {
-                while (`is`!!.read(buf).also { len = it } > 0) {
-                    os.write(buf, 0, len)
-                    os.flush()
-                    session.fsync(os)
+                while (inputStream!!.read(buffer).also { length = it } > 0) {
+                    openedSession.write(buffer, 0, length)
+                    openedSession.flush()
+                    session.fsync(openedSession)
                 }
             } finally {
                 try {
-                    `is`!!.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-                try {
-                    os.close()
+                    inputStream!!.close()
+                    openedSession.close()
                 } catch (e: IOException) {
                     e.printStackTrace()
                 }
             }
-            res.append('\n').append("commit: ")
             val results = arrayOf<Intent?>(null)
             val countDownLatch = CountDownLatch(1)
             val intentSender: IntentSender =
@@ -139,66 +110,62 @@ class MainActivity: FlutterActivity() {
                 })
             session.commit(intentSender)
             countDownLatch.await()
-            val result = results[0]
-            val status =
-                result!!.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
-            val message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-            res.append('\n').append("status: ").append(status).append(" (").append(message)
-                .append(")")
-        } catch (tr: Throwable) {
-            tr.printStackTrace()
-            res.append(tr)
+            res = results[0]!!.getIntExtra(
+                PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE) == 0
+        } catch (_: Exception) {
+            res = false
         } finally {
             if (session != null) {
                 try {
                     session.close()
-                } catch (tr: Throwable) {
-                    res.append(tr)
+                } catch (_: Exception) {
+                    res = false
                 }
             }
         }
+        result.success(res)
     }
 
-    private fun installWithShizuku(apkFilePath: String, result: Result) {
-        shizukuCheckPermission()
-        shizukuInstallApk(Uri.parse("file://$apkFilePath"))
-        result.success(0)
-    }
-
-    private fun installWithRoot(apkFilePath: String, result: Result) {
-        Shell.sh("pm install -r -t " + apkFilePath).submit { out ->
-            val builder = StringBuilder()
-            for (data in out.getOut()) {
-                builder.append(data)
+    private fun rootCheckPermission(result: Result) {
+        Shell.getShell(Shell.GetShellCallback(
+            fun(shell: Shell) {
+                result.success(shell.isRoot)
             }
-            result.success(if (builder.toString().endsWith("Success")) 0 else 1)
+        ))
+    }
+
+    private fun rootInstallApk(apkFilePath: String, result: Result) {
+        Shell.sh("pm install -R -t " + apkFilePath).submit { out ->
+            val builder = StringBuilder()
+            for (data in out.getOut()) { builder.append(data) }
+            result.success(builder.toString().endsWith("Success"))
         }
     }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, installersChannel).setMethodCallHandler {
+        Shizuku.addRequestPermissionResultListener(shizukuRequestPermissionResultListener)
+        installersChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger, "installers")
+        installersChannel!!.setMethodCallHandler {
             call, result ->
-            var apkFilePath: String? = call.argument("apkFilePath")
-            if (call.method == "installWithShizuku") {
-                installWithShizuku(apkFilePath.toString(), result)
+            if (call.method == "checkPermissionShizuku") {
+                shizukuCheckPermission()
+                result.success(0)
+            } else if (call.method == "checkPermissionRoot") {
+                rootCheckPermission(result)
+            } else if (call.method == "installWithShizuku") {
+                val apkFileUri: String? = call.argument("apkFileUri")
+                shizukuInstallApk(apkFileUri!!, result)
             } else if (call.method == "installWithRoot") {
-                installWithRoot(apkFilePath.toString(), result)
+                val apkFilePath: String? = call.argument("apkFilePath")
+                rootInstallApk(apkFilePath!!, result)
             }
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Shizuku.addBinderReceivedListener(shizukuBinderReceivedListener)
-        Shizuku.addBinderDeadListener(shizukuBinderDeadListener)
-        Shizuku.addRequestPermissionResultListener(shizukuRequestPermissionResultListener)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        Shizuku.removeBinderReceivedListener(shizukuBinderReceivedListener)
-        Shizuku.removeBinderDeadListener(shizukuBinderDeadListener)
         Shizuku.removeRequestPermissionResultListener(shizukuRequestPermissionResultListener)
     }
 }

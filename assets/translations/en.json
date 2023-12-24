@@ -282,6 +282,7 @@
     "normal": "Normal",
     "shizuku": "Shizuku",
     "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
