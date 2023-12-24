@@ -245,8 +245,8 @@
     "enableBackgroundUpdates": "به روز رسانی پس زمینه را فعال کنید",
     "backgroundUpdateReqsExplanation": "به روز رسانی پس زمینه ممکن است برای همه برنامه ها امکان پذیر نباشد.",
     "backgroundUpdateLimitsExplanation": "موفقیت نصب پس‌زمینه تنها زمانی مشخص می‌شود که Obtainium باز شود.",
-    "verifyLatestTag": "برچسب "آخرین" را تأیید کنید",
-    "intermediateLinkRegex": "برای اولین بار بازدید از لینک "متوسط" را فیلتر کنید",
+    "verifyLatestTag": "برچسب \"آخرین\" را تأیید کنید",
+    "intermediateLinkRegex": "برای اولین بار بازدید از لینک \"متوسط\" را فیلتر کنید",
     "intermediateLinkNotFound": "لینک میانی پیدا نشد",
     "exemptFromBackgroundUpdates": "معاف از به‌روزرسانی‌های پس‌زمینه (در صورت فعال بودن)",
     "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال به WiFi غیرفعال کنید",
@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "نسخه پیشنهادی APK نسخه کد را انتخاب کنید",
     "dontSortReleasesList": "حفظ سفارش انتشار از API",
     "reverseSort": "مرتب سازی معکوس",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "منوی اشکال زدایی",
     "bgTaskStarted": "کار پس زمینه شروع شد - لاگ های مربوط را بررسی کنید.",
     "runBgCheckNow": "اکنون به‌روزرسانی پس‌زمینه را بررسی کنید",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "فقط برنامه های نصب شده و فقط ردیابی را برای به روز رسانی بررسی کنید",
     "supportFixedAPKURL": "پشتیبانی از URL های APK ثابت",
     "selectX": "انتخاب کنید {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

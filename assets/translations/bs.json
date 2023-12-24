@@ -261,6 +261,8 @@
     "trySelectingSuggestedVersionCode": "Probajte izabrati preloženu (verziju) versionCode APK-a",
     "dontSortReleasesList": "Zadrži redosled izdanja iz API-a",
     "reverseSort": "Obrni redosled",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Meni za otkrivanje grešaka",
     "bgTaskStarted": "Rad u pozadini pokrenut - provjerite log-ove.",
     "runBgCheckNow": "Pokrenite pozadinsku provjeru ažuriranja sad",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Isključivo provjerite ažuriranje za instalirane i aplikacije 'samo za praćenje'",
     "supportFixedAPKURL": "Podržite fiksne APK URL-ove",
     "selectX": "Izaberite {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

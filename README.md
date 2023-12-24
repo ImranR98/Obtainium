@@ -6,6 +6,8 @@ Obtainium allows you to install and update Apps directly from their releases pag
 
 Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
 
+Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
+
 Currently supported App sources:
 - Open Source - General:
   - [GitHub](https://github.com/)

@@ -352,6 +352,19 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             height16,
                             installMethodDropdown,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('parallelDownloads'))),
+                                Switch(
+                                    value: settingsProvider.parallelDownloads,
+                                    onChanged: (value) {
+                                      settingsProvider.parallelDownloads =
+                                          value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),

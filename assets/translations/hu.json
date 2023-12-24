@@ -260,6 +260,8 @@
     "trySelectingSuggestedVersionCode": "Próbálja ki a javasolt verziókódú APK-t",
     "dontSortReleasesList": "Az API-ból származó kiadási sorrend megőrzése",
     "reverseSort": "Fordított rendezés",
+    "takeFirstLink": "Take first link",
+    "skipSort": "Skip sorting",
     "debugMenu": "Hibakereső menü",
     "bgTaskStarted": "A háttérfeladat elindult – ellenőrizze a naplókat.",
     "enableBackgroundUpdates": "Frissítések a háttérben",
@@ -278,6 +280,7 @@
     "onlyCheckInstalledOrTrackOnlyApps": "Csak a telepített és a csak követhető appokat ellenőrizze frissítésekért",
     "supportFixedAPKURL": "Támogatja a rögzített APK URL-eket",
     "selectX": "Kiválaszt {}",
+    "parallelDownloads": "Allow parallel downloads",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
