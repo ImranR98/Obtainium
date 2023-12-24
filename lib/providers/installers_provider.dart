@@ -7,7 +7,7 @@ class Installers {
   static int _resPermShizuku = -2;  // not set
 
   static Future waitWhile(bool Function() test,
-      [Duration pollInterval = const Duration(milliseconds: 100)]) {
+      [Duration pollInterval = const Duration(milliseconds: 250)]) {
     var completer = Completer();
     check() {
       if (test()) {
@@ -31,10 +31,12 @@ class Installers {
       _channel.setMethodCallHandler(handleCalls);
       _callbacksApplied = true;
     }
-    await _channel.invokeMethod('checkPermissionShizuku');
-    await waitWhile(() => _resPermShizuku == -2);
-    int res = _resPermShizuku;
-    _resPermShizuku = -2;
+    int res = await _channel.invokeMethod('checkPermissionShizuku');
+    if(res == -2) {
+      await waitWhile(() => _resPermShizuku == -2);
+      res = _resPermShizuku;
+      _resPermShizuku = -2;
+    }
     return res;
   }
 

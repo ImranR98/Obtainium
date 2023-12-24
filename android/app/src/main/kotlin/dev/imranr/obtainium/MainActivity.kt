@@ -30,19 +30,20 @@ class MainActivity: FlutterActivity() {
     private var installersChannel: MethodChannel? = null
     private val SHIZUKU_PERMISSION_REQUEST_CODE = (10..200).random()
 
-    private fun shizukuCheckPermission() {
+    private fun shizukuCheckPermission(result: Result) {
         try {
             if (Shizuku.isPreV11()) {  // Unsupported
-                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to -1))
+                result.success(-1)
             } else if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to 1))
+                result.success(1)
             } else if (Shizuku.shouldShowRequestPermissionRationale()) {  // Deny and don't ask again
-                installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to 0))
+                result.success(0)
             } else {
                 Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
+                result.success(-2)
             }
         } catch (_: Exception) {  // If shizuku not running
-            installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to -1))
+            result.success(-1)
         }
     }
 
@@ -150,8 +151,7 @@ class MainActivity: FlutterActivity() {
         installersChannel!!.setMethodCallHandler {
             call, result ->
             if (call.method == "checkPermissionShizuku") {
-                shizukuCheckPermission()
-                result.success(0)
+                shizukuCheckPermission(result)
             } else if (call.method == "checkPermissionRoot") {
                 rootCheckPermission(result)
             } else if (call.method == "installWithShizuku") {
