@@ -520,11 +520,17 @@ class AppsProvider with ChangeNotifier {
     int? code;
     switch (settingsProvider.installMethod) {
       case InstallMethodSettings.normal:
-        code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+        code = await AndroidPackageInstaller.installApk(
+            apkFilePath: file.file.path);
       case InstallMethodSettings.shizuku:
-        code = (await Installers.installWithShizuku(apkFileUri: file.file.uri.toString())) ? 0 : 1;
+        code = (await Installers.installWithShizuku(
+                apkFileUri: file.file.uri.toString()))
+            ? 0
+            : 1;
       case InstallMethodSettings.root:
-        code = (await Installers.installWithRoot(apkFilePath: file.file.path)) ? 0 : 1;
+        code = (await Installers.installWithRoot(apkFilePath: file.file.path))
+            ? 0
+            : 1;
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -683,7 +689,8 @@ class AppsProvider with ChangeNotifier {
         bool willBeSilent = await canInstallSilently(apps[appId]!.app);
         switch (settingsProvider.installMethod) {
           case InstallMethodSettings.normal:
-            if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+            if (!(await settingsProvider.getInstallPermission(
+                enforce: false))) {
               throw ObtainiumError(tr('cancelled'));
             }
           case InstallMethodSettings.shizuku:
@@ -743,7 +750,9 @@ class AppsProvider with ChangeNotifier {
       await Future.wait(
           appsToInstall.map((id) => updateFn(id, skipInstalls: true)));
       for (var id in appsToInstall) {
-        await updateFn(id);
+        if (!errors.appIdNames.containsKey(id)) {
+          await updateFn(id);
+        }
       }
     }
 
