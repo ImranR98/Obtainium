@@ -95,7 +95,7 @@ class HTML extends AppSource {
             label: tr('sortByFileNamesNotLinks'))
       ],
       [GeneratedFormSwitch('skipSort', label: tr('skipSort'))],
-      [GeneratedFormSwitch('reverseSort', label: tr('takeTopLink'))],
+      [GeneratedFormSwitch('reverseSort', label: tr('takeFirstLink'))],
       [
         GeneratedFormSwitch('supportFixedAPKURL',
             defaultValue: true, label: tr('supportFixedAPKURL')),
