@@ -350,7 +350,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            height16,
                             installMethodDropdown,
                             height16,
                             Row(

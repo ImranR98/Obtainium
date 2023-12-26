@@ -221,13 +221,17 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily: context.locale.languageCode != 'ru'
+                  ? 'Metropolis'
+                  : 'Montserrat'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily: context.locale.languageCode != 'ru'
+                  ? 'Metropolis'
+                  : 'Montserrat'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));

@@ -136,3 +136,6 @@ flutter:
       - family: Metropolis
         fonts:
           - asset: assets/fonts/Metropolis-Regular.otf
+      - family: Montserrat
+        fonts:
+          - asset: assets/fonts/Montserrat-Regular.ttf
