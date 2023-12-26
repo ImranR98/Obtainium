@@ -284,6 +284,7 @@
     "normal": "Normal",
     "shizuku": "Shizuku",
     "root": "Root",
+    "installMethodsExplanation": "Alternative installation methods allow you to bypass the limitations of Android. They can help in cases where, for example, an Android based OS is used in the likeness of the HyperOS(MIUI).",
     "shizukuBinderNotFound": "Compatible Shizuku service wasn't found",
     "removeAppQuestion": {
         "one": "Remove App?",

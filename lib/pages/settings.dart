@@ -350,7 +350,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            installMethodDropdown,
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -363,6 +362,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                           value;
                                     })
                               ],
+                            ),
+                            installMethodDropdown,
+                            height8,
+                            Text(
+                                tr('installMethodsExplanation'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
                             ),
                             height32,
                             Text(
