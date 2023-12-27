@@ -350,7 +350,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            installMethodDropdown,
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -364,6 +363,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            installMethodDropdown,
                             height32,
                             Text(
                               tr('sourceSpecific'),
