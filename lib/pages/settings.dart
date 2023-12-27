@@ -371,20 +371,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     .textTheme
                                     .labelSmall
                             ),
-                            height8,
-                            GestureDetector(
-                                onTap: () {
-                                  launchUrlString(
-                                      'https://shizuku.rikka.app/download/',
-                                      mode: LaunchMode.externalApplication);
-                                },
-                                child: Text(
-                                  tr('about'),
-                                  style: const TextStyle(
-                                      decoration: TextDecoration.underline,
-                                      fontSize: 12),
-                                )
-                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),
