@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "El éxito de las instalaciones en segundo plano solo se puede comprobar con Obtainium abierto.",
     "verifyLatestTag": "Comprueba la etiqueta 'latest'",
     "intermediateLinkRegex": "Filtrar por Enlace 'Intermedio' para Visitar Primero",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Enlace Intermedio no encontrado",
     "exemptFromBackgroundUpdates": "Exento de actualizciones en segundo plano (si están habilitadas)",
     "bgUpdatesOnWiFiOnly": "Deshabilitar las actualizaciones en segundo plano sin WiFi",

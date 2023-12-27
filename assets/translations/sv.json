@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "The success of a background install can only be determined when Obtainium is opened.",
     "verifyLatestTag": "Verifiera 'senaste'-taggen",
     "intermediateLinkRegex": "Filter for an 'Intermediate' Link to Visit First",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Intermediate link not found",
     "exemptFromBackgroundUpdates": "Undta från bakgrundsuppdateringar (om aktiverad)",
     "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",

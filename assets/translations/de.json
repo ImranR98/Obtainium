@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Der Erfolg einer Hintergrundinstallation kann nur festgestellt werden, wenn Obtainium geöffnet wird.",
     "verifyLatestTag": "Überprüfe das „latest“ Tag",
     "intermediateLinkRegex": "Filter für einen „Zwischen“-Link, der zuerst besucht werden soll",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "„Zwischen“link nicht gefunden",
     "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",

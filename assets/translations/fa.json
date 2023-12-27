@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "موفقیت نصب پس‌زمینه تنها زمانی مشخص می‌شود که Obtainium باز شود.",
     "verifyLatestTag": "برچسب \"آخرین\" را تأیید کنید",
     "intermediateLinkRegex": "برای اولین بار بازدید از لینک \"متوسط\" را فیلتر کنید",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "لینک میانی پیدا نشد",
     "exemptFromBackgroundUpdates": "معاف از به‌روزرسانی‌های پس‌زمینه (در صورت فعال بودن)",
     "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال به WiFi غیرفعال کنید",

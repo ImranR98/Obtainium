@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Успешность фоновой установки можно определить только после открытия Obtainium",
     "verifyLatestTag": "Проверять тег 'latest'",
     "intermediateLinkRegex": "Фильтр промежуточных ссылок для первоочередного посещения\n(регулярное выражение)",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Промежуточная ссылка не найдена",
     "exemptFromBackgroundUpdates": "Исключить из фоновых обновлений (если включено)",
     "bgUpdatesOnWiFiOnly": "Отключить фоновые обновления, если нет соединения с Wi-Fi",

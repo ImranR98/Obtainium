@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Arka plan kurulumunun başarısı, Obtainium'un açıldığında ancak belirlenebilir.",
     "verifyLatestTag": "'latest' etiketini doğrula",
     "intermediateLinkRegex": "İlk Ziyaret Edilecek 'Ara' Bağlantısını Filtrele",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Ara bağlantı bulunamadı",
     "exemptFromBackgroundUpdates": "Arka plan güncellemelerinden muaf tut (etkinse)",
     "bgUpdatesOnWiFiOnly": "WiFi olmadığında arka plan güncellemelerini devre dışı bırak",

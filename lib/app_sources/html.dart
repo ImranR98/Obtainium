@@ -91,6 +91,17 @@ class HTML extends AppSource {
   HTML() {
     additionalSourceAppSpecificSettingFormItems = [
       [
+        GeneratedFormTextField('intermediateLinkRegex',
+            label: tr('intermediateLinkRegex'),
+            hint: '([0-9]+.)*[0-9]+/\$',
+            required: false,
+            additionalValidators: [(value) => regExValidator(value)])
+      ],
+      [
+        GeneratedFormSwitch('intermediateLinkByText',
+            label: tr('intermediateLinkByText'))
+      ],
+      [
         GeneratedFormSwitch('sortByFileNamesNotLinks',
             label: tr('sortByFileNamesNotLinks'))
       ],
@@ -110,13 +121,6 @@ class HTML extends AppSource {
                 return regExValidator(value);
               }
             ])
-      ],
-      [
-        GeneratedFormTextField('intermediateLinkRegex',
-            label: tr('intermediateLinkRegex'),
-            hint: '([0-9]+.)*[0-9]+/\$',
-            required: false,
-            additionalValidators: [(value) => regExValidator(value)])
       ],
       [
         GeneratedFormTextField('versionExtractionRegEx',
@@ -173,27 +177,39 @@ class HTML extends AppSource {
     Response res = await sourceRequest(standardUrl);
     if (res.statusCode == 200) {
       var html = parse(res.body);
-      List<String> allLinks = html
+      List<MapEntry<String, String>> allLinks = html
           .querySelectorAll('a')
-          .map((element) => element.attributes['href'] ?? '')
-          .where((element) => element.isNotEmpty)
+          .map((element) => MapEntry(
+              element.attributes['href'] ?? '',
+              element.text.isNotEmpty
+                  ? element.text
+                  : (element.attributes['href'] ?? '').split('/').last))
+          .where((element) => element.key.isNotEmpty)
           .toList();
       if (allLinks.isEmpty) {
         allLinks = RegExp(
                 r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
             .allMatches(res.body)
-            .map((match) => match.group(0)!)
+            .map((match) => MapEntry(
+                match.group(0)!, match.group(0)?.split('/').last ?? ''))
             .toList();
       }
-      List<String> links = [];
+      List<MapEntry<String, String>> links = [];
       bool skipSort = additionalSettings['skipSort'] == true;
       if ((additionalSettings['intermediateLinkRegex'] as String?)
               ?.isNotEmpty ==
           true) {
+        bool filterIntermediateLinkByText =
+            additionalSettings['intermediateLinkByText'] == true;
         var reg = RegExp(additionalSettings['intermediateLinkRegex']);
-        links = allLinks.where((element) => reg.hasMatch(element)).toList();
+        links = allLinks
+            .where((element) => reg.hasMatch(
+                filterIntermediateLinkByText ? element.value : element.key))
+            .toList();
         if (!skipSort) {
-          links.sort((a, b) => compareAlphaNumeric(a, b));
+          links.sort((a, b) => filterIntermediateLinkByText
+              ? compareAlphaNumeric(a.value, b.value)
+              : compareAlphaNumeric(a.key, b.key));
         }
         if (links.isEmpty) {
           throw ObtainiumError(tr('intermediateLinkNotFound'));
@@ -202,26 +218,26 @@ class HTML extends AppSource {
             Map.from(additionalSettings);
         additionalSettingsTemp['intermediateLinkRegex'] = null;
         return getLatestAPKDetails(
-            ensureAbsoluteUrl(links.last, uri), additionalSettingsTemp);
+            ensureAbsoluteUrl(links.last.key, uri), additionalSettingsTemp);
       }
       if ((additionalSettings['customLinkFilterRegex'] as String?)
               ?.isNotEmpty ==
           true) {
         var reg = RegExp(additionalSettings['customLinkFilterRegex']);
-        links = allLinks.where((element) => reg.hasMatch(element)).toList();
+        links = allLinks.where((element) => reg.hasMatch(element.key)).toList();
       } else {
         links = allLinks
             .where((element) =>
-                Uri.parse(element).path.toLowerCase().endsWith('.apk'))
+                Uri.parse(element.key).path.toLowerCase().endsWith('.apk'))
             .toList();
       }
       if (!skipSort) {
         links.sort((a, b) =>
             additionalSettings['sortByFileNamesNotLinks'] == true
                 ? compareAlphaNumeric(
-                    a.split('/').where((e) => e.isNotEmpty).last,
-                    b.split('/').where((e) => e.isNotEmpty).last)
-                : compareAlphaNumeric(a, b));
+                    a.key.split('/').where((e) => e.isNotEmpty).last,
+                    b.key.split('/').where((e) => e.isNotEmpty).last)
+                : compareAlphaNumeric(a.key, b.key));
       }
       if (additionalSettings['reverseSort'] == true) {
         links = links.reversed.toList();
@@ -229,12 +245,12 @@ class HTML extends AppSource {
       if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty ==
           true) {
         var reg = RegExp(additionalSettings['apkFilterRegEx']);
-        links = links.where((element) => reg.hasMatch(element)).toList();
+        links = links.where((element) => reg.hasMatch(element.key)).toList();
       }
       if (links.isEmpty) {
         throw NoReleasesError();
       }
-      var rel = links.last;
+      var rel = links.last.key;
       String? version;
       if (additionalSettings['supportFixedAPKURL'] != true) {
         version = rel.hashCode.toString();

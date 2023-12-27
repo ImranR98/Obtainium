@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Sự thành công của cài đặt nền chỉ có thể được xác định khi mở Obtainium.",
     "verifyLatestTag": "Xác minh thẻ 'mới nhất'",
     "intermediateLinkRegex": "Lọc tìm liên kết 'Trung gian' để truy cập trước",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Không tìm thấy liên kết trung gian",
     "exemptFromBackgroundUpdates": "Miễn cập nhật nền (nếu được bật)",
     "bgUpdatesOnWiFiOnly": "Tắt cập nhật nền khi không có WiFi",

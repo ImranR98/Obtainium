@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "バックグラウンドアップデートが成功したかどうかは、Obtainiumを起動したときにしか判断できません。",
     "verifyLatestTag": "'latest'タグを確認する",
     "intermediateLinkRegex": "最初にアクセスする「中間」リンクをフィルタリングする",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "中間リンクが見つかりませんでした",
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合，バックグラウンドアップデートを無効にする",

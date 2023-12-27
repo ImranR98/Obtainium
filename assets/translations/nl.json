@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Het succes van een installatie in de achtergrond kan alleen worden bepaald wanneer Obtainium is geopend.",
     "verifyLatestTag": "Verifieer de 'Laatste'-tag",
     "intermediateLinkRegex": "Filter voor een 'tussenliggende' link om eerst te bezoeken",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Tussenliggende link niet gevonden",
     "exemptFromBackgroundUpdates": "Vrijgesteld van achtergrondupdates (indien ingeschakeld)",
     "bgUpdatesOnWiFiOnly": "Achtergrondupdates uitschakelen wanneer niet verbonden met WiFi",

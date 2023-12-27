@@ -246,6 +246,7 @@
     "backgroundUpdateLimitsExplanation": "A háttérben történő telepítés sikeressége csak az Obtainium megnyitásakor állapítható meg.",
     "verifyLatestTag": "Ellenőrizze a „legújabb” címkét",
     "intermediateLinkRegex": "Szűrés egy 'közvetítő' linkre, amelyet először meg kell látogatni",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Közvetítő link nem található",
     "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",
     "bgUpdatesOnWiFiOnly": "Tiltsa le a háttérben frissítéseket, ha nincs Wi-Fi-n",

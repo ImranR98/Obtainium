@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "只有在启动 Obtainium 时才能确认安装是否成功。",
     "verifyLatestTag": "验证“Latest”标签",
     "intermediateLinkRegex": "筛选首先访问的“中转”链接（正则表达式）",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "未找到“中转”链接",
     "exemptFromBackgroundUpdates": "禁用后台更新\n（如果已经全局启用）",
     "bgUpdatesOnWiFiOnly": "未连接 Wi-Fi 时禁用后台更新",

@@ -247,6 +247,7 @@
     "backgroundUpdateLimitsExplanation": "Úspěšnost instalace na pozadí lze určit pouze v případě, že je otevřen Obtainium.",
     "verifyLatestTag": "Ověřit značku 'latest'",
     "intermediateLinkRegex": "Filter for an 'Intermediate' Link to Visit First",
+    "intermediateLinkByText": "Filter/Sort intermediate links by text",
     "intermediateLinkNotFound": "Intermediate link not found",
     "exemptFromBackgroundUpdates": "Vyloučit aktualizace na pozadí (pokud jsou povoleny)",
     "bgUpdatesOnWiFiOnly": "Zakázat aktualizace na pozadí, pokud není přítomna Wi-Fi",
