@@ -31,7 +31,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       {super.label,
       super.belowWidgets,
       String super.defaultValue = '',
-      List<String? Function(String? value)> super.additionalValidators = const [],
+      List<String? Function(String? value)> super.additionalValidators =
+          const [],
       this.required = true,
       this.max = 1,
       this.hint,
@@ -117,6 +118,21 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+class GeneratedFormSubForm extends GeneratedFormItem {
+  final List<List<GeneratedFormItem>> items;
+  int repetitions;
+  final int maxRepetitions;
+  final int minRepetitions;
+
+  GeneratedFormSubForm(super.key, this.items,
+      {this.repetitions = 1, this.maxRepetitions = 1, this.minRepetitions = 1});
+
+  @override
+  ensureType(val) {
+    return val is List<MapEntry<String, dynamic>> ? val : [];
+  }
+}
+
 // Generates a color in the HSLuv (Pastel) color space
 // https://pub.dev/documentation/hsluv/latest/hsluv/Hsluv/hpluvToRgb.html
 Color generateRandomLightColor() {
@@ -133,6 +149,9 @@ Color generateRandomLightColor() {
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
+bool validateTextField(TextFormField tf) =>
+    (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
+
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
@@ -141,19 +160,18 @@ class _GeneratedFormState extends State<GeneratedForm> {
   String? initKey;
 
   // If any value changes, call this to update the parent with value and validity
-  void someValueChanged({bool isBuilding = false}) {
+  void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
     Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < widget.items.length; r++) {
       for (int i = 0; i < widget.items[r].length; i++) {
         if (formInputs[r][i] is TextFormField) {
-          var fieldState =
-              (formInputs[r][i].key as GlobalKey<FormFieldState>).currentState;
-          if (fieldState != null) {
-            valid = valid && fieldState.isValid;
-          }
+          valid = valid && validateTextField(formInputs[r][i] as TextFormField);
         }
       }
+    }
+    if (forceInvalid) {
+      valid = false;
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
@@ -481,6 +499,84 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ],
             )
           ]);
+        } else if (widget.items[r][e] is GeneratedFormSubForm) {
+          List<Widget> items = [];
+          if (values[widget.items[r][e].key] == null) {
+            values[widget.items[r][e].key] = [];
+          }
+          var subForm = widget.items[r][e] as GeneratedFormSubForm;
+          while (values[widget.items[r][e].key].length < subForm.repetitions) {
+            values[widget.items[r][e].key].add({});
+          }
+          for (int i = 0; i < subForm.repetitions; i++) {
+            items.add(Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(),
+                const SizedBox(
+                  height: 16,
+                ),
+                Text('${subForm.label} (${i + 1})'),
+                GeneratedForm(
+                  items: subForm.items
+                      .map((x) => x.map((y) {
+                            y.defaultValue = values[widget.items[r][e].key]?[i]
+                                    ?[y.key] ??
+                                y.defaultValue;
+                            return y;
+                          }).toList())
+                      .toList(),
+                  onValueChanges: (values, valid, isBuilding) {
+                    this.values[widget.items[r][e].key]?[i] = values;
+                    someValueChanged(
+                        isBuilding: isBuilding, forceInvalid: !valid);
+                  },
+                ),
+                if (subForm.maxRepetitions != subForm.minRepetitions)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                          onPressed: (subForm.repetitions >
+                                  subForm.minRepetitions)
+                              ? () {
+                                  setState(() {
+                                    values[widget.items[r][e].key]?.removeAt(i);
+                                    subForm.repetitions--;
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.delete_rounded))
+                    ],
+                  ),
+              ],
+            ));
+          }
+          if (subForm.maxRepetitions != subForm.minRepetitions) {
+            items.add(Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                      child: ElevatedButton.icon(
+                          onPressed:
+                              (subForm.repetitions < subForm.maxRepetitions ||
+                                      subForm.maxRepetitions == 0)
+                                  ? () {
+                                      setState(() {
+                                        subForm.repetitions =
+                                            subForm.repetitions + 1;
+                                      });
+                                    }
+                                  : null,
+                          icon: const Icon(Icons.add),
+                          label: Text(subForm.label))),
+                ],
+              ),
+            ));
+          }
+          items.add(const Divider());
+          formInputs[r][e] = Column(children: items);
         }
       }
     }
