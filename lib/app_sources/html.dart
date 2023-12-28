@@ -154,10 +154,7 @@ class HTML extends AppSource {
       [
         GeneratedFormSubForm(
             'intermediateLink', [...intermediateFormItems, ...commonFormItems],
-            label: tr('intermediateLink'),
-            minRepetitions: 0,
-            repetitions: 0,
-            maxRepetitions: 0)
+            label: tr('intermediateLink'))
       ],
       finalStepFormitems[0],
       ...commonFormItems,
