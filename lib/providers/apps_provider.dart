@@ -1448,7 +1448,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 /// When toCheck is empty, the function is in "install mode" (else it is in "update mode").
 /// In update mode, all apps in toCheck are checked for updates (in parallel).
 /// If an update is available and it cannot be installed silently, the user is notified of the available update.
-/// If there are any errors, the user is notified.
+/// If there are any errors, we recursively call the same function with retry count for the relevant apps decremented (if zero, the user is notified).
 ///
 /// Once all update checks are complete, the task is run again in install mode.
 /// In this mode, all pending silent updates are downloaded (in parallel) and installed in the background.
@@ -1466,6 +1466,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
 
+  int maxAttempts = 4;
+  int maxRetryWaitSeconds = 5;
+
   var netResult = await (Connectivity().checkConnectivity());
   if (netResult == ConnectivityResult.none) {
     logs.add('BG update task: No network.');
@@ -1473,9 +1476,12 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   }
 
   params ??= {};
-  if (params['toCheck'] == null) {
-    appsProvider.settingsProvider.lastBGCheckTime = DateTime.now();
-  }
+
+  bool isFreshUpdateTask = params['toCheck'] == null;
+  bool firstEverUpdateTask = DateTime.fromMillisecondsSinceEpoch(0)
+          .compareTo(appsProvider.settingsProvider.lastCompletedBGCheckTime) ==
+      0;
+
   List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
     ...(params['toCheck']
             ?.map((entry) => MapEntry<String, int>(
@@ -1483,6 +1489,11 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             .toList() ??
         appsProvider
             .getAppsSortedByUpdateCheckTime(
+                ignoreAppsCheckedAfter: isFreshUpdateTask
+                    ? firstEverUpdateTask
+                        ? null
+                        : appsProvider.settingsProvider.lastCompletedBGCheckTime
+                    : null,
                 onlyCheckInstalledOrTrackOnlyApps: appsProvider
                     .settingsProvider.onlyCheckInstalledOrTrackOnlyApps)
             .map((e) => MapEntry(e, 0)))
@@ -1513,14 +1524,14 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     logs.add('BG update task: Started (${toCheck.length}).');
 
     var enoughTimePassed = appsProvider.settingsProvider.updateInterval != 0 &&
-        appsProvider.settingsProvider.lastBGCheckTime
+        appsProvider.settingsProvider.lastCompletedBGCheckTime
             .add(
                 Duration(minutes: appsProvider.settingsProvider.updateInterval))
             .isBefore(DateTime.now());
     if (!enoughTimePassed) {
       // ignore: avoid_print
       print(
-          'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).');
+          'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).');
       return;
     }
 
@@ -1528,6 +1539,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     List<App> updates = []; // All updates found (silent and non-silent)
     List<App> toNotify =
         []; // All non-silent updates that the user will be notified about
+    List<MapEntry<String, int>> toRetry =
+        []; // All apps that got errors while checking
+    var retryAfterXSeconds = 0;
     MultiAppMultiError?
         errors; // All errors including those that will lead to a retry
     MultiAppMultiError toThrow =
@@ -1556,7 +1570,26 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         errors!.rawErrors.forEach((key, err) {
           logs.add(
               'BG update task: Got error on checking for $key \'${err.toString()}\'.');
+
+          var toCheckApp = toCheck.where((element) => element.key == key).first;
           toThrow.add(key, err, appName: errors?.appIdNames[key]);
+          if (toCheckApp.value < maxAttempts) {
+            toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
+            // Next task interval is based on the error with the longest retry time
+            int minRetryIntervalForThisApp = err is RateLimitError
+                ? (err.remainingMinutes * 60)
+                : e is ClientException
+                    ? (15 * 60)
+                    : (toCheckApp.value + 1);
+            if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
+              minRetryIntervalForThisApp = maxRetryWaitSeconds;
+            }
+            if (minRetryIntervalForThisApp > retryAfterXSeconds) {
+              retryAfterXSeconds = minRetryIntervalForThisApp;
+            }
+          } else {
+            toThrow.add(key, err, appName: errors?.appIdNames[key]);
+          }
         });
       } else {
         // We don't expect to ever get here in any situation so no need to catch (but log it in case)
@@ -1590,14 +1623,29 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             id: Random().nextInt(10000)));
       }
     }
-    // If there are no more update checks, call the function in install mode
+    // if there are update checks to retry, schedule a retry task
     logs.add('BG update task: Done checking for updates.');
-    bgUpdateCheck(taskId, {
-      'toCheck': [],
-      'toInstall': toInstall
-          .map((entry) => {'key': entry.key, 'value': entry.value})
-          .toList()
-    });
+    if (toRetry.isNotEmpty) {
+      logs.add(
+          'BG update task $taskId: Will retry in $retryAfterXSeconds seconds.');
+      return await bgUpdateCheck(taskId, {
+        'toCheck': toRetry
+            .map((entry) => {'key': entry.key, 'value': entry.value})
+            .toList(),
+        'toInstall': toInstall
+            .map((entry) => {'key': entry.key, 'value': entry.value})
+            .toList(),
+      });
+    } else {
+      // If there are no more update checks, call the function in install mode
+      logs.add('BG update task: Done checking for updates.');
+      return await bgUpdateCheck(taskId, {
+        'toCheck': [],
+        'toInstall': toInstall
+            .map((entry) => {'key': entry.key, 'value': entry.value})
+            .toList()
+      });
+    }
   } else {
     // In install mode...
     // If you haven't explicitly been given updates to install, grab all available silent updates
@@ -1638,5 +1686,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
       logs.add('BG install task: Done installing updates.');
     }
+  }
+  if (isFreshUpdateTask) {
+    appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
   }
 }
