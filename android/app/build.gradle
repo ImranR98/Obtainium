@@ -109,6 +109,7 @@ dependencies {
     implementation "dev.rikka.tools.refine:runtime:$hidden_api_version"
     implementation "dev.rikka.hidden:compat:$hidden_api_version"
     compileOnly "dev.rikka.hidden:stub:$hidden_api_version"
+    implementation "org.lsposed.hiddenapibypass:hiddenapibypass:4.3"
 
     implementation "com.github.topjohnwu.libsu:core:5.2.2"
 }
