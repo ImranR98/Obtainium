@@ -125,7 +125,11 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   final int minRepetitions;
 
   GeneratedFormSubForm(super.key, this.items,
-      {this.repetitions = 1, this.maxRepetitions = 1, this.minRepetitions = 1});
+      {super.label,
+      super.belowWidgets,
+      this.repetitions = 1,
+      this.maxRepetitions = 1,
+      this.minRepetitions = 1});
 
   @override
   ensureType(val) {
@@ -516,7 +520,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 const SizedBox(
                   height: 16,
                 ),
-                Text('${subForm.label} (${i + 1})'),
+                Text(
+                  '${subForm.label} (${i + 1})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 GeneratedForm(
                   items: subForm.items
                       .map((x) => x.map((y) {
@@ -532,11 +539,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                         isBuilding: isBuilding, forceInvalid: !valid);
                   },
                 ),
-                if (subForm.maxRepetitions != subForm.minRepetitions)
+                if (subForm.maxRepetitions != subForm.minRepetitions ||
+                    subForm.maxRepetitions == 0)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      IconButton(
+                      TextButton.icon(
+                          style: TextButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.error),
                           onPressed: (subForm.repetitions >
                                   subForm.minRepetitions)
                               ? () {
@@ -546,15 +557,22 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                   });
                                 }
                               : null,
-                          icon: const Icon(Icons.delete_rounded))
+                          label: Text(
+                            '${subForm.label} (${i + 1})',
+                          ),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                          ))
                     ],
                   ),
               ],
             ));
           }
-          if (subForm.maxRepetitions != subForm.minRepetitions) {
+          if (subForm.maxRepetitions != subForm.minRepetitions ||
+              subForm.maxRepetitions == 0) {
             items.add(Padding(
-              padding: const EdgeInsets.only(bottom: 24),
+              padding:
+                  EdgeInsets.only(bottom: subForm.repetitions > 0 ? 24 : 0),
               child: Row(
                 children: [
                   Expanded(
@@ -575,7 +593,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ),
             ));
           }
-          items.add(const Divider());
+          if (subForm.repetitions > 0) {
+            items.add(const Divider());
+          }
           formInputs[r][e] = Column(children: items);
         }
       }

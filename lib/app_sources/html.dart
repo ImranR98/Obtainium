@@ -88,66 +88,80 @@ bool _isNumeric(String s) {
 }
 
 class HTML extends AppSource {
+  var finalStepFormitems = [
+    [
+      GeneratedFormTextField('customLinkFilterRegex',
+          label: tr('customLinkFilterRegex'),
+          hint: 'download/(.*/)?(android|apk|mobile)',
+          required: false,
+          additionalValidators: [
+            (value) {
+              return regExValidator(value);
+            }
+          ])
+    ],
+    [
+      GeneratedFormTextField('versionExtractionRegEx',
+          label: tr('versionExtractionRegEx'),
+          required: false,
+          additionalValidators: [(value) => regExValidator(value)]),
+    ],
+    [
+      GeneratedFormTextField('matchGroupToUse',
+          label: tr('matchGroupToUse'),
+          required: false,
+          hint: '0',
+          textInputType: const TextInputType.numberWithOptions(),
+          additionalValidators: [
+            (value) {
+              if (value?.isEmpty == true) {
+                value = null;
+              }
+              value ??= '0';
+              return intValidator(value);
+            }
+          ])
+    ],
+    [
+      GeneratedFormSwitch('versionExtractWholePage',
+          label: tr('versionExtractWholePage'))
+    ],
+    [
+      GeneratedFormSwitch('supportFixedAPKURL',
+          defaultValue: true, label: tr('supportFixedAPKURL')),
+    ],
+  ];
+  var commonFormItems = [
+    [GeneratedFormSwitch('filterByLinkText', label: tr('filterByLinkText'))],
+    [GeneratedFormSwitch('skipSort', label: tr('skipSort'))],
+    [GeneratedFormSwitch('reverseSort', label: tr('takeFirstLink'))],
+    [
+      GeneratedFormSwitch('sortByLastLinkSegment',
+          label: tr('sortByLastLinkSegment'))
+    ],
+  ];
+  var intermediateFormItems = [
+    [
+      GeneratedFormTextField('customLinkFilterRegex',
+          label: tr('intermediateLinkRegex'),
+          hint: '([0-9]+.)*[0-9]+/\$',
+          required: true,
+          additionalValidators: [(value) => regExValidator(value)])
+    ],
+  ];
   HTML() {
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormTextField('intermediateLinkRegex',
-            label: tr('intermediateLinkRegex'),
-            hint: '([0-9]+.)*[0-9]+/\$',
-            required: false,
-            additionalValidators: [(value) => regExValidator(value)])
+        GeneratedFormSubForm(
+            'intermediateLink', [...intermediateFormItems, ...commonFormItems],
+            label: tr('intermediateLink'),
+            minRepetitions: 0,
+            repetitions: 0,
+            maxRepetitions: 0)
       ],
-      [
-        GeneratedFormSwitch('intermediateLinkByText',
-            label: tr('intermediateLinkByText'))
-      ],
-      [
-        GeneratedFormSwitch('sortByFileNamesNotLinks',
-            label: tr('sortByFileNamesNotLinks'))
-      ],
-      [GeneratedFormSwitch('skipSort', label: tr('skipSort'))],
-      [GeneratedFormSwitch('reverseSort', label: tr('takeFirstLink'))],
-      [
-        GeneratedFormSwitch('supportFixedAPKURL',
-            defaultValue: true, label: tr('supportFixedAPKURL')),
-      ],
-      [
-        GeneratedFormTextField('customLinkFilterRegex',
-            label: tr('customLinkFilterRegex'),
-            hint: 'download/(.*/)?(android|apk|mobile)',
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              }
-            ])
-      ],
-      [
-        GeneratedFormTextField('versionExtractionRegEx',
-            label: tr('versionExtractionRegEx'),
-            required: false,
-            additionalValidators: [(value) => regExValidator(value)]),
-      ],
-      [
-        GeneratedFormTextField('matchGroupToUse',
-            label: tr('matchGroupToUse'),
-            required: false,
-            hint: '0',
-            textInputType: const TextInputType.numberWithOptions(),
-            additionalValidators: [
-              (value) {
-                if (value?.isEmpty == true) {
-                  value = null;
-                }
-                value ??= '0';
-                return intValidator(value);
-              }
-            ])
-      ],
-      [
-        GeneratedFormSwitch('versionExtractWholePage',
-            label: tr('versionExtractWholePage'))
-      ]
+      finalStepFormitems[0],
+      ...commonFormItems,
+      ...finalStepFormitems.sublist(1)
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
         disableStandard: false, disableRelDate: true);
@@ -168,119 +182,120 @@ class HTML extends AppSource {
     return url;
   }
 
+  // Given an HTTP response, grab some links according to the common additional settings
+  // (those that apply to intermediate and final steps)
+  Future<List<MapEntry<String, String>>> grabLinksCommon(
+      Response res, Map<String, dynamic> additionalSettings) async {
+    if (res.statusCode != 200) {
+      throw getObtainiumHttpError(res);
+    }
+    var html = parse(res.body);
+    List<MapEntry<String, String>> allLinks = html
+        .querySelectorAll('a')
+        .map((element) => MapEntry(
+            element.attributes['href'] ?? '',
+            element.text.isNotEmpty
+                ? element.text
+                : (element.attributes['href'] ?? '').split('/').last))
+        .where((element) => element.key.isNotEmpty)
+        .toList();
+    if (allLinks.isEmpty) {
+      allLinks = RegExp(
+              r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
+          .allMatches(res.body)
+          .map((match) =>
+              MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''))
+          .toList();
+    }
+    List<MapEntry<String, String>> links = [];
+    bool skipSort = additionalSettings['skipSort'] == true;
+    bool filterLinkByText = additionalSettings['filterByLinkText'] == true;
+    if ((additionalSettings['customLinkFilterRegex'] as String?)?.isNotEmpty ==
+        true) {
+      var reg = RegExp(additionalSettings['customLinkFilterRegex']);
+      links = allLinks
+          .where((element) =>
+              reg.hasMatch(filterLinkByText ? element.value : element.key))
+          .toList();
+    } else {
+      links = allLinks
+          .where((element) =>
+              Uri.parse(filterLinkByText ? element.value : element.key)
+                  .path
+                  .toLowerCase()
+                  .endsWith('.apk'))
+          .toList();
+    }
+    if (!skipSort) {
+      links.sort((a, b) => additionalSettings['sortByLastLinkSegment'] == true
+          ? compareAlphaNumeric(
+              a.key.split('/').where((e) => e.isNotEmpty).last,
+              b.key.split('/').where((e) => e.isNotEmpty).last)
+          : compareAlphaNumeric(a.key, b.key));
+    }
+    if (additionalSettings['reverseSort'] == true) {
+      links = links.reversed.toList();
+    }
+    return links;
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var uri = Uri.parse(standardUrl);
-    Response res = await sourceRequest(standardUrl);
-    if (res.statusCode == 200) {
-      var html = parse(res.body);
-      List<MapEntry<String, String>> allLinks = html
-          .querySelectorAll('a')
-          .map((element) => MapEntry(
-              element.attributes['href'] ?? '',
-              element.text.isNotEmpty
-                  ? element.text
-                  : (element.attributes['href'] ?? '').split('/').last))
-          .where((element) => element.key.isNotEmpty)
-          .toList();
-      if (allLinks.isEmpty) {
-        allLinks = RegExp(
-                r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
-            .allMatches(res.body)
-            .map((match) => MapEntry(
-                match.group(0)!, match.group(0)?.split('/').last ?? ''))
-            .toList();
-      }
-      List<MapEntry<String, String>> links = [];
-      bool skipSort = additionalSettings['skipSort'] == true;
-      if ((additionalSettings['intermediateLinkRegex'] as String?)
-              ?.isNotEmpty ==
-          true) {
-        bool filterIntermediateLinkByText =
-            additionalSettings['intermediateLinkByText'] == true;
-        var reg = RegExp(additionalSettings['intermediateLinkRegex']);
-        links = allLinks
-            .where((element) => reg.hasMatch(
-                filterIntermediateLinkByText ? element.value : element.key))
-            .toList();
-        if (!skipSort) {
-          links.sort((a, b) => filterIntermediateLinkByText
-              ? compareAlphaNumeric(a.value, b.value)
-              : compareAlphaNumeric(a.key, b.key));
-        }
-        if (links.isEmpty) {
-          throw ObtainiumError(tr('intermediateLinkNotFound'));
-        }
-        Map<String, dynamic> additionalSettingsTemp =
-            Map.from(additionalSettings);
-        additionalSettingsTemp['intermediateLinkRegex'] = null;
-        return getLatestAPKDetails(
-            ensureAbsoluteUrl(links.last.key, uri), additionalSettingsTemp);
-      }
-      if ((additionalSettings['customLinkFilterRegex'] as String?)
-              ?.isNotEmpty ==
-          true) {
-        var reg = RegExp(additionalSettings['customLinkFilterRegex']);
-        links = allLinks.where((element) => reg.hasMatch(element.key)).toList();
-      } else {
-        links = allLinks
-            .where((element) =>
-                Uri.parse(element.key).path.toLowerCase().endsWith('.apk'))
-            .toList();
-      }
-      if (!skipSort) {
-        links.sort((a, b) =>
-            additionalSettings['sortByFileNamesNotLinks'] == true
-                ? compareAlphaNumeric(
-                    a.key.split('/').where((e) => e.isNotEmpty).last,
-                    b.key.split('/').where((e) => e.isNotEmpty).last)
-                : compareAlphaNumeric(a.key, b.key));
-      }
-      if (additionalSettings['reverseSort'] == true) {
-        links = links.reversed.toList();
-      }
-      if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty ==
-          true) {
-        var reg = RegExp(additionalSettings['apkFilterRegEx']);
-        links = links.where((element) => reg.hasMatch(element.key)).toList();
-      }
-      if (links.isEmpty) {
+    var currentUrl = standardUrl;
+    for (int i = 0;
+        i < (additionalSettings['intermediateLink']?.length ?? 0);
+        i++) {
+      var intLinks = await grabLinksCommon(await sourceRequest(currentUrl),
+          additionalSettings['intermediateLink'][i]);
+      if (intLinks.isEmpty) {
         throw NoReleasesError();
+      } else {
+        currentUrl = intLinks.last.key;
       }
-      var rel = links.last.key;
-      String? version;
-      if (additionalSettings['supportFixedAPKURL'] != true) {
-        version = rel.hashCode.toString();
-      }
-      var versionExtractionRegEx =
-          additionalSettings['versionExtractionRegEx'] as String?;
-      if (versionExtractionRegEx?.isNotEmpty == true) {
-        var match = RegExp(versionExtractionRegEx!).allMatches(
-            additionalSettings['versionExtractWholePage'] == true
-                ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
-                : rel);
-        if (match.isEmpty) {
-          throw NoVersionError();
-        }
-        String matchGroupString =
-            (additionalSettings['matchGroupToUse'] as String).trim();
-        if (matchGroupString.isEmpty) {
-          matchGroupString = "0";
-        }
-        version = match.last.group(int.parse(matchGroupString));
-        if (version?.isEmpty == true) {
-          throw NoVersionError();
-        }
-      }
-      rel = ensureAbsoluteUrl(rel, uri);
-      version ??= (await checkDownloadHash(rel)).toString();
-      return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
-          AppNames(uri.host, tr('app')));
-    } else {
-      throw getObtainiumHttpError(res);
     }
+
+    var uri = Uri.parse(currentUrl);
+    Response res = await sourceRequest(currentUrl);
+    var links = await grabLinksCommon(res, additionalSettings);
+
+    if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true) {
+      var reg = RegExp(additionalSettings['apkFilterRegEx']);
+      links = links.where((element) => reg.hasMatch(element.key)).toList();
+    }
+    if (links.isEmpty) {
+      throw NoReleasesError();
+    }
+    var rel = links.last.key;
+    String? version;
+    if (additionalSettings['supportFixedAPKURL'] != true) {
+      version = rel.hashCode.toString();
+    }
+    var versionExtractionRegEx =
+        additionalSettings['versionExtractionRegEx'] as String?;
+    if (versionExtractionRegEx?.isNotEmpty == true) {
+      var match = RegExp(versionExtractionRegEx!).allMatches(
+          additionalSettings['versionExtractWholePage'] == true
+              ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
+              : rel);
+      if (match.isEmpty) {
+        throw NoVersionError();
+      }
+      String matchGroupString =
+          (additionalSettings['matchGroupToUse'] as String).trim();
+      if (matchGroupString.isEmpty) {
+        matchGroupString = "0";
+      }
+      version = match.last.group(int.parse(matchGroupString));
+      if (version?.isEmpty == true) {
+        throw NoVersionError();
+      }
+    }
+    rel = ensureAbsoluteUrl(rel, uri);
+    version ??= (await checkDownloadHash(rel)).toString();
+    return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
+        AppNames(uri.host, tr('app')));
   }
 }
