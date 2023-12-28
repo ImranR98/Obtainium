@@ -248,7 +248,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (formItem is GeneratedFormSubForm) {
           values[formItem.key] = [];
           for (Map<String, dynamic> v
-              in (formItem.defaultValue as List<dynamic>)) {
+              in ((formItem.defaultValue ?? []) as List<dynamic>)) {
             var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
             v.entries.forEach((element) {
               fullDefaults[element.key] = element.value;
@@ -554,30 +554,26 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ),
               ],
             ));
-            if (i == (values[fieldKey].length - 1)) {
-              subformColumn.add(Padding(
-                padding: EdgeInsets.only(
-                    bottom: values[fieldKey].length > 0 ? 24 : 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                        child: ElevatedButton.icon(
-                            onPressed: () {
-                              values[fieldKey].add(
-                                  getDefaultValuesFromFormItems((widget.items[r]
-                                          [e] as GeneratedFormSubForm)
-                                      .items));
-                              someValueChanged();
-                            },
-                            icon: const Icon(Icons.add),
-                            label: Text(
-                                (widget.items[r][e] as GeneratedFormSubForm)
-                                    .label))),
-                  ],
-                ),
-              ));
-            }
           }
+          subformColumn.add(Padding(
+            padding: EdgeInsets.only(
+                bottom: values[fieldKey].length > 0 ? 24 : 0, top: 8),
+            child: Row(
+              children: [
+                Expanded(
+                    child: ElevatedButton.icon(
+                        onPressed: () {
+                          values[fieldKey].add(getDefaultValuesFromFormItems(
+                              (widget.items[r][e] as GeneratedFormSubForm)
+                                  .items));
+                          someValueChanged();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: Text((widget.items[r][e] as GeneratedFormSubForm)
+                            .label))),
+              ],
+            ),
+          ));
           if (values[fieldKey].length > 0) {
             subformColumn.add(const Divider());
           }
