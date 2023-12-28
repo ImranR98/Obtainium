@@ -250,9 +250,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
           for (Map<String, dynamic> v
               in ((formItem.defaultValue ?? []) as List<dynamic>)) {
             var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
-            v.entries.forEach((element) {
+            for (var element in v.entries) {
               fullDefaults[element.key] = element.value;
-            });
+            }
             values[formItem.key].add(fullDefaults);
           }
           return Container();
