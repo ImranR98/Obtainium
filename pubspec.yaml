@@ -57,7 +57,6 @@ dependencies:
       ref: main
   android_package_manager: ^0.6.0
   share_plus: ^7.0.0
-  android_alarm_manager_plus: ^3.0.0
   sqflite: ^2.2.0+3
   easy_localization: ^3.0.1
   android_intent_plus: ^4.0.0
@@ -68,6 +67,7 @@ dependencies:
   shared_storage: ^0.8.0
   crypto: ^3.0.3
   app_links: ^3.5.0
+  background_fetch: ^1.2.1
 
 dev_dependencies:
   flutter_test:
