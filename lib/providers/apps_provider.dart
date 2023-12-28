@@ -1455,6 +1455,8 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 /// If there is an error, the user is notified.
 ///
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
+  // ignore: avoid_print
+  print('Started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
@@ -1499,13 +1501,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         (netResult != ConnectivityResult.ethernet);
   }
 
-  bool installMode =
-      toCheck.isEmpty; // Task is either in update mode or install mode
-
-  logs.add(
-      'BG ${installMode ? 'install' : 'update'} task: Started (${installMode ? toInstall.length : toCheck.length}).');
-
-  if (!installMode) {
+  if (toCheck.isNotEmpty) {
+    // Task is either in update mode or install mode
     // If in update mode, we check for updates.
     // We divide the results into 4 groups:
     // - toNotify - Apps with updates that the user will be notified about (can't be silently installed)
@@ -1513,13 +1510,16 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     // After grouping the updates, we take care of toNotify and toThrow first
     // Then we run the function again in install mode (toCheck is empty)
 
+    logs.add('BG update task: Started (${toCheck.length}).');
+
     var enoughTimePassed = appsProvider.settingsProvider.updateInterval != 0 &&
         appsProvider.settingsProvider.lastBGCheckTime
-            // .add(Duration(minutes: appsProvider.settingsProvider.updateInterval))
+            .add(
+                Duration(minutes: appsProvider.settingsProvider.updateInterval))
             .isBefore(DateTime.now());
     if (!enoughTimePassed) {
       // ignore: avoid_print
-      logs.add(
+      print(
           'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).');
       return;
     }
@@ -1610,30 +1610,33 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         }
       }
     }
-    var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
-    if (tempObtArr.isNotEmpty) {
-      // Move obtainium to the end of the list as it must always install last
-      var obt = tempObtArr.first;
-      toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
-    }
-    // Loop through all updates and install each
-    try {
-      await appsProvider.downloadAndInstallLatestApps(
-          toInstall.map((e) => e.key).toList(), null,
-          notificationsProvider: notificationsProvider,
-          forceParallelDownloads: true);
-    } catch (e) {
-      if (e is MultiAppMultiError) {
-        e.idsByErrorString.forEach((key, value) {
-          notificationsProvider.notify(
-              ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)));
-        });
-      } else {
-        // We don't expect to ever get here in any situation so no need to catch (but log it in case)
-        logs.add('Fatal error in BG install task: ${e.toString()}');
-        rethrow;
+    if (toInstall.isNotEmpty) {
+      logs.add('BG install task: Started (${toInstall.length}).');
+      var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
+      if (tempObtArr.isNotEmpty) {
+        // Move obtainium to the end of the list as it must always install last
+        var obt = tempObtArr.first;
+        toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
       }
+      // Loop through all updates and install each
+      try {
+        await appsProvider.downloadAndInstallLatestApps(
+            toInstall.map((e) => e.key).toList(), null,
+            notificationsProvider: notificationsProvider,
+            forceParallelDownloads: true);
+      } catch (e) {
+        if (e is MultiAppMultiError) {
+          e.idsByErrorString.forEach((key, value) {
+            notificationsProvider.notify(ErrorCheckingUpdatesNotification(
+                e.errorsAppsString(key, value)));
+          });
+        } else {
+          // We don't expect to ever get here in any situation so no need to catch (but log it in case)
+          logs.add('Fatal error in BG install task: ${e.toString()}');
+          rethrow;
+        }
+      }
+      logs.add('BG install task: Done installing updates.');
     }
-    logs.add('BG install task: Done.');
   }
 }
