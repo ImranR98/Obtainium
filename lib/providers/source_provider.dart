@@ -135,10 +135,28 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   if (additionalSettings['autoApkFilterByArch'] == null) {
     additionalSettings['autoApkFilterByArch'] = false;
   }
-  // HTML 'fixed URL' support should be disabled if it previously did not exist
-  if (source.runtimeType == HTML().runtimeType &&
-      originalAdditionalSettings['supportFixedAPKURL'] == null) {
-    additionalSettings['supportFixedAPKURL'] = false;
+  if (source.runtimeType == HTML().runtimeType) {
+    // HTML 'fixed URL' support should be disabled if it previously did not exist
+    if (originalAdditionalSettings['supportFixedAPKURL'] == null) {
+      additionalSettings['supportFixedAPKURL'] = false;
+    }
+    // HTML key rename
+    if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
+      additionalSettings['sortByLastLinkSegment'] =
+          originalAdditionalSettings['sortByFileNamesNotLinks'];
+    }
+    // HTML single 'intermediate link' should be converted to multi-support version
+    if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
+        additionalSettings['intermediateLink']?.isNotEmpty != true) {
+      additionalSettings['intermediateLink'] = [
+        {
+          'customLinkFilterRegex':
+              originalAdditionalSettings['intermediateLinkRegex'],
+          'filterByLinkText':
+              originalAdditionalSettings['intermediateLinkByText']
+        }
+      ];
+    }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
