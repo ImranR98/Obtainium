@@ -1,4 +1,3 @@
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -608,38 +607,35 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Divider(
                   height: 32,
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Column(children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(child: Text(tr('debugMenu'))),
-                        Switch(
-                            value: settingsProvider.showDebugOpts,
-                            onChanged: (value) {
-                              settingsProvider.showDebugOpts = value;
-                            })
-                      ],
-                    ),
-                    if (settingsProvider.showDebugOpts)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          height16,
-                          TextButton(
-                              onPressed: () {
-                                AndroidAlarmManager.oneShot(
-                                    const Duration(seconds: 0),
-                                    bgUpdateCheckAlarmId + 200,
-                                    bgUpdateCheck);
-                                showMessage(tr('bgTaskStarted'), context);
-                              },
-                              child: Text(tr('runBgCheckNow')))
-                        ],
-                      ),
-                  ]),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                //   child: Column(children: [
+                //     Row(
+                //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //       children: [
+                //         Flexible(child: Text(tr('debugMenu'))),
+                //         Switch(
+                //             value: settingsProvider.showDebugOpts,
+                //             onChanged: (value) {
+                //               settingsProvider.showDebugOpts = value;
+                //             })
+                //       ],
+                //     ),
+                //     if (settingsProvider.showDebugOpts)
+                //       Column(
+                //         crossAxisAlignment: CrossAxisAlignment.stretch,
+                //         children: [
+                //           height16,
+                //           TextButton(
+                //               onPressed: () {
+                //                 bgUpdateCheck('taskId', null);
+                //                 showMessage(tr('bgTaskStarted'), context);
+                //               },
+                //               child: Text(tr('runBgCheckNow')))
+                //         ],
+                //       ),
+                //   ]),
+                // ),
               ],
             ),
           )
