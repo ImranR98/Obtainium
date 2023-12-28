@@ -1477,7 +1477,6 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
 
   params ??= {};
 
-  bool isFreshUpdateTask = params['toCheck'] == null;
   bool firstEverUpdateTask = DateTime.fromMillisecondsSinceEpoch(0)
           .compareTo(appsProvider.settingsProvider.lastCompletedBGCheckTime) ==
       0;
@@ -1489,7 +1488,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             .toList() ??
         appsProvider
             .getAppsSortedByUpdateCheckTime(
-                ignoreAppsCheckedAfter: isFreshUpdateTask
+                ignoreAppsCheckedAfter: params['toCheck'] == null
                     ? firstEverUpdateTask
                         ? null
                         : appsProvider.settingsProvider.lastCompletedBGCheckTime
@@ -1687,7 +1686,5 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       logs.add('BG install task: Done installing updates.');
     }
   }
-  if (isFreshUpdateTask) {
-    appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
-  }
+  appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
 }
