@@ -151,10 +151,7 @@ class _ObtainiumState extends State<Obtainium> {
             requiresCharging: false,
             requiresStorageNotLow: false,
             requiresDeviceIdle: false,
-            requiredNetworkType:
-                context.watch<SettingsProvider>().bgUpdatesOnWiFiOnly
-                    ? NetworkType.UNMETERED
-                    : NetworkType.ANY), (String taskId) async {
+            requiredNetworkType: NetworkType.ANY), (String taskId) async {
       // We don't want periodic tasks in the foreground - ignore
       await bgUpdateCheck(taskId, null);
       BackgroundFetch.finish(taskId);
