@@ -133,7 +133,7 @@ class GeneratedFormSubForm extends GeneratedFormItem {
 
   @override
   ensureType(val) {
-    return val is List<MapEntry<String, dynamic>> ? val : [];
+    return val; // Not easy to validate List<Map<String, dynamic>>
   }
 }
 
