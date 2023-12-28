@@ -1520,8 +1520,6 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     // After grouping the updates, we take care of toNotify and toThrow first
     // Then we run the function again in install mode (toCheck is empty)
 
-    logs.add('BG update task: Started (${toCheck.length}).');
-
     var enoughTimePassed = appsProvider.settingsProvider.updateInterval != 0 &&
         appsProvider.settingsProvider.lastCompletedBGCheckTime
             .add(
@@ -1533,6 +1531,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
           'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).');
       return;
     }
+
+    logs.add('BG update task: Started (${toCheck.length}).');
 
     // Init. vars.
     List<App> updates = []; // All updates found (silent and non-silent)
