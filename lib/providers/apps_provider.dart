@@ -1571,7 +1571,6 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
               'BG update task: Got error on checking for $key \'${err.toString()}\'.');
 
           var toCheckApp = toCheck.where((element) => element.key == key).first;
-          toThrow.add(key, err, appName: errors?.appIdNames[key]);
           if (toCheckApp.value < maxAttempts) {
             toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
             // Next task interval is based on the error with the longest retry time
@@ -1587,7 +1586,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
               retryAfterXSeconds = minRetryIntervalForThisApp;
             }
           } else {
-            toThrow.add(key, err, appName: errors?.appIdNames[key]);
+            if (err is! RateLimitError) {
+              toThrow.add(key, err, appName: errors?.appIdNames[key]);
+            }
           }
         });
       } else {
