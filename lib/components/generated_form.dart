@@ -127,6 +127,7 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   GeneratedFormSubForm(super.key, this.items,
       {super.label,
       super.belowWidgets,
+      super.defaultValue,
       this.repetitions = 1,
       this.maxRepetitions = 1,
       this.minRepetitions = 1});
@@ -509,8 +510,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
             values[widget.items[r][e].key] = [];
           }
           var subForm = widget.items[r][e] as GeneratedFormSubForm;
-          while (values[widget.items[r][e].key].length < subForm.repetitions) {
-            values[widget.items[r][e].key].add({});
+          if ((subForm.defaultValue?.length ?? 0) > subForm.repetitions) {
+            subForm.repetitions = subForm.defaultValue.length;
+          }
+          for (int i = values[widget.items[r][e].key].length;
+              i <= subForm.repetitions;
+              i++) {
+            values[widget.items[r][e].key]
+                .add(subForm.defaultValue?[i - 1] ?? {});
           }
           for (int i = 0; i < subForm.repetitions; i++) {
             items.add(Column(
