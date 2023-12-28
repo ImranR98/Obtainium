@@ -147,7 +147,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     }
     // HTML single 'intermediate link' should be converted to multi-support version
     if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
-        additionalSettings['intermediateLink'] == null) {
+        additionalSettings['intermediateLink']?.isNotEmpty != true) {
       additionalSettings['intermediateLink'] = [
         {
           'customLinkFilterRegex':
