@@ -147,6 +147,14 @@ Color generateRandomLightColor() {
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
+int generateRandomNumber(int seed1,
+    {int seed2 = 0, int seed3 = 0, max = 10000}) {
+  int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
+  Random random = Random(combinedSeed);
+  int randomNumber = random.nextInt(max);
+  return randomNumber;
+}
+
 bool validateTextField(TextFormField tf) =>
     (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
 
@@ -156,6 +164,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   late List<List<Widget>> formInputs;
   List<List<Widget>> rows = [];
   String? initKey;
+  int forceUpdateKeyCount = 0;
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
@@ -502,6 +511,17 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (widget.items[r][e] is GeneratedFormSubForm) {
           List<Widget> subformColumn = [];
           for (int i = 0; i < values[fieldKey].length; i++) {
+            var items = (widget.items[r][e] as GeneratedFormSubForm)
+                .items
+                .map((x) => x.map((y) {
+                      y.defaultValue = values[fieldKey]?[i]?[y.key];
+                      return y;
+                    }).toList())
+                .toList();
+            var internalFormKey = ValueKey(generateRandomNumber(
+                values[fieldKey].length,
+                seed2: i,
+                seed3: forceUpdateKeyCount));
             subformColumn.add(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -514,13 +534,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 GeneratedForm(
-                  items: (widget.items[r][e] as GeneratedFormSubForm)
-                      .items
-                      .map((x) => x.map((y) {
-                            y.defaultValue = values[fieldKey]?[i]?[y.key];
-                            return y;
-                          }).toList())
-                      .toList(),
+                  key: internalFormKey,
+                  items: items,
                   onValueChanges: (values, valid, isBuilding) {
                     if (valid) {
                       this.values[fieldKey]?[i] = values;
@@ -541,6 +556,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 var temp = List.from(values[fieldKey]);
                                 temp.removeAt(i);
                                 values[fieldKey] = List.from(temp);
+                                forceUpdateKeyCount++;
                                 someValueChanged();
                               }
                             : null,
@@ -566,6 +582,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           values[fieldKey].add(getDefaultValuesFromFormItems(
                               (widget.items[r][e] as GeneratedFormSubForm)
                                   .items));
+                          forceUpdateKeyCount++;
                           someValueChanged();
                         },
                         icon: const Icon(Icons.add),
