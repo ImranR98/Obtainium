@@ -147,7 +147,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     }
     // HTML single 'intermediate link' should be converted to multi-support version
     if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
-        additionalSettings['intermediateLink']?.isNotEmpty != true) {
+        additionalSettings['intermediateLinkRegex']?.isNotEmpty != true) {
       additionalSettings['intermediateLink'] = [
         {
           'customLinkFilterRegex':
@@ -156,6 +156,12 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
               originalAdditionalSettings['intermediateLinkByText']
         }
       ];
+    }
+    if ((additionalSettings['intermediateLink']?.length ?? 0) > 0) {
+      additionalSettings['intermediateLink'] =
+          additionalSettings['intermediateLink'].where((e) {
+        return e['intermediateLinkRegex']?.isNotEmpty == true;
+      }).toList();
     }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
