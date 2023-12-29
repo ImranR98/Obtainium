@@ -236,7 +236,7 @@
     "addInfoInSettings": "Adja hozzá ezt az infót a Beállításokban.",
     "githubSourceNote": "A GitHub sebességkorlátozás elkerülhető API-kulcs használatával.",
     "gitlabSourceNote": "Előfordulhat, hogy a GitLab APK kibontása nem működik API-kulcs nélkül.",
-    "sortByLastLinkSegment": "Sort by only the last segment of the link",
+    "sortByLastLinkSegment": "Rendezés csak a link utolsó szegmense szerint",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",
     "customLinkFilterRegex": "Egyéni APK hivatkozásszűrő reguláris kifejezéssel (Alapérték '.apk$')",
     "appsPossiblyUpdated": "App frissítési kísérlet",
