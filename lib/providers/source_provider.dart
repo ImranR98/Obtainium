@@ -160,7 +160,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     if ((additionalSettings['intermediateLink']?.length ?? 0) > 0) {
       additionalSettings['intermediateLink'] =
           additionalSettings['intermediateLink'].where((e) {
-        return e['intermediateLinkRegex']?.isNotEmpty == true;
+        return e['customLinkFilterRegex']?.isNotEmpty == true;
       }).toList();
     }
   }
