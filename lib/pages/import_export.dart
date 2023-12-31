@@ -676,7 +676,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 GeneratedFromSwitch(
                   'selectAll',
                   label: tr('selectAll'),
-                  defaultValue: true,
+                  defaultValue: selectedByDefault
                 )
               ]
             ],
