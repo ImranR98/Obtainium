@@ -671,6 +671,13 @@ class _SelectionModalState extends State<SelectionModal> {
                         return regExValidator(value);
                       }
                     ])
+              ],
+              [
+                GeneratedFromSwitch(
+                  'selectAll',
+                  label: tr('selectAll'),
+                  defaultValue: true,
+                )
               ]
             ],
             onValueChanges: (value, valid, isBuilding) {
@@ -679,6 +686,12 @@ class _SelectionModalState extends State<SelectionModal> {
                   setState(() {
                     filterRegex = value['filter'];
                   });
+                } else if (value['selectAll'] != null) {
+                  setState(() {
+                    for (var e in entrySelections.keys) {
+                      entrySelections[e] = value['selectAll']
+                    }
+                  })
                 }
               }
             }),
