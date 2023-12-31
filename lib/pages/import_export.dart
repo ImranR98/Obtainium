@@ -686,7 +686,8 @@ class _SelectionModalState extends State<SelectionModal> {
                   setState(() {
                     filterRegex = value['filter'];
                   });
-                } else if (value['selectAll'] != null) {
+                }
+                if (value['selectAll'] != null) {
                   setState(() {
                     for (var e in entrySelections.keys) {
                       entrySelections[e] = value['selectAll']
