@@ -590,7 +590,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
             onPressed: () {
               Navigator.of(context).pop(null);
             },
-            child: Text(tr('okay')))
+            child: Text(tr('ok')))
       ],
     );
   }

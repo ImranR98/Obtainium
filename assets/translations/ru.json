@@ -103,7 +103,6 @@
     "importErrors": "Ошибка импорта",
     "importedXOfYApps": "Импортировано приложений: {} из {}",
     "followingURLsHadErrors": "При импорте следующие URL-адреса содержали ошибки:",
-    "okay": "Ok",
     "selectURL": "Выбрать URL-адрес",
     "selectURLs": "Выбрать URL-адреса",
     "pick": "Выбрать",
