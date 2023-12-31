@@ -285,7 +285,8 @@
     "normal": "Normal",
     "shizuku": "Shizuku",
     "root": "Root",
-    "shizukuBinderNotFound": "Shizuku is not running",
+    "shizukuBinderNotFound": "Сompatible Shizuku service wasn't found",
+    "tryUseSystemFont": "Try to use a system font",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

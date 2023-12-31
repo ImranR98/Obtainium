@@ -285,7 +285,8 @@
     "normal": "Нормальный",
     "shizuku": "Shizuku",
     "root": "Суперпользователь",
-    "shizukuBinderNotFound": "Shizuku не запущен",
+    "shizukuBinderNotFound": "Совместимый сервис Shizuku не найден",
+    "tryUseSystemFont": "Попытаться использовать системный шрифт",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

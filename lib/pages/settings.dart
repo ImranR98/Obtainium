@@ -351,8 +351,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               ],
                             ),
                             height16,
-                            installMethodDropdown,
-                            height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -365,6 +363,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            installMethodDropdown,
                             height32,
                             Text(
                               tr('sourceSpecific'),
@@ -408,6 +407,18 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             height16,
                             localeDropdown,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('tryUseSystemFont'))),
+                                Switch(
+                                    value: settingsProvider.tryUseSystemFont,
+                                    onChanged: (value) {
+                                      settingsProvider.tryUseSystemFont = value;
+                                    })
+                              ],
+                            ),
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

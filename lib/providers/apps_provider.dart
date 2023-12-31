@@ -33,7 +33,7 @@ import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
-import 'installers_provider.dart';
+import 'native_provider.dart';
 
 final pm = AndroidPackageManager();
 
@@ -523,12 +523,12 @@ class AppsProvider with ChangeNotifier {
         code = await AndroidPackageInstaller.installApk(
             apkFilePath: file.file.path);
       case InstallMethodSettings.shizuku:
-        code = (await Installers.installWithShizuku(
+        code = (await NativeFeatures.installWithShizuku(
                 apkFileUri: file.file.uri.toString()))
             ? 0
             : 1;
       case InstallMethodSettings.root:
-        code = (await Installers.installWithRoot(apkFilePath: file.file.path))
+        code = (await NativeFeatures.installWithRoot(apkFilePath: file.file.path))
             ? 0
             : 1;
     }
@@ -694,14 +694,14 @@ class AppsProvider with ChangeNotifier {
               throw ObtainiumError(tr('cancelled'));
             }
           case InstallMethodSettings.shizuku:
-            int code = await Installers.checkPermissionShizuku();
+            int code = await NativeFeatures.checkPermissionShizuku();
             if (code == -1) {
               throw ObtainiumError(tr('shizukuBinderNotFound'));
             } else if (code == 0) {
               throw ObtainiumError(tr('cancelled'));
             }
           case InstallMethodSettings.root:
-            if (!(await Installers.checkPermissionRoot())) {
+            if (!(await NativeFeatures.checkPermissionRoot())) {
               throw ObtainiumError(tr('cancelled'));
             }
         }
