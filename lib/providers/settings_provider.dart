@@ -446,4 +446,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('parallelDownloads', val);
     notifyListeners();
   }
+
+  List<String> get searchDeselected {
+    return prefs?.getStringList('searchDeselected') ?? [];
+  }
+
+  set searchDeselected(List<String> list) {
+    prefs?.setStringList('searchDeselected', list);
+    notifyListeners();
+  }
 }
