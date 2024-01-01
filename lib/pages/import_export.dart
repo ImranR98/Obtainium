@@ -604,11 +604,13 @@ class SelectionModal extends StatefulWidget {
       this.selectedByDefault = true,
       this.onlyOneSelectionAllowed = false,
       this.titlesAreLinks = true,
-      this.title});
+      this.title,
+      this.deselectThese = const []});
 
   String? title;
   Map<String, List<String>> entries;
   bool selectedByDefault;
+  List<String> deselectThese;
   bool onlyOneSelectionAllowed;
   bool titlesAreLinks;
 
@@ -622,9 +624,13 @@ class _SelectionModalState extends State<SelectionModal> {
   @override
   void initState() {
     super.initState();
-    for (var url in widget.entries.entries) {
-      entrySelections.putIfAbsent(url,
-          () => widget.selectedByDefault && !widget.onlyOneSelectionAllowed);
+    for (var entry in widget.entries.entries) {
+      entrySelections.putIfAbsent(
+          entry,
+          () =>
+              widget.selectedByDefault &&
+              !widget.onlyOneSelectionAllowed &&
+              !widget.deselectThese.contains(entry.key));
     }
     if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
       selectOnlyOne(widget.entries.entries.first.key);

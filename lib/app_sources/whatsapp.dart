@@ -6,6 +6,8 @@ import 'package:obtainium/providers/source_provider.dart';
 class WhatsApp extends AppSource {
   WhatsApp() {
     host = 'whatsapp.com';
+    overrideVersionDetectionFormDefault('noVersionDetection',
+        disableStandard: true, disableRelDate: true);
   }
 
   @override

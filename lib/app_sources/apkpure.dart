@@ -34,7 +34,7 @@ class APKPure extends AppSource {
       url = 'https://$host${Uri.parse(url).path}';
     }
     RegExp standardUrlRegExA =
-        RegExp('^https?://$host/+[^/]+/+[^/]+(/+[^/]+)?');
+        RegExp('^https?://(www\\.)?$host/+[^/]+/+[^/]+(/+[^/]+)?');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);

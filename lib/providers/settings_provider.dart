@@ -70,8 +70,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   InstallMethodSettings get installMethod {
-    return InstallMethodSettings
-        .values[prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];
+    return InstallMethodSettings.values[
+        prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];
   }
 
   set installMethod(InstallMethodSettings t) {
@@ -363,15 +363,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  DateTime get lastBGCheckTime {
-    int? temp = prefs?.getInt('lastBGCheckTime');
+  DateTime get lastCompletedBGCheckTime {
+    int? temp = prefs?.getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  set lastBGCheckTime(DateTime val) {
-    prefs?.setInt('lastBGCheckTime', val.millisecondsSinceEpoch);
+  set lastCompletedBGCheckTime(DateTime val) {
+    prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
   }
 
@@ -462,6 +462,15 @@ class SettingsProvider with ChangeNotifier {
 
   set parallelDownloads(bool val) {
     prefs?.setBool('parallelDownloads', val);
+    notifyListeners();
+  }
+
+  List<String> get searchDeselected {
+    return prefs?.getStringList('searchDeselected') ?? [];
+  }
+
+  set searchDeselected(List<String> list) {
+    prefs?.setStringList('searchDeselected', list);
     notifyListeners();
   }
 }

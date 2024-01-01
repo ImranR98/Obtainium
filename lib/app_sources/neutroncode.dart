@@ -10,7 +10,8 @@ class NeutronCode extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/downloads/file/[^/]+');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://(www\\.)?$host/downloads/file/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);

@@ -13,14 +13,14 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.14.41';
+const String currentVersion = '0.15.3';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -77,6 +77,19 @@ Future<void> loadTranslations() async {
       fallbackTranslations: controller.fallbackTranslations);
 }
 
+@pragma('vm:entry-point')
+void backgroundFetchHeadlessTask(HeadlessTask task) async {
+  String taskId = task.taskId;
+  bool isTimeout = task.timeout;
+  if (isTimeout) {
+    print('BG update task timed out.');
+    BackgroundFetch.finish(taskId);
+    return;
+  }
+  await bgUpdateCheck(taskId, null);
+  BackgroundFetch.finish(taskId);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -94,7 +107,6 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
-  await AndroidAlarmManager.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
@@ -109,6 +121,7 @@ void main() async {
         useOnlyLangCode: true,
         child: const Obtainium()),
   ));
+  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
 var defaultThemeColour = Colors.deepPurple;
@@ -122,6 +135,32 @@ class Obtainium extends StatefulWidget {
 
 class _ObtainiumState extends State<Obtainium> {
   var existingUpdateInterval = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+  }
+
+  Future<void> initPlatformState() async {
+    await BackgroundFetch.configure(
+        BackgroundFetchConfig(
+            minimumFetchInterval: 15,
+            stopOnTerminate: false,
+            enableHeadless: true,
+            requiresBatteryNotLow: false,
+            requiresCharging: false,
+            requiresStorageNotLow: false,
+            requiresDeviceIdle: false,
+            requiredNetworkType: NetworkType.ANY), (String taskId) async {
+      await bgUpdateCheck(taskId, null);
+      BackgroundFetch.finish(taskId);
+    }, (String taskId) async {
+      context.read<LogsProvider>().add('BG update task timed out.');
+      BackgroundFetch.finish(taskId);
+    });
+    if (!mounted) return;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,30 +200,6 @@ class _ObtainiumState extends State<Obtainium> {
               context.deviceLocale.languageCode !=
                   context.locale.languageCode)) {
         settingsProvider.resetLocaleSafe(context);
-      }
-      // Register the background update task according to the user's setting
-      var actualUpdateInterval = settingsProvider.updateInterval;
-      if (existingUpdateInterval != actualUpdateInterval) {
-        if (actualUpdateInterval == 0) {
-          AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
-        } else {
-          var settingChanged = existingUpdateInterval != -1;
-          var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
-              settingsProvider.lastBGCheckTime
-                  .add(Duration(minutes: actualUpdateInterval + 60))
-                  .isBefore(DateTime.now());
-          if (settingChanged || lastCheckWasTooLongAgo) {
-            logs.add(
-                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
-            AndroidAlarmManager.periodic(
-                Duration(minutes: actualUpdateInterval),
-                bgUpdateCheckAlarmId,
-                bgUpdateCheck,
-                rescheduleOnReboot: true,
-                wakeup: true);
-          }
-        }
-        existingUpdateInterval = actualUpdateInterval;
       }
       settingsProvider.addListener(() async {
         if (settingsProvider.tryUseSystemFont &&

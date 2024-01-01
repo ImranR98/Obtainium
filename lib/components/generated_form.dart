@@ -4,6 +4,7 @@ import 'package:hsluv/hsluv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/providers/source_provider.dart';
 
 abstract class GeneratedFormItem {
   late String key;
@@ -31,7 +32,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       {super.label,
       super.belowWidgets,
       String super.defaultValue = '',
-      List<String? Function(String? value)> super.additionalValidators = const [],
+      List<String? Function(String? value)> super.additionalValidators =
+          const [],
       this.required = true,
       this.max = 1,
       this.hint,
@@ -117,6 +119,18 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+class GeneratedFormSubForm extends GeneratedFormItem {
+  final List<List<GeneratedFormItem>> items;
+
+  GeneratedFormSubForm(super.key, this.items,
+      {super.label, super.belowWidgets, super.defaultValue});
+
+  @override
+  ensureType(val) {
+    return val; // Not easy to validate List<Map<String, dynamic>>
+  }
+}
+
 // Generates a color in the HSLuv (Pastel) color space
 // https://pub.dev/documentation/hsluv/latest/hsluv/Hsluv/hpluvToRgb.html
 Color generateRandomLightColor() {
@@ -133,27 +147,38 @@ Color generateRandomLightColor() {
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
+int generateRandomNumber(int seed1,
+    {int seed2 = 0, int seed3 = 0, max = 10000}) {
+  int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
+  Random random = Random(combinedSeed);
+  int randomNumber = random.nextInt(max);
+  return randomNumber;
+}
+
+bool validateTextField(TextFormField tf) =>
+    (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
+
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   List<List<Widget>> rows = [];
   String? initKey;
+  int forceUpdateKeyCount = 0;
 
   // If any value changes, call this to update the parent with value and validity
-  void someValueChanged({bool isBuilding = false}) {
+  void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
     Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < widget.items.length; r++) {
       for (int i = 0; i < widget.items[r].length; i++) {
         if (formInputs[r][i] is TextFormField) {
-          var fieldState =
-              (formInputs[r][i].key as GlobalKey<FormFieldState>).currentState;
-          if (fieldState != null) {
-            valid = valid && fieldState.isValid;
-          }
+          valid = valid && validateTextField(formInputs[r][i] as TextFormField);
         }
       }
+    }
+    if (forceInvalid) {
+      valid = false;
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
@@ -229,6 +254,17 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   someValueChanged();
                 });
               });
+        } else if (formItem is GeneratedFormSubForm) {
+          values[formItem.key] = [];
+          for (Map<String, dynamic> v
+              in ((formItem.defaultValue ?? []) as List<dynamic>)) {
+            var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
+            for (var element in v.entries) {
+              fullDefaults[element.key] = element.value;
+            }
+            values[formItem.key].add(fullDefaults);
+          }
+          return Container();
         } else {
           return Container(); // Some input types added in build
         }
@@ -250,6 +286,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     for (var r = 0; r < formInputs.length; r++) {
       for (var e = 0; e < formInputs[r].length; e++) {
+        String fieldKey = widget.items[r][e].key;
         if (widget.items[r][e] is GeneratedFormSwitch) {
           formInputs[r][e] = Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -259,10 +296,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 width: 8,
               ),
               Switch(
-                  value: values[widget.items[r][e].key],
+                  value: values[fieldKey],
                   onChanged: (value) {
                     setState(() {
-                      values[widget.items[r][e].key] = value;
+                      values[fieldKey] = value;
                       someValueChanged();
                     });
                   })
@@ -271,8 +308,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (widget.items[r][e] is GeneratedFormTagInput) {
           formInputs[r][e] =
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            if ((values[widget.items[r][e].key]
-                            as Map<String, MapEntry<int, bool>>?)
+            if ((values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                         ?.isNotEmpty ==
                     true &&
                 (widget.items[r][e] as GeneratedFormTagInput)
@@ -295,8 +331,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   (widget.items[r][e] as GeneratedFormTagInput).alignment,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                (values[widget.items[r][e].key]
-                                as Map<String, MapEntry<int, bool>>?)
+                (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                             ?.isEmpty ==
                         true
                     ? Text(
@@ -304,8 +339,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                             .emptyMessage,
                       )
                     : const SizedBox.shrink(),
-                ...(values[widget.items[r][e].key]
-                            as Map<String, MapEntry<int, bool>>?)
+                ...(values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                         ?.entries
                         .map((e2) {
                       return Padding(
@@ -318,11 +352,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
                             selected: e2.value.value,
                             onSelected: (value) {
                               setState(() {
-                                (values[widget.items[r][e].key] as Map<String,
+                                (values[fieldKey] as Map<String,
                                         MapEntry<int, bool>>)[e2.key] =
                                     MapEntry(
-                                        (values[widget.items[r][e].key] as Map<
-                                                String,
+                                        (values[fieldKey] as Map<String,
                                                 MapEntry<int, bool>>)[e2.key]!
                                             .key,
                                         value);
@@ -330,22 +363,18 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                             as GeneratedFormTagInput)
                                         .singleSelect &&
                                     value == true) {
-                                  for (var key in (values[
-                                              widget.items[r][e].key]
+                                  for (var key in (values[fieldKey]
                                           as Map<String, MapEntry<int, bool>>)
                                       .keys) {
                                     if (key != e2.key) {
-                                      (values[widget.items[r][e].key] as Map<
-                                              String,
-                                              MapEntry<int, bool>>)[key] =
-                                          MapEntry(
-                                              (values[widget.items[r][e].key]
-                                                      as Map<
-                                                          String,
-                                                          MapEntry<int,
-                                                              bool>>)[key]!
-                                                  .key,
-                                              false);
+                                      (values[fieldKey] as Map<
+                                          String,
+                                          MapEntry<int,
+                                              bool>>)[key] = MapEntry(
+                                          (values[fieldKey] as Map<String,
+                                                  MapEntry<int, bool>>)[key]!
+                                              .key,
+                                          false);
                                     }
                                   }
                                 }
@@ -355,8 +384,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           ));
                     }) ??
                     [const SizedBox.shrink()],
-                (values[widget.items[r][e].key]
-                                as Map<String, MapEntry<int, bool>>?)
+                (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                             ?.values
                             .where((e) => e.value)
                             .length ==
@@ -366,7 +394,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                         child: IconButton(
                           onPressed: () {
                             setState(() {
-                              var temp = values[widget.items[r][e].key]
+                              var temp = values[fieldKey]
                                   as Map<String, MapEntry<int, bool>>;
                               // get selected category str where bool is true
                               final oldEntry = temp.entries
@@ -379,7 +407,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                               // Update entry with new color, remain selected
                               temp.update(oldEntry.key,
                                   (old) => MapEntry(newColor, old.value));
-                              values[widget.items[r][e].key] = temp;
+                              values[fieldKey] = temp;
                               someValueChanged();
                             });
                           },
@@ -388,8 +416,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           tooltip: tr('colour'),
                         ))
                     : const SizedBox.shrink(),
-                (values[widget.items[r][e].key]
-                                as Map<String, MapEntry<int, bool>>?)
+                (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                             ?.values
                             .where((e) => e.value)
                             .isNotEmpty ==
@@ -400,10 +427,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           onPressed: () {
                             fn() {
                               setState(() {
-                                var temp = values[widget.items[r][e].key]
+                                var temp = values[fieldKey]
                                     as Map<String, MapEntry<int, bool>>;
                                 temp.removeWhere((key, value) => value.value);
-                                values[widget.items[r][e].key] = temp;
+                                values[fieldKey] = temp;
                                 someValueChanged();
                               });
                             }
@@ -454,7 +481,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           String? label = value?['label'];
                           if (label != null) {
                             setState(() {
-                              var temp = values[widget.items[r][e].key]
+                              var temp = values[fieldKey]
                                   as Map<String, MapEntry<int, bool>>?;
                               temp ??= {};
                               if (temp[label] == null) {
@@ -467,7 +494,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 temp[label] = MapEntry(
                                     generateRandomLightColor().value,
                                     !(someSelected && singleSelect));
-                                values[widget.items[r][e].key] = temp;
+                                values[fieldKey] = temp;
                                 someValueChanged();
                               }
                             });
@@ -481,6 +508,93 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ],
             )
           ]);
+        } else if (widget.items[r][e] is GeneratedFormSubForm) {
+          List<Widget> subformColumn = [];
+          for (int i = 0; i < values[fieldKey].length; i++) {
+            var items = (widget.items[r][e] as GeneratedFormSubForm)
+                .items
+                .map((x) => x.map((y) {
+                      y.defaultValue = values[fieldKey]?[i]?[y.key];
+                      return y;
+                    }).toList())
+                .toList();
+            var internalFormKey = ValueKey(generateRandomNumber(
+                values[fieldKey].length,
+                seed2: i,
+                seed3: forceUpdateKeyCount));
+            subformColumn.add(Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(),
+                const SizedBox(
+                  height: 16,
+                ),
+                Text(
+                  '${(widget.items[r][e] as GeneratedFormSubForm).label} (${i + 1})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                GeneratedForm(
+                  key: internalFormKey,
+                  items: items,
+                  onValueChanges: (values, valid, isBuilding) {
+                    if (valid) {
+                      this.values[fieldKey]?[i] = values;
+                    }
+                    someValueChanged(
+                        isBuilding: isBuilding, forceInvalid: !valid);
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                        style: TextButton.styleFrom(
+                            foregroundColor:
+                                Theme.of(context).colorScheme.error),
+                        onPressed: (values[fieldKey].length > 0)
+                            ? () {
+                                var temp = List.from(values[fieldKey]);
+                                temp.removeAt(i);
+                                values[fieldKey] = List.from(temp);
+                                forceUpdateKeyCount++;
+                                someValueChanged();
+                              }
+                            : null,
+                        label: Text(
+                          '${(widget.items[r][e] as GeneratedFormSubForm).label} (${i + 1})',
+                        ),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                        ))
+                  ],
+                ),
+              ],
+            ));
+          }
+          subformColumn.add(Padding(
+            padding: EdgeInsets.only(
+                bottom: values[fieldKey].length > 0 ? 24 : 0, top: 8),
+            child: Row(
+              children: [
+                Expanded(
+                    child: ElevatedButton.icon(
+                        onPressed: () {
+                          values[fieldKey].add(getDefaultValuesFromFormItems(
+                              (widget.items[r][e] as GeneratedFormSubForm)
+                                  .items));
+                          forceUpdateKeyCount++;
+                          someValueChanged();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: Text((widget.items[r][e] as GeneratedFormSubForm)
+                            .label))),
+              ],
+            ),
+          ));
+          if (values[fieldKey].length > 0) {
+            subformColumn.add(const Divider());
+          }
+          formInputs[r][e] = Column(children: subformColumn);
         }
       }
     }
