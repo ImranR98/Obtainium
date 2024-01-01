@@ -286,10 +286,14 @@ class AddAppPageState extends State<AddAppPage> {
                     selectedByDefault: true,
                     onlyOneSelectionAllowed: false,
                     titlesAreLinks: false,
+                    deselectThese: settingsProvider.searchDeselected,
                   );
                 }) ??
             [];
         if (searchSources.isNotEmpty) {
+          settingsProvider.searchDeselected = sourceStrings.keys
+              .where((s) => !searchSources.contains(s))
+              .toList();
           var results = await Future.wait(sourceProvider.sources
               .where((e) => searchSources.contains(e.name))
               .map((e) async {
@@ -306,7 +310,6 @@ class AddAppPageState extends State<AddAppPage> {
             }
           }));
 
-          // .then((results) async {
           // Interleave results instead of simple reduce
           Map<String, List<String>> res = {};
           var si = 0;
