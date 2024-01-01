@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 class NativeFeatures {
   static const MethodChannel _channel = MethodChannel('native');
   static bool _callbacksApplied = false;
+  static bool _systemFontLoaded = false;
   static int _resPermShizuku = -2;  // not set
 
   static Future<ByteData> _readFileBytes(String path) async {
@@ -34,11 +35,13 @@ class NativeFeatures {
   }
 
   static Future<bool> tryLoadSystemFont() async {
+    if (_systemFontLoaded) { return true; }
     var font = await _channel.invokeMethod('getSystemFont');
     if (font == null) { return false; }
     var fontLoader = FontLoader('SystemFont');
     fontLoader.addFont(_readFileBytes(font));
     await fontLoader.load();
+    _systemFontLoaded = true;
     return true;
   }
 
