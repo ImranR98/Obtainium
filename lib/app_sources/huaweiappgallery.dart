@@ -13,7 +13,7 @@ class HuaweiAppGallery extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/app/[^/]+');
+    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/app/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);

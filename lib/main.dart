@@ -19,7 +19,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.15.2';
+const String currentVersion = '0.15.3';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -152,7 +152,6 @@ class _ObtainiumState extends State<Obtainium> {
             requiresStorageNotLow: false,
             requiresDeviceIdle: false,
             requiredNetworkType: NetworkType.ANY), (String taskId) async {
-      // We don't want periodic tasks in the foreground - ignore
       await bgUpdateCheck(taskId, null);
       BackgroundFetch.finish(taskId);
     }, (String taskId) async {
