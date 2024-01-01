@@ -30,6 +30,7 @@ Currently supported App sources:
   - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)
 - Other - App-Specific:
+  - [WhatsApp](https://whatsapp.com)
   - [Telegram App](https://telegram.org)
   - [Steam Mobile Apps](https://store.steampowered.com/mobile)
   - [Neutron Code](https://neutroncode.com)
