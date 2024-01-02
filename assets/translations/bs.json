@@ -283,6 +283,11 @@
     "supportFixedAPKURL": "Podržite fiksne APK URL-ove",
     "selectX": "Izaberite {}",
     "parallelDownloads": "Allow parallel downloads",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"
