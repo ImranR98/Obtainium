@@ -269,6 +269,11 @@
     "bgTaskStarted": "Background task started - check logs.",
     "runBgCheckNow": "Kör Bakgrundsuppdateringskoll Nu",
     "parallelDownloads": "Allow parallel downloads",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
