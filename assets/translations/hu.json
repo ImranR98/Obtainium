@@ -283,6 +283,11 @@
     "supportFixedAPKURL": "Támogatja a rögzített APK URL-eket",
     "selectX": "Kiválaszt {}",
     "parallelDownloads": "Párhuzamos letöltéseket enged",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
