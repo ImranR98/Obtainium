@@ -283,6 +283,11 @@
     "supportFixedAPKURL": "Support fixed APK URLs",
     "selectX": "Select {}",
     "parallelDownloads": "Allow parallel downloads",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"
