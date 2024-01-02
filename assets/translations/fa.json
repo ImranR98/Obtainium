@@ -283,6 +283,11 @@
     "supportFixedAPKURL": "پشتیبانی از URL های APK ثابت",
     "selectX": "انتخاب کنید {}",
     "parallelDownloads": "Allow parallel downloads",
+    "installMethod": "Installation method",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku is not running",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
