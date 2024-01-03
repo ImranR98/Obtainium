@@ -346,6 +346,11 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
+        if (additionalSettings['apkFilterRegEx'] != null) {
+          var reg = RegExp(additionalSettings['apkFilterRegEx']);
+          apkUrls =
+              apkUrls.where((element) => reg.hasMatch(element.key)).toList();
+        }
         if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
           continue;
         }
