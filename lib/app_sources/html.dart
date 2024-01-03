@@ -242,9 +242,14 @@ class HTML extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     var currentUrl = standardUrl;
-    for (int i = 0;
-        i < (additionalSettings['intermediateLink']?.length ?? 0);
-        i++) {
+    if (additionalSettings['intermediateLink']?.isNotEmpty != true) {
+      additionalSettings['intermediateLink'] = [];
+    }
+    additionalSettings['intermediateLink'] =
+        additionalSettings['intermediateLink']
+            .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
+            .toList();
+    for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
       var intLinks = await grabLinksCommon(await sourceRequest(currentUrl),
           additionalSettings['intermediateLink'][i]);
       if (intLinks.isEmpty) {
