@@ -96,19 +96,15 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-
     def shizuku_version = '13.1.5'
     implementation "dev.rikka.shizuku:api:$shizuku_version"
     implementation "dev.rikka.shizuku:provider:$shizuku_version"
 
-    def hidden_api_version = '4.1.0'
-    // DO NOT UPDATE Hidden API without updating the Android tools
-    // and do not update Android tools without updating the whole Flutter
-    // (also in android/build.gradle)
+    def hidden_api_version = '4.3.1'
     implementation "dev.rikka.tools.refine:runtime:$hidden_api_version"
     implementation "dev.rikka.hidden:compat:$hidden_api_version"
     compileOnly "dev.rikka.hidden:stub:$hidden_api_version"
+    implementation "org.lsposed.hiddenapibypass:hiddenapibypass:4.3"
 
     implementation "com.github.topjohnwu.libsu:core:5.2.2"
 }

@@ -36,7 +36,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('fr'), 'Français'),
   MapEntry(Locale('es'), 'Español'),
   MapEntry(Locale('pl'), 'Polski'),
-  MapEntry(Locale('ru'), 'Русский язык'),
+  MapEntry(Locale('ru'), 'Русский'),
   MapEntry(Locale('bs'), 'Bosanski'),
   MapEntry(Locale('pt'), 'Brasileiro'),
   MapEntry(Locale('cs'), 'Česky'),
@@ -236,13 +236,17 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Metropolis'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Metropolis'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));

@@ -103,7 +103,6 @@
     "importErrors": "Import Errors",
     "importedXOfYApps": "{} of {} Apps imported.",
     "followingURLsHadErrors": "The following URLs had errors:",
-    "okay": "Okay",
     "selectURL": "Select URL",
     "selectURLs": "Select URLs",
     "pick": "Pick",
@@ -287,7 +286,9 @@
     "normal": "Normal",
     "shizuku": "Shizuku",
     "root": "Root",
-    "shizukuBinderNotFound": "Shizuku is not running",
+    "shizukuBinderNotFound": "Сompatible Shizuku service wasn't found",
+    "useSystemFont": "Use the system font",
+    "systemFontError": "Error loading the system font: {}",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

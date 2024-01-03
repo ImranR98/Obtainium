@@ -51,6 +51,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get useSystemFont {
+    return prefs?.getBool('useSystemFont') ?? false;
+  }
+
+  set useSystemFont(bool useSystemFont) {
+    prefs?.setBool('useSystemFont', useSystemFont);
+    notifyListeners();
+  }
+
   InstallMethodSettings get installMethod {
     return InstallMethodSettings.values[
         prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];

@@ -22,12 +22,13 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.OnRequestPermissionResultListener
 import rikka.shizuku.ShizukuBinderWrapper
 
 class MainActivity: FlutterActivity() {
-    private var installersChannel: MethodChannel? = null
+    private var nativeChannel: MethodChannel? = null
     private val SHIZUKU_PERMISSION_REQUEST_CODE = (10..200).random()
 
     private fun shizukuCheckPermission(result: Result) {
@@ -51,7 +52,7 @@ class MainActivity: FlutterActivity() {
             requestCode: Int, grantResult: Int ->
         if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
             val res = if (grantResult == PackageManager.PERMISSION_GRANTED) 1 else 0
-            installersChannel!!.invokeMethod("resPermShizuku", mapOf("res" to res))
+            nativeChannel!!.invokeMethod("resPermShizuku", mapOf("res" to res))
         }
     }
 
@@ -76,7 +77,8 @@ class MainActivity: FlutterActivity() {
             val params =
                 PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             var installFlags: Int = PackageInstallerUtils.getInstallFlags(params)
-            installFlags = installFlags or 0x00000004  // PackageManager.INSTALL_ALLOW_TEST
+            installFlags = installFlags or (0x00000002/*PackageManager.INSTALL_REPLACE_EXISTING*/
+                    or 0x00000004 /*PackageManager.INSTALL_ALLOW_TEST*/)
             PackageInstallerUtils.setInstallFlags(params, installFlags)
             val sessionId = packageInstaller.createSession(params)
             val iSession = IPackageInstallerSession.Stub.asInterface(
@@ -136,7 +138,7 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun rootInstallApk(apkFilePath: String, result: Result) {
-        Shell.sh("pm install -R -t " + apkFilePath).submit { out ->
+        Shell.sh("pm install -r -t " + apkFilePath).submit { out ->
             val builder = StringBuilder()
             for (data in out.getOut()) { builder.append(data) }
             result.success(builder.toString().endsWith("Success"))
@@ -145,12 +147,18 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            HiddenApiBypass.addHiddenApiExemptions("")
+        }
         Shizuku.addRequestPermissionResultListener(shizukuRequestPermissionResultListener)
-        installersChannel = MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger, "installers")
-        installersChannel!!.setMethodCallHandler {
+        nativeChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger, "native")
+        nativeChannel!!.setMethodCallHandler {
             call, result ->
-            if (call.method == "checkPermissionShizuku") {
+            if (call.method == "getSystemFont") {
+                val res = DefaultSystemFont().get()
+                result.success(res)
+            } else if (call.method == "checkPermissionShizuku") {
                 shizukuCheckPermission(result)
             } else if (call.method == "checkPermissionRoot") {
                 rootCheckPermission(result)
