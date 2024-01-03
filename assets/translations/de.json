@@ -282,6 +282,11 @@
     "supportFixedAPKURL": "neuere Version anhand der ersten dreißig Zahlen der Checksumme der APK URL erraten, wenn anderweitig nicht unterstützt",
     "selectX": "Wähle {}",
     "parallelDownloads": "Erlaube parallele Downloads",
+    "installMethod": "Installationsmethode",
+    "normal": "Normal",
+    "shizuku": "Shizuku",
+    "root": "Root",
+    "shizukuBinderNotFound": "Shizuku läuft nicht",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
