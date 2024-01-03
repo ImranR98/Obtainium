@@ -77,8 +77,8 @@ class MainActivity: FlutterActivity() {
             val params =
                 PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
             var installFlags: Int = PackageInstallerUtils.getInstallFlags(params)
-            installFlags = installFlags or (0x00000002/*PackageManager.INSTALL_REPLACE_EXISTING*/ or
-                    0x00000004 /*PackageManager.INSTALL_ALLOW_TEST*/)
+            installFlags = installFlags or (0x00000002/*PackageManager.INSTALL_REPLACE_EXISTING*/
+                    or 0x00000004 /*PackageManager.INSTALL_ALLOW_TEST*/)
             PackageInstallerUtils.setInstallFlags(params, installFlags)
             val sessionId = packageInstaller.createSession(params)
             val iSession = IPackageInstallerSession.Stub.asInterface(

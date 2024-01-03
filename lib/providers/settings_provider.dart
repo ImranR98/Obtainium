@@ -51,21 +51,12 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String get appFont {
-    return prefs?.getString('appFont') ?? 'Metropolis';
+  bool get useSystemFont {
+    return prefs?.getBool('useSystemFont') ?? false;
   }
 
-  set appFont(String appFont) {
-    prefs?.setString('appFont', appFont);
-    notifyListeners();
-  }
-
-  bool get tryUseSystemFont {
-    return prefs?.getBool('tryUseSystemFont') ?? false;
-  }
-
-  set tryUseSystemFont(bool tryUseSystemFont) {
-    prefs?.setBool('tryUseSystemFont', tryUseSystemFont);
+  set useSystemFont(bool useSystemFont) {
+    prefs?.setBool('useSystemFont', useSystemFont);
     notifyListeners();
   }
 

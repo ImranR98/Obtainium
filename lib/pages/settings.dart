@@ -7,6 +7,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -410,11 +411,23 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Flexible(child: Text(tr('tryUseSystemFont'))),
+                                Flexible(child: Text(tr('useSystemFont'))),
                                 Switch(
-                                    value: settingsProvider.tryUseSystemFont,
-                                    onChanged: (value) {
-                                      settingsProvider.tryUseSystemFont = value;
+                                    value: settingsProvider.useSystemFont,
+                                    onChanged: (useSystemFont) {
+                                      if (useSystemFont) {
+                                        NativeFeatures.loadSystemFont().then((fontLoadRes) {
+                                          if (fontLoadRes == 'ok') {
+                                            settingsProvider.useSystemFont = true;
+                                          } else {
+                                            showError(ObtainiumError(
+                                                tr('systemFontError', args: [fontLoadRes])
+                                            ), context);
+                                          }
+                                        });
+                                      } else {
+                                        settingsProvider.useSystemFont = false;
+                                      }
                                     })
                               ],
                             ),

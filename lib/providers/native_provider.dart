@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 
 class NativeFeatures {
   static const MethodChannel _channel = MethodChannel('native');
-  static bool _callbacksApplied = false;
   static bool _systemFontLoaded = false;
+  static bool _callbacksApplied = false;
   static int _resPermShizuku = -2;  // not set
 
   static Future<ByteData> _readFileBytes(String path) async {
@@ -34,15 +34,15 @@ class NativeFeatures {
     return completer.future;
   }
 
-  static Future<bool> tryLoadSystemFont() async {
-    if (_systemFontLoaded) { return true; }
-    var font = await _channel.invokeMethod('getSystemFont');
-    if (font == null) { return false; }
+  static Future<String> loadSystemFont() async {
+    if (_systemFontLoaded) { return "ok"; }
+    var getFontRes = await _channel.invokeMethod('getSystemFont');
+    if (getFontRes[0] != '/') { return getFontRes; }  // Error
     var fontLoader = FontLoader('SystemFont');
-    fontLoader.addFont(_readFileBytes(font));
+    fontLoader.addFont(_readFileBytes(getFontRes));
     await fontLoader.load();
     _systemFontLoaded = true;
-    return true;
+    return "ok";
   }
 
   static Future<int> checkPermissionShizuku() async {

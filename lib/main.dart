@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -201,16 +200,6 @@ class _ObtainiumState extends State<Obtainium> {
                   context.locale.languageCode)) {
         settingsProvider.resetLocaleSafe(context);
       }
-      settingsProvider.addListener(() async {
-        if (settingsProvider.tryUseSystemFont &&
-            settingsProvider.appFont == "Metropolis") {
-          bool fontLoaded = await NativeFeatures.tryLoadSystemFont();
-          if (fontLoaded) { settingsProvider.appFont = "SystemFont"; }
-        } else if (!settingsProvider.tryUseSystemFont &&
-            settingsProvider.appFont != "Metropolis") {
-          settingsProvider.appFont = "Metropolis";
-        }
-      });
     }
 
     return DynamicColorBuilder(
@@ -247,13 +236,17 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: settingsProvider.appFont),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Metropolis'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: settingsProvider.appFont),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Metropolis'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));
