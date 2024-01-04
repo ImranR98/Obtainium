@@ -455,17 +455,8 @@ abstract class AppSource {
       GeneratedFormTextField('matchGroupToUse',
           label: tr('matchGroupToUse'),
           required: false,
-          hint: '0',
-          textInputType: const TextInputType.numberWithOptions(),
-          additionalValidators: [
-            (value) {
-              if (value?.isEmpty == true) {
-                value = null;
-              }
-              value ??= '0';
-              return intValidator(value);
-            }
-          ])
+          hint: '\$0',
+          textInputType: const TextInputType.numberWithOptions())
     ],
     [
       GeneratedFormDropdown(
@@ -603,6 +594,35 @@ bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
+replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
+  if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
+    matchGroupString = '\$$matchGroupString';
+  }
+  // Regular expression to match numbers in the input string
+  final numberRegex = RegExp(r'\$\d+');
+  // Extract all numbers from the input string
+  final numbers = numberRegex.allMatches(matchGroupString);
+  if (numbers.isEmpty) {
+    // If no numbers found, return the original string
+    return null;
+  }
+  // Replace numbers with corresponding match groups
+  var outputString = matchGroupString;
+  for (final numberMatch in numbers) {
+    final number = numberMatch.group(0)!;
+    final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+    // Check if the number is preceded by a single backslash
+    final isEscaped = outputString.contains('\\$number');
+    // Replace the number with the corresponding match group
+    if (!isEscaped) {
+      outputString = outputString.replaceAll(number, matchGroup);
+    } else {
+      outputString = outputString.replaceAll('\\$number', number);
+    }
+  }
+  return outputString;
+}
+
 String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
     String stringToCheck) {
   if (versionExtractionRegEx?.isNotEmpty == true) {
@@ -615,7 +635,7 @@ String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
     if (matchGroupString.isEmpty) {
       matchGroupString = "0";
     }
-    version = match.last.group(int.parse(matchGroupString));
+    version = replaceMatchGroupsInString(match.last, matchGroupString);
     if (version?.isNotEmpty != true) {
       throw NoVersionError();
     }
