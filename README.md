@@ -1,12 +1,14 @@
 # ![Obtainium Icon](./assets/graphics/icon_small.png) Obtainium
 
+[![Ceasefire Now](https://badge.techforpalestine.org/default)](https://techforpalestine.org/learn-more)
+
 Get Android App Updates Directly From the Source.
 
 Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.
 
 Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
 
-Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
+Read the Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
 
 Currently supported App sources:
 - Open Source - General:
