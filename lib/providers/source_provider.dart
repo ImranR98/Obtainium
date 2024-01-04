@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -445,6 +446,19 @@ abstract class AppSource {
       )
     ],
     [
+      GeneratedFormTextField('versionExtractionRegEx',
+          label: tr('versionExtractionRegEx'),
+          required: false,
+          additionalValidators: [(value) => regExValidator(value)]),
+    ],
+    [
+      GeneratedFormTextField('matchGroupToUse',
+          label: tr('matchGroupToUse'),
+          required: false,
+          hint: '\$0',
+          textInputType: const TextInputType.numberWithOptions())
+    ],
+    [
       GeneratedFormDropdown(
           'versionDetection',
           [
@@ -580,6 +594,57 @@ bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
+replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
+  if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
+    matchGroupString = '\$$matchGroupString';
+  }
+  // Regular expression to match numbers in the input string
+  final numberRegex = RegExp(r'\$\d+');
+  // Extract all numbers from the input string
+  final numbers = numberRegex.allMatches(matchGroupString);
+  if (numbers.isEmpty) {
+    // If no numbers found, return the original string
+    return null;
+  }
+  // Replace numbers with corresponding match groups
+  var outputString = matchGroupString;
+  for (final numberMatch in numbers) {
+    final number = numberMatch.group(0)!;
+    final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+    // Check if the number is preceded by a single backslash
+    final isEscaped = outputString.contains('\\$number');
+    // Replace the number with the corresponding match group
+    if (!isEscaped) {
+      outputString = outputString.replaceAll(number, matchGroup);
+    } else {
+      outputString = outputString.replaceAll('\\$number', number);
+    }
+  }
+  return outputString;
+}
+
+String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
+    String stringToCheck) {
+  if (versionExtractionRegEx?.isNotEmpty == true) {
+    String? version = stringToCheck;
+    var match = RegExp(versionExtractionRegEx!).allMatches(version);
+    if (match.isEmpty) {
+      throw NoVersionError();
+    }
+    matchGroupString = matchGroupString?.trim() ?? '';
+    if (matchGroupString.isEmpty) {
+      matchGroupString = "0";
+    }
+    version = replaceMatchGroupsInString(match.last, matchGroupString);
+    if (version?.isNotEmpty != true) {
+      throw NoVersionError();
+    }
+    return version!;
+  } else {
+    return null;
+  }
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -679,6 +744,18 @@ class SourceProvider {
     String standardUrl = source.standardizeUrl(url);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
+
+    if (source.runtimeType != HTML().runtimeType) {
+      // HTML does it separately
+      String? extractedVersion = extractVersion(
+          additionalSettings['versionExtractionRegEx'] as String?,
+          additionalSettings['matchGroupToUse'] as String?,
+          apk.version);
+      if (extractedVersion != null) {
+        apk.version = extractedVersion;
+      }
+    }
+
     if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();

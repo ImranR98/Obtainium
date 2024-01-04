@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -97,28 +96,6 @@ class HTML extends AppSource {
           additionalValidators: [
             (value) {
               return regExValidator(value);
-            }
-          ])
-    ],
-    [
-      GeneratedFormTextField('versionExtractionRegEx',
-          label: tr('versionExtractionRegEx'),
-          required: false,
-          additionalValidators: [(value) => regExValidator(value)]),
-    ],
-    [
-      GeneratedFormTextField('matchGroupToUse',
-          label: tr('matchGroupToUse'),
-          required: false,
-          hint: '0',
-          textInputType: const TextInputType.numberWithOptions(),
-          additionalValidators: [
-            (value) {
-              if (value?.isEmpty == true) {
-                value = null;
-              }
-              value ??= '0';
-              return intValidator(value);
             }
           ])
     ],
@@ -242,9 +219,14 @@ class HTML extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     var currentUrl = standardUrl;
-    for (int i = 0;
-        i < (additionalSettings['intermediateLink']?.length ?? 0);
-        i++) {
+    if (additionalSettings['intermediateLink']?.isNotEmpty != true) {
+      additionalSettings['intermediateLink'] = [];
+    }
+    additionalSettings['intermediateLink'] =
+        additionalSettings['intermediateLink']
+            .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
+            .toList();
+    for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
       var intLinks = await grabLinksCommon(await sourceRequest(currentUrl),
           additionalSettings['intermediateLink'][i]);
       if (intLinks.isEmpty) {
@@ -270,26 +252,12 @@ class HTML extends AppSource {
     if (additionalSettings['supportFixedAPKURL'] != true) {
       version = rel.hashCode.toString();
     }
-    var versionExtractionRegEx =
-        additionalSettings['versionExtractionRegEx'] as String?;
-    if (versionExtractionRegEx?.isNotEmpty == true) {
-      var match = RegExp(versionExtractionRegEx!).allMatches(
-          additionalSettings['versionExtractWholePage'] == true
-              ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
-              : rel);
-      if (match.isEmpty) {
-        throw NoVersionError();
-      }
-      String matchGroupString =
-          (additionalSettings['matchGroupToUse'] as String).trim();
-      if (matchGroupString.isEmpty) {
-        matchGroupString = "0";
-      }
-      version = match.last.group(int.parse(matchGroupString));
-      if (version?.isEmpty == true) {
-        throw NoVersionError();
-      }
-    }
+    version = extractVersion(
+        additionalSettings['versionExtractionRegEx'] as String?,
+        additionalSettings['matchGroupToUse'] as String?,
+        additionalSettings['versionExtractWholePage'] == true
+            ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
+            : rel);
     rel = ensureAbsoluteUrl(rel, uri);
     version ??= (await checkDownloadHash(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
