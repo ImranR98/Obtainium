@@ -603,6 +603,28 @@ bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
+String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
+    String stringToCheck) {
+  if (versionExtractionRegEx?.isNotEmpty == true) {
+    String? version = stringToCheck;
+    var match = RegExp(versionExtractionRegEx!).allMatches(version);
+    if (match.isEmpty) {
+      throw NoVersionError();
+    }
+    matchGroupString = matchGroupString?.trim() ?? '';
+    if (matchGroupString.isEmpty) {
+      matchGroupString = "0";
+    }
+    version = match.last.group(int.parse(matchGroupString));
+    if (version?.isNotEmpty != true) {
+      throw NoVersionError();
+    }
+    return version!;
+  } else {
+    return null;
+  }
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -705,24 +727,12 @@ class SourceProvider {
 
     if (source.runtimeType != HTML().runtimeType) {
       // HTML does it separately
-      var versionExtractionRegEx =
-          additionalSettings['versionExtractionRegEx'] as String?;
-      if (versionExtractionRegEx?.isNotEmpty == true) {
-        String? version = apk.version;
-        var match = RegExp(versionExtractionRegEx!).allMatches(apk.version);
-        if (match.isEmpty) {
-          throw NoVersionError();
-        }
-        String matchGroupString =
-            (additionalSettings['matchGroupToUse'] as String).trim();
-        if (matchGroupString.isEmpty) {
-          matchGroupString = "0";
-        }
-        version = match.last.group(int.parse(matchGroupString));
-        if (version?.isNotEmpty != true) {
-          throw NoVersionError();
-        }
-        apk.version = version!;
+      String? extractedVersion = extractVersion(
+          additionalSettings['versionExtractionRegEx'] as String?,
+          additionalSettings['matchGroupToUse'] as String?,
+          apk.version);
+      if (extractedVersion != null) {
+        apk.version = extractedVersion;
       }
     }
 

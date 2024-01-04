@@ -252,26 +252,12 @@ class HTML extends AppSource {
     if (additionalSettings['supportFixedAPKURL'] != true) {
       version = rel.hashCode.toString();
     }
-    var versionExtractionRegEx =
-        additionalSettings['versionExtractionRegEx'] as String?;
-    if (versionExtractionRegEx?.isNotEmpty == true) {
-      var match = RegExp(versionExtractionRegEx!).allMatches(
-          additionalSettings['versionExtractWholePage'] == true
-              ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
-              : rel);
-      if (match.isEmpty) {
-        throw NoVersionError();
-      }
-      String matchGroupString =
-          (additionalSettings['matchGroupToUse'] as String).trim();
-      if (matchGroupString.isEmpty) {
-        matchGroupString = "0";
-      }
-      version = match.last.group(int.parse(matchGroupString));
-      if (version?.isNotEmpty != true) {
-        throw NoVersionError();
-      }
-    }
+    version = extractVersion(
+        additionalSettings['versionExtractionRegEx'] as String?,
+        additionalSettings['matchGroupToUse'] as String?,
+        additionalSettings['versionExtractWholePage'] == true
+            ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
+            : rel);
     rel = ensureAbsoluteUrl(rel, uri);
     version ??= (await checkDownloadHash(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
