@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
@@ -76,14 +77,39 @@ class _HomePageState extends State<HomePage> {
       try {
         if (action == 'add') {
           await goToAddApp(data);
-        } else if (action == 'app') {
-          await context
-              .read<AppsProvider>()
-              .import('{ "apps": [${Uri.decodeComponent(data)}] }');
-        } else if (action == 'apps') {
-          await context
-              .read<AppsProvider>()
-              .import('{ "apps": ${Uri.decodeComponent(data)} }');
+        } else if (action == 'app' || action == 'apps') {
+          var dataStr = Uri.decodeComponent(data);
+          if (await showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return GeneratedFormModal(
+                      title: tr('importX', args: [
+                        action == 'app' ? tr('app') : tr('appsString')
+                      ]),
+                      items: const [],
+                      additionalWidgets: [
+                        ExpansionTile(
+                          title: const Text('Raw JSON'),
+                          children: [
+                            Text(
+                              dataStr,
+                              style: const TextStyle(fontFamily: 'monospace'),
+                            )
+                          ],
+                        )
+                      ],
+                    );
+                  }) !=
+              null) {
+            // ignore: use_build_context_synchronously
+            var result = await context.read<AppsProvider>().import(
+                action == 'app'
+                    ? '{ "apps": [$dataStr] }'
+                    : '{ "apps": $dataStr }');
+            // ignore: use_build_context_synchronously
+            showMessage(
+                tr('importedX', args: [plural('apps', result.key)]), context);
+          }
         } else {
           throw ObtainiumError(tr('unknown'));
         }
