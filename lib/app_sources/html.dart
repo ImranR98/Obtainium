@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -97,28 +96,6 @@ class HTML extends AppSource {
           additionalValidators: [
             (value) {
               return regExValidator(value);
-            }
-          ])
-    ],
-    [
-      GeneratedFormTextField('versionExtractionRegEx',
-          label: tr('versionExtractionRegEx'),
-          required: false,
-          additionalValidators: [(value) => regExValidator(value)]),
-    ],
-    [
-      GeneratedFormTextField('matchGroupToUse',
-          label: tr('matchGroupToUse'),
-          required: false,
-          hint: '0',
-          textInputType: const TextInputType.numberWithOptions(),
-          additionalValidators: [
-            (value) {
-              if (value?.isEmpty == true) {
-                value = null;
-              }
-              value ??= '0';
-              return intValidator(value);
             }
           ])
     ],
@@ -291,7 +268,7 @@ class HTML extends AppSource {
         matchGroupString = "0";
       }
       version = match.last.group(int.parse(matchGroupString));
-      if (version?.isEmpty == true) {
+      if (version?.isNotEmpty != true) {
         throw NoVersionError();
       }
     }

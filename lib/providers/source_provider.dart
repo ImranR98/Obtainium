@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
@@ -445,6 +446,28 @@ abstract class AppSource {
       )
     ],
     [
+      GeneratedFormTextField('versionExtractionRegEx',
+          label: tr('versionExtractionRegEx'),
+          required: false,
+          additionalValidators: [(value) => regExValidator(value)]),
+    ],
+    [
+      GeneratedFormTextField('matchGroupToUse',
+          label: tr('matchGroupToUse'),
+          required: false,
+          hint: '0',
+          textInputType: const TextInputType.numberWithOptions(),
+          additionalValidators: [
+            (value) {
+              if (value?.isEmpty == true) {
+                value = null;
+              }
+              value ??= '0';
+              return intValidator(value);
+            }
+          ])
+    ],
+    [
       GeneratedFormDropdown(
           'versionDetection',
           [
@@ -679,6 +702,30 @@ class SourceProvider {
     String standardUrl = source.standardizeUrl(url);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
+
+    if (source.runtimeType != HTML().runtimeType) {
+      // HTML does it separately
+      var versionExtractionRegEx =
+          additionalSettings['versionExtractionRegEx'] as String?;
+      if (versionExtractionRegEx?.isNotEmpty == true) {
+        String? version = apk.version;
+        var match = RegExp(versionExtractionRegEx!).allMatches(apk.version);
+        if (match.isEmpty) {
+          throw NoVersionError();
+        }
+        String matchGroupString =
+            (additionalSettings['matchGroupToUse'] as String).trim();
+        if (matchGroupString.isEmpty) {
+          matchGroupString = "0";
+        }
+        version = match.last.group(int.parse(matchGroupString));
+        if (version?.isNotEmpty != true) {
+          throw NoVersionError();
+        }
+        apk.version = version!;
+      }
+    }
+
     if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
