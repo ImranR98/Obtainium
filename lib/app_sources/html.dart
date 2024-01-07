@@ -264,7 +264,6 @@ class HTML extends AppSource {
         additionalSettings['versionExtractWholePage'] == true
             ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
             : rel);
-    rel = ensureAbsoluteUrl(rel, uri);
     version ??= (await checkDownloadHash(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
