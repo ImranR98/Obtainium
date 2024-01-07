@@ -34,7 +34,6 @@ Currently supported App sources:
 - Other - App-Specific:
   - [WhatsApp](https://whatsapp.com)
   - [Telegram App](https://telegram.org)
-  - [Steam Mobile Apps](https://store.steampowered.com/mobile)
   - [Neutron Code](https://neutroncode.com)
 - "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
 

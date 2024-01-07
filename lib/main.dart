@@ -19,7 +19,7 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.15.4';
+const String currentVersion = '0.15.5';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
@@ -236,17 +236,15 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Metropolis'),
+              fontFamily:
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Metropolis'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Metropolis'),
+              fontFamily:
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Metropolis'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));
