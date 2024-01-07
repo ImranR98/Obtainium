@@ -163,6 +163,24 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
         return e['customLinkFilterRegex']?.isNotEmpty == true;
       }).toList();
     }
+    // Steam source apps should be converted to HTML (#1244)
+    var legacySteamSourceApps = SteamMobile().apks.keys;
+    if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
+      json['url'] = '${json['url']}/mobile';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      for (var s in replacementAdditionalSettings.keys) {
+        if (additionalSettings.containsKey(s)) {
+          replacementAdditionalSettings[s] = additionalSettings[s];
+        }
+      }
+      replacementAdditionalSettings['customLinkFilterRegex'] =
+          '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk';
+      replacementAdditionalSettings['versionExtractionRegEx'] =
+          replacementAdditionalSettings['customLinkFilterRegex'];
+      replacementAdditionalSettings['matchGroupToUse'] = '\$1';
+      additionalSettings = replacementAdditionalSettings;
+    }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
@@ -658,13 +676,11 @@ class SourceProvider {
         APKMirror(),
         HuaweiAppGallery(),
         Jenkins(),
-        // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
         Mullvad(),
         Signal(),
         VLC(),
-        WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+        WhatsApp(),
         TelegramApp(),
-        SteamMobile(),
         NeutronCode(),
         HTML() // This should ALWAYS be the last option as they are tried in order
       ];

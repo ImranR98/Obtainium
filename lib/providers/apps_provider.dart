@@ -527,9 +527,10 @@ class AppsProvider with ChangeNotifier {
             ? 0
             : 1;
       case InstallMethodSettings.root:
-        code = (await NativeFeatures.installWithRoot(apkFilePath: file.file.path))
-            ? 0
-            : 1;
+        code =
+            (await NativeFeatures.installWithRoot(apkFilePath: file.file.path))
+                ? 0
+                : 1;
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -1300,6 +1301,9 @@ class AppsProvider with ChangeNotifier {
           settingsProvider.prefs?.setInt(key, value);
         } else if (value is bool) {
           settingsProvider.prefs?.setBool(key, value);
+        } else if (value is List) {
+          settingsProvider.prefs
+              ?.setStringList(key, value.map((e) => e as String).toList());
         } else {
           settingsProvider.prefs?.setString(key, value as String);
         }

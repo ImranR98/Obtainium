@@ -123,7 +123,7 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   final List<List<GeneratedFormItem>> items;
 
   GeneratedFormSubForm(super.key, this.items,
-      {super.label, super.belowWidgets, super.defaultValue});
+      {super.label, super.belowWidgets, super.defaultValue = const []});
 
   @override
   ensureType(val) {
