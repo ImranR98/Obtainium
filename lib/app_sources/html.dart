@@ -17,13 +17,17 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
       .split('/')
       .where((element) => element.trim().isNotEmpty)
       .toList();
+  String absoluteUrl;
   if (ambiguousUrl.startsWith('/') || currPathSegments.isEmpty) {
-    return '${referenceAbsoluteUrl.origin}/$ambiguousUrl';
+    absoluteUrl = '${referenceAbsoluteUrl.origin}/$ambiguousUrl';
   } else if (ambiguousUrl.split('/').where((e) => e.isNotEmpty).length == 1) {
-    return '${referenceAbsoluteUrl.origin}/${currPathSegments.join('/')}/$ambiguousUrl';
+    absoluteUrl =
+        '${referenceAbsoluteUrl.origin}/${currPathSegments.join('/')}/$ambiguousUrl';
   } else {
-    return '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - (currPathSegments.last.contains('.') ? 1 : 0)).join('/')}/$ambiguousUrl';
+    absoluteUrl =
+        '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - (currPathSegments.last.contains('.') ? 1 : 0)).join('/')}/$ambiguousUrl';
   }
+  return Uri.parse(absoluteUrl).toString();
 }
 
 int compareAlphaNumeric(String a, String b) {
@@ -172,6 +176,8 @@ class HTML extends AppSource {
                 ? element.text
                 : (element.attributes['href'] ?? '').split('/').last))
         .where((element) => element.key.isNotEmpty)
+        .map((e) =>
+            MapEntry(ensureAbsoluteUrl(e.key, res.request!.url), e.value))
         .toList();
     if (allLinks.isEmpty) {
       allLinks = RegExp(
@@ -258,7 +264,6 @@ class HTML extends AppSource {
         additionalSettings['versionExtractWholePage'] == true
             ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
             : rel);
-    rel = ensureAbsoluteUrl(rel, uri);
     version ??= (await checkDownloadHash(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
