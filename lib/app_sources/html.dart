@@ -19,6 +19,8 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
       .toList();
   String absoluteUrl;
   if (ambiguousUrl.startsWith('/') || currPathSegments.isEmpty) {
+    absoluteUrl = '${referenceAbsoluteUrl.origin}$ambiguousUrl';
+  } else if (currPathSegments.isEmpty) {
     absoluteUrl = '${referenceAbsoluteUrl.origin}/$ambiguousUrl';
   } else if (ambiguousUrl.split('/').where((e) => e.isNotEmpty).length == 1) {
     absoluteUrl =
