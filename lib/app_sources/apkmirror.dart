@@ -84,7 +84,7 @@ class APKMirror extends AppSource {
           dateString != null ? HttpDate.parse('$dateString GMT') : null;
       String? version = titleString
           ?.substring(RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-              RegExp(' by ').firstMatch(titleString)?.start ?? 0)
+              RegExp(' by ').allMatches(titleString).last.start)
           .trim();
       if (version == null || version.isEmpty) {
         version = titleString;
