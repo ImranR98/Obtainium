@@ -85,16 +85,29 @@ class FDroid extends AppSource {
       try {
         var res = await sourceRequest(
             'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml');
-        String author = res.body
-            .split('\n')
+        var lines = res.body.split('\n');
+        String author = lines
             .where((l) => l.startsWith('AuthorName: '))
             .first
             .split(': ')
             .sublist(1)
             .join(': ');
         details.names.author = author;
+        var changelogUrls = lines.where((l) => l.startsWith('Changelog: '));
+        if (changelogUrls.isNotEmpty) {
+          details.changeLog = changelogUrls.first;
+          details.changeLog = (await sourceRequest(details.changeLog!
+                  .split(': ')
+                  .sublist(1)
+                  .join(': ')
+                  .replaceFirst('/blob/', '/raw/')))
+              .body;
+        }
       } catch (e) {
         // Fail silently
+      }
+      if ((details.changeLog?.length ?? 0) > 1000) {
+        details.changeLog = '${details.changeLog!.substring(0, 2048)}...';
       }
     }
     return details;
