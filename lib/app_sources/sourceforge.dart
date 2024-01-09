@@ -5,24 +5,25 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class SourceForge extends AppSource {
   SourceForge() {
-    host = 'sourceforge.net';
+    hosts = ['sourceforge.net'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB = RegExp('^https?://(www\\.)?$host/p/[^/]+');
+    RegExp standardUrlRegExB =
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/p/[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
       url =
-          'https://${Uri.parse(url.substring(0, match.end)).host}/projects/${url.substring(Uri.parse(url.substring(0, match.end)).host.length + '/projects/'.length + 1)}';
+          'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
     RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?$host/projects/[^/]+');
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/projects/[^/]+');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

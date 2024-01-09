@@ -20,7 +20,7 @@ parseDateTimeMMMddCommayyyy(String? dateString) {
 
 class APKPure extends AppSource {
   APKPure() {
-    host = 'apkpure.com';
+    hosts = ['apkpure.net', 'apkpure.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
   }
@@ -28,18 +28,18 @@ class APKPure extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegExB =
-        RegExp('^https?://m.$host/+[^/]+/+[^/]+(/+[^/]+)?');
+        RegExp('^https?://m.${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
-      url = 'https://$host${Uri.parse(url).path}';
+      url = 'https://${getSourceRegex(hosts)}${Uri.parse(url).path}';
     }
-    RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?$host/+[^/]+/+[^/]+(/+[^/]+)?');
+    RegExp standardUrlRegExA = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

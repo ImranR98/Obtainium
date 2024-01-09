@@ -7,9 +7,9 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class VLC extends AppSource {
   VLC() {
-    host = 'videolan.org';
+    hosts = ['videolan.org'];
   }
-  get dwUrlBase => 'https://get.$host/vlc-android/';
+  get dwUrlBase => 'https://get.${hosts[0]}/vlc-android/';
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
@@ -21,7 +21,7 @@ class VLC extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
   Future<String?> getLatestVersion(String standardUrl) async {

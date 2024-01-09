@@ -5,14 +5,14 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class WhatsApp extends AppSource {
   WhatsApp() {
-    host = 'whatsapp.com';
+    hosts = ['whatsapp.com'];
     overrideVersionDetectionFormDefault('noVersionDetection',
         disableStandard: true, disableRelDate: true);
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
   @override

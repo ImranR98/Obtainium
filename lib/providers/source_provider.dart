@@ -366,8 +366,12 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
+getSourceRegex(List<String> hosts) {
+  return '(${hosts.join('|').replaceAll('.', '\\.')})';
+}
+
 abstract class AppSource {
-  String? host;
+  List<String> hosts = [];
   bool hostChanged = false;
   late String name;
   bool enforceTrackOnly = false;
@@ -697,14 +701,14 @@ class SourceProvider {
         throw UnsupportedURLError();
       }
       var res = srcs.first;
-      res.host = Uri.parse(url).host;
+      res.hosts = [Uri.parse(url).host];
       res.hostChanged = true;
       return srcs.first;
     }
     AppSource? source;
-    for (var s in sources.where((element) => element.host != null)) {
+    for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
       if (RegExp(
-              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}${s.host}(/|\\z)?')
+              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})(/|\\z)?')
           .hasMatch(url)) {
         source = s;
         break;
@@ -712,7 +716,7 @@ class SourceProvider {
     }
     if (source == null) {
       for (var s in sources.where(
-          (element) => element.host == null && !element.neverAutoSelect)) {
+          (element) => element.hosts.isEmpty && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;

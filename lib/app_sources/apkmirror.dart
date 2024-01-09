@@ -9,7 +9,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class APKMirror extends AppSource {
   APKMirror() {
-    host = 'apkmirror.com';
+    hosts = ['apkmirror.com'];
     enforceTrackOnly = true;
 
     additionalSourceAppSpecificSettingFormItems = [
@@ -33,12 +33,12 @@ class APKMirror extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx =
-        RegExp('^https?://(www\\.)?$host/apk/[^/]+/[^/]+');
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -84,7 +84,7 @@ class APKMirror extends AppSource {
           dateString != null ? HttpDate.parse('$dateString GMT') : null;
       String? version = titleString
           ?.substring(RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-              RegExp(' by ').firstMatch(titleString)?.start ?? 0)
+              RegExp(' by ').allMatches(titleString).last.start)
           .trim();
       if (version == null || version.isEmpty) {
         version = titleString;

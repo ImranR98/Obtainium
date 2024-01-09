@@ -5,17 +5,18 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class APKCombo extends AppSource {
   APKCombo() {
-    host = 'apkcombo.com';
+    hosts = ['apkcombo.com'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/+[^/]+/+[^/]+');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+');
     var match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -32,7 +33,7 @@ class APKCombo extends AppSource {
       "User-Agent": "curl/8.0.1",
       "Accept": "*/*",
       "Connection": "keep-alive",
-      "Host": "$host"
+      "Host": hosts[0]
     };
   }
 
