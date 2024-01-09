@@ -59,7 +59,9 @@ class AddAppPageState extends State<AddAppPage> {
         if (updateUrlInput) {
           urlInputKey++;
         }
-        var prevHost = pickedSource?.host;
+        var prevHost = pickedSource?.hosts.isNotEmpty == true
+            ? pickedSource?.hosts[0]
+            : null;
         try {
           var naturalSource =
               valid ? sourceProvider.getSource(userInput) : null;
@@ -77,7 +79,7 @@ class AddAppPageState extends State<AddAppPage> {
                 overrideSource: pickedSourceOverride)
             : null;
         if (pickedSource.runtimeType != source.runtimeType ||
-            (prevHost != null && prevHost != source?.host)) {
+            (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;
           additionalSettings = source != null
               ? getDefaultValuesFromFormItems(
@@ -508,16 +510,16 @@ class AddAppPageState extends State<AddAppPage> {
                 height: 16,
               ),
               ...sourceProvider.sources.map((e) => GestureDetector(
-                  onTap: e.host != null
+                  onTap: e.hosts.isNotEmpty
                       ? () {
-                          launchUrlString('https://${e.host}',
+                          launchUrlString('https://${e.hosts[0]}',
                               mode: LaunchMode.externalApplication);
                         }
                       : null,
                   child: Text(
                     '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
                     style: TextStyle(
-                        decoration: e.host != null
+                        decoration: e.hosts.isNotEmpty
                             ? TextDecoration.underline
                             : TextDecoration.none,
                         fontStyle: FontStyle.italic),

@@ -6,7 +6,7 @@ class IzzyOnDroid extends AppSource {
   late FDroid fd;
 
   IzzyOnDroid() {
-    host = 'izzysoft.de';
+    hosts = ['izzysoft.de'];
     fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =
         fd.additionalSourceAppSpecificSettingFormItems;
@@ -15,17 +15,18 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExA = RegExp('^https?://android.$host/repo/apk/[^/]+');
+    RegExp standardUrlRegExA =
+        RegExp('^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+');
     RegExpMatch? match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
-      RegExp standardUrlRegExB =
-          RegExp('^https?://apt.$host/fdroid/index/apk/[^/]+');
+      RegExp standardUrlRegExB = RegExp(
+          '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+');
       match = standardUrlRegExB.firstMatch(url.toLowerCase());
     }
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

@@ -14,7 +14,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub extends AppSource {
   GitHub() {
-    host = 'github.com';
+    hosts = ['github.com'];
     appIdInferIsOptional = true;
 
     sourceConfigSettingFormItems = [
@@ -149,12 +149,13 @@ class GitHub extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/[^/]+/[^/]+');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -203,11 +204,11 @@ class GitHub extends AppSource {
   }
 
   Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
-      'https://api.$host';
+      'https://api.${hosts[0]}';
 
   Future<String> convertStandardUrlToAPIUrl(
           String standardUrl, Map<String, dynamic> additionalSettings) async =>
-      '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://$host'.length)}';
+      '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://${hosts[0]}'.length)}';
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>

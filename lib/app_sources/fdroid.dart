@@ -9,7 +9,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
   FDroid() {
-    host = 'f-droid.org';
+    hosts = ['f-droid.org'];
     name = tr('fdroid');
     naiveStandardVersionDetection = true;
     canSearch = true;
@@ -37,20 +37,20 @@ class FDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB =
-        RegExp('^https?://(www\\.)?$host/+[^/]+/+packages/+[^/]+');
+    RegExp standardUrlRegExB = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+');
     RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
     if (match != null) {
       url =
-          'https://${Uri.parse(url.substring(0, match.end)).host}/packages/${Uri.parse(url).pathSegments.last}';
+          'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.last}';
     }
     RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?$host/+packages/+[^/]+');
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+');
     match = standardUrlRegExA.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -117,7 +117,7 @@ class FDroid extends AppSource {
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
     Response res = await sourceRequest(
-        'https://search.$host/?q=${Uri.encodeQueryComponent(query)}');
+        'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}');
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       parse(res.body).querySelectorAll('.package-header').forEach((e) {

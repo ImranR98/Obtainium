@@ -8,7 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 class SourceHut extends AppSource {
   SourceHut() {
-    host = 'git.sr.ht';
+    hosts = ['git.sr.ht'];
 
     additionalSourceAppSpecificSettingFormItems = [
       [
@@ -20,12 +20,13 @@ class SourceHut extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/[^/]+/[^/]+');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

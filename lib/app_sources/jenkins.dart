@@ -16,7 +16,7 @@ class Jenkins extends AppSource {
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

@@ -5,7 +5,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class Codeberg extends AppSource {
   GitHub gh = GitHub();
   Codeberg() {
-    host = 'codeberg.org';
+    hosts = ['codeberg.org'];
 
     additionalSourceAppSpecificSettingFormItems =
         gh.additionalSourceAppSpecificSettingFormItems;
@@ -16,12 +16,13 @@ class Codeberg extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/[^/]+/[^/]+');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -35,7 +36,7 @@ class Codeberg extends AppSource {
   ) async {
     return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
         (bool useTagUrl) async {
-      return 'https://$host/api/v1/repos${standardUrl.substring('https://$host'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+      return 'https://${hosts[0]}/api/v1/repos${standardUrl.substring('https://${hosts[0]}'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
     }, null);
   }
 
@@ -50,7 +51,7 @@ class Codeberg extends AppSource {
       {Map<String, dynamic> querySettings = const {}}) async {
     return gh.searchCommon(
         query,
-        'https://$host/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
+        'https://${hosts[0]}/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
         'data',
         querySettings: querySettings);
   }

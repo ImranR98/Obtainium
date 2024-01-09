@@ -5,12 +5,12 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Signal extends AppSource {
   Signal() {
-    host = 'signal.org';
+    hosts = ['signal.org'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
   @override
@@ -19,7 +19,7 @@ class Signal extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     Response res =
-        await sourceRequest('https://updates.$host/android/latest.json');
+        await sourceRequest('https://updates.${hosts[0]}/android/latest.json');
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];

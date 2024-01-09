@@ -6,19 +6,20 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Uptodown extends AppSource {
   Uptodown() {
-    host = 'uptodown.com';
+    hosts = ['uptodown.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://([^\\.]+\\.){2,}$host');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return '${url.substring(0, match.end)}/android/download';
+    return '${match.group(0)!}/android/download';
   }
 
   @override
@@ -94,6 +95,6 @@ class Uptodown extends AppSource {
     if (finalUrlKey == null) {
       throw NoAPKError();
     }
-    return 'https://dw.$host/dwn/$finalUrlKey';
+    return 'https://dw.${hosts[0]}/dwn/$finalUrlKey';
   }
 }

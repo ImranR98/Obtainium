@@ -6,7 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Aptoide extends AppSource {
   Aptoide() {
-    host = 'aptoide.com';
+    hosts = ['aptoide.com'];
     name = 'Aptoide';
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
@@ -14,12 +14,13 @@ class Aptoide extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://([^\\.]+\\.){2,}$host');
+    RegExp standardUrlRegEx =
+        RegExp('^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override

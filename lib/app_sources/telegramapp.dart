@@ -6,13 +6,13 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class TelegramApp extends AppSource {
   TelegramApp() {
-    host = 'telegram.org';
+    hosts = ['telegram.org'];
     name = 'Telegram ${tr('app')}';
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
   @override

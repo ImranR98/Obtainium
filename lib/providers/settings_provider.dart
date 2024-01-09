@@ -14,7 +14,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
+String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
 
 enum InstallMethodSettings { normal, shizuku, root }

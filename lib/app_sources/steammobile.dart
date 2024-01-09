@@ -7,7 +7,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class SteamMobile extends AppSource {
   SteamMobile() {
-    host = 'store.steampowered.com';
+    hosts = ['store.steampowered.com'];
     name = tr('steam');
     additionalSourceAppSpecificSettingFormItems = [
       [
@@ -21,7 +21,7 @@ class SteamMobile extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
   @override
@@ -29,7 +29,7 @@ class SteamMobile extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest('https://$host/mobile');
+    Response res = await sourceRequest('https://${hosts[0]}/mobile');
     if (res.statusCode == 200) {
       var apkNamePrefix = additionalSettings['app'] as String?;
       if (apkNamePrefix == null) {
