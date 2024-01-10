@@ -86,13 +86,11 @@ class FDroid extends AppSource {
         var res = await sourceRequest(
             'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml');
         var lines = res.body.split('\n');
-        String author = lines
-            .where((l) => l.startsWith('AuthorName: '))
-            .first
-            .split(': ')
-            .sublist(1)
-            .join(': ');
-        details.names.author = author;
+        var authorLines = lines.where((l) => l.startsWith('AuthorName: '));
+        if (authorLines.isNotEmpty) {
+          details.names.author =
+              authorLines.first.split(': ').sublist(1).join(': ');
+        }
         var changelogUrls = lines.where((l) => l.startsWith('Changelog: '));
         if (changelogUrls.isNotEmpty) {
           details.changeLog = changelogUrls.first;
