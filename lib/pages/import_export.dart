@@ -199,10 +199,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   ...source.searchQuerySettingFormItems.map((e) => [e]),
                   [
                     GeneratedFormTextField('url',
-                        label: source.host != null
+                        label: source.hosts.isNotEmpty
                             ? tr('overrideSource')
                             : plural('url', 1).substring(2),
-                        defaultValue: source.host ?? '',
+                        defaultValue:
+                            source.hosts.isNotEmpty ? source.hosts[0] : '',
                         required: true)
                   ],
                 ],
@@ -212,7 +213,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           setState(() {
             importInProgress = true;
           });
-          if (values['url'] != source.host) {
+          if (values['url'] != source.hosts[0]) {
             source = sourceProvider.getSource(values['url'],
                 overrideSource: source.runtimeType.toString());
           }

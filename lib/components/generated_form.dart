@@ -510,9 +510,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
           ]);
         } else if (widget.items[r][e] is GeneratedFormSubForm) {
           List<Widget> subformColumn = [];
+          var formItems = (widget.items[r][e] as GeneratedFormSubForm).items;
+          var compact = formItems.length == 1 && formItems[0].length == 1;
           for (int i = 0; i < values[fieldKey].length; i++) {
-            var items = (widget.items[r][e] as GeneratedFormSubForm)
-                .items
+            var items = formItems
                 .map((x) => x.map((y) {
                       y.defaultValue = values[fieldKey]?[i]?[y.key];
                       return y;
@@ -525,14 +526,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
             subformColumn.add(Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Divider(),
-                const SizedBox(
-                  height: 16,
-                ),
-                Text(
-                  '${(widget.items[r][e] as GeneratedFormSubForm).label} (${i + 1})',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                if (!compact)
+                  const SizedBox(
+                    height: 16,
+                  ),
+                if (!compact)
+                  Text(
+                    '${(widget.items[r][e] as GeneratedFormSubForm).label} (${i + 1})',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 GeneratedForm(
                   key: internalFormKey,
                   items: items,
@@ -567,13 +569,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           Icons.delete_outline_rounded,
                         ))
                   ],
-                ),
+                )
               ],
             ));
           }
           subformColumn.add(Padding(
-            padding: EdgeInsets.only(
-                bottom: values[fieldKey].length > 0 ? 24 : 0, top: 8),
+            padding: const EdgeInsets.only(bottom: 0, top: 8),
             child: Row(
               children: [
                 Expanded(
@@ -591,9 +592,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ],
             ),
           ));
-          if (values[fieldKey].length > 0) {
-            subformColumn.add(const Divider());
-          }
           formInputs[r][e] = Column(children: subformColumn);
         }
       }

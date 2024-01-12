@@ -289,6 +289,8 @@
     "shizukuBinderNotFound": "Совместимый сервис Shizuku не найден",
     "useSystemFont": "Использовать системный шрифт",
     "systemFontError": "Ошибка загрузки системного шрифта: {}",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
+    "requestHeader": "Request header",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

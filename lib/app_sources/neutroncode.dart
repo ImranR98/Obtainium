@@ -5,18 +5,19 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class NeutronCode extends AppSource {
   NeutronCode() {
-    host = 'neutroncode.com';
+    hosts = ['neutroncode.com'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx =
-        RegExp('^https?://(www\\.)?$host/downloads/file/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -79,7 +80,7 @@ class NeutronCode extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest(standardUrl);
+    Response res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200) {
       var http = parse(res.body);
       var name = http.querySelector('.pd-title')?.innerHtml;
@@ -92,7 +93,7 @@ class NeutronCode extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      String? apkUrl = 'https://$host/download/$filename';
+      String? apkUrl = 'https://${hosts[0]}/download/$filename';
       var dateStringOriginal =
           http.querySelector('.pd-date-txt')?.nextElementSibling?.innerHtml;
       var dateString = dateStringOriginal != null

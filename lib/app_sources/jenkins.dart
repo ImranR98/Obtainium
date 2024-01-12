@@ -8,6 +8,7 @@ class Jenkins extends AppSource {
   Jenkins() {
     overrideVersionDetectionFormDefault('releaseDateAsVersion',
         disableStandard: true);
+    neverAutoSelect = true;
   }
 
   String trimJobUrl(String url) {
@@ -16,7 +17,7 @@ class Jenkins extends AppSource {
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -29,8 +30,8 @@ class Jenkins extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     standardUrl = trimJobUrl(standardUrl);
-    Response res =
-        await sourceRequest('$standardUrl/lastSuccessfulBuild/api/json');
+    Response res = await sourceRequest(
+        '$standardUrl/lastSuccessfulBuild/api/json', additionalSettings);
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       var releaseDate = json['timestamp'] == null

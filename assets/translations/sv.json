@@ -273,6 +273,8 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizuku is not running",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
+    "requestHeader": "Request header",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

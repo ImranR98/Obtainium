@@ -19,7 +19,6 @@ import 'package:obtainium/app_sources/huaweiappgallery.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
-import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -366,8 +365,12 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
+getSourceRegex(List<String> hosts) {
+  return '(${hosts.join('|').replaceAll('.', '\\.')})';
+}
+
 abstract class AppSource {
-  String? host;
+  List<String> hosts = [];
   bool hostChanged = false;
   late String name;
   bool enforceTrackOnly = false;
@@ -413,8 +416,8 @@ abstract class AppSource {
   }
 
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return null;
   }
 
@@ -422,12 +425,10 @@ abstract class AppSource {
     return app;
   }
 
-  Future<Response> sourceRequest(String url,
-      {bool followRedirects = true,
-      Map<String, dynamic> additionalSettings =
-          const <String, dynamic>{}}) async {
-    var requestHeaders =
-        await getRequestHeaders(additionalSettings: additionalSettings);
+  Future<Response> sourceRequest(
+      String url, Map<String, dynamic> additionalSettings,
+      {bool followRedirects = true}) async {
+    var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
@@ -483,6 +484,10 @@ abstract class AppSource {
           ],
           label: tr('versionDetection'),
           defaultValue: 'standardVersionDetection')
+    ],
+    [
+      GeneratedFormSwitch('useVersionCodeAsOSVersion',
+          label: tr('useVersionCodeAsOSVersion'), defaultValue: false)
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -544,8 +549,8 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
     return apkUrl;
   }
 
@@ -676,7 +681,6 @@ class SourceProvider {
         APKMirror(),
         HuaweiAppGallery(),
         Jenkins(),
-        Mullvad(),
         Signal(),
         VLC(),
         WhatsApp(),
@@ -697,14 +701,14 @@ class SourceProvider {
         throw UnsupportedURLError();
       }
       var res = srcs.first;
-      res.host = Uri.parse(url).host;
+      res.hosts = [Uri.parse(url).host];
       res.hostChanged = true;
       return srcs.first;
     }
     AppSource? source;
-    for (var s in sources.where((element) => element.host != null)) {
+    for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
       if (RegExp(
-              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}${s.host}(/|\\z)?')
+              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})(/|\\z)?')
           .hasMatch(url)) {
         source = s;
         break;
@@ -712,7 +716,7 @@ class SourceProvider {
     }
     if (source == null) {
       for (var s in sources.where(
-          (element) => element.host == null && !element.neverAutoSelect)) {
+          (element) => element.hosts.isEmpty && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;

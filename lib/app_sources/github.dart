@@ -14,7 +14,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub extends AppSource {
   GitHub() {
-    host = 'github.com';
+    hosts = ['github.com'];
     appIdInferIsOptional = true;
 
     sourceConfigSettingFormItems = [
@@ -108,7 +108,8 @@ class GitHub extends AppSource {
     for (var path in possibleBuildGradleLocations) {
       try {
         var res = await sourceRequest(
-            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path');
+            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path',
+            additionalSettings);
         if (res.statusCode == 200) {
           try {
             var body = jsonDecode(res.body);
@@ -149,18 +150,20 @@ class GitHub extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://(www\\.)?$host/[^/]+/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     var token = await getTokenIfAny(additionalSettings);
     var headers = <String, String>{};
     if (token != null) {
@@ -203,11 +206,11 @@ class GitHub extends AppSource {
   }
 
   Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
-      'https://api.$host';
+      'https://api.${hosts[0]}';
 
   Future<String> convertStandardUrlToAPIUrl(
           String standardUrl, Map<String, dynamic> additionalSettings) async =>
-      '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://$host'.length)}';
+      '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://${hosts[0]}'.length)}';
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
@@ -238,7 +241,8 @@ class GitHub extends AppSource {
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
       Response res = await sourceRequest(
-          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}');
+          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}',
+          additionalSettings);
       if (res.statusCode != 200) {
         if (onHttpErrorCode != null) {
           onHttpErrorCode(res);
@@ -247,7 +251,7 @@ class GitHub extends AppSource {
       }
       latestRelease = jsonDecode(res.body);
     }
-    Response res = await sourceRequest(requestUrl);
+    Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
       if (latestRelease != null) {
@@ -424,7 +428,7 @@ class GitHub extends AppSource {
       String query, String requestUrl, String rootProp,
       {Function(Response)? onHttpErrorCode,
       Map<String, dynamic> querySettings = const {}}) async {
-    Response res = await sourceRequest(requestUrl);
+    Response res = await sourceRequest(requestUrl, {});
     if (res.statusCode == 200) {
       int minStarCount = querySettings['minStarCount'] != null
           ? int.parse(querySettings['minStarCount'])

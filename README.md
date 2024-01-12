@@ -21,7 +21,7 @@ Currently supported App sources:
   - [SourceForge](https://sourceforge.net/)
   - [SourceHut](https://git.sr.ht/)
 - Other - General:
-  - [APKPure](https://apkpure.com/)
+  - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
   - [APKMirror](https://apkmirror.com/) (Track-Only)

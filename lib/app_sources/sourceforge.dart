@@ -5,24 +5,27 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class SourceForge extends AppSource {
   SourceForge() {
-    host = 'sourceforge.net';
+    hosts = ['sourceforge.net'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB = RegExp('^https?://(www\\.)?$host/p/[^/]+');
-    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExB = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/p/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       url =
-          'https://${Uri.parse(url.substring(0, match.end)).host}/projects/${url.substring(Uri.parse(url.substring(0, match.end)).host.length + '/projects/'.length + 1)}';
+          'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
-    RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?$host/projects/[^/]+');
-    match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExA = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/projects/[^/]+',
+        caseSensitive: false);
+    match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -30,7 +33,8 @@ class SourceForge extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest('$standardUrl/rss?path=/');
+    Response res =
+        await sourceRequest('$standardUrl/rss?path=/', additionalSettings);
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       var allDownloadLinks =

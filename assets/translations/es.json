@@ -287,6 +287,8 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizuku no está operativo",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
+    "requestHeader": "Request header",
     "removeAppQuestion": {
         "one": "¿Eliminar Aplicación?",
         "other": "¿Eliminar Aplicaciones?"

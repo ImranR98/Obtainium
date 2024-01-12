@@ -287,6 +287,8 @@
     "shizuku": "Shizuku",
     "root": "Správce",
     "shizukuBinderNotFound": "Shizuku neběží",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
+    "requestHeader": "Request header",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
