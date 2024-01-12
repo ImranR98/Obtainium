@@ -15,13 +15,15 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExA =
-        RegExp('^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+');
-    RegExpMatch? match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExA = RegExp(
+        '^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       RegExp standardUrlRegExB = RegExp(
-          '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+');
-      match = standardUrlRegExB.firstMatch(url.toLowerCase());
+          '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+',
+          caseSensitive: false);
+      match = standardUrlRegExB.firstMatch(url);
     }
     if (match == null) {
       throw InvalidURLError(name);

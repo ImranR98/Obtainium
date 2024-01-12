@@ -8,6 +8,7 @@ class Jenkins extends AppSource {
   Jenkins() {
     overrideVersionDetectionFormDefault('releaseDateAsVersion',
         disableStandard: true);
+    neverAutoSelect = true;
   }
 
   String trimJobUrl(String url) {

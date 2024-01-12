@@ -38,15 +38,17 @@ class FDroid extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegExB = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+');
-    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       url =
           'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.last}';
     }
-    RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+');
-    match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExA = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+',
+        caseSensitive: false);
+    match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }

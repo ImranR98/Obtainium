@@ -13,9 +13,10 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx =
-        RegExp('^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
