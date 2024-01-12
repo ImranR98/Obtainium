@@ -108,7 +108,7 @@ class FDroid extends AppSource {
       } catch (e) {
         // Fail silently
       }
-      if ((details.changeLog?.length ?? 0) > 1000) {
+      if ((details.changeLog?.length ?? 0) > 2048) {
         details.changeLog = '${details.changeLog!.substring(0, 2048)}...';
       }
     }
