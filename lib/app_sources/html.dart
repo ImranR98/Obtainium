@@ -179,8 +179,8 @@ class HTML extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     if (additionalSettings.isNotEmpty) {
       if (additionalSettings['requestHeader']?.isNotEmpty != true) {
         additionalSettings['requestHeader'] = [];
@@ -278,7 +278,8 @@ class HTML extends AppSource {
             .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
             .toList();
     for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
-      var intLinks = await grabLinksCommon(await sourceRequest(currentUrl),
+      var intLinks = await grabLinksCommon(
+          await sourceRequest(currentUrl, additionalSettings),
           additionalSettings['intermediateLink'][i]);
       if (intLinks.isEmpty) {
         throw NoReleasesError();
@@ -288,7 +289,7 @@ class HTML extends AppSource {
     }
 
     var uri = Uri.parse(currentUrl);
-    Response res = await sourceRequest(currentUrl);
+    Response res = await sourceRequest(currentUrl, additionalSettings);
     var links = await grabLinksCommon(res, additionalSettings);
 
     if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true) {

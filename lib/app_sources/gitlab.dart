@@ -83,7 +83,7 @@ class GitLab extends AppSource {
       {Map<String, dynamic> querySettings = const {}}) async {
     var url =
         'https://${hosts[0]}/api/v4/projects?search=${Uri.encodeQueryComponent(query)}';
-    var res = await sourceRequest(url);
+    var res = await sourceRequest(url, {});
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -114,7 +114,8 @@ class GitLab extends AppSource {
     if (PAT != null) {
       var names = GitHub().getAppNames(standardUrl);
       Response res = await sourceRequest(
-          'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT');
+          'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
+          additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
@@ -149,7 +150,8 @@ class GitLab extends AppSource {
             releaseDate: releaseDate);
       });
     } else {
-      Response res = await sourceRequest('$standardUrl/-/tags?format=atom');
+      Response res = await sourceRequest(
+          '$standardUrl/-/tags?format=atom', additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }

@@ -67,7 +67,8 @@ class FDroid extends AppSource {
     String? appId = await tryInferringAppId(standardUrl);
     String host = Uri.parse(standardUrl).host;
     var details = getAPKUrlsFromFDroidPackagesAPIResponse(
-        await sourceRequest('https://$host/api/v1/packages/$appId'),
+        await sourceRequest(
+            'https://$host/api/v1/packages/$appId', additionalSettings),
         'https://$host/repo/$appId',
         standardUrl,
         name,
@@ -84,7 +85,8 @@ class FDroid extends AppSource {
     if (!hostChanged) {
       try {
         var res = await sourceRequest(
-            'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml');
+            'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
+            additionalSettings);
         var lines = res.body.split('\n');
         var authorLines = lines.where((l) => l.startsWith('AuthorName: '));
         if (authorLines.isNotEmpty) {
@@ -94,11 +96,13 @@ class FDroid extends AppSource {
         var changelogUrls = lines.where((l) => l.startsWith('Changelog: '));
         if (changelogUrls.isNotEmpty) {
           details.changeLog = changelogUrls.first;
-          details.changeLog = (await sourceRequest(details.changeLog!
-                  .split(': ')
-                  .sublist(1)
-                  .join(': ')
-                  .replaceFirst('/blob/', '/raw/')))
+          details.changeLog = (await sourceRequest(
+                  details.changeLog!
+                      .split(': ')
+                      .sublist(1)
+                      .join(': ')
+                      .replaceFirst('/blob/', '/raw/'),
+                  additionalSettings))
               .body;
         }
       } catch (e) {
@@ -115,7 +119,7 @@ class FDroid extends AppSource {
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
     Response res = await sourceRequest(
-        'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}');
+        'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}', {});
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       parse(res.body).querySelectorAll('.package-header').forEach((e) {

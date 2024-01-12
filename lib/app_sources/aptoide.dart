@@ -26,11 +26,13 @@ class Aptoide extends AppSource {
   @override
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
-    return (await getAppDetailsJSON(standardUrl))['package'];
+    return (await getAppDetailsJSON(
+        standardUrl, additionalSettings))['package'];
   }
 
-  Future<Map<String, dynamic>> getAppDetailsJSON(String standardUrl) async {
-    var res = await sourceRequest(standardUrl);
+  Future<Map<String, dynamic>> getAppDetailsJSON(
+      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -41,8 +43,8 @@ class Aptoide extends AppSource {
     } else {
       throw NoReleasesError();
     }
-    var res2 =
-        await sourceRequest('https://ws2.aptoide.com/api/7/getApp/app_id/$id');
+    var res2 = await sourceRequest(
+        'https://ws2.aptoide.com/api/7/getApp/app_id/$id', additionalSettings);
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -54,7 +56,7 @@ class Aptoide extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var appDetails = await getAppDetailsJSON(standardUrl);
+    var appDetails = await getAppDetailsJSON(standardUrl, additionalSettings);
     String appName = appDetails['name'] ?? tr('app');
     String author = appDetails['developer']?['name'] ?? name;
     String? dateStr = appDetails['updated'];

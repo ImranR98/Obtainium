@@ -108,7 +108,8 @@ class GitHub extends AppSource {
     for (var path in possibleBuildGradleLocations) {
       try {
         var res = await sourceRequest(
-            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path');
+            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path',
+            additionalSettings);
         if (res.statusCode == 200) {
           try {
             var body = jsonDecode(res.body);
@@ -160,8 +161,8 @@ class GitHub extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     var token = await getTokenIfAny(additionalSettings);
     var headers = <String, String>{};
     if (token != null) {
@@ -239,7 +240,8 @@ class GitHub extends AppSource {
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
       Response res = await sourceRequest(
-          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}');
+          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}',
+          additionalSettings);
       if (res.statusCode != 200) {
         if (onHttpErrorCode != null) {
           onHttpErrorCode(res);
@@ -248,7 +250,7 @@ class GitHub extends AppSource {
       }
       latestRelease = jsonDecode(res.body);
     }
-    Response res = await sourceRequest(requestUrl);
+    Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
       var releases = jsonDecode(res.body) as List<dynamic>;
       if (latestRelease != null) {
@@ -425,7 +427,7 @@ class GitHub extends AppSource {
       String query, String requestUrl, String rootProp,
       {Function(Response)? onHttpErrorCode,
       Map<String, dynamic> querySettings = const {}}) async {
-    Response res = await sourceRequest(requestUrl);
+    Response res = await sourceRequest(requestUrl, {});
     if (res.statusCode == 200) {
       int minStarCount = querySettings['minStarCount'] != null
           ? int.parse(querySettings['minStarCount'])

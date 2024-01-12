@@ -41,7 +41,8 @@ class SourceHut extends AppSource {
     String appName = standardUri.pathSegments.last;
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    Response res = await sourceRequest('$standardUrl/refs/rss.xml');
+    Response res =
+        await sourceRequest('$standardUrl/refs/rss.xml', additionalSettings);
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       List<APKDetails> apkDetailsList = [];
@@ -70,7 +71,7 @@ class SourceHut extends AppSource {
         } catch (e) {
           // ignore
         }
-        var res2 = await sourceRequest(releasePage);
+        var res2 = await sourceRequest(releasePage, additionalSettings);
         List<MapEntry<String, String>> apkUrls = [];
         if (res2.statusCode == 200) {
           apkUrls = getApkUrlsFromUrls(parse(res2.body)

@@ -31,7 +31,8 @@ class SourceForge extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest('$standardUrl/rss?path=/');
+    Response res =
+        await sourceRequest('$standardUrl/rss?path=/', additionalSettings);
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       var allDownloadLinks =

@@ -29,8 +29,8 @@ class Jenkins extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     standardUrl = trimJobUrl(standardUrl);
-    Response res =
-        await sourceRequest('$standardUrl/lastSuccessfulBuild/api/json');
+    Response res = await sourceRequest(
+        '$standardUrl/lastSuccessfulBuild/api/json', additionalSettings);
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       var releaseDate = json['timestamp'] == null

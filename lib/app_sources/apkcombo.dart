@@ -27,8 +27,8 @@ class APKCombo extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return {
       "User-Agent": "curl/8.0.1",
       "Accept": "*/*",
@@ -37,8 +37,9 @@ class APKCombo extends AppSource {
     };
   }
 
-  Future<List<MapEntry<String, String>>> getApkUrls(String standardUrl) async {
-    var res = await sourceRequest('$standardUrl/download/apk');
+  Future<List<MapEntry<String, String>>> getApkUrls(
+      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    var res = await sourceRequest('$standardUrl/download/apk', {});
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -71,9 +72,9 @@ class APKCombo extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
-    var freshURLs = await getApkUrls(standardUrl);
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    var freshURLs = await getApkUrls(standardUrl, additionalSettings);
     var path2Match = Uri.parse(apkUrl).path;
     for (var url in freshURLs) {
       if (Uri.parse(url.value).path == path2Match) {
@@ -89,7 +90,7 @@ class APKCombo extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String appId = (await tryInferringAppId(standardUrl))!;
-    var preres = await sourceRequest(standardUrl);
+    var preres = await sourceRequest(standardUrl, additionalSettings);
     if (preres.statusCode != 200) {
       throw getObtainiumHttpError(preres);
     }
@@ -113,7 +114,9 @@ class APKCombo extends AppSource {
       }
     }
     return APKDetails(
-        version, await getApkUrls(standardUrl), AppNames(author, appName),
+        version,
+        await getApkUrls(standardUrl, additionalSettings),
+        AppNames(author, appName),
         releaseDate: releaseDate);
   }
 }

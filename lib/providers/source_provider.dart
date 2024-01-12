@@ -417,8 +417,8 @@ abstract class AppSource {
   }
 
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return null;
   }
 
@@ -426,12 +426,10 @@ abstract class AppSource {
     return app;
   }
 
-  Future<Response> sourceRequest(String url,
-      {bool followRedirects = true,
-      Map<String, dynamic> additionalSettings =
-          const <String, dynamic>{}}) async {
-    var requestHeaders =
-        await getRequestHeaders(additionalSettings: additionalSettings);
+  Future<Response> sourceRequest(
+      String url, Map<String, dynamic> additionalSettings,
+      {bool followRedirects = true}) async {
+    var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
@@ -548,8 +546,8 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
     return apkUrl;
   }
 

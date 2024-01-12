@@ -326,13 +326,15 @@ class AppsProvider with ChangeNotifier {
       AppSource source = SourceProvider()
           .getSource(app.url, overrideSource: app.overrideSource);
       String downloadUrl = await source.apkUrlPrefetchModifier(
-          app.apkUrls[app.preferredApkIndex].value, app.url);
+          app.apkUrls[app.preferredApkIndex].value,
+          app.url,
+          app.additionalSettings);
       var notif = DownloadNotification(app.finalName, 100);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
-      var headers = await source.getRequestHeaders(
-          additionalSettings: app.additionalSettings, forAPKDownload: true);
+      var headers = await source.getRequestHeaders(app.additionalSettings,
+          forAPKDownload: true);
       var downloadedFile = await downloadFileWithRetry(
           downloadUrl, fileNameNoExt,
           headers: headers, (double? progress) {

@@ -55,8 +55,8 @@ class APKPure extends AppSource {
   ) async {
     String appId = (await tryInferringAppId(standardUrl))!;
     String host = Uri.parse(standardUrl).host;
-    var res = await sourceRequest('$standardUrl/download');
-    var resChangelog = await sourceRequest(standardUrl);
+    var res = await sourceRequest('$standardUrl/download', additionalSettings);
+    var resChangelog = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200 && resChangelog.statusCode == 200) {
       var html = parse(res.body);
       var htmlChangelog = parse(resChangelog.body);

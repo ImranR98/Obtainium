@@ -18,8 +18,8 @@ class Signal extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res =
-        await sourceRequest('https://updates.${hosts[0]}/android/latest.json');
+    Response res = await sourceRequest(
+        'https://updates.${hosts[0]}/android/latest.json', additionalSettings);
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       String? apkUrl = json['url'];

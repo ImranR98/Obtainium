@@ -12,8 +12,8 @@ class VLC extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return {
       "User-Agent":
           "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
@@ -25,8 +25,9 @@ class VLC extends AppSource {
     return 'https://${hosts[0]}';
   }
 
-  Future<String?> getLatestVersion(String standardUrl) async {
-    Response res = await sourceRequest(dwUrlBase);
+  Future<String?> getLatestVersion(
+      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    Response res = await sourceRequest(dwUrlBase, additionalSettings);
     if (res.statusCode == 200) {
       var dwLinks = parse(res.body)
           .querySelectorAll('a')
@@ -78,9 +79,9 @@ class VLC extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
-    Response res = await sourceRequest(apkUrl);
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    Response res = await sourceRequest(apkUrl, additionalSettings);
     if (res.statusCode == 200) {
       String? apkUrl =
           parse(res.body).querySelector('#alt_link')?.attributes['href'];

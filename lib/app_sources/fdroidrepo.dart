@@ -59,7 +59,7 @@ class FDroidRepo extends AppSource {
       throw NoReleasesError();
     }
     url = removeQueryParamsFromUrl(standardizeUrl(url));
-    var res = await sourceRequest('$url/index.xml');
+    var res = await sourceRequest('$url/index.xml', {});
     if (res.statusCode == 200) {
       var body = parse(res.body);
       Map<String, List<String>> results = {};
@@ -117,7 +117,8 @@ class FDroidRepo extends AppSource {
       throw NoReleasesError();
     }
     var res = await sourceRequest(
-        '$standardUrl${standardUrl.endsWith('/index.xml') ? '' : '/index.xml'}');
+        '$standardUrl${standardUrl.endsWith('/index.xml') ? '' : '/index.xml'}',
+        additionalSettings);
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {
