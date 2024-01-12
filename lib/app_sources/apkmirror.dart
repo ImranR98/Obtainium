@@ -32,9 +32,10 @@ class APKMirror extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx =
-        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -58,7 +59,7 @@ class APKMirror extends AppSource {
                 true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
-    Response res = await sourceRequest('$standardUrl/feed');
+    Response res = await sourceRequest('$standardUrl/feed', additionalSettings);
     if (res.statusCode == 200) {
       var items = parse(res.body).querySelectorAll('item');
       dynamic targetRelease;

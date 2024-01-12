@@ -13,9 +13,10 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx =
-        RegExp('^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -25,11 +26,13 @@ class Uptodown extends AppSource {
   @override
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
-    return (await getAppDetailsFromPage(standardUrl))['appId'];
+    return (await getAppDetailsFromPage(
+        standardUrl, additionalSettings))['appId'];
   }
 
-  Future<Map<String, String?>> getAppDetailsFromPage(String standardUrl) async {
-    var res = await sourceRequest(standardUrl);
+  Future<Map<String, String?>> getAppDetailsFromPage(
+      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -57,7 +60,8 @@ class Uptodown extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var appDetails = await getAppDetailsFromPage(standardUrl);
+    var appDetails =
+        await getAppDetailsFromPage(standardUrl, additionalSettings);
     var version = appDetails['version'];
     var apkUrl = appDetails['apkUrl'];
     var appId = appDetails['appId'];
@@ -83,9 +87,9 @@ class Uptodown extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
-    var res = await sourceRequest(apkUrl);
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    var res = await sourceRequest(apkUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }

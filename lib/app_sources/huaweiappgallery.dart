@@ -13,9 +13,10 @@ class HuaweiAppGallery extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx =
-        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/app/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/app/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -25,8 +26,10 @@ class HuaweiAppGallery extends AppSource {
   getDlUrl(String standardUrl) =>
       'https://${hosts[0].replaceAll('appgallery.', 'appgallery.cloud.')}/appdl/${standardUrl.split('/').last}';
 
-  requestAppdlRedirect(String dlUrl) async {
-    Response res = await sourceRequest(dlUrl, followRedirects: false);
+  requestAppdlRedirect(
+      String dlUrl, Map<String, dynamic> additionalSettings) async {
+    Response res =
+        await sourceRequest(dlUrl, additionalSettings, followRedirects: false);
     if (res.statusCode == 200 ||
         res.statusCode == 302 ||
         res.statusCode == 304) {
@@ -53,7 +56,7 @@ class HuaweiAppGallery extends AppSource {
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
     String dlUrl = getDlUrl(standardUrl);
-    Response res = await requestAppdlRedirect(dlUrl);
+    Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
     return res.headers['location'] != null
         ? appIdFromRedirectDlUrl(res.headers['location']!)
         : null;
@@ -65,7 +68,7 @@ class HuaweiAppGallery extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String dlUrl = getDlUrl(standardUrl);
-    Response res = await requestAppdlRedirect(dlUrl);
+    Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
     if (res.headers['location'] == null) {
       throw NoReleasesError();
     }

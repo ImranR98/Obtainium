@@ -11,8 +11,9 @@ class NeutronCode extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -79,7 +80,7 @@ class NeutronCode extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest(standardUrl);
+    Response res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200) {
       var http = parse(res.body);
       var name = http.querySelector('.pd-title')?.innerHtml;

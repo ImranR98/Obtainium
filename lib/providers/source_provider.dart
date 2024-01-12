@@ -19,7 +19,6 @@ import 'package:obtainium/app_sources/huaweiappgallery.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
-import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -417,8 +416,8 @@ abstract class AppSource {
   }
 
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return null;
   }
 
@@ -426,12 +425,10 @@ abstract class AppSource {
     return app;
   }
 
-  Future<Response> sourceRequest(String url,
-      {bool followRedirects = true,
-      Map<String, dynamic> additionalSettings =
-          const <String, dynamic>{}}) async {
-    var requestHeaders =
-        await getRequestHeaders(additionalSettings: additionalSettings);
+  Future<Response> sourceRequest(
+      String url, Map<String, dynamic> additionalSettings,
+      {bool followRedirects = true}) async {
+    var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
@@ -487,6 +484,10 @@ abstract class AppSource {
           ],
           label: tr('versionDetection'),
           defaultValue: 'standardVersionDetection')
+    ],
+    [
+      GeneratedFormSwitch('useVersionCodeAsOSVersion',
+          label: tr('useVersionCodeAsOSVersion'), defaultValue: false)
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -548,8 +549,8 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
     return apkUrl;
   }
 
@@ -680,7 +681,6 @@ class SourceProvider {
         APKMirror(),
         HuaweiAppGallery(),
         Jenkins(),
-        Mullvad(),
         Signal(),
         VLC(),
         WhatsApp(),

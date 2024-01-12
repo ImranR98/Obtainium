@@ -27,15 +27,17 @@ class APKPure extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB =
-        RegExp('^https?://m.${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?');
-    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExB = RegExp(
+        '^https?://m.${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       url = 'https://${getSourceRegex(hosts)}${Uri.parse(url).path}';
     }
     RegExp standardUrlRegExA = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?');
-    match = standardUrlRegExA.firstMatch(url.toLowerCase());
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?',
+        caseSensitive: false);
+    match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -55,8 +57,8 @@ class APKPure extends AppSource {
   ) async {
     String appId = (await tryInferringAppId(standardUrl))!;
     String host = Uri.parse(standardUrl).host;
-    var res = await sourceRequest('$standardUrl/download');
-    var resChangelog = await sourceRequest(standardUrl);
+    var res = await sourceRequest('$standardUrl/download', additionalSettings);
+    var resChangelog = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200 && resChangelog.statusCode == 200) {
       var html = parse(res.body);
       var htmlChangelog = parse(resChangelog.body);
@@ -69,7 +71,8 @@ class APKPure extends AppSource {
       DateTime? releaseDate = parseDateTimeMMMddCommayyyy(dateString);
       String type = html.querySelector('a.info-tag')?.text.trim() ?? 'APK';
       List<MapEntry<String, String>> apkUrls = [
-        MapEntry('$appId.apk', 'https://d.$host/b/$type/$appId?version=latest')
+        MapEntry('$appId.apk',
+            'https://d.${hosts.contains(host) ? 'cdnpure.com' : host}/b/$type/$appId?version=latest')
       ];
       String author = html
               .querySelector('span.info-sdk')

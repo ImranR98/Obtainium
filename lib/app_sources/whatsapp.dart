@@ -16,9 +16,10 @@ class WhatsApp extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
-    Response res = await sourceRequest('$standardUrl/android');
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    Response res =
+        await sourceRequest('$standardUrl/android', additionalSettings);
     if (res.statusCode == 200) {
       var targetLinks = parse(res.body)
           .querySelectorAll('a')
@@ -42,8 +43,8 @@ class WhatsApp extends AppSource {
   ) async {
     // This is a CDN link that is consistent per version
     // But it has query params that change constantly
-    Uri apkUri =
-        Uri.parse(await apkUrlPrefetchModifier(standardUrl, standardUrl));
+    Uri apkUri = Uri.parse(await apkUrlPrefetchModifier(
+        standardUrl, standardUrl, additionalSettings));
     var unusableApkUrl = '${apkUri.origin}/${apkUri.path}';
     // So we use the param-less URL is a pseudo-version to add the app and check for updates
     // See #357 for why we can't scrape the version number directly

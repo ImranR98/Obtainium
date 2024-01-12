@@ -10,16 +10,18 @@ class SourceForge extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB =
-        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/p/[^/]+');
-    RegExpMatch? match = standardUrlRegExB.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExB = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/p/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       url =
           'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
-    RegExp standardUrlRegExA =
-        RegExp('^https?://(www\\.)?${getSourceRegex(hosts)}/projects/[^/]+');
-    match = standardUrlRegExA.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegExA = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/projects/[^/]+',
+        caseSensitive: false);
+    match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -31,7 +33,8 @@ class SourceForge extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest('$standardUrl/rss?path=/');
+    Response res =
+        await sourceRequest('$standardUrl/rss?path=/', additionalSettings);
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       var allDownloadLinks =
