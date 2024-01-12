@@ -71,7 +71,8 @@ class APKPure extends AppSource {
       DateTime? releaseDate = parseDateTimeMMMddCommayyyy(dateString);
       String type = html.querySelector('a.info-tag')?.text.trim() ?? 'APK';
       List<MapEntry<String, String>> apkUrls = [
-        MapEntry('$appId.apk', 'https://d.$host/b/$type/$appId?version=latest')
+        MapEntry('$appId.apk',
+            'https://d.${hosts.contains(host) ? 'cdnpure.com' : host}/b/$type/$appId?version=latest')
       ];
       String author = html
               .querySelector('span.info-sdk')
