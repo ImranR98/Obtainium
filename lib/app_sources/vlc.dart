@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -13,11 +12,13 @@ class VLC extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-          {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-          bool forAPKDownload = false}) =>
-      HTML().getRequestHeaders(
-          additionalSettings: additionalSettings,
-          forAPKDownload: forAPKDownload);
+      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
+      bool forAPKDownload = false}) async {
+    return {
+      "User-Agent":
+          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+    };
+  }
 
   @override
   String sourceSpecificStandardizeURL(String url) {

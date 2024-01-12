@@ -141,7 +141,37 @@ class HTML extends AppSource {
       ],
       finalStepFormitems[0],
       ...commonFormItems,
-      ...finalStepFormitems.sublist(1)
+      ...finalStepFormitems.sublist(1),
+      [
+        GeneratedFormSubForm(
+            'requestHeader',
+            [
+              [
+                GeneratedFormTextField('requestHeader',
+                    label: tr('requestHeader'),
+                    additionalValidators: [
+                      (value) {
+                        if ((value ?? 'empty:valid')
+                                .split(':')
+                                .map((e) => e.trim())
+                                .where((e) => e.isNotEmpty)
+                                .length <
+                            2) {
+                          return tr('invalidInput');
+                        }
+                        return null;
+                      }
+                    ])
+              ]
+            ],
+            label: tr('requestHeader'),
+            defaultValue: [
+              {
+                'requestHeader':
+                    'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36'
+              }
+            ])
+      ]
     ];
     overrideVersionDetectionFormDefault('noVersionDetection',
         disableStandard: false, disableRelDate: true);
@@ -151,10 +181,23 @@ class HTML extends AppSource {
   Future<Map<String, String>?> getRequestHeaders(
       {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
       bool forAPKDownload = false}) async {
-    return {
-      "User-Agent":
-          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
-    };
+    if (additionalSettings.isNotEmpty) {
+      if (additionalSettings['requestHeader']?.isNotEmpty != true) {
+        additionalSettings['requestHeader'] = [];
+      }
+      additionalSettings['requestHeader'] = additionalSettings['requestHeader']
+          .where((l) => l['requestHeader'].isNotEmpty == true)
+          .toList();
+      Map<String, String> requestHeaders = {};
+      for (int i = 0; i < (additionalSettings['requestHeader'].length); i++) {
+        var temp =
+            (additionalSettings['requestHeader'][i]['requestHeader'] as String)
+                .split(':');
+        requestHeaders[temp[0].trim()] = temp.sublist(1).join(':').trim();
+      }
+      return requestHeaders;
+    }
+    return null;
   }
 
   @override
