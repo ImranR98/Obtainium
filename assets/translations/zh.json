@@ -289,6 +289,7 @@
     "shizukuBinderNotFound": "未发现兼容的 Shizuku 服务",
     "useSystemFont": "使用系统字体",
     "systemFontError": "加载系统字体出错：{}",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
     "removeAppQuestion": {
         "one": "是否删除应用？",

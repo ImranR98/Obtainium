@@ -798,13 +798,17 @@ class AppsProvider with ChangeNotifier {
             SourceProvider()
                 .getSource(app.app.url, overrideSource: app.app.overrideSource)
                 .naiveStandardVersionDetection;
+    String? realInstalledVersion =
+        app.app.additionalSettings['useVersionCodeAsOSVersion'] == true
+            ? app.installedInfo?.versionCode.toString()
+            : app.installedInfo?.versionName;
     return app.app.additionalSettings['trackOnly'] != true &&
         app.app.additionalSettings['versionDetection'] !=
             'releaseDateAsVersion' &&
-        app.installedInfo?.versionName != null &&
+        realInstalledVersion != null &&
         app.app.installedVersion != null &&
-        (reconcileVersionDifferences(app.installedInfo!.versionName!,
-                    app.app.installedVersion!) !=
+        (reconcileVersionDifferences(
+                    realInstalledVersion, app.app.installedVersion!) !=
                 null ||
             naiveStandardVersionDetection);
   }
@@ -823,30 +827,33 @@ class AppsProvider with ChangeNotifier {
             SourceProvider()
                 .getSource(app.url, overrideSource: app.overrideSource)
                 .naiveStandardVersionDetection;
+    String? realInstalledVersion =
+        app.additionalSettings['useVersionCodeAsOSVersion'] == true
+            ? installedInfo?.versionCode.toString()
+            : installedInfo?.versionName;
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
       app.installedVersion = null;
       modded = true;
-    } else if (installedInfo?.versionName != null &&
-        app.installedVersion == null) {
-      // App says it's not installed but really is - set to installed and use real package versionName
-      app.installedVersion = installedInfo!.versionName;
+    } else if (realInstalledVersion != null && app.installedVersion == null) {
+      // App says it's not installed but really is - set to installed and use real package versionName (or versionCode if chosen)
+      app.installedVersion = realInstalledVersion;
       modded = true;
     }
     // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
-    if (installedInfo?.versionName != null &&
-        installedInfo!.versionName != app.installedVersion &&
+    if (realInstalledVersion != null &&
+        realInstalledVersion != app.installedVersion &&
         versionDetectionIsStandard) {
       // App's reported version and real version don't match (and it uses standard version detection)
       // If they share a standard format (and are still different under it), update the reported version accordingly
       var correctedInstalledVersion = reconcileVersionDifferences(
-          installedInfo.versionName!, app.installedVersion!);
+          realInstalledVersion, app.installedVersion!);
       if (correctedInstalledVersion?.key == false) {
         app.installedVersion = correctedInstalledVersion!.value;
         modded = true;
       } else if (naiveStandardVersionDetection) {
-        app.installedVersion = installedInfo.versionName;
+        app.installedVersion = realInstalledVersion;
         modded = true;
       }
     }
@@ -1291,8 +1298,11 @@ class AppsProvider with ChangeNotifier {
       await Future.delayed(const Duration(microseconds: 1));
     }
     for (App a in importedApps) {
+      var installedInfo = await getInstalledInfo(a.id, printErr: false);
       a.installedVersion =
-          (await getInstalledInfo(a.id, printErr: false))?.versionName;
+          a.additionalSettings['useVersionCodeAsOSVersion'] == true
+              ? installedInfo?.versionCode.toString()
+              : installedInfo?.versionName;
     }
     await saveApps(importedApps, onlyIfExists: false);
     notifyListeners();

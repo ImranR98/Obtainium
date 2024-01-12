@@ -486,6 +486,10 @@ abstract class AppSource {
           defaultValue: 'standardVersionDetection')
     ],
     [
+      GeneratedFormSwitch('useVersionCodeAsOSVersion',
+          label: tr('useVersionCodeAsOSVersion'), defaultValue: false)
+    ],
+    [
       GeneratedFormTextField('apkFilterRegEx',
           label: tr('filterAPKsByRegEx'),
           required: false,
