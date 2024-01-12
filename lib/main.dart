@@ -23,8 +23,6 @@ const String currentVersion = '0.15.9';
 const String currentReleaseTag =
     'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
-const int bgUpdateCheckAlarmId = 666;
-
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
   MapEntry(Locale('zh'), '简体中文'),
