@@ -287,6 +287,8 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizukuが起動していません",
+    "useSystemFont": "システムフォントを使用する",
+    "systemFontError": "システムフォントの読み込みエラー: {}",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
     "removeAppQuestion": {
