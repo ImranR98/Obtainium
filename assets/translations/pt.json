@@ -73,6 +73,8 @@
     "unpinFromTop": "Desafixar do topo",
     "resetInstallStatusForSelectedAppsQuestion": "Reiniciar status de instalação para aplicativos selecionados?",
     "installStatusOfXWillBeResetExplanation": "O status de instalação de qualquer aplicativo selecionado será reiniciado.\n\nIsso pode ajudar quando uma versão de um aplicativo mostrada no Obtainium é incorreta devido a falhas ao atualizar ou outros problemas.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Compartilhar URLs de aplicativos selecionados",
     "resetInstallStatus": "Reiniciar status de Iistalação",
     "more": "Mais",

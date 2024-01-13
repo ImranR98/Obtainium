@@ -7,7 +7,6 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -174,20 +173,7 @@ class _ObtainiumState extends State<Obtainium> {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         if (!fdroid) {
-          appsProvider.saveApps([
-            App(
-                obtainiumId,
-                'https://github.com/ImranR98/Obtainium',
-                'ImranR98',
-                'Obtainium',
-                currentReleaseTag,
-                currentReleaseTag,
-                [],
-                0,
-                {'includePrereleases': true},
-                null,
-                false)
-          ], onlyIfExists: false);
+          appsProvider.saveApps([obtainiumApp], onlyIfExists: false);
         }
       }
       if (!supportedLocales

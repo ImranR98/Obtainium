@@ -73,6 +73,8 @@
     "unpinFromTop": "Eltávolít felülről",
     "resetInstallStatusForSelectedAppsQuestion": "Visszaállítja a kiválasztott appok telepítési állapotát?",
     "installStatusOfXWillBeResetExplanation": "A kiválasztott appok telepítési állapota visszaáll.\n\nEz akkor segíthet, ha az Obtainiumban megjelenített app verzió hibás, frissítések vagy egyéb problémák miatt.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Ossza meg a kiválasztott app URL címeit",
     "resetInstallStatus": "Telepítési állapot visszaállítása",
     "more": "További",

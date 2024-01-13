@@ -73,6 +73,8 @@
     "unpinFromTop": "Открепить",
     "resetInstallStatusForSelectedAppsQuestion": "Сбросить статус установки для выбранных приложений?",
     "installStatusOfXWillBeResetExplanation": "Статус установки для выбранных приложений будет сброшен.\n\nЭто может помочь, если версия приложения, отображаемая в Obtainium, некорректная — из-за неудачных обновлений или других проблем",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Поделиться выбранными URL-адресами приложений",
     "resetInstallStatus": "Сбросить статус установки",
     "more": "Ещё",

@@ -73,6 +73,8 @@
     "unpinFromTop": "برداشتن پین از بالا",
     "resetInstallStatusForSelectedAppsQuestion": "وضعیت نصب برنامه‌های انتخابی بازنشانی شود؟",
     "installStatusOfXWillBeResetExplanation": "وضعیت نصب برنامه‌های انتخاب‌شده بازنشانی می‌شود.\n\nاگر نسخه برنامه نشان‌داده‌شده در Obtainium به دلیل به‌روزرسانی‌های ناموفق یا مشکلات دیگر نادرست باشد، می‌تواند کمک کند.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "اشتراک گذاری آدرس اینترنتی برنامه های انتخاب شده",
     "resetInstallStatus": "بازنشانی وضعیت نصب",
     "more": "بیشتر",
