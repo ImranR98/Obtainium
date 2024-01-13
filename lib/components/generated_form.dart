@@ -13,6 +13,7 @@ abstract class GeneratedFormItem {
   late dynamic defaultValue;
   List<dynamic> additionalValidators;
   dynamic ensureType(dynamic val);
+  GeneratedFormItem clone();
 
   GeneratedFormItem(this.key,
       {this.label = 'Input',
@@ -44,6 +45,20 @@ class GeneratedFormTextField extends GeneratedFormItem {
   String ensureType(val) {
     return val.toString();
   }
+
+  @override
+  GeneratedFormTextField clone() {
+    return GeneratedFormTextField(key,
+        label: label,
+        belowWidgets: belowWidgets,
+        defaultValue: defaultValue,
+        additionalValidators: List.from(additionalValidators),
+        required: required,
+        max: max,
+        hint: hint,
+        password: password,
+        textInputType: textInputType);
+  }
 }
 
 class GeneratedFormDropdown extends GeneratedFormItem {
@@ -64,6 +79,20 @@ class GeneratedFormDropdown extends GeneratedFormItem {
   String ensureType(val) {
     return val.toString();
   }
+
+  @override
+  GeneratedFormDropdown clone() {
+    return GeneratedFormDropdown(
+      key,
+      opts?.map((e) => MapEntry(e.key, e.value)).toList(),
+      label: label,
+      belowWidgets: belowWidgets,
+      defaultValue: defaultValue,
+      disabledOptKeys:
+          disabledOptKeys != null ? List.from(disabledOptKeys!) : null,
+      additionalValidators: List.from(additionalValidators),
+    );
+  }
 }
 
 class GeneratedFormSwitch extends GeneratedFormItem {
@@ -78,6 +107,15 @@ class GeneratedFormSwitch extends GeneratedFormItem {
   @override
   bool ensureType(val) {
     return val == true || val == 'true';
+  }
+
+  @override
+  GeneratedFormSwitch clone() {
+    return GeneratedFormSwitch(key,
+        label: label,
+        belowWidgets: belowWidgets,
+        defaultValue: defaultValue,
+        additionalValidators: List.from(additionalValidators));
   }
 }
 
@@ -103,6 +141,20 @@ class GeneratedFormTagInput extends GeneratedFormItem {
   Map<String, MapEntry<int, bool>> ensureType(val) {
     return val is Map<String, MapEntry<int, bool>> ? val : {};
   }
+
+  @override
+  GeneratedFormTagInput clone() {
+    return GeneratedFormTagInput(key,
+        label: label,
+        belowWidgets: belowWidgets,
+        defaultValue: defaultValue,
+        additionalValidators: List.from(additionalValidators),
+        deleteConfirmationMessage: deleteConfirmationMessage,
+        singleSelect: singleSelect,
+        alignment: alignment,
+        emptyMessage: emptyMessage,
+        showLabelWhenNotEmpty: showLabelWhenNotEmpty);
+  }
 }
 
 typedef OnValueChanges = void Function(
@@ -119,6 +171,19 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
+List<List<GeneratedFormItem>> cloneFormItems(
+    List<List<GeneratedFormItem>> items) {
+  List<List<GeneratedFormItem>> clonedItems = [];
+  items.forEach((row) {
+    List<GeneratedFormItem> clonedRow = [];
+    row.forEach((it) {
+      clonedRow.add(it.clone());
+    });
+    clonedItems.add(clonedRow);
+  });
+  return clonedItems;
+}
+
 class GeneratedFormSubForm extends GeneratedFormItem {
   final List<List<GeneratedFormItem>> items;
 
@@ -128,6 +193,12 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   @override
   ensureType(val) {
     return val; // Not easy to validate List<Map<String, dynamic>>
+  }
+
+  @override
+  GeneratedFormSubForm clone() {
+    return GeneratedFormSubForm(key, cloneFormItems(items),
+        label: label, belowWidgets: belowWidgets, defaultValue: defaultValue);
   }
 }
 
@@ -510,15 +581,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
           ]);
         } else if (widget.items[r][e] is GeneratedFormSubForm) {
           List<Widget> subformColumn = [];
-          var formItems = (widget.items[r][e] as GeneratedFormSubForm).items;
-          var compact = formItems.length == 1 && formItems[0].length == 1;
+          var compact = (widget.items[r][e] as GeneratedFormSubForm)
+                      .items
+                      .length ==
+                  1 &&
+              (widget.items[r][e] as GeneratedFormSubForm).items[0].length == 1;
           for (int i = 0; i < values[fieldKey].length; i++) {
-            var items = formItems
-                .map((x) => x.map((y) {
-                      y.defaultValue = values[fieldKey]?[i]?[y.key];
-                      return y;
-                    }).toList())
-                .toList();
             var internalFormKey = ValueKey(generateRandomNumber(
                 values[fieldKey].length,
                 seed2: i,
@@ -537,8 +605,17 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   ),
                 GeneratedForm(
                   key: internalFormKey,
-                  items: items,
+                  items: cloneFormItems(
+                          (widget.items[r][e] as GeneratedFormSubForm).items)
+                      .map((x) => x.map((y) {
+                            y.defaultValue = values[fieldKey]?[i]?[y.key];
+                            y.key = '${y.key.toString()},$internalFormKey';
+                            return y;
+                          }).toList())
+                      .toList(),
                   onValueChanges: (values, valid, isBuilding) {
+                    values = values.map(
+                        (key, value) => MapEntry(key.split(',')[0], value));
                     if (valid) {
                       this.values[fieldKey]?[i] = values;
                     }
