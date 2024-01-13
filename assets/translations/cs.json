@@ -73,6 +73,8 @@
     "unpinFromTop": "Odepnout shora",
     "resetInstallStatusForSelectedAppsQuestion": "Obnovit stav instalace vybraných aplikací?",
     "installStatusOfXWillBeResetExplanation": "Stav instalace vybraných aplikací bude resetován. To může být užitečné, pokud je verze aplikace zobrazená v Obtainium nesprávná z důvodu neúspěšných aktualizací nebo jiných problémů.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Sdílet adresy URL vybraných aplikací",
     "resetInstallStatus": "Obnovit stav instalace",
     "more": "Více",

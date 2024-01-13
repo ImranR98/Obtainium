@@ -276,9 +276,10 @@ class App {
         json['installedVersion'] == null
             ? null
             : json['installedVersion'] as String,
-        json['latestVersion'] as String,
-        assumed2DlistToStringMapList(jsonDecode(json['apkUrls'])),
-        json['preferredApkIndex'] as int,
+        (json['latestVersion'] ?? tr('unknown')) as String,
+        assumed2DlistToStringMapList(jsonDecode(
+            (json['apkUrls'] ?? '[["placeholder", "placeholder"]]'))),
+        (json['preferredApkIndex'] ?? -1) as int,
         jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
         json['lastUpdateCheck'] == null
             ? null

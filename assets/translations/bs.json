@@ -73,6 +73,8 @@
     "unpinFromTop": "Otkvači sa vrha",
     "resetInstallStatusForSelectedAppsQuestion": "Resetujte status instalacije za odabrane aplikacije?",
     "installStatusOfXWillBeResetExplanation": "Status instalacije bilo koje odabrane aplikacije će se resetovati.\n\nTo može pomoći kada je verzija aplikacije prikazana u Obtainiumu netačna zbog neuspjelih ažuriranja ili drugih problema.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Podijeli odabrane URL-ove aplikacija",
     "resetInstallStatus": "Resetujte status instalacije",
     "more": "Više",

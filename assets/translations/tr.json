@@ -73,6 +73,8 @@
     "unpinFromTop": "Üstten Kaldır",
     "resetInstallStatusForSelectedAppsQuestion": "Seçilen Uygulamaların Yükleme Durumunu Sıfırlamak İstiyor musunuz?",
     "installStatusOfXWillBeResetExplanation": "Seçilen Uygulamaların yükleme durumu sıfırlanacak.\n\nBu, Obtainium'da gösterilen uygulama sürümünün başarısız güncellemeler veya diğer sorunlar nedeniyle yanlış olması durumunda yardımcı olabilir.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Seçilen Uygulama URL'larını Paylaş",
     "resetInstallStatus": "Yükleme Durumunu Sıfırla",
     "more": "Daha Fazla",

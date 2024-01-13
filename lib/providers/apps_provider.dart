@@ -404,7 +404,7 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumId) {
+    if (app.id == obtainiumApp.id) {
       return false;
     }
     if (!settingsProvider.enableBackgroundUpdates) {
@@ -428,7 +428,7 @@ class AppsProvider with ChangeNotifier {
     } catch (e) {
       // Probably not installed - ignore
     }
-    if (installerPackageName != obtainiumId) {
+    if (installerPackageName != obtainiumApp.id) {
       // If we did not install the app (or it isn't installed), silent install is not possible
       return false;
     }
@@ -673,7 +673,7 @@ class AppsProvider with ChangeNotifier {
 
     // Move Obtainium to the end of the line (let all other apps update first)
     appsToInstall =
-        moveStrToEnd(appsToInstall, obtainiumId, strB: obtainiumTempId);
+        moveStrToEnd(appsToInstall, obtainiumApp.id, strB: obtainiumTempId);
 
     Future<void> updateFn(String id, {bool skipInstalls = false}) async {
       try {
@@ -1676,7 +1676,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     }
     if (toInstall.isNotEmpty) {
       logs.add('BG install task: Started (${toInstall.length}).');
-      var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
+      var tempObtArr =
+          toInstall.where((element) => element.key == obtainiumApp.id);
       if (tempObtArr.isNotEmpty) {
         // Move obtainium to the end of the list as it must always install last
         var obt = tempObtArr.first;
