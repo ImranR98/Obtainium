@@ -149,6 +149,7 @@ class HTML extends AppSource {
               [
                 GeneratedFormTextField('requestHeader',
                     label: tr('requestHeader'),
+                    required: false,
                     additionalValidators: [
                       (value) {
                         if ((value ?? 'empty:valid')
@@ -301,16 +302,15 @@ class HTML extends AppSource {
     }
     var rel = links.last.key;
     String? version;
-    if (additionalSettings['supportFixedAPKURL'] != true) {
-      version = rel.hashCode.toString();
-    }
     version = extractVersion(
         additionalSettings['versionExtractionRegEx'] as String?,
         additionalSettings['matchGroupToUse'] as String?,
         additionalSettings['versionExtractWholePage'] == true
             ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
             : rel);
-    version ??= (await checkDownloadHash(rel)).toString();
+    version ??= additionalSettings['supportFixedAPKURL'] != true
+        ? rel.hashCode.toString()
+        : (await checkDownloadHash(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
   }
