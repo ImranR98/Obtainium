@@ -174,13 +174,13 @@ class GeneratedForm extends StatefulWidget {
 List<List<GeneratedFormItem>> cloneFormItems(
     List<List<GeneratedFormItem>> items) {
   List<List<GeneratedFormItem>> clonedItems = [];
-  items.forEach((row) {
+  for (var row in items) {
     List<GeneratedFormItem> clonedRow = [];
-    row.forEach((it) {
+    for (var it in row) {
       clonedRow.add(it.clone());
-    });
+    }
     clonedItems.add(clonedRow);
-  });
+  }
   return clonedItems;
 }
 
