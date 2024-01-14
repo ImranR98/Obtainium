@@ -15,22 +15,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
-
-App obtainiumApp = App(
-    'dev.imranr.obtainium',
-    'https://github.com/ImranR98/Obtainium',
-    'ImranR98',
-    'Obtainium',
-    currentReleaseTag,
-    currentReleaseTag,
-    [],
-    0,
-    {
-      'includePrereleases': true,
-      'versionDetection': 'standardVersionDetection'
-    },
-    null,
-    false);
+String obtainiumId = 'dev.imranr.obtainium';
+String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 
 enum InstallMethodSettings { normal, shizuku, root }
 

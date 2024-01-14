@@ -2,6 +2,12 @@ name: Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      beta:
+        type: boolean
+        description: Is beta?
+      environment:
+        type: environment
     
 jobs:
   build:
@@ -47,12 +53,13 @@ jobs:
       - name: Extract Version
         id: extract_version      
         run: |
-           VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
+           VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
            echo "version=$VERSION" >> $GITHUB_OUTPUT
-           TAG=$(grep -oP "'.*\\\$currentVersion.*'" lib/main.dart | head -c -2 | tail -c +2 | sed "s/\$currentVersion/$VERSION/g")
-           echo "tag=$TAG" >> $GITHUB_OUTPUT
-           if [ -n "$(echo $TAG | grep -oP '\-beta$')" ]; then BETA=true; else BETA=false; fi
+           if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
            echo "beta=$BETA" >> $GITHUB_OUTPUT
+           TAG="v$VERSION"
+           if [ $BETA == true ]; then TAG="$TAG"-beta; fi
+           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Create Tag
         uses: mathieudutour/github-tag-action@v6.1

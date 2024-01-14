@@ -7,6 +7,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -17,10 +18,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
-
-const String currentVersion = '0.15.11';
-const String currentReleaseTag =
-    'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
@@ -174,7 +171,29 @@ class _ObtainiumState extends State<Obtainium> {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         if (!fdroid) {
-          appsProvider.saveApps([obtainiumApp], onlyIfExists: false);
+          getInstalledInfo(obtainiumId).then((value) {
+            if (value?.versionName != null) {
+              appsProvider.saveApps([
+                App(
+                    obtainiumId,
+                    obtainiumUrl,
+                    'ImranR98',
+                    'Obtainium',
+                    value!.versionName,
+                    value.versionName!,
+                    [],
+                    0,
+                    {
+                      'includePrereleases': true,
+                      'versionDetection': 'standardVersionDetection'
+                    },
+                    null,
+                    false)
+              ], onlyIfExists: false);
+            }
+          }).catchError((err) {
+            print(err);
+          });
         }
       }
       if (!supportedLocales

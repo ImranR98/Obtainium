@@ -234,6 +234,20 @@ Future<File> downloadFile(
   return downloadedFile;
 }
 
+Future<PackageInfo?> getInstalledInfo(String? packageName,
+    {bool printErr = true}) async {
+  if (packageName != null) {
+    try {
+      return await pm.getPackageInfo(packageName: packageName);
+    } catch (e) {
+      if (printErr) {
+        print(e); // OK
+      }
+    }
+  }
+  return null;
+}
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -404,7 +418,7 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumApp.id) {
+    if (app.id == obtainiumId) {
       return false;
     }
     if (!settingsProvider.enableBackgroundUpdates) {
@@ -428,7 +442,7 @@ class AppsProvider with ChangeNotifier {
     } catch (e) {
       // Probably not installed - ignore
     }
-    if (installerPackageName != obtainiumApp.id) {
+    if (installerPackageName != obtainiumId) {
       // If we did not install the app (or it isn't installed), silent install is not possible
       return false;
     }
@@ -639,6 +653,7 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
+        // ignore: use_build_context_synchronously
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
       }
       if (apkUrl != null) {
@@ -673,7 +688,7 @@ class AppsProvider with ChangeNotifier {
 
     // Move Obtainium to the end of the line (let all other apps update first)
     appsToInstall =
-        moveStrToEnd(appsToInstall, obtainiumApp.id, strB: obtainiumTempId);
+        moveStrToEnd(appsToInstall, obtainiumId, strB: obtainiumTempId);
 
     Future<void> updateFn(String id, {bool skipInstalls = false}) async {
       try {
@@ -773,20 +788,6 @@ class AppsProvider with ChangeNotifier {
       appsDir.createSync();
     }
     return appsDir;
-  }
-
-  Future<PackageInfo?> getInstalledInfo(String? packageName,
-      {bool printErr = true}) async {
-    if (packageName != null) {
-      try {
-        return await pm.getPackageInfo(packageName: packageName);
-      } catch (e) {
-        if (printErr) {
-          print(e); // OK
-        }
-      }
-    }
-    return null;
   }
 
   bool isVersionDetectionPossible(AppInMemory? app) {
@@ -1678,8 +1679,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     }
     if (toInstall.isNotEmpty) {
       logs.add('BG install task: Started (${toInstall.length}).');
-      var tempObtArr =
-          toInstall.where((element) => element.key == obtainiumApp.id);
+      var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
       if (tempObtArr.isNotEmpty) {
         // Move obtainium to the end of the list as it must always install last
         var obt = tempObtArr.first;

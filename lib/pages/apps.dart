@@ -904,7 +904,7 @@ class AppsPageState extends State<AppsPage> {
                                       }))}">${a.name}</a></li>\n';
                                 }
                                 urls +=
-                                    '</ul>\n\n<p><a href="${obtainiumApp.url}">${tr('about')}</a></p>';
+                                    '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
                                 Share.share(urls,
                                     subject:
                                         '${tr('obtainium')} - ${tr('appsString')}');
