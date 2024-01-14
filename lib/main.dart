@@ -143,6 +143,7 @@ class _ObtainiumState extends State<Obtainium> {
         BackgroundFetchConfig(
             minimumFetchInterval: 15,
             stopOnTerminate: false,
+            startOnBoot: true,
             enableHeadless: true,
             requiresBatteryNotLow: false,
             requiresCharging: false,
