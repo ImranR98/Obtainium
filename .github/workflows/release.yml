@@ -33,6 +33,7 @@ jobs:
            TAG="v$VERSION"
            if [ $BETA == true ]; then TAG="$TAG"-beta; fi
            echo "tag=$TAG" >> $GITHUB_OUTPUT
+           echo "$VERSION" "$TAG" "$BETA"
 
       - name: Build APKs
         run: |
