@@ -72,5 +72,5 @@ jobs:
       #     token: ${{ secrets.GH_ACCESS_TOKEN }}
       #     tag: "${{ steps.extract_version.outputs.tag }}"
       #     prerelease: "${{ steps.extract_version.outputs.beta }}"
-          artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
-          generateReleaseNotes: true
+          # artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
+          # generateReleaseNotes: true
