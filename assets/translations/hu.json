@@ -291,6 +291,7 @@
     "shizukuBinderNotFound": "A Shizuku nem fut",
     "useVersionCodeAsOSVersion": "Az app versionCode használata a rendszer által észlelt verzióként",
     "requestHeader": "Kérelem fejléc",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

@@ -291,6 +291,7 @@
     "shizukuBinderNotFound": "Shizuku در حال اجرا نیست",
     "useVersionCodeAsOSVersion": "استفاده کد نسخه برنامه به جای نسخه شناسایی شده توسط سیستم عامل استفاده کنید",
     "requestHeader": "درخواست سطر بالایی",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
