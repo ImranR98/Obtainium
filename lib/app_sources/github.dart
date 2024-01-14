@@ -76,6 +76,10 @@ class GitHub extends AppSource {
       [
         GeneratedFormSwitch('dontSortReleasesList',
             label: tr('dontSortReleasesList'))
+      ],
+      [
+        GeneratedFormSwitch('useLatestAssetDateAsReleaseDate',
+            label: tr('useLatestAssetDateAsReleaseDate'), defaultValue: false)
       ]
     ];
 
@@ -237,6 +241,8 @@ class GitHub extends AppSource {
     bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
     bool dontSortReleasesList =
         additionalSettings['dontSortReleasesList'] == true;
+    bool useLatestAssetDateAsReleaseDate =
+        additionalSettings['useLatestAssetDateAsReleaseDate'] == true;
     dynamic latestRelease;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
@@ -277,10 +283,31 @@ class GitHub extends AppSource {
               .toList() ??
           [];
 
-      DateTime? getReleaseDateFromRelease(dynamic rel) =>
+      DateTime? getPublishDateFromRelease(dynamic rel) =>
           rel?['published_at'] != null
               ? DateTime.parse(rel['published_at'])
               : null;
+      DateTime? getNewestAssetDateFromRelease(dynamic rel) {
+        var t = (rel['assets'] as List<dynamic>?)
+            ?.map((e) {
+              return e?['updated_at'] != null
+                  ? DateTime.parse(e['updated_at'])
+                  : null;
+            })
+            .where((e) => e != null)
+            .toList();
+        t?.sort((a, b) => b!.compareTo(a!));
+        if (t?.isNotEmpty == true) {
+          return t!.first;
+        }
+        return null;
+      }
+
+      DateTime? getReleaseDateFromRelease(dynamic rel, bool useAssetDate) =>
+          !useAssetDate
+              ? getPublishDateFromRelease(rel)
+              : getNewestAssetDateFromRelease(rel);
+
       if (dontSortReleasesList) {
         releases = releases.reversed.toList();
       } else {
@@ -305,8 +332,12 @@ class GitHub extends AppSource {
                   (nameA as String).substring(matchA!.start, matchA.end),
                   (nameB as String).substring(matchB!.start, matchB.end));
             } else {
-              return (getReleaseDateFromRelease(a) ?? DateTime(1))
-                  .compareTo(getReleaseDateFromRelease(b) ?? DateTime(0));
+              return (getReleaseDateFromRelease(
+                          a, useLatestAssetDateAsReleaseDate) ??
+                      DateTime(1))
+                  .compareTo(getReleaseDateFromRelease(
+                          b, useLatestAssetDateAsReleaseDate) ??
+                      DateTime(0));
             }
           }
         });
@@ -366,7 +397,8 @@ class GitHub extends AppSource {
         throw NoReleasesError();
       }
       String? version = targetRelease['tag_name'] ?? targetRelease['name'];
-      DateTime? releaseDate = getReleaseDateFromRelease(targetRelease);
+      DateTime? releaseDate = getReleaseDateFromRelease(
+          targetRelease, useLatestAssetDateAsReleaseDate);
       if (version == null) {
         throw NoVersionError();
       }
