@@ -6,8 +6,6 @@ on:
       beta:
         type: boolean
         description: Is beta?
-      environment:
-        type: environment
     
 jobs:
   build:
@@ -61,18 +59,18 @@ jobs:
            if [ $BETA == true ]; then TAG="$TAG"-beta; fi
            echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Create Tag
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
-          custom_tag: "${{ steps.extract_version.outputs.tag }}"
-          tag_prefix: ""
+      # - name: Create Tag
+      #   uses: mathieudutour/github-tag-action@v6.1
+      #   with:
+      #     github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #     custom_tag: "${{ steps.extract_version.outputs.tag }}"
+      #     tag_prefix: ""
       
-      - name: Create Release And Upload APKs
-        uses: ncipollo/release-action@v1
-        with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-          tag: "${{ steps.extract_version.outputs.tag }}"
-          prerelease: "${{ steps.extract_version.outputs.beta }}"
+      # - name: Create Release And Upload APKs
+      #   uses: ncipollo/release-action@v1
+      #   with:
+      #     token: ${{ secrets.GH_ACCESS_TOKEN }}
+      #     tag: "${{ steps.extract_version.outputs.tag }}"
+      #     prerelease: "${{ steps.extract_version.outputs.beta }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
           generateReleaseNotes: true
