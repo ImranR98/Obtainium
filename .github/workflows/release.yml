@@ -23,6 +23,17 @@ jobs:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
           passphrase: ${{ secrets.PGP_PASSPHRASE }}
 
+      - name: Extract Version
+        id: extract_version      
+        run: |
+           VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
+           echo "version=$VERSION" >> $GITHUB_OUTPUT
+           if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
+           echo "beta=$BETA" >> $GITHUB_OUTPUT
+           TAG="v$VERSION"
+           if [ $BETA == true ]; then TAG="$TAG"-beta; fi
+           echo "tag=$TAG" >> $GITHUB_OUTPUT
+
       - name: Build APKs
         run: |
           sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
@@ -47,17 +58,6 @@ jobs:
           done
           rm apksign.keystore
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
-        
-      - name: Extract Version
-        id: extract_version      
-        run: |
-           VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
-           echo "version=$VERSION" >> $GITHUB_OUTPUT
-           if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
-           echo "beta=$BETA" >> $GITHUB_OUTPUT
-           TAG="v$VERSION"
-           if [ $BETA == true ]; then TAG="$TAG"-beta; fi
-           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       # - name: Create Tag
       #   uses: mathieudutour/github-tag-action@v6.1
