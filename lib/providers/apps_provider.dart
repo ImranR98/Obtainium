@@ -917,6 +917,17 @@ class AppsProvider with ChangeNotifier {
         : false;
   }
 
+  Future<void> updateInstallStatusInMemory(AppInMemory app) async {
+    apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
+    apps[app.app.id]?.icon =
+        await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
+    apps[app.app.id]?.app.name = await (apps[app.app.id]
+            ?.installedInfo
+            ?.applicationInfo
+            ?.getAppLabel()) ??
+        app.name;
+  }
+
   Future<void> loadApps({String? singleId}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
@@ -965,19 +976,11 @@ class AppsProvider with ChangeNotifier {
       NotificationsProvider().notify(
           AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
-
-    for (var app in apps.values) {
-      // Get install status and other OS info for each App (slow)
-      apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
-      apps[app.app.id]?.icon =
-          await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
-      apps[app.app.id]?.app.name = await (apps[app.app.id]
-              ?.installedInfo
-              ?.applicationInfo
-              ?.getAppLabel()) ??
-          app.name;
-      notifyListeners();
-    }
+    // Get install status and other OS info for each App (slow)
+    await Future.wait(apps.values.map((app) {
+      return updateInstallStatusInMemory(app);
+    }));
+    notifyListeners();
     // Reconcile version differences
     List<App> modifiedApps = [];
     for (var app in apps.values) {
@@ -1000,7 +1003,6 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }
-
     loadingApps = false;
     notifyListeners();
   }
