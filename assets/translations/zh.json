@@ -73,6 +73,8 @@
     "unpinFromTop": "取消置顶",
     "resetInstallStatusForSelectedAppsQuestion": "是否重置选中应用的安装状态？",
     "installStatusOfXWillBeResetExplanation": "选中应用的安装状态将会被重置。\n\n当更新安装失败或其他问题导致 Obtainium 中的应用版本显示错误时，可以尝试通过此方法解决。",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "分享选中应用的 URL",
     "resetInstallStatus": "重置安装状态",
     "more": "更多",
@@ -291,6 +293,7 @@
     "systemFontError": "加载系统字体出错：{}",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

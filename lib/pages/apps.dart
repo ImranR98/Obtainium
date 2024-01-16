@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -871,20 +873,44 @@ class AppsPageState extends State<AppsPage> {
                         onPressed: () {
                           String urls = '';
                           for (var a in selectedApps) {
-                            urls += 'obtainium://add/${a.url}\n';
+                            urls += '${a.url}\n';
                           }
                           urls = urls.substring(0, urls.length - 1);
                           Share.share(urls,
-                              subject: tr('selectedAppURLsFromObtainium'));
+                              subject:
+                                  '${tr('obtainium')} - ${tr('appsString')}');
                           Navigator.of(context).pop();
                         },
                         tooltip: tr('shareSelectedAppURLs'),
-                        icon: const Icon(Icons.share),
+                        icon: const Icon(Icons.share_rounded),
                       ),
                       IconButton(
-                        onPressed: resetSelectedAppsInstallStatuses,
-                        tooltip: tr('resetInstallStatus'),
-                        icon: const Icon(Icons.restore_page_outlined),
+                        onPressed: selectedAppIds.isEmpty
+                            ? null
+                            : () {
+                                String urls =
+                                    '<p>${tr('customLinkMessage')}:</p>\n\n<ul>\n';
+                                for (var a in selectedApps) {
+                                  urls +=
+                                      '    <li><a href="obtainium://app/${Uri.encodeComponent(jsonEncode({
+                                        'id': a.id,
+                                        'url': a.url,
+                                        'author': a.author,
+                                        'name': a.name,
+                                        'preferredApkIndex':
+                                            a.preferredApkIndex,
+                                        'additionalSettings':
+                                            jsonEncode(a.additionalSettings)
+                                      }))}">${a.name}</a></li>\n';
+                                }
+                                urls +=
+                                    '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
+                                Share.share(urls,
+                                    subject:
+                                        '${tr('obtainium')} - ${tr('appsString')}');
+                              },
+                        tooltip: tr('shareAppConfigLinks'),
+                        icon: const Icon(Icons.ios_share),
                       ),
                     ]),
               ),

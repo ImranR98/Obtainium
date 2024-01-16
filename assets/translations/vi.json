@@ -73,6 +73,8 @@
     "unpinFromTop": "Bỏ ghim khỏi đầu trang",
     "resetInstallStatusForSelectedAppsQuestion": "Đặt lại trạng thái cài đặt cho ứng dụng đã chọn?",
     "installStatusOfXWillBeResetExplanation": "Trạng thái cài đặt của mọi Ứng dụng đã chọn sẽ được đặt lại.\n\nĐiều này có thể hữu ích khi phiên bản Ứng dụng hiển thị trong Obtainium không chính xác do cập nhật không thành công hoặc các sự cố khác.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Chia sẻ URL ứng dụng đã chọn",
     "resetInstallStatus": "Đặt lại trạng thái cài đặt",
     "more": "Nhiều hơn",
@@ -287,6 +289,7 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizuku chưa khởi động",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

@@ -73,6 +73,8 @@
     "unpinFromTop": "Avnåla",
     "resetInstallStatusForSelectedAppsQuestion": "Återställ Installationsstatus för valda Appar?",
     "installStatusOfXWillBeResetExplanation": "Installationsstatusen för de markerade apparna kommer återställas.\n\n Detta kan hjälpa när appversionen visad i Obtanium är fel på grund av misslyckade uppdateringar eller andra orsaker.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Dela Valda Appars URL:er",
     "resetInstallStatus": "Återställ Installationstatus",
     "more": "Mer",
@@ -275,6 +277,7 @@
     "shizukuBinderNotFound": "Shizuku is not running",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

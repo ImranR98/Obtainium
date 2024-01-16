@@ -19,10 +19,6 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 
-const String currentVersion = '0.15.9';
-const String currentReleaseTag =
-    'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
-
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
   MapEntry(Locale('zh'), '简体中文'),
@@ -144,6 +140,7 @@ class _ObtainiumState extends State<Obtainium> {
         BackgroundFetchConfig(
             minimumFetchInterval: 15,
             stopOnTerminate: false,
+            startOnBoot: true,
             enableHeadless: true,
             requiresBatteryNotLow: false,
             requiresCharging: false,
@@ -174,20 +171,29 @@ class _ObtainiumState extends State<Obtainium> {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         if (!fdroid) {
-          appsProvider.saveApps([
-            App(
-                obtainiumId,
-                'https://github.com/ImranR98/Obtainium',
-                'ImranR98',
-                'Obtainium',
-                currentReleaseTag,
-                currentReleaseTag,
-                [],
-                0,
-                {'includePrereleases': true},
-                null,
-                false)
-          ], onlyIfExists: false);
+          getInstalledInfo(obtainiumId).then((value) {
+            if (value?.versionName != null) {
+              appsProvider.saveApps([
+                App(
+                    obtainiumId,
+                    obtainiumUrl,
+                    'ImranR98',
+                    'Obtainium',
+                    value!.versionName,
+                    value.versionName!,
+                    [],
+                    0,
+                    {
+                      'includePrereleases': true,
+                      'versionDetection': 'standardVersionDetection'
+                    },
+                    null,
+                    false)
+              ], onlyIfExists: false);
+            }
+          }).catchError((err) {
+            print(err);
+          });
         }
       }
       if (!supportedLocales

@@ -73,6 +73,8 @@
     "unpinFromTop": "トップから固定解除",
     "resetInstallStatusForSelectedAppsQuestion": "選択したアプリのインストール状態をリセットしますか？",
     "installStatusOfXWillBeResetExplanation": "選択したアプリのインストール状態がリセットされます。\n\nアップデートに失敗した場合など、Obtainiumに表示されるアプリのバージョンが正しくない場合に有効です。",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "選択したアプリのURLを共有する",
     "resetInstallStatus": "インストール状態をリセットする",
     "more": "もっと見る",
@@ -291,6 +293,7 @@
     "systemFontError": "システムフォントの読み込みエラー: {}",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

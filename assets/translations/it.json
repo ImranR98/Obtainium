@@ -73,6 +73,8 @@
     "unpinFromTop": "Rimuovi dall'alto",
     "resetInstallStatusForSelectedAppsQuestion": "Ripristinare lo stato d'installazione delle app selezionate?",
     "installStatusOfXWillBeResetExplanation": "Lo stato d'installazione di ogni app selezionata sarà ripristinato.\n\nCiò può essere d'aiuto nel caso in cui la versione mostrata dell'app in Obtainium non sia corretta a causa di un aggiornamento fallito o di altri problemi.",
+    "customLinkMessage": "These links work on devices with Obtainium installed",
+    "shareAppConfigLinks": "Share app configuration as HTML link",
     "shareSelectedAppURLs": "Condividi gli URL delle app selezionate",
     "resetInstallStatus": "Ripristina lo stato d'installazione",
     "more": "Altro",
@@ -289,6 +291,7 @@
     "shizukuBinderNotFound": "Shizuku non è in esecuzione",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
+    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

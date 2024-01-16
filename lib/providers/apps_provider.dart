@@ -234,6 +234,20 @@ Future<File> downloadFile(
   return downloadedFile;
 }
 
+Future<PackageInfo?> getInstalledInfo(String? packageName,
+    {bool printErr = true}) async {
+  if (packageName != null) {
+    try {
+      return await pm.getPackageInfo(packageName: packageName);
+    } catch (e) {
+      if (printErr) {
+        print(e); // OK
+      }
+    }
+  }
+  return null;
+}
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -639,6 +653,7 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
+        // ignore: use_build_context_synchronously
         apkUrl = await confirmApkUrl(apps[id]!.app, context);
       }
       if (apkUrl != null) {
@@ -775,20 +790,6 @@ class AppsProvider with ChangeNotifier {
     return appsDir;
   }
 
-  Future<PackageInfo?> getInstalledInfo(String? packageName,
-      {bool printErr = true}) async {
-    if (packageName != null) {
-      try {
-        return await pm.getPackageInfo(packageName: packageName);
-      } catch (e) {
-        if (printErr) {
-          print(e); // OK
-        }
-      }
-    }
-    return null;
-  }
-
   bool isVersionDetectionPossible(AppInMemory? app) {
     if (app?.app == null) {
       return false;
@@ -917,6 +918,17 @@ class AppsProvider with ChangeNotifier {
         : false;
   }
 
+  Future<void> updateInstallStatusInMemory(AppInMemory app) async {
+    apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
+    apps[app.app.id]?.icon =
+        await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
+    apps[app.app.id]?.app.name = await (apps[app.app.id]
+            ?.installedInfo
+            ?.applicationInfo
+            ?.getAppLabel()) ??
+        app.name;
+  }
+
   Future<void> loadApps({String? singleId}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
@@ -965,19 +977,11 @@ class AppsProvider with ChangeNotifier {
       NotificationsProvider().notify(
           AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
-
-    for (var app in apps.values) {
-      // Get install status and other OS info for each App (slow)
-      apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
-      apps[app.app.id]?.icon =
-          await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
-      apps[app.app.id]?.app.name = await (apps[app.app.id]
-              ?.installedInfo
-              ?.applicationInfo
-              ?.getAppLabel()) ??
-          app.name;
-      notifyListeners();
-    }
+    // Get install status and other OS info for each App (slow)
+    await Future.wait(apps.values.map((app) {
+      return updateInstallStatusInMemory(app);
+    }));
+    notifyListeners();
     // Reconcile version differences
     List<App> modifiedApps = [];
     for (var app in apps.values) {
@@ -1000,7 +1004,6 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }
-
     loadingApps = false;
     notifyListeners();
   }
