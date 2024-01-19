@@ -52,7 +52,7 @@
     "pleaseWait": "In attesa",
     "updateAvailable": "Aggiornamento disponibile",
     "notInstalled": "Non installato",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "Seleziona tutto",
     "deselectX": "Deseleziona {}",
     "xWillBeRemovedButRemainInstalled": "Verà effettuata la rimozione di {}, ma non la disinstallazione.",

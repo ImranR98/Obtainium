@@ -52,7 +52,7 @@
     "pleaseWait": "Molimo sačekajte",
     "updateAvailable": "Ažuriranje dostupno",
     "notInstalled": "Nije instalirano",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "Označi sve",
     "deselectX": "Poništi odabir {}",
     "xWillBeRemovedButRemainInstalled": "{} će biti uklonjen iz Obtainiuma, ali će ostati instaliran na uređaju.",

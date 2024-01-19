@@ -530,7 +530,9 @@ abstract class AppSource {
                 1,
             [
               GeneratedFormSwitch('releaseDateAsVersion',
-                  label: tr('releaseDateAsVersion'), defaultValue: false)
+                  label:
+                      '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
+                  defaultValue: false)
             ]);
       }
     }

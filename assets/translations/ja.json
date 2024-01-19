@@ -52,7 +52,7 @@
     "pleaseWait": "しばらくお待ちください",
     "updateAvailable": "アップデートが利用可能",
     "notInstalled": "未インストール",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "すべて選択",
     "deselectX": "{}件の選択を解除",
     "xWillBeRemovedButRemainInstalled": "{} はObtainiumから削除されますが、デバイスにはインストールされたままです。",

@@ -52,7 +52,7 @@
     "pleaseWait": "请稍候",
     "updateAvailable": "更新可用",
     "notInstalled": "未安装",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "全选",
     "deselectX": "取消选择 {}",
     "xWillBeRemovedButRemainInstalled": "“{}”将从 Obtainium 中删除，但仍安装在您的设备中。",

@@ -52,7 +52,7 @@
     "pleaseWait": "Vänta",
     "updateAvailable": "Uppdatering Tillgänglig",
     "notInstalled": "Inte Installerad",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "Välj Alla",
     "deselectX": "Avmarkera {}",
     "xWillBeRemovedButRemainInstalled": "{} kommer tas bort från Obtainium men kommer vara fortsatt installerad på enheten.",

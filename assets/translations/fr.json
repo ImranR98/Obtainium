@@ -52,7 +52,7 @@
     "pleaseWait": "Veuillez patienter",
     "updateAvailable": "Mise à jour disponible",
     "notInstalled": "Pas installé",
-    "pseudoVersion": "Pseudo-version",
+    "pseudoVersion": "pseudo-version",
     "selectAll": "Tout sélectionner",
     "deselectX": "Déselectionner {}",
     "xWillBeRemovedButRemainInstalled": "{} sera supprimé d'Obtainium mais restera installé sur l'appareil.",

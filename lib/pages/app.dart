@@ -94,7 +94,7 @@ class _AppPageState extends State<AppPage> {
                         app?.app.latestVersion ?? tr('unknown')
                       ])}\n${tr('installedVersionX', args: [
                         app?.app.installedVersion ?? tr('none')
-                      ])}${installedVersionIsEstimate ? '\n${tr('pseudoVersion')}' : ''}',
+                      ])}${installedVersionIsEstimate ? '\n(${tr('pseudoVersion')})' : ''}',
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge!,
                 ),
@@ -108,9 +108,7 @@ class _AppPageState extends State<AppPage> {
                     height: 16,
                   ),
                   Text(
-                    '${trackOnly ? '${tr('xIsTrackOnly', args: [
-                            tr('app')
-                          ])}\n' : ''}${tr('noVersionDetection')}',
+                    trackOnly ? tr('xIsTrackOnly', args: [tr('app')]) : '',
                     style: Theme.of(context).textTheme.labelSmall,
                     textAlign: TextAlign.center,
                   )
