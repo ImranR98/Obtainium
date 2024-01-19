@@ -94,7 +94,7 @@ class _AppPageState extends State<AppPage> {
                         app?.app.latestVersion ?? tr('unknown')
                       ])}\n${tr('installedVersionX', args: [
                         app?.app.installedVersion ?? tr('none')
-                      ])}${installedVersionIsEstimate ? '\n${tr('estimateInBrackets')}' : ''}',
+                      ])}${installedVersionIsEstimate ? '\n${tr('pseudoVersion')}' : ''}',
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge!,
                 ),

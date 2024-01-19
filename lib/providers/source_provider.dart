@@ -480,7 +480,7 @@ abstract class AppSource {
     ],
     [
       GeneratedFormSwitch('versionDetection',
-          label: tr('versionDetection'), defaultValue: true)
+          label: tr('versionDetectionExplanation'), defaultValue: true)
     ],
     [
       GeneratedFormSwitch('useVersionCodeAsOSVersion',
