@@ -734,11 +734,15 @@ class SourceProvider {
     }
     AppSource? source;
     for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
-      if (RegExp(
-              '://${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})(/|\\z)?')
-          .hasMatch(url)) {
-        source = s;
-        break;
+      try {
+        if (RegExp(
+                '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$')
+            .hasMatch(Uri.parse(url).host)) {
+          source = s;
+          break;
+        }
+      } catch (e) {
+        // Ignore
       }
     }
     if (source == null) {
