@@ -310,7 +310,7 @@ class HTML extends AppSource {
             : rel);
     version ??= additionalSettings['supportFixedAPKURL'] != true
         ? rel.hashCode.toString()
-        : (await checkDownloadHash(rel)).toString();
+        : (await checkPartialDownloadHashDynamc(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
   }

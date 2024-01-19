@@ -167,8 +167,25 @@ String hashListOfLists(List<List<int>> data) {
   return hash.hashCode.toString();
 }
 
-Future<String> checkDownloadHash(String url,
-    {int bytesToGrab = 1024, Map<String, String>? headers}) async {
+Future<String> checkPartialDownloadHashDynamc(String url,
+    {int startingSize = 1024,
+    int lowerLimit = 128,
+    Map<String, String>? headers}) async {
+  for (int i = startingSize; i >= lowerLimit; i -= 256) {
+    List<String> ab = await Future.wait([
+      checkPartialDownloadHash(url, i, headers: headers),
+      checkPartialDownloadHash(url, i, headers: headers)
+    ]);
+    if (ab[0] == ab[1]) {
+      print(i);
+      return ab[0];
+    }
+  }
+  throw NoVersionError();
+}
+
+Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
+    {Map<String, String>? headers}) async {
   var req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
