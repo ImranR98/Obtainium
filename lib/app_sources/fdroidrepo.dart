@@ -10,6 +10,7 @@ class FDroidRepo extends AppSource {
     canSearch = true;
     excludeFromMassSearch = true;
     neverAutoSelect = true;
+    showReleaseDateAsVersionToggle = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [

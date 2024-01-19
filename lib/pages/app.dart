@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -54,13 +53,11 @@ class _AppPageState extends State<AppPage> {
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
 
     bool isVersionDetectionStandard =
-        app?.app.additionalSettings['versionDetection'] ==
-            'standardVersionDetection';
+        app?.app.additionalSettings['versionDetection'] == true;
 
     bool installedVersionIsEstimate = trackOnly ||
         (app?.app.installedVersion != null &&
-            app?.app.additionalSettings['versionDetection'] ==
-                'noVersionDetection');
+            app?.app.additionalSettings['versionDetection'] != true);
 
     getInfoColumn() => Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -287,25 +284,6 @@ class _AppPageState extends State<AppPage> {
               return row;
             }).toList();
 
-            items = items.map((row) {
-              row = row.map((e) {
-                if (e.key == 'versionDetection' && e is GeneratedFormDropdown) {
-                  e.disabledOptKeys ??= [];
-                  if (app?.app.installedVersion != null &&
-                      app?.app.additionalSettings['versionDetection'] !=
-                          'releaseDateAsVersion' &&
-                      !appsProvider.isVersionDetectionPossible(app)) {
-                    e.disabledOptKeys!.add('standardVersionDetection');
-                  }
-                  if (app?.app.releaseDate == null) {
-                    e.disabledOptKeys!.add('releaseDateAsVersion');
-                  }
-                }
-                return e;
-              }).toList();
-              return row;
-            }).toList();
-
             return GeneratedFormModal(
                 title: tr('additionalOptions'), items: items);
           });
@@ -320,9 +298,8 @@ class _AppPageState extends State<AppPage> {
           // ignore: use_build_context_synchronously
           showMessage(tr('appsFromSourceAreTrackOnly'), context);
         }
-        if (app.app.additionalSettings['versionDetection'] ==
-            'releaseDateAsVersion') {
-          if (originalSettings['versionDetection'] != 'releaseDateAsVersion') {
+        if (app.app.additionalSettings['releaseDateAsVersion'] == true) {
+          if (originalSettings['releaseDateAsVersion'] != true) {
             if (app.app.releaseDate != null) {
               bool isUpdated =
                   app.app.installedVersion == app.app.latestVersion;
@@ -333,8 +310,7 @@ class _AppPageState extends State<AppPage> {
               }
             }
           }
-        } else if (originalSettings['versionDetection'] ==
-            'releaseDateAsVersion') {
+        } else if (originalSettings['releaseDateAsVersion'] == true) {
           app.app.installedVersion =
               app.installedInfo?.versionName ?? app.app.installedVersion;
         }

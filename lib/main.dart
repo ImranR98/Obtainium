@@ -183,10 +183,7 @@ class _ObtainiumState extends State<Obtainium> {
                     value.versionName!,
                     [],
                     0,
-                    {
-                      'includePrereleases': true,
-                      'versionDetection': 'standardVersionDetection'
-                    },
+                    {'includePrereleases': true, 'versionDetection': true},
                     null,
                     false)
               ], onlyIfExists: false);

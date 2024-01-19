@@ -820,8 +820,7 @@ class AppsProvider with ChangeNotifier {
             ? app.installedInfo?.versionCode.toString()
             : app.installedInfo?.versionName;
     return app.app.additionalSettings['trackOnly'] != true &&
-        app.app.additionalSettings['versionDetection'] !=
-            'releaseDateAsVersion' &&
+        app.app.additionalSettings['releaseDateAsVersion'] != true &&
         realInstalledVersion != null &&
         app.app.installedVersion != null &&
         (reconcileVersionDifferences(
@@ -837,8 +836,7 @@ class AppsProvider with ChangeNotifier {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
     var versionDetectionIsStandard =
-        app.additionalSettings['versionDetection'] ==
-            'standardVersionDetection';
+        app.additionalSettings['versionDetection'] == true;
     var naiveStandardVersionDetection =
         app.additionalSettings['naiveStandardVersionDetection'] == true ||
             SourceProvider()
@@ -892,7 +890,7 @@ class AppsProvider with ChangeNotifier {
         versionDetectionIsStandard &&
         !isVersionDetectionPossible(
             AppInMemory(app, null, installedInfo, null))) {
-      app.additionalSettings['versionDetection'] = 'noVersionDetection';
+      app.additionalSettings['versionDetection'] = false;
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }

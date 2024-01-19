@@ -96,11 +96,14 @@ class GeneratedFormDropdown extends GeneratedFormItem {
 }
 
 class GeneratedFormSwitch extends GeneratedFormItem {
+  bool disabled = false;
+
   GeneratedFormSwitch(
     super.key, {
     super.label,
     super.belowWidgets,
     bool super.defaultValue = false,
+    bool disabled = false,
     List<String? Function(bool value)> super.additionalValidators = const [],
   });
 
@@ -115,6 +118,7 @@ class GeneratedFormSwitch extends GeneratedFormItem {
         label: label,
         belowWidgets: belowWidgets,
         defaultValue: defaultValue,
+        disabled: false,
         additionalValidators: List.from(additionalValidators));
   }
 }
@@ -368,12 +372,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ),
               Switch(
                   value: values[fieldKey],
-                  onChanged: (value) {
-                    setState(() {
-                      values[fieldKey] = value;
-                      someValueChanged();
-                    });
-                  })
+                  onChanged:
+                      (widget.items[r][e] as GeneratedFormSwitch).disabled
+                          ? null
+                          : (value) {
+                              setState(() {
+                                values[fieldKey] = value;
+                                someValueChanged();
+                              });
+                            })
             ],
           );
         } else if (widget.items[r][e] is GeneratedFormTagInput) {

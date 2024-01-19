@@ -135,8 +135,7 @@ class AddAppPageState extends State<AddAppPage> {
 
     getReleaseDateAsVersionConfirmationIfNeeded(
         bool userPickedTrackOnly) async {
-      return (!(additionalSettings['versionDetection'] ==
-              'releaseDateAsVersion' &&
+      return (!(additionalSettings['releaseDateAsVersion'] == true &&
           // ignore: use_build_context_synchronously
           await showDialog(
                   context: context,
@@ -192,8 +191,7 @@ class AddAppPageState extends State<AddAppPage> {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
           if (app.additionalSettings['trackOnly'] == true ||
-              app.additionalSettings['versionDetection'] !=
-                  'standardVersionDetection') {
+              app.additionalSettings['versionDetection'] != true) {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;

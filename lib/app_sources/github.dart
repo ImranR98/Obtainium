@@ -16,6 +16,7 @@ class GitHub extends AppSource {
   GitHub() {
     hosts = ['github.com'];
     appIdInferIsOptional = true;
+    showReleaseDateAsVersionToggle = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField('github-creds',

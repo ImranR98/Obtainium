@@ -7,8 +7,8 @@ class HuaweiAppGallery extends AppSource {
   HuaweiAppGallery() {
     name = 'Huawei AppGallery';
     hosts = ['appgallery.huawei.com'];
-    overrideVersionDetectionFormDefault('releaseDateAsVersion',
-        disableStandard: true);
+    versionDetectionDisallowed = true;
+    showReleaseDateAsVersionToggle = true;
   }
 
   @override

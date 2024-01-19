@@ -15,6 +15,7 @@ class GitLab extends AppSource {
   GitLab() {
     hosts = ['gitlab.com'];
     canSearch = true;
+    showReleaseDateAsVersionToggle = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField('gitlab-creds',

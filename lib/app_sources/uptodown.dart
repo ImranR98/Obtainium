@@ -9,6 +9,7 @@ class Uptodown extends AppSource {
     hosts = ['uptodown.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
+    showReleaseDateAsVersionToggle = true;
   }
 
   @override

@@ -174,8 +174,6 @@ class HTML extends AppSource {
             ])
       ]
     ];
-    overrideVersionDetectionFormDefault('noVersionDetection',
-        disableStandard: false, disableRelDate: true);
   }
 
   @override
