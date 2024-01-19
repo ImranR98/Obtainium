@@ -28,8 +28,18 @@ class _AppPageState extends State<AppPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    getUpdate(String id) {
-      appsProvider.checkUpdate(id).catchError((e) {
+    getUpdate(String id, {bool resetVersion = false}) {
+      appsProvider.checkUpdate(id).then((e) {
+        if (resetVersion) {
+          appsProvider.apps[id]?.app.additionalSettings['versionDetection'] =
+              true;
+          if (appsProvider.apps[id]?.app.installedVersion != null) {
+            appsProvider.apps[id]?.app.installedVersion =
+                appsProvider.apps[id]?.app.latestVersion;
+          }
+          appsProvider.saveApps([appsProvider.apps[id]!.app]);
+        }
+      }).catchError((e) {
         showError(e, context);
         return null;
       });
@@ -296,24 +306,34 @@ class _AppPageState extends State<AppPage> {
           // ignore: use_build_context_synchronously
           showMessage(tr('appsFromSourceAreTrackOnly'), context);
         }
-        if (app.app.additionalSettings['releaseDateAsVersion'] == true) {
-          if (originalSettings['releaseDateAsVersion'] != true) {
-            if (app.app.releaseDate != null) {
-              bool isUpdated =
-                  app.app.installedVersion == app.app.latestVersion;
-              app.app.latestVersion =
-                  app.app.releaseDate!.microsecondsSinceEpoch.toString();
-              if (isUpdated) {
-                app.app.installedVersion = app.app.latestVersion;
-              }
+        var versionDetectionEnabled =
+            app.app.additionalSettings['versionDetection'] == true &&
+                originalSettings['versionDetection'] != true;
+        var releaseDateVersionEnabled =
+            app.app.additionalSettings['releaseDateAsVersion'] == true &&
+                originalSettings['releaseDateAsVersion'] != true;
+        var releaseDateVersionDisabled =
+            app.app.additionalSettings['releaseDateAsVersion'] != true &&
+                originalSettings['releaseDateAsVersion'] == true;
+        if (releaseDateVersionEnabled) {
+          if (app.app.releaseDate != null) {
+            bool isUpdated = app.app.installedVersion == app.app.latestVersion;
+            app.app.latestVersion =
+                app.app.releaseDate!.microsecondsSinceEpoch.toString();
+            if (isUpdated) {
+              app.app.installedVersion = app.app.latestVersion;
             }
           }
-        } else if (originalSettings['releaseDateAsVersion'] == true) {
+        } else if (releaseDateVersionDisabled) {
           app.app.installedVersion =
               app.installedInfo?.versionName ?? app.app.installedVersion;
         }
+        if (versionDetectionEnabled) {
+          app.app.additionalSettings['versionDetection'] = true;
+          app.app.additionalSettings['releaseDateAsVersion'] = false;
+        }
         appsProvider.saveApps([app.app]).then((value) {
-          getUpdate(app.app.id);
+          getUpdate(app.app.id, resetVersion: versionDetectionEnabled);
         });
       }
     }
