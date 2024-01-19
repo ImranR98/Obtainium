@@ -294,6 +294,10 @@
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",
     "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
+    "defaultPseudoVersioningMethod": "Default Pseudo-Versioning Method",
+    "partialAPKHash": "Partial APK Hash",
+    "APKLinkHash": "APK Link Hash",
+    "directAPKLink": "Direct APK Link",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

@@ -294,6 +294,10 @@
     "useVersionCodeAsOSVersion": "Verwende die Appversion als erkannte Version vom Betriebssystem",
     "requestHeader": "Request Header",
     "useLatestAssetDateAsReleaseDate": "Den letzten Asset-Upload als Veröffentlichungsdatum verwenden",
+    "defaultPseudoVersioningMethod": "Default Pseudo-Versioning Method",
+    "partialAPKHash": "Partial APK Hash",
+    "APKLinkHash": "APK Link Hash",
+    "directAPKLink": "Direct APK Link",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

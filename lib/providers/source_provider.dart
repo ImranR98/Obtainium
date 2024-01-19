@@ -11,6 +11,7 @@ import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
+import 'package:obtainium/app_sources/directAPKLink.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
@@ -111,6 +112,12 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   } else if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
     additionalSettings['versionDetection'] = false;
     additionalSettings['releaseDateAsVersion'] = true;
+  }
+  // Convert bool style pseudo version method to dropdown style
+  if (originalAdditionalSettings['supportFixedAPKURL'] == true) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'partialAPKHash';
+  } else if (originalAdditionalSettings['supportFixedAPKURL'] == false) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'APKLinkHash';
   }
   // Ensure additionalSettings are correctly typed
   for (var item in formItems) {
@@ -391,6 +398,7 @@ abstract class AppSource {
   bool neverAutoSelect = false;
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
+  List<String> excludeCommonSettingKeys = [];
 
   AppSource() {
     name = runtimeType.toString();
@@ -536,6 +544,13 @@ abstract class AppSource {
             ]);
       }
     }
+    additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly =
+        additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
+            .map((e) => e
+                .where((ee) => !excludeCommonSettingKeys.contains(ee.key))
+                .toList())
+            .where((e) => e.isNotEmpty)
+            .toList();
     if (versionDetectionDisallowed) {
       overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(
           'versionDetection',
@@ -715,6 +730,7 @@ class SourceProvider {
         WhatsApp(),
         TelegramApp(),
         NeutronCode(),
+        DirectAPKLink(),
         HTML() // This should ALWAYS be the last option as they are tried in order
       ];
 

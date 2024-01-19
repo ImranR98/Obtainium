@@ -292,6 +292,10 @@
     "useVersionCodeAsOSVersion": "استفاده کد نسخه برنامه به جای نسخه شناسایی شده توسط سیستم عامل استفاده کنید",
     "requestHeader": "درخواست سطر بالایی",
     "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
+    "defaultPseudoVersioningMethod": "Default Pseudo-Versioning Method",
+    "partialAPKHash": "Partial APK Hash",
+    "APKLinkHash": "APK Link Hash",
+    "directAPKLink": "Direct APK Link",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
