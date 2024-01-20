@@ -298,6 +298,9 @@
     "partialAPKHash": "Partial APK Hash",
     "APKLinkHash": "APK Link Hash",
     "directAPKLink": "Direct APK Link",
+    "pseudoVersionInUse": "A Pseudo-Version is in Use",
+    "installed": "Installed",
+    "latest": "Latest",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

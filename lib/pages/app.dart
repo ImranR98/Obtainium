@@ -69,112 +69,107 @@ class _AppPageState extends State<AppPage> {
         (app?.app.installedVersion != null &&
             app?.app.additionalSettings['versionDetection'] != true);
 
-    getInfoColumn() => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GestureDetector(
-                onTap: () {
-                  if (app?.app.url != null) {
-                    launchUrlString(app?.app.url ?? '',
-                        mode: LaunchMode.externalApplication);
-                  }
-                },
-                onLongPress: () {
-                  Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(tr('copiedToClipboard')),
-                  ));
-                },
-                child: Text(
-                  app?.app.url ?? '',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12),
-                )),
-            const SizedBox(
-              height: 32,
-            ),
-            Column(
+    getInfoColumn() {
+      String versionLines = '';
+      bool installed = app?.app.installedVersion != null;
+      bool upToDate = app?.app.installedVersion == app?.app.latestVersion;
+      if (installed) {
+        versionLines = '${app?.app.installedVersion} ${tr('installed')}';
+        if (upToDate) {
+          versionLines += '/${tr('latest')}';
+        }
+      } else {
+        versionLines = tr('notInstalled');
+      }
+      if (!upToDate) {
+        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
+      }
+      String infoLines = tr('lastUpdateCheckX', args: [
+        app?.app.lastUpdateCheck == null
+            ? tr('never')
+            : '${app?.app.lastUpdateCheck?.toLocal()}'
+      ]);
+      if (trackOnly) {
+        infoLines = '${tr('xIsTrackOnly', args: [tr('app')])}\n$infoLines';
+      }
+      if (installedVersionIsEstimate) {
+        infoLines = '${tr('pseudoVersionInUse')}\n$infoLines';
+      }
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
+            child: Column(
               children: [
-                Text(
-                  '${tr('latestVersionX', args: [
-                        app?.app.latestVersion ?? tr('unknown')
-                      ])}\n${tr('installedVersionX', args: [
-                        app?.app.installedVersion ?? tr('none')
-                      ])}${installedVersionIsEstimate ? '\n(${tr('pseudoVersion')})' : ''}',
-                  textAlign: TextAlign.end,
-                  style: Theme.of(context).textTheme.bodyLarge!,
+                const SizedBox(
+                  height: 8,
+                ),
+                Text(versionLines,
+                    textAlign: TextAlign.start,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge!
+                        .copyWith(fontWeight: FontWeight.bold)),
+                app?.app.releaseDate == null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        app!.app.releaseDate.toString(),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                const SizedBox(
+                  height: 8,
                 ),
               ],
             ),
-            if (app?.app.installedVersion != null &&
-                !isVersionDetectionStandard)
-              Column(
-                children: [
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  Text(
-                    trackOnly ? tr('xIsTrackOnly', args: [tr('app')]) : '',
-                    style: Theme.of(context).textTheme.labelSmall,
+          ),
+          Text(
+            infoLines,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          ),
+          const SizedBox(
+            height: 48,
+          ),
+          CategoryEditorSelector(
+              alignment: WrapAlignment.center,
+              preselected: app?.app.categories != null
+                  ? app!.app.categories.toSet()
+                  : {},
+              onSelected: (categories) {
+                if (app != null) {
+                  app.app.categories = categories;
+                  appsProvider.saveApps([app.app]);
+                }
+              }),
+          if (app?.app.additionalSettings['about'] is String &&
+              app?.app.additionalSettings['about'].isNotEmpty)
+            Column(
+              children: [
+                const SizedBox(
+                  height: 48,
+                ),
+                GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(ClipboardData(
+                        text: app?.app.additionalSettings['about'] ?? ''));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(tr('copiedToClipboard')),
+                    ));
+                  },
+                  child: Text(
+                    app?.app.additionalSettings['about'],
                     textAlign: TextAlign.center,
-                  )
-                ],
-              ),
-            const SizedBox(
-              height: 32,
-            ),
-            Text(
-              tr('lastUpdateCheckX', args: [
-                app?.app.lastUpdateCheck == null
-                    ? tr('never')
-                    : '\n${app?.app.lastUpdateCheck?.toLocal()}'
-              ]),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-            ),
-            const SizedBox(
-              height: 48,
-            ),
-            CategoryEditorSelector(
-                alignment: WrapAlignment.center,
-                preselected: app?.app.categories != null
-                    ? app!.app.categories.toSet()
-                    : {},
-                onSelected: (categories) {
-                  if (app != null) {
-                    app.app.categories = categories;
-                    appsProvider.saveApps([app.app]);
-                  }
-                }),
-            if (app?.app.additionalSettings['about'] is String &&
-                app?.app.additionalSettings['about'].isNotEmpty)
-              Column(
-                children: [
-                  const SizedBox(
-                    height: 48,
+                    style: const TextStyle(fontStyle: FontStyle.italic),
                   ),
-                  GestureDetector(
-                    onLongPress: () {
-                      Clipboard.setData(ClipboardData(
-                          text: app?.app.additionalSettings['about'] ?? ''));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(tr('copiedToClipboard')),
-                      ));
-                    },
-                    child: Text(
-                      app?.app.additionalSettings['about'],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontStyle: FontStyle.italic),
-                    ),
-                  )
-                ],
-              ),
-          ],
-        );
+                )
+              ],
+            ),
+        ],
+      );
+    }
 
     getFullInfoColumn() => Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -201,11 +196,26 @@ class _AppPageState extends State<AppPage> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displayLarge,
             ),
-            Text(
-              tr('byX', args: [app?.app.author ?? tr('unknown')]),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            GestureDetector(
+                onTap: () {
+                  if (app?.app.url != null) {
+                    launchUrlString(app?.app.url ?? '',
+                        mode: LaunchMode.externalApplication);
+                  }
+                },
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(tr('copiedToClipboard')),
+                  ));
+                },
+                child: Text(
+                  tr('byX', args: [app?.app.author ?? tr('unknown')]),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic),
+                )),
             const SizedBox(
               height: 8,
             ),
@@ -213,16 +223,6 @@ class _AppPageState extends State<AppPage> {
               app?.app.id ?? '',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall,
-            ),
-            app?.app.releaseDate == null
-                ? const SizedBox.shrink()
-                : Text(
-                    app!.app.releaseDate.toString(),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-            const SizedBox(
-              height: 32,
             ),
             getInfoColumn(),
             const SizedBox(height: 150)
