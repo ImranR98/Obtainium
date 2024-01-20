@@ -696,7 +696,7 @@ class AppsPageState extends State<AppsPage> {
                     showError(e, context);
                     return <String>[];
                   }).then((value) {
-                    if (shouldInstallUpdates) {
+                    if (value.isNotEmpty && shouldInstallUpdates) {
                       showMessage(tr('appsUpdated'), context);
                     }
                   });
