@@ -183,7 +183,12 @@ class _ObtainiumState extends State<Obtainium> {
                     value.versionName!,
                     [],
                     0,
-                    {'includePrereleases': true, 'versionDetection': true},
+                    {
+                      'includePrereleases': true,
+                      'versionDetection': true,
+                      'apkFilterRegEx': 'fdroid',
+                      'invertAPKFilter': true
+                    },
                     null,
                     false)
               ], onlyIfExists: false);
