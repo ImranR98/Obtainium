@@ -8,7 +8,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class SteamMobile extends AppSource {
   SteamMobile() {
     hosts = ['store.steampowered.com'];
-    name = tr('steam');
+    name = 'Steam';
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormDropdown('app', apks.entries.toList(),

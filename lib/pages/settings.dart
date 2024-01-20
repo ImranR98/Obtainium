@@ -38,9 +38,9 @@ class _SettingsPageState extends State<SettingsPage> {
             value: InstallMethodSettings.normal,
             child: Text(tr('normal')),
           ),
-          DropdownMenuItem(
+          const DropdownMenuItem(
             value: InstallMethodSettings.shizuku,
-            child: Text(tr('shizuku')),
+            child: Text('Shizuku'),
           ),
           DropdownMenuItem(
             value: InstallMethodSettings.root,
@@ -79,14 +79,14 @@ class _SettingsPageState extends State<SettingsPage> {
     var colourDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('colour')),
         value: settingsProvider.colour,
-        items: [
+        items: const [
           DropdownMenuItem(
             value: ColourSettings.basic,
-            child: Text(tr('obtainium')),
+            child: Text('Obtainium'),
           ),
           DropdownMenuItem(
             value: ColourSettings.materialYou,
-            child: Text(tr('materialYou')),
+            child: Text('Material You'),
           )
         ],
         onChanged: (value) {

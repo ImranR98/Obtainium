@@ -52,7 +52,7 @@
     "pleaseWait": "Vui lòng chờ",
     "updateAvailable": "Có sẵn bản cập nhật",
     "notInstalled": "Chưa cài đặt",
-    "pseudoVersion": "pseudo-version",
+    "pseudoVersion": "phiên bản giả",
     "selectAll": "Chọn tất cả",
     "deselectX": "Bỏ chọn {}",
     "xWillBeRemovedButRemainInstalled": "{} sẽ bị xóa khỏi Obtainium nhưng vẫn còn cài đặt trên thiết bị.",
@@ -72,8 +72,8 @@
     "unpinFromTop": "Bỏ ghim khỏi đầu trang",
     "resetInstallStatusForSelectedAppsQuestion": "Đặt lại trạng thái cài đặt cho ứng dụng đã chọn?",
     "installStatusOfXWillBeResetExplanation": "Trạng thái cài đặt của mọi Ứng dụng đã chọn sẽ được đặt lại.\n\nĐiều này có thể hữu ích khi phiên bản Ứng dụng hiển thị trong Obtainium không chính xác do cập nhật không thành công hoặc các sự cố khác.",
-    "customLinkMessage": "These links work on devices with Obtainium installed",
-    "shareAppConfigLinks": "Share app configuration as HTML link",
+    "customLinkMessage": "Các liên kết này hoạt động trên các thiết bị có cài đặt Gainium",
+    "shareAppConfigLinks": "Chia sẻ cấu hình ứng dụng dưới dạng liên kết HTML",
     "shareSelectedAppURLs": "Chia sẻ URL ứng dụng đã chọn",
     "resetInstallStatus": "Đặt lại trạng thái cài đặt",
     "more": "Nhiều hơn",
@@ -111,8 +111,6 @@
     "dark": "Tối",
     "light": "Sáng",
     "followSystem": "Theo hệ thống",
-    "obtainium": "Obtainium",
-    "materialYou": "Material You",
     "useBlackTheme": "Nền đen",
     "appSortBy": "Sắp xếp ứng dụng",
     "authorName": "Tác giả",
@@ -176,9 +174,8 @@
     "appWithIdOrNameNotFound": "Không tìm thấy ứng dụng nào có ID hoặc tên đó",
     "reposHaveMultipleApps": "Kho có thể chứa nhiều Ứng dụng",
     "fdroidThirdPartyRepo": "Kho lưu trữ bên thứ ba F-Droid",
-    "steam": "Steam",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Steam Chat",
+    "steamMobile": "Điện thoại di động hơi nước",
+    "steamChat": "Trò chuyện hơi nước",
     "install": "Cài đặt",
     "markInstalled": "Đánh dấu là đã cài đặt",
     "update": "Cập nhật",
@@ -212,7 +209,7 @@
     "changes": "Thay đổi",
     "releaseDate": "Ngày phát hành",
     "importFromURLsInFile": "Nhập từ URL trong Tệp (như OPML)",
-    "versionDetectionExplanation": "Reconcile version string with version detected from OS",
+    "versionDetectionExplanation": "Đối chiếu chuỗi phiên bản với phiên bản được phát hiện từ hệ điều hành",
     "versionDetection": "Phát hiện phiên bản",
     "standardVersionDetection": "Phát hiện phiên bản tiêu chuẩn",
     "groupByCategory": "Nhóm theo thể loại",
@@ -237,7 +234,7 @@
     "addInfoInSettings": "Thêm thông tin này vào Cài đặt.",
     "githubSourceNote": "Có thể tránh được việc giới hạn tốc độ GitHub bằng cách sử dụng khóa API.",
     "gitlabSourceNote": "Trích xuất APK GitLab có thể không hoạt động nếu không có khóa API.",
-    "sortByLastLinkSegment": "Sort by only the last segment of the link",
+    "sortByLastLinkSegment": "Chỉ sắp xếp theo đoạn cuối của liên kết",
     "filterReleaseNotesByRegEx": "Lọc ghi chú phát hành theo biểu thức chính quy",
     "customLinkFilterRegex": "Bộ lọc liên kết APK tùy chỉnh theo biểu thức chính quy (Mặc định '.apk$')",
     "appsPossiblyUpdated": "Đã cố gắng cập nhật ứng dụng",
@@ -247,10 +244,10 @@
     "backgroundUpdateReqsExplanation": "Có thể không thực hiện được cập nhật trong nền cho tất cả ứng dụng.",
     "backgroundUpdateLimitsExplanation": "Sự thành công của cài đặt trong nền chỉ có thể được xác định khi mở Obtainium.",
     "verifyLatestTag": "Xác minh thẻ 'mới nhất'",
-    "intermediateLinkRegex": "Filter for an 'Intermediate' Link to Visit",
-    "filterByLinkText": "Filter links by link text",
+    "intermediateLinkRegex": "Lọc tìm liên kết 'Trung cấp' để truy cập",
+    "filterByLinkText": "Lọc liên kết theo văn bản liên kết",
     "intermediateLinkNotFound": "Không tìm thấy liên kết trung gian",
-    "intermediateLink": "Intermediate link",
+    "intermediateLink": "Liên kết trung gian",
     "exemptFromBackgroundUpdates": "Miễn cập nhật nền (nếu được bật)",
     "bgUpdatesOnWiFiOnly": "Tắt cập nhật nền khi không có WiFi",
     "autoSelectHighestVersionCode": "Tự động chọn APK mã phiên bản cao nhất",
@@ -264,8 +261,8 @@
     "trySelectingSuggestedVersionCode": "Thử chọn APK Mã phiên bản được đề xuất",
     "dontSortReleasesList": "Giữ lại thứ tự phát hành từ API",
     "reverseSort": "Sắp xếp ngược",
-    "takeFirstLink": "Take first link",
-    "skipSort": "Skip sorting",
+    "takeFirstLink": "Lấy liên kết đầu tiên",
+    "skipSort": "Bỏ qua việc sắp xếp",
     "debugMenu": "Danh sách gỡ lỗi",
     "bgTaskStarted": "Tác vụ nền đã bắt đầu - kiểm tra nhật ký.",
     "runBgCheckNow": "Chạy kiểm tra cập nhật nền ngay bây giờ",
@@ -281,72 +278,75 @@
     "completeAppInstallationNotifChannel": "Hoàn tất cài đặt ứng dụng",
     "checkingForUpdatesNotifChannel": "Đang kiểm tra cập nhật",
     "onlyCheckInstalledOrTrackOnlyApps": "Chỉ kiểm tra cập nhật các ứng dụng đã cài đặt và Chỉ-Theo dõi",
-    "supportFixedAPKURL": "Support fixed APK URLs",
-    "selectX": "Select {}",
+    "supportFixedAPKURL": "Hỗ trợ URL APK cố định",
+    "selectX": "Lựa chọn {}",
     "parallelDownloads": "Cho phép tải đa luồng",
     "installMethod": "Phương thức cài đặt",
     "normal": "Mặc định",
-    "shizuku": "Shizuku",
-    "root": "Root",
+    "root": "Nguồn gốc",
     "shizukuBinderNotFound": "Shizuku chưa khởi động",
-    "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
-    "defaultPseudoVersioningMethod": "Default Pseudo-Versioning Method",
-    "partialAPKHash": "Partial APK Hash",
-    "APKLinkHash": "APK Link Hash",
-    "directAPKLink": "Direct APK Link",
-    "pseudoVersionInUse": "A Pseudo-Version is in Use",
-    "installed": "Installed",
-    "latest": "Latest",
-    "invertRegEx": "Invert regular expression",
-    "removeAppQuestion":{
+    "useSystemFont": "Sử dụng phông chữ hệ thống",
+    "systemFontError": "Lỗi tải phông chữ hệ thống: {}",
+    "useVersionCodeAsOSVersion": "Sử dụng Mã phiên bản ứng dụng làm phiên bản do hệ điều hành phát hiện",
+    "requestHeader": "Tiêu đề yêu cầu",
+    "useLatestAssetDateAsReleaseDate": "Sử dụng nội dung tải lên mới nhất làm ngày phát hành",
+    "defaultPseudoVersioningMethod": "Phương pháp tạo phiên bản giả mặc định",
+    "partialAPKHash": "Băm APK một phần",
+    "APKLinkHash": "Băm liên kết APK",
+    "directAPKLink": "Liên kết APK trực tiếp",
+    "pseudoVersionInUse": "Phiên bản giả đang được sử dụng",
+    "installed": "Cài đặt",
+    "latest": "Muộn nhất",
+    "invertRegEx": "Đảo ngược biểu thức chính quy",
+    "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"
     },
-    "tooManyRequestsTryAgainInMinutes":{
+    "tooManyRequestsTryAgainInMinutes": {
         "one": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút",
         "other": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút"
     },
-    "bgUpdateGotErrorRetryInMinutes":{
+    "bgUpdateGotErrorRetryInMinutes": {
         "one": "Việc kiểm tra bản cập nhật BG gặp phải {}, sẽ lên lịch kiểm tra lại sau {} phút",
         "other": "Việc kiểm tra bản cập nhật BG gặp phải {}, sẽ lên lịch kiểm tra lại sau {} phút"
     },
-    "bgCheckFoundUpdatesWillNotifyIfNeeded":{
+    "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần",
         "other": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần"
     },
-    "apps":{
+    "apps": {
         "one": "{} Ứng dụng",
         "other": "{} Ứng dụng"
     },
-    "url":{
+    "url": {
         "one": "{} URL",
         "other": "{} URL"
     },
-    "minute":{
+    "minute": {
         "one": "{} Phút",
         "other": "{} Phút"
     },
-    "hour":{
+    "hour": {
         "one": "{} Giờ",
         "other": "{} Giờ"
     },
-    "day":{
+    "day": {
         "one": "{} Ngày",
         "other": "{} ngày"
     },
-    "clearedNLogsBeforeXAfterY":{
+    "clearedNLogsBeforeXAfterY": {
         "one": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})",
         "other": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})"
     },
-    "xAndNMoreUpdatesAvailable":{
+    "xAndNMoreUpdatesAvailable": {
         "one": "{} và 1 ứng dụng khác có bản cập nhật.",
         "other": "{} và {} ứng dụng khác có bản cập nhật."
     },
-    "xAndNMoreUpdatesInstalled":{
+    "xAndNMoreUpdatesInstalled": {
         "one": "{} và 1 ứng dụng khác đã được cập nhật.",
         "other": "{} và {} ứng dụng khác đã được cập nhật."
     },
-    "xAndNMoreUpdatesPossiblyInstalled":{
+    "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} và 1 ứng dụng khác có thể đã được cập nhật.",
         "other": "{} và {} ứng dụng khác có thể đã được cập nhật."
     }
