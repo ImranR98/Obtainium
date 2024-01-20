@@ -289,6 +289,10 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizuku chưa khởi động",
+    "useSystemFont": "Use the system font",
+    "systemFontError": "Error loading the system font: {}",
+    "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
+    "requestHeader": "Request header",
     "useLatestAssetDateAsReleaseDate": "Use latest asset upload as release date",
     "defaultPseudoVersioningMethod": "Default Pseudo-Versioning Method",
     "partialAPKHash": "Partial APK Hash",
@@ -298,55 +302,55 @@
     "installed": "Installed",
     "latest": "Latest",
     "invertRegEx": "Invert regular expression",
-    "removeAppQuestion":{
+    "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"
     },
-    "tooManyRequestsTryAgainInMinutes":{
+    "tooManyRequestsTryAgainInMinutes": {
         "one": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút",
         "other": "Quá nhiều yêu cầu (tốc độ giới hạn) - hãy thử lại sau {} phút"
     },
-    "bgUpdateGotErrorRetryInMinutes":{
+    "bgUpdateGotErrorRetryInMinutes": {
         "one": "Việc kiểm tra bản cập nhật BG gặp phải {}, sẽ lên lịch kiểm tra lại sau {} phút",
         "other": "Việc kiểm tra bản cập nhật BG gặp phải {}, sẽ lên lịch kiểm tra lại sau {} phút"
     },
-    "bgCheckFoundUpdatesWillNotifyIfNeeded":{
+    "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần",
         "other": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần"
     },
-    "apps":{
+    "apps": {
         "one": "{} Ứng dụng",
         "other": "{} Ứng dụng"
     },
-    "url":{
+    "url": {
         "one": "{} URL",
         "other": "{} URL"
     },
-    "minute":{
+    "minute": {
         "one": "{} Phút",
         "other": "{} Phút"
     },
-    "hour":{
+    "hour": {
         "one": "{} Giờ",
         "other": "{} Giờ"
     },
-    "day":{
+    "day": {
         "one": "{} Ngày",
         "other": "{} ngày"
     },
-    "clearedNLogsBeforeXAfterY":{
+    "clearedNLogsBeforeXAfterY": {
         "one": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})",
         "other": "Đã xóa {n} nhật ký (trước = {trước}, sau = {sau})"
     },
-    "xAndNMoreUpdatesAvailable":{
+    "xAndNMoreUpdatesAvailable": {
         "one": "{} và 1 ứng dụng khác có bản cập nhật.",
         "other": "{} và {} ứng dụng khác có bản cập nhật."
     },
-    "xAndNMoreUpdatesInstalled":{
+    "xAndNMoreUpdatesInstalled": {
         "one": "{} và 1 ứng dụng khác đã được cập nhật.",
         "other": "{} và {} ứng dụng khác đã được cập nhật."
     },
-    "xAndNMoreUpdatesPossiblyInstalled":{
+    "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} và 1 ứng dụng khác có thể đã được cập nhật.",
         "other": "{} và {} ứng dụng khác có thể đã được cập nhật."
     }

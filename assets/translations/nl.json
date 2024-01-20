@@ -289,6 +289,8 @@
     "shizuku": "Shizuku",
     "root": "Root",
     "shizukuBinderNotFound": "Shizuku draait niet",
+    "useSystemFont": "Use the system font",
+    "systemFontError": "Error loading the system font: {}",
     "useVersionCodeAsOSVersion": "Gebruik app versieCode als door OS gedetecteerde versie",
     "requestHeader": "Request header",
     "useLatestAssetDateAsReleaseDate": "Gebruik laatste upload als releasedatum",
