@@ -877,8 +877,7 @@ class AppsPageState extends State<AppsPage> {
                           }
                           urls = urls.substring(0, urls.length - 1);
                           Share.share(urls,
-                              subject:
-                                  '${tr('obtainium')} - ${tr('appsString')}');
+                              subject: 'Obtainium - ${tr('appsString')}');
                           Navigator.of(context).pop();
                         },
                         tooltip: tr('shareSelectedAppURLs'),
@@ -906,8 +905,7 @@ class AppsPageState extends State<AppsPage> {
                                 urls +=
                                     '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
                                 Share.share(urls,
-                                    subject:
-                                        '${tr('obtainium')} - ${tr('appsString')}');
+                                    subject: 'Obtainium - ${tr('appsString')}');
                               },
                         tooltip: tr('shareAppConfigLinks'),
                         icon: const Icon(Icons.ios_share),
