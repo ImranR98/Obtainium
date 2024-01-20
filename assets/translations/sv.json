@@ -285,6 +285,7 @@
     "pseudoVersionInUse": "A Pseudo-Version is in Use",
     "installed": "Installed",
     "latest": "Latest",
+    "invertRegEx": "Invert regular expression",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

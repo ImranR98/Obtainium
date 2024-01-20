@@ -297,6 +297,7 @@
     "pseudoVersionInUse": "A Pseudo-Version is in Use",
     "installed": "Installed",
     "latest": "Latest",
+    "invertRegEx": "Invert regular expression",
     "removeAppQuestion":{
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

@@ -300,12 +300,8 @@ class HTML extends AppSource {
       versionExtractionWholePageString =
           res.body.split('\r\n').join('\n').split('\n').join('\\n');
       links = await grabLinksCommon(res, additionalSettings);
-
-      if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty ==
-          true) {
-        var reg = RegExp(additionalSettings['apkFilterRegEx']);
-        links = links.where((element) => reg.hasMatch(element.key)).toList();
-      }
+      links = filterApks(links, additionalSettings['apkFilterRegEx'],
+          additionalSettings['invertAPKFilter']);
       if (links.isEmpty) {
         throw NoReleasesError();
       }

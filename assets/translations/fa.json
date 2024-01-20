@@ -299,6 +299,7 @@
     "pseudoVersionInUse": "A Pseudo-Version is in Use",
     "installed": "Installed",
     "latest": "Latest",
+    "invertRegEx": "Invert regular expression",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

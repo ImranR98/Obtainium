@@ -505,6 +505,11 @@ abstract class AppSource {
           ])
     ],
     [
+      GeneratedFormSwitch('invertAPKFilter',
+          label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
+          defaultValue: false)
+    ],
+    [
       GeneratedFormSwitch('autoApkFilterByArch',
           label: tr('autoApkFilterByArch'), defaultValue: true)
     ],
@@ -708,6 +713,20 @@ String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
   }
 }
 
+List<MapEntry<String, String>> filterApks(
+    List<MapEntry<String, String>> apkUrls,
+    String? apkFilterRegEx,
+    bool? invert) {
+  if (apkFilterRegEx?.isNotEmpty == true) {
+    var reg = RegExp(apkFilterRegEx!);
+    apkUrls = apkUrls.where((element) {
+      var hasMatch = reg.hasMatch(element.key);
+      return invert == true ? !hasMatch : hasMatch;
+    }).toList();
+  }
+  return apkUrls;
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -825,11 +844,8 @@ class SourceProvider {
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
     }
-    if (additionalSettings['apkFilterRegEx'] != null) {
-      var reg = RegExp(additionalSettings['apkFilterRegEx']);
-      apk.apkUrls =
-          apk.apkUrls.where((element) => reg.hasMatch(element.key)).toList();
-    }
+    apk.apkUrls = filterApks(apk.apkUrls, additionalSettings['apkFilterRegEx'],
+        additionalSettings['invertAPKFilter']);
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }

@@ -301,6 +301,7 @@
     "pseudoVersionInUse": "A Pseudo-Version is in Use",
     "installed": "Installed",
     "latest": "Latest",
+    "invertRegEx": "Invert regular expression",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
