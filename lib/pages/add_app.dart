@@ -506,12 +506,14 @@ class AddAppPageState extends State<AddAppPage> {
                       context: context,
                       builder: (context) {
                         return GeneratedFormModal(
+                          singleNullReturnButton: tr('ok'),
                           title: tr('supportedSources'),
                           items: const [],
                           additionalWidgets: [
                             ...sourceProvider.sources.map(
                               (e) => Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: GestureDetector(
                                       onTap: e.hosts.isNotEmpty
                                           ? () {
