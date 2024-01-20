@@ -361,7 +361,7 @@ class _AppPageState extends State<AppPage> {
                     app?.app.id != null ? [app!.app.id] : [],
                     globalNavigatorKey.currentContext,
                   );
-                  if (app?.app.installedVersion != null && !trackOnly) {
+                  if (res.isNotEmpty && !trackOnly) {
                     // ignore: use_build_context_synchronously
                     showMessage(tr('appsUpdated'), context);
                   }
