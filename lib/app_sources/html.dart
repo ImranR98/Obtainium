@@ -108,11 +108,7 @@ class HTML extends AppSource {
     [
       GeneratedFormSwitch('versionExtractWholePage',
           label: tr('versionExtractWholePage'))
-    ],
-    [
-      GeneratedFormSwitch('supportFixedAPKURL',
-          defaultValue: true, label: tr('supportFixedAPKURL')),
-    ],
+    ]
   ];
   var commonFormItems = [
     [GeneratedFormSwitch('filterByLinkText', label: tr('filterByLinkText'))],
@@ -172,10 +168,18 @@ class HTML extends AppSource {
                     'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36'
               }
             ])
+      ],
+      [
+        GeneratedFormDropdown(
+            'defaultPseudoVersioningMethod',
+            [
+              MapEntry('partialAPKHash', tr('partialAPKHash')),
+              MapEntry('APKLinkHash', tr('APKLinkHash'))
+            ],
+            label: tr('defaultPseudoVersioningMethod'),
+            defaultValue: 'partialAPKHash')
       ]
     ];
-    overrideVersionDetectionFormDefault('noVersionDetection',
-        disableStandard: false, disableRelDate: true);
   }
 
   @override
@@ -288,17 +292,21 @@ class HTML extends AppSource {
         currentUrl = intLinks.last.key;
       }
     }
-
     var uri = Uri.parse(currentUrl);
-    Response res = await sourceRequest(currentUrl, additionalSettings);
-    var links = await grabLinksCommon(res, additionalSettings);
-
-    if ((additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true) {
-      var reg = RegExp(additionalSettings['apkFilterRegEx']);
-      links = links.where((element) => reg.hasMatch(element.key)).toList();
-    }
-    if (links.isEmpty) {
-      throw NoReleasesError();
+    List<MapEntry<String, String>> links = [];
+    String versionExtractionWholePageString = currentUrl;
+    if (additionalSettings['directAPKLink'] != true) {
+      Response res = await sourceRequest(currentUrl, additionalSettings);
+      versionExtractionWholePageString =
+          res.body.split('\r\n').join('\n').split('\n').join('\\n');
+      links = await grabLinksCommon(res, additionalSettings);
+      links = filterApks(links, additionalSettings['apkFilterRegEx'],
+          additionalSettings['invertAPKFilter']);
+      if (links.isEmpty) {
+        throw NoReleasesError();
+      }
+    } else {
+      links = [MapEntry(currentUrl, currentUrl)];
     }
     var rel = links.last.key;
     String? version;
@@ -306,11 +314,12 @@ class HTML extends AppSource {
         additionalSettings['versionExtractionRegEx'] as String?,
         additionalSettings['matchGroupToUse'] as String?,
         additionalSettings['versionExtractWholePage'] == true
-            ? res.body.split('\r\n').join('\n').split('\n').join('\\n')
+            ? versionExtractionWholePageString
             : rel);
-    version ??= additionalSettings['supportFixedAPKURL'] != true
-        ? rel.hashCode.toString()
-        : (await checkDownloadHash(rel)).toString();
+    version ??=
+        additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
+            ? rel.hashCode.toString()
+            : (await checkPartialDownloadHashDynamc(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
   }

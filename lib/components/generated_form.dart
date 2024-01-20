@@ -96,11 +96,14 @@ class GeneratedFormDropdown extends GeneratedFormItem {
 }
 
 class GeneratedFormSwitch extends GeneratedFormItem {
+  bool disabled = false;
+
   GeneratedFormSwitch(
     super.key, {
     super.label,
     super.belowWidgets,
     bool super.defaultValue = false,
+    bool disabled = false,
     List<String? Function(bool value)> super.additionalValidators = const [],
   });
 
@@ -115,6 +118,7 @@ class GeneratedFormSwitch extends GeneratedFormItem {
         label: label,
         belowWidgets: belowWidgets,
         defaultValue: defaultValue,
+        disabled: false,
         additionalValidators: List.from(additionalValidators));
   }
 }
@@ -368,15 +372,51 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ),
               Switch(
                   value: values[fieldKey],
-                  onChanged: (value) {
-                    setState(() {
-                      values[fieldKey] = value;
-                      someValueChanged();
-                    });
-                  })
+                  onChanged:
+                      (widget.items[r][e] as GeneratedFormSwitch).disabled
+                          ? null
+                          : (value) {
+                              setState(() {
+                                values[fieldKey] = value;
+                                someValueChanged();
+                              });
+                            })
             ],
           );
         } else if (widget.items[r][e] is GeneratedFormTagInput) {
+          onAddPressed() {
+            showDialog<Map<String, dynamic>?>(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return GeneratedFormModal(
+                      title: widget.items[r][e].label,
+                      items: [
+                        [GeneratedFormTextField('label', label: tr('label'))]
+                      ]);
+                }).then((value) {
+              String? label = value?['label'];
+              if (label != null) {
+                setState(() {
+                  var temp =
+                      values[fieldKey] as Map<String, MapEntry<int, bool>>?;
+                  temp ??= {};
+                  if (temp[label] == null) {
+                    var singleSelect =
+                        (widget.items[r][e] as GeneratedFormTagInput)
+                            .singleSelect;
+                    var someSelected = temp.entries
+                        .where((element) => element.value.value)
+                        .isNotEmpty;
+                    temp[label] = MapEntry(generateRandomLightColor().value,
+                        !(someSelected && singleSelect));
+                    values[fieldKey] = temp;
+                    someValueChanged();
+                  }
+                });
+              }
+            });
+          }
+
           formInputs[r][e] =
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if ((values[fieldKey] as Map<String, MapEntry<int, bool>>?)
@@ -402,14 +442,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   (widget.items[r][e] as GeneratedFormTagInput).alignment,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
-                            ?.isEmpty ==
-                        true
-                    ? Text(
-                        (widget.items[r][e] as GeneratedFormTagInput)
-                            .emptyMessage,
-                      )
-                    : const SizedBox.shrink(),
+                // (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
+                //             ?.isEmpty ==
+                //         true
+                //     ? Text(
+                //         (widget.items[r][e] as GeneratedFormTagInput)
+                //             .emptyMessage,
+                //       )
+                //     : const SizedBox.shrink(),
                 ...(values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                         ?.entries
                         .map((e2) {
@@ -533,49 +573,26 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           tooltip: tr('remove'),
                         ))
                     : const SizedBox.shrink(),
-                Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: IconButton(
-                      onPressed: () {
-                        showDialog<Map<String, dynamic>?>(
-                            context: context,
-                            builder: (BuildContext ctx) {
-                              return GeneratedFormModal(
-                                  title: widget.items[r][e].label,
-                                  items: [
-                                    [
-                                      GeneratedFormTextField('label',
-                                          label: tr('label'))
-                                    ]
-                                  ]);
-                            }).then((value) {
-                          String? label = value?['label'];
-                          if (label != null) {
-                            setState(() {
-                              var temp = values[fieldKey]
-                                  as Map<String, MapEntry<int, bool>>?;
-                              temp ??= {};
-                              if (temp[label] == null) {
-                                var singleSelect = (widget.items[r][e]
-                                        as GeneratedFormTagInput)
-                                    .singleSelect;
-                                var someSelected = temp.entries
-                                    .where((element) => element.value.value)
-                                    .isNotEmpty;
-                                temp[label] = MapEntry(
-                                    generateRandomLightColor().value,
-                                    !(someSelected && singleSelect));
-                                values[fieldKey] = temp;
-                                someValueChanged();
-                              }
-                            });
-                          }
-                        });
-                      },
-                      icon: const Icon(Icons.add),
-                      visualDensity: VisualDensity.compact,
-                      tooltip: tr('add'),
-                    )),
+                (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
+                            ?.isEmpty ==
+                        true
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: TextButton.icon(
+                          onPressed: onAddPressed,
+                          icon: const Icon(Icons.add),
+                          label: Text(
+                              (widget.items[r][e] as GeneratedFormTagInput)
+                                  .label),
+                        ))
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: IconButton(
+                          onPressed: onAddPressed,
+                          icon: const Icon(Icons.add),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: tr('add'),
+                        )),
               ],
             )
           ]);

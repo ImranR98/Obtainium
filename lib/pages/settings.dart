@@ -416,13 +416,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.useSystemFont,
                                     onChanged: (useSystemFont) {
                                       if (useSystemFont) {
-                                        NativeFeatures.loadSystemFont().then((fontLoadRes) {
+                                        NativeFeatures.loadSystemFont()
+                                            .then((fontLoadRes) {
                                           if (fontLoadRes == 'ok') {
-                                            settingsProvider.useSystemFont = true;
+                                            settingsProvider.useSystemFont =
+                                                true;
                                           } else {
-                                            showError(ObtainiumError(
-                                                tr('systemFontError', args: [fontLoadRes])
-                                            ), context);
+                                            showError(
+                                                ObtainiumError(tr(
+                                                    'systemFontError',
+                                                    args: [fontLoadRes])),
+                                                context);
                                           }
                                         });
                                       } else {
@@ -628,38 +632,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         label: Text(tr('appLogs'))),
                   ],
                 ),
-                const Divider(
-                  height: 32,
-                ),
-                // Padding(
-                //   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                //   child: Column(children: [
-                //     Row(
-                //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //       children: [
-                //         Flexible(child: Text(tr('debugMenu'))),
-                //         Switch(
-                //             value: settingsProvider.showDebugOpts,
-                //             onChanged: (value) {
-                //               settingsProvider.showDebugOpts = value;
-                //             })
-                //       ],
-                //     ),
-                //     if (settingsProvider.showDebugOpts)
-                //       Column(
-                //         crossAxisAlignment: CrossAxisAlignment.stretch,
-                //         children: [
-                //           height16,
-                //           TextButton(
-                //               onPressed: () {
-                //                 bgUpdateCheck('taskId', null);
-                //                 showMessage(tr('bgTaskStarted'), context);
-                //               },
-                //               child: Text(tr('runBgCheckNow')))
-                //         ],
-                //       ),
-                //   ]),
-                // ),
+                const SizedBox(
+                  height: 16,
+                )
               ],
             ),
           )

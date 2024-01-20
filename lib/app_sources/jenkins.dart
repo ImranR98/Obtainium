@@ -6,9 +6,9 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Jenkins extends AppSource {
   Jenkins() {
-    overrideVersionDetectionFormDefault('releaseDateAsVersion',
-        disableStandard: true);
+    versionDetectionDisallowed = true;
     neverAutoSelect = true;
+    showReleaseDateAsVersionToggle = true;
   }
 
   String trimJobUrl(String url) {

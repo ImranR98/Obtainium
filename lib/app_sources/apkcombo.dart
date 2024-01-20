@@ -6,6 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class APKCombo extends AppSource {
   APKCombo() {
     hosts = ['apkcombo.com'];
+    showReleaseDateAsVersionToggle = true;
   }
 
   @override

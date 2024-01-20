@@ -135,8 +135,7 @@ class AddAppPageState extends State<AddAppPage> {
 
     getReleaseDateAsVersionConfirmationIfNeeded(
         bool userPickedTrackOnly) async {
-      return (!(additionalSettings['versionDetection'] ==
-              'releaseDateAsVersion' &&
+      return (!(additionalSettings['releaseDateAsVersion'] == true &&
           // ignore: use_build_context_synchronously
           await showDialog(
                   context: context,
@@ -192,8 +191,7 @@ class AddAppPageState extends State<AddAppPage> {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
           if (app.additionalSettings['trackOnly'] == true ||
-              app.additionalSettings['versionDetection'] !=
-                  'standardVersionDetection') {
+              app.additionalSettings['versionDetection'] != true) {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;
@@ -498,36 +496,61 @@ class AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    Widget getSourcesListWidget() => Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
+    Widget getSourcesListWidget() => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              Text(
-                tr('supportedSources'),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              ...sourceProvider.sources.map((e) => GestureDetector(
-                  onTap: e.hosts.isNotEmpty
-                      ? () {
-                          launchUrlString('https://${e.hosts[0]}',
-                              mode: LaunchMode.externalApplication);
-                        }
-                      : null,
+              GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return GeneratedFormModal(
+                          singleNullReturnButton: tr('ok'),
+                          title: tr('supportedSources'),
+                          items: const [],
+                          additionalWidgets: [
+                            ...sourceProvider.sources.map(
+                              (e) => Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: GestureDetector(
+                                      onTap: e.hosts.isNotEmpty
+                                          ? () {
+                                              launchUrlString(
+                                                  'https://${e.hosts[0]}',
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            }
+                                          : null,
+                                      child: Text(
+                                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                                        style: TextStyle(
+                                            decoration: e.hosts.isNotEmpty
+                                                ? TextDecoration.underline
+                                                : TextDecoration.none),
+                                      ))),
+                            )
+                          ],
+                        );
+                      },
+                    );
+                  },
                   child: Text(
-                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                    style: TextStyle(
-                        decoration: e.hosts.isNotEmpty
-                            ? TextDecoration.underline
-                            : TextDecoration.none,
+                    tr('supportedSources'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
                         fontStyle: FontStyle.italic),
-                  )))
-            ]);
+                  ))
+            ],
+          ),
+        );
 
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        bottomNavigationBar:
+            pickedSource == null ? getSourcesListWidget() : null,
         body: CustomScrollView(shrinkWrap: true, slivers: <Widget>[
           CustomAppBar(title: tr('addApp')),
           SliverToBoxAdapter(
@@ -559,18 +582,7 @@ class AddAppPageState extends State<AddAppPage> {
                                   : const SizedBox();
                             },
                             future: pickedSource?.getSourceNote()),
-                      SizedBox(
-                        height: pickedSource != null ? 16 : 96,
-                      ),
                       if (pickedSource != null) getAdditionalOptsCol(),
-                      if (pickedSource == null)
-                        const Divider(
-                          height: 48,
-                        ),
-                      if (pickedSource == null) getSourcesListWidget(),
-                      SizedBox(
-                        height: pickedSource != null ? 8 : 2,
-                      ),
                     ])),
           )
         ]));

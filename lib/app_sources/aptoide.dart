@@ -10,6 +10,7 @@ class Aptoide extends AppSource {
     name = 'Aptoide';
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
+    showReleaseDateAsVersionToggle = true;
   }
 
   @override

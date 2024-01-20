@@ -167,8 +167,24 @@ String hashListOfLists(List<List<int>> data) {
   return hash.hashCode.toString();
 }
 
-Future<String> checkDownloadHash(String url,
-    {int bytesToGrab = 1024, Map<String, String>? headers}) async {
+Future<String> checkPartialDownloadHashDynamc(String url,
+    {int startingSize = 1024,
+    int lowerLimit = 128,
+    Map<String, String>? headers}) async {
+  for (int i = startingSize; i >= lowerLimit; i -= 256) {
+    List<String> ab = await Future.wait([
+      checkPartialDownloadHash(url, i, headers: headers),
+      checkPartialDownloadHash(url, i, headers: headers)
+    ]);
+    if (ab[0] == ab[1]) {
+      return ab[0];
+    }
+  }
+  throw NoVersionError();
+}
+
+Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
+    {Map<String, String>? headers}) async {
   var req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
@@ -804,8 +820,7 @@ class AppsProvider with ChangeNotifier {
             ? app.installedInfo?.versionCode.toString()
             : app.installedInfo?.versionName;
     return app.app.additionalSettings['trackOnly'] != true &&
-        app.app.additionalSettings['versionDetection'] !=
-            'releaseDateAsVersion' &&
+        app.app.additionalSettings['releaseDateAsVersion'] != true &&
         realInstalledVersion != null &&
         app.app.installedVersion != null &&
         (reconcileVersionDifferences(
@@ -821,8 +836,7 @@ class AppsProvider with ChangeNotifier {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
     var versionDetectionIsStandard =
-        app.additionalSettings['versionDetection'] ==
-            'standardVersionDetection';
+        app.additionalSettings['versionDetection'] == true;
     var naiveStandardVersionDetection =
         app.additionalSettings['naiveStandardVersionDetection'] == true ||
             SourceProvider()
@@ -876,7 +890,7 @@ class AppsProvider with ChangeNotifier {
         versionDetectionIsStandard &&
         !isVersionDetectionPossible(
             AppInMemory(app, null, installedInfo, null))) {
-      app.additionalSettings['versionDetection'] = 'noVersionDetection';
+      app.additionalSettings['versionDetection'] = false;
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }

@@ -421,7 +421,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getVersionText(int appIndex) {
-      return '${listedApps[appIndex].app.installedVersion ?? tr('notInstalled')}${listedApps[appIndex].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}';
+      return '${listedApps[appIndex].app.installedVersion ?? tr('notInstalled')}${listedApps[appIndex].app.additionalSettings['trackOnly'] == true ? ' ${tr('pseudoVersion')}' : ''}';
     }
 
     getChangesButtonString(int appIndex, bool hasChangeLogFn) {

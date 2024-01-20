@@ -16,6 +16,7 @@ class GitHub extends AppSource {
   GitHub() {
     hosts = ['github.com'];
     appIdInferIsOptional = true;
+    showReleaseDateAsVersionToggle = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField('github-creds',
@@ -381,11 +382,8 @@ class GitHub extends AppSource {
           continue;
         }
         var apkUrls = getReleaseAPKUrls(releases[i]);
-        if (additionalSettings['apkFilterRegEx'] != null) {
-          var reg = RegExp(additionalSettings['apkFilterRegEx']);
-          apkUrls =
-              apkUrls.where((element) => reg.hasMatch(element.key)).toList();
-        }
+        apkUrls = filterApks(apkUrls, additionalSettings['apkFilterRegEx'],
+            additionalSettings['invertAPKFilter']);
         if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
           continue;
         }
