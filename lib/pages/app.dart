@@ -23,13 +23,18 @@ class AppPage extends StatefulWidget {
 
 class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
+  bool updating = false;
 
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    getUpdate(String id, {bool resetVersion = false}) {
-      appsProvider.checkUpdate(id).then((e) {
+    getUpdate(String id, {bool resetVersion = false}) async {
+      try {
+        setState(() {
+          updating = true;
+        });
+        await appsProvider.checkUpdate(id);
         if (resetVersion) {
           appsProvider.apps[id]?.app.additionalSettings['versionDetection'] =
               true;
@@ -39,10 +44,14 @@ class _AppPageState extends State<AppPage> {
           }
           appsProvider.saveApps([appsProvider.apps[id]!.app]);
         }
-      }).catchError((e) {
-        showError(e, context);
-        return null;
-      });
+      } catch (err) {
+        // ignore: use_build_context_synchronously
+        showError(err, context);
+      } finally {
+        setState(() {
+          updating = false;
+        });
+      }
     }
 
     bool areDownloadsRunning = appsProvider.areDownloadsRunning();
@@ -339,7 +348,7 @@ class _AppPageState extends State<AppPage> {
     }
 
     getResetInstallStatusButton() => TextButton(
-        onPressed: app?.app == null
+        onPressed: app?.app == null || updating
             ? null
             : () {
                 app!.app.installedVersion = null;
@@ -351,7 +360,8 @@ class _AppPageState extends State<AppPage> {
         ));
 
     getInstallOrUpdateButton() => TextButton(
-        onPressed: (app?.app.installedVersion == null ||
+        onPressed: !updating &&
+                (app?.app.installedVersion == null ||
                     app?.app.installedVersion != app?.app.latestVersion) &&
                 !areDownloadsRunning
             ? () async {
@@ -398,7 +408,7 @@ class _AppPageState extends State<AppPage> {
                           !isVersionDetectionStandard &&
                           !trackOnly)
                         IconButton(
-                            onPressed: app?.downloadProgress != null
+                            onPressed: app?.downloadProgress != null || updating
                                 ? null
                                 : showMarkUpdatedDialog,
                             tooltip: tr('markUpdated'),
@@ -406,7 +416,7 @@ class _AppPageState extends State<AppPage> {
                       if (source != null &&
                           source.combinedAppSpecificSettingFormItems.isNotEmpty)
                         IconButton(
-                            onPressed: app?.downloadProgress != null
+                            onPressed: app?.downloadProgress != null || updating
                                 ? null
                                 : () async {
                                     var values =
@@ -458,7 +468,7 @@ class _AppPageState extends State<AppPage> {
                               : getInstallOrUpdateButton()),
                       const SizedBox(width: 16.0),
                       IconButton(
-                        onPressed: app?.downloadProgress != null
+                        onPressed: app?.downloadProgress != null || updating
                             ? null
                             : () {
                                 appsProvider
