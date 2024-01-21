@@ -283,7 +283,7 @@
     "parallelDownloads": "启用并行下载",
     "installMethod": "安装方式",
     "normal": "常规",
-    "root": "根",
+    "root": "root",
     "shizukuBinderNotFound": "未发现兼容的 Shizuku 服务",
     "useSystemFont": "使用系统字体",
     "systemFontError": "加载系统字体出错：{}",
