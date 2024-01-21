@@ -1,0 +1,54 @@
+<p>Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.</p>
+<p>Read the <a href="https://github.com/ImranR98/Obtainium/wiki">Wiki</a></p>
+<p>
+	<b>Currently supported App sources:</b>
+</p>
+<ul>
+	<li>
+		<p>Open Source - General:</p>
+		<ul>
+			<li>GitHub</li>
+			<li>GitLab</li>
+			<li>Codeberg</li>
+			<li>F-Droid</li>
+			<li>Third Party F-Droid Repos</li>
+			<li>IzzyOnDroid</li>
+			<li>SourceForge</li>
+			<li>SourceHut</li>
+		</ul>
+	</li>
+	<li>
+		<p>Other - General:</p>
+		<ul>
+			<li>APKPure</li>
+			<li>Aptoide</li>
+			<li>Uptodowng</li>
+			<li>APKMirror (Track-Only)</li>
+			<li>Huawei AppGallery</li>
+			<li>Jenkins Jobs</li>
+		</ul>
+	</li>
+	<li>
+		<p>Open Source - App-Specific:</p>
+		<ul>
+			<li>Mullvad</li>
+			<li>Signal</li>
+			<li>VLC</li>
+		</ul>
+	</li>
+	<li>
+		<p>Other - App-Specific:</p>
+		<ul>
+			<li>WhatsApp</li>
+			<li>Telegram App</li>
+			<li>Neutron Code</li>
+		</ul>
+	</li>
+	<li><p>"HTML" (Fallback): Any other URL that returns an HTML page with links to APK files</p></li>
+</ul>
+<p>
+	<b>Limitations:</b>
+</p>
+<p>
+	For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
+</p>
