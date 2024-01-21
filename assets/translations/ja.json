@@ -289,7 +289,7 @@
     "systemFontError": "システムフォントの読み込みエラー: {}",
     "useVersionCodeAsOSVersion": "アプリのバージョンコードをOSで検出されたバージョンとして使用する",
     "requestHeader": "リクエストヘッダー",
-    "useLatestAssetDateAsReleaseDate": "最新のアセットアップロードをリリース日として使用",
+    "useLatestAssetDateAsReleaseDate": "最新のアセットアップロードをリリース日として使用する",
     "defaultPseudoVersioningMethod": "デフォルトの疑似バージョン管理方法",
     "partialAPKHash": "部分的なAPKのハッシュ",
     "APKLinkHash": "APKリンクのハッシュ",
