@@ -30,10 +30,10 @@ jobs:
       - name: Check submodule
         id: check_submodule
         run: |
-          SUBMODULE_COMMIT="$(cd .flutter; git rev-parse --short HEAD; cd ..)"
-          FLUTTER_COMMIT="$(flutter --version | head -2 | tail -1 | awk '{print $4}')"
-          echo "SUBMODULE_COMMIT=$SUBMODULE_COMMIT, FLUTTER_COMMIT=$FLUTTER_COMMIT"
-          if [ "$SUBMODULE_COMMIT" != "$FLUTTER_COMMIT" ]; then
+          SUBMODULE_COMMIT_LONG="$(git submodule status | head -1 | awk '{print $1}' | xargs)"
+          FLUTTER_COMMIT_SHORT="$(flutter --version | head -2 | tail -1 | awk '{print $4}')"
+          echo "SUBMODULE_COMMIT_LONG=$SUBMODULE_COMMIT_LONG, FLUTTER_COMMIT_SHORT=$FLUTTER_COMMIT_SHORT"
+          if ! [[ "$SUBMODULE_COMMIT_LONG" =~ ^$FLUTTER_COMMIT_SHORT ]]; then
             echo "Your submodule has not been updated!"
             exit 1
           fi
