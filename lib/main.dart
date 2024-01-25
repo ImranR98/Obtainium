@@ -184,7 +184,6 @@ class _ObtainiumState extends State<Obtainium> {
                     [],
                     0,
                     {
-                      'includePrereleases': true,
                       'versionDetection': true,
                       'apkFilterRegEx': 'fdroid',
                       'invertAPKFilter': true
