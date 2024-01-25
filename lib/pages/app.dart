@@ -347,18 +347,6 @@ class _AppPageState extends State<AppPage> {
       }
     }
 
-    getResetInstallStatusButton() => TextButton(
-        onPressed: app?.app == null || updating
-            ? null
-            : () {
-                app!.app.installedVersion = null;
-                appsProvider.saveApps([app.app]);
-              },
-        child: Text(
-          tr('resetInstallStatus'),
-          textAlign: TextAlign.center,
-        ));
-
     getInstallOrUpdateButton() => TextButton(
         onPressed: !updating &&
                 (app?.app.installedVersion == null ||
@@ -458,14 +446,20 @@ class _AppPageState extends State<AppPage> {
                             },
                             icon: const Icon(Icons.more_horiz),
                             tooltip: tr('more')),
+                      if ((!isVersionDetectionStandard || trackOnly) &&
+                          app?.app.installedVersion != null &&
+                          app?.app.installedVersion == app?.app.latestVersion)
+                        IconButton(
+                            onPressed: app?.app == null || updating
+                                ? null
+                                : () {
+                                    app!.app.installedVersion = null;
+                                    appsProvider.saveApps([app.app]);
+                                  },
+                            icon: const Icon(Icons.restore_rounded),
+                            tooltip: tr('resetInstallStatus')),
                       const SizedBox(width: 16.0),
-                      Expanded(
-                          child: (!isVersionDetectionStandard || trackOnly) &&
-                                  app?.app.installedVersion != null &&
-                                  app?.app.installedVersion ==
-                                      app?.app.latestVersion
-                              ? getResetInstallStatusButton()
-                              : getInstallOrUpdateButton()),
+                      Expanded(child: getInstallOrUpdateButton()),
                       const SizedBox(width: 16.0),
                       IconButton(
                         onPressed: app?.downloadProgress != null || updating
