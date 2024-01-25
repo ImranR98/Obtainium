@@ -243,7 +243,9 @@ Future<File> downloadFile(
       tempDownloadedFile.deleteSync(recursive: true);
       throw response.reasonPhrase ?? tr('unexpectedError');
     }
-    tempDownloadedFile.renameSync(downloadedFile.path);
+    if (tempDownloadedFile.existsSync()) {
+      tempDownloadedFile.renameSync(downloadedFile.path);
+    }
   } else {
     client.close();
   }
