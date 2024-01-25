@@ -391,16 +391,6 @@ class _AppPageState extends State<AppPage> {
                 child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      if (app?.app.installedVersion != null &&
-                          app?.app.installedVersion != app?.app.latestVersion &&
-                          !isVersionDetectionStandard &&
-                          !trackOnly)
-                        IconButton(
-                            onPressed: app?.downloadProgress != null || updating
-                                ? null
-                                : showMarkUpdatedDialog,
-                            tooltip: tr('markUpdated'),
-                            icon: const Icon(Icons.done)),
                       if (source != null &&
                           source.combinedAppSpecificSettingFormItems.isNotEmpty)
                         IconButton(
@@ -446,6 +436,16 @@ class _AppPageState extends State<AppPage> {
                             },
                             icon: const Icon(Icons.more_horiz),
                             tooltip: tr('more')),
+                      if (app?.app.installedVersion != null &&
+                          app?.app.installedVersion != app?.app.latestVersion &&
+                          !isVersionDetectionStandard &&
+                          !trackOnly)
+                        IconButton(
+                            onPressed: app?.downloadProgress != null || updating
+                                ? null
+                                : showMarkUpdatedDialog,
+                            tooltip: tr('markUpdated'),
+                            icon: const Icon(Icons.done)),
                       if ((!isVersionDetectionStandard || trackOnly) &&
                           app?.app.installedVersion != null &&
                           app?.app.installedVersion == app?.app.latestVersion)
