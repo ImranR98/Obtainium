@@ -39,6 +39,15 @@ class SourceHut extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+    if (standardUrl.endsWith('/refs')) {
+      standardUrl = standardUrl
+          .split('/')
+          .reversed
+          .toList()
+          .sublist(1)
+          .reversed
+          .join('/');
+    }
     Uri standardUri = Uri.parse(standardUrl);
     String appName = standardUri.pathSegments.last;
     bool fallbackToOlderReleases =
