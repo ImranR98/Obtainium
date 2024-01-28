@@ -10,16 +10,23 @@ class SourceForge extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegExB = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/p/[^/]+',
-        caseSensitive: false);
-    RegExpMatch? match = standardUrlRegExB.firstMatch(url);
+    var sourceRegex = getSourceRegex(hosts);
+    RegExp standardUrlRegExC =
+        RegExp('^https?://(www\\.)?$sourceRegex/p/.+', caseSensitive: false);
+    RegExpMatch? match = standardUrlRegExC.firstMatch(url);
     if (match != null) {
       url =
           'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
+    RegExp standardUrlRegExB = RegExp(
+        '^https?://(www\\.)?$sourceRegex/projects/[^/]+',
+        caseSensitive: false);
+    match = standardUrlRegExB.firstMatch(url);
+    if (match != null && match.group(0) == url) {
+      url = '$url/files';
+    }
     RegExp standardUrlRegExA = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/projects/[^/]+',
+        '^https?://(www\\.)?$sourceRegex/projects/[^/]+/files(/.+)?',
         caseSensitive: false);
     match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
@@ -33,38 +40,79 @@ class SourceForge extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res =
-        await sourceRequest('$standardUrl/rss?path=/', additionalSettings);
+    var standardUri = Uri.parse(standardUrl);
+    if (standardUri.pathSegments.length == 2) {
+      standardUrl = '$standardUrl/files';
+      standardUri = Uri.parse(standardUrl);
+    }
+    Response res = await sourceRequest(
+        '${standardUri.origin}/${standardUri.pathSegments.sublist(0, 2).join('/')}/rss?path=/',
+        additionalSettings);
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
-      var allDownloadLinks =
-          parsedHtml.querySelectorAll('guid').map((e) => e.innerHtml).toList();
+      var allDownloadLinks = parsedHtml
+          .querySelectorAll('guid')
+          .map((e) => e.innerHtml)
+          .where((element) => element.startsWith(standardUrl))
+          .toList();
       getVersion(String url) {
         try {
-          var tokens = url.split('/');
-          var fi = tokens.indexOf('files');
-          return tokens[tokens[fi + 2] == 'download' ? fi - 1 : fi + 1];
+          var segments = url
+              .substring(standardUrl.length)
+              .split('/')
+              .where((element) => element.isNotEmpty)
+              .toList()
+              .reversed
+              .toList()
+              .sublist(1)
+              .reversed
+              .toList();
+          segments = segments.length > 1
+              ? segments.reversed.toList().sublist(1).reversed.toList()
+              : segments;
+          var version = segments.isNotEmpty ? segments.join('/') : null;
+          if (version != null) {
+            try {
+              var extractedVersion = extractVersion(
+                  additionalSettings['versionExtractionRegEx'] as String?,
+                  additionalSettings['matchGroupToUse'] as String?,
+                  version);
+              if (extractedVersion != null) {
+                version = extractedVersion;
+              }
+            } catch (e) {
+              if (e is NoVersionError) {
+                version = null;
+              } else {
+                rethrow;
+              }
+            }
+          }
+          return version;
         } catch (e) {
           return null;
         }
       }
 
-      String? version = getVersion(allDownloadLinks[0]);
+      var apkUrlListAllReleases = allDownloadLinks
+          .where((element) => element.toLowerCase().endsWith('.apk/download'))
+          .where((element) => getVersion(element) != null)
+          .toList();
+      if (apkUrlListAllReleases.isEmpty) {
+        throw NoReleasesError();
+      }
+      String? version = getVersion(apkUrlListAllReleases[0]);
       if (version == null) {
         throw NoVersionError();
       }
-      var apkUrlListAllReleases = allDownloadLinks
-          .where((element) => element.toLowerCase().endsWith('.apk/download'))
-          .toList();
+
       var apkUrlList =
           apkUrlListAllReleases // This can be used skipped for fallback support later
               .where((element) => getVersion(element) == version)
               .toList();
-      return APKDetails(
-          version,
-          getApkUrlsFromUrls(apkUrlList),
-          AppNames(
-              name, standardUrl.substring(standardUrl.lastIndexOf('/') + 1)));
+      var segments = standardUrl.split('/');
+      return APKDetails(version, getApkUrlsFromUrls(apkUrlList),
+          AppNames(name, segments[segments.indexOf('files') - 1]));
     } else {
       throw getObtainiumHttpError(res);
     }

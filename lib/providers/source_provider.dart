@@ -829,8 +829,9 @@ class SourceProvider {
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
 
-    if (source.runtimeType != HTML().runtimeType) {
-      // HTML does it separately
+    if (source.runtimeType !=
+            HTML().runtimeType && // Some sources do it separately
+        source.runtimeType != SourceForge().runtimeType) {
       String? extractedVersion = extractVersion(
           additionalSettings['versionExtractionRegEx'] as String?,
           additionalSettings['matchGroupToUse'] as String?,
