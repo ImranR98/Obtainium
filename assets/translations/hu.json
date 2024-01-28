@@ -287,7 +287,7 @@
     "shizukuBinderNotFound": "A Shizuku nem fut",
     "useSystemFont": "Használja a rendszer betűtípusát",
     "systemFontError": "Hiba a rendszer betűtípusának betöltésekor: {}",
-    "useVersionCodeAsOSVersion": "Az app versionCode használata a rendszer által észlelt verzióként",
+    "useVersionCodeAsOSVersion": "Az app verziókód használata a rendszer által észlelt verzióként",
     "requestHeader": "Kérelem fejléc",
     "useLatestAssetDateAsReleaseDate": "Használja a legújabb tartalomfeltöltést megjelenési dátumként",
     "defaultPseudoVersioningMethod": "Alapértelmezett álversziós módszer",
@@ -299,7 +299,7 @@
     "latest": "Legújabb",
     "invertRegEx": "Invertált reguláris kifejezés",
     "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
+    "selfHostedNote": "A \"{}\" legördülő menü használható bármely forrás saját üzemeltetésű/egyéni példányainak eléréséhez.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
