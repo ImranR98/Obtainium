@@ -298,6 +298,8 @@
     "installed": "Установлен",
     "latest": "Последний",
     "invertRegEx": "Инвертировать регулярное выражение",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

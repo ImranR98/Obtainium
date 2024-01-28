@@ -298,6 +298,8 @@
     "installed": "Instalováno",
     "latest": "Nejnovější",
     "invertRegEx": "Invertovat regulární výraz",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
