@@ -319,7 +319,7 @@ class HTML extends AppSource {
     version ??=
         additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
             ? rel.hashCode.toString()
-            : (await checkPartialDownloadHashDynamc(rel)).toString();
+            : (await checkPartialDownloadHashDynamic(rel)).toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
   }
