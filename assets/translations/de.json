@@ -296,7 +296,7 @@
     "directAPKLink": "Direkter APK-Link",
     "pseudoVersionInUse": "Pseudoversionen sind in Benutzung",
     "installed": "Installiert",
-    "latest": "Neueste(r)",
+    "latest": "Neueste Version",
     "invertRegEx": "Regulären Ausdruck  invertieren",
     "removeAppQuestion": {
         "one": "App entfernen?",
