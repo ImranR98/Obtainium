@@ -94,7 +94,7 @@ void main() async {
     // Already added, do nothing (see #375)
   }
   await EasyLocalization.ensureInitialized();
-  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
+  if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 28) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );
