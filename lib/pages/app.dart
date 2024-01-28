@@ -205,6 +205,12 @@ class _AppPageState extends State<AppPage> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displayLarge,
             ),
+            Text(tr('byX', args: [app?.app.author ?? tr('unknown')]),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(
+              height: 24,
+            ),
             GestureDetector(
                 onTap: () {
                   if (app?.app.url != null) {
@@ -219,15 +225,12 @@ class _AppPageState extends State<AppPage> {
                   ));
                 },
                 child: Text(
-                  tr('byX', args: [app?.app.author ?? tr('unknown')]),
+                  app?.app.url ?? '',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
                       decoration: TextDecoration.underline,
                       fontStyle: FontStyle.italic),
                 )),
-            const SizedBox(
-              height: 8,
-            ),
             Text(
               app?.app.id ?? '',
               textAlign: TextAlign.center,
