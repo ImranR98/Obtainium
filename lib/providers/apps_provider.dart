@@ -167,7 +167,7 @@ String hashListOfLists(List<List<int>> data) {
   return hash.hashCode.toString();
 }
 
-Future<String> checkPartialDownloadHashDynamc(String url,
+Future<String> checkPartialDownloadHashDynamic(String url,
     {int startingSize = 1024,
     int lowerLimit = 128,
     Map<String, String>? headers}) async {
