@@ -298,6 +298,8 @@
     "installed": "Cài đặt",
     "latest": "Mới nhất",
     "invertRegEx": "Đảo ngược biểu thức chính quy",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

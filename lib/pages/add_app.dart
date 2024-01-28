@@ -530,7 +530,20 @@ class AddAppPageState extends State<AddAppPage> {
                                                 ? TextDecoration.underline
                                                 : TextDecoration.none),
                                       ))),
-                            )
+                            ),
+                            const SizedBox(
+                              height: 16,
+                            ),
+                            Text(
+                              '${tr('note')}:',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              height: 4,
+                            ),
+                            Text(tr('selfHostedNote',
+                                args: [tr('overrideSource')])),
                           ],
                         );
                       },

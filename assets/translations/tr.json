@@ -298,6 +298,8 @@
     "installed": "Kurulmuş",
     "latest": "En sonuncu",
     "invertRegEx": "Normal ifadeyi ters çevir",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

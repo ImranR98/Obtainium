@@ -298,6 +298,8 @@
     "installed": "インストール済み",
     "latest": "最新",
     "invertRegEx": "正規表現を反転",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

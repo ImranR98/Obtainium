@@ -298,6 +298,8 @@
     "installed": "Instalirano",
     "latest": "Najnoviji",
     "invertRegEx": "Obrni regularni izraz",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

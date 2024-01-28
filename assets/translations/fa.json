@@ -298,6 +298,8 @@
     "installed": "نصب شده است",
     "latest": "آخرین",
     "invertRegEx": "معکوس کردن عبارت منظم",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

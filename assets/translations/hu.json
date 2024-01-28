@@ -298,6 +298,8 @@
     "installed": "Telepített",
     "latest": "Legújabb",
     "invertRegEx": "Invertált reguláris kifejezés",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

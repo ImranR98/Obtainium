@@ -298,6 +298,8 @@
     "installed": "Installed",
     "latest": "Latest",
     "invertRegEx": "Invert regular expression",
+    "note": "Note",
+    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
