@@ -358,6 +358,16 @@ class AppsPageState extends State<AppsPage> {
       String? changesUrl =
           appSource.changeLogPageFromStandardUrl(listedApps[appIndex].app.url);
       String? changeLog = listedApps[appIndex].app.changeLog;
+      if (changeLog?.split('\n').length == 1) {
+        if (RegExp(
+                '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?')
+            .hasMatch(changeLog!)) {
+          if (changesUrl == null) {
+            changesUrl = changeLog;
+            changeLog = null;
+          }
+        }
+      }
       return (changeLog == null && changesUrl == null)
           ? null
           : () {
