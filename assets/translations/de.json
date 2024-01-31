@@ -294,12 +294,12 @@
     "partialAPKHash": "partieller APK-Hash",
     "APKLinkHash": "APK-Link-Hash",
     "directAPKLink": "Direkter APK-Link",
-    "pseudoVersionInUse": "Pseudoversionen sind in Benutzung",
+    "pseudoVersionInUse": "Es werden Pseudoversionen verwendet",
     "installed": "Installiert",
     "latest": "Neueste Version",
     "invertRegEx": "Regulären Ausdruck  invertieren",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
+    "note": "Hinweis",
+    "selfHostedNote": "Das \„{}\“-Dropdown-Menü kann verwendet werden, um selbst gehostete/angepasste Instanzen einer beliebigen Quelle zu erreichen.",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
