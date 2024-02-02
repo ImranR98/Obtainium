@@ -299,7 +299,8 @@
     "latest": "Neueste Version",
     "invertRegEx": "Regulären Ausdruck  invertieren",
     "note": "Hinweis",
-    "selfHostedNote": "Das \„{}\“-Dropdown-Menü kann verwendet werden, um selbst gehostete/angepasste Instanzen einer beliebigen Quelle zu erreichen.",
+    "selfHostedNote": "Das „{}“-Dropdown-Menü kann verwendet werden, um selbst gehostete/angepasste Instanzen einer beliebigen Quelle zu erreichen.",
+    "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

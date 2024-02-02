@@ -532,9 +532,18 @@ class AppsProvider with ChangeNotifier {
       {bool needsBGWorkaround = false}) async {
     var newInfo =
         await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
+    if (newInfo == null) {
+      try {
+        file.file.deleteSync(recursive: true);
+      } catch (e) {
+        //
+      } finally {
+        throw ObtainiumError(tr('badDownload'));
+      }
+    }
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
     if (appInfo != null &&
-        newInfo!.versionCode! < appInfo.versionCode! &&
+        newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }

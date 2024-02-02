@@ -300,6 +300,7 @@
     "invertRegEx": "Inverter expressão regular",
     "note": "Note",
     "selfHostedNote": "O menu suspenso \"{}\" pode ser usado para acessar instâncias auto-hospedadas/personalizadas de qualquer fonte.",
+    "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

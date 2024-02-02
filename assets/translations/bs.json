@@ -300,6 +300,7 @@
     "invertRegEx": "Obrni regularni izraz",
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
+    "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

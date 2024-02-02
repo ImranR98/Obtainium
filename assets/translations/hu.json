@@ -300,6 +300,7 @@
     "invertRegEx": "Invertált reguláris kifejezés",
     "note": "Note",
     "selfHostedNote": "A \"{}\" legördülő menü használható bármely forrás saját üzemeltetésű/egyéni példányainak eléréséhez.",
+    "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"
