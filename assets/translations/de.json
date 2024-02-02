@@ -226,7 +226,7 @@
     "tryInferAppIdFromCode": "Versuche, die App-ID aus dem Quellcode zu ermitteln",
     "removeOnExternalUninstall": "Automatisches Entfernen von extern deinstallierten Apps",
     "pickHighestVersionCode": "Automatische Auswahl des APK mit höchstem Versionscode",
-    "checkUpdateOnDetailPage": "Nach Updates suchen, wenn eine App-Detailseite geöffnet wird",
+    "checkUpdateOnDetailPage": "Nach Aktualisierungen suchen, wenn eine App-Detailseite geöffnet wird",
     "disablePageTransitions": "Animationen für Seitenübergänge deaktivieren",
     "reversePageTransitions": "Umgekehrte Animationen für Seitenübergänge",
     "minStarCount": "Minimale Anzahl von Sternen",
