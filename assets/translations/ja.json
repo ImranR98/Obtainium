@@ -298,9 +298,9 @@
     "installed": "インストール済み",
     "latest": "最新",
     "invertRegEx": "正規表現を反転",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "note": "注",
+    "selfHostedNote": "ドロップダウン\"{}\"を使用すると、あらゆるソースのセルフホスト/カスタムインスタンスにアクセスできます。",
+    "badDownload": "APK を解析できませんでした（互換性がないか、部分的にダウンロードされています）。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

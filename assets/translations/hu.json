@@ -298,9 +298,9 @@
     "installed": "Telepített",
     "latest": "Legújabb",
     "invertRegEx": "Invertált reguláris kifejezés",
-    "note": "Note",
+    "note": "Megjegyzés:",
     "selfHostedNote": "A \"{}\" legördülő menü használható bármely forrás saját üzemeltetésű/egyéni példányainak eléréséhez.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "badDownload": "Az APK-t nem lehetett elemezni (inkompatibilis vagy részleges letöltés)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazást?"

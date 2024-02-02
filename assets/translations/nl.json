@@ -298,9 +298,9 @@
     "installed": "Geïnstalleerd",
     "latest": "Laatste",
     "invertRegEx": "Reguliere expressie omkeren",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "note": "Opmerking",
+    "selfHostedNote": "De \"{}\" dropdown kan gebruikt worden om zelf gehoste/aangepaste instanties van elke bron te bereiken.",
+    "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

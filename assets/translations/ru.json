@@ -298,9 +298,9 @@
     "installed": "Установлен",
     "latest": "Последний",
     "invertRegEx": "Инвертировать регулярное выражение",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "note": "Примечание",
+    "selfHostedNote": "Выпадающий список \"{}\" можно использовать для доступа к самостоятельно размещенным/настроенным экземплярам любого источника.",
+    "badDownload": "APK не удалось разобрать (несовместимая или неполная загрузка)",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

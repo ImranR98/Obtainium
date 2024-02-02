@@ -300,7 +300,7 @@
     "invertRegEx": "Regulären Ausdruck  invertieren",
     "note": "Hinweis",
     "selfHostedNote": "Das „{}“-Dropdown-Menü kann verwendet werden, um selbst gehostete/angepasste Instanzen einer beliebigen Quelle zu erreichen.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "badDownload": "Die APK konnte nicht geparst werden (inkompatibler oder teilweiser Download)",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

@@ -298,9 +298,9 @@
     "installed": "已安装",
     "latest": "最新的",
     "invertRegEx": "反转正则表达式",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "note": "备注",
+    "selfHostedNote": "{}\"下拉菜单可用于访问任何来源的自托管/自定义实例。",
+    "badDownload": "无法解析 APK（不兼容或部分下载）",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

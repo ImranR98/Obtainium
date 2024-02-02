@@ -298,9 +298,9 @@
     "installed": "Kurulmuş",
     "latest": "En sonuncu",
     "invertRegEx": "Normal ifadeyi ters çevir",
-    "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "note": "Not",
+    "selfHostedNote": "\"{}\" açılır menüsü, herhangi bir kaynağın kendi kendine barındırılan/özel örneklerine ulaşmak için kullanılabilir.",
+    "badDownload": "APK ayrıştırılamadı (uyumsuz veya kısmi indirme)",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"
