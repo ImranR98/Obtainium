@@ -300,6 +300,7 @@
     "invertRegEx": "معکوس کردن عبارت منظم",
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
+    "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
