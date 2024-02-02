@@ -298,9 +298,9 @@
     "installed": "Instalado",
     "latest": "Mais recente",
     "invertRegEx": "Inverter expressão regular",
-    "note": "Note",
+    "note": "Nota",
     "selfHostedNote": "O menu suspenso \"{}\" pode ser usado para acessar instâncias auto-hospedadas/personalizadas de qualquer fonte.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "badDownload": "Não foi possível analisar o APK (transferência incompatível ou parcial)",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

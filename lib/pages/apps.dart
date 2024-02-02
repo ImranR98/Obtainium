@@ -1038,7 +1038,7 @@ class AppsPageState extends State<AppsPage> {
           IconButton(
               color: Theme.of(context).colorScheme.primary,
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              tooltip: isFilterOff ? tr('filter') : tr('filterActive'),
+              tooltip: '${tr('filter')}${isFilterOff ? '' : ' *'}',
               onPressed: isFilterOff
                   ? showFilterDialog
                   : () {

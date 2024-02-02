@@ -299,8 +299,8 @@
     "latest": "Dernier",
     "invertRegEx": "Inverser l'expression régulière",
     "note": "Note",
-    "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "selfHostedNote": "La liste déroulante \"{}\" peut être utilisée pour accéder aux instances auto-hébergées/personnalisées de n'importe quelle source.",
+    "badDownload": "L'APK n'a pas pu être analysé (téléchargement incompatible ou partiel)",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

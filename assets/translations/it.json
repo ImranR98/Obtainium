@@ -300,7 +300,7 @@
     "invertRegEx": "Inverti espressione regolare",
     "note": "Nota",
     "selfHostedNote": "Il menu a tendina \"{}\" può essere usato per raggiungere istanze autogestite/personali di qualsiasi fonte.",
-    "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "badDownload": "Non è stato possibile analizzare l'APK (download incompatibile o parziale).",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"
