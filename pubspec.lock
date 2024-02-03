@@ -22,10 +22,10 @@ packages:
     dependency: "direct main"
     description:
       name: android_package_manager
-      sha256: e52ca607b9f19f95d5dae4211ed8fa93e67093f22ac570db47489c5bca512940
+      sha256: "2de859fae7226a7de1c1ff9a2308f1967599408800330501a1ce97927c051153"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.0"
+    version: "0.7.1"
   animations:
     dependency: "direct main"
     description:
