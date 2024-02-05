@@ -30,29 +30,6 @@ class _SettingsPageState extends State<SettingsPage> {
       settingsProvider.initializeSettings();
     }
 
-    var installMethodDropdown = DropdownButtonFormField(
-        decoration: InputDecoration(labelText: tr('installMethod')),
-        value: settingsProvider.installMethod,
-        items: [
-          DropdownMenuItem(
-            value: InstallMethodSettings.normal,
-            child: Text(tr('normal')),
-          ),
-          const DropdownMenuItem(
-            value: InstallMethodSettings.shizuku,
-            child: Text('Shizuku'),
-          ),
-          DropdownMenuItem(
-            value: InstallMethodSettings.root,
-            child: Text(tr('root')),
-          )
-        ],
-        onChanged: (value) {
-          if (value != null) {
-            settingsProvider.installMethod = value;
-          }
-        });
-
     var themeDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('theme')),
         value: settingsProvider.theme,
@@ -363,7 +340,29 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            installMethodDropdown,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('useShizuku'))),
+                                Switch(
+                                    value: settingsProvider.useShizuku,
+                                    onChanged: (useShizuku) {
+                                      if (useShizuku) {
+                                        NativeFeatures.checkPermissionShizuku().then((resCode) {
+                                          settingsProvider.useShizuku = resCode == 1;
+                                          if (resCode == 0) {
+                                            showError(ObtainiumError(tr('cancelled')), context);
+                                          } else if (resCode == -1) {
+                                            showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
+                                          }
+                                        });
+                                      } else {
+                                        settingsProvider.useShizuku = false;
+                                      }
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),

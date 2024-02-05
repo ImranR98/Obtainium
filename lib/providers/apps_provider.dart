@@ -547,8 +547,7 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    if (needsBGWorkaround &&
-        settingsProvider.installMethod == InstallMethodSettings.normal) {
+    if (needsBGWorkaround) {
       // The below 'await' will never return if we are in a background process
       // To work around this, we should assume the install will be successful
       // So we update the app's installed version first as we will never get to the later code
@@ -560,20 +559,14 @@ class AppsProvider with ChangeNotifier {
           attemptToCorrectInstallStatus: false);
     }
     int? code;
-    switch (settingsProvider.installMethod) {
-      case InstallMethodSettings.normal:
-        code = await AndroidPackageInstaller.installApk(
-            apkFilePath: file.file.path);
-      case InstallMethodSettings.shizuku:
-        code = (await NativeFeatures.installWithShizuku(
-                apkFileUri: file.file.uri.toString()))
-            ? 0
-            : 1;
-      case InstallMethodSettings.root:
-        code =
-            (await NativeFeatures.installWithRoot(apkFilePath: file.file.path))
-                ? 0
-                : 1;
+    if (!settingsProvider.useShizuku) {
+      code = await AndroidPackageInstaller.installApk(
+          apkFilePath: file.file.path);
+    } else {
+      code = (await NativeFeatures.installWithShizuku(
+          apkFileUri: file.file.uri.toString()))
+          ? 0
+          : 1;
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -732,25 +725,19 @@ class AppsProvider with ChangeNotifier {
         }
         var appId = downloadedFile?.appId ?? downloadedDir!.appId;
         bool willBeSilent = await canInstallSilently(apps[appId]!.app);
-        switch (settingsProvider.installMethod) {
-          case InstallMethodSettings.normal:
-            if (!(await settingsProvider.getInstallPermission(
-                enforce: false))) {
-              throw ObtainiumError(tr('cancelled'));
-            }
-          case InstallMethodSettings.shizuku:
-            int code = await NativeFeatures.checkPermissionShizuku();
-            if (code == -1) {
-              throw ObtainiumError(tr('shizukuBinderNotFound'));
-            } else if (code == 0) {
-              throw ObtainiumError(tr('cancelled'));
-            }
-          case InstallMethodSettings.root:
-            if (!(await NativeFeatures.checkPermissionRoot())) {
-              throw ObtainiumError(tr('cancelled'));
-            }
+        if (!settingsProvider.useShizuku) {
+          if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+            throw ObtainiumError(tr('cancelled'));
+          }
+        } else {
+          int code = await NativeFeatures.checkPermissionShizuku();
+          if (code == 0) {
+            throw ObtainiumError(tr('cancelled'));
+          } else if (code == -1) {
+            throw ObtainiumError(tr('shizukuBinderNotFound'));
+          }
         }
-        if (!willBeSilent && context != null) {
+        if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
           // ignore: use_build_context_synchronously
           await waitForUserToReturnToForeground(context);
         }

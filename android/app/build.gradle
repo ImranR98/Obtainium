@@ -105,8 +105,6 @@ dependencies {
     implementation "dev.rikka.hidden:compat:$hidden_api_version"
     compileOnly "dev.rikka.hidden:stub:$hidden_api_version"
     implementation "org.lsposed.hiddenapibypass:hiddenapibypass:4.3"
-
-    implementation "com.github.topjohnwu.libsu:core:5.2.2"
 }
 
 ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]

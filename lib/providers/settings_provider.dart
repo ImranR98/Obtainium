@@ -18,8 +18,6 @@ String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 
-enum InstallMethodSettings { normal, shizuku, root }
-
 enum ThemeSettings { system, light, dark }
 
 enum ColourSettings { basic, materialYou }
@@ -61,13 +59,12 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  InstallMethodSettings get installMethod {
-    return InstallMethodSettings.values[
-        prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];
+  bool get useShizuku{
+    return prefs?.getBool('useShizuku') ?? false;
   }
 
-  set installMethod(InstallMethodSettings t) {
-    prefs?.setInt('installMethod', t.index);
+  set useShizuku(bool useShizuku) {
+    prefs?.setBool('useShizuku', useShizuku);
     notifyListeners();
   }
 

@@ -59,17 +59,8 @@ class NativeFeatures {
     return res;
   }
 
-  static Future<bool> checkPermissionRoot() async {
-    return await _channel.invokeMethod('checkPermissionRoot');
-  }
-
   static Future<bool> installWithShizuku({required String apkFileUri}) async {
     return await _channel.invokeMethod(
         'installWithShizuku', {'apkFileUri': apkFileUri});
-  }
-
-  static Future<bool> installWithRoot({required String apkFilePath}) async {
-    return await _channel.invokeMethod(
-        'installWithRoot', {'apkFilePath': apkFilePath});
   }
 }

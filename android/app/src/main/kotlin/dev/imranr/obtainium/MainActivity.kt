@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import androidx.annotation.NonNull
-import com.topjohnwu.superuser.Shell
 import dev.imranr.obtainium.util.IIntentSenderAdaptor
 import dev.imranr.obtainium.util.IntentSenderUtils
 import dev.imranr.obtainium.util.PackageInstallerUtils
@@ -23,13 +22,15 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import org.lsposed.hiddenapibypass.HiddenApiBypass
+import kotlinx.coroutines.async
+import kotlinx.coroutines.GlobalScope
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.OnRequestPermissionResultListener
 import rikka.shizuku.ShizukuBinderWrapper
 
 class MainActivity: FlutterActivity() {
     private var nativeChannel: MethodChannel? = null
-    private val SHIZUKU_PERMISSION_REQUEST_CODE = (10..200).random()
+    private val SHIZUKU_PERMISSION_REQUEST_CODE = 1492
 
     private fun shizukuCheckPermission(result: Result) {
         try {
@@ -43,7 +44,7 @@ class MainActivity: FlutterActivity() {
                 Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
                 result.success(-2)
             }
-        } catch (_: Exception) {  // If shizuku not running
+        } catch (_: Exception) {  // If shizuku binder not found
             result.success(-1)
         }
     }
@@ -56,7 +57,7 @@ class MainActivity: FlutterActivity() {
         }
     }
 
-    private fun shizukuInstallApk(apkFileUri: String, result: Result) {
+    private suspend fun shizukuInstallApk(apkFileUri: String, result: Result) {
         val uri = Uri.parse(apkFileUri)
         var res = false
         var session: PackageInstaller.Session? = null
@@ -129,22 +130,6 @@ class MainActivity: FlutterActivity() {
         result.success(res)
     }
 
-    private fun rootCheckPermission(result: Result) {
-        Shell.getShell(Shell.GetShellCallback(
-            fun(shell: Shell) {
-                result.success(shell.isRoot)
-            }
-        ))
-    }
-
-    private fun rootInstallApk(apkFilePath: String, result: Result) {
-        Shell.sh("pm install -r -t " + apkFilePath).submit { out ->
-            val builder = StringBuilder()
-            for (data in out.getOut()) { builder.append(data) }
-            result.success(builder.toString().endsWith("Success"))
-        }
-    }
-
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -160,14 +145,9 @@ class MainActivity: FlutterActivity() {
                 result.success(res)
             } else if (call.method == "checkPermissionShizuku") {
                 shizukuCheckPermission(result)
-            } else if (call.method == "checkPermissionRoot") {
-                rootCheckPermission(result)
             } else if (call.method == "installWithShizuku") {
-                val apkFileUri: String? = call.argument("apkFileUri")
-                shizukuInstallApk(apkFileUri!!, result)
-            } else if (call.method == "installWithRoot") {
-                val apkFilePath: String? = call.argument("apkFilePath")
-                rootInstallApk(apkFilePath!!, result)
+                val apkFileUri: String = call.argument("apkFileUri")!!
+                GlobalScope.async { shizukuInstallApk(apkFileUri, result) }
             }
         }
     }
