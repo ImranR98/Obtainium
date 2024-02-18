@@ -303,7 +303,7 @@
     "badDownload": "Az APK-t nem lehetett elemezni (inkompatibilis vagy részleges letöltés)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
-        "other": "Eltávolítja az alkalmazást?"
+        "other": "Eltávolítja az alkalmazásokat?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
