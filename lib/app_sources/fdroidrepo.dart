@@ -120,6 +120,22 @@ class FDroidRepo extends AppSource {
     var res = await sourceRequest(
         '$standardUrl${standardUrl.endsWith('/index.xml') ? '' : '/index.xml'}',
         additionalSettings);
+    if (res.statusCode != 200) {
+      var base = standardUrl.endsWith('/index.xml')
+          ? standardUrl
+              .split('/')
+              .reversed
+              .toList()
+              .sublist(1)
+              .reversed
+              .join('/')
+          : standardUrl;
+      res = await sourceRequest('$base/repo/index.xml', additionalSettings);
+      if (res.statusCode != 200) {
+        res = await sourceRequest(
+            '$base/fdroid/repo/index.xml', additionalSettings);
+      }
+    }
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {
@@ -168,7 +184,8 @@ class FDroidRepo extends AppSource {
         latestVersionReleases = [latestVersionReleases[0]];
       }
       List<String> apkUrls = latestVersionReleases
-          .map((e) => '$standardUrl/${e.querySelector('apkname')!.innerHtml}')
+          .map((e) =>
+              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}')
           .toList();
       return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
           AppNames(authorName, appName),
