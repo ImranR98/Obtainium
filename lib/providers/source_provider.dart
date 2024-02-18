@@ -819,7 +819,7 @@ class SourceProvider {
       AppSource source, String url, Map<String, dynamic> additionalSettings,
       {App? currentApp,
       bool trackOnlyOverride = false,
-      String? overrideSource,
+      bool sourceIsOverriden = false,
       bool inferAppIdIfOptional = false}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
@@ -887,7 +887,9 @@ class SourceProvider {
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
         changeLog: apk.changeLog,
-        overrideSource: overrideSource ?? currentApp?.overrideSource,
+        overrideSource: sourceIsOverriden
+            ? source.runtimeType.toString()
+            : currentApp?.overrideSource,
         allowIdChange: currentApp?.allowIdChange ??
             trackOnly ||
                 (source.appIdInferIsOptional &&
@@ -911,6 +913,7 @@ class SourceProvider {
         apps.add(await getApp(
             source,
             url,
+            sourceIsOverriden: sourceOverride != null,
             getDefaultValuesFromFormItems(
                 source.combinedAppSpecificSettingFormItems)));
       } catch (e) {
