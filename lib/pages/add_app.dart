@@ -163,7 +163,7 @@ class AddAppPageState extends State<AddAppPage> {
           app = await sourceProvider.getApp(
               pickedSource!, userInput.trim(), additionalSettings,
               trackOnlyOverride: trackOnly,
-              overrideSource: pickedSourceOverride,
+              sourceIsOverriden: pickedSourceOverride != null,
               inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
