@@ -70,8 +70,6 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        tools:node="remove" />
+        android:maxSdkVersion="29" />\
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 </manifest>
