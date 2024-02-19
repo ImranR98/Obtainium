@@ -213,7 +213,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           setState(() {
             importInProgress = true;
           });
-          if (values['url'] != source.hosts[0]) {
+          if (source.hosts.isEmpty || values['url'] != source.hosts[0]) {
             source = sourceProvider.getSource(values['url'],
                 overrideSource: source.runtimeType.toString());
           }

@@ -50,10 +50,6 @@ class IzzyOnDroid extends AppSource {
         'https://android.izzysoft.de/frepo/$appId',
         standardUrl,
         name,
-        autoSelectHighestVersionCode:
-            additionalSettings['autoSelectHighestVersionCode'] == true,
-        trySelectingSuggestedVersionCode:
-            additionalSettings['trySelectingSuggestedVersionCode'] == true,
-        filterVersionsByRegEx: additionalSettings['filterVersionsByRegEx']);
+        additionalSettings: additionalSettings);
   }
 }
