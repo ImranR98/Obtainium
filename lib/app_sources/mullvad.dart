@@ -6,17 +6,19 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Mullvad extends AppSource {
   Mullvad() {
-    host = 'mullvad.net';
+    hosts = ['mullvad.net'];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   @override
@@ -28,7 +30,8 @@ class Mullvad extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest('$standardUrl/en/download/android');
+    Response res = await sourceRequest(
+        '$standardUrl/en/download/android', additionalSettings);
     if (res.statusCode == 200) {
       var versions = parse(res.body)
           .querySelectorAll('p')

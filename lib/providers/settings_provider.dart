@@ -14,8 +14,11 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-String obtainiumTempId = 'imranr98_obtainium_${GitHub().host}';
+String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
+String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
+
+enum InstallMethodSettings { normal, shizuku, root }
 
 enum ThemeSettings { system, light, dark }
 
@@ -46,6 +49,25 @@ class SettingsProvider with ChangeNotifier {
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     defaultAppDir = (await getExternalStorageDirectory())!.path;
+    notifyListeners();
+  }
+
+  bool get useSystemFont {
+    return prefs?.getBool('useSystemFont') ?? false;
+  }
+
+  set useSystemFont(bool useSystemFont) {
+    prefs?.setBool('useSystemFont', useSystemFont);
+    notifyListeners();
+  }
+
+  InstallMethodSettings get installMethod {
+    return InstallMethodSettings.values[
+        prefs?.getInt('installMethod') ?? InstallMethodSettings.normal.index];
+  }
+
+  set installMethod(InstallMethodSettings t) {
+    prefs?.setInt('installMethod', t.index);
     notifyListeners();
   }
 
@@ -213,7 +235,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    return prefs?.getString(settingId);
+    String? str = prefs?.getString(settingId);
+    return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
@@ -332,15 +355,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  DateTime get lastBGCheckTime {
-    int? temp = prefs?.getInt('lastBGCheckTime');
+  DateTime get lastCompletedBGCheckTime {
+    int? temp = prefs?.getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  set lastBGCheckTime(DateTime val) {
-    prefs?.setInt('lastBGCheckTime', val.millisecondsSinceEpoch);
+  set lastCompletedBGCheckTime(DateTime val) {
+    prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
   }
 
@@ -413,6 +436,33 @@ class SettingsProvider with ChangeNotifier {
 
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
     prefs?.setBool('onlyCheckInstalledOrTrackOnlyApps', val);
+    notifyListeners();
+  }
+
+  bool get exportSettings {
+    return prefs?.getBool('exportSettings') ?? false;
+  }
+
+  set exportSettings(bool val) {
+    prefs?.setBool('exportSettings', val);
+    notifyListeners();
+  }
+
+  bool get parallelDownloads {
+    return prefs?.getBool('parallelDownloads') ?? false;
+  }
+
+  set parallelDownloads(bool val) {
+    prefs?.setBool('parallelDownloads', val);
+    notifyListeners();
+  }
+
+  List<String> get searchDeselected {
+    return prefs?.getStringList('searchDeselected') ?? [];
+  }
+
+  set searchDeselected(List<String> list) {
+    prefs?.setStringList('searchDeselected', list);
     notifyListeners();
   }
 }

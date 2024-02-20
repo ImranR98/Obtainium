@@ -21,10 +21,10 @@ class AddAppPage extends StatefulWidget {
   const AddAppPage({super.key});
 
   @override
-  State<AddAppPage> createState() => _AddAppPageState();
+  State<AddAppPage> createState() => AddAppPageState();
 }
 
-class _AddAppPageState extends State<AddAppPage> {
+class AddAppPageState extends State<AddAppPage> {
   bool gettingAppInfo = false;
   bool searching = false;
 
@@ -36,8 +36,63 @@ class _AddAppPageState extends State<AddAppPage> {
   bool additionalSettingsValid = true;
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
-  int searchnum = 0;
+  int urlInputKey = 0;
   SourceProvider sourceProvider = SourceProvider();
+
+  linkFn(String input) {
+    try {
+      if (input.isEmpty) {
+        throw UnsupportedURLError();
+      }
+      sourceProvider.getSource(input);
+      changeUserInput(input, true, false, updateUrlInput: true);
+    } catch (e) {
+      showError(e, context);
+    }
+  }
+
+  changeUserInput(String input, bool valid, bool isBuilding,
+      {bool updateUrlInput = false}) {
+    userInput = input;
+    if (!isBuilding) {
+      setState(() {
+        if (updateUrlInput) {
+          urlInputKey++;
+        }
+        var prevHost = pickedSource?.hosts.isNotEmpty == true
+            ? pickedSource?.hosts[0]
+            : null;
+        try {
+          var naturalSource =
+              valid ? sourceProvider.getSource(userInput) : null;
+          if (naturalSource != null &&
+              naturalSource.runtimeType.toString() !=
+                  HTML().runtimeType.toString()) {
+            // If input has changed to match a regular source, reset the override
+            pickedSourceOverride = null;
+          }
+        } catch (e) {
+          // ignore
+        }
+        var source = valid
+            ? sourceProvider.getSource(userInput,
+                overrideSource: pickedSourceOverride)
+            : null;
+        if (pickedSource.runtimeType != source.runtimeType ||
+            (prevHost != null && prevHost != source?.hosts[0])) {
+          pickedSource = source;
+          additionalSettings = source != null
+              ? getDefaultValuesFromFormItems(
+                  source.combinedAppSpecificSettingFormItems)
+              : {};
+          additionalSettingsValid = source != null
+              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
+              : true;
+          inferAppIdIfOptional = true;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,47 +102,6 @@ class _AddAppPageState extends State<AddAppPage> {
         context.read<NotificationsProvider>();
 
     bool doingSomething = gettingAppInfo || searching;
-
-    changeUserInput(String input, bool valid, bool isBuilding,
-        {bool isSearch = false}) {
-      userInput = input;
-      if (!isBuilding) {
-        setState(() {
-          if (isSearch) {
-            searchnum++;
-          }
-          var prevHost = pickedSource?.host;
-          try {
-            var naturalSource =
-                valid ? sourceProvider.getSource(userInput) : null;
-            if (naturalSource != null &&
-                naturalSource.runtimeType.toString() !=
-                    HTML().runtimeType.toString()) {
-              // If input has changed to match a regular source, reset the override
-              pickedSourceOverride = null;
-            }
-          } catch (e) {
-            // ignore
-          }
-          var source = valid
-              ? sourceProvider.getSource(userInput,
-                  overrideSource: pickedSourceOverride)
-              : null;
-          if (pickedSource.runtimeType != source.runtimeType ||
-              (prevHost != null && prevHost != source?.host)) {
-            pickedSource = source;
-            additionalSettings = source != null
-                ? getDefaultValuesFromFormItems(
-                    source.combinedAppSpecificSettingFormItems)
-                : {};
-            additionalSettingsValid = source != null
-                ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-                : true;
-            inferAppIdIfOptional = true;
-          }
-        });
-      }
-    }
 
     Future<bool> getTrackOnlyConfirmationIfNeeded(bool userPickedTrackOnly,
         {bool ignoreHideSetting = false}) async {
@@ -121,8 +135,7 @@ class _AddAppPageState extends State<AddAppPage> {
 
     getReleaseDateAsVersionConfirmationIfNeeded(
         bool userPickedTrackOnly) async {
-      return (!(additionalSettings['versionDetection'] ==
-              'releaseDateAsVersion' &&
+      return (!(additionalSettings['releaseDateAsVersion'] == true &&
           // ignore: use_build_context_synchronously
           await showDialog(
                   context: context,
@@ -150,7 +163,7 @@ class _AddAppPageState extends State<AddAppPage> {
           app = await sourceProvider.getApp(
               pickedSource!, userInput.trim(), additionalSettings,
               trackOnlyOverride: trackOnly,
-              overrideSource: pickedSourceOverride,
+              sourceIsOverriden: pickedSourceOverride != null,
               inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
@@ -178,8 +191,7 @@ class _AddAppPageState extends State<AddAppPage> {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
           if (app.additionalSettings['trackOnly'] == true ||
-              app.additionalSettings['versionDetection'] !=
-                  'standardVersionDetection') {
+              app.additionalSettings['versionDetection'] != true) {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;
@@ -205,7 +217,7 @@ class _AddAppPageState extends State<AddAppPage> {
           children: [
             Expanded(
                 child: GeneratedForm(
-                    key: Key(searchnum.toString()),
+                    key: Key(urlInputKey.toString()),
                     items: [
                       [
                         GeneratedFormTextField('appSourceURL',
@@ -254,57 +266,82 @@ class _AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    runSearch() async {
+    runSearch({bool filtered = true}) async {
       setState(() {
         searching = true;
       });
+      var sourceStrings = <String, List<String>>{};
+      sourceProvider.sources
+          .where((e) => e.canSearch && !e.excludeFromMassSearch)
+          .forEach((s) {
+        sourceStrings[s.name] = [s.name];
+      });
       try {
-        var results = await Future.wait(sourceProvider.sources
-            .where((e) => e.canSearch && !e.excludeFromMassSearch)
-            .map((e) async {
-          try {
-            return await e.search(searchQuery);
-          } catch (err) {
-            if (err is! CredsNeededError) {
-              rethrow;
-            } else {
-              return <String, List<String>>{};
-            }
-          }
-        }));
-
-        // .then((results) async {
-        // Interleave results instead of simple reduce
-        Map<String, List<String>> res = {};
-        var si = 0;
-        var done = false;
-        while (!done) {
-          done = true;
-          for (var r in results) {
-            if (r.length > si) {
-              done = false;
-              res.addEntries([r.entries.elementAt(si)]);
-            }
-          }
-          si++;
-        }
-        if (res.isEmpty) {
-          throw ObtainiumError(tr('noResults'));
-        }
-        List<String>? selectedUrls = res.isEmpty
-            ? []
-            // ignore: use_build_context_synchronously
-            : await showDialog<List<String>?>(
+        var searchSources = await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
-                  return UrlSelectionModal(
-                    urlsWithDescriptions: res,
-                    selectedByDefault: false,
-                    onlyOneSelectionAllowed: true,
+                  return SelectionModal(
+                    title: tr('selectX', args: [plural('source', 2)]),
+                    entries: sourceStrings,
+                    selectedByDefault: true,
+                    onlyOneSelectionAllowed: false,
+                    titlesAreLinks: false,
+                    deselectThese: settingsProvider.searchDeselected,
                   );
-                });
-        if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          changeUserInput(selectedUrls[0], true, false, isSearch: true);
+                }) ??
+            [];
+        if (searchSources.isNotEmpty) {
+          settingsProvider.searchDeselected = sourceStrings.keys
+              .where((s) => !searchSources.contains(s))
+              .toList();
+          var results = await Future.wait(sourceProvider.sources
+              .where((e) => searchSources.contains(e.name))
+              .map((e) async {
+            try {
+              return await e.search(searchQuery);
+            } catch (err) {
+              if (err is! CredsNeededError) {
+                rethrow;
+              } else {
+                err.unexpected = true;
+                showError(err, context);
+                return <String, List<String>>{};
+              }
+            }
+          }));
+
+          // Interleave results instead of simple reduce
+          Map<String, List<String>> res = {};
+          var si = 0;
+          var done = false;
+          while (!done) {
+            done = true;
+            for (var r in results) {
+              if (r.length > si) {
+                done = false;
+                res.addEntries([r.entries.elementAt(si)]);
+              }
+            }
+            si++;
+          }
+          if (res.isEmpty) {
+            throw ObtainiumError(tr('noResults'));
+          }
+          List<String>? selectedUrls = res.isEmpty
+              ? []
+              // ignore: use_build_context_synchronously
+              : await showDialog<List<String>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return SelectionModal(
+                      entries: res,
+                      selectedByDefault: false,
+                      onlyOneSelectionAllowed: true,
+                    );
+                  });
+          if (selectedUrls != null && selectedUrls.isNotEmpty) {
+            changeUserInput(selectedUrls[0], true, false, updateUrlInput: true);
+          }
         }
       } catch (e) {
         showError(e, context);
@@ -459,38 +496,74 @@ class _AddAppPageState extends State<AddAppPage> {
           ],
         );
 
-    Widget getSourcesListWidget() => Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
+    Widget getSourcesListWidget() => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              Text(
-                tr('supportedSources'),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 16,
-              ),
-              ...sourceProvider.sources
-                  .map((e) => GestureDetector(
-                      onTap: e.host != null
-                          ? () {
-                              launchUrlString('https://${e.host}',
-                                  mode: LaunchMode.externalApplication);
-                            }
-                          : null,
-                      child: Text(
-                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                        style: TextStyle(
-                            decoration: e.host != null
-                                ? TextDecoration.underline
-                                : TextDecoration.none,
-                            fontStyle: FontStyle.italic),
-                      )))
-                  .toList()
-            ]);
+              GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return GeneratedFormModal(
+                          singleNullReturnButton: tr('ok'),
+                          title: tr('supportedSources'),
+                          items: const [],
+                          additionalWidgets: [
+                            ...sourceProvider.sources.map(
+                              (e) => Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: GestureDetector(
+                                      onTap: e.hosts.isNotEmpty
+                                          ? () {
+                                              launchUrlString(
+                                                  'https://${e.hosts[0]}',
+                                                  mode: LaunchMode
+                                                      .externalApplication);
+                                            }
+                                          : null,
+                                      child: Text(
+                                        '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                                        style: TextStyle(
+                                            decoration: e.hosts.isNotEmpty
+                                                ? TextDecoration.underline
+                                                : TextDecoration.none),
+                                      ))),
+                            ),
+                            const SizedBox(
+                              height: 16,
+                            ),
+                            Text(
+                              '${tr('note')}:',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              height: 4,
+                            ),
+                            Text(tr('selfHostedNote',
+                                args: [tr('overrideSource')])),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  child: Text(
+                    tr('supportedSources'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                        fontStyle: FontStyle.italic),
+                  ))
+            ],
+          ),
+        );
 
     return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
+        bottomNavigationBar:
+            pickedSource == null ? getSourcesListWidget() : null,
         body: CustomScrollView(shrinkWrap: true, slivers: <Widget>[
           CustomAppBar(title: tr('addApp')),
           SliverToBoxAdapter(
@@ -522,18 +595,7 @@ class _AddAppPageState extends State<AddAppPage> {
                                   : const SizedBox();
                             },
                             future: pickedSource?.getSourceNote()),
-                      SizedBox(
-                        height: pickedSource != null ? 16 : 96,
-                      ),
                       if (pickedSource != null) getAdditionalOptsCol(),
-                      if (pickedSource == null)
-                        const Divider(
-                          height: 48,
-                        ),
-                      if (pickedSource == null) getSourcesListWidget(),
-                      SizedBox(
-                        height: pickedSource != null ? 8 : 2,
-                      ),
                     ])),
           )
         ]));

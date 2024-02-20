@@ -2,6 +2,10 @@ name: Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      beta:
+        type: boolean
+        description: Is beta?
     
 jobs:
   build:
@@ -19,10 +23,34 @@ jobs:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
           passphrase: ${{ secrets.PGP_PASSPHRASE }}
 
+      - name: Check submodule
+        id: check_submodule
+        run: |
+          SUBMODULE_COMMIT_LONG="$(git submodule status | head -1 | tail -c +2 | awk '{print $1}')"
+          FLUTTER_COMMIT_SHORT="$(flutter --version | head -2 | tail -1 | awk '{print $4}')"
+          echo "SUBMODULE_COMMIT_LONG=$SUBMODULE_COMMIT_LONG, FLUTTER_COMMIT_SHORT=$FLUTTER_COMMIT_SHORT"
+          if ! [[ "$SUBMODULE_COMMIT_LONG" =~ ^$FLUTTER_COMMIT_SHORT ]]; then
+            echo "Your submodule has not been updated!"
+            exit 1
+          fi
+
+      - name: Extract Version
+        id: extract_version      
+        run: |
+          VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
+          echo "beta=$BETA" >> $GITHUB_OUTPUT
+          TAG="v$VERSION"
+          if [ $BETA == true ]; then TAG="$TAG"-beta; fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
       - name: Build APKs
         run: |
           sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
-          flutter build apk && flutter build apk --split-per-abi
+          flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
+          for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
+          flutter build apk --flavor fdroid -t lib/main_fdroid.dart && flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
           rm ./build/app/outputs/flutter-apk/*.sha1
           ls -l ./build/app/outputs/flutter-apk/
         
@@ -36,22 +64,12 @@ jobs:
           for apk in ./build/app/outputs/flutter-apk/*-release*.apk; do
             unsignedFn=${apk/-release/-unsigned}
             mv "$apk" "$unsignedFn"
-            ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedFn}"
+            ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | tail -1)/apksigner sign --ks apksign.keystore --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedFn}"
             sha256sum ${apk} | cut -d " " -f 1 > "$apk".sha256
             gpg --batch  --pinentry-mode loopback --passphrase "${PGP_PASSPHRASE}" --sign --detach-sig "$apk".sha256
           done
           rm apksign.keystore
           PGP_KEY_FINGERPRINT="${{ steps.import_pgp_key.outputs.fingerprint }}"
-        
-      - name: Extract Version
-        id: extract_version      
-        run: |
-           VERSION=$(grep -oP "currentVersion = '\K[^']+" lib/main.dart)
-           echo "version=$VERSION" >> $GITHUB_OUTPUT
-           TAG=$(grep -oP "'.*\\\$currentVersion.*'" lib/main.dart | head -c -2 | tail -c +2 | sed "s/\$currentVersion/$VERSION/g")
-           echo "tag=$TAG" >> $GITHUB_OUTPUT
-           if [ -n "$(echo $TAG | grep -oP '\-beta$')" ]; then BETA=true; else BETA=false; fi
-           echo "beta=$BETA" >> $GITHUB_OUTPUT
 
       - name: Create Tag
         uses: mathieudutour/github-tag-action@v6.1

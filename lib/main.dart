@@ -12,18 +12,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
-
-const String currentVersion = '0.14.32';
-const String currentReleaseTag =
-    'v$currentVersion-beta'; // KEEP THIS IN SYNC WITH GITHUB RELEASES
-
-const int bgUpdateCheckAlarmId = 666;
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
@@ -36,15 +30,18 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('fr'), 'Français'),
   MapEntry(Locale('es'), 'Español'),
   MapEntry(Locale('pl'), 'Polski'),
-  MapEntry(Locale('ru'), 'Русский язык'),
+  MapEntry(Locale('ru'), 'Русский'),
   MapEntry(Locale('bs'), 'Bosanski'),
   MapEntry(Locale('pt'), 'Brasileiro'),
   MapEntry(Locale('cs'), 'Česky'),
   MapEntry(Locale('sv'), 'Svenska'),
   MapEntry(Locale('nl'), 'Nederlands'),
+  MapEntry(Locale('vi'), 'Tiếng Việt'),
+  MapEntry(Locale('tr'), 'Türkçe'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
+var fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -73,6 +70,19 @@ Future<void> loadTranslations() async {
       fallbackTranslations: controller.fallbackTranslations);
 }
 
+@pragma('vm:entry-point')
+void backgroundFetchHeadlessTask(HeadlessTask task) async {
+  String taskId = task.taskId;
+  bool isTimeout = task.timeout;
+  if (isTimeout) {
+    print('BG update task timed out.');
+    BackgroundFetch.finish(taskId);
+    return;
+  }
+  await bgUpdateCheck(taskId, null);
+  BackgroundFetch.finish(taskId);
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -90,7 +100,6 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
-  await AndroidAlarmManager.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
@@ -105,6 +114,7 @@ void main() async {
         useOnlyLangCode: true,
         child: const Obtainium()),
   ));
+  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
 var defaultThemeColour = Colors.deepPurple;
@@ -120,6 +130,33 @@ class _ObtainiumState extends State<Obtainium> {
   var existingUpdateInterval = -1;
 
   @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+  }
+
+  Future<void> initPlatformState() async {
+    await BackgroundFetch.configure(
+        BackgroundFetchConfig(
+            minimumFetchInterval: 15,
+            stopOnTerminate: false,
+            startOnBoot: true,
+            enableHeadless: true,
+            requiresBatteryNotLow: false,
+            requiresCharging: false,
+            requiresStorageNotLow: false,
+            requiresDeviceIdle: false,
+            requiredNetworkType: NetworkType.ANY), (String taskId) async {
+      await bgUpdateCheck(taskId, null);
+      BackgroundFetch.finish(taskId);
+    }, (String taskId) async {
+      context.read<LogsProvider>().add('BG update task timed out.');
+      BackgroundFetch.finish(taskId);
+    });
+    if (!mounted) return;
+  }
+
+  @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     AppsProvider appsProvider = context.read<AppsProvider>();
@@ -133,20 +170,32 @@ class _ObtainiumState extends State<Obtainium> {
         logs.add('This is the first ever run of Obtainium.');
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
-        appsProvider.saveApps([
-          App(
-              obtainiumId,
-              'https://github.com/ImranR98/Obtainium',
-              'ImranR98',
-              'Obtainium',
-              currentReleaseTag,
-              currentReleaseTag,
-              [],
-              0,
-              {'includePrereleases': true},
-              null,
-              false)
-        ], onlyIfExists: false);
+        if (!fdroid) {
+          getInstalledInfo(obtainiumId).then((value) {
+            if (value?.versionName != null) {
+              appsProvider.saveApps([
+                App(
+                    obtainiumId,
+                    obtainiumUrl,
+                    'ImranR98',
+                    'Obtainium',
+                    value!.versionName,
+                    value.versionName!,
+                    [],
+                    0,
+                    {
+                      'versionDetection': true,
+                      'apkFilterRegEx': 'fdroid',
+                      'invertAPKFilter': true
+                    },
+                    null,
+                    false)
+              ], onlyIfExists: false);
+            }
+          }).catchError((err) {
+            print(err);
+          });
+        }
       }
       if (!supportedLocales
               .map((e) => e.key.languageCode)
@@ -155,30 +204,6 @@ class _ObtainiumState extends State<Obtainium> {
               context.deviceLocale.languageCode !=
                   context.locale.languageCode)) {
         settingsProvider.resetLocaleSafe(context);
-      }
-      // Register the background update task according to the user's setting
-      var actualUpdateInterval = settingsProvider.updateInterval;
-      if (existingUpdateInterval != actualUpdateInterval) {
-        if (actualUpdateInterval == 0) {
-          AndroidAlarmManager.cancel(bgUpdateCheckAlarmId);
-        } else {
-          var settingChanged = existingUpdateInterval != -1;
-          var lastCheckWasTooLongAgo = actualUpdateInterval != 0 &&
-              settingsProvider.lastBGCheckTime
-                  .add(Duration(minutes: actualUpdateInterval + 60))
-                  .isBefore(DateTime.now());
-          if (settingChanged || lastCheckWasTooLongAgo) {
-            logs.add(
-                'Update interval was set to ${actualUpdateInterval.toString()} (reason: ${settingChanged ? 'setting changed' : 'last check was ${settingsProvider.lastBGCheckTime.toLocal().toString()}'}).');
-            AndroidAlarmManager.periodic(
-                Duration(minutes: actualUpdateInterval),
-                bgUpdateCheckAlarmId,
-                bgUpdateCheck,
-                rescheduleOnReboot: true,
-                wakeup: true);
-          }
-        }
-        existingUpdateInterval = actualUpdateInterval;
       }
     }
 
@@ -216,13 +241,15 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily:
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Metropolis'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: 'Metropolis'),
+              fontFamily:
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Metropolis'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));

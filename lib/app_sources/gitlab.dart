@@ -13,8 +13,9 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class GitLab extends AppSource {
   GitLab() {
-    host = 'gitlab.com';
+    hosts = ['gitlab.com'];
     canSearch = true;
+    showReleaseDateAsVersionToggle = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField('gitlab-creds',
@@ -52,12 +53,14 @@ class GitLab extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    RegExp standardUrlRegEx = RegExp('^https?://$host/[^/]+/[^/]+');
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url.toLowerCase());
+    RegExp standardUrlRegEx = RegExp(
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
+        caseSensitive: false);
+    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return url.substring(0, match.end);
+    return match.group(0)!;
   }
 
   Future<String?> getPATIfAny(Map<String, dynamic> additionalSettings) async {
@@ -80,20 +83,16 @@ class GitLab extends AppSource {
   @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
-    String? PAT = await getPATIfAny({});
-    if (PAT == null) {
-      throw CredsNeededError(name);
-    }
     var url =
-        'https://$host/api/v4/search?private_token=$PAT&scope=projects&search=${Uri.encodeQueryComponent(query)}';
-    var res = await sourceRequest(url);
+        'https://${hosts[0]}/api/v4/projects?search=${Uri.encodeQueryComponent(query)}';
+    var res = await sourceRequest(url, {});
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
     var json = jsonDecode(res.body) as List<dynamic>;
     Map<String, List<String>> results = {};
     for (var element in json) {
-      results['https://$host/${element['path_with_namespace']}'] = [
+      results['https://${hosts[0]}/${element['path_with_namespace']}'] = [
         element['name_with_namespace'],
         element['description'] ?? tr('noDescription')
       ];
@@ -117,7 +116,8 @@ class GitLab extends AppSource {
     if (PAT != null) {
       var names = GitHub().getAppNames(standardUrl);
       Response res = await sourceRequest(
-          'https://$host/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT');
+          'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
+          additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
@@ -152,7 +152,8 @@ class GitLab extends AppSource {
             releaseDate: releaseDate);
       });
     } else {
-      Response res = await sourceRequest('$standardUrl/-/tags?format=atom');
+      Response res = await sourceRequest(
+          '$standardUrl/-/tags?format=atom', additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
@@ -174,7 +175,6 @@ class GitLab extends AppSource {
           ...getLinksFromParsedHTML(entryContent,
                   RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
               .where((element) => Uri.parse(element).host != '')
-              .toList()
         ];
         var entryId = entry.querySelector('id')?.innerHtml;
         var version =
@@ -192,7 +192,7 @@ class GitLab extends AppSource {
       });
     }
     if (apkDetailsList.isEmpty) {
-      throw NoReleasesError();
+      throw NoReleasesError(note: tr('gitlabSourceNote'));
     }
     if (fallbackToOlderReleases) {
       if (additionalSettings['trackOnly'] != true) {
@@ -200,7 +200,7 @@ class GitLab extends AppSource {
             apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
       }
       if (apkDetailsList.isEmpty) {
-        throw NoReleasesError();
+        throw NoReleasesError(note: tr('gitlabSourceNote'));
       }
     }
     return apkDetailsList.first;

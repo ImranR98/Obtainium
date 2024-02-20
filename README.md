@@ -1,10 +1,14 @@
 # ![Obtainium Icon](./assets/graphics/icon_small.png) Obtainium
 
+[![Ceasefire Now](https://badge.techforpalestine.org/default)](https://techforpalestine.org/learn-more)
+
 Get Android App Updates Directly From the Source.
 
 Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.
 
 Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
+
+Read the Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
 
 Currently supported App sources:
 - Open Source - General:
@@ -17,7 +21,7 @@ Currently supported App sources:
   - [SourceForge](https://sourceforge.net/)
   - [SourceHut](https://git.sr.ht/)
 - Other - General:
-  - [APKPure](https://apkpure.com/)
+  - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
   - [APKMirror](https://apkmirror.com/) (Track-Only)
@@ -28,8 +32,8 @@ Currently supported App sources:
   - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)
 - Other - App-Specific:
+  - [WhatsApp](https://whatsapp.com)
   - [Telegram App](https://telegram.org)
-  - [Steam Mobile Apps](https://store.steampowered.com/mobile)
   - [Neutron Code](https://neutroncode.com)
 - "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
 
@@ -38,6 +42,9 @@ Currently supported App sources:
 [<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png"
     alt="Get it on GitHub"
     height="80">](https://github.com/ImranR98/Obtainium/releases)
+[<img src="https://gitlab.com/fdroid/artwork/-/raw/master/badge/get-it-on.png"
+    alt="Get it on F-Droid"
+    height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
 
 [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index)
 

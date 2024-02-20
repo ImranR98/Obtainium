@@ -23,6 +23,7 @@ if (flutterVersionName == null) {
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'dev.rikka.tools.refine'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 def keystoreProperties = new Properties()
@@ -32,7 +33,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion rootProject.ext.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -52,12 +53,25 @@ android {
         applicationId "dev.imranr.obtainium"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-build-configuration.
-        minSdkVersion 23
-        targetSdkVersion 33
+        minSdkVersion 24
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
+    
+    flavorDimensions "flavor"
 
+    productFlavors {
+        normal {
+            dimension "flavor"
+            applicationIdSuffix ""
+        }
+        fdroid {
+            dimension "flavor"
+            applicationIdSuffix ".fdroid"
+        }
+    }
+    
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']
@@ -77,6 +91,33 @@ flutter {
     source '../..'
 }
 
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    def shizuku_version = '13.1.5'
+    implementation "dev.rikka.shizuku:api:$shizuku_version"
+    implementation "dev.rikka.shizuku:provider:$shizuku_version"
+
+    def hidden_api_version = '4.3.1'
+    implementation "dev.rikka.tools.refine:runtime:$hidden_api_version"
+    implementation "dev.rikka.hidden:compat:$hidden_api_version"
+    compileOnly "dev.rikka.hidden:stub:$hidden_api_version"
+    implementation "org.lsposed.hiddenapibypass:hiddenapibypass:4.3"
+
+    implementation "com.github.topjohnwu.libsu:core:5.2.2"
+}
+
+ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
+import com.android.build.OutputFile
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        def abiVersionCode = project.ext.abiCodes.get(output.getFilter(OutputFile.ABI))
+        if (abiVersionCode != null) {
+            output.versionCodeOverride = variant.versionCode * 10 + abiVersionCode
+        } else {
+            output.versionCodeOverride = variant.versionCode * 10
+        }
+    }
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -356,6 +358,16 @@ class AppsPageState extends State<AppsPage> {
       String? changesUrl =
           appSource.changeLogPageFromStandardUrl(listedApps[appIndex].app.url);
       String? changeLog = listedApps[appIndex].app.changeLog;
+      if (changeLog?.split('\n').length == 1) {
+        if (RegExp(
+                '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?')
+            .hasMatch(changeLog!)) {
+          if (changesUrl == null) {
+            changesUrl = changeLog;
+            changeLog = null;
+          }
+        }
+      }
       return (changeLog == null && changesUrl == null)
           ? null
           : () {
@@ -419,7 +431,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getVersionText(int appIndex) {
-      return '${listedApps[appIndex].app.installedVersion ?? tr('notInstalled')}${listedApps[appIndex].app.additionalSettings['trackOnly'] == true ? ' ${tr('estimateInBrackets')}' : ''}';
+      return '${listedApps[appIndex].app.installedVersion ?? tr('notInstalled')}${listedApps[appIndex].app.additionalSettings['trackOnly'] == true ? ' ${tr('pseudoVersion')}' : ''}';
     }
 
     getChangesButtonString(int appIndex, bool hasChangeLogFn) {
@@ -496,14 +508,8 @@ class AppsPageState extends State<AppsPage> {
       var transparent =
           Theme.of(context).colorScheme.background.withAlpha(0).value;
       List<double> stops = [
-        ...listedApps[index]
-            .app
-            .categories
-            .asMap()
-            .entries
-            .map((e) =>
-                ((e.key / (listedApps[index].app.categories.length - 1))))
-            .toList(),
+        ...listedApps[index].app.categories.asMap().entries.map(
+            (e) => ((e.key / (listedApps[index].app.categories.length - 1)))),
         1
       ];
       if (stops.length == 2) {
@@ -516,13 +522,9 @@ class AppsPageState extends State<AppsPage> {
                   begin: const Alignment(-1, 0),
                   end: const Alignment(-0.97, 0),
                   colors: [
-                ...listedApps[index]
-                    .app
-                    .categories
-                    .map((e) =>
-                        Color(settingsProvider.categories[e] ?? transparent)
-                            .withAlpha(255))
-                    .toList(),
+                ...listedApps[index].app.categories.map((e) =>
+                    Color(settingsProvider.categories[e] ?? transparent)
+                        .withAlpha(255)),
                 Color(transparent)
               ])),
           child: ListTile(
@@ -704,7 +706,7 @@ class AppsPageState extends State<AppsPage> {
                     showError(e, context);
                     return <String>[];
                   }).then((value) {
-                    if (shouldInstallUpdates) {
+                    if (value.isNotEmpty && shouldInstallUpdates) {
                       showMessage(tr('appsUpdated'), context);
                     }
                   });
@@ -885,16 +887,38 @@ class AppsPageState extends State<AppsPage> {
                           }
                           urls = urls.substring(0, urls.length - 1);
                           Share.share(urls,
-                              subject: tr('selectedAppURLsFromObtainium'));
+                              subject: 'Obtainium - ${tr('appsString')}');
                           Navigator.of(context).pop();
                         },
                         tooltip: tr('shareSelectedAppURLs'),
-                        icon: const Icon(Icons.share),
+                        icon: const Icon(Icons.share_rounded),
                       ),
                       IconButton(
-                        onPressed: resetSelectedAppsInstallStatuses,
-                        tooltip: tr('resetInstallStatus'),
-                        icon: const Icon(Icons.restore_page_outlined),
+                        onPressed: selectedAppIds.isEmpty
+                            ? null
+                            : () {
+                                String urls =
+                                    '<p>${tr('customLinkMessage')}:</p>\n\n<ul>\n';
+                                for (var a in selectedApps) {
+                                  urls +=
+                                      '    <li><a href="obtainium://app/${Uri.encodeComponent(jsonEncode({
+                                        'id': a.id,
+                                        'url': a.url,
+                                        'author': a.author,
+                                        'name': a.name,
+                                        'preferredApkIndex':
+                                            a.preferredApkIndex,
+                                        'additionalSettings':
+                                            jsonEncode(a.additionalSettings)
+                                      }))}">${a.name}</a></li>\n';
+                                }
+                                urls +=
+                                    '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
+                                Share.share(urls,
+                                    subject: 'Obtainium - ${tr('appsString')}');
+                              },
+                        tooltip: tr('shareAppConfigLinks'),
+                        icon: const Icon(Icons.ios_share),
                       ),
                     ]),
               ),
@@ -981,10 +1005,8 @@ class AppsPageState extends State<AppsPage> {
                       defaultValue: filter.sourceFilter,
                       [
                         MapEntry('', tr('none')),
-                        ...sourceProvider.sources
-                            .map((e) =>
-                                MapEntry(e.runtimeType.toString(), e.name))
-                            .toList()
+                        ...sourceProvider.sources.map(
+                            (e) => MapEntry(e.runtimeType.toString(), e.name))
                       ])
                 ]
               ],
@@ -1016,7 +1038,7 @@ class AppsPageState extends State<AppsPage> {
           IconButton(
               color: Theme.of(context).colorScheme.primary,
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              tooltip: isFilterOff ? tr('filter') : tr('filterActive'),
+              tooltip: '${tr('filter')}${isFilterOff ? '' : ' *'}',
               onPressed: isFilterOff
                   ? showFilterDialog
                   : () {

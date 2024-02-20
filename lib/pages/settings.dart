@@ -1,4 +1,3 @@
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +29,29 @@ class _SettingsPageState extends State<SettingsPage> {
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     }
+
+    var installMethodDropdown = DropdownButtonFormField(
+        decoration: InputDecoration(labelText: tr('installMethod')),
+        value: settingsProvider.installMethod,
+        items: [
+          DropdownMenuItem(
+            value: InstallMethodSettings.normal,
+            child: Text(tr('normal')),
+          ),
+          const DropdownMenuItem(
+            value: InstallMethodSettings.shizuku,
+            child: Text('Shizuku'),
+          ),
+          DropdownMenuItem(
+            value: InstallMethodSettings.root,
+            child: Text(tr('root')),
+          )
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            settingsProvider.installMethod = value;
+          }
+        });
 
     var themeDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('theme')),
@@ -56,14 +79,14 @@ class _SettingsPageState extends State<SettingsPage> {
     var colourDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('colour')),
         value: settingsProvider.colour,
-        items: [
+        items: const [
           DropdownMenuItem(
             value: ColourSettings.basic,
-            child: Text(tr('obtainium')),
+            child: Text('Obtainium'),
           ),
           DropdownMenuItem(
             value: ColourSettings.materialYou,
-            child: Text(tr('materialYou')),
+            child: Text('Material You'),
           )
         ],
         onChanged: (value) {
@@ -327,6 +350,20 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('parallelDownloads'))),
+                                Switch(
+                                    value: settingsProvider.parallelDownloads,
+                                    onChanged: (value) {
+                                      settingsProvider.parallelDownloads =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            installMethodDropdown,
                             height32,
                             Text(
                               tr('sourceSpecific'),
@@ -370,6 +407,34 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             height16,
                             localeDropdown,
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(child: Text(tr('useSystemFont'))),
+                                Switch(
+                                    value: settingsProvider.useSystemFont,
+                                    onChanged: (useSystemFont) {
+                                      if (useSystemFont) {
+                                        NativeFeatures.loadSystemFont()
+                                            .then((fontLoadRes) {
+                                          if (fontLoadRes == 'ok') {
+                                            settingsProvider.useSystemFont =
+                                                true;
+                                          } else {
+                                            showError(
+                                                ObtainiumError(tr(
+                                                    'systemFontError',
+                                                    args: [fontLoadRes])),
+                                                context);
+                                          }
+                                        });
+                                      } else {
+                                        settingsProvider.useSystemFont = false;
+                                      }
+                                    })
+                              ],
+                            ),
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -567,41 +632,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         label: Text(tr('appLogs'))),
                   ],
                 ),
-                const Divider(
-                  height: 32,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Column(children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(child: Text(tr('debugMenu'))),
-                        Switch(
-                            value: settingsProvider.showDebugOpts,
-                            onChanged: (value) {
-                              settingsProvider.showDebugOpts = value;
-                            })
-                      ],
-                    ),
-                    if (settingsProvider.showDebugOpts)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          height16,
-                          TextButton(
-                              onPressed: () {
-                                AndroidAlarmManager.oneShot(
-                                    const Duration(seconds: 0),
-                                    bgUpdateCheckAlarmId + 200,
-                                    bgUpdateCheck);
-                                showMessage(tr('bgTaskStarted'), context);
-                              },
-                              child: Text(tr('runBgCheckNow')))
-                        ],
-                      ),
-                  ]),
-                ),
+                const SizedBox(
+                  height: 16,
+                )
               ],
             ),
           )

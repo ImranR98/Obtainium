@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
+import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -10,6 +11,7 @@ class FDroidRepo extends AppSource {
     canSearch = true;
     excludeFromMassSearch = true;
     neverAutoSelect = true;
+    showReleaseDateAsVersionToggle = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [
@@ -44,7 +46,7 @@ class FDroidRepo extends AppSource {
   String sourceSpecificStandardizeURL(String url) {
     var standardUri = Uri.parse(url);
     var pathSegments = standardUri.pathSegments;
-    if (pathSegments.last == 'index.xml') {
+    if (pathSegments.isNotEmpty && pathSegments.last == 'index.xml') {
       pathSegments.removeLast();
       standardUri = standardUri.replace(path: pathSegments.join('/'));
     }
@@ -54,17 +56,29 @@ class FDroidRepo extends AppSource {
   @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
-    query = removeQueryParamsFromUrl(standardizeUrl(query));
-    var res = await sourceRequest('$query/index.xml');
+    String? url = querySettings['url'];
+    if (url == null) {
+      throw NoReleasesError();
+    }
+    url = removeQueryParamsFromUrl(standardizeUrl(url));
+    var res = await sourceRequestWithURLVariants(url, {});
     if (res.statusCode == 200) {
       var body = parse(res.body);
       Map<String, List<String>> results = {};
       body.querySelectorAll('application').toList().forEach((app) {
         String appId = app.attributes['id']!;
-        results['$query?appId=$appId'] = [
-          app.querySelector('name')?.innerHtml ?? appId,
-          app.querySelector('desc')?.innerHtml ?? ''
-        ];
+        String appName = app.querySelector('name')?.innerHtml ?? appId;
+        String appDesc = app.querySelector('desc')?.innerHtml ?? '';
+        if (query.isEmpty ||
+            appId.contains(query) ||
+            appName.contains(query) ||
+            appDesc.contains(query)) {
+          results[
+              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] = [
+            appName,
+            appDesc
+          ];
+        }
       });
       return results;
     } else {
@@ -93,6 +107,26 @@ class FDroidRepo extends AppSource {
     return app;
   }
 
+  Future<Response> sourceRequestWithURLVariants(
+    String url,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    var res = await sourceRequest(
+        '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
+        additionalSettings);
+    if (res.statusCode != 200) {
+      var base = url.endsWith('/index.xml')
+          ? url.split('/').reversed.toList().sublist(1).reversed.join('/')
+          : url;
+      res = await sourceRequest('$base/repo/index.xml', additionalSettings);
+      if (res.statusCode != 200) {
+        res = await sourceRequest(
+            '$base/fdroid/repo/index.xml', additionalSettings);
+      }
+    }
+    return res;
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
@@ -108,8 +142,8 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
-    var res = await sourceRequest(
-        '$standardUrl${standardUrl.endsWith('/index.xml') ? '' : '/index.xml'}');
+    var res =
+        await sourceRequestWithURLVariants(standardUrl, additionalSettings);
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {
@@ -158,7 +192,8 @@ class FDroidRepo extends AppSource {
         latestVersionReleases = [latestVersionReleases[0]];
       }
       List<String> apkUrls = latestVersionReleases
-          .map((e) => '$standardUrl/${e.querySelector('apkname')!.innerHtml}')
+          .map((e) =>
+              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}')
           .toList();
       return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
           AppNames(authorName, appName),

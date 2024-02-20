@@ -11,6 +11,7 @@ import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
+import 'package:obtainium/app_sources/directAPKLink.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
@@ -19,7 +20,6 @@ import 'package:obtainium/app_sources/huaweiappgallery.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
-import 'package:obtainium/app_sources/mullvad.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -67,10 +67,11 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       .reduce((value, element) => [...value, ...element]);
   Map<String, dynamic> additionalSettings =
       getDefaultValuesFromFormItems([formItems]);
+  Map<String, dynamic> originalAdditionalSettings = {};
   if (json['additionalSettings'] != null) {
-    additionalSettings.addEntries(
-        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']))
-            .entries);
+    originalAdditionalSettings =
+        Map<String, dynamic>.from(jsonDecode(json['additionalSettings']));
+    additionalSettings.addEntries(originalAdditionalSettings.entries);
   }
   // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
   if (json['additionalData'] != null) {
@@ -103,6 +104,21 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       additionalSettings.remove('releaseDateAsVersion');
     }
   }
+  // Convert dropdown style version detection options back into bool style
+  if (additionalSettings['versionDetection'] == 'standardVersionDetection') {
+    additionalSettings['versionDetection'] = true;
+  } else if (additionalSettings['versionDetection'] == 'noVersionDetection') {
+    additionalSettings['versionDetection'] = false;
+  } else if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
+    additionalSettings['versionDetection'] = false;
+    additionalSettings['releaseDateAsVersion'] = true;
+  }
+  // Convert bool style pseudo version method to dropdown style
+  if (originalAdditionalSettings['supportFixedAPKURL'] == true) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'partialAPKHash';
+  } else if (originalAdditionalSettings['supportFixedAPKURL'] == false) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'APKLinkHash';
+  }
   // Ensure additionalSettings are correctly typed
   for (var item in formItems) {
     if (additionalSettings[item.key] != null) {
@@ -133,6 +149,53 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   // Arch based APK filter option should be disabled if it previously did not exist
   if (additionalSettings['autoApkFilterByArch'] == null) {
     additionalSettings['autoApkFilterByArch'] = false;
+  }
+  if (source.runtimeType == HTML().runtimeType) {
+    // HTML 'fixed URL' support should be disabled if it previously did not exist
+    if (originalAdditionalSettings['supportFixedAPKURL'] == null) {
+      additionalSettings['supportFixedAPKURL'] = false;
+    }
+    // HTML key rename
+    if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
+      additionalSettings['sortByLastLinkSegment'] =
+          originalAdditionalSettings['sortByFileNamesNotLinks'];
+    }
+    // HTML single 'intermediate link' should be converted to multi-support version
+    if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
+        additionalSettings['intermediateLinkRegex']?.isNotEmpty != true) {
+      additionalSettings['intermediateLink'] = [
+        {
+          'customLinkFilterRegex':
+              originalAdditionalSettings['intermediateLinkRegex'],
+          'filterByLinkText':
+              originalAdditionalSettings['intermediateLinkByText']
+        }
+      ];
+    }
+    if ((additionalSettings['intermediateLink']?.length ?? 0) > 0) {
+      additionalSettings['intermediateLink'] =
+          additionalSettings['intermediateLink'].where((e) {
+        return e['customLinkFilterRegex']?.isNotEmpty == true;
+      }).toList();
+    }
+    // Steam source apps should be converted to HTML (#1244)
+    var legacySteamSourceApps = SteamMobile().apks.keys;
+    if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
+      json['url'] = '${json['url']}/mobile';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      for (var s in replacementAdditionalSettings.keys) {
+        if (additionalSettings.containsKey(s)) {
+          replacementAdditionalSettings[s] = additionalSettings[s];
+        }
+      }
+      replacementAdditionalSettings['customLinkFilterRegex'] =
+          '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk';
+      replacementAdditionalSettings['versionExtractionRegEx'] =
+          replacementAdditionalSettings['customLinkFilterRegex'];
+      replacementAdditionalSettings['matchGroupToUse'] = '\$1';
+      additionalSettings = replacementAdditionalSettings;
+    }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
@@ -229,9 +292,10 @@ class App {
         json['installedVersion'] == null
             ? null
             : json['installedVersion'] as String,
-        json['latestVersion'] as String,
-        assumed2DlistToStringMapList(jsonDecode(json['apkUrls'])),
-        json['preferredApkIndex'] as int,
+        (json['latestVersion'] ?? tr('unknown')) as String,
+        assumed2DlistToStringMapList(jsonDecode(
+            (json['apkUrls'] ?? '[["placeholder", "placeholder"]]'))),
+        (json['preferredApkIndex'] ?? -1) as int,
         jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
         json['lastUpdateCheck'] == null
             ? null
@@ -318,8 +382,12 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
+getSourceRegex(List<String> hosts) {
+  return '(${hosts.join('|').replaceAll('.', '\\.')})';
+}
+
 abstract class AppSource {
-  String? host;
+  List<String> hosts = [];
   bool hostChanged = false;
   late String name;
   bool enforceTrackOnly = false;
@@ -328,28 +396,24 @@ abstract class AppSource {
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
   bool neverAutoSelect = false;
+  bool showReleaseDateAsVersionToggle = false;
+  bool versionDetectionDisallowed = false;
+  List<String> excludeCommonSettingKeys = [];
 
   AppSource() {
     name = runtimeType.toString();
   }
 
-  overrideVersionDetectionFormDefault(String vd,
-      {bool disableStandard = false, bool disableRelDate = false}) {
-    additionalAppSpecificSourceAgnosticSettingFormItems =
-        additionalAppSpecificSourceAgnosticSettingFormItems.map((e) {
+  overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(String key,
+      {bool disabled = true, bool defaultValue = true}) {
+    additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly =
+        additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
+            .map((e) {
       return e.map((e2) {
-        if (e2.key == 'versionDetection') {
-          var item = e2 as GeneratedFormDropdown;
-          item.defaultValue = vd;
-          item.disabledOptKeys = [];
-          if (disableStandard) {
-            item.disabledOptKeys?.add('standardVersionDetection');
-          }
-          if (disableRelDate) {
-            item.disabledOptKeys?.add('releaseDateAsVersion');
-          }
-          item.disabledOptKeys =
-              item.disabledOptKeys?.where((element) => element != vd).toList();
+        if (e2.key == key) {
+          var item = e2 as GeneratedFormSwitch;
+          item.disabled = disabled;
+          item.defaultValue = defaultValue;
         }
         return e2;
       }).toList();
@@ -365,8 +429,8 @@ abstract class AppSource {
   }
 
   Future<Map<String, String>?> getRequestHeaders(
-      {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-      bool forAPKDownload = false}) async {
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
     return null;
   }
 
@@ -374,12 +438,10 @@ abstract class AppSource {
     return app;
   }
 
-  Future<Response> sourceRequest(String url,
-      {bool followRedirects = true,
-      Map<String, dynamic> additionalSettings =
-          const <String, dynamic>{}}) async {
-    var requestHeaders =
-        await getRequestHeaders(additionalSettings: additionalSettings);
+  Future<Response> sourceRequest(
+      String url, Map<String, dynamic> additionalSettings,
+      {bool followRedirects = true}) async {
+    var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
       var req = Request('GET', Uri.parse(url));
       req.followRedirects = followRedirects;
@@ -407,7 +469,7 @@ abstract class AppSource {
 
   // Some additional data may be needed for Apps regardless of Source
   List<List<GeneratedFormItem>>
-      additionalAppSpecificSourceAgnosticSettingFormItems = [
+      additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly = [
     [
       GeneratedFormSwitch(
         'trackOnly',
@@ -415,16 +477,22 @@ abstract class AppSource {
       )
     ],
     [
-      GeneratedFormDropdown(
-          'versionDetection',
-          [
-            MapEntry(
-                'standardVersionDetection', tr('standardVersionDetection')),
-            MapEntry('releaseDateAsVersion', tr('releaseDateAsVersion')),
-            MapEntry('noVersionDetection', tr('noVersionDetection'))
-          ],
-          label: tr('versionDetection'),
-          defaultValue: 'standardVersionDetection')
+      GeneratedFormTextField('versionExtractionRegEx',
+          label: tr('versionExtractionRegEx'),
+          required: false,
+          additionalValidators: [(value) => regExValidator(value)]),
+    ],
+    [
+      GeneratedFormTextField('matchGroupToUse',
+          label: tr('matchGroupToUse'), required: false, hint: '\$0')
+    ],
+    [
+      GeneratedFormSwitch('versionDetection',
+          label: tr('versionDetectionExplanation'), defaultValue: true)
+    ],
+    [
+      GeneratedFormSwitch('useVersionCodeAsOSVersion',
+          label: tr('useVersionCodeAsOSVersion'), defaultValue: false)
     ],
     [
       GeneratedFormTextField('apkFilterRegEx',
@@ -435,6 +503,11 @@ abstract class AppSource {
               return regExValidator(value);
             }
           ])
+    ],
+    [
+      GeneratedFormSwitch('invertAPKFilter',
+          label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
+          defaultValue: false)
     ],
     [
       GeneratedFormSwitch('autoApkFilterByArch',
@@ -448,14 +521,54 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('skipUpdateNotifications',
           label: tr('skipUpdateNotifications'))
-    ]
+    ],
+    [GeneratedFormTextField('about', label: tr('about'), required: false)]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
+    if (showReleaseDateAsVersionToggle == true) {
+      if (additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
+              .indexWhere((List<GeneratedFormItem> e) =>
+                  e.indexWhere((GeneratedFormItem i) =>
+                      i.key == 'releaseDateAsVersion') >=
+                  0) <
+          0) {
+        additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly.insert(
+            additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
+                    .indexWhere((List<GeneratedFormItem> e) =>
+                        e.indexWhere((GeneratedFormItem i) =>
+                            i.key == 'versionDetection') >=
+                        0) +
+                1,
+            [
+              GeneratedFormSwitch('releaseDateAsVersion',
+                  label:
+                      '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
+                  defaultValue: false)
+            ]);
+      }
+    }
+    additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly =
+        additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
+            .map((e) => e
+                .where((ee) => !excludeCommonSettingKeys.contains(ee.key))
+                .toList())
+            .where((e) => e.isNotEmpty)
+            .toList();
+    if (versionDetectionDisallowed) {
+      overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(
+          'versionDetection',
+          disabled: true,
+          defaultValue: false);
+      overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(
+          'useVersionCodeAsOSVersion',
+          disabled: true,
+          defaultValue: false);
+    }
     return [
       ...additionalSourceAppSpecificSettingFormItems,
-      ...additionalAppSpecificSourceAgnosticSettingFormItems
+      ...additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly
     ];
   }
 
@@ -485,8 +598,8 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
     return apkUrl;
   }
 
@@ -549,6 +662,71 @@ bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
+replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
+  if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
+    matchGroupString = '\$$matchGroupString';
+  }
+  // Regular expression to match numbers in the input string
+  final numberRegex = RegExp(r'\$\d+');
+  // Extract all numbers from the input string
+  final numbers = numberRegex.allMatches(matchGroupString);
+  if (numbers.isEmpty) {
+    // If no numbers found, return the original string
+    return null;
+  }
+  // Replace numbers with corresponding match groups
+  var outputString = matchGroupString;
+  for (final numberMatch in numbers) {
+    final number = numberMatch.group(0)!;
+    final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+    // Check if the number is preceded by a single backslash
+    final isEscaped = outputString.contains('\\$number');
+    // Replace the number with the corresponding match group
+    if (!isEscaped) {
+      outputString = outputString.replaceAll(number, matchGroup);
+    } else {
+      outputString = outputString.replaceAll('\\$number', number);
+    }
+  }
+  return outputString;
+}
+
+String? extractVersion(String? versionExtractionRegEx, String? matchGroupString,
+    String stringToCheck) {
+  if (versionExtractionRegEx?.isNotEmpty == true) {
+    String? version = stringToCheck;
+    var match = RegExp(versionExtractionRegEx!).allMatches(version);
+    if (match.isEmpty) {
+      throw NoVersionError();
+    }
+    matchGroupString = matchGroupString?.trim() ?? '';
+    if (matchGroupString.isEmpty) {
+      matchGroupString = "0";
+    }
+    version = replaceMatchGroupsInString(match.last, matchGroupString);
+    if (version?.isNotEmpty != true) {
+      throw NoVersionError();
+    }
+    return version!;
+  } else {
+    return null;
+  }
+}
+
+List<MapEntry<String, String>> filterApks(
+    List<MapEntry<String, String>> apkUrls,
+    String? apkFilterRegEx,
+    bool? invert) {
+  if (apkFilterRegEx?.isNotEmpty == true) {
+    var reg = RegExp(apkFilterRegEx!);
+    apkUrls = apkUrls.where((element) {
+      var hasMatch = reg.hasMatch(element.key);
+      return invert == true ? !hasMatch : hasMatch;
+    }).toList();
+  }
+  return apkUrls;
+}
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [
@@ -566,14 +744,12 @@ class SourceProvider {
         APKMirror(),
         HuaweiAppGallery(),
         Jenkins(),
-        // APKCombo(), // Can't get past their scraping blocking yet (get 403 Forbidden)
-        Mullvad(),
         Signal(),
         VLC(),
-        WhatsApp(), // As of 2023-03-20 this is unusable as the version on the webpage is months out of date
+        WhatsApp(),
         TelegramApp(),
-        SteamMobile(),
         NeutronCode(),
+        DirectAPKLink(),
         HTML() // This should ALWAYS be the last option as they are tried in order
       ];
 
@@ -589,22 +765,26 @@ class SourceProvider {
         throw UnsupportedURLError();
       }
       var res = srcs.first;
-      res.host = Uri.parse(url).host;
+      res.hosts = [Uri.parse(url).host];
       res.hostChanged = true;
       return srcs.first;
     }
     AppSource? source;
-    for (var s in sources.where((element) => element.host != null)) {
-      if (RegExp(
-              '://(${s.allowSubDomains ? '([^\\.]+\\.)*' : ''}|www\\.)${s.host}(/|\\z)?')
-          .hasMatch(url)) {
-        source = s;
-        break;
+    for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
+      try {
+        if (RegExp(
+                '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$')
+            .hasMatch(Uri.parse(url).host)) {
+          source = s;
+          break;
+        }
+      } catch (e) {
+        // Ignore
       }
     }
     if (source == null) {
       for (var s in sources.where(
-          (element) => element.host == null && !element.neverAutoSelect)) {
+          (element) => element.hosts.isEmpty && !element.neverAutoSelect)) {
         try {
           s.sourceSpecificStandardizeURL(url);
           source = s;
@@ -639,7 +819,7 @@ class SourceProvider {
       AppSource source, String url, Map<String, dynamic> additionalSettings,
       {App? currentApp,
       bool trackOnlyOverride = false,
-      String? overrideSource,
+      bool sourceIsOverriden = false,
       bool inferAppIdIfOptional = false}) async {
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
@@ -648,15 +828,25 @@ class SourceProvider {
     String standardUrl = source.standardizeUrl(url);
     APKDetails apk =
         await source.getLatestAPKDetails(standardUrl, additionalSettings);
-    if (additionalSettings['versionDetection'] == 'releaseDateAsVersion' &&
+
+    if (source.runtimeType !=
+            HTML().runtimeType && // Some sources do it separately
+        source.runtimeType != SourceForge().runtimeType) {
+      String? extractedVersion = extractVersion(
+          additionalSettings['versionExtractionRegEx'] as String?,
+          additionalSettings['matchGroupToUse'] as String?,
+          apk.version);
+      if (extractedVersion != null) {
+        apk.version = extractedVersion;
+      }
+    }
+
+    if (additionalSettings['releaseDateAsVersion'] == true &&
         apk.releaseDate != null) {
       apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
     }
-    if (additionalSettings['apkFilterRegEx'] != null) {
-      var reg = RegExp(additionalSettings['apkFilterRegEx']);
-      apk.apkUrls =
-          apk.apkUrls.where((element) => reg.hasMatch(element.key)).toList();
-    }
+    apk.apkUrls = filterApks(apk.apkUrls, additionalSettings['apkFilterRegEx'],
+        additionalSettings['invertAPKFilter']);
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
@@ -677,8 +867,9 @@ class SourceProvider {
     name = name.isNotEmpty ? name : apk.names.name;
     App finalApp = App(
         currentApp?.id ??
-            ((!source.appIdInferIsOptional ||
-                    (source.appIdInferIsOptional && inferAppIdIfOptional))
+            (!trackOnly &&
+                    (!source.appIdInferIsOptional ||
+                        (source.appIdInferIsOptional && inferAppIdIfOptional))
                 ? await source.tryInferringAppId(standardUrl,
                     additionalSettings: additionalSettings)
                 : null) ??
@@ -696,17 +887,21 @@ class SourceProvider {
         categories: currentApp?.categories ?? const [],
         releaseDate: apk.releaseDate,
         changeLog: apk.changeLog,
-        overrideSource: overrideSource ?? currentApp?.overrideSource,
+        overrideSource: sourceIsOverriden
+            ? source.runtimeType.toString()
+            : currentApp?.overrideSource,
         allowIdChange: currentApp?.allowIdChange ??
-            source.appIdInferIsOptional &&
-                inferAppIdIfOptional // Optional ID inferring may be incorrect - allow correction on first install
+            trackOnly ||
+                (source.appIdInferIsOptional &&
+                    inferAppIdIfOptional) // Optional ID inferring may be incorrect - allow correction on first install
         );
     return source.endOfGetAppChanges(finalApp);
   }
 
   // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getAppsByURLNaive(List<String> urls,
-      {List<String> alreadyAddedUrls = const []}) async {
+      {List<String> alreadyAddedUrls = const [],
+      AppSource? sourceOverride}) async {
     List<App> apps = [];
     Map<String, dynamic> errors = {};
     for (var url in urls) {
@@ -714,10 +909,11 @@ class SourceProvider {
         if (alreadyAddedUrls.contains(url)) {
           throw ObtainiumError(tr('appAlreadyAdded'));
         }
-        var source = getSource(url);
+        var source = sourceOverride ?? getSource(url);
         apps.add(await getApp(
             source,
             url,
+            sourceIsOverriden: sourceOverride != null,
             getDefaultValuesFromFormItems(
                 source.combinedAppSpecificSettingFormItems)));
       } catch (e) {

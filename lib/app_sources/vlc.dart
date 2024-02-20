@@ -1,31 +1,33 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class VLC extends AppSource {
   VLC() {
-    host = 'videolan.org';
+    hosts = ['videolan.org'];
   }
-  get dwUrlBase => 'https://get.$host/vlc-android/';
+  get dwUrlBase => 'https://get.${hosts[0]}/vlc-android/';
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-          {Map<String, dynamic> additionalSettings = const <String, dynamic>{},
-          bool forAPKDownload = false}) =>
-      HTML().getRequestHeaders(
-          additionalSettings: additionalSettings,
-          forAPKDownload: forAPKDownload);
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
+    return {
+      "User-Agent":
+          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
+    };
+  }
 
   @override
   String sourceSpecificStandardizeURL(String url) {
-    return 'https://$host';
+    return 'https://${hosts[0]}';
   }
 
-  Future<String?> getLatestVersion(String standardUrl) async {
-    Response res = await sourceRequest(dwUrlBase);
+  Future<String?> getLatestVersion(
+      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    Response res = await sourceRequest(dwUrlBase, additionalSettings);
     if (res.statusCode == 200) {
       var dwLinks = parse(res.body)
           .querySelectorAll('a')
@@ -77,9 +79,9 @@ class VLC extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-      String apkUrl, String standardUrl) async {
-    Response res = await sourceRequest(apkUrl);
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    Response res = await sourceRequest(apkUrl, additionalSettings);
     if (res.statusCode == 200) {
       String? apkUrl =
           parse(res.body).querySelector('#alt_link')?.attributes['href'];
