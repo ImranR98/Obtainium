@@ -11,6 +11,163 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+/// This class is defined to retrieve .apk-details from gitlab API
+class GitlabApiStrategy {
+
+  // Source context
+  AppSource source;
+
+  // Specific source parameters
+  String standardUrl;
+  Map<String, dynamic> additionalSettings;
+
+  /// Constructor with mandatory parameters
+  GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings);
+
+  /// Retrieves an iterable list of ApkDetails
+  Future<Iterable<APKDetails>> retrieve(PAT) async {
+
+    // Extract names from URL
+    var names = GitHub().getAppNames(standardUrl);
+
+    // Request "releases" data from API
+    Response res = await source.sourceRequest(
+        'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
+        additionalSettings);
+
+    // Check for HTTP errors
+    if (res.statusCode != 200) {
+      throw getObtainiumHttpError(res);
+    }
+
+    // Parse HTTP response data in JSON format
+    var json = jsonDecode(res.body) as List<dynamic>;
+
+    // Extract .apk-Details from received JSON data
+    return json.map((e) {
+
+      // ...search in related asset files
+      var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
+          .map((e) {
+            return (e['direct_asset_url'] ?? e['url'] ?? '') as String;
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
+
+      // ...search in related description text
+      List<String> uploadedAPKsFromDescription =
+          ((e['description'] ?? '') as String)
+              .split('](')
+              .join('\n')
+              .split('.apk)')
+              .join('.apk\n')
+              .split('\n')
+              .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
+              .map((s) => '$standardUrl$s')
+              .toList();
+
+      // Merge extracted .apk URLs from both "Assets" and "Description" field
+      var apkUrlsSet = apkUrlsFromAssets.toSet();
+      apkUrlsSet.addAll(uploadedAPKsFromDescription);
+
+      // Extract either released or created date as "release" property
+      var releaseDateString = e['released_at'] ?? e['created_at'];
+
+      // Create a time object out of the extracted release string
+      DateTime? releaseDate =
+          releaseDateString != null ? DateTime.parse(releaseDateString) : null;
+
+      // Create a details object from retrieved information
+      return APKDetails(
+          e['tag_name'] ?? e['name'],
+          getApkUrlsFromUrls(apkUrlsSet.toList()),
+          GitHub().getAppNames(standardUrl),
+          releaseDate: releaseDate);
+    });
+  }
+}
+
+/// This class is designed to retrieve .apk-details from gitlab's tags-page
+class GitlabTagsPageStrategy {
+
+  // Source context
+  AppSource source;
+
+  // Specific source parameters
+  String standardUrl;
+  Map<String, dynamic> additionalSettings;
+
+  /// Constructor with mandatory parameters
+  GitlabTagsPageStrategy(this.source, this.standardUrl, this.additionalSettings);
+
+  /// Retrieves an iterable list of ApkDetails
+  Future<Iterable<APKDetails>> retrieve() async {
+
+    // Request XML data from gitlab's tags-page
+    Response res = await source.sourceRequest(
+        '$standardUrl/-/tags?format=atom', additionalSettings);
+
+    // Check for HTTP errors
+    if (res.statusCode != 200) {
+      throw getObtainiumHttpError(res);
+    }
+
+    // Create an uri object from URL string
+    var standardUri = Uri.parse(standardUrl);
+
+    // Parse received XML response
+    var parsedHtml = parse(res.body);
+
+    // Iterate each entry-element
+    return parsedHtml.querySelectorAll('entry').map((entry) {
+
+      // Extract html-content from entry-element and parse it
+      var entryContent = parse(
+          parseFragment(entry.querySelector('content')!.innerHtml).text);
+
+      // Define a collection with .apk-URLs
+      var apkUrls = [
+        // Extract .apk-URLs from uploaded files with RegExp
+        ...getLinksFromParsedHTML(
+            entryContent,
+            RegExp(
+                '^${standardUri.path.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
+                  return '\\${x[0]}';
+                })}/uploads/[^/]+/[^/]+\\.apk\$',
+                caseSensitive: false),
+            standardUri.origin),
+        // Extract .apk-URLs from other related links
+        // NOTICE: GitLab releases may contain links to externally hosted APKs
+        ...getLinksFromParsedHTML(entryContent,
+            RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
+            .where((element) => Uri.parse(element).host != '')
+      ];
+
+      // Extract an id from the current entry and make a version string out of it
+      var entryId = entry.querySelector('id')?.innerHtml;
+      var version = entryId == null ? null : Uri.parse(entryId).pathSegments.last;
+
+      // Extract a release date from updated-element
+      var releaseDateString = entry.querySelector('updated')?.innerHtml;
+
+      // Create a time object from extracted release date
+      DateTime? releaseDate = releaseDateString != null
+          ? DateTime.parse(releaseDateString)
+          : null;
+
+      // Check for retrieval errors
+      if (version == null) {
+        throw NoVersionError();
+      }
+
+      // Create a details object from retrieved information
+      return APKDetails(version, getApkUrlsFromUrls(apkUrls),
+          GitHub().getAppNames(standardUrl),
+          releaseDate: releaseDate);
+    });
+  }
+}
+
 class GitLab extends AppSource {
   GitLab() {
     hosts = ['gitlab.com'];
@@ -109,91 +266,38 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+
+    // Load "fallback" setting
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
+
+    // Load Private Access Token
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
+
+    // Define a result list
     Iterable<APKDetails> apkDetailsList = [];
+
+    // Decide between retrieval strategies
     if (PAT != null) {
-      var names = GitHub().getAppNames(standardUrl);
-      Response res = await sourceRequest(
-          'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
-          additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
-      var json = jsonDecode(res.body) as List<dynamic>;
-      apkDetailsList = json.map((e) {
-        var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
-            .map((e) {
-              return (e['direct_asset_url'] ?? e['url'] ?? '') as String;
-            })
-            .where((s) => s.isNotEmpty)
-            .toList();
-        List<String> uploadedAPKsFromDescription =
-            ((e['description'] ?? '') as String)
-                .split('](')
-                .join('\n')
-                .split('.apk)')
-                .join('.apk\n')
-                .split('\n')
-                .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
-                .map((s) => '$standardUrl$s')
-                .toList();
-        var apkUrlsSet = apkUrlsFromAssets.toSet();
-        apkUrlsSet.addAll(uploadedAPKsFromDescription);
-        var releaseDateString = e['released_at'] ?? e['created_at'];
-        DateTime? releaseDate = releaseDateString != null
-            ? DateTime.parse(releaseDateString)
-            : null;
-        return APKDetails(
-            e['tag_name'] ?? e['name'],
-            getApkUrlsFromUrls(apkUrlsSet.toList()),
-            GitHub().getAppNames(standardUrl),
-            releaseDate: releaseDate);
-      });
+
+      // Retrieve from Gitlab API
+      GitlabApiStrategy apiStrategy = GitlabApiStrategy(this, standardUrl, additionalSettings);
+      apkDetailsList = await apiStrategy.retrieve(PAT);
+
     } else {
-      Response res = await sourceRequest(
-          '$standardUrl/-/tags?format=atom', additionalSettings);
-      if (res.statusCode != 200) {
-        throw getObtainiumHttpError(res);
-      }
-      var standardUri = Uri.parse(standardUrl);
-      var parsedHtml = parse(res.body);
-      apkDetailsList = parsedHtml.querySelectorAll('entry').map((entry) {
-        var entryContent = parse(
-            parseFragment(entry.querySelector('content')!.innerHtml).text);
-        var apkUrls = [
-          ...getLinksFromParsedHTML(
-              entryContent,
-              RegExp(
-                  '^${standardUri.path.replaceAllMapped(RegExp(r'[.*+?^${}()|[\]\\]'), (x) {
-                    return '\\${x[0]}';
-                  })}/uploads/[^/]+/[^/]+\\.apk\$',
-                  caseSensitive: false),
-              standardUri.origin),
-          // GitLab releases may contain links to externally hosted APKs
-          ...getLinksFromParsedHTML(entryContent,
-                  RegExp('/[^/]+\\.apk\$', caseSensitive: false), '')
-              .where((element) => Uri.parse(element).host != '')
-        ];
-        var entryId = entry.querySelector('id')?.innerHtml;
-        var version =
-            entryId == null ? null : Uri.parse(entryId).pathSegments.last;
-        var releaseDateString = entry.querySelector('updated')?.innerHtml;
-        DateTime? releaseDate = releaseDateString != null
-            ? DateTime.parse(releaseDateString)
-            : null;
-        if (version == null) {
-          throw NoVersionError();
-        }
-        return APKDetails(version, getApkUrlsFromUrls(apkUrls),
-            GitHub().getAppNames(standardUrl),
-            releaseDate: releaseDate);
-      });
+
+      // Retrieve from "tags"-page
+      GitlabTagsPageStrategy tagsPageStrategy = GitlabTagsPageStrategy(this, standardUrl, additionalSettings);
+      apkDetailsList = await tagsPageStrategy.retrieve();
+
     }
+
+    // Error recognition
     if (apkDetailsList.isEmpty) {
       throw NoReleasesError(note: tr('gitlabSourceNote'));
     }
+
+    // Proceed fallback if enabled
     if (fallbackToOlderReleases) {
       if (additionalSettings['trackOnly'] != true) {
         apkDetailsList =
@@ -203,6 +307,8 @@ class GitLab extends AppSource {
         throw NoReleasesError(note: tr('gitlabSourceNote'));
       }
     }
+
+    // Return first of .apk details, which means "latest" version (?)
     return apkDetailsList.first;
   }
 }
