@@ -112,7 +112,7 @@ class GitLab extends AppSource {
     // Change headers to pacify, e.g. cloudflare protection
     // Related to: (#1397, #1389, #1384, #1382, #1381, #1380, #1359, #854, #785, #697)
     var headers = <String, String>{};
-    headers[HttpHeaders.refererHeader] = 'https://gitlab.com';
+    headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
     if (headers.isNotEmpty) {
       return headers;
     } else {
