@@ -33,29 +33,24 @@ class GitlabApiStrategy extends RetrievalStrategy {
   @override
   Future<Iterable<APKDetails>> retrieve() async {
 
-    // Load Private Access Token
     String? PAT = await source.getPATIfAny(source.hostChanged ? additionalSettings : {});
-
-    // Extract names from URL
     var names = GitHub().getAppNames(standardUrl);
 
-    // Request "releases" data from API
+    // Request data from API
     Response res = await source.sourceRequest(
         'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
         additionalSettings);
 
-    // Check for HTTP errors
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
 
-    // Parse HTTP response data in JSON format
     var json = jsonDecode(res.body) as List<dynamic>;
 
     // Extract .apk-Details from received JSON data
     return json.map((e) {
 
-      // ...search in related asset files
+      // Search in related asset files
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
           .map((e) {
             return (e['direct_asset_url'] ?? e['url'] ?? '') as String;
@@ -63,7 +58,7 @@ class GitlabApiStrategy extends RetrievalStrategy {
           .where((s) => s.isNotEmpty)
           .toList();
 
-      // ...search in related description text
+      // Search in related description text
       List<String> uploadedAPKsFromDescription =
           ((e['description'] ?? '') as String)
               .split('](')
@@ -75,18 +70,14 @@ class GitlabApiStrategy extends RetrievalStrategy {
               .map((s) => '$standardUrl$s')
               .toList();
 
-      // Merge extracted .apk URLs from both "Assets" and "Description" field
+      // Merge extracted .apk URLs into a set collection
       var apkUrlsSet = apkUrlsFromAssets.toSet();
       apkUrlsSet.addAll(uploadedAPKsFromDescription);
 
-      // Extract either released or created date as "release" property
       var releaseDateString = e['released_at'] ?? e['created_at'];
-
-      // Create a time object out of the extracted release string
       DateTime? releaseDate =
           releaseDateString != null ? DateTime.parse(releaseDateString) : null;
 
-      // Create a details object from retrieved information
       return APKDetails(
           e['tag_name'] ?? e['name'],
           getApkUrlsFromUrls(apkUrlsSet.toList()),
@@ -113,29 +104,23 @@ class GitlabTagsPageStrategy extends RetrievalStrategy {
   @override
   Future<Iterable<APKDetails>> retrieve() async {
 
-    // Request XML data from gitlab's tags-page
+    // Request data from tags-page
     Response res = await source.sourceRequest(
         '$standardUrl/-/tags?format=atom', additionalSettings);
 
-    // Check for HTTP errors
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
 
-    // Create an uri object from URL string
     var standardUri = Uri.parse(standardUrl);
-
-    // Parse received XML response
     var parsedHtml = parse(res.body);
 
     // Iterate each entry-element
     return parsedHtml.querySelectorAll('entry').map((entry) {
 
-      // Extract html-content from entry-element and parse it
       var entryContent = parse(
           parseFragment(entry.querySelector('content')!.innerHtml).text);
 
-      // Define a collection with .apk-URLs
       var apkUrls = [
         // Extract .apk-URLs from uploaded files with RegExp
         ...getLinksFromParsedHTML(
@@ -153,24 +138,19 @@ class GitlabTagsPageStrategy extends RetrievalStrategy {
             .where((element) => Uri.parse(element).host != '')
       ];
 
-      // Extract an id from the current entry and make a version string out of it
+      // Extract an id
       var entryId = entry.querySelector('id')?.innerHtml;
       var version = entryId == null ? null : Uri.parse(entryId).pathSegments.last;
 
-      // Extract a release date from updated-element
       var releaseDateString = entry.querySelector('updated')?.innerHtml;
-
-      // Create a time object from extracted release date
       DateTime? releaseDate = releaseDateString != null
           ? DateTime.parse(releaseDateString)
           : null;
 
-      // Check for retrieval errors
       if (version == null) {
         throw NoVersionError();
       }
 
-      // Create a details object from retrieved information
       return APKDetails(version, getApkUrlsFromUrls(apkUrls),
           GitHub().getAppNames(standardUrl),
           releaseDate: releaseDate);
@@ -277,17 +257,10 @@ class GitLab extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
 
-    // Load "fallback" setting
-    bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == true;
-
-    // Load Private Access Token
+    Iterable<APKDetails> apkDetailsList = [];
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
 
-    // Define a result list
-    Iterable<APKDetails> apkDetailsList = [];
-
-    // Decide between retrieval strategies
+    // Choose between retrieval strategies
     if (PAT != null) {
 
       // Retrieve from Gitlab API
@@ -299,15 +272,14 @@ class GitLab extends AppSource {
       // Retrieve from "tags"-page
       GitlabTagsPageStrategy tagsPageStrategy = GitlabTagsPageStrategy(this, standardUrl, additionalSettings);
       apkDetailsList = await tagsPageStrategy.retrieve();
-
     }
 
-    // Error recognition
     if (apkDetailsList.isEmpty) {
       throw NoReleasesError(note: tr('gitlabSourceNote'));
     }
 
-    // Proceed fallback if enabled
+    bool fallbackToOlderReleases =
+        additionalSettings['fallbackToOlderReleases'] == true;
     if (fallbackToOlderReleases) {
       if (additionalSettings['trackOnly'] != true) {
         apkDetailsList =
@@ -318,7 +290,6 @@ class GitLab extends AppSource {
       }
     }
 
-    // Return first of .apk details, which means "latest" version (?)
     return apkDetailsList.first;
   }
 }
