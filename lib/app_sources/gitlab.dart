@@ -11,8 +11,13 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+/// This class is designed as an interface to define a .apk retrieval method
+abstract class RetrievalStrategy {
+  Future<Iterable<APKDetails>> retrieve();
+}
+
 /// This class is defined to retrieve .apk-details from gitlab API
-class GitlabApiStrategy {
+class GitlabApiStrategy extends RetrievalStrategy {
 
   // Source context
   AppSource source;
@@ -28,6 +33,7 @@ class GitlabApiStrategy {
   GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings, this.privateAccessToken);
 
   /// Retrieves an iterable list of ApkDetails
+  @override
   Future<Iterable<APKDetails>> retrieve() async {
 
     // Extract names from URL
@@ -91,7 +97,7 @@ class GitlabApiStrategy {
 }
 
 /// This class is designed to retrieve .apk-details from gitlab's tags-page
-class GitlabTagsPageStrategy {
+class GitlabTagsPageStrategy extends RetrievalStrategy {
 
   // Source context
   AppSource source;
@@ -104,6 +110,7 @@ class GitlabTagsPageStrategy {
   GitlabTagsPageStrategy(this.source, this.standardUrl, this.additionalSettings);
 
   /// Retrieves an iterable list of ApkDetails
+  @override
   Future<Iterable<APKDetails>> retrieve() async {
 
     // Request XML data from gitlab's tags-page
