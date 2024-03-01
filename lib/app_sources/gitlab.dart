@@ -20,28 +20,28 @@ abstract class RetrievalStrategy {
 class GitlabApiStrategy extends RetrievalStrategy {
 
   // Source context
-  AppSource source;
+  GitLab source;
 
   // Specific source parameters
   String standardUrl;
   Map<String, dynamic> additionalSettings;
 
-  // Specific strategy parameters
-  String privateAccessToken;
-
   /// Constructor with mandatory parameters
-  GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings, this.privateAccessToken);
+  GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings);
 
   /// Retrieves an iterable list of ApkDetails
   @override
   Future<Iterable<APKDetails>> retrieve() async {
+
+    // Load Private Access Token
+    String? PAT = await source.getPATIfAny(source.hostChanged ? additionalSettings : {});
 
     // Extract names from URL
     var names = GitHub().getAppNames(standardUrl);
 
     // Request "releases" data from API
     Response res = await source.sourceRequest(
-        'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$privateAccessToken',
+        'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
         additionalSettings);
 
     // Check for HTTP errors
@@ -100,7 +100,7 @@ class GitlabApiStrategy extends RetrievalStrategy {
 class GitlabTagsPageStrategy extends RetrievalStrategy {
 
   // Source context
-  AppSource source;
+  GitLab source;
 
   // Specific source parameters
   String standardUrl;
@@ -291,7 +291,7 @@ class GitLab extends AppSource {
     if (PAT != null) {
 
       // Retrieve from Gitlab API
-      GitlabApiStrategy apiStrategy = GitlabApiStrategy(this, standardUrl, additionalSettings, PAT);
+      GitlabApiStrategy apiStrategy = GitlabApiStrategy(this, standardUrl, additionalSettings);
       apkDetailsList = await apiStrategy.retrieve();
 
     } else {
