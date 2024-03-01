@@ -21,18 +21,21 @@ class GitlabApiStrategy {
   String standardUrl;
   Map<String, dynamic> additionalSettings;
 
+  // Specific strategy parameters
+  String privateAccessToken;
+
   /// Constructor with mandatory parameters
-  GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings);
+  GitlabApiStrategy(this.source, this.standardUrl, this.additionalSettings, this.privateAccessToken);
 
   /// Retrieves an iterable list of ApkDetails
-  Future<Iterable<APKDetails>> retrieve(PAT) async {
+  Future<Iterable<APKDetails>> retrieve() async {
 
     // Extract names from URL
     var names = GitHub().getAppNames(standardUrl);
 
     // Request "releases" data from API
     Response res = await source.sourceRequest(
-        'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
+        'https://${source.hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$privateAccessToken',
         additionalSettings);
 
     // Check for HTTP errors
@@ -281,8 +284,8 @@ class GitLab extends AppSource {
     if (PAT != null) {
 
       // Retrieve from Gitlab API
-      GitlabApiStrategy apiStrategy = GitlabApiStrategy(this, standardUrl, additionalSettings);
-      apkDetailsList = await apiStrategy.retrieve(PAT);
+      GitlabApiStrategy apiStrategy = GitlabApiStrategy(this, standardUrl, additionalSettings, PAT);
+      apkDetailsList = await apiStrategy.retrieve();
 
     } else {
 
