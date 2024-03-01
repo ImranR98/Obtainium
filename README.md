@@ -45,7 +45,7 @@ Currently supported App sources:
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
      alt="Get it on IzzyOnDroid"
      height="80">](https://apt.izzysoft.de/fdroid/index/apk/dev.imranr.obtainium)
-[<img src="https://gitlab.com/fdroid/artwork/-/raw/master/badge/get-it-on.png"
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
     alt="Get it on F-Droid"
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
      
