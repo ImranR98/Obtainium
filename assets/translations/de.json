@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "App-Filter ‚Nicht aktuell‘ entfernen",
     "showOutdatedOnly": "Nur nicht aktuelle Apps anzeigen",
     "filter": "Filter",
-    "filterActive": "Filter *",
     "filterApps": "Apps filtern",
     "appName": "App Name",
     "author": "Autor",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} und 1 weitere Anwendung wurden möglicherweise aktualisiert.",
         "other": "{} und {} weitere Anwendungen wurden möglicherweise aktualisiert."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

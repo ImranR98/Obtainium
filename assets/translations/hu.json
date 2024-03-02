@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Távolítsa el az elavult app szűrőt",
     "showOutdatedOnly": "Csak az elavult appok megjelenítése",
     "filter": "Szűrő",
-    "filterActive": "Szűrő *",
     "filterApps": "Appok szűrése",
     "appName": "App név",
     "author": "Szerző",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} és 1 további alkalmazás is frissült.",
         "other": "{} és {} további alkalmazás is frissült."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK-k"
     }
 }

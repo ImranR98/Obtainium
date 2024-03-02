@@ -351,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} và 1 ứng dụng khác có thể đã được cập nhật.",
         "other": "{} và {} ứng dụng khác có thể đã được cập nhật."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

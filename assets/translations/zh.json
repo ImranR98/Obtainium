@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "删除失效的应用筛选",
     "showOutdatedOnly": "只显示待更新应用",
     "filter": "筛选",
-    "filterActive": "筛选 *",
     "filterApps": "筛选应用",
     "appName": "应用名称",
     "author": "作者",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} 和另外 1 个应用已尝试更新。",
         "other": "“{}”和另外 {} 个应用已尝试更新。"
+    },
+    "apk": {
+        "one": "{}APK",
+        "other": "{}APK"
     }
 }

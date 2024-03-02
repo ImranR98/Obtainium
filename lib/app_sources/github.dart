@@ -400,7 +400,7 @@ class GitHub extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      var changeLog = targetRelease['body'].toString();
+      var changeLog = (targetRelease['body'] ?? '').toString();
       return APKDetails(
           version,
           targetRelease['apkUrls'] as List<MapEntry<String, String>>,

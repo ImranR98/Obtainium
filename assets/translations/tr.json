@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Güncel Olmayan Uygulama Filtresini Kaldır",
     "showOutdatedOnly": "Yalnızca Güncel Olmayan Uygulamaları Göster",
     "filter": "Filtre",
-    "filterActive": "Filtre *",
     "filterApps": "Uygulamaları Filtrele",
     "appName": "Uygulama Adı",
     "author": "Yazar",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} ve 1 diğer uygulama muhtemelen güncellendi.",
         "other": "{} ve {} daha fazla uygulama muhtemelen güncellendi."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK'lar"
     }
 }

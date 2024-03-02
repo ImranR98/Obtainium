@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "فیلتر برنامه قدیمی را حذف کنید",
     "showOutdatedOnly": "فقط برنامه های قدیمی را نشان دهید",
     "filter": "فیلتر",
-    "filterActive": "فیلتر *",
     "filterApps": "فیلتر کردن برنامه ها",
     "appName": "نام برنامه",
     "author": "سازنده",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} و 1 برنامه دیگر ممکن است به روز شده باشند.",
         "other": "ممکن است {} و {} برنامه های دیگر به روز شده باشند."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

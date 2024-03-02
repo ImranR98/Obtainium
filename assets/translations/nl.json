@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Verwijder out-of-date app filter",
     "showOutdatedOnly": "Toon alleen out-of-date apps",
     "filter": "Filter",
-    "filterActive": "Filteren *",
     "filterApps": "Filter apps",
     "appName": "App naam",
     "author": "Auteur",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} en nog 1 app zijn mogelijk bijgewerkt.",
         "other": "{} en {} meer apps zijn mogelijk bijgwerkt."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK's"
     }
 }

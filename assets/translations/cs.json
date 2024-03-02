@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Odstranit filtr Neaktuální",
     "showOutdatedOnly": "Zobrazovat pouze zastaralé aplikace",
     "filter": "Filtr",
-    "filterActive": "Filtr *",
     "filterApps": "Filtrovat aplikace",
     "appName": "Název aplikace",
     "author": "Autor",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} a 1 další aplikace možno aktualizovat",
         "other": "{} a {} další aplikace mohou být aktualizovány."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK"
     }
 }
