@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Usuń filtr nieaktualnych aplikacji",
     "showOutdatedOnly": "Pokaż tylko nieaktualne aplikacje",
     "filter": "FIltr",
-    "filterActive": "Filtruj *",
     "filterApps": "Filtruj aplikacje",
     "appName": "Nazwa aplikacji",
     "author": "Autor",
@@ -378,5 +377,9 @@
         "few": "{} i {} inne apki mogły zostać zaktualizowane.",
         "many": "{} i {} innych apek mogło zostać zaktualizowanych.",
         "other": "{} i {} inne apki mogły zostać zaktualizowane."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK"
     }
 }

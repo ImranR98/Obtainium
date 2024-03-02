@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Uklonite zastarjeli filter aplikacija",
     "showOutdatedOnly": "Prikaži samo zastarjele aplikacije",
     "filter": "Filtriranje",
-    "filterActive": "Filtriranje",
     "filterApps": "Filtriraj aplikacije",
     "appName": "Naziv aplikacije",
     "author": "Autor",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} i još jedna aplikacija je vjerovatno ažurirana.",
         "other": "{} i još {} aplikacija su vjerovatno ažurirane."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

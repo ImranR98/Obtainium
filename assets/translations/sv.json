@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Ta bort Utgånga App-filtret",
     "showOutdatedOnly": "Visa Endast Utgånga Appar",
     "filter": "Filtrera",
-    "filterActive": "Filter *",
     "filterApps": "Filtrera Appar",
     "appName": "Appnamn",
     "author": "Utvecklare",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} och 1 till app kan ha uppdaterats.",
         "other": "{} och {} appar till kan ha uppdaterats."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK:er"
     }
 }

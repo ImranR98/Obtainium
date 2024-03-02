@@ -58,11 +58,10 @@ const main = async () => {
         return `${translationsDir}/${f}`
     }).filter(f => f.endsWith('.json') && f != templateFile)
 
-    const templateTranslation = require(templateFile)
-
+    const templateTranslation = JSON.parse(fs.readFileSync(templateFile).toString())
 
     otherFiles.forEach(file => {
-        const thisTranslationOriginal = require(file)
+        const thisTranslationOriginal = JSON.parse(fs.readFileSync((file).toString()))
         const thisTranslationNew = {}
         Object.keys(templateTranslation).forEach(k => {
             thisTranslationNew[k] = thisTranslationOriginal[k] || templateTranslation[k]
@@ -72,7 +71,7 @@ const main = async () => {
 
     for (let i in otherFiles) {
         const file = otherFiles[i]
-        const thisTranslation = require(file)
+        const thisTranslation = JSON.parse(fs.readFileSync((file).toString()))
         const translationKeys = Object.keys(templateTranslation)
         for (let j in translationKeys) {
             const k = translationKeys[j]

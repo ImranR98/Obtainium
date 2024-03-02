@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "アップデートが存在するアプリのフィルターを解除",
     "showOutdatedOnly": "アップデートが存在するアプリのみ表示する",
     "filter": "フィルター",
-    "filterActive": "フィルター *",
     "filterApps": "アプリをフィルタリングする",
     "appName": "アプリ名",
     "author": "作者",
@@ -352,5 +351,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",
         "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります。"
+    },
+    "apk": {
+        "one": "{}APK",
+        "other": "{}APK"
     }
 }
