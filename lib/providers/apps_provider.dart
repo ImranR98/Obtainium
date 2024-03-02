@@ -717,7 +717,7 @@ class AppsProvider with ChangeNotifier {
     appsToInstall =
         moveStrToEnd(appsToInstall, obtainiumId, strB: obtainiumTempId);
 
-    Future<void> updateFn(String id, {bool skipInstalls = false}) async {
+    Future<String> updateFn(String id, {bool skipInstalls = false}) async {
       try {
         var downloadedArtifact =
             // ignore: use_build_context_synchronously
@@ -730,8 +730,8 @@ class AppsProvider with ChangeNotifier {
         } else {
           downloadedDir = downloadedArtifact as DownloadedXApkDir;
         }
-        var appId = downloadedFile?.appId ?? downloadedDir!.appId;
-        bool willBeSilent = await canInstallSilently(apps[appId]!.app);
+        id = downloadedFile?.appId ?? downloadedDir!.appId;
+        bool willBeSilent = await canInstallSilently(apps[id]!.app);
         switch (settingsProvider.installMethod) {
           case InstallMethodSettings.normal:
             if (!(await settingsProvider.getInstallPermission(
@@ -773,18 +773,19 @@ class AppsProvider with ChangeNotifier {
             }
             if (willBeSilent && context == null) {
               notificationsProvider?.notify(SilentUpdateAttemptNotification(
-                  [apps[appId]!.app],
-                  id: appId.hashCode));
+                  [apps[id]!.app],
+                  id: id.hashCode));
             }
+            installedIds.add(id);
           }
         } finally {
           apps[id]?.downloadProgress = null;
           notifyListeners();
         }
-        installedIds.add(id);
       } catch (e) {
         errors.add(id, e, appName: apps[id]?.name);
       }
+      return id;
     }
 
     if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
@@ -792,9 +793,9 @@ class AppsProvider with ChangeNotifier {
         await updateFn(id);
       }
     } else {
-      await Future.wait(
+      List<String> ids = await Future.wait(
           appsToInstall.map((id) => updateFn(id, skipInstalls: true)));
-      for (var id in appsToInstall) {
+      for (var id in ids) {
         if (!errors.appIdNames.containsKey(id)) {
           await updateFn(id);
         }
