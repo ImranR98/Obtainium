@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
@@ -103,6 +104,21 @@ class GitLab extends AppSource {
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/-/releases';
+
+  @override
+  Future<Map<String, String>?> getRequestHeaders(
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
+    // Change headers to pacify, e.g. cloudflare protection
+    // Related to: (#1397, #1389, #1384, #1382, #1381, #1380, #1359, #854, #785, #697)
+    var headers = <String, String>{};
+    headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
+    if (headers.isNotEmpty) {
+      return headers;
+    } else {
+      return null;
+    }
+  }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
