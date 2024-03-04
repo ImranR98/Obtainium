@@ -1,5 +1,5 @@
 {
-    "invalidURLForSource": "Неправильна URL-адреса для джерела {}",
+    "invalidURLForSource": "Неправильна URL-адреса додатку {}",
     "noReleaseFound": "Не вдалося знайти відповідне видання",
     "noVersionFound": "Не вдалося визначити версію видання",
     "urlMatchesNoSource": "URL не відповідає відомому джерелу",
