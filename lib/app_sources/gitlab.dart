@@ -112,10 +112,11 @@ class GitLab extends AppSource {
     // Prepare request params
     var names = GitHub().getAppNames(standardUrl);
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
 
     // Request data from REST API
     Response res = await sourceRequest(
-        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
+        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?$optionalAuth',
         additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
