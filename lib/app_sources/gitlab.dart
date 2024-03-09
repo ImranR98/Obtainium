@@ -109,17 +109,20 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == true;
-    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
-    Iterable<APKDetails> apkDetailsList = [];
+    // Prepare request params
     var names = GitHub().getAppNames(standardUrl);
+    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
+
+    // Request data from REST API
     Response res = await sourceRequest(
         'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?private_token=$PAT',
         additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
+
+    // Extract .apk details from received data
+    Iterable<APKDetails> apkDetailsList = [];
     var json = jsonDecode(res.body) as List<dynamic>;
     apkDetailsList = json.map((e) {
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
@@ -153,6 +156,10 @@ class GitLab extends AppSource {
     if (apkDetailsList.isEmpty) {
       throw NoReleasesError(note: tr('gitlabSourceNote'));
     }
+
+    // Fallback procedure
+    bool fallbackToOlderReleases =
+        additionalSettings['fallbackToOlderReleases'] == true;
     if (fallbackToOlderReleases) {
       if (additionalSettings['trackOnly'] != true) {
         apkDetailsList =
@@ -162,6 +169,7 @@ class GitLab extends AppSource {
         throw NoReleasesError(note: tr('gitlabSourceNote'));
       }
     }
+
     return apkDetailsList.first;
   }
 }
