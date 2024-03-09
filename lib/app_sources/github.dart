@@ -343,7 +343,8 @@ class GitHub extends AppSource {
           }
         });
       }
-      if ((latestRelease['tag_name'] ?? latestRelease['name']) != null &&
+      if (latestRelease != null &&
+          (latestRelease['tag_name'] ?? latestRelease['name']) != null &&
           releases.isNotEmpty &&
           latestRelease !=
               (releases[releases.length - 1]['tag_name'] ??
