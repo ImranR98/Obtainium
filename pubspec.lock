@@ -38,10 +38,10 @@ packages:
     dependency: "direct main"
     description:
       name: app_links
-      sha256: "4e392b5eba997df356ca6021f28431ce1cfeb16758699553a94b13add874a3bb"
+      sha256: "3ced568a5d9e309e99af71285666f1f3117bddd0bd5b3317979dccc1a40cada4"
       url: "https://pub.dev"
     source: hosted
-    version: "3.5.0"
+    version: "3.5.1"
   archive:
     dependency: transitive
     description:
@@ -70,10 +70,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_fetch
-      sha256: "1a7868d9bd165eb177f039ff8244cfa7952340b18f7caabf322b26e712b438a3"
+      sha256: eb3af263d390d7e68ecb90f2ae984d2bfd96dceb4c7b4f72418dd5383b49de0a
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.3"
+    version: "1.2.4"
   boolean_selector:
     dependency: transitive
     description:
@@ -254,10 +254,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "4e42aacde3b993c5947467ab640882c56947d9d27342a5b6f2895b23956954a6"
+      sha256: caa6bc229eab3e32eb2f37b53a5f9d22a6981474afd210c512a7546c1e1a04f6
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.1"
+    version: "6.2.0"
   fixnum:
     dependency: transitive
     description:
@@ -307,10 +307,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_local_notifications
-      sha256: c18f1de98fe0bb9dd5ba91e1330d4febc8b6a7de6aae3ffe475ef423723e72f3
+      sha256: "55b9b229307a10974b26296ff29f2e132256ba4bd74266939118eaefa941cb00"
       url: "https://pub.dev"
     source: hosted
-    version: "16.3.2"
+    version: "16.3.3"
   flutter_local_notifications_linux:
     dependency: transitive
     description:
@@ -336,10 +336,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_markdown
-      sha256: a64c5323ac83ed2b7940d2b6288d160aa1753ff271ba9d9b2a86770414aa3eab
+      sha256: cb44f7831b23a6bdd0f501718b0d2e8045cbc625a15f668af37ddb80314821db
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.20+1"
+    version: "0.6.21"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -474,10 +474,10 @@ packages:
     dependency: transitive
     description:
       name: markdown
-      sha256: "1b134d9f8ff2da15cb298efe6cd8b7d2a78958c1b00384ebcbdf13fe340a6c90"
+      sha256: ef2a1298144e3f985cc736b22e0ccdaf188b5b3970648f2d9dc13efd1d9df051
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.1"
+    version: "7.2.2"
   matcher:
     dependency: transitive
     description:
@@ -943,10 +943,10 @@ packages:
     dependency: transitive
     description:
       name: web
-      sha256: "1d9158c616048c38f712a6646e317a3426da10e884447626167240d45209cbad"
+      sha256: "97da13628db363c635202ad97068d47c5b8aa555808e7a9411963c533b449b27"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.0"
+    version: "0.5.1"
   webview_flutter:
     dependency: "direct main"
     description:
@@ -983,10 +983,10 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: "464f5674532865248444b4c3daca12bd9bf2d7c47f759ce2617986e7229494a8"
+      sha256: "8cb58b45c47dcb42ab3651533626161d6b67a2921917d8d429791f76972b3480"
       url: "https://pub.dev"
     source: hosted
-    version: "5.2.0"
+    version: "5.3.0"
   win32_registry:
     dependency: transitive
     description:

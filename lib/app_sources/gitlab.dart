@@ -73,14 +73,6 @@ class GitLab extends AppSource {
   }
 
   @override
-  Future<String?> getSourceNote() async {
-    if ((await getPATIfAny({})) == null) {
-      return '${tr('gitlabSourceNote')} ${hostChanged ? tr('addInfoBelow') : tr('addInfoInSettings')}';
-    }
-    return null;
-  }
-
-  @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
     var url =
@@ -170,7 +162,7 @@ class GitLab extends AppSource {
           releaseDate: releaseDate);
     });
     if (apkDetailsList.isEmpty) {
-      throw NoReleasesError(note: tr('gitlabSourceNote'));
+      throw NoReleasesError();
     }
 
     // Fallback procedure
@@ -182,7 +174,7 @@ class GitLab extends AppSource {
             apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
       }
       if (apkDetailsList.isEmpty) {
-        throw NoReleasesError(note: tr('gitlabSourceNote'));
+        throw NoReleasesError();
       }
     }
 
