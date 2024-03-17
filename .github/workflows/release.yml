@@ -42,7 +42,6 @@ jobs:
           if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
           echo "beta=$BETA" >> $GITHUB_OUTPUT
           TAG="v$VERSION"
-          if [ $BETA == true ]; then TAG="$TAG"-beta; fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Build APKs
