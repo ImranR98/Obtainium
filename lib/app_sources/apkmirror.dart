@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -62,7 +62,7 @@ class APKMirror extends AppSource {
             : null;
     Response res = await sourceRequest('$standardUrl/feed', additionalSettings);
     if (res.statusCode == 200) {
-      var items = parse(res.body).querySelectorAll('item');
+      var items = parse(res.data).querySelectorAll('item');
       dynamic targetRelease;
       for (int i = 0; i < items.length; i++) {
         if (!fallbackToOlderReleases && i > 0) break;

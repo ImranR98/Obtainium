@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -82,7 +82,7 @@ class FDroid extends AppSource {
         var res = await sourceRequest(
             'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
             additionalSettings);
-        var lines = res.body.split('\n');
+        var lines = res.data.split('\n');
         var authorLines = lines.where((l) => l.startsWith('AuthorName: '));
         if (authorLines.isNotEmpty) {
           details.names.author =
@@ -112,7 +112,7 @@ class FDroid extends AppSource {
             details.changeLog = (await sourceRequest(
                     details.changeLog!.replaceFirst('/blob/', '/raw/'),
                     additionalSettings))
-                .body;
+                .data;
           }
         }
       } catch (e) {
@@ -132,7 +132,7 @@ class FDroid extends AppSource {
         'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}', {});
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
-      parse(res.body).querySelectorAll('.package-header').forEach((e) {
+      parse(res.data).querySelectorAll('.package-header').forEach((e) {
         String? url = e.attributes['href'];
         if (url != null) {
           try {
@@ -172,7 +172,7 @@ class FDroid extends AppSource {
             ? additionalSettings['apkFilterRegEx']
             : null;
     if (res.statusCode == 200) {
-      var response = jsonDecode(res.body);
+      var response = jsonDecode(res.data);
       List<dynamic> releases = response['packages'] ?? [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {

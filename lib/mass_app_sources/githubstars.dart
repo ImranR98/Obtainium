@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHubStars implements MassAppUrlSource {
@@ -15,13 +16,12 @@ class GitHubStars implements MassAppUrlSource {
 
   Future<Map<String, List<String>>> getOnePageOfUserStarredUrlsWithDescriptions(
       String username, int page) async {
-    Response res = await get(
-        Uri.parse(
-            'https://api.github.com/users/$username/starred?per_page=100&page=$page'),
-        headers: await GitHub().getRequestHeaders({}));
+    Response res = await dio.get(
+        'https://api.github.com/users/$username/starred?per_page=100&page=$page',
+        options: Options(headers: await GitHub().getRequestHeaders({})));
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
-      for (var e in (jsonDecode(res.body) as List<dynamic>)) {
+      for (var e in (jsonDecode(res.data) as List<dynamic>)) {
         urlsWithDescriptions.addAll({
           e['html_url'] as String: [
             e['full_name'] as String,

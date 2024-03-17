@@ -1,6 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -61,9 +61,10 @@ class FDroidRepo extends AppSource {
       throw NoReleasesError();
     }
     url = removeQueryParamsFromUrl(standardizeUrl(url));
-    var res = await sourceRequestWithURLVariants(url, {});
+    var ress = await sourceRequestWithURLVariants(url, {});
+    var res = ress.value;
     if (res.statusCode == 200) {
-      var body = parse(res.body);
+      var body = parse(res.data);
       Map<String, List<String>> results = {};
       body.querySelectorAll('application').toList().forEach((app) {
         String appId = app.attributes['id']!;
@@ -74,7 +75,7 @@ class FDroidRepo extends AppSource {
             appName.contains(query) ||
             appDesc.contains(query)) {
           results[
-              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] = [
+              '${ress.value.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] = [
             appName,
             appDesc
           ];
@@ -107,24 +108,24 @@ class FDroidRepo extends AppSource {
     return app;
   }
 
-  Future<Response> sourceRequestWithURLVariants(
+  Future<MapEntry<String, Response>> sourceRequestWithURLVariants(
     String url,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var res = await sourceRequest(
-        '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
-        additionalSettings);
+    var finalUrl = '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}';
+    var res = await sourceRequest(finalUrl, additionalSettings);
     if (res.statusCode != 200) {
       var base = url.endsWith('/index.xml')
           ? url.split('/').reversed.toList().sublist(1).reversed.join('/')
           : url;
-      res = await sourceRequest('$base/repo/index.xml', additionalSettings);
+      finalUrl = '$base/repo/index.xml';
+      res = await sourceRequest(finalUrl, additionalSettings);
       if (res.statusCode != 200) {
-        res = await sourceRequest(
-            '$base/fdroid/repo/index.xml', additionalSettings);
+        finalUrl = '$base/fdroid/repo/index.xml';
+        res = await sourceRequest(finalUrl, additionalSettings);
       }
     }
-    return res;
+    return MapEntry(finalUrl, res);
   }
 
   @override
@@ -142,10 +143,11 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
-    var res =
+    var ress =
         await sourceRequestWithURLVariants(standardUrl, additionalSettings);
+    var res = ress.value;
     if (res.statusCode == 200) {
-      var body = parse(res.body);
+      var body = parse(res.data);
       var foundApps = body.querySelectorAll('application').where((element) {
         return element.attributes['id'] == appIdOrName;
       }).toList();
@@ -193,7 +195,7 @@ class FDroidRepo extends AppSource {
       }
       List<String> apkUrls = latestVersionReleases
           .map((e) =>
-              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}')
+              '${ress.value.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}')
           .toList();
       return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
           AppNames(authorName, appName),

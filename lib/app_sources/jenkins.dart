@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart';
+import 'package:dio/dio.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -33,7 +33,7 @@ class Jenkins extends AppSource {
     Response res = await sourceRequest(
         '$standardUrl/lastSuccessfulBuild/api/json', additionalSettings);
     if (res.statusCode == 200) {
-      var json = jsonDecode(res.body);
+      var json = jsonDecode(res.data);
       var releaseDate = json['timestamp'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int);

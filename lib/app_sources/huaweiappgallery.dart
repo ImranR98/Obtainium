@@ -1,5 +1,5 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -57,8 +57,8 @@ class HuaweiAppGallery extends AppSource {
       {Map<String, dynamic> additionalSettings = const {}}) async {
     String dlUrl = getDlUrl(standardUrl);
     Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
-    return res.headers['location'] != null
-        ? appIdFromRedirectDlUrl(res.headers['location']!)
+    return res.headers.map['location']?.isNotEmpty == true
+        ? appIdFromRedirectDlUrl(res.headers.map['location']![0])
         : null;
   }
 
@@ -72,9 +72,12 @@ class HuaweiAppGallery extends AppSource {
     if (res.headers['location'] == null) {
       throw NoReleasesError();
     }
-    String appId = appIdFromRedirectDlUrl(res.headers['location']!);
-    var relDateStr =
-        res.headers['location']?.split('?')[0].split('.').reversed.toList()[1];
+    String appId = appIdFromRedirectDlUrl(res.headers.map['location']![0]);
+    var relDateStr = res.headers.map['location']?[0]
+        .split('?')[0]
+        .split('.')
+        .reversed
+        .toList()[1];
     var relDateStrAdj = relDateStr?.split('');
     var tempLen = relDateStrAdj?.length ?? 0;
     var i = 2;

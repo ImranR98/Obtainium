@@ -1,6 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -213,11 +213,11 @@ class HTML extends AppSource {
   // Given an HTTP response, grab some links according to the common additional settings
   // (those that apply to intermediate and final steps)
   Future<List<MapEntry<String, String>>> grabLinksCommon(
-      Response res, Map<String, dynamic> additionalSettings) async {
+      Response res, Uri url, Map<String, dynamic> additionalSettings) async {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var html = parse(res.body);
+    var html = parse(res.data);
     List<MapEntry<String, String>> allLinks = html
         .querySelectorAll('a')
         .map((element) => MapEntry(
@@ -226,13 +226,12 @@ class HTML extends AppSource {
                 ? element.text
                 : (element.attributes['href'] ?? '').split('/').last))
         .where((element) => element.key.isNotEmpty)
-        .map((e) =>
-            MapEntry(ensureAbsoluteUrl(e.key, res.request!.url), e.value))
+        .map((e) => MapEntry(ensureAbsoluteUrl(e.key, url), e.value))
         .toList();
     if (allLinks.isEmpty) {
       allLinks = RegExp(
               r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
-          .allMatches(res.body)
+          .allMatches(res.data)
           .map((match) =>
               MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''))
           .toList();
@@ -285,6 +284,7 @@ class HTML extends AppSource {
     for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
       var intLinks = await grabLinksCommon(
           await sourceRequest(currentUrl, additionalSettings),
+          Uri.parse(currentUrl),
           additionalSettings['intermediateLink'][i]);
       if (intLinks.isEmpty) {
         throw NoReleasesError();
@@ -298,8 +298,9 @@ class HTML extends AppSource {
     if (additionalSettings['directAPKLink'] != true) {
       Response res = await sourceRequest(currentUrl, additionalSettings);
       versionExtractionWholePageString =
-          res.body.split('\r\n').join('\n').split('\n').join('\\n');
-      links = await grabLinksCommon(res, additionalSettings);
+          res.data.split('\r\n').join('\n').split('\n').join('\\n');
+      links =
+          await grabLinksCommon(res, Uri.parse(currentUrl), additionalSettings);
       links = filterApks(links, additionalSettings['apkFilterRegEx'],
           additionalSettings['invertAPKFilter']);
       if (links.isEmpty) {

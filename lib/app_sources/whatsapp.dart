@@ -1,5 +1,5 @@
+import 'package:dio/dio.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -20,7 +20,7 @@ class WhatsApp extends AppSource {
     Response res =
         await sourceRequest('$standardUrl/android', additionalSettings);
     if (res.statusCode == 200) {
-      var targetLinks = parse(res.body)
+      var targetLinks = parse(res.data)
           .querySelectorAll('a')
           .map((e) => e.attributes['href'] ?? '')
           .where((e) => e.isNotEmpty)

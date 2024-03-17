@@ -45,7 +45,7 @@ class APKCombo extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var html = parse(res.body);
+    var html = parse(res.data);
     return html
         .querySelectorAll('#variants-tab > div > ul > li')
         .map((e) {
@@ -96,7 +96,7 @@ class APKCombo extends AppSource {
     if (preres.statusCode != 200) {
       throw getObtainiumHttpError(preres);
     }
-    var res = parse(preres.body);
+    var res = parse(preres.data);
     String? version = res.querySelector('div.version')?.text.trim();
     if (version == null) {
       throw NoVersionError();

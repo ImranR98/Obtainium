@@ -1,5 +1,5 @@
+import 'package:dio/dio.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -55,7 +55,7 @@ class SourceHut extends AppSource {
     Response res =
         await sourceRequest('$standardUrl/refs/rss.xml', additionalSettings);
     if (res.statusCode == 200) {
-      var parsedHtml = parse(res.body);
+      var parsedHtml = parse(res.data);
       List<APKDetails> apkDetailsList = [];
       int ind = 0;
 
@@ -85,7 +85,7 @@ class SourceHut extends AppSource {
         var res2 = await sourceRequest(releasePage, additionalSettings);
         List<MapEntry<String, String>> apkUrls = [];
         if (res2.statusCode == 200) {
-          apkUrls = getApkUrlsFromUrls(parse(res2.body)
+          apkUrls = getApkUrlsFromUrls(parse(res2.data)
               .querySelectorAll('a')
               .map((e) => e.attributes['href'] ?? '')
               .where((e) => e.toLowerCase().endsWith('.apk'))

@@ -38,10 +38,10 @@ class Aptoide extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var idMatch = RegExp('"app":{"id":[0-9]+').firstMatch(res.body);
+    var idMatch = RegExp('"app":{"id":[0-9]+').firstMatch(res.data);
     String? id;
     if (idMatch != null) {
-      id = res.body.substring(idMatch.start + 12, idMatch.end);
+      id = res.data.substring(idMatch.start + 12, idMatch.end);
     } else {
       throw NoReleasesError();
     }
@@ -50,7 +50,7 @@ class Aptoide extends AppSource {
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    return jsonDecode(res2.body)?['nodes']?['meta']?['data'];
+    return jsonDecode(res2.data)?['nodes']?['meta']?['data'];
   }
 
   @override

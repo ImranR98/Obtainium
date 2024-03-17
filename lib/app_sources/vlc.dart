@@ -1,7 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class VLC extends AppSource {
@@ -29,7 +30,7 @@ class VLC extends AppSource {
       String standardUrl, Map<String, dynamic> additionalSettings) async {
     Response res = await sourceRequest(dwUrlBase, additionalSettings);
     if (res.statusCode == 200) {
-      var dwLinks = parse(res.body)
+      var dwLinks = parse(res.data)
           .querySelectorAll('a')
           .where((element) => element.attributes['href'] != 'last/')
           .map((e) => e.attributes['href']?.split('/')[0])
@@ -49,11 +50,11 @@ class VLC extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await get(
-        Uri.parse('https://www.videolan.org/vlc/download-android.html'));
+    Response res =
+        await dio.get('https://www.videolan.org/vlc/download-android.html');
     if (res.statusCode == 200) {
       var dwUrlBase = 'get.videolan.org/vlc-android';
-      var dwLinks = parse(res.body)
+      var dwLinks = parse(res.data)
           .querySelectorAll('a')
           .where((element) =>
               element.attributes['href']?.contains(dwUrlBase) ?? false)
@@ -84,14 +85,14 @@ class VLC extends AppSource {
     Response res = await sourceRequest(apkUrl, additionalSettings);
     if (res.statusCode == 200) {
       String? apkUrl =
-          parse(res.body).querySelector('#alt_link')?.attributes['href'];
+          parse(res.data).querySelector('#alt_link')?.attributes['href'];
       if (apkUrl == null) {
         throw NoAPKError();
       }
       return apkUrl;
     } else if (res.statusCode == 500 &&
-        res.body.toLowerCase().indexOf('mirror') > 0) {
-      var html = parse(res.body);
+        res.data.toLowerCase().indexOf('mirror') > 0) {
+      var html = parse(res.data);
       var err = '';
       html.body?.nodes.forEach((element) {
         if (element.text != null) {

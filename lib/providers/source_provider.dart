@@ -4,9 +4,9 @@
 import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
@@ -31,6 +31,7 @@ import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
@@ -442,16 +443,9 @@ abstract class AppSource {
       String url, Map<String, dynamic> additionalSettings,
       {bool followRedirects = true}) async {
     var requestHeaders = await getRequestHeaders(additionalSettings);
-    if (requestHeaders != null || followRedirects == false) {
-      var req = Request('GET', Uri.parse(url));
-      req.followRedirects = followRedirects;
-      if (requestHeaders != null) {
-        req.headers.addAll(requestHeaders);
-      }
-      return Response.fromStream(await Client().send(req));
-    } else {
-      return get(Uri.parse(url));
-    }
+    return await dio.get(url,
+        options:
+            Options(headers: requestHeaders, followRedirects: followRedirects));
   }
 
   String sourceSpecificStandardizeURL(String url) {
@@ -618,10 +612,10 @@ abstract class AppSource {
 }
 
 ObtainiumError getObtainiumHttpError(Response res) {
-  return ObtainiumError((res.reasonPhrase != null &&
-          res.reasonPhrase != null &&
-          res.reasonPhrase!.isNotEmpty)
-      ? res.reasonPhrase!
+  return ObtainiumError((res.statusMessage != null &&
+          res.statusMessage != null &&
+          res.statusMessage!.isNotEmpty)
+      ? res.statusMessage!
       : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]));
 }
 

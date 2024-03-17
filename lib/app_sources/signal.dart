@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart';
+import 'package:dio/dio.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -21,7 +21,7 @@ class Signal extends AppSource {
     Response res = await sourceRequest(
         'https://updates.${hosts[0]}/android/latest.json', additionalSettings);
     if (res.statusCode == 200) {
-      var json = jsonDecode(res.body);
+      var json = jsonDecode(res.data);
       String? apkUrl = json['url'];
       List<String> apkUrls = apkUrl == null ? [] : [apkUrl];
       String? version = json['versionName'];

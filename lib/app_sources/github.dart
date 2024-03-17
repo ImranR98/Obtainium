@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -112,12 +112,12 @@ class GitHub extends AppSource {
     ];
     for (var path in possibleBuildGradleLocations) {
       try {
-        var res = await sourceRequest(
-            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path',
-            additionalSettings);
+        var finalUrl =
+            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path';
+        var res = await sourceRequest(finalUrl, additionalSettings);
         if (res.statusCode == 200) {
           try {
-            var body = jsonDecode(res.body);
+            var body = jsonDecode(res.data);
             var trimmedLines = utf8
                 .decode(base64
                     .decode(body['content'].toString().split('\n').join('')))
@@ -143,7 +143,7 @@ class GitHub extends AppSource {
             }
           } catch (err) {
             LogsProvider().add(
-                'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}');
+                'Error parsing build.gradle from $finalUrl: ${err.toString()}');
           }
         }
       } catch (err) {
@@ -256,11 +256,11 @@ class GitHub extends AppSource {
         }
         throw getObtainiumHttpError(res);
       }
-      latestRelease = jsonDecode(res.body);
+      latestRelease = jsonDecode(res.data);
     }
     Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
-      var releases = jsonDecode(res.body) as List<dynamic>;
+      var releases = jsonDecode(res.data) as List<dynamic>;
       if (latestRelease != null) {
         var latestTag = latestRelease['tag_name'] ?? latestRelease['name'];
         if (releases
@@ -466,7 +466,7 @@ class GitHub extends AppSource {
           ? int.parse(querySettings['minStarCount'])
           : 0;
       Map<String, List<String>> urlsWithDescriptions = {};
-      for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {
+      for (var e in (jsonDecode(res.data)[rootProp] as List<dynamic>)) {
         if ((e['stargazers_count'] ?? e['stars_count'] ?? 0) >= minStarCount) {
           urlsWithDescriptions.addAll({
             e['html_url'] as String: [
@@ -500,11 +500,13 @@ class GitHub extends AppSource {
   }
 
   rateLimitErrorCheck(Response res) {
-    if (res.headers['x-ratelimit-remaining'] == '0') {
+    String? rateLimitHeader;
+    if (res.headers.map['x-ratelimit-remaining']?.isNotEmpty == true) {
+      rateLimitHeader = res.headers.map['x-ratelimit-remaining']![0];
+    }
+    if (rateLimitHeader == '0') {
       throw RateLimitError(
-          (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
-                  60000000)
-              .round());
+          (int.parse(rateLimitHeader ?? '1800000000') / 60000000).round());
     }
   }
 }

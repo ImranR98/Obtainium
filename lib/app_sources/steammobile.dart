@@ -1,6 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -38,7 +38,7 @@ class SteamMobile extends AppSource {
       }
       String apkInURLRegexPattern =
           '/$apkNamePrefix-([0-9]+\\.)*[0-9]+\\.apk\$';
-      var links = parse(res.body)
+      var links = parse(res.data)
           .querySelectorAll('a')
           .map((e) => e.attributes['href'] ?? '')
           .where((e) => RegExp('https://.*$apkInURLRegexPattern').hasMatch(e))

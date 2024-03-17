@@ -18,6 +18,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
+import 'package:dio/dio.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
@@ -45,6 +46,9 @@ const localeDir = 'assets/translations';
 var fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
+
+final dio = Dio(BaseOptions(
+    responseType: ResponseType.plain, receiveDataWhenStatusError: true));
 
 Future<void> loadTranslations() async {
   // See easy_localization/issues/210

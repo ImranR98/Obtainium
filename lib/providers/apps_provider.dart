@@ -5,14 +5,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:android_intent_plus/flag.dart';
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,7 +29,6 @@ import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
@@ -146,10 +146,10 @@ Future<File> downloadFileWithRetry(
     Map<String, String>? headers,
     int retries = 3}) async {
   try {
-    return await downloadFile(url, fileNameNoExt, onProgress, destDir,
+    return await downloadApk(url, fileNameNoExt, onProgress, destDir,
         useExisting: useExisting, headers: headers);
   } catch (e) {
-    if (retries > 0 && e is ClientException) {
+    if (retries > 0 && e is DioException) {
       await Future.delayed(const Duration(seconds: 5));
       return await downloadFileWithRetry(
           url, fileNameNoExt, onProgress, destDir,
@@ -183,9 +183,162 @@ Future<String> checkPartialDownloadHashDynamic(String url,
   throw NoVersionError();
 }
 
+Future<File> downloadApk(
+    String url, String fileNameNoExt, Function? onProgress, String destDir,
+    {bool useExisting = true, Map<String, String>? headers}) async {
+  var resHeaders = await getHeaders(url, headers: headers);
+
+  String ext = resHeaders['content-disposition']?.split('.').last ?? 'apk';
+  if (ext.endsWith('"') || ext.endsWith("other")) {
+    ext = ext.substring(0, ext.length - 1);
+  }
+  if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+    ext = 'apk';
+  }
+  File file = File('$destDir/$fileNameNoExt.$ext');
+
+  final contentLength = await getContentLengthIfRangeSupported(resHeaders);
+
+  if (useExisting && file.existsSync()) {
+    var length = file.lengthSync();
+    if (contentLength == null) {
+      return file;
+    } else {
+      if (length == contentLength) {
+        return file;
+      }
+      if (length > contentLength) {
+        useExisting = false;
+      }
+    }
+  }
+
+  double progress = -1;
+
+  try {
+    if (contentLength == null) {
+      Response response = await dio.download(
+        url,
+        file.path,
+        options: Options(headers: headers),
+        onReceiveProgress: (count, total) {
+          progress = (total > 0 ? count / total * 100 : 30);
+          if (onProgress != null) {
+            onProgress(progress);
+          }
+        },
+      );
+      if ((response.statusCode ?? 200) < 200 ||
+          (response.statusCode ?? 200) > 299) {
+        throw response.statusMessage ?? tr('unexpectedError');
+      }
+    } else {
+      var targetFileLength =
+          useExisting && file.existsSync() ? file.lengthSync() : null;
+      int bufferSize = 1024 * 1024; // 1 Megabyte
+      final sink = file.openWrite(
+        mode: useExisting ? FileMode.writeOnlyAppend : FileMode.writeOnly,
+      );
+      int rangeStart = targetFileLength ?? 0;
+      int rangeEnd = min(
+        rangeStart + bufferSize - 1,
+        contentLength - 1,
+      );
+      if (onProgress != null) {
+        progress = ((rangeStart / contentLength) * 100);
+        onProgress(progress);
+      }
+      while (true) {
+        var headersCurrent = headers ?? {};
+        headersCurrent['range'] = 'bytes=$rangeStart-$rangeEnd';
+        Response response = await dio.get(
+          url,
+          onReceiveProgress: (count, total) {
+            if (onProgress != null) {
+              final newProgress =
+                  (((rangeStart + count) / contentLength) * 100);
+              if (newProgress != progress) {
+                progress = newProgress;
+                onProgress(progress);
+              }
+            }
+          },
+          options: Options(
+            headers: headersCurrent,
+            responseType: ResponseType.bytes,
+          ),
+        );
+
+        if ((response.statusCode ?? 200) < 200 ||
+            (response.statusCode ?? 200) > 299) {
+          throw response.statusMessage ?? tr('unexpectedError');
+        }
+
+        final Uint8List data = response.data;
+        sink.add(data);
+        if (rangeEnd == contentLength - 1) {
+          break;
+        }
+        rangeStart = rangeEnd + 1;
+        rangeEnd = min(
+          rangeStart + bufferSize - 1,
+          contentLength - 1,
+        );
+      }
+      await sink.flush();
+      await sink.close();
+    }
+  } finally {
+    if (onProgress != null) {
+      onProgress(null);
+    }
+  }
+  return file;
+}
+
+Future<int?> getContentLengthIfRangeSupported(
+    Map<String, String> headers) async {
+  try {
+    int? contentLength;
+    {
+      var contentLengthHeaderValue = headers['content-length'];
+      if (contentLengthHeaderValue?.isNotEmpty == true) {
+        contentLength = int.tryParse(contentLengthHeaderValue!);
+      }
+    }
+    bool rangeFeatureEnabled = false;
+    if (headers['accept-ranges']?.isNotEmpty == true) {
+      rangeFeatureEnabled =
+          headers['accept-ranges']!.trim().toLowerCase() == 'bytes';
+    }
+    if (!rangeFeatureEnabled) {
+      contentLength = null;
+    }
+    return contentLength;
+  } catch (e) {
+    return null;
+  }
+}
+
+Future<Map<String, String>> getHeaders(String url,
+    {Map<String, String>? headers}) async {
+  var req = http.Request('GET', Uri.parse(url));
+  if (headers != null) {
+    req.headers.addAll(headers);
+  }
+  var client = http.Client();
+  var response = await client.send(req);
+  if (response.statusCode < 200 || response.statusCode > 299) {
+    throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
+  }
+  var returnHeaders = response.headers;
+  client.close();
+  return returnHeaders;
+}
+
 Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
     {Map<String, String>? headers}) async {
-  var req = Request('GET', Uri.parse(url));
+  var req = http.Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
@@ -199,58 +352,41 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
   return hashListOfLists(bytes);
 }
 
-Future<File> downloadFile(
-    String url, String fileNameNoExt, Function? onProgress, String destDir,
-    {bool useExisting = true, Map<String, String>? headers}) async {
-  var req = Request('GET', Uri.parse(url));
-  if (headers != null) {
-    req.headers.addAll(headers);
-  }
-  var client = http.Client();
-  StreamedResponse response = await client.send(req);
-  String ext =
-      response.headers['content-disposition']?.split('.').last ?? 'apk';
-  if (ext.endsWith('"') || ext.endsWith("other")) {
-    ext = ext.substring(0, ext.length - 1);
-  }
-  if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
-    ext = 'apk';
-  }
-  File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
-  if (!(downloadedFile.existsSync() && useExisting)) {
-    File tempDownloadedFile = File('${downloadedFile.path}.part');
-    if (tempDownloadedFile.existsSync()) {
-      tempDownloadedFile.deleteSync(recursive: true);
-    }
-    var length = response.contentLength;
-    var received = 0;
-    double? progress;
-    var sink = tempDownloadedFile.openWrite();
-    await response.stream.map((s) {
-      received += s.length;
-      progress = (length != null ? received / length * 100 : 30);
-      if (onProgress != null) {
-        onProgress(progress);
-      }
-      return s;
-    }).pipe(sink);
-    await sink.close();
-    progress = null;
-    if (onProgress != null) {
-      onProgress(progress);
-    }
-    if (response.statusCode != 200) {
-      tempDownloadedFile.deleteSync(recursive: true);
-      throw response.reasonPhrase ?? tr('unexpectedError');
-    }
-    if (tempDownloadedFile.existsSync()) {
-      tempDownloadedFile.renameSync(downloadedFile.path);
-    }
-  } else {
-    client.close();
-  }
-  return downloadedFile;
-}
+// Future<File> downloadFile(
+//     String url, String fileNameNoExt, Function? onProgress, String destDir,
+//     {bool useExisting = true, Map<String, String>? headers}) async {
+//   var resHead = await dio.head(url);
+//   String ext =
+//       resHead.headers.map['content-disposition']?[0].split('.').last ?? 'apk';
+//   if (ext.endsWith('"') || ext.endsWith("other")) {
+//     ext = ext.substring(0, ext.length - 1);
+//   }
+//   if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+//     ext = 'apk';
+//   }
+//   File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
+//   if (!(downloadedFile.existsSync() && useExisting)) {
+//     double? progress;
+//     var response = await dio.download(
+//       url,
+//       downloadedFile.path,
+//       options: Options(headers: headers),
+//       onReceiveProgress: (count, total) {
+//         progress = (total > 0 ? count / total * 100 : 30);
+//         if (onProgress != null) {
+//           onProgress(progress);
+//         }
+//       },
+//     );
+//     if (onProgress != null) {
+//       onProgress(null);
+//     }
+//     if (response.statusCode != 200) {
+//       throw response.statusMessage ?? tr('unexpectedError');
+//     }
+//   }
+//   return downloadedFile;
+// }
 
 Future<PackageInfo?> getInstalledInfo(String? packageName,
     {bool printErr = true}) async {
@@ -1621,7 +1757,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             // Next task interval is based on the error with the longest retry time
             int minRetryIntervalForThisApp = err is RateLimitError
                 ? (err.remainingMinutes * 60)
-                : e is ClientException
+                : e is DioException
                     ? (15 * 60)
                     : (toCheckApp.value + 1);
             if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {

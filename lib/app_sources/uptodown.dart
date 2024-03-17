@@ -37,7 +37,7 @@ class Uptodown extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var html = parse(res.body);
+    var html = parse(res.data);
     String? version = html.querySelector('div.version')?.innerHtml;
     String? apkUrl =
         '${standardUrl.split('/').reversed.toList().sublist(1).reversed.join('/')}/post-download';
@@ -94,7 +94,7 @@ class Uptodown extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var html = parse(res.body);
+    var html = parse(res.data);
     var finalUrlKey =
         html.querySelector('.post-download')?.attributes['data-url'];
     if (finalUrlKey == null) {

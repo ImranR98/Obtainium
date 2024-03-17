@@ -61,8 +61,8 @@ class APKPure extends AppSource {
     var res = await sourceRequest('$standardUrl/download', additionalSettings);
     var resChangelog = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200 && resChangelog.statusCode == 200) {
-      var html = parse(res.body);
-      var htmlChangelog = parse(resChangelog.body);
+      var html = parse(res.data);
+      var htmlChangelog = parse(resChangelog.data);
       String? version = html.querySelector('span.info-sdk span')?.text.trim();
       if (version == null) {
         throw NoVersionError();

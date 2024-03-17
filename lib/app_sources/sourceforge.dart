@@ -1,5 +1,5 @@
+import 'package:dio/dio.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -49,7 +49,7 @@ class SourceForge extends AppSource {
         '${standardUri.origin}/${standardUri.pathSegments.sublist(0, 2).join('/')}/rss?path=/',
         additionalSettings);
     if (res.statusCode == 200) {
-      var parsedHtml = parse(res.body);
+      var parsedHtml = parse(res.data);
       var allDownloadLinks = parsedHtml
           .querySelectorAll('guid')
           .map((e) => e.innerHtml)

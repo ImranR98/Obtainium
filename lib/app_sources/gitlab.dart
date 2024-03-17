@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -81,7 +81,7 @@ class GitLab extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var json = jsonDecode(res.body) as List<dynamic>;
+    var json = jsonDecode(res.data) as List<dynamic>;
     Map<String, List<String>> results = {};
     for (var element in json) {
       results['https://${hosts[0]}/${element['path_with_namespace']}'] = [
@@ -131,7 +131,7 @@ class GitLab extends AppSource {
 
     // Extract .apk details from received data
     Iterable<APKDetails> apkDetailsList = [];
-    var json = jsonDecode(res.body) as List<dynamic>;
+    var json = jsonDecode(res.data) as List<dynamic>;
     apkDetailsList = json.map((e) {
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
           .map((e) {
@@ -152,9 +152,8 @@ class GitLab extends AppSource {
       var apkUrlsSet = apkUrlsFromAssets.toSet();
       apkUrlsSet.addAll(uploadedAPKsFromDescription);
       var releaseDateString = e['released_at'] ?? e['created_at'];
-      DateTime? releaseDate = releaseDateString != null
-          ? DateTime.parse(releaseDateString)
-          : null;
+      DateTime? releaseDate =
+          releaseDateString != null ? DateTime.parse(releaseDateString) : null;
       return APKDetails(
           e['tag_name'] ?? e['name'],
           getApkUrlsFromUrls(apkUrlsSet.toList()),
