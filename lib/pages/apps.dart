@@ -26,6 +26,92 @@ class AppsPage extends StatefulWidget {
   State<AppsPage> createState() => AppsPageState();
 }
 
+showChangeLogDialog(BuildContext context, App app, String? changesUrl,
+    AppSource appSource, String changeLog) {
+  showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return GeneratedFormModal(
+          title: tr('changes'),
+          items: const [],
+          message: app.latestVersion,
+          additionalWidgets: [
+            changesUrl != null
+                ? GestureDetector(
+                    child: Text(
+                      changesUrl,
+                      style: const TextStyle(
+                          decoration: TextDecoration.underline,
+                          fontStyle: FontStyle.italic),
+                    ),
+                    onTap: () {
+                      launchUrlString(changesUrl,
+                          mode: LaunchMode.externalApplication);
+                    },
+                  )
+                : const SizedBox.shrink(),
+            changesUrl != null
+                ? const SizedBox(
+                    height: 16,
+                  )
+                : const SizedBox.shrink(),
+            appSource.changeLogIfAnyIsMarkDown
+                ? SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height - 350,
+                    child: Markdown(
+                      data: changeLog,
+                      onTapLink: (text, href, title) {
+                        if (href != null) {
+                          launchUrlString(
+                              href.startsWith('http://') ||
+                                      href.startsWith('https://')
+                                  ? href
+                                  : '${Uri.parse(app.url).origin}/$href',
+                              mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      extensionSet: md.ExtensionSet(
+                        md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+                        [
+                          md.EmojiSyntax(),
+                          ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes
+                        ],
+                      ),
+                    ))
+                : Text(changeLog),
+          ],
+          singleNullReturnButton: tr('ok'),
+        );
+      });
+}
+
+getChangeLogFn(BuildContext context, App app) {
+  AppSource appSource =
+      SourceProvider().getSource(app.url, overrideSource: app.overrideSource);
+  String? changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
+  String? changeLog = app.changeLog;
+  if (changeLog?.split('\n').length == 1) {
+    if (RegExp(
+            '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?')
+        .hasMatch(changeLog!)) {
+      if (changesUrl == null) {
+        changesUrl = changeLog;
+        changeLog = null;
+      }
+    }
+  }
+  return (changeLog == null && changesUrl == null)
+      ? null
+      : () {
+          if (changeLog != null) {
+            showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
+          } else {
+            launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
+          }
+        };
+}
+
 class AppsPageState extends State<AppsPage> {
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
@@ -262,66 +348,6 @@ class AppsPageState extends State<AppsPage> {
         .where((a) => selectedAppIds.contains(a.id))
         .toSet();
 
-    showChangeLogDialog(
-        String? changesUrl, AppSource appSource, String changeLog, int index) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return GeneratedFormModal(
-              title: tr('changes'),
-              items: const [],
-              message: listedApps[index].app.latestVersion,
-              additionalWidgets: [
-                changesUrl != null
-                    ? GestureDetector(
-                        child: Text(
-                          changesUrl,
-                          style: const TextStyle(
-                              decoration: TextDecoration.underline,
-                              fontStyle: FontStyle.italic),
-                        ),
-                        onTap: () {
-                          launchUrlString(changesUrl,
-                              mode: LaunchMode.externalApplication);
-                        },
-                      )
-                    : const SizedBox.shrink(),
-                changesUrl != null
-                    ? const SizedBox(
-                        height: 16,
-                      )
-                    : const SizedBox.shrink(),
-                appSource.changeLogIfAnyIsMarkDown
-                    ? SizedBox(
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height - 350,
-                        child: Markdown(
-                          data: changeLog,
-                          onTapLink: (text, href, title) {
-                            if (href != null) {
-                              launchUrlString(
-                                  href.startsWith('http://') ||
-                                          href.startsWith('https://')
-                                      ? href
-                                      : '${Uri.parse(listedApps[index].app.url).origin}/$href',
-                                  mode: LaunchMode.externalApplication);
-                            }
-                          },
-                          extensionSet: md.ExtensionSet(
-                            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                            [
-                              md.EmojiSyntax(),
-                              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes
-                            ],
-                          ),
-                        ))
-                    : Text(changeLog),
-              ],
-              singleNullReturnButton: tr('ok'),
-            );
-          });
-    }
-
     getLoadingWidgets() {
       return [
         if (listedApps.isEmpty)
@@ -349,35 +375,6 @@ class AppsPageState extends State<AppsPage> {
             ),
           )
       ];
-    }
-
-    getChangeLogFn(int appIndex) {
-      AppSource appSource = SourceProvider().getSource(
-          listedApps[appIndex].app.url,
-          overrideSource: listedApps[appIndex].app.overrideSource);
-      String? changesUrl =
-          appSource.changeLogPageFromStandardUrl(listedApps[appIndex].app.url);
-      String? changeLog = listedApps[appIndex].app.changeLog;
-      if (changeLog?.split('\n').length == 1) {
-        if (RegExp(
-                '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?')
-            .hasMatch(changeLog!)) {
-          if (changesUrl == null) {
-            changesUrl = changeLog;
-            changeLog = null;
-          }
-        }
-      }
-      return (changeLog == null && changesUrl == null)
-          ? null
-          : () {
-              if (changeLog != null) {
-                showChangeLogDialog(changesUrl, appSource, changeLog, appIndex);
-              } else {
-                launchUrlString(changesUrl!,
-                    mode: LaunchMode.externalApplication);
-              }
-            };
     }
 
     getUpdateButton(int appIndex) {
@@ -444,7 +441,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getSingleAppHorizTile(int index) {
-      var showChangesFn = getChangeLogFn(index);
+      var showChangesFn = getChangeLogFn(context, listedApps[index].app);
       var hasUpdate = listedApps[index].app.installedVersion != null &&
           listedApps[index].app.installedVersion !=
               listedApps[index].app.latestVersion;
