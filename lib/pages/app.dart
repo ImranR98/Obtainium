@@ -361,6 +361,9 @@ class _AppPageState extends State<AppPage> {
                 !areDownloadsRunning
             ? () async {
                 try {
+                  var successMessage = app?.app.installedVersion == null
+                      ? tr('installed')
+                      : tr('appsUpdated');
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
                     app?.app.id != null ? [app!.app.id] : [],
@@ -368,7 +371,7 @@ class _AppPageState extends State<AppPage> {
                   );
                   if (res.isNotEmpty && !trackOnly) {
                     // ignore: use_build_context_synchronously
-                    showMessage(tr('appsUpdated'), context);
+                    showMessage(successMessage, context);
                   }
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();

@@ -563,13 +563,13 @@ class AppsProvider with ChangeNotifier {
         zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
-  Future<void> installXApkDir(DownloadedXApkDir dir,
+  Future<bool> installXApkDir(DownloadedXApkDir dir,
       {bool needsBGWorkaround = false}) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
+    var somethingInstalled = false;
     try {
-      var somethingInstalled = false;
       MultiAppMultiError errors = MultiAppMultiError();
       for (var file in dir.extracted
           .listSync(recursive: true, followLinks: false)
@@ -596,6 +596,7 @@ class AppsProvider with ChangeNotifier {
     } finally {
       dir.extracted.delete(recursive: true);
     }
+    return somethingInstalled;
   }
 
   Future<bool> installApk(DownloadedApk file,
@@ -828,17 +829,18 @@ class AppsProvider with ChangeNotifier {
         notifyListeners();
         try {
           if (!skipInstalls) {
+            bool sayInstalled = true;
             if (downloadedFile != null) {
               if (willBeSilent && context == null) {
                 installApk(downloadedFile, needsBGWorkaround: true);
               } else {
-                await installApk(downloadedFile);
+                sayInstalled = await installApk(downloadedFile);
               }
             } else {
               if (willBeSilent && context == null) {
                 installXApkDir(downloadedDir!, needsBGWorkaround: true);
               } else {
-                await installXApkDir(downloadedDir!);
+                sayInstalled = await installXApkDir(downloadedDir!);
               }
             }
             if (willBeSilent && context == null) {
@@ -846,7 +848,9 @@ class AppsProvider with ChangeNotifier {
                   [apps[id]!.app],
                   id: id.hashCode));
             }
-            installedIds.add(id);
+            if (sayInstalled) {
+              installedIds.add(id);
+            }
           }
         } finally {
           apps[id]?.downloadProgress = null;
