@@ -297,8 +297,6 @@ Future<File> downloadFile(
     tempDownloadedFile.deleteSync(recursive: true);
     throw response.reasonPhrase ?? tr('unexpectedError');
   }
-  print(tempDownloadedFile.lengthSync());
-  print(fullContentLength);
   if (tempDownloadedFile.existsSync()) {
     tempDownloadedFile.renameSync(downloadedFile.path);
   }
@@ -648,7 +646,13 @@ class AppsProvider with ChangeNotifier {
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
-      throw InstallError(code);
+      try {
+        file.file.deleteSync(recursive: true);
+      } catch (e) {
+        //
+      } finally {
+        throw InstallError(code);
+      }
     } else if (code == 0) {
       installed = true;
       apps[file.appId]!.app.installedVersion =
