@@ -20,8 +20,8 @@ jobs:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '17'
 
-      - name: Temp
-        id: temp
+      - name: Flutter Doctor
+        id: flutter_doctor
         run: |
           flutter doctor -v
           
