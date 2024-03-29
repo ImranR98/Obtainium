@@ -218,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Visa inte 'Följ-Endast' varningar",
     "dontShowAPKOriginWarnings": "Visa inte APK-ursprung varningar",
     "moveNonInstalledAppsToBottom": "Flytta icke-installerade appar till botten av appvyn",
-    "gitlabPATLabel": "GitLab Personal Access Token",
+    "gitlabPATLabel": "Personligt åtkomsttoken för GitLab",
     "about": "Om",
     "requiresCredentialsInSettings": "{}: This needs additional credentials (in Settings)",
     "checkOnStart": "Kolla efter uppdateringar vid start",
@@ -299,6 +299,8 @@
     "note": "Anmärkning",
     "selfHostedNote": "Rullgardinsmenyn \"{}\" kan användas för att nå självhostade/anpassade instanser av valfri källa.",
     "badDownload": "APK kunde inte analyseras (inkompatibel eller partiell nedladdning)",
+    "beforeNewInstallsShareToAppVerifier": "Dela nya appar med AppVerifier (om tillgängligt)",
+    "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

@@ -218,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Non mostrare gli avvisi 'Solo-Monitoraggio'",
     "dontShowAPKOriginWarnings": "Non mostrare gli avvisi di origine dell'APK",
     "moveNonInstalledAppsToBottom": "Sposta le app non installate in fondo alla lista",
-    "gitlabPATLabel": "GitLab Personal Access Token",
+    "gitlabPATLabel": "GitLab Token di accesso personale",
     "about": "Informazioni",
     "requiresCredentialsInSettings": "{}: Servono credenziali aggiuntive (in Impostazioni)",
     "checkOnStart": "Controlla una volta all'avvio",
@@ -299,6 +299,8 @@
     "note": "Nota",
     "selfHostedNote": "Il menu a tendina \"{}\" può essere usato per raggiungere istanze autogestite/personali di qualsiasi fonte.",
     "badDownload": "Non è stato possibile analizzare l'APK (download incompatibile o parziale).",
+    "beforeNewInstallsShareToAppVerifier": "Condividere le nuove applicazioni con AppVerifier (se disponibile)",
+    "appVerifierInstructionToast": "Condividete con AppVerifier, quindi tornate qui quando siete pronti.",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

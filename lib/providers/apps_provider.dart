@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 
@@ -31,6 +32,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'native_provider.dart';
 
@@ -561,7 +563,8 @@ class AppsProvider with ChangeNotifier {
         zipFile: File(filePath), destinationDir: Directory(destinationPath));
   }
 
-  Future<bool> installXApkDir(DownloadedXApkDir dir,
+  Future<bool> installXApkDir(
+      DownloadedXApkDir dir, BuildContext? firstTimeWithContext,
       {bool needsBGWorkaround = false}) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
@@ -575,7 +578,8 @@ class AppsProvider with ChangeNotifier {
         if (file.path.toLowerCase().endsWith('.apk')) {
           try {
             somethingInstalled = somethingInstalled ||
-                await installApk(DownloadedApk(dir.appId, file),
+                await installApk(
+                    DownloadedApk(dir.appId, file), firstTimeWithContext,
                     needsBGWorkaround: needsBGWorkaround);
           } catch (e) {
             logs.add(
@@ -597,8 +601,19 @@ class AppsProvider with ChangeNotifier {
     return somethingInstalled;
   }
 
-  Future<bool> installApk(DownloadedApk file,
+  Future<bool> installApk(
+      DownloadedApk file, BuildContext? firstTimeWithContext,
       {bool needsBGWorkaround = false}) async {
+    if (firstTimeWithContext != null &&
+        settingsProvider.beforeNewInstallsShareToAppVerifier &&
+        (await getInstalledInfo('dev.soupslurpr.appverifier')) != null) {
+      XFile f = XFile.fromData(file.file.readAsBytesSync(),
+          mimeType: 'application/vnd.android.package-archive');
+      Fluttertoast.showToast(
+          msg: tr('appVerifierInstructionToast'),
+          toastLength: Toast.LENGTH_LONG);
+      await Share.shareXFiles([f]);
+    }
     var newInfo =
         await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
     if (newInfo == null) {
@@ -834,17 +849,23 @@ class AppsProvider with ChangeNotifier {
         try {
           if (!skipInstalls) {
             bool sayInstalled = true;
+            var contextIfNewInstall =
+                apps[id]?.installedInfo == null ? context : null;
             if (downloadedFile != null) {
               if (willBeSilent && context == null) {
-                installApk(downloadedFile, needsBGWorkaround: true);
+                installApk(downloadedFile, contextIfNewInstall,
+                    needsBGWorkaround: true);
               } else {
-                sayInstalled = await installApk(downloadedFile);
+                sayInstalled =
+                    await installApk(downloadedFile, contextIfNewInstall);
               }
             } else {
               if (willBeSilent && context == null) {
-                installXApkDir(downloadedDir!, needsBGWorkaround: true);
+                installXApkDir(downloadedDir!, contextIfNewInstall,
+                    needsBGWorkaround: true);
               } else {
-                sayInstalled = await installXApkDir(downloadedDir!);
+                sayInstalled =
+                    await installXApkDir(downloadedDir!, contextIfNewInstall);
               }
             }
             if (willBeSilent && context == null) {

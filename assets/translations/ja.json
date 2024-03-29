@@ -299,6 +299,8 @@
     "note": "注",
     "selfHostedNote": "ドロップダウン\"{}\"を使用すると、あらゆるソースのセルフホスト/カスタムインスタンスにアクセスできます。",
     "badDownload": "APK を解析できませんでした（互換性がないか、部分的にダウンロードされています）。",
+    "beforeNewInstallsShareToAppVerifier": "AppVerifierで新しいアプリを共有する（利用可能な場合）",
+    "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

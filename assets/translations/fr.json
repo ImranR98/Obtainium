@@ -299,6 +299,8 @@
     "note": "Note",
     "selfHostedNote": "La liste déroulante \"{}\" peut être utilisée pour accéder aux instances auto-hébergées/personnalisées de n'importe quelle source.",
     "badDownload": "L'APK n'a pas pu être analysé (téléchargement incompatible ou partiel)",
+    "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
+    "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque vous êtes prêt.",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

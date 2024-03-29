@@ -354,11 +354,64 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Flexible(
+                                    child:
+                                        Text(tr('removeOnExternalUninstall'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .removeOnExternalUninstall,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                          .removeOnExternalUninstall = value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
                                 Flexible(child: Text(tr('parallelDownloads'))),
                                 Switch(
                                     value: settingsProvider.parallelDownloads,
                                     onChanged: (value) {
                                       settingsProvider.parallelDownloads =
+                                          value;
+                                    })
+                              ],
+                            ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(tr(
+                                        'beforeNewInstallsShareToAppVerifier')),
+                                    GestureDetector(
+                                        onTap: () {
+                                          launchUrlString(
+                                              'https://github.com/soupslurpr/AppVerifier',
+                                              mode: LaunchMode
+                                                  .externalApplication);
+                                        },
+                                        child: Text(
+                                          tr('about'),
+                                          style: const TextStyle(
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              fontSize: 12),
+                                        )),
+                                  ],
+                                )),
+                                Switch(
+                                    value: settingsProvider
+                                        .beforeNewInstallsShareToAppVerifier,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                              .beforeNewInstallsShareToAppVerifier =
                                           value;
                                     })
                               ],
@@ -470,22 +523,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.buryNonInstalled,
                                     onChanged: (value) {
                                       settingsProvider.buryNonInstalled = value;
-                                    })
-                              ],
-                            ),
-                            height16,
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                    child:
-                                        Text(tr('removeOnExternalUninstall'))),
-                                Switch(
-                                    value: settingsProvider
-                                        .removeOnExternalUninstall,
-                                    onChanged: (value) {
-                                      settingsProvider
-                                          .removeOnExternalUninstall = value;
                                     })
                               ],
                             ),

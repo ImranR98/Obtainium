@@ -218,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Nezobrazovat varování pro 'Jen sledované'",
     "dontShowAPKOriginWarnings": "Nezobrazovat varování pro původ APK",
     "moveNonInstalledAppsToBottom": "Přesunout nenainstalované aplikace na konec zobrazení Aplikace",
-    "gitlabPATLabel": "GitLab Personal Access Token",
+    "gitlabPATLabel": "Osobní přístupový token GitLab",
     "about": "O",
     "requiresCredentialsInSettings": "{}: Vyžaduje další pověření (v nastavení)",
     "checkOnStart": "Zkontrolovat jednou při spuštění",
@@ -299,6 +299,8 @@
     "note": "Poznámka",
     "selfHostedNote": "Rozbalovací seznam \"{}\" lze použít k dosažení vlastních/obvyklých instancí libovolného zdroje.",
     "badDownload": "APK nelze analyzovat (nekompatibilní nebo částečné stažení)",
+    "beforeNewInstallsShareToAppVerifier": "Sdílení nových aplikací s aplikací AppVerifier (pokud je k dispozici)",
+    "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

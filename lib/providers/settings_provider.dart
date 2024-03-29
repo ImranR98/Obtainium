@@ -479,4 +479,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setStringList('searchDeselected', list);
     notifyListeners();
   }
+
+  bool get beforeNewInstallsShareToAppVerifier {
+    return prefs?.getBool('beforeNewInstallsShareToAppVerifier') ?? true;
+  }
+
+  set beforeNewInstallsShareToAppVerifier(bool val) {
+    prefs?.setBool('beforeNewInstallsShareToAppVerifier', val);
+    notifyListeners();
+  }
 }

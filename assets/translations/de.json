@@ -299,6 +299,8 @@
     "note": "Hinweis",
     "selfHostedNote": "Das „{}“-Dropdown-Menü kann verwendet werden, um selbst gehostete/angepasste Instanzen einer beliebigen Quelle zu erreichen.",
     "badDownload": "Die APK konnte nicht geparst werden (inkompatibler oder teilweiser Download)",
+    "beforeNewInstallsShareToAppVerifier": "Neue Apps mit AppVerifier teilen (falls verfügbar)",
+    "appVerifierInstructionToast": "Geben Sie die Daten an AppVerifier weiter und kehren Sie dann hierher zurück, wenn Sie fertig sind.",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
