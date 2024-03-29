@@ -18,7 +18,6 @@ Currently supported App sources:
   - [F-Droid](https://f-droid.org/)
   - Third Party F-Droid Repos
   - [IzzyOnDroid](https://android.izzysoft.de/)
-  - [SourceForge](https://sourceforge.net/)
   - [SourceHut](https://git.sr.ht/)
 - Other - General:
   - [APKPure](https://apkpure.net/)
