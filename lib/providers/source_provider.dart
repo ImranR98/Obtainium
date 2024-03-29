@@ -736,7 +736,6 @@ class SourceProvider {
         FDroid(),
         FDroidRepo(),
         IzzyOnDroid(),
-        SourceForge(),
         SourceHut(),
         APKPure(),
         Aptoide(),

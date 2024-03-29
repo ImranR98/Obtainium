@@ -121,9 +121,11 @@ class GitLab extends AppSource {
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
     String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
 
+    bool trackOnly = additionalSettings['trackOnly'] == true;
+
     // Request data from REST API
     Response res = await sourceRequest(
-        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/releases?$optionalAuth',
+        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
         additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -152,9 +154,8 @@ class GitLab extends AppSource {
       var apkUrlsSet = apkUrlsFromAssets.toSet();
       apkUrlsSet.addAll(uploadedAPKsFromDescription);
       var releaseDateString = e['released_at'] ?? e['created_at'];
-      DateTime? releaseDate = releaseDateString != null
-          ? DateTime.parse(releaseDateString)
-          : null;
+      DateTime? releaseDate =
+          releaseDateString != null ? DateTime.parse(releaseDateString) : null;
       return APKDetails(
           e['tag_name'] ?? e['name'],
           getApkUrlsFromUrls(apkUrlsSet.toList()),
@@ -164,18 +165,19 @@ class GitLab extends AppSource {
     if (apkDetailsList.isEmpty) {
       throw NoReleasesError();
     }
+    var finalResult = apkDetailsList.first;
 
     // Fallback procedure
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    if (fallbackToOlderReleases) {
-      if (additionalSettings['trackOnly'] != true) {
-        apkDetailsList =
-            apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
-      }
-      if (apkDetailsList.isEmpty) {
-        throw NoReleasesError();
-      }
+    if (finalResult.apkUrls.isEmpty && fallbackToOlderReleases && !trackOnly) {
+      apkDetailsList =
+          apkDetailsList.where((e) => e.apkUrls.isNotEmpty).toList();
+      finalResult = apkDetailsList.first;
+    }
+
+    if (finalResult.apkUrls.isEmpty && !trackOnly) {
+      throw NoAPKError();
     }
 
     return apkDetailsList.first;

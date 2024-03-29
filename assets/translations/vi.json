@@ -299,6 +299,8 @@
     "note": "Ghi chú",
     "selfHostedNote": "Trình đơn thả xuống \"{}\" có thể được dùng để tiếp cận các phiên bản tự lưu trữ/tùy chỉnh của bất kỳ nguồn nào.",
     "badDownload": "Không thể phân tích cú pháp APK (tải xuống một phần hoặc không tương thích)",
+    "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
+    "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

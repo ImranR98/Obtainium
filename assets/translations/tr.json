@@ -299,6 +299,8 @@
     "note": "Not",
     "selfHostedNote": "\"{}\" açılır menüsü, herhangi bir kaynağın kendi kendine barındırılan/özel örneklerine ulaşmak için kullanılabilir.",
     "badDownload": "APK ayrıştırılamadı (uyumsuz veya kısmi indirme)",
+    "beforeNewInstallsShareToAppVerifier": "Yeni Uygulamaları AppVerifier ile paylaşın (varsa)",
+    "appVerifierInstructionToast": "AppVerifier ile paylaşın, hazır olduğunuzda buraya dönün.",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

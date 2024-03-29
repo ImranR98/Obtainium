@@ -218,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Geen waarschuwingen voor 'Track-Only' weergeven",
     "dontShowAPKOriginWarnings": "APK-herkomstwaarschuwingen niet weergeven",
     "moveNonInstalledAppsToBottom": "Verplaats niet-geïnstalleerde apps naar de onderkant van de apps-weergave",
-    "gitlabPATLabel": "GitLab Personal Access Token",
+    "gitlabPATLabel": "GitLab persoonlijk toegangskenmerk",
     "about": "Over",
     "requiresCredentialsInSettings": "{}: Dit vereist aanvullende referenties (in Instellingen)",
     "checkOnStart": "Controleren op updates bij opstarten",
@@ -299,6 +299,8 @@
     "note": "Opmerking",
     "selfHostedNote": "De \"{}\" dropdown kan gebruikt worden om zelf gehoste/aangepaste instanties van elke bron te bereiken.",
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
+    "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
+    "appVerifierInstructionToast": "Deel naar AppVerifier en keer hier terug als je klaar bent.",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

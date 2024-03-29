@@ -299,6 +299,8 @@
     "note": "Nota",
     "selfHostedNote": "O menu suspenso \"{}\" pode ser usado para acessar instâncias auto-hospedadas/personalizadas de qualquer fonte.",
     "badDownload": "Não foi possível analisar o APK (transferência incompatível ou parcial)",
+    "beforeNewInstallsShareToAppVerifier": "Partilhar novas aplicações com o AppVerifier (se disponível)",
+    "appVerifierInstructionToast": "Partilhe com o AppVerifier e, em seguida, regresse aqui quando estiver pronto.",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"
