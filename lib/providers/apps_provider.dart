@@ -291,11 +291,14 @@ Future<File> downloadFile(
     return s;
   }).pipe(sink);
   await sink.close();
+  bool likelyCorruptFile = (progress ?? 0) > 101;
   progress = null;
   if (onProgress != null) {
     onProgress(progress);
   }
-  if (response.statusCode < 200 || response.statusCode > 299) {
+  if (response.statusCode < 200 ||
+      response.statusCode > 299 ||
+      likelyCorruptFile) {
     tempDownloadedFile.deleteSync(recursive: true);
     throw response.reasonPhrase ?? tr('unexpectedError');
   }
