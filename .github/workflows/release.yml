@@ -19,8 +19,7 @@ jobs:
       - name: Temp
         id: temp
         run: |
-          echo $JAVA_HOME
-          find . | grep /javac$
+          flutter doctor -v
           
       - name: Import GPG key
         id: import_pgp_key
