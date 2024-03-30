@@ -30,7 +30,7 @@ import rikka.shizuku.ShizukuBinderWrapper
 
 class MainActivity: FlutterActivity() {
     private var nativeChannel: MethodChannel? = null
-    private val SHIZUKU_PERMISSION_REQUEST_CODE = 1492
+    private val SHIZUKU_PERMISSION_REQUEST_CODE = (1000..2000).random()
 
     private fun shizukuCheckPermission(result: Result) {
         try {
