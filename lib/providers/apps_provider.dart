@@ -816,7 +816,7 @@ class AppsProvider with ChangeNotifier {
         } else {
           downloadedDir = downloadedArtifact as DownloadedXApkDir;
         }
-        var id = downloadedFile?.appId ?? downloadedDir!.appId;
+        id = downloadedFile?.appId ?? downloadedDir!.appId;
         bool willBeSilent = await canInstallSilently(apps[id]!.app);
         if (!settingsProvider.useShizuku) {
           if (!(await settingsProvider.getInstallPermission(enforce: false))) {
