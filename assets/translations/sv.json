@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Ta bort Utgånga App-filtret",
     "showOutdatedOnly": "Visa Endast Utgånga Appar",
     "filter": "Filtrera",
-    "filterActive": "Filter *",
     "filterApps": "Filtrera Appar",
     "appName": "Appnamn",
     "author": "Utvecklare",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Visa inte 'Följ-Endast' varningar",
     "dontShowAPKOriginWarnings": "Visa inte APK-ursprung varningar",
     "moveNonInstalledAppsToBottom": "Flytta icke-installerade appar till botten av appvyn",
-    "gitlabPATLabel": "GitLab Personal Access Token\\n(Möjliggör sökning och bättre APK-upptäckt)",
+    "gitlabPATLabel": "Personligt åtkomsttoken för GitLab",
     "about": "Om",
     "requiresCredentialsInSettings": "{}: This needs additional credentials (in Settings)",
     "checkOnStart": "Kolla efter uppdateringar vid start",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Lägg till denna information nedanför.",
     "addInfoInSettings": "Lägg till denna information i Inställningar.",
     "githubSourceNote": "GitHub-hastighetsbegränsning kan undvikas med en API-nyckel.",
-    "gitlabSourceNote": "GitLab APK-extraktion kanske inte fungerar utan en API-nyckel.",
     "sortByLastLinkSegment": "Sortera endast efter det sista segmentet av länken",
     "filterReleaseNotesByRegEx": "Filtrera versionskommentarer efter reguljärt uttryck",
     "customLinkFilterRegex": "Anpassad APK-länkfiltrera efter reguljärt uttryck (standard '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Anmärkning",
     "selfHostedNote": "Rullgardinsmenyn \"{}\" kan användas för att nå självhostade/anpassade instanser av valfri källa.",
     "badDownload": "APK kunde inte analyseras (inkompatibel eller partiell nedladdning)",
+    "beforeNewInstallsShareToAppVerifier": "Dela nya appar med AppVerifier (om tillgängligt)",
+    "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} och 1 till app kan ha uppdaterats.",
         "other": "{} och {} appar till kan ha uppdaterats."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK:er"
     }
 }

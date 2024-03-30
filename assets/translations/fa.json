@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "فیلتر برنامه قدیمی را حذف کنید",
     "showOutdatedOnly": "فقط برنامه های قدیمی را نشان دهید",
     "filter": "فیلتر",
-    "filterActive": "فیلتر *",
     "filterApps": "فیلتر کردن برنامه ها",
     "appName": "نام برنامه",
     "author": "سازنده",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "هشدار 'فقط ردیابی' را نشان ندهید",
     "dontShowAPKOriginWarnings": "هشدارهای منبع APK را نشان ندهید",
     "moveNonInstalledAppsToBottom": "برنامه های نصب نشده را به نمای پایین برنامه ها منتقل کنید",
-    "gitlabPATLabel": "رمز دسترسی شخصی GitLab\n(جستجو و کشف بهتر APK را فعال میکند)",
+    "gitlabPATLabel": "رمز دسترسی شخصی GitLab",
     "about": "درباره",
     "requiresCredentialsInSettings": "{}: این به اعتبارنامه های اضافی نیاز دارد (در تنظیمات)",
     "checkOnStart": "بررسی در شروع",
@@ -233,7 +232,6 @@
     "addInfoBelow": "این اطلاعات را در زیر اضافه کنید",
     "addInfoInSettings": "این اطلاعات را در تنظیمات اضافه کنید.",
     "githubSourceNote": "با استفاده از کلید API می توان از محدودیت نرخ GitHub جلوگیری کرد.",
-    "gitlabSourceNote": "استخراج APK GitLab ممکن است بدون کلید API کار نکند.",
     "sortByLastLinkSegment": "فقط بر اساس آخرین بخش پیوند مرتب کنید",
     "filterReleaseNotesByRegEx": "یادداشت های انتشار را با بیان منظم فیلتر کنید",
     "customLinkFilterRegex": "فیلتر پیوند سفارشی بر اساس عبارت منظم (پیش‌فرض '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
+    "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} و 1 برنامه دیگر ممکن است به روز شده باشند.",
         "other": "ممکن است {} و {} برنامه های دیگر به روز شده باشند."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

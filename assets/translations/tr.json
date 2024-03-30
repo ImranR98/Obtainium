@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Güncel Olmayan Uygulama Filtresini Kaldır",
     "showOutdatedOnly": "Yalnızca Güncel Olmayan Uygulamaları Göster",
     "filter": "Filtre",
-    "filterActive": "Filtre *",
     "filterApps": "Uygulamaları Filtrele",
     "appName": "Uygulama Adı",
     "author": "Yazar",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "'Yalnızca Takip Edilen' uyarılarını gösterme",
     "dontShowAPKOriginWarnings": "APK kaynağı uyarılarını gösterme",
     "moveNonInstalledAppsToBottom": "Yüklenmemiş Uygulamaları Uygulamalar Görünümünün Altına Taşı",
-    "gitlabPATLabel": "GitLab Kişisel Erişim Belirteci\n(Arama ve Daha İyi APK Keşfi İçin)",
+    "gitlabPATLabel": "GitLab Kişisel Erişim Belirteci",
     "about": "Hakkında",
     "requiresCredentialsInSettings": "{}: Bu, ek kimlik bilgilerine ihtiyaç duyar (Ayarlar'da)",
     "checkOnStart": "Başlangıçta güncellemeleri kontrol et",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Bu bilgiyi aşağıya ekle.",
     "addInfoInSettings": "Bu bilgiyi Ayarlar'da ekleyin.",
     "githubSourceNote": "GitHub hız sınırlaması bir API anahtarı kullanılarak atlanabilir.",
-    "gitlabSourceNote": "GitLab APK çıkarma işlemi bir API anahtarı olmadan çalışmayabilir.",
     "sortByLastLinkSegment": "Bağlantının yalnızca son bölümüne göre sırala",
     "filterReleaseNotesByRegEx": "Sürüm Notlarını Düzenli İfade ile Filtrele",
     "customLinkFilterRegex": "Özel APK Bağlantı Filtresi Düzenli İfade ile (Varsayılan '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Not",
     "selfHostedNote": "\"{}\" açılır menüsü, herhangi bir kaynağın kendi kendine barındırılan/özel örneklerine ulaşmak için kullanılabilir.",
     "badDownload": "APK ayrıştırılamadı (uyumsuz veya kısmi indirme)",
+    "beforeNewInstallsShareToAppVerifier": "Yeni Uygulamaları AppVerifier ile paylaşın (varsa)",
+    "appVerifierInstructionToast": "AppVerifier ile paylaşın, hazır olduğunuzda buraya dönün.",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} ve 1 diğer uygulama muhtemelen güncellendi.",
         "other": "{} ve {} daha fazla uygulama muhtemelen güncellendi."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK'lar"
     }
 }

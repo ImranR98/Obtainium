@@ -344,12 +344,14 @@ class GitHub extends AppSource {
         });
       }
       if (latestRelease != null &&
+          (latestRelease['tag_name'] ?? latestRelease['name']) != null &&
           releases.isNotEmpty &&
           latestRelease !=
               (releases[releases.length - 1]['tag_name'] ??
                   releases[0]['name'])) {
         var ind = releases.indexWhere((element) =>
-            latestRelease == (element['tag_name'] ?? element['name']));
+            (latestRelease['tag_name'] ?? latestRelease['name']) ==
+            (element['tag_name'] ?? element['name']));
         if (ind >= 0) {
           releases.add(releases.removeAt(ind));
         }
@@ -400,7 +402,7 @@ class GitHub extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      var changeLog = targetRelease['body'].toString();
+      var changeLog = (targetRelease['body'] ?? '').toString();
       return APKDetails(
           version,
           targetRelease['apkUrls'] as List<MapEntry<String, String>>,

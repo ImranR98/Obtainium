@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Verwijder out-of-date app filter",
     "showOutdatedOnly": "Toon alleen out-of-date apps",
     "filter": "Filter",
-    "filterActive": "Filteren *",
     "filterApps": "Filter apps",
     "appName": "App naam",
     "author": "Auteur",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Geen waarschuwingen voor 'Track-Only' weergeven",
     "dontShowAPKOriginWarnings": "APK-herkomstwaarschuwingen niet weergeven",
     "moveNonInstalledAppsToBottom": "Verplaats niet-geïnstalleerde apps naar de onderkant van de apps-weergave",
-    "gitlabPATLabel": "GitLab Personal Access Token\n(Maakt het mogelijk beter te zoeken naar APK's)",
+    "gitlabPATLabel": "GitLab persoonlijk toegangskenmerk",
     "about": "Over",
     "requiresCredentialsInSettings": "{}: Dit vereist aanvullende referenties (in Instellingen)",
     "checkOnStart": "Controleren op updates bij opstarten",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Voeg deze informatie hieronder toe.",
     "addInfoInSettings": "Voeg deze informatie toe in de instellingen.",
     "githubSourceNote": "Beperkingen van GitHub kunnen worden vermeden door het gebruik van een API-sleutel.",
-    "gitlabSourceNote": "GitLab APK-extractie werkt mogelijk niet zonder een API-sleutel.",
     "sortByLastLinkSegment": "Sorteren op alleen het laatste segment van de link",
     "filterReleaseNotesByRegEx": "Filter release-opmerkingen met een reguliere expressie.",
     "customLinkFilterRegex": "Aangepaste APK-linkfilter met een reguliere expressie (Standaard '.apk$').",
@@ -301,6 +299,8 @@
     "note": "Opmerking",
     "selfHostedNote": "De \"{}\" dropdown kan gebruikt worden om zelf gehoste/aangepaste instanties van elke bron te bereiken.",
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
+    "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
+    "appVerifierInstructionToast": "Deel naar AppVerifier en keer hier terug als je klaar bent.",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} en nog 1 app zijn mogelijk bijgewerkt.",
         "other": "{} en {} meer apps zijn mogelijk bijgwerkt."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK's"
     }
 }

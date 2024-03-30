@@ -76,16 +76,7 @@ class FDroid extends AppSource {
         'https://$host/repo/$appId',
         standardUrl,
         name,
-        autoSelectHighestVersionCode:
-            additionalSettings['autoSelectHighestVersionCode'] == true,
-        trySelectingSuggestedVersionCode:
-            additionalSettings['trySelectingSuggestedVersionCode'] == true,
-        filterVersionsByRegEx:
-            (additionalSettings['filterVersionsByRegEx'] as String?)
-                        ?.isNotEmpty ==
-                    true
-                ? additionalSettings['filterVersionsByRegEx']
-                : null);
+        additionalSettings: additionalSettings);
     if (!hostChanged) {
       try {
         var res = await sourceRequest(
@@ -166,12 +157,30 @@ class FDroid extends AppSource {
 
   APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
       Response res, String apkUrlPrefix, String standardUrl, String sourceName,
-      {bool autoSelectHighestVersionCode = false,
-      bool trySelectingSuggestedVersionCode = false,
-      String? filterVersionsByRegEx}) {
+      {Map<String, dynamic> additionalSettings = const {}}) {
+    var autoSelectHighestVersionCode =
+        additionalSettings['autoSelectHighestVersionCode'] == true;
+    var trySelectingSuggestedVersionCode =
+        additionalSettings['trySelectingSuggestedVersionCode'] == true;
+    var filterVersionsByRegEx =
+        (additionalSettings['filterVersionsByRegEx'] as String?)?.isNotEmpty ==
+                true
+            ? additionalSettings['filterVersionsByRegEx']
+            : null;
+    var apkFilterRegEx =
+        (additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true
+            ? additionalSettings['apkFilterRegEx']
+            : null;
     if (res.statusCode == 200) {
       var response = jsonDecode(res.body);
       List<dynamic> releases = response['packages'] ?? [];
+      if (apkFilterRegEx != null) {
+        releases = releases.where((rel) {
+          String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';
+          return filterApks([MapEntry(apk, apk)], apkFilterRegEx, false)
+              .isNotEmpty;
+        }).toList();
+      }
       if (releases.isEmpty) {
         throw NoReleasesError();
       }

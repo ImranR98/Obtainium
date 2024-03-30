@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Odstranit filtr Neaktuální",
     "showOutdatedOnly": "Zobrazovat pouze zastaralé aplikace",
     "filter": "Filtr",
-    "filterActive": "Filtr *",
     "filterApps": "Filtrovat aplikace",
     "appName": "Název aplikace",
     "author": "Autor",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Nezobrazovat varování pro 'Jen sledované'",
     "dontShowAPKOriginWarnings": "Nezobrazovat varování pro původ APK",
     "moveNonInstalledAppsToBottom": "Přesunout nenainstalované aplikace na konec zobrazení Aplikace",
-    "gitlabPATLabel": "GitLab Personal Access Token\n(Umožňuje vyhledávání a lepší zjišťování APK)",
+    "gitlabPATLabel": "Osobní přístupový token GitLab",
     "about": "O",
     "requiresCredentialsInSettings": "{}: Vyžaduje další pověření (v nastavení)",
     "checkOnStart": "Zkontrolovat jednou při spuštění",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Přidat tuto informaci na konec stránky.",
     "addInfoInSettings": "Přidat tuto informaci do nastavení.",
     "githubSourceNote": "Omezení rychlosti GitHub lze obejít pomocí klíče API.",
-    "gitlabSourceNote": "Extrakce GitLab APK nemusí fungovat bez klíče API",
     "sortByLastLinkSegment": "Seřadit pouze podle poslední části odkazu",
     "filterReleaseNotesByRegEx": "Filtrovat poznámky k vydání podle regulárního výrazu",
     "customLinkFilterRegex": "Vlastní filtr odkazů APK podle regulárního výrazu (výchozí '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Poznámka",
     "selfHostedNote": "Rozbalovací seznam \"{}\" lze použít k dosažení vlastních/obvyklých instancí libovolného zdroje.",
     "badDownload": "APK nelze analyzovat (nekompatibilní nebo částečné stažení)",
+    "beforeNewInstallsShareToAppVerifier": "Sdílení nových aplikací s aplikací AppVerifier (pokud je k dispozici)",
+    "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} a 1 další aplikace možno aktualizovat",
         "other": "{} a {} další aplikace mohou být aktualizovány."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK"
     }
 }

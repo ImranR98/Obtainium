@@ -14,11 +14,14 @@ assignees: ''
 **Describe the feature**
 <!-- A clear and concise description of what you want to happen.
 
-For new Sources, it's preferable (not required) if you suggest how the following details can be extracted from the Source in a reliable way (like an API or through web scraping):
+For new Sources, please ensure:
+1. It is not already possible to use the HTML Source for your purposes.
+2. It must be possible to extract the following details from the Source in a reliable way:
 - The App version (or any release-specific identifier - a "pseudo-version") for the latest release
 - One or more APK URL(s) for the latest release
 - Above details for previous releases (optional)
 
+If you're not sure about 1 or 2, open a discussion item instead.
 Note that the Web scraper cannot deal with JavaScript-enabled content. -->
 
 **Describe alternatives you've considered (if applicable)**

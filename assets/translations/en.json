@@ -218,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Don't show 'Track-Only' warnings",
     "dontShowAPKOriginWarnings": "Don't show APK origin warnings",
     "moveNonInstalledAppsToBottom": "Move non-installed Apps to bottom of Apps view",
-    "gitlabPATLabel": "GitLab Personal Access Token\n(Enables Search and Better APK Discovery)",
+    "gitlabPATLabel": "GitLab Personal Access Token",
     "about": "About",
     "requiresCredentialsInSettings": "{} needs additional credentials (in Settings)",
     "checkOnStart": "Check for updates on startup",
@@ -232,7 +232,6 @@
     "addInfoBelow": "Add this info below.",
     "addInfoInSettings": "Add this info in the Settings.",
     "githubSourceNote": "GitHub rate limiting can be avoided using an API key.",
-    "gitlabSourceNote": "GitLab APK extraction may not work without an API key.",
     "sortByLastLinkSegment": "Sort by only the last segment of the link",
     "filterReleaseNotesByRegEx": "Filter Release Notes by Regular Expression",
     "customLinkFilterRegex": "Custom APK Link Filter by Regular Expression (Default '.apk$')",
@@ -298,6 +297,8 @@
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
+    "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
@@ -349,5 +350,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} and 1 more app may have been updated.",
         "other": "{} and {} more apps may have been updated."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

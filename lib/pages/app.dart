@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -104,6 +105,11 @@ class _AppPageState extends State<AppPage> {
       if (installedVersionIsEstimate) {
         infoLines = '${tr('pseudoVersionInUse')}\n$infoLines';
       }
+      if ((app?.app.apkUrls.length ?? 0) > 0) {
+        infoLines =
+            '$infoLines\n${app?.app.apkUrls.length == 1 ? app?.app.apkUrls[0].key : plural('apk', app?.app.apkUrls.length ?? 0)}';
+      }
+      var changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,13 +127,26 @@ class _AppPageState extends State<AppPage> {
                         .textTheme
                         .bodyLarge!
                         .copyWith(fontWeight: FontWeight.bold)),
-                app?.app.releaseDate == null
-                    ? const SizedBox.shrink()
-                    : Text(
-                        app!.app.releaseDate.toString(),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
+                changeLogFn != null || app?.app.releaseDate != null
+                    ? GestureDetector(
+                        onTap: changeLogFn,
+                        child: Text(
+                          app?.app.releaseDate == null
+                              ? tr('changes')
+                              : app!.app.releaseDate.toString(),
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.labelSmall!.copyWith(
+                                    decoration: changeLogFn != null
+                                        ? TextDecoration.underline
+                                        : null,
+                                    fontStyle: changeLogFn != null
+                                        ? FontStyle.italic
+                                        : null,
+                                  ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
                 const SizedBox(
                   height: 8,
                 ),
@@ -357,6 +376,9 @@ class _AppPageState extends State<AppPage> {
                 !areDownloadsRunning
             ? () async {
                 try {
+                  var successMessage = app?.app.installedVersion == null
+                      ? tr('installed')
+                      : tr('appsUpdated');
                   HapticFeedback.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
                     app?.app.id != null ? [app!.app.id] : [],
@@ -364,7 +386,7 @@ class _AppPageState extends State<AppPage> {
                   );
                   if (res.isNotEmpty && !trackOnly) {
                     // ignore: use_build_context_synchronously
-                    showMessage(tr('appsUpdated'), context);
+                    showMessage(successMessage, context);
                   }
                   if (res.isNotEmpty && mounted) {
                     Navigator.of(context).pop();

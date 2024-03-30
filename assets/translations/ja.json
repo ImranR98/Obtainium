@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "アップデートが存在するアプリのフィルターを解除",
     "showOutdatedOnly": "アップデートが存在するアプリのみ表示する",
     "filter": "フィルター",
-    "filterActive": "フィルター *",
     "filterApps": "アプリをフィルタリングする",
     "appName": "アプリ名",
     "author": "作者",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "「追跡のみ」の警告を表示しない",
     "dontShowAPKOriginWarnings": "APKのダウンロード元の警告を表示しない",
     "moveNonInstalledAppsToBottom": "未インストールのアプリをアプリ一覧の下部に移動させる",
-    "gitlabPATLabel": "GitLab パーソナルアクセストークン\n(検索とより良いAPK検出の有効化)",
+    "gitlabPATLabel": "GitLab パーソナルアクセストークン",
     "about": "概要",
     "requiresCredentialsInSettings": "{}: これには追加の認証が必要です (設定にて)",
     "checkOnStart": "起動時にアップデートを確認する",
@@ -233,7 +232,6 @@
     "addInfoBelow": "下部でこの情報を追加してください。",
     "addInfoInSettings": "設定でこの情報を追加してください。",
     "githubSourceNote": "GitHubのレート制限はAPIキーを使うことで回避できます。",
-    "gitlabSourceNote": "GitLabのAPK抽出はAPIキーがないと動作しない場合があります。",
     "sortByLastLinkSegment": "リンクの最後のセグメントのみでソートする",
     "filterReleaseNotesByRegEx": "正規表現でリリースノートをフィルタリングする",
     "customLinkFilterRegex": "正規表現によるカスタムリンクフィルター (デフォルト '.apk$')",
@@ -301,6 +299,8 @@
     "note": "注",
     "selfHostedNote": "ドロップダウン\"{}\"を使用すると、あらゆるソースのセルフホスト/カスタムインスタンスにアクセスできます。",
     "badDownload": "APK を解析できませんでした（互換性がないか、部分的にダウンロードされています）。",
+    "beforeNewInstallsShareToAppVerifier": "AppVerifierで新しいアプリを共有する（利用可能な場合）",
+    "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",
         "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります。"
+    },
+    "apk": {
+        "one": "{}APK",
+        "other": "{}APK"
     }
 }

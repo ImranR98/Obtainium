@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -62,18 +61,6 @@ class AddAppPageState extends State<AddAppPage> {
         var prevHost = pickedSource?.hosts.isNotEmpty == true
             ? pickedSource?.hosts[0]
             : null;
-        try {
-          var naturalSource =
-              valid ? sourceProvider.getSource(userInput) : null;
-          if (naturalSource != null &&
-              naturalSource.runtimeType.toString() !=
-                  HTML().runtimeType.toString()) {
-            // If input has changed to match a regular source, reset the override
-            pickedSourceOverride = null;
-          }
-        } catch (e) {
-          // ignore
-        }
         var source = valid
             ? sourceProvider.getSource(userInput,
                 overrideSource: pickedSourceOverride)
@@ -163,7 +150,7 @@ class AddAppPageState extends State<AddAppPage> {
           app = await sourceProvider.getApp(
               pickedSource!, userInput.trim(), additionalSettings,
               trackOnlyOverride: trackOnly,
-              overrideSource: pickedSourceOverride,
+              sourceIsOverriden: pickedSourceOverride != null,
               inferAppIdIfOptional: inferAppIdIfOptional);
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
@@ -361,8 +348,9 @@ class AddAppPageState extends State<AddAppPage> {
                   [
                     GeneratedFormDropdown(
                         'overrideSource',
-                        defaultValue: HTML().runtimeType.toString(),
+                        defaultValue: '',
                         [
+                          MapEntry('', tr('none')),
                           ...sourceProvider.sources.map(
                               (s) => MapEntry(s.runtimeType.toString(), s.name))
                         ],
@@ -577,11 +565,7 @@ class AddAppPageState extends State<AddAppPage> {
                       const SizedBox(
                         height: 16,
                       ),
-                      if (pickedSourceOverride != null ||
-                          (pickedSource != null &&
-                              pickedSource.runtimeType.toString() ==
-                                  HTML().runtimeType.toString()))
-                        getHTMLSourceOverrideDropdown(),
+                      if (pickedSource != null) getHTMLSourceOverrideDropdown(),
                       if (shouldShowSearchBar()) getSearchBarRow(),
                       if (pickedSource != null)
                         FutureBuilder(

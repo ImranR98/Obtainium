@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Supprimer le filtre d'application obsolète",
     "showOutdatedOnly": "Afficher uniquement les applications obsolètes",
     "filter": "Filtre",
-    "filterActive": "Filtre *",
     "filterApps": "Filtrer les applications",
     "appName": "Nom de l'application",
     "author": "Auteur",
@@ -168,7 +167,7 @@
     "lastUpdateCheckX": "Vérification de la dernière mise à jour : {}",
     "remove": "Retirer",
     "yesMarkUpdated": "Oui, marquer comme mis à jour",
-    "fdroid": "F-Droïde Officiel",
+    "fdroid": "F-Droid Officiel",
     "appIdOrName": "ID ou nom de l'application",
     "appId": "ID de l'application",
     "appWithIdOrNameNotFound": "Aucune application n'a été trouvée avec cet identifiant ou ce nom",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Don't Show the 'Track-Only' Warning",
     "dontShowAPKOriginWarnings": "Ne pas afficher les avertissements sur l'origine de l'APK",
     "moveNonInstalledAppsToBottom": "Déplacer les applications non installées vers le bas de la vue Applications",
-    "gitlabPATLabel": "Jeton d'accès personnel GitLab\\n (permet la recherche et une meilleure découverte d'APK)",
+    "gitlabPATLabel": "Jeton d'accès personnel GitLab",
     "about": "À propos de",
     "requiresCredentialsInSettings": "{}: This needs additional credentials (in Settings)",
     "checkOnStart": "Vérifier les mises à jour au démarrage",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Ajoutez ces informations ci-dessous.",
     "addInfoInSettings": "Ajoutez ces informations dans les paramètres.",
     "githubSourceNote": "La limitation du débit GitHub peut être évitée à l'aide d'une clé API.",
-    "gitlabSourceNote": "L'extraction d'APK GitLab peut ne pas fonctionner sans clé API.",
     "sortByLastLinkSegment": "Trier uniquement sur le dernier segment du lien",
     "filterReleaseNotesByRegEx": "Filtrer les notes de version par expression régulière",
     "customLinkFilterRegex": "Filtre de lien APK personnalisé par expression régulière (par défaut '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Note",
     "selfHostedNote": "La liste déroulante \"{}\" peut être utilisée pour accéder aux instances auto-hébergées/personnalisées de n'importe quelle source.",
     "badDownload": "L'APK n'a pas pu être analysé (téléchargement incompatible ou partiel)",
+    "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
+    "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque vous êtes prêt.",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "une": "{} et 1 application supplémentaire ont peut-être été mises à jour.",
         "other": "{} et {} autres applications peuvent avoir été mises à jour."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

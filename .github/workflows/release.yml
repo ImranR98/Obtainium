@@ -15,7 +15,16 @@ jobs:
       
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '17'
 
+      - name: Flutter Doctor
+        id: flutter_doctor
+        run: |
+          flutter doctor -v
+          
       - name: Import GPG key
         id: import_pgp_key
         uses: crazy-max/ghaction-import-gpg@v6
@@ -42,7 +51,6 @@ jobs:
           if [ ${{ inputs.beta }} == true ]; then BETA=true; else BETA=false; fi
           echo "beta=$BETA" >> $GITHUB_OUTPUT
           TAG="v$VERSION"
-          if [ $BETA == true ]; then TAG="$TAG"-beta; fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Build APKs

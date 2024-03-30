@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Uklonite zastarjeli filter aplikacija",
     "showOutdatedOnly": "Prikaži samo zastarjele aplikacije",
     "filter": "Filtriranje",
-    "filterActive": "Filtriranje",
     "filterApps": "Filtriraj aplikacije",
     "appName": "Naziv aplikacije",
     "author": "Autor",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Ne prikazuj upozorenja „Samo za  praćenje”",
     "dontShowAPKOriginWarnings": "Ne prikazuj upozorenja o porijeklu APK-a",
     "moveNonInstalledAppsToBottom": "Premjesti neinstalirane aplikacije na dno prikaza aplikacija",
-    "gitlabPATLabel": "GitLab token za lični pristup\n(Omogućava pretraživanje i bolje otkrivanje APK-a)",
+    "gitlabPATLabel": "GitLab token za lični pristup",
     "about": "O nama",
     "requiresCredentialsInSettings": "{}: Za ovo su potrebni dodatni akreditivi (u Postavkama)",
     "checkOnStart": "Provjerite ima li novosti pri pokretanju",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Dodajte ove informacije ispod.",
     "addInfoInSettings": "Dodajte ove informacije u Postavkama.",
     "githubSourceNote": "GitHub ograničavanje se može izbjeći korišćenjem tokena za lični pristup.",
-    "gitlabSourceNote": "GitLab APK preuzimanje možda neće raditi bez tokena za lični pristup.",
     "sortByLastLinkSegment": "Sortiraj samo po zadnjem segmentu veze",
     "filterReleaseNotesByRegEx": "Filtirajte promjene u izdanju po regularnom izrazu",
     "customLinkFilterRegex": "Prilagođeni APK link filtrira se po regularnom izrazu (Zadano '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",
     "badDownload": "The APK could not be parsed (incompatible or partial download)",
+    "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
+    "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} i još jedna aplikacija je vjerovatno ažurirana.",
         "other": "{} i još {} aplikacija su vjerovatno ažurirane."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

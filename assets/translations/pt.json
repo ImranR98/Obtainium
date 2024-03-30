@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Remover filtro de aplicativos desatualizados",
     "showOutdatedOnly": "Mostrar apenas aplicativos desatualizados",
     "filter": "Filtro",
-    "filterActive": "Filtro *",
     "filterApps": "Filtrar aplicativos",
     "appName": "Nome do aplicativo",
     "author": "Autor",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Não mostrar avisos 'Apenas monitorar'",
     "dontShowAPKOriginWarnings": "Não mostrar avisos de origem da APK",
     "moveNonInstalledAppsToBottom": "Mover aplicativos não instalados para o fundo da lista de aplicativos",
-    "gitlabPATLabel": "Token de acesso pessoal do Gitlab\n(Ativa pesquisa e melhora a descoberta de APKs)",
+    "gitlabPATLabel": "Token de acesso pessoal do Gitlab",
     "about": "Sobre",
     "requiresCredentialsInSettings": "{}: Isso requer credenciais adicionais (em Configurações)",
     "checkOnStart": "Verificar se há atualizações ao iniciar",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Adicionar essa informação abaixo.",
     "addInfoInSettings": "Adicionar essa informação nas configurações.",
     "githubSourceNote": "A limitação de taxa do GitHub pode ser evitada usando uma chave de API.",
-    "gitlabSourceNote": "A extração de endereço de download do APK no GitLab provavelmente não funcione sem que seja fornecido uma chave de API.",
     "sortByLastLinkSegment": "Ordenar apenas usando o último segmento do link",
     "filterReleaseNotesByRegEx": "Filtrar notas de versão usando Regex",
     "customLinkFilterRegex": "Filtro de link personalizado usando expressão regular (Padrão '.apk$')",
@@ -301,6 +299,8 @@
     "note": "Nota",
     "selfHostedNote": "O menu suspenso \"{}\" pode ser usado para acessar instâncias auto-hospedadas/personalizadas de qualquer fonte.",
     "badDownload": "Não foi possível analisar o APK (transferência incompatível ou parcial)",
+    "beforeNewInstallsShareToAppVerifier": "Partilhar novas aplicações com o AppVerifier (se disponível)",
+    "appVerifierInstructionToast": "Partilhe com o AppVerifier e, em seguida, regresse aqui quando estiver pronto.",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"
@@ -352,5 +352,9 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} e um outro aplicativo podem ter sido atualizados.",
         "other": "{} e {} outros aplicativos podem ter sido atualizados."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APKs"
     }
 }

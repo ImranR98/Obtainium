@@ -80,7 +80,6 @@
     "removeOutdatedFilter": "Usuń filtr nieaktualnych aplikacji",
     "showOutdatedOnly": "Pokaż tylko nieaktualne aplikacje",
     "filter": "FIltr",
-    "filterActive": "Filtruj *",
     "filterApps": "Filtruj aplikacje",
     "appName": "Nazwa aplikacji",
     "author": "Autor",
@@ -219,7 +218,7 @@
     "dontShowTrackOnlyWarnings": "Nie pokazuj ostrzeżeń \"Tylko obserwowana\"",
     "dontShowAPKOriginWarnings": "Nie pokazuj ostrzeżeń o pochodzeniu APK",
     "moveNonInstalledAppsToBottom": "Przenieś niezainstalowane aplikacje na dół widoku aplikacji",
-    "gitlabPATLabel": "Osobisty token dostępu GitLab\n(Umożliwia wyszukiwanie i lepsze wykrywanie APK)",
+    "gitlabPATLabel": "Osobisty token dostępu GitLab",
     "about": "Więcej informacji",
     "requiresCredentialsInSettings": "{}: Wymaga to dodatkowych poświadczeń (w Ustawieniach)",
     "checkOnStart": "Sprawdź aktualizacje przy uruchomieniu",
@@ -233,7 +232,6 @@
     "addInfoBelow": "Dodaj tę informację poniżej.",
     "addInfoInSettings": "Dodaj tę informację w Ustawieniach.",
     "githubSourceNote": "Limit żądań GitHub można ominąć za pomocą klucza API.",
-    "gitlabSourceNote": "Pozyskiwanie pliku APK z GitLab może nie działać bez klucza API.",
     "sortByLastLinkSegment": "Sortuj tylko według ostatniego segmentu łącza",
     "filterReleaseNotesByRegEx": "Filtruj informacje o wersji według wyrażenia regularnego",
     "customLinkFilterRegex": "Filtruj linki APK według wyrażenia regularnego (domyślnie \".apk$\")",
@@ -301,6 +299,8 @@
     "note": "Uwaga",
     "selfHostedNote": "Lista rozwijana \"{}\" może być używana do uzyskiwania dostępu do samodzielnie hostowanych / niestandardowych instancji dowolnego źródła.",
     "badDownload": "Nie można przeanalizować pliku APK (niekompatybilny lub częściowo pobrany).",
+    "beforeNewInstallsShareToAppVerifier": "Udostępnianie nowych aplikacji za pomocą AppVerifier (jeśli dostępne)",
+    "appVerifierInstructionToast": "Udostępnij w AppVerifier, a następnie wróć tutaj, gdy będziesz gotowy.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",
@@ -378,5 +378,9 @@
         "few": "{} i {} inne apki mogły zostać zaktualizowane.",
         "many": "{} i {} innych apek mogło zostać zaktualizowanych.",
         "other": "{} i {} inne apki mogły zostać zaktualizowane."
+    },
+    "apk": {
+        "one": "{} APK",
+        "other": "{} APK"
     }
 }

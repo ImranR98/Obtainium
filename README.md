@@ -18,7 +18,6 @@ Currently supported App sources:
   - [F-Droid](https://f-droid.org/)
   - Third Party F-Droid Repos
   - [IzzyOnDroid](https://android.izzysoft.de/)
-  - [SourceForge](https://sourceforge.net/)
   - [SourceHut](https://git.sr.ht/)
 - Other - General:
   - [APKPure](https://apkpure.net/)
@@ -42,7 +41,13 @@ Currently supported App sources:
 [<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png"
     alt="Get it on GitHub"
     height="80">](https://github.com/ImranR98/Obtainium/releases)
-
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
+     alt="Get it on IzzyOnDroid"
+     height="80">](https://apt.izzysoft.de/fdroid/index/apk/dev.imranr.obtainium)
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+    alt="Get it on F-Droid"
+    height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
+     
 [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index)
 
 ## Limitations
