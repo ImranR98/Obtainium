@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:android_system_font/android_system_font.dart';
 import 'package:flutter/services.dart';
 
 class NativeFeatures {
@@ -9,8 +10,7 @@ class NativeFeatures {
   static int _resPermShizuku = -2;  // not set
 
   static Future<ByteData> _readFileBytes(String path) async {
-    var file = File(path);
-    var bytes = await file.readAsBytes();
+    var bytes = await File(path).readAsBytes();
     return ByteData.view(bytes.buffer);
   }
 
@@ -34,15 +34,13 @@ class NativeFeatures {
     return completer.future;
   }
 
-  static Future<String> loadSystemFont() async {
-    if (_systemFontLoaded) { return "ok"; }
-    var getFontRes = await _channel.invokeMethod('getSystemFont');
-    if (getFontRes[0] != '/') { return getFontRes; }  // Error
+  static Future loadSystemFont() async {
+    if (_systemFontLoaded) return;
     var fontLoader = FontLoader('SystemFont');
-    fontLoader.addFont(_readFileBytes(getFontRes));
-    await fontLoader.load();
+    var fontFilePath = await AndroidSystemFont().getFilePath();
+    fontLoader.addFont(_readFileBytes(fontFilePath!));
+    fontLoader.load();
     _systemFontLoaded = true;
-    return "ok";
   }
 
   static Future<int> checkPermissionShizuku() async {

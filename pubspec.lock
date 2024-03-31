@@ -26,6 +26,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.1"
+  android_system_font:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "355f897e92a58a803f91d9270d389d9ec40ba550"
+      url: "https://github.com/re7gog/android_system_font"
+    source: git
+    version: "1.0.0"
   animations:
     dependency: "direct main"
     description:

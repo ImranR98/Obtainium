@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -230,6 +231,8 @@ class _ObtainiumState extends State<Obtainium> {
             .copyWith(background: Colors.black, surface: Colors.black)
             .harmonized();
       }
+
+      if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
 
       return MaterialApp(
           title: 'Obtainium',

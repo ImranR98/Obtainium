@@ -469,17 +469,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                     onChanged: (useSystemFont) {
                                       if (useSystemFont) {
                                         NativeFeatures.loadSystemFont()
-                                            .then((fontLoadRes) {
-                                          if (fontLoadRes == 'ok') {
-                                            settingsProvider.useSystemFont =
-                                                true;
-                                          } else {
-                                            showError(
-                                                ObtainiumError(tr(
-                                                    'systemFontError',
-                                                    args: [fontLoadRes])),
-                                                context);
-                                          }
+                                            .then((val) {
+                                          settingsProvider.useSystemFont = true;
                                         });
                                       } else {
                                         settingsProvider.useSystemFont = false;

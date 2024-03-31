@@ -140,10 +140,7 @@ class MainActivity: FlutterActivity() {
             flutterEngine.dartExecutor.binaryMessenger, "native")
         nativeChannel!!.setMethodCallHandler {
             call, result ->
-            if (call.method == "getSystemFont") {
-                val res = DefaultSystemFont().get()
-                result.success(res)
-            } else if (call.method == "checkPermissionShizuku") {
+            if (call.method == "checkPermissionShizuku") {
                 shizukuCheckPermission(result)
             } else if (call.method == "installWithShizuku") {
                 val apkFileUri: String = call.argument("apkFileUri")!!
