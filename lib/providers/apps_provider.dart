@@ -360,7 +360,7 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) await loadApps();
+      if (isForeground) loadApps();
     });
     () async {
       await settingsProvider.initializeSettings();
