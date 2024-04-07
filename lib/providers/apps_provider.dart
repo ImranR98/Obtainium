@@ -705,23 +705,28 @@ class AppsProvider with ChangeNotifier {
     await intent.launch();
   }
 
-  Future<MapEntry<String, String>?> confirmApkUrl(
-      App app, BuildContext? context) async {
+  Future<MapEntry<String, String>?> confirmAppFileUrl(
+      App app, BuildContext? context, bool pickAnyAsset) async {
+    var urlsToSelectFrom = app.apkUrls;
+    if (pickAnyAsset) {
+      urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
+    }
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? apkUrl =
-        app.apkUrls[app.preferredApkIndex >= 0 ? app.preferredApkIndex : 0];
+    MapEntry<String, String>? appFileUrl = urlsToSelectFrom[
+        app.preferredApkIndex >= 0 ? app.preferredApkIndex : 0];
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-    if (app.apkUrls.length > 1 && context != null) {
+    if (urlsToSelectFrom.length > 1 && context != null) {
       // ignore: use_build_context_synchronously
-      apkUrl = await showDialog(
+      appFileUrl = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
-            return APKPicker(
+            return AppFilePicker(
               app: app,
-              initVal: apkUrl,
+              initVal: appFileUrl,
               archs: archs,
+              pickAnyAsset: pickAnyAsset,
             );
           });
     }
@@ -731,8 +736,8 @@ class AppsProvider with ChangeNotifier {
     }
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
-    if (apkUrl != null &&
-        getHost(apkUrl.value) != getHost(app.url) &&
+    if (appFileUrl != null &&
+        getHost(appFileUrl.value) != getHost(app.url) &&
         context != null) {
       // ignore: use_build_context_synchronously
       if (!(settingsProvider.hideAPKOriginWarning) &&
@@ -741,13 +746,13 @@ class AppsProvider with ChangeNotifier {
                   context: context,
                   builder: (BuildContext ctx) {
                     return APKOriginWarningDialog(
-                        sourceUrl: app.url, apkUrl: apkUrl!.value);
+                        sourceUrl: app.url, apkUrl: appFileUrl!.value);
                   }) !=
               true) {
-        apkUrl = null;
+        appFileUrl = null;
       }
     }
-    return apkUrl;
+    return appFileUrl;
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -774,7 +779,7 @@ class AppsProvider with ChangeNotifier {
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
         // ignore: use_build_context_synchronously
-        apkUrl = await confirmApkUrl(apps[id]!.app, context);
+        apkUrl = await confirmAppFileUrl(apps[id]!.app, context, false);
       }
       if (apkUrl != null) {
         int urlInd = apps[id]!
@@ -1482,38 +1487,49 @@ class AppsProvider with ChangeNotifier {
   }
 }
 
-class APKPicker extends StatefulWidget {
-  const APKPicker({super.key, required this.app, this.initVal, this.archs});
+class AppFilePicker extends StatefulWidget {
+  const AppFilePicker(
+      {super.key,
+      required this.app,
+      this.initVal,
+      this.archs,
+      this.pickAnyAsset = false});
 
   final App app;
   final MapEntry<String, String>? initVal;
   final List<String>? archs;
+  final bool pickAnyAsset;
 
   @override
-  State<APKPicker> createState() => _APKPickerState();
+  State<AppFilePicker> createState() => _AppFilePickerState();
 }
 
-class _APKPickerState extends State<APKPicker> {
-  MapEntry<String, String>? apkUrl;
+class _AppFilePickerState extends State<AppFilePicker> {
+  MapEntry<String, String>? fileUrl;
 
   @override
   Widget build(BuildContext context) {
-    apkUrl ??= widget.initVal;
+    fileUrl ??= widget.initVal;
+    var urlsToSelectFrom = widget.app.apkUrls;
+    if (widget.pickAnyAsset) {
+      urlsToSelectFrom = [...urlsToSelectFrom, ...widget.app.otherAssetUrls];
+    }
     return AlertDialog(
       scrollable: true,
-      title: Text(tr('pickAnAPK')),
+      title: Text(widget.pickAnyAsset
+          ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
+          : tr('pickAnAPK')),
       content: Column(children: [
         Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName])),
         const SizedBox(height: 16),
-        ...widget.app.apkUrls.map(
+        ...urlsToSelectFrom.map(
           (u) => RadioListTile<String>(
               title: Text(u.key),
               value: u.value,
-              groupValue: apkUrl!.value,
+              groupValue: fileUrl!.value,
               onChanged: (String? val) {
                 setState(() {
-                  apkUrl =
-                      widget.app.apkUrls.where((e) => e.value == val).first;
+                  fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
                 });
               }),
         ),
@@ -1540,7 +1556,7 @@ class _APKPickerState extends State<APKPicker> {
         TextButton(
             onPressed: () {
               HapticFeedback.selectionClick();
-              Navigator.of(context).pop(apkUrl);
+              Navigator.of(context).pop(fileUrl);
             },
             child: Text(tr('continue')))
       ],

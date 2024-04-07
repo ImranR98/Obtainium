@@ -155,7 +155,8 @@ class AddAppPageState extends State<AddAppPage> {
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
             // ignore: use_build_context_synchronously
-            var apkUrl = await appsProvider.confirmApkUrl(app, context);
+            var apkUrl =
+                await appsProvider.confirmAppFileUrl(app, context, false);
             if (apkUrl == null) {
               throw ObtainiumError(tr('cancelled'));
             }

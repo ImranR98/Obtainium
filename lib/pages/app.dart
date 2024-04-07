@@ -1,8 +1,6 @@
-import 'package:animations/animations.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -167,46 +165,19 @@ class _AppPageState extends State<AppPage> {
               onTap: app?.app == null || updating
                   ? null
                   : () async {
-                      var allAssetUrls = [
-                        ...app!.app.apkUrls,
-                        ...app.app.otherAssetUrls
-                      ].map((e) => MapEntry(e.value, e.key)).toList();
-                      var values = await showModal(
-                        context: globalNavigatorKey.currentContext ?? context,
-                        builder: (BuildContext ctx) {
-                          return GeneratedFormModal(
-                              title:
-                                  tr('downloadX', args: [tr('releaseAsset')]),
-                              initValid: true,
-                              items: [
-                                [
-                                  GeneratedFormDropdown(
-                                      'assetToDownload', allAssetUrls,
-                                      defaultValue: allAssetUrls[0].key,
-                                      label: tr('selectX', args: [
-                                        tr('releaseAsset').toLowerCase()
-                                      ]))
-                                ]
-                              ]);
-                        },
-                      );
-
-                      if (values != null) {
-                        var downloadUrl = values['assetToDownload'] as String;
-                        var fileName = allAssetUrls
-                            .where((e) => e.key == downloadUrl)
-                            .first
-                            .value;
+                      var fileUrl = await appsProvider.confirmAppFileUrl(
+                          app!.app, context, true);
+                      if (fileUrl != null) {
                         NotificationsProvider notificationsProvider =
                             (globalNavigatorKey.currentContext ?? context)
                                 .read<NotificationsProvider>();
                         try {
                           showMessage(
-                              '${tr('downloadingX', args: [fileName])}...',
+                              '${tr('downloadingX', args: [fileUrl.key])}...',
                               globalNavigatorKey.currentContext ?? context);
                           await downloadFile(
-                              downloadUrl,
-                              fileName
+                              fileUrl.value,
+                              fileUrl.key
                                   .split('.')
                                   .reversed
                                   .toList()
@@ -214,21 +185,21 @@ class _AppPageState extends State<AppPage> {
                                   .reversed
                                   .join('.'), (double? progress) {
                             notificationsProvider.notify(DownloadNotification(
-                                fileName, progress?.ceil() ?? 0));
+                                fileUrl.key, progress?.ceil() ?? 0));
                           }, '/storage/emulated/0/Download',
                               headers: await source?.getRequestHeaders(
                                   app.app.additionalSettings,
-                                  forAPKDownload: fileName.endsWith('.apk')
+                                  forAPKDownload: fileUrl.key.endsWith('.apk')
                                       ? true
                                       : false));
-                          notificationsProvider.notify(
-                              DownloadedNotification(fileName, downloadUrl));
+                          notificationsProvider.notify(DownloadedNotification(
+                              fileUrl.key, fileUrl.value));
                         } catch (e) {
                           showError(
                               e, globalNavigatorKey.currentContext ?? context);
                         } finally {
                           notificationsProvider
-                              .cancel(DownloadNotification(fileName, 0).id);
+                              .cancel(DownloadNotification(fileUrl.key, 0).id);
                         }
                       }
                     },
