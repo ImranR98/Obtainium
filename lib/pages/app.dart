@@ -7,7 +7,6 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -165,42 +164,11 @@ class _AppPageState extends State<AppPage> {
               onTap: app?.app == null || updating
                   ? null
                   : () async {
-                      var fileUrl = await appsProvider.confirmAppFileUrl(
-                          app!.app, context, true);
-                      if (fileUrl != null) {
-                        NotificationsProvider notificationsProvider =
-                            (globalNavigatorKey.currentContext ?? context)
-                                .read<NotificationsProvider>();
-                        try {
-                          showMessage(
-                              '${tr('downloadingX', args: [fileUrl.key])}...',
-                              globalNavigatorKey.currentContext ?? context);
-                          await downloadFile(
-                              fileUrl.value,
-                              fileUrl.key
-                                  .split('.')
-                                  .reversed
-                                  .toList()
-                                  .sublist(1)
-                                  .reversed
-                                  .join('.'), (double? progress) {
-                            notificationsProvider.notify(DownloadNotification(
-                                fileUrl.key, progress?.ceil() ?? 0));
-                          }, '/storage/emulated/0/Download',
-                              headers: await source?.getRequestHeaders(
-                                  app.app.additionalSettings,
-                                  forAPKDownload: fileUrl.key.endsWith('.apk')
-                                      ? true
-                                      : false));
-                          notificationsProvider.notify(DownloadedNotification(
-                              fileUrl.key, fileUrl.value));
-                        } catch (e) {
-                          showError(
-                              e, globalNavigatorKey.currentContext ?? context);
-                        } finally {
-                          notificationsProvider
-                              .cancel(DownloadNotification(fileUrl.key, 0).id);
-                        }
+                      try {
+                        await appsProvider
+                            .downloadAppAssets([app!.app.id], context);
+                      } catch (e) {
+                        showError(e, context);
                       }
                     },
               child: Text(

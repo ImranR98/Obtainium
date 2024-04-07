@@ -916,6 +916,73 @@ class AppsProvider with ChangeNotifier {
     return installedIds;
   }
 
+  Future<List<String>> downloadAppAssets(
+      List<String> appIds, BuildContext context,
+      {bool forceParallelDownloads = false}) async {
+    NotificationsProvider notificationsProvider =
+        context.read<NotificationsProvider>();
+    List<MapEntry<MapEntry<String, String>, App>> filesToDownload = [];
+    for (var id in appIds) {
+      if (apps[id] == null) {
+        throw ObtainiumError(tr('appNotFound'));
+      }
+      MapEntry<String, String>? fileUrl;
+      if (apps[id]!.app.apkUrls.isNotEmpty ||
+          apps[id]!.app.otherAssetUrls.isNotEmpty) {
+        // ignore: use_build_context_synchronously
+        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true);
+      }
+      if (fileUrl != null) {
+        filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
+      }
+    }
+
+    // Prepare to download+install Apps
+    MultiAppMultiError errors = MultiAppMultiError();
+    List<String> downloadedIds = [];
+
+    Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
+      try {
+        await downloadFile(
+            fileUrl.value,
+            fileUrl.key
+                .split('.')
+                .reversed
+                .toList()
+                .sublist(1)
+                .reversed
+                .join('.'), (double? progress) {
+          notificationsProvider
+              .notify(DownloadNotification(fileUrl.key, progress?.ceil() ?? 0));
+        }, '/storage/emulated/0/Download',
+            headers: await SourceProvider()
+                .getSource(app.url, overrideSource: app.overrideSource)
+                .getRequestHeaders(app.additionalSettings,
+                    forAPKDownload:
+                        fileUrl.key.endsWith('.apk') ? true : false));
+        notificationsProvider
+            .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
+      } catch (e) {
+        errors.add(fileUrl.key, e);
+      } finally {
+        notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id);
+      }
+    }
+
+    if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+      for (var urlWithApp in filesToDownload) {
+        await downloadFn(urlWithApp.key, urlWithApp.value);
+      }
+    } else {
+      await Future.wait(filesToDownload
+          .map((urlWithApp) => downloadFn(urlWithApp.key, urlWithApp.value)));
+    }
+    if (errors.idsByErrorString.isNotEmpty) {
+      throw errors;
+    }
+    return downloadedIds;
+  }
+
   Future<Directory> getAppsDir() async {
     Directory appsDir =
         Directory('${(await getExternalStorageDirectory())!.path}/app_data');
