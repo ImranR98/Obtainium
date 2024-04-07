@@ -970,7 +970,8 @@ class AppsProvider with ChangeNotifier {
                 .getSource(app.url, overrideSource: app.overrideSource)
                 .getRequestHeaders(app.additionalSettings,
                     forAPKDownload:
-                        fileUrl.key.endsWith('.apk') ? true : false));
+                        fileUrl.key.endsWith('.apk') ? true : false),
+            useExisting: false);
         notificationsProvider
             .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
       } catch (e) {
