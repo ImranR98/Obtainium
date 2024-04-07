@@ -158,6 +158,29 @@ class _AppPageState extends State<AppPage> {
             textAlign: TextAlign.center,
             style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
           ),
+          if (app?.app.apkUrls.isNotEmpty == true ||
+              app?.app.otherAssetUrls.isNotEmpty == true)
+            GestureDetector(
+              onTap: app?.app == null || updating
+                  ? null
+                  : () async {
+                      try {
+                        await appsProvider
+                            .downloadAppAssets([app!.app.id], context);
+                      } catch (e) {
+                        showError(e, context);
+                      }
+                    },
+              child: Text(
+                tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      decoration:
+                          changeLogFn != null ? TextDecoration.underline : null,
+                      fontStyle: changeLogFn != null ? FontStyle.italic : null,
+                    ),
+              ),
+            ),
           const SizedBox(
             height: 48,
           ),

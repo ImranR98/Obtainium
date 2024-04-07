@@ -854,69 +854,78 @@ class AppsPageState extends State<AppsPage> {
               scrollable: true,
               content: Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Row(
+                child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      IconButton(
+                      TextButton(
+                          onPressed: pinSelectedApps,
+                          child: Text(selectedApps
+                                  .where((element) => element.pinned)
+                                  .isEmpty
+                              ? tr('pinToTop')
+                              : tr('unpinFromTop'))),
+                      const Divider(),
+                      TextButton(
+                          onPressed: () {
+                            String urls = '';
+                            for (var a in selectedApps) {
+                              urls += '${a.url}\n';
+                            }
+                            urls = urls.substring(0, urls.length - 1);
+                            Share.share(urls,
+                                subject: 'Obtainium - ${tr('appsString')}');
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(tr('shareSelectedAppURLs'))),
+                      const Divider(),
+                      TextButton(
+                          onPressed: selectedAppIds.isEmpty
+                              ? null
+                              : () {
+                                  String urls =
+                                      '<p>${tr('customLinkMessage')}:</p>\n\n<ul>\n';
+                                  for (var a in selectedApps) {
+                                    urls +=
+                                        '    <li><a href="obtainium://app/${Uri.encodeComponent(jsonEncode({
+                                          'id': a.id,
+                                          'url': a.url,
+                                          'author': a.author,
+                                          'name': a.name,
+                                          'preferredApkIndex':
+                                              a.preferredApkIndex,
+                                          'additionalSettings':
+                                              jsonEncode(a.additionalSettings)
+                                        }))}">${a.name}</a></li>\n';
+                                  }
+                                  urls +=
+                                      '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
+                                  Share.share(urls,
+                                      subject:
+                                          'Obtainium - ${tr('appsString')}');
+                                },
+                          child: Text(tr('shareAppConfigLinks'))),
+                      const Divider(),
+                      TextButton(
+                          onPressed: () {
+                            appsProvider
+                                .downloadAppAssets(
+                                    selectedApps.map((e) => e.id).toList(),
+                                    globalNavigatorKey.currentContext ??
+                                        context)
+                                .catchError((e) => showError(
+                                    e,
+                                    globalNavigatorKey.currentContext ??
+                                        context));
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(tr('downloadX',
+                              args: [tr('releaseAsset').toLowerCase()]))),
+                      const Divider(),
+                      TextButton(
                           onPressed: appsProvider.areDownloadsRunning()
                               ? null
                               : showMassMarkDialog,
-                          tooltip: tr('markSelectedAppsUpdated'),
-                          icon: const Icon(Icons.done)),
-                      IconButton(
-                        onPressed: pinSelectedApps,
-                        tooltip: selectedApps
-                                .where((element) => element.pinned)
-                                .isEmpty
-                            ? tr('pinToTop')
-                            : tr('unpinFromTop'),
-                        icon: Icon(selectedApps
-                                .where((element) => element.pinned)
-                                .isEmpty
-                            ? Icons.bookmark_outline_rounded
-                            : Icons.bookmark_remove_outlined),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          String urls = '';
-                          for (var a in selectedApps) {
-                            urls += '${a.url}\n';
-                          }
-                          urls = urls.substring(0, urls.length - 1);
-                          Share.share(urls,
-                              subject: 'Obtainium - ${tr('appsString')}');
-                          Navigator.of(context).pop();
-                        },
-                        tooltip: tr('shareSelectedAppURLs'),
-                        icon: const Icon(Icons.share_rounded),
-                      ),
-                      IconButton(
-                        onPressed: selectedAppIds.isEmpty
-                            ? null
-                            : () {
-                                String urls =
-                                    '<p>${tr('customLinkMessage')}:</p>\n\n<ul>\n';
-                                for (var a in selectedApps) {
-                                  urls +=
-                                      '    <li><a href="obtainium://app/${Uri.encodeComponent(jsonEncode({
-                                        'id': a.id,
-                                        'url': a.url,
-                                        'author': a.author,
-                                        'name': a.name,
-                                        'preferredApkIndex':
-                                            a.preferredApkIndex,
-                                        'additionalSettings':
-                                            jsonEncode(a.additionalSettings)
-                                      }))}">${a.name}</a></li>\n';
-                                }
-                                urls +=
-                                    '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
-                                Share.share(urls,
-                                    subject: 'Obtainium - ${tr('appsString')}');
-                              },
-                        tooltip: tr('shareAppConfigLinks'),
-                        icon: const Icon(Icons.ios_share),
-                      ),
+                          child: Text(tr('markSelectedAppsUpdated'))),
                     ]),
               ),
             );
