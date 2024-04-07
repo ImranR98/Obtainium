@@ -943,6 +943,17 @@ class AppsProvider with ChangeNotifier {
 
     Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
       try {
+        var exportDir = await settingsProvider.getExportDir();
+        String downloadPath = '/storage/emulated/0/Download';
+        bool downloadsAccessible = false;
+        try {
+          downloadsAccessible = Directory(downloadPath).existsSync();
+        } catch (e) {
+          //
+        }
+        if (!downloadsAccessible && exportDir != null) {
+          downloadPath = exportDir.path;
+        }
         await downloadFile(
             fileUrl.value,
             fileUrl.key
@@ -954,7 +965,7 @@ class AppsProvider with ChangeNotifier {
                 .join('.'), (double? progress) {
           notificationsProvider
               .notify(DownloadNotification(fileUrl.key, progress?.ceil() ?? 0));
-        }, '/storage/emulated/0/Download',
+        }, downloadPath,
             headers: await SourceProvider()
                 .getSource(app.url, overrideSource: app.overrideSource)
                 .getRequestHeaders(app.additionalSettings,
