@@ -47,9 +47,10 @@ class APKDetails {
   late AppNames names;
   late DateTime? releaseDate;
   late String? changeLog;
+  late List<MapEntry<String, String>> allAssetUrls;
 
   APKDetails(this.version, this.apkUrls, this.names,
-      {this.releaseDate, this.changeLog});
+      {this.releaseDate, this.changeLog, this.allAssetUrls = const []});
 }
 
 stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
@@ -223,6 +224,7 @@ class App {
   String? installedVersion;
   late String latestVersion;
   List<MapEntry<String, String>> apkUrls = [];
+  List<MapEntry<String, String>> otherAssetUrls = [];
   late int preferredApkIndex;
   late Map<String, dynamic> additionalSettings;
   late DateTime? lastUpdateCheck;
@@ -248,7 +250,8 @@ class App {
       this.releaseDate,
       this.changeLog,
       this.overrideSource,
-      this.allowIdChange = false});
+      this.allowIdChange = false,
+      this.otherAssetUrls = const []});
 
   @override
   String toString() {
@@ -280,41 +283,44 @@ class App {
       changeLog: changeLog,
       releaseDate: releaseDate,
       overrideSource: overrideSource,
-      allowIdChange: allowIdChange);
+      allowIdChange: allowIdChange,
+      otherAssetUrls: otherAssetUrls);
 
   factory App.fromJson(Map<String, dynamic> json) {
     json = appJSONCompatibilityModifiers(json);
     return App(
-        json['id'] as String,
-        json['url'] as String,
-        json['author'] as String,
-        json['name'] as String,
-        json['installedVersion'] == null
-            ? null
-            : json['installedVersion'] as String,
-        (json['latestVersion'] ?? tr('unknown')) as String,
-        assumed2DlistToStringMapList(jsonDecode(
-            (json['apkUrls'] ?? '[["placeholder", "placeholder"]]'))),
-        (json['preferredApkIndex'] ?? -1) as int,
-        jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
-        json['lastUpdateCheck'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-        json['pinned'] ?? false,
-        categories: json['categories'] != null
-            ? (json['categories'] as List<dynamic>)
-                .map((e) => e.toString())
-                .toList()
-            : json['category'] != null
-                ? [json['category'] as String]
-                : [],
-        releaseDate: json['releaseDate'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
-        changeLog:
-            json['changeLog'] == null ? null : json['changeLog'] as String,
-        overrideSource: json['overrideSource'],
-        allowIdChange: json['allowIdChange'] ?? false);
+      json['id'] as String,
+      json['url'] as String,
+      json['author'] as String,
+      json['name'] as String,
+      json['installedVersion'] == null
+          ? null
+          : json['installedVersion'] as String,
+      (json['latestVersion'] ?? tr('unknown')) as String,
+      assumed2DlistToStringMapList(
+          jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]'))),
+      (json['preferredApkIndex'] ?? -1) as int,
+      jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
+      json['lastUpdateCheck'] == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+      json['pinned'] ?? false,
+      categories: json['categories'] != null
+          ? (json['categories'] as List<dynamic>)
+              .map((e) => e.toString())
+              .toList()
+          : json['category'] != null
+              ? [json['category'] as String]
+              : [],
+      releaseDate: json['releaseDate'] == null
+          ? null
+          : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+      changeLog: json['changeLog'] == null ? null : json['changeLog'] as String,
+      overrideSource: json['overrideSource'],
+      allowIdChange: json['allowIdChange'] ?? false,
+      otherAssetUrls: assumed2DlistToStringMapList(
+          jsonDecode((json['otherAssetUrls'] ?? '[]'))),
+    );
   }
 
   Map<String, dynamic> toJson() => {
@@ -325,6 +331,7 @@ class App {
         'installedVersion': installedVersion,
         'latestVersion': latestVersion,
         'apkUrls': jsonEncode(stringMapListTo2DList(apkUrls)),
+        'otherAssetUrls': jsonEncode(stringMapListTo2DList(otherAssetUrls)),
         'preferredApkIndex': preferredApkIndex,
         'additionalSettings': jsonEncode(additionalSettings),
         'lastUpdateCheck': lastUpdateCheck?.microsecondsSinceEpoch,
@@ -892,8 +899,10 @@ class SourceProvider {
         allowIdChange: currentApp?.allowIdChange ??
             trackOnly ||
                 (source.appIdInferIsOptional &&
-                    inferAppIdIfOptional) // Optional ID inferring may be incorrect - allow correction on first install
-        );
+                    inferAppIdIfOptional), // Optional ID inferring may be incorrect - allow correction on first install
+        otherAssetUrls: apk.allAssetUrls
+            .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
+            .toList());
     return source.endOfGetAppChanges(finalApp);
   }
 

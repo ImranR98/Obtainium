@@ -180,6 +180,16 @@ class GitLab extends AppSource {
       throw NoAPKError();
     }
 
-    return apkDetailsList.first;
+    finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
+      if (RegExp('^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+\$')
+          .hasMatch(apkUrl.value)) {
+        return MapEntry(
+            apkUrl.key, apkUrl.value.replaceFirst('/file/', '/raw/'));
+      } else {
+        return apkUrl;
+      }
+    }).toList();
+
+    return finalResult;
   }
 }

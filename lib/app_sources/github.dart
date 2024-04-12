@@ -271,17 +271,14 @@ class GitHub extends AppSource {
         }
       }
 
-      List<MapEntry<String, String>> getReleaseAPKUrls(dynamic release) =>
-          (release['assets'] as List<dynamic>?)
-              ?.map((e) {
-                return (e['name'] != null) &&
-                        ((e['url'] ?? e['browser_download_url']) != null)
-                    ? MapEntry(e['name'] as String,
-                        (e['url'] ?? e['browser_download_url']) as String)
-                    : const MapEntry('', '');
-              })
-              .where((element) => element.key.toLowerCase().endsWith('.apk'))
-              .toList() ??
+      List<MapEntry<String, String>> getReleaseAssetUrls(dynamic release) =>
+          (release['assets'] as List<dynamic>?)?.map((e) {
+            return (e['name'] != null) &&
+                    ((e['url'] ?? e['browser_download_url']) != null)
+                ? MapEntry(e['name'] as String,
+                    (e['url'] ?? e['browser_download_url']) as String)
+                : const MapEntry('', '');
+          }).toList() ??
           [];
 
       DateTime? getPublishDateFromRelease(dynamic rel) =>
@@ -383,7 +380,11 @@ class GitHub extends AppSource {
                 .hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
           continue;
         }
-        var apkUrls = getReleaseAPKUrls(releases[i]);
+        var allAssetUrls = getReleaseAssetUrls(releases[i]);
+        List<MapEntry<String, String>> apkUrls = allAssetUrls
+            .where((element) => element.key.toLowerCase().endsWith('.apk'))
+            .toList();
+
         apkUrls = filterApks(apkUrls, additionalSettings['apkFilterRegEx'],
             additionalSettings['invertAPKFilter']);
         if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
@@ -391,12 +392,25 @@ class GitHub extends AppSource {
         }
         targetRelease = releases[i];
         targetRelease['apkUrls'] = apkUrls;
+        targetRelease['version'] =
+            targetRelease['tag_name'] ?? targetRelease['name'];
+        if (targetRelease['tarball_url'] != null) {
+          allAssetUrls.add(MapEntry(
+              (targetRelease['version'] ?? 'source') + '.tar.gz',
+              targetRelease['tarball_url']));
+        }
+        if (targetRelease['zipball_url'] != null) {
+          allAssetUrls.add(MapEntry(
+              (targetRelease['version'] ?? 'source') + '.zip',
+              targetRelease['zipball_url']));
+        }
+        targetRelease['allAssetUrls'] = allAssetUrls;
         break;
       }
       if (targetRelease == null) {
         throw NoReleasesError();
       }
-      String? version = targetRelease['tag_name'] ?? targetRelease['name'];
+      String? version = targetRelease['version'];
       DateTime? releaseDate = getReleaseDateFromRelease(
           targetRelease, useLatestAssetDateAsReleaseDate);
       if (version == null) {
@@ -408,7 +422,9 @@ class GitHub extends AppSource {
           targetRelease['apkUrls'] as List<MapEntry<String, String>>,
           getAppNames(standardUrl),
           releaseDate: releaseDate,
-          changeLog: changeLog.isEmpty ? null : changeLog);
+          changeLog: changeLog.isEmpty ? null : changeLog,
+          allAssetUrls:
+              targetRelease['allAssetUrls'] as List<MapEntry<String, String>>);
     } else {
       if (onHttpErrorCode != null) {
         onHttpErrorCode(res);

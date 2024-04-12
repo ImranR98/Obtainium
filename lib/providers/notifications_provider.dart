@@ -120,6 +120,18 @@ class DownloadNotification extends ObtainiumNotification {
             progPercent: progPercent);
 }
 
+class DownloadedNotification extends ObtainiumNotification {
+  DownloadedNotification(String fileName, String downloadUrl)
+      : super(
+            downloadUrl.hashCode,
+            tr('downloadedX', args: [fileName]),
+            '',
+            'FILE_DOWNLOADED',
+            tr('downloadedXNotifChannel', args: [tr('app')]),
+            tr('downloadedX', args: [tr('app')]),
+            Importance.defaultImportance);
+}
+
 final completeInstallationNotification = ObtainiumNotification(
     1,
     tr('completeAppInstallation'),

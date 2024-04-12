@@ -360,7 +360,7 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) await loadApps();
+      if (isForeground) loadApps();
     });
     () async {
       await settingsProvider.initializeSettings();
@@ -698,23 +698,28 @@ class AppsProvider with ChangeNotifier {
     await intent.launch();
   }
 
-  Future<MapEntry<String, String>?> confirmApkUrl(
-      App app, BuildContext? context) async {
+  Future<MapEntry<String, String>?> confirmAppFileUrl(
+      App app, BuildContext? context, bool pickAnyAsset) async {
+    var urlsToSelectFrom = app.apkUrls;
+    if (pickAnyAsset) {
+      urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
+    }
     // If the App has more than one APK, the user should pick one (if context provided)
-    MapEntry<String, String>? apkUrl =
-        app.apkUrls[app.preferredApkIndex >= 0 ? app.preferredApkIndex : 0];
+    MapEntry<String, String>? appFileUrl = urlsToSelectFrom[
+        app.preferredApkIndex >= 0 ? app.preferredApkIndex : 0];
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-    if (app.apkUrls.length > 1 && context != null) {
+    if (urlsToSelectFrom.length > 1 && context != null) {
       // ignore: use_build_context_synchronously
-      apkUrl = await showDialog(
+      appFileUrl = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
-            return APKPicker(
+            return AppFilePicker(
               app: app,
-              initVal: apkUrl,
+              initVal: appFileUrl,
               archs: archs,
+              pickAnyAsset: pickAnyAsset,
             );
           });
     }
@@ -724,8 +729,8 @@ class AppsProvider with ChangeNotifier {
     }
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
-    if (apkUrl != null &&
-        getHost(apkUrl.value) != getHost(app.url) &&
+    if (appFileUrl != null &&
+        getHost(appFileUrl.value) != getHost(app.url) &&
         context != null) {
       // ignore: use_build_context_synchronously
       if (!(settingsProvider.hideAPKOriginWarning) &&
@@ -734,13 +739,13 @@ class AppsProvider with ChangeNotifier {
                   context: context,
                   builder: (BuildContext ctx) {
                     return APKOriginWarningDialog(
-                        sourceUrl: app.url, apkUrl: apkUrl!.value);
+                        sourceUrl: app.url, apkUrl: appFileUrl!.value);
                   }) !=
               true) {
-        apkUrl = null;
+        appFileUrl = null;
       }
     }
-    return apkUrl;
+    return appFileUrl;
   }
 
   // Given a list of AppIds, uses stored info about the apps to download APKs and install them
@@ -767,7 +772,7 @@ class AppsProvider with ChangeNotifier {
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       if (!trackOnly) {
         // ignore: use_build_context_synchronously
-        apkUrl = await confirmApkUrl(apps[id]!.app, context);
+        apkUrl = await confirmAppFileUrl(apps[id]!.app, context, false);
       }
       if (apkUrl != null) {
         int urlInd = apps[id]!
@@ -896,6 +901,85 @@ class AppsProvider with ChangeNotifier {
     }
 
     return installedIds;
+  }
+
+  Future<List<String>> downloadAppAssets(
+      List<String> appIds, BuildContext context,
+      {bool forceParallelDownloads = false}) async {
+    NotificationsProvider notificationsProvider =
+        context.read<NotificationsProvider>();
+    List<MapEntry<MapEntry<String, String>, App>> filesToDownload = [];
+    for (var id in appIds) {
+      if (apps[id] == null) {
+        throw ObtainiumError(tr('appNotFound'));
+      }
+      MapEntry<String, String>? fileUrl;
+      if (apps[id]!.app.apkUrls.isNotEmpty ||
+          apps[id]!.app.otherAssetUrls.isNotEmpty) {
+        // ignore: use_build_context_synchronously
+        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true);
+      }
+      if (fileUrl != null) {
+        filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
+      }
+    }
+
+    // Prepare to download+install Apps
+    MultiAppMultiError errors = MultiAppMultiError();
+    List<String> downloadedIds = [];
+
+    Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
+      try {
+        var exportDir = await settingsProvider.getExportDir();
+        String downloadPath = '/storage/emulated/0/Download';
+        bool downloadsAccessible = false;
+        try {
+          downloadsAccessible = Directory(downloadPath).existsSync();
+        } catch (e) {
+          //
+        }
+        if (!downloadsAccessible && exportDir != null) {
+          downloadPath = exportDir.path;
+        }
+        await downloadFile(
+            fileUrl.value,
+            fileUrl.key
+                .split('.')
+                .reversed
+                .toList()
+                .sublist(1)
+                .reversed
+                .join('.'), (double? progress) {
+          notificationsProvider
+              .notify(DownloadNotification(fileUrl.key, progress?.ceil() ?? 0));
+        }, downloadPath,
+            headers: await SourceProvider()
+                .getSource(app.url, overrideSource: app.overrideSource)
+                .getRequestHeaders(app.additionalSettings,
+                    forAPKDownload:
+                        fileUrl.key.endsWith('.apk') ? true : false),
+            useExisting: false);
+        notificationsProvider
+            .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
+      } catch (e) {
+        errors.add(fileUrl.key, e);
+      } finally {
+        notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id);
+      }
+    }
+
+    if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+      for (var urlWithApp in filesToDownload) {
+        await downloadFn(urlWithApp.key, urlWithApp.value);
+      }
+    } else {
+      await Future.wait(filesToDownload
+          .map((urlWithApp) => downloadFn(urlWithApp.key, urlWithApp.value)));
+    }
+    if (errors.idsByErrorString.isNotEmpty) {
+      throw errors;
+    }
+    return downloadedIds;
   }
 
   Future<Directory> getAppsDir() async {
@@ -1469,38 +1553,49 @@ class AppsProvider with ChangeNotifier {
   }
 }
 
-class APKPicker extends StatefulWidget {
-  const APKPicker({super.key, required this.app, this.initVal, this.archs});
+class AppFilePicker extends StatefulWidget {
+  const AppFilePicker(
+      {super.key,
+      required this.app,
+      this.initVal,
+      this.archs,
+      this.pickAnyAsset = false});
 
   final App app;
   final MapEntry<String, String>? initVal;
   final List<String>? archs;
+  final bool pickAnyAsset;
 
   @override
-  State<APKPicker> createState() => _APKPickerState();
+  State<AppFilePicker> createState() => _AppFilePickerState();
 }
 
-class _APKPickerState extends State<APKPicker> {
-  MapEntry<String, String>? apkUrl;
+class _AppFilePickerState extends State<AppFilePicker> {
+  MapEntry<String, String>? fileUrl;
 
   @override
   Widget build(BuildContext context) {
-    apkUrl ??= widget.initVal;
+    fileUrl ??= widget.initVal;
+    var urlsToSelectFrom = widget.app.apkUrls;
+    if (widget.pickAnyAsset) {
+      urlsToSelectFrom = [...urlsToSelectFrom, ...widget.app.otherAssetUrls];
+    }
     return AlertDialog(
       scrollable: true,
-      title: Text(tr('pickAnAPK')),
+      title: Text(widget.pickAnyAsset
+          ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
+          : tr('pickAnAPK')),
       content: Column(children: [
         Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName])),
         const SizedBox(height: 16),
-        ...widget.app.apkUrls.map(
+        ...urlsToSelectFrom.map(
           (u) => RadioListTile<String>(
               title: Text(u.key),
               value: u.value,
-              groupValue: apkUrl!.value,
+              groupValue: fileUrl!.value,
               onChanged: (String? val) {
                 setState(() {
-                  apkUrl =
-                      widget.app.apkUrls.where((e) => e.value == val).first;
+                  fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
                 });
               }),
         ),
@@ -1527,7 +1622,7 @@ class _APKPickerState extends State<APKPicker> {
         TextButton(
             onPressed: () {
               HapticFeedback.selectionClick();
-              Navigator.of(context).pop(apkUrl);
+              Navigator.of(context).pop(fileUrl);
             },
             child: Text(tr('continue')))
       ],
