@@ -245,8 +245,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
     Map<String, dynamic> returnValues = values;
     var valid = true;
-    for (int r = 0; r < widget.items.length; r++) {
-      for (int i = 0; i < widget.items[r].length; i++) {
+    for (int r = 0; r < formInputs.length; r++) {
+      for (int i = 0; i < formInputs[r].length; i++) {
         if (formInputs[r][i] is TextFormField) {
           valid = valid && validateTextField(formInputs[r][i] as TextFormField);
         }
