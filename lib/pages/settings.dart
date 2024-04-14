@@ -12,6 +12,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -402,12 +403,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.useShizuku,
                                     onChanged: (useShizuku) {
                                       if (useShizuku) {
-                                        NativeFeatures.checkPermissionShizuku().then((resCode) {
-                                          settingsProvider.useShizuku = resCode == 1;
-                                          if (resCode == 0) {
-                                            showError(ObtainiumError(tr('cancelled')), context);
-                                          } else if (resCode == -1) {
-                                            showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
+                                        ShizukuApkInstaller.checkPermission().then((resCode) {
+                                          settingsProvider.useShizuku = resCode!.startsWith('granted');
+                                          switch(resCode){
+                                            case 'binder_not_found':
+                                              showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
+                                            case 'old_shizuku':
+                                              showError(ObtainiumError(tr('shizukuOld')), context);
+                                            case 'old_android_with_adb':
+                                              showError(ObtainiumError(tr('shizukuOldAndroidWithADB')), context);
+                                            case 'denied':
+                                              showError(ObtainiumError(tr('cancelled')), context);
                                           }
                                         });
                                       } else {
@@ -416,6 +422,24 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            if (settingsProvider.useShizuku)
+                              Column(
+                                children: [
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                          child: Text(tr('shizukuPretendToBeGooglePlay'))),
+                                      Switch(
+                                          value: settingsProvider.pretendToBeGooglePlay,
+                                          onChanged: (value) {
+                                            settingsProvider.pretendToBeGooglePlay = value;
+                                          })
+                                    ],
+                                  )
+                                ],
+                              ),
                             height32,
                             Text(
                               tr('sourceSpecific'),
@@ -459,25 +483,35 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             height16,
                             localeDropdown,
-                            height16,
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(child: Text(tr('useSystemFont'))),
-                                Switch(
-                                    value: settingsProvider.useSystemFont,
-                                    onChanged: (useSystemFont) {
-                                      if (useSystemFont) {
-                                        NativeFeatures.loadSystemFont()
-                                            .then((val) {
-                                          settingsProvider.useSystemFont = true;
-                                        });
-                                      } else {
-                                        settingsProvider.useSystemFont = false;
-                                      }
-                                    })
-                              ],
-                            ),
+                            FutureBuilder(
+                                builder: (ctx, val) {
+                                  return (val.data?.version.sdkInt ?? 0) >= 34
+                                      ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      height16,
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(child: Text(tr('useSystemFont'))),
+                                          Switch(
+                                              value: settingsProvider.useSystemFont,
+                                              onChanged: (useSystemFont) {
+                                                if (useSystemFont) {
+                                                  NativeFeatures.loadSystemFont().then((val) {
+                                                    settingsProvider.useSystemFont = true;
+                                                  });
+                                                } else {
+                                                  settingsProvider.useSystemFont = false;
+                                                }
+                                              })
+                                        ]
+                                      )
+                                    ]
+                                  )
+                                      : const SizedBox.shrink();
+                                },
+                                future: DeviceInfoPlugin().androidInfo),
                             height16,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -34,7 +34,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
-import 'native_provider.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 final pm = AndroidPackageManager();
 
@@ -634,7 +634,7 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    if (needsBGWorkaround) {
+    if (needsBGWorkaround && !settingsProvider.useShizuku) {
       // The below 'await' will never return if we are in a background process
       // To work around this, we should assume the install will be successful
       // So we update the app's installed version first as we will never get to the later code
@@ -647,13 +647,10 @@ class AppsProvider with ChangeNotifier {
     }
     int? code;
     if (!settingsProvider.useShizuku) {
-      code = await AndroidPackageInstaller.installApk(
-          apkFilePath: file.file.path);
+      code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
     } else {
-      code = (await NativeFeatures.installWithShizuku(
-          apkFileUri: file.file.uri.toString()))
-          ? 0
-          : 1;
+      code = await ShizukuApkInstaller.installAPK(file.file.uri.toString(),
+          settingsProvider.pretendToBeGooglePlay ? "com.android.vending" : "");
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -828,11 +825,16 @@ class AppsProvider with ChangeNotifier {
             throw ObtainiumError(tr('cancelled'));
           }
         } else {
-          int code = await NativeFeatures.checkPermissionShizuku();
-          if (code == 0) {
-            throw ObtainiumError(tr('cancelled'));
-          } else if (code == -1) {
-            throw ObtainiumError(tr('shizukuBinderNotFound'));
+          String? code = await ShizukuApkInstaller.checkPermission();
+          switch(code!){
+            case 'binder_not_found':
+              throw ObtainiumError(tr('shizukuBinderNotFound'));
+            case 'old_shizuku':
+              throw ObtainiumError(tr('shizukuOld'));
+            case 'old_android_with_adb':
+              throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
+            case 'denied':
+              throw ObtainiumError(tr('cancelled'));
           }
         }
         if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
