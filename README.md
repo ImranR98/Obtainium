@@ -4,11 +4,13 @@
 
 Get Android App Updates Directly From the Source.
 
-Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.
+Obtainium allows you to install and update apps directly from their releases pages, and receive notifications when new releases are made available.
 
-Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
-
-Read the Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
+More info:
+- Motivation: [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0)
+- Help/Wiki: [https://github.com/ImranR98/Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
+- App verification tool (recommended, integrates with Obtainium): [AppVerifier](https://github.com/soupslurpr/AppVerifier)
+- Crowdsourced app configurations: [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/)
 
 Currently supported App sources:
 - Open Source - General:
