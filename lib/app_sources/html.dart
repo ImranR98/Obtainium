@@ -244,16 +244,17 @@ class HTML extends AppSource {
         true) {
       var reg = RegExp(additionalSettings['customLinkFilterRegex']);
       links = allLinks
-          .where((element) =>
-              reg.hasMatch(filterLinkByText ? element.value : element.key))
+          .where((element) => reg.hasMatch(
+              filterLinkByText ? element.value : Uri.decodeFull(element.key)))
           .toList();
     } else {
       links = allLinks
-          .where((element) =>
-              Uri.parse(filterLinkByText ? element.value : element.key)
-                  .path
-                  .toLowerCase()
-                  .endsWith('.apk'))
+          .where((element) => Uri.parse(filterLinkByText
+                  ? element.value
+                  : Uri.decodeFull(element.key))
+              .path
+              .toLowerCase()
+              .endsWith('.apk'))
           .toList();
     }
     if (!skipSort) {
@@ -315,7 +316,7 @@ class HTML extends AppSource {
         additionalSettings['matchGroupToUse'] as String?,
         additionalSettings['versionExtractWholePage'] == true
             ? versionExtractionWholePageString
-            : rel);
+            : Uri.decodeFull(rel));
     version ??=
         additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
             ? rel.hashCode.toString()
