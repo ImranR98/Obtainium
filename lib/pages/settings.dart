@@ -1,5 +1,6 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:equations/equations.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -23,14 +24,64 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  List<int> updateIntervalNodes = [
+    15, 30, 60, 120, 180, 360, 720, 1440, 4320, 10080, 20160, 43200];
+  int updateInterval = 0;
+  late SplineInterpolation updateIntervalInterpolator;  // 🤓
+  String updateIntervalLabel = tr('neverManualOnly');
+  bool showIntervalLabel = true;
+
+  void initUpdateIntervalInterpolator() {
+    List<InterpolationNode> nodes = [];
+    for (final (index, element) in updateIntervalNodes.indexed) {
+      nodes.add(InterpolationNode(x: index.toDouble()+1, y: element.toDouble()));
+    }
+    updateIntervalInterpolator = SplineInterpolation(nodes: nodes);
+  }
+
+  void processIntervalSliderValue(double val) {
+    if (val < 0.5) {
+      updateInterval = 0;
+      updateIntervalLabel = tr('neverManualOnly');
+      return;
+    }
+    int valInterpolated = 0;
+    if (val < 1) {
+      valInterpolated = 15;
+    } else {
+      valInterpolated = updateIntervalInterpolator.compute(val).round();
+    }
+    if (valInterpolated < 60) {
+      updateInterval = valInterpolated;
+      updateIntervalLabel = plural('minute', valInterpolated);
+    } else if (valInterpolated < 8 * 60) {
+      int valRounded = (valInterpolated / 15).ceil() * 15;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('hour', valRounded ~/ 60);
+      int mins = valRounded % 60;
+      if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
+    } else if (valInterpolated < 24 * 60) {
+      int valRounded = (valInterpolated / 30).ceil() * 30;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('hour', valRounded / 60);
+    } else if (valInterpolated < 7 * 24 * 60){
+      int valRounded = (valInterpolated / (12 * 60)).ceil() * 12 * 60;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('day', valRounded / (24 * 60));
+    } else {
+      int valRounded = (valInterpolated / (24 * 60)).ceil() * 24 * 60;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     SourceProvider sourceProvider = SourceProvider();
-    if (settingsProvider.prefs == null) {
-      settingsProvider.initializeSettings();
-    }
-
+    if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
+    initUpdateIntervalInterpolator();
+    processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
     var themeDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('theme')),
         value: settingsProvider.theme,
@@ -143,7 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }
         });
 
-    var intervalDropdown = DropdownButtonFormField(
+    /*var intervalDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('bgUpdateCheckInterval')),
         value: settingsProvider.updateInterval,
         items: updateIntervals.map((e) {
@@ -166,7 +217,31 @@ class _SettingsPageState extends State<SettingsPage> {
           if (value != null) {
             settingsProvider.updateInterval = value;
           }
+        });*/
+
+    var intervalSlider = Slider(
+      value: settingsProvider.updateIntervalSliderVal,
+      max: updateIntervalNodes.length.toDouble(),
+      divisions: updateIntervalNodes.length * 20,
+      label: updateIntervalLabel,
+      onChanged: (double value) {
+        setState(() {
+          settingsProvider.updateIntervalSliderVal = value;
+          processIntervalSliderValue(value);
         });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showIntervalLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showIntervalLabel = true;
+          settingsProvider.updateInterval = updateInterval;
+        });
+      },
+    );
 
     var sourceSpecificFields = sourceProvider.sources.map((e) {
       if (e.sourceConfigSettingFormItems.isNotEmpty) {
@@ -217,15 +292,19 @@ class _SettingsPageState extends State<SettingsPage> {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            intervalDropdown,
+                            //intervalDropdown,
+                            height16,
+                            if (showIntervalLabel) SizedBox(
+                                child: Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+                            ) else const SizedBox(height: 16),
+                            intervalSlider,
                             FutureBuilder(
                                 builder: (ctx, val) {
-                                  return (val.data?.version.sdkInt ?? 0) >= 30
+                                  return ((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku
                                       ? Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            height16,
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment

@@ -28,27 +28,6 @@ enum SortOrderSettings { ascending, descending }
 
 const maxAPIRateLimitMinutes = 30;
 const minUpdateIntervalMinutes = maxAPIRateLimitMinutes + 30;
-const maxUpdateIntervalMinutes = 43200;
-List<int> updateIntervals = [
-  15,
-  30,
-  60,
-  120,
-  180,
-  360,
-  720,
-  1440,
-  4320,
-  10080,
-  20160,
-  43200,
-  0
-]
-    .where((element) =>
-        (element >= minUpdateIntervalMinutes &&
-            element <= maxUpdateIntervalMinutes) ||
-        element == 0)
-    .toList();
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
@@ -121,21 +100,20 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    var min = prefs?.getInt('updateInterval') ?? 360;
-    if (!updateIntervals.contains(min)) {
-      var temp = updateIntervals[0];
-      for (var i in updateIntervals) {
-        if (min > i && i != 0) {
-          temp = i;
-        }
-      }
-      min = temp;
-    }
-    return min;
+    return prefs?.getInt('updateInterval') ?? 360;
   }
 
   set updateInterval(int min) {
-    prefs?.setInt('updateInterval', (min < 15 && min != 0) ? 15 : min);
+    prefs?.setInt('updateInterval', min);
+    notifyListeners();
+  }
+
+  double get updateIntervalSliderVal {
+    return prefs?.getDouble('updateIntervalSliderVal') ?? 6.0;
+  }
+
+  set updateIntervalSliderVal(double val) {
+    prefs?.setDouble('updateIntervalSliderVal', val);
     notifyListeners();
   }
 
