@@ -509,9 +509,6 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumId) {
-      return false;
-    }
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
@@ -519,8 +516,7 @@ class AppsProvider with ChangeNotifier {
       return false;
     }
     if (app.apkUrls.length > 1) {
-      // Manual API selection means silent install is not possible
-      return false;
+      return false; // Manual API selection means silent install is not possible
     }
 
     var osInfo = await DeviceInfoPlugin().androidInfo;
@@ -531,20 +527,29 @@ class AppsProvider with ChangeNotifier {
               ?.installingPackageName
           : (await pm.getInstallerPackageName(packageName: app.id));
     } catch (e) {
-      // Probably not installed - ignore
+      return false;  // App probably not installed
     }
-    if (installerPackageName != obtainiumId) {
-      // If we did not install the app (or it isn't installed), silent install is not possible
+
+    int? targetSDK = (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
+    // The APK should target a new enough API
+    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+    if (!(targetSDK != null && targetSDK >= (osInfo.version.sdkInt - 3))) {
       return false;
     }
-    int? targetSDK =
-        (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
 
-    // The OS must also be new enough and the APK should target a new enough API
-    return osInfo.version.sdkInt >= 31 &&
-        targetSDK != null &&
-        targetSDK >= // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-            (osInfo.version.sdkInt - 3);
+    if (settingsProvider.useShizuku) {
+      return true;
+    }
+
+    if (app.id == obtainiumId) {
+      return false;
+    }
+    if (installerPackageName != obtainiumId) {
+      // If we did not install the app, silent install is not possible
+      return false;
+    }
+    // The OS must also be new enough
+    return osInfo.version.sdkInt >= 31;
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
@@ -634,7 +639,7 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    if (needsBGWorkaround && !settingsProvider.useShizuku) {
+    if (needsBGWorkaround) {
       // The below 'await' will never return if we are in a background process
       // To work around this, we should assume the install will be successful
       // So we update the app's installed version first as we will never get to the later code
@@ -837,7 +842,7 @@ class AppsProvider with ChangeNotifier {
               throw ObtainiumError(tr('cancelled'));
           }
         }
-        if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
+        if (!willBeSilent && context != null) {
           // ignore: use_build_context_synchronously
           await waitForUserToReturnToForeground(context);
         }
