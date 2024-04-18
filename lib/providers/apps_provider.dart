@@ -854,7 +854,7 @@ class AppsProvider with ChangeNotifier {
             var contextIfNewInstall =
                 apps[id]?.installedInfo == null ? context : null;
             if (downloadedFile != null) {
-              if (willBeSilent && context == null) {
+              if (willBeSilent && context == null && !settingsProvider.useShizuku) {
                 installApk(downloadedFile, contextIfNewInstall,
                     needsBGWorkaround: true);
               } else {
@@ -862,7 +862,7 @@ class AppsProvider with ChangeNotifier {
                     await installApk(downloadedFile, contextIfNewInstall);
               }
             } else {
-              if (willBeSilent && context == null) {
+              if (willBeSilent && context == null && !settingsProvider.useShizuku) {
                 installXApkDir(downloadedDir!, contextIfNewInstall,
                     needsBGWorkaround: true);
               } else {
@@ -870,7 +870,12 @@ class AppsProvider with ChangeNotifier {
                     await installXApkDir(downloadedDir!, contextIfNewInstall);
               }
             }
-            if (willBeSilent && context == null) {
+            if (willBeSilent && settingsProvider.useShizuku) {
+              notificationsProvider?.notify(SilentUpdateNotification(
+                  [apps[id]!.app],
+                  sayInstalled,
+                  id: id.hashCode));
+            } else if (willBeSilent && context == null) {
               notificationsProvider?.notify(SilentUpdateAttemptNotification(
                   [apps[id]!.app],
                   id: id.hashCode));

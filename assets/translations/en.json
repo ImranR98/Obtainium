@@ -143,8 +143,10 @@
     "noNewUpdates": "No new updates.",
     "xHasAnUpdate": "{} has an update.",
     "appsUpdated": "Apps Updated",
+    "appsNotUpdated": "Failed to update applications",
     "appsUpdatedNotifDescription": "Notifies the user that updates to one or more Apps were applied in the background",
     "xWasUpdatedToY": "{} was updated to {}.",
+    "xWasNotUpdatedToY": "Failed to update {} to {}.",
     "errorCheckingUpdates": "Error Checking for Updates",
     "errorCheckingUpdatesNotifDescription": "A notification that shows when background update checking fails",
     "appsRemoved": "Apps Removed",
@@ -351,6 +353,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} and 1 more app was updated.",
         "other": "{} and {} more apps were updated."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Failed to update {} and 1 more app.",
+        "other": "Failed to update {} and {} more apps."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} and 1 more app may have been updated.",

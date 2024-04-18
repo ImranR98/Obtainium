@@ -143,8 +143,10 @@
     "noNewUpdates": "Нет новых обновлений",
     "xHasAnUpdate": "{} есть обновление",
     "appsUpdated": "Приложения обновлены",
+    "appsNotUpdated": "Не удалось обновить приложения",
     "appsUpdatedNotifDescription": "Уведомляет об обновлении одного или нескольких приложений в фоновом режиме",
     "xWasUpdatedToY": "{} была обновлена до версии {}",
+    "xWasNotUpdatedToY": "Не удалось обновить {} до версии {}",
     "errorCheckingUpdates": "Ошибка при проверке обновлений",
     "errorCheckingUpdatesNotifDescription": "Уведомление о завершении проверки обновлений в фоновом режиме с ошибкой",
     "appsRemoved": "Приложение удалено",
@@ -351,6 +353,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} и ещё 1 приложение были обновлены",
         "other": "{} и ещё {} приложений были обновлены"
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Не удалось обновить {} и ещё 1 приложение",
+        "other": "Не удалось обновить {} и ещё {} приложений"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} и ещё 1 приложение могли быть обновлены",
