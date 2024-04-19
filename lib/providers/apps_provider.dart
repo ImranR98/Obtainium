@@ -235,8 +235,9 @@ Future<File> downloadFile(
   var fullContentLength = response.contentLength;
   if (useExisting && downloadedFile.existsSync()) {
     var length = downloadedFile.lengthSync();
-    if (fullContentLength == null) {
-      // Assume full
+    if (fullContentLength == null || !rangeFeatureEnabled) {
+      // If there is no content length reported, assume it the existing file is fully downloaded
+      // Also if the range feature is not supported, don't trust the content length if any (#1542)
       client.close();
       return downloadedFile;
     } else {
@@ -291,14 +292,11 @@ Future<File> downloadFile(
     return s;
   }).pipe(sink);
   await sink.close();
-  bool likelyCorruptFile = (progress ?? 0) > 101;
   progress = null;
   if (onProgress != null) {
     onProgress(progress);
   }
-  if (response.statusCode < 200 ||
-      response.statusCode > 299 ||
-      likelyCorruptFile) {
+  if (response.statusCode < 200 || response.statusCode > 299) {
     tempDownloadedFile.deleteSync(recursive: true);
     throw response.reasonPhrase ?? tr('unexpectedError');
   }
@@ -392,30 +390,26 @@ class AppsProvider with ChangeNotifier {
     }();
   }
 
-  Future<File> handleAPKIDChange(App app, PackageInfo? newInfo,
+  Future<File> handleAPKIDChange(App app, PackageInfo newInfo,
       File downloadedFile, String downloadUrl) async {
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
     // The former case should be handled (give the App its real ID), the latter is a security issue
     var isTempIdBool = isTempId(app);
-    if (newInfo != null) {
-      if (app.id != newInfo.packageName) {
-        if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
-          throw IDChangedError(newInfo.packageName!);
-        }
-        var idChangeWasAllowed = app.allowIdChange;
-        app.allowIdChange = false;
-        var originalAppId = app.id;
-        app.id = newInfo.packageName!;
-        downloadedFile = downloadedFile.renameSync(
-            '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
-        if (apps[originalAppId] != null) {
-          await removeApps([originalAppId]);
-          await saveApps([app],
-              onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
-        }
+    if (app.id != newInfo.packageName) {
+      if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
+        throw IDChangedError(newInfo.packageName!);
       }
-    } else if (isTempIdBool) {
-      throw ObtainiumError('Could not get ID from APK');
+      var idChangeWasAllowed = app.allowIdChange;
+      app.allowIdChange = false;
+      var originalAppId = app.id;
+      app.id = newInfo.packageName!;
+      downloadedFile = downloadedFile.renameSync(
+          '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}');
+      if (apps[originalAppId] != null) {
+        await removeApps([originalAppId]);
+        await saveApps([app],
+            onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
+      }
     }
     return downloadedFile;
   }
@@ -478,6 +472,10 @@ class AppsProvider with ChangeNotifier {
             .toList();
         newInfo =
             await pm.getPackageArchiveInfo(archiveFilePath: apks.first.path);
+      }
+      if (newInfo == null) {
+        downloadedFile.delete();
+        throw ObtainiumError('Could not get ID from APK');
       }
       downloadedFile =
           await handleAPKIDChange(app, newInfo, downloadedFile, downloadUrl);
