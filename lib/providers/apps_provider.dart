@@ -573,7 +573,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> installXApkDir(
       DownloadedXApkDir dir, BuildContext? firstTimeWithContext,
-      {bool needsBGWorkaround = false}) async {
+      {bool needsBGWorkaround = false, bool shizukuPretendToBeGooglePlay = false}) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
@@ -588,7 +588,8 @@ class AppsProvider with ChangeNotifier {
             somethingInstalled = somethingInstalled ||
                 await installApk(
                     DownloadedApk(dir.appId, file), firstTimeWithContext,
-                    needsBGWorkaround: needsBGWorkaround);
+                    needsBGWorkaround: needsBGWorkaround,
+                    shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
@@ -611,7 +612,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> installApk(
       DownloadedApk file, BuildContext? firstTimeWithContext,
-      {bool needsBGWorkaround = false}) async {
+      {bool needsBGWorkaround = false, bool shizukuPretendToBeGooglePlay = false}) async {
     if (firstTimeWithContext != null &&
         settingsProvider.beforeNewInstallsShareToAppVerifier &&
         (await getInstalledInfo('dev.soupslurpr.appverifier')) != null) {
@@ -655,7 +656,7 @@ class AppsProvider with ChangeNotifier {
       code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
     } else {
       code = await ShizukuApkInstaller.installAPK(file.file.uri.toString(),
-          settingsProvider.pretendToBeGooglePlay ? "com.android.vending" : "");
+          shizukuPretendToBeGooglePlay ? "com.android.vending" : "");
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -858,7 +859,7 @@ class AppsProvider with ChangeNotifier {
                 installApk(downloadedFile, contextIfNewInstall, needsBGWorkaround: true);
               } else {
                 // ignore: use_build_context_synchronously
-                sayInstalled = await installApk(downloadedFile, contextIfNewInstall);
+                sayInstalled = await installApk(downloadedFile, contextIfNewInstall, shizukuPretendToBeGooglePlay: apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] == true);
               }
             } else {
               if (needBGWorkaround) {
@@ -866,7 +867,7 @@ class AppsProvider with ChangeNotifier {
                 installXApkDir(downloadedDir!, contextIfNewInstall, needsBGWorkaround: true);
               } else {
                 // ignore: use_build_context_synchronously
-                sayInstalled = await installXApkDir(downloadedDir!, contextIfNewInstall);
+                sayInstalled = await installXApkDir(downloadedDir!, contextIfNewInstall, shizukuPretendToBeGooglePlay: apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] == true);
               }
             }
             if (willBeSilent && context == null) {

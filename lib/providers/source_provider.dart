@@ -522,6 +522,11 @@ abstract class AppSource {
     ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
     [
+      GeneratedFormSwitch('shizukuPretendToBeGooglePlay',
+          label: tr('shizukuPretendToBeGooglePlay'),
+          defaultValue: false)
+    ],
+    [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',
           label: tr('exemptFromBackgroundUpdates'))
     ],

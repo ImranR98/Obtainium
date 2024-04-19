@@ -61,15 +61,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get pretendToBeGooglePlay{
-    return prefs?.getBool('pretendToBeGooglePlay') ?? false;
-  }
-
-  set pretendToBeGooglePlay(bool pretendToBeGooglePlay) {
-    prefs?.setBool('pretendToBeGooglePlay', pretendToBeGooglePlay);
-    notifyListeners();
-  }
-
   ThemeSettings get theme {
     return ThemeSettings
         .values[prefs?.getInt('theme') ?? ThemeSettings.system.index];

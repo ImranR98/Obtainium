@@ -55,21 +55,21 @@ class _SettingsPageState extends State<SettingsPage> {
       updateInterval = valInterpolated;
       updateIntervalLabel = plural('minute', valInterpolated);
     } else if (valInterpolated < 8 * 60) {
-      int valRounded = (valInterpolated / 15).ceil() * 15;
+      int valRounded = (valInterpolated / 15).floor() * 15;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded ~/ 60);
       int mins = valRounded % 60;
       if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
     } else if (valInterpolated < 24 * 60) {
-      int valRounded = (valInterpolated / 30).ceil() * 30;
+      int valRounded = (valInterpolated / 30).floor() * 30;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded / 60);
     } else if (valInterpolated < 7 * 24 * 60){
-      int valRounded = (valInterpolated / (12 * 60)).ceil() * 12 * 60;
+      int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
       updateInterval = valRounded;
       updateIntervalLabel = plural('day', valRounded / (24 * 60));
     } else {
-      int valRounded = (valInterpolated / (24 * 60)).ceil() * 24 * 60;
+      int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
       updateInterval = valRounded;
       updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
     }
@@ -501,24 +501,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            if (settingsProvider.useShizuku)
-                              Column(
-                                children: [
-                                  height16,
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                          child: Text(tr('shizukuPretendToBeGooglePlay'))),
-                                      Switch(
-                                          value: settingsProvider.pretendToBeGooglePlay,
-                                          onChanged: (value) {
-                                            settingsProvider.pretendToBeGooglePlay = value;
-                                          })
-                                    ],
-                                  )
-                                ],
-                              ),
                             height32,
                             Text(
                               tr('sourceSpecific'),

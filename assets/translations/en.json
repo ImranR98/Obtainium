@@ -288,7 +288,7 @@
     "shizukuBinderNotFound": "Shizuku service not found, probably it's not launched",
     "shizukuOld": "Old Shizuku version (<11), update it",
     "shizukuOldAndroidWithADB": "Shizuku running on Android < 8.1 with ADB, update Android or use Sui instead",
-    "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source",
+    "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source (if Shizuku is used)",
     "useSystemFont": "Use the system font",
     "useVersionCodeAsOSVersion": "Use app versionCode as OS-detected version",
     "requestHeader": "Request header",

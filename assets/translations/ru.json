@@ -288,7 +288,7 @@
     "shizukuBinderNotFound": "Совместимый сервис Shizuku не найден, возможно он не запущен",
     "shizukuOld": "Устаревшая версия Shizuku (<11), обновите",
     "shizukuOldAndroidWithADB": "Shizuku работает на Android < 8.1 с ADB, обновите Android или используйте Sui",
-    "shizukuPretendToBeGooglePlay": "Указать Google Play как источник установки",
+    "shizukuPretendToBeGooglePlay": "Указать Google Play как источник установки (если используется Shizuku)",
     "useSystemFont": "Использовать системный шрифт",
     "useVersionCodeAsOSVersion": "Использовать код версии приложения как версию, обнаруженную ОС",
     "requestHeader": "Заголовок запроса",
