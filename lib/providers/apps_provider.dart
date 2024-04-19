@@ -713,8 +713,8 @@ class AppsProvider with ChangeNotifier {
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
     if (urlsToSelectFrom.length > 1 && context != null) {
-      // ignore: use_build_context_synchronously
       appFileUrl = await showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (BuildContext ctx) {
             return AppFilePicker(
@@ -734,10 +734,9 @@ class AppsProvider with ChangeNotifier {
     if (appFileUrl != null &&
         getHost(appFileUrl.value) != getHost(app.url) &&
         context != null) {
-      // ignore: use_build_context_synchronously
       if (!(settingsProvider.hideAPKOriginWarning) &&
-          // ignore: use_build_context_synchronously
           await showDialog(
+                  // ignore: use_build_context_synchronously
                   context: context,
                   builder: (BuildContext ctx) {
                     return APKOriginWarningDialog(
@@ -830,8 +829,7 @@ class AppsProvider with ChangeNotifier {
             throw ObtainiumError(tr('cancelled'));
           }
         } else {
-          String? code = await ShizukuApkInstaller.checkPermission();
-          switch(code!){
+          switch((await ShizukuApkInstaller.checkPermission())!){
             case 'binder_not_found':
               throw ObtainiumError(tr('shizukuBinderNotFound'));
             case 'old_shizuku':
@@ -853,32 +851,32 @@ class AppsProvider with ChangeNotifier {
             bool sayInstalled = true;
             var contextIfNewInstall =
                 apps[id]?.installedInfo == null ? context : null;
+            bool needBGWorkaround = willBeSilent && context == null && !settingsProvider.useShizuku;
             if (downloadedFile != null) {
-              if (willBeSilent && context == null && !settingsProvider.useShizuku) {
-                installApk(downloadedFile, contextIfNewInstall,
-                    needsBGWorkaround: true);
+              if (needBGWorkaround) {
+                // ignore: use_build_context_synchronously
+                installApk(downloadedFile, contextIfNewInstall, needsBGWorkaround: true);
               } else {
-                sayInstalled =
-                    await installApk(downloadedFile, contextIfNewInstall);
+                // ignore: use_build_context_synchronously
+                sayInstalled = await installApk(downloadedFile, contextIfNewInstall);
               }
             } else {
-              if (willBeSilent && context == null && !settingsProvider.useShizuku) {
-                installXApkDir(downloadedDir!, contextIfNewInstall,
-                    needsBGWorkaround: true);
+              if (needBGWorkaround) {
+                // ignore: use_build_context_synchronously
+                installXApkDir(downloadedDir!, contextIfNewInstall, needsBGWorkaround: true);
               } else {
-                sayInstalled =
-                    await installXApkDir(downloadedDir!, contextIfNewInstall);
+                // ignore: use_build_context_synchronously
+                sayInstalled = await installXApkDir(downloadedDir!, contextIfNewInstall);
               }
             }
-            if (willBeSilent && settingsProvider.useShizuku) {
-              notificationsProvider?.notify(SilentUpdateNotification(
-                  [apps[id]!.app],
-                  sayInstalled,
-                  id: id.hashCode));
-            } else if (willBeSilent && context == null) {
-              notificationsProvider?.notify(SilentUpdateAttemptNotification(
-                  [apps[id]!.app],
-                  id: id.hashCode));
+            if (willBeSilent && context == null) {
+              if (!settingsProvider.useShizuku) {
+                notificationsProvider?.notify(SilentUpdateAttemptNotification(
+                    [apps[id]!.app], id: id.hashCode));
+              } else {
+                notificationsProvider?.notify(SilentUpdateNotification(
+                    [apps[id]!.app], sayInstalled, id: id.hashCode));
+              }
             }
             if (sayInstalled) {
               installedIds.add(id);
