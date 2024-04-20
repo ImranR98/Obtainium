@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Yêu cầu)",
     "dropdownNoOptsError": "LỖI: TẢI XUỐNG PHẢI CÓ ÍT NHẤT MỘT LỰA CHỌN",
     "colour": "Màu sắc",
+    "standard": "Standard",
+    "custom": "Custom",
+    "useMaterialYou": "Use Material You",
     "githubStarredRepos": "Kho lưu trữ có gắn dấu sao GitHub",
     "uname": "Tên người dùng",
     "wrongArgNum": "Số lượng đối số được cung cấp sai",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Không có bản cập nhật mới.",
     "xHasAnUpdate": "{} có bản cập nhật.",
     "appsUpdated": "Ứng dụng đã cập nhật ",
+    "appsNotUpdated": "Failed to update applications",
     "appsUpdatedNotifDescription": "Thông báo cho người dùng rằng các bản cập nhật cho một hoặc nhiều Ứng dụng đã được áp dụng trong nền",
     "xWasUpdatedToY": "{} đã được cập nhật thành {}.",
+    "xWasNotUpdatedToY": "Failed to update {} to {}.",
     "errorCheckingUpdates": "Lỗi kiểm tra bản cập nhật",
     "errorCheckingUpdatesNotifDescription": "Thông báo hiển thị khi kiểm tra cập nhật nền không thành công",
     "appsRemoved": "Ứng dụng đã loại bỏ",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Hỗ trợ URL APK cố định",
     "selectX": "Lựa chọn {}",
     "parallelDownloads": "Cho phép tải đa luồng",
-    "installMethod": "Phương thức cài đặt",
-    "normal": "Mặc định",
-    "root": "Root",
+    "useShizuku": "Use Shizuku or Sui to install",
     "shizukuBinderNotFound": "Shizuku chưa khởi động",
+    "shizukuOld": "Old Shizuku version (<11) - update it",
+    "shizukuOldAndroidWithADB": "Shizuku running on Android < 8.1 with ADB - update Android or use Sui instead",
+    "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source (if Shizuku is used)",
     "useSystemFont": "Sử dụng phông chữ hệ thống",
-    "systemFontError": "Lỗi tải phông chữ hệ thống: {}",
     "useVersionCodeAsOSVersion": "Sử dụng Mã phiên bản ứng dụng làm phiên bản do hệ điều hành phát hiện",
     "requestHeader": "Tiêu đề yêu cầu",
     "useLatestAssetDateAsReleaseDate": "Sử dụng nội dung tải lên mới nhất làm ngày phát hành",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} và 1 ứng dụng khác đã được cập nhật.",
         "other": "{} và {} ứng dụng khác đã được cập nhật."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Failed to update {} and 1 more app.",
+        "other": "Failed to update {} and {} more apps."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} và 1 ứng dụng khác có thể đã được cập nhật.",

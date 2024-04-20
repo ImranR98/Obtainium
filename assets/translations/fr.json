@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Requis)",
     "dropdownNoOptsError": "ERREUR : LE DÉROULEMENT DOIT AVOIR AU MOINS UNE OPT",
     "colour": "Couleur",
+    "standard": "Standard",
+    "custom": "Sur mesure",
+    "useMaterialYou": "Utiliser le matériel que vous",
     "githubStarredRepos": "Dépôts étoilés GitHub",
     "uname": "Nom d'utilisateur",
     "wrongArgNum": "Mauvais nombre d'arguments fournis",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Aucune nouvelle mise à jour.",
     "xHasAnUpdate": "{} a une mise à jour.",
     "appsUpdated": "Applications mises à jour",
+    "appsNotUpdated": "Échec de la mise à jour des applications",
     "appsUpdatedNotifDescription": "Avertit l'utilisateur que les mises à jour d'une ou plusieurs applications ont été appliquées en arrière-plan",
     "xWasUpdatedToY": "{} a été mis à jour pour {}.",
+    "xWasNotUpdatedToY": "Échec de la mise à jour de {} vers {}.",
     "errorCheckingUpdates": "Erreur lors de la vérification des mises à jour",
     "errorCheckingUpdatesNotifDescription": "Une notification qui s'affiche lorsque la vérification de la mise à jour en arrière-plan échoue",
     "appsRemoved": "Applications supprimées",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Prise en charge des URL APK fixes",
     "selectX": "Sélectionner {}",
     "parallelDownloads": "Autoriser les téléchargements parallèles",
-    "installMethod": "Méthode d'installation",
-    "normal": "Normale",
-    "root": "Racine",
+    "useShizuku": "Utiliser Shizuku ou Sui pour l'installation",
     "shizukuBinderNotFound": "Service Shizuku compatible non trouvé",
+    "shizukuOld": "Ancienne version de Shizuku (<11) - la mettre à jour",
+    "shizukuOldAndroidWithADB": "Shizuku fonctionne sur Android < 8.1 avec ADB - mettre à jour Android ou utiliser Sui à la place",
+    "shizukuPretendToBeGooglePlay": "Définir Google Play comme source d'installation (si Shizuku est utilisé)",
     "useSystemFont": "Utiliser la police du système",
-    "systemFontError": "Erreur de chargement de la police du système : {}",
     "useVersionCodeAsOSVersion": "Utiliser le code de version de l'application comme version détectée par le système d'exploitation",
     "requestHeader": "En-tête de demande",
     "useLatestAssetDateAsReleaseDate": "Utiliser le dernier élément téléversé comme date de sortie",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} et 1 autre application ont été mises à jour.",
         "other": "{} et {} autres applications ont été mises à jour."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Échec de la mise à jour de {} et d'une autre application.",
+        "other": "Échec de la mise à jour de {} et {} autres applications."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "une": "{} et 1 application supplémentaire ont peut-être été mises à jour.",

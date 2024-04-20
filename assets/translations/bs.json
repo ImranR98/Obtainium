@@ -22,6 +22,9 @@
     "requiredInBrackets": "(obavezno)",
     "dropdownNoOptsError": "GREŠKA: PADAJUĆI MENI MORA IMATI NAJMANJE JEDNU OPCIJU",
     "colour": "Boja",
+    "standard": "Standard",
+    "custom": "Custom",
+    "useMaterialYou": "Use Material You",
     "githubStarredRepos": "GitHub repo-i sa zvjezdicom",
     "uname": "Korisničko ime",
     "wrongArgNum": "Naveden je pogrešan broj argumenata",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Nema novih ažuriranja.",
     "xHasAnUpdate": "{} ima ažuriranje.",
     "appsUpdated": "Aplikacije su ažurirane",
+    "appsNotUpdated": "Failed to update applications",
     "appsUpdatedNotifDescription": "Obavještava korisnika da su u pozadini primijenjena ažuriranja na jednu ili više aplikacija",
     "xWasUpdatedToY": "{} je ažuriran na {}.",
+    "xWasNotUpdatedToY": "Failed to update {} to {}.",
     "errorCheckingUpdates": "Greška pri provjeri ažuriranja",
     "errorCheckingUpdatesNotifDescription": "Obavijest koja se prikazuje kada provjera sigurnosnog ažuriranja ne uspije",
     "appsRemoved": "Aplikacije su uklonjene",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Podržite fiksne APK URL-ove",
     "selectX": "Izaberite {}",
     "parallelDownloads": "Dozvoli paralelna preuzimanja",
-    "installMethod": "Način instalacije",
-    "normal": "normalno",
-    "root": "korijen",
+    "useShizuku": "Use Shizuku or Sui to install",
     "shizukuBinderNotFound": "Shizuku is not running",
+    "shizukuOld": "Old Shizuku version (<11) - update it",
+    "shizukuOldAndroidWithADB": "Shizuku running on Android < 8.1 with ADB - update Android or use Sui instead",
+    "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source (if Shizuku is used)",
     "useSystemFont": "Koristite sistemski font",
-    "systemFontError": "Greška pri učitavanju sistemskog fonta: {}",
     "useVersionCodeAsOSVersion": "Koristite kod verzije aplikacije kao verziju koju je otkrio OS",
     "requestHeader": "Zaglavlje zahtjeva",
     "useLatestAssetDateAsReleaseDate": "Koristite najnovije otpremanje materijala kao datum izdavanja",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} i još 1 aplikacija je ažurirana.",
         "other": "{} i još {} aplikacija je ažurirano."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Failed to update {} and 1 more app.",
+        "other": "Failed to update {} and {} more apps."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} i još jedna aplikacija je vjerovatno ažurirana.",

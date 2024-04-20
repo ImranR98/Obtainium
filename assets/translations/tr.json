@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Gerekli)",
     "dropdownNoOptsError": "HATA: DİPLOMADA EN AZ BİR SEÇENEK OLMALI",
     "colour": "Renk",
+    "standard": "Standart",
+    "custom": "Özel",
+    "useMaterialYou": "Sizin Malzemenizi Kullanın",
     "githubStarredRepos": "GitHub'a Yıldızlı Depolar",
     "uname": "Kullanıcı Adı",
     "wrongArgNum": "Hatalı argüman sayısı sağlandı",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Yeni güncelleme yok.",
     "xHasAnUpdate": "{} güncelleme alıyor.",
     "appsUpdated": "Uygulamalar Güncellendi",
+    "appsNotUpdated": "Uygulamalar güncellenemedi",
     "appsUpdatedNotifDescription": "Kullanıcıya bir veya daha fazla uygulamanın arka planda güncellendiğine dair bilgi verir",
     "xWasUpdatedToY": "{} şu sürüme güncellendi: {}.",
+    "xWasNotUpdatedToY": "{} öğesi {} olarak güncellenemedi.",
     "errorCheckingUpdates": "Güncellemeler Kontrol Edilirken Hata Oluştu",
     "errorCheckingUpdatesNotifDescription": "Arka planda güncelleme kontrolü sırasında hata oluştuğunda görünen bir bildirim",
     "appsRemoved": "Uygulamalar Kaldırıldı",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Sabit APK URL'lerini destekleyin",
     "selectX": "Seçme {}",
     "parallelDownloads": "Paralel indirmelere izin ver",
-    "installMethod": "Kurulum yöntemi",
-    "normal": "Normal",
-    "root": "Kök",
+    "useShizuku": "Yüklemek için Shizuku veya Sui'yi kullanın",
     "shizukuBinderNotFound": "Shizuku is not running",
+    "shizukuOld": "Eski Shizuku sürümü (<11) - güncelleyin",
+    "shizukuOldAndroidWithADB": "Shizuku ADB ile Android < 8.1 üzerinde çalışıyor - Android'i güncelleyin veya bunun yerine Sui kullanın",
+    "shizukuPretendToBeGooglePlay": "Google Play'i yükleme kaynağı olarak ayarlayın (Shizuku kullanılıyorsa)",
     "useSystemFont": "Sistem yazı tipini kullan",
-    "systemFontError": "Sistem yazı tipi yüklenirken hata oluştu: {}",
     "useVersionCodeAsOSVersion": "Uygulama versionCode'unu işletim sistemi tarafından algılanan sürüm olarak kullan",
     "requestHeader": "Başlık talep et",
     "useLatestAssetDateAsReleaseDate": "Yayın tarihi olarak en son öğe yüklemesini kullan",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} ve 1 diğer uygulama güncellendi.",
         "other": "{} ve {} daha fazla uygulama güncellendi."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "{} ve 1 uygulama daha güncellenemedi.",
+        "other": "{} ve {} daha fazla uygulama güncellenemedi."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} ve 1 diğer uygulama muhtemelen güncellendi.",

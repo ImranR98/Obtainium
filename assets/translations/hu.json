@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Kötelező)",
     "dropdownNoOptsError": "HIBA: A LEDOBÁST LEGALÁBB EGY OPCIÓHOZ KELL RENDELNI",
     "colour": "Szín",
+    "standard": "Standard",
+    "custom": "Custom",
+    "useMaterialYou": "Használja az Ön által használt anyagot",
     "githubStarredRepos": "GitHub Csillagos Repo-k",
     "uname": "Felh.név",
     "wrongArgNum": "Rossz számú argumentumot adott meg",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Nincsenek új frissítések.",
     "xHasAnUpdate": "A(z) {} frissítést kapott.",
     "appsUpdated": "Alkalmazások frissítve",
+    "appsNotUpdated": "Nem sikerült frissíteni az alkalmazásokat",
     "appsUpdatedNotifDescription": "Értesíti a felhasználót, hogy egy/több app frissítése megtörtént a háttérben",
     "xWasUpdatedToY": "{} frissítve a következőre: {}.",
+    "xWasNotUpdatedToY": "A {} frissítése a {}-ra nem sikerült.",
     "errorCheckingUpdates": "Hiba a frissítések keresésekor",
     "errorCheckingUpdatesNotifDescription": "Értesítés, amely akkor jelenik meg, ha a háttérbeli frissítések ellenőrzése sikertelen",
     "appsRemoved": "Alkalmazások eltávolítva",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Támogatja a rögzített APK URL-eket",
     "selectX": "Kiválaszt {}",
     "parallelDownloads": "Párhuzamos letöltéseket enged",
-    "installMethod": "Telepítési mód",
-    "normal": "Normál",
-    "root": "Root",
+    "useShizuku": "Használja Shizuku vagy Sui telepítéséhez",
     "shizukuBinderNotFound": "A Shizuku nem fut",
+    "shizukuOld": "Régi Shizuku verzió (<11) - frissítsd!",
+    "shizukuOldAndroidWithADB": "Shizuku fut Android < 8.1 ADB-vel - frissítse az Androidot vagy használja a Sui-t helyette",
+    "shizukuPretendToBeGooglePlay": "Állítsa be a Google Play-t telepítési forrásként (ha Shizuku-t használ)",
     "useSystemFont": "Használja a rendszer betűtípusát",
-    "systemFontError": "Hiba a rendszer betűtípusának betöltésekor: {}",
     "useVersionCodeAsOSVersion": "Az app verziókód használata a rendszer által észlelt verzióként",
     "requestHeader": "Kérelem fejléc",
     "useLatestAssetDateAsReleaseDate": "Használja a legújabb tartalomfeltöltést megjelenési dátumként",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "A(z) {} és 1 további alkalmazás frissítve.",
         "other": "{} és {} további alkalmazás frissítve."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Nem sikerült frissíteni {} és még 1 alkalmazást.",
+        "other": "Nem sikerült frissíteni {} és {} további alkalmazásokat."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} és 1 további alkalmazás is frissült.",

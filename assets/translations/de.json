@@ -22,6 +22,9 @@
     "requiredInBrackets": "(wird benötigt)",
     "dropdownNoOptsError": "FEHLER: DROPDOWN MUSS MINDESTENS EINE OPTION HABEN",
     "colour": "Farbe",
+    "standard": "Standard",
+    "custom": "Benutzerdefiniert",
+    "useMaterialYou": "Verwenden Sie Material, das Sie",
     "githubStarredRepos": "GitHub Starred Repos",
     "uname": "Benutzername",
     "wrongArgNum": "Falsche Anzahl von Argumenten (Parametern) übermittelt",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Keine neuen Aktualisierungen.",
     "xHasAnUpdate": "{} hat eine Aktualisierung.",
     "appsUpdated": "Apps aktualisiert",
+    "appsNotUpdated": "Aktualisierung der Anwendungen fehlgeschlagen",
     "appsUpdatedNotifDescription": "Benachrichtigt den Benutzer, dass Aktualisierungen für eine oder mehrere Apps im Hintergrund durchgeführt wurden",
     "xWasUpdatedToY": "{} wurde auf {} aktualisiert.",
+    "xWasNotUpdatedToY": "Die Aktualisierung von {} auf {} ist fehlgeschlagen.",
     "errorCheckingUpdates": "Fehler beim Prüfen auf Aktualisierungen",
     "errorCheckingUpdatesNotifDescription": "Eine Benachrichtigung, die angezeigt wird, wenn die Prüfung der Hintergrundaktualisierung fehlschlägt",
     "appsRemoved": "Apps entfernt",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "neuere Version anhand der ersten dreißig Zahlen der Checksumme der APK URL erraten, wenn anderweitig nicht unterstützt",
     "selectX": "Wähle {}",
     "parallelDownloads": "Erlaube parallele Downloads",
-    "installMethod": "Installationsmethode",
-    "normal": "Normal",
-    "root": "Root",
+    "useShizuku": "Verwenden Sie Shizuku oder Sui zur Installation",
     "shizukuBinderNotFound": "Kompatibler Shizukudienst wurde nicht gefunden",
+    "shizukuOld": "Alte Shizuku-Version (<11) - aktualisieren Sie sie",
+    "shizukuOldAndroidWithADB": "Shizuku läuft auf Android < 8.1 mit ADB - aktualisieren Sie Android oder verwenden Sie stattdessen Sui",
+    "shizukuPretendToBeGooglePlay": "Google Play als Installationsquelle festlegen (wenn Shizuku verwendet wird)",
     "useSystemFont": "Verwende die Systemschriftart",
-    "systemFontError": "Fehler beim Laden der Systemschriftart: {}",
     "useVersionCodeAsOSVersion": "Verwende die Appversion als erkannte Version vom Betriebssystem",
     "requestHeader": "Request Header",
     "useLatestAssetDateAsReleaseDate": "Den letzten Asset-Upload als Veröffentlichungsdatum verwenden",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} und 1 weitere Anwendung wurden aktualisiert.",
         "other": "{} und {} weitere Anwendungen wurden aktualisiert."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Aktualisierung fehlgeschlagen {} und 1 weitere Anwendung.",
+        "other": "Die Aktualisierung von {} und {} weiteren Anwendungen ist fehlgeschlagen."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} und 1 weitere Anwendung wurden möglicherweise aktualisiert.",
