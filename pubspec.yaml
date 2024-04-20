@@ -69,6 +69,7 @@ dependencies:
   app_links: ^4.0.0
   background_fetch: ^1.2.1
   equations: ^5.0.2
+  flex_color_picker: ^3.4.1
   android_system_font:
     git:
       url: https://github.com/re7gog/android_system_font

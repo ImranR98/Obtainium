@@ -1,6 +1,7 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -30,6 +31,10 @@ class _SettingsPageState extends State<SettingsPage> {
   late SplineInterpolation updateIntervalInterpolator;  // 🤓
   String updateIntervalLabel = tr('neverManualOnly');
   bool showIntervalLabel = true;
+  final Map<ColorSwatch<Object>, String> colorsNameMap =
+  <ColorSwatch<Object>, String> {
+    ColorTools.createPrimarySwatch(obtainiumThemeColor): 'Obtainium'
+  };
 
   void initUpdateIntervalInterpolator() {
     List<InterpolationNode> nodes = [];
@@ -111,24 +116,105 @@ class _SettingsPageState extends State<SettingsPage> {
         future: DeviceInfoPlugin().androidInfo
     );
 
-    var colourDropdown = DropdownButtonFormField(
-        decoration: InputDecoration(labelText: tr('colour')),
-        value: settingsProvider.colour,
-        items: const [
-          DropdownMenuItem(
-            value: ColourSettings.basic,
-            child: Text('Obtainium'),
-          ),
-          DropdownMenuItem(
-            value: ColourSettings.materialYou,
-            child: Text('Material You'),
-          )
-        ],
-        onChanged: (value) {
-          if (value != null) {
-            settingsProvider.colour = value;
+    Future<bool> colorPickerDialog() async {
+      return ColorPicker(
+        color: settingsProvider.themeColor,
+        onColorChanged: (Color color) =>
+            setState(() =>
+            settingsProvider.themeColor = color
+            ),
+        actionButtons: const ColorPickerActionButtons(
+          okButton: true,
+          closeButton: true,
+          dialogActionButtons: false,
+        ),
+        pickersEnabled: const <ColorPickerType, bool>{
+          ColorPickerType.both: false,
+          ColorPickerType.primary: false,
+          ColorPickerType.accent: false,
+          ColorPickerType.bw: false,
+          ColorPickerType.custom: true,
+          ColorPickerType.wheel: true,
+        },
+        pickerTypeLabels: <ColorPickerType, String>{
+          ColorPickerType.custom: tr('standard'),
+          ColorPickerType.wheel: tr('custom')
+        },
+        title: Text(tr('selectX', args: [tr('colour')]),
+            style: Theme.of(context).textTheme.titleLarge),
+        wheelDiameter: 192,
+        wheelSquareBorderRadius: 32,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        spacing: 8,
+        runSpacing: 8,
+        enableShadesSelection: false,
+        customColorSwatchesAndNames: colorsNameMap,
+        showMaterialName: true,
+        showColorName: true,
+        materialNameTextStyle: Theme.of(context).textTheme.bodySmall,
+        colorNameTextStyle: Theme.of(context).textTheme.bodySmall,
+        copyPasteBehavior: const ColorPickerCopyPasteBehavior(longPressMenu: true),
+      ).showPickerDialog(
+        context,
+        transitionBuilder: (BuildContext context,
+            Animation<double> a1, Animation<double> a2, Widget widget) {
+          final double curvedValue = Curves.easeInCubic.transform(a1.value);
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
+            child: Opacity(
+                opacity: curvedValue,
+                child: widget
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 250),
+      );
+    }
+
+    var colorPicker = ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(tr('selectX', args: [tr('colour')])),
+      subtitle: Text("${ColorTools.nameThatColor(settingsProvider.themeColor)} "
+          "(${ColorTools.materialNameAndCode(settingsProvider.themeColor,
+              colorSwatchNameMap: colorsNameMap)})"),
+      trailing: ColorIndicator(
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        color: settingsProvider.themeColor,
+        onSelectFocus: false,
+        onSelect: () async {
+          final Color colorBeforeDialog = settingsProvider.themeColor;
+          if (!(await colorPickerDialog())) {
+            setState(() {
+              settingsProvider.themeColor = colorBeforeDialog;
+            });
           }
-        });
+        }
+      )
+    );
+
+    var useMaterialThemeSwitch = FutureBuilder(
+        builder: (ctx, val) {
+          return ((val.data?.version.sdkInt ?? 0) >= 31) ?
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(child: Text(tr('useMaterialYou'))),
+              Switch(
+                  value: settingsProvider.useMaterialYou,
+                  onChanged: (value) {
+                    settingsProvider.useMaterialYou = value;
+                  })
+            ],
+          ) : const SizedBox.shrink();
+        },
+        future: DeviceInfoPlugin().androidInfo
+    );
 
     var sortDropdown = DropdownButtonFormField(
         isExpanded: true,
@@ -510,8 +596,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
-                            colourDropdown,
                             height16,
+                            useMaterialThemeSwitch,
+                            if (!settingsProvider.useMaterialYou) colorPicker,
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,

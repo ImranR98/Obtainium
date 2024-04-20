@@ -119,8 +119,6 @@ void main() async {
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
-var defaultThemeColour = Colors.deepPurple;
-
 class Obtainium extends StatefulWidget {
   const Obtainium({super.key});
 
@@ -214,15 +212,13 @@ class _ObtainiumState extends State<Obtainium> {
       // Decide on a colour/brightness scheme based on OS and user settings
       ColorScheme lightColorScheme;
       ColorScheme darkColorScheme;
-      if (lightDynamic != null &&
-          darkDynamic != null &&
-          settingsProvider.colour == ColourSettings.materialYou) {
+      if (lightDynamic != null && darkDynamic != null && settingsProvider.useMaterialYou) {
         lightColorScheme = lightDynamic.harmonized();
         darkColorScheme = darkDynamic.harmonized();
       } else {
-        lightColorScheme = ColorScheme.fromSeed(seedColor: defaultThemeColour);
+        lightColorScheme = ColorScheme.fromSeed(seedColor: settingsProvider.themeColor);
         darkColorScheme = ColorScheme.fromSeed(
-            seedColor: defaultThemeColour, brightness: Brightness.dark);
+            seedColor: settingsProvider.themeColor, brightness: Brightness.dark);
       }
 
       // set the background and surface colors to pure black in the amoled theme

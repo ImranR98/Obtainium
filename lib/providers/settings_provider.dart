@@ -17,10 +17,9 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
+Color obtainiumThemeColor = const Color(0xFF6438B5);
 
 enum ThemeSettings { light, dark, system }
-
-enum ColourSettings { basic, materialYou }
 
 enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
@@ -68,13 +67,23 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  ColourSettings get colour {
-    return ColourSettings
-        .values[prefs?.getInt('colour') ?? ColourSettings.basic.index];
+  Color get themeColor {
+    int? colorCode = prefs?.getInt('themeColor');
+    return (colorCode != null) ?
+        Color(colorCode) : obtainiumThemeColor;
   }
 
-  set colour(ColourSettings t) {
-    prefs?.setInt('colour', t.index);
+  set themeColor(Color themeColor) {
+    prefs?.setInt('themeColor', themeColor.value);
+    notifyListeners();
+  }
+
+  bool get useMaterialYou {
+    return prefs?.getBool('useMaterialYou') ?? false;
+  }
+
+  set useMaterialYou(bool useMaterialYou) {
+    prefs?.setBool('useMaterialYou', useMaterialYou);
     notifyListeners();
   }
 
