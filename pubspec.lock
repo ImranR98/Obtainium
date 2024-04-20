@@ -26,6 +26,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.1"
+  android_system_font:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "355f897e92a58a803f91d9270d389d9ec40ba550"
+      url: "https://github.com/re7gog/android_system_font"
+    source: git
+    version: "1.0.0"
   animations:
     dependency: "direct main"
     description:
@@ -226,6 +235,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.2"
+  equations:
+    dependency: "direct main"
+    description:
+      name: equations
+      sha256: ae30e977d601e19aa1fc3409736c5eac01559d1d653a4c30141fbc4e86aa605c
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.2"
   fake_async:
     dependency: transitive
     description:
@@ -266,6 +283,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  flex_color_picker:
+    dependency: "direct main"
+    description:
+      name: flex_color_picker
+      sha256: "5c846437069fb7afdd7ade6bf37e628a71d2ab0787095ddcb1253bf9345d5f3a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.4.1"
+  flex_seed_scheme:
+    dependency: transitive
+    description:
+      name: flex_seed_scheme
+      sha256: "4cee2f1d07259f77e8b36f4ec5f35499d19e74e17c7dce5b819554914082bc01"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -366,6 +399,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.2.5"
+  fraction:
+    dependency: transitive
+    description:
+      name: fraction
+      sha256: "09e9504c9177bbd77df56e5d147abfbb3b43360e64bf61510059c14d6a82d524"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.2"
   gtk:
     dependency: transitive
     description:
@@ -634,10 +675,10 @@ packages:
     dependency: transitive
     description:
       name: petitparser
-      sha256: c15605cd28af66339f8eb6fbe0e541bfe2d1b72d5825efc6598f3e0a31b9ad27
+      sha256: cb3798bef7fc021ac45b308f4b51208a152792445cce0448c9a4ba5879dd8750
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.2"
+    version: "5.4.0"
   platform:
     dependency: transitive
     description:
@@ -750,6 +791,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.1"
+  shizuku_apk_installer:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "25acc02612c2e0fcae40d312e047ac48106f8f6b"
+      url: "https://github.com/re7gog/shizuku_apk_installer"
+    source: git
+    version: "0.0.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -1007,10 +1057,10 @@ packages:
     dependency: transitive
     description:
       name: xml
-      sha256: b015a8ad1c488f66851d762d3090a21c600e479dc75e68328c52774040cf9226
+      sha256: "5bc72e1e45e941d825fd7468b9b4cc3b9327942649aeb6fc5cdbf135f0a86e84"
       url: "https://pub.dev"
     source: hosted
-    version: "6.5.0"
+    version: "6.3.0"
   yaml:
     dependency: transitive
     description:
@@ -1020,5 +1070,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.3.0 <4.0.0"
+  dart: ">=3.3.3 <4.0.0"
   flutter: ">=3.19.0"

@@ -34,7 +34,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
-import 'native_provider.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 final pm = AndroidPackageManager();
 
@@ -507,9 +507,6 @@ class AppsProvider with ChangeNotifier {
       .isNotEmpty;
 
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumId) {
-      return false;
-    }
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
@@ -517,8 +514,7 @@ class AppsProvider with ChangeNotifier {
       return false;
     }
     if (app.apkUrls.length > 1) {
-      // Manual API selection means silent install is not possible
-      return false;
+      return false; // Manual API selection means silent install is not possible
     }
 
     var osInfo = await DeviceInfoPlugin().androidInfo;
@@ -529,20 +525,29 @@ class AppsProvider with ChangeNotifier {
               ?.installingPackageName
           : (await pm.getInstallerPackageName(packageName: app.id));
     } catch (e) {
-      // Probably not installed - ignore
+      return false;  // App probably not installed
     }
-    if (installerPackageName != obtainiumId) {
-      // If we did not install the app (or it isn't installed), silent install is not possible
+
+    int? targetSDK = (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
+    // The APK should target a new enough API
+    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+    if (!(targetSDK != null && targetSDK >= (osInfo.version.sdkInt - 3))) {
       return false;
     }
-    int? targetSDK =
-        (await getInstalledInfo(app.id))?.applicationInfo?.targetSdkVersion;
 
-    // The OS must also be new enough and the APK should target a new enough API
-    return osInfo.version.sdkInt >= 31 &&
-        targetSDK != null &&
-        targetSDK >= // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-            (osInfo.version.sdkInt - 3);
+    if (settingsProvider.useShizuku) {
+      return true;
+    }
+
+    if (app.id == obtainiumId) {
+      return false;
+    }
+    if (installerPackageName != obtainiumId) {
+      // If we did not install the app, silent install is not possible
+      return false;
+    }
+    // The OS must also be new enough
+    return osInfo.version.sdkInt >= 31;
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
@@ -566,7 +571,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> installXApkDir(
       DownloadedXApkDir dir, BuildContext? firstTimeWithContext,
-      {bool needsBGWorkaround = false}) async {
+      {bool needsBGWorkaround = false, bool shizukuPretendToBeGooglePlay = false}) async {
     // We don't know which APKs in an XAPK are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
@@ -581,7 +586,8 @@ class AppsProvider with ChangeNotifier {
             somethingInstalled = somethingInstalled ||
                 await installApk(
                     DownloadedApk(dir.appId, file), firstTimeWithContext,
-                    needsBGWorkaround: needsBGWorkaround);
+                    needsBGWorkaround: needsBGWorkaround,
+                    shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           } catch (e) {
             logs.add(
                 'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
@@ -604,7 +610,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<bool> installApk(
       DownloadedApk file, BuildContext? firstTimeWithContext,
-      {bool needsBGWorkaround = false}) async {
+      {bool needsBGWorkaround = false, bool shizukuPretendToBeGooglePlay = false}) async {
     if (firstTimeWithContext != null &&
         settingsProvider.beforeNewInstallsShareToAppVerifier &&
         (await getInstalledInfo('dev.soupslurpr.appverifier')) != null) {
@@ -632,8 +638,7 @@ class AppsProvider with ChangeNotifier {
         !(await canDowngradeApps())) {
       throw DowngradeError();
     }
-    if (needsBGWorkaround &&
-        settingsProvider.installMethod == InstallMethodSettings.normal) {
+    if (needsBGWorkaround) {
       // The below 'await' will never return if we are in a background process
       // To work around this, we should assume the install will be successful
       // So we update the app's installed version first as we will never get to the later code
@@ -645,20 +650,11 @@ class AppsProvider with ChangeNotifier {
           attemptToCorrectInstallStatus: false);
     }
     int? code;
-    switch (settingsProvider.installMethod) {
-      case InstallMethodSettings.normal:
-        code = await AndroidPackageInstaller.installApk(
-            apkFilePath: file.file.path);
-      case InstallMethodSettings.shizuku:
-        code = (await NativeFeatures.installWithShizuku(
-                apkFileUri: file.file.uri.toString()))
-            ? 0
-            : 1;
-      case InstallMethodSettings.root:
-        code =
-            (await NativeFeatures.installWithRoot(apkFilePath: file.file.path))
-                ? 0
-                : 1;
+    if (!settingsProvider.useShizuku) {
+      code = await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+    } else {
+      code = await ShizukuApkInstaller.installAPK(file.file.uri.toString(),
+          shizukuPretendToBeGooglePlay ? "com.android.vending" : "");
     }
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
@@ -716,8 +712,8 @@ class AppsProvider with ChangeNotifier {
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
     if (urlsToSelectFrom.length > 1 && context != null) {
-      // ignore: use_build_context_synchronously
       appFileUrl = await showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (BuildContext ctx) {
             return AppFilePicker(
@@ -737,10 +733,9 @@ class AppsProvider with ChangeNotifier {
     if (appFileUrl != null &&
         getHost(appFileUrl.value) != getHost(app.url) &&
         context != null) {
-      // ignore: use_build_context_synchronously
       if (!(settingsProvider.hideAPKOriginWarning) &&
-          // ignore: use_build_context_synchronously
           await showDialog(
+                  // ignore: use_build_context_synchronously
                   context: context,
                   builder: (BuildContext ctx) {
                     return APKOriginWarningDialog(
@@ -828,23 +823,21 @@ class AppsProvider with ChangeNotifier {
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
         bool willBeSilent = await canInstallSilently(apps[id]!.app);
-        switch (settingsProvider.installMethod) {
-          case InstallMethodSettings.normal:
-            if (!(await settingsProvider.getInstallPermission(
-                enforce: false))) {
-              throw ObtainiumError(tr('cancelled'));
-            }
-          case InstallMethodSettings.shizuku:
-            int code = await NativeFeatures.checkPermissionShizuku();
-            if (code == -1) {
+        if (!settingsProvider.useShizuku) {
+          if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+            throw ObtainiumError(tr('cancelled'));
+          }
+        } else {
+          switch((await ShizukuApkInstaller.checkPermission())!){
+            case 'binder_not_found':
               throw ObtainiumError(tr('shizukuBinderNotFound'));
-            } else if (code == 0) {
+            case 'old_shizuku':
+              throw ObtainiumError(tr('shizukuOld'));
+            case 'old_android_with_adb':
+              throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
+            case 'denied':
               throw ObtainiumError(tr('cancelled'));
-            }
-          case InstallMethodSettings.root:
-            if (!(await NativeFeatures.checkPermissionRoot())) {
-              throw ObtainiumError(tr('cancelled'));
-            }
+          }
         }
         if (!willBeSilent && context != null) {
           // ignore: use_build_context_synchronously
@@ -857,27 +850,32 @@ class AppsProvider with ChangeNotifier {
             bool sayInstalled = true;
             var contextIfNewInstall =
                 apps[id]?.installedInfo == null ? context : null;
+            bool needBGWorkaround = willBeSilent && context == null && !settingsProvider.useShizuku;
             if (downloadedFile != null) {
-              if (willBeSilent && context == null) {
-                installApk(downloadedFile, contextIfNewInstall,
-                    needsBGWorkaround: true);
+              if (needBGWorkaround) {
+                // ignore: use_build_context_synchronously
+                installApk(downloadedFile, contextIfNewInstall, needsBGWorkaround: true);
               } else {
-                sayInstalled =
-                    await installApk(downloadedFile, contextIfNewInstall);
+                // ignore: use_build_context_synchronously
+                sayInstalled = await installApk(downloadedFile, contextIfNewInstall, shizukuPretendToBeGooglePlay: apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] == true);
               }
             } else {
-              if (willBeSilent && context == null) {
-                installXApkDir(downloadedDir!, contextIfNewInstall,
-                    needsBGWorkaround: true);
+              if (needBGWorkaround) {
+                // ignore: use_build_context_synchronously
+                installXApkDir(downloadedDir!, contextIfNewInstall, needsBGWorkaround: true);
               } else {
-                sayInstalled =
-                    await installXApkDir(downloadedDir!, contextIfNewInstall);
+                // ignore: use_build_context_synchronously
+                sayInstalled = await installXApkDir(downloadedDir!, contextIfNewInstall, shizukuPretendToBeGooglePlay: apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] == true);
               }
             }
             if (willBeSilent && context == null) {
-              notificationsProvider?.notify(SilentUpdateAttemptNotification(
-                  [apps[id]!.app],
-                  id: id.hashCode));
+              if (!settingsProvider.useShizuku) {
+                notificationsProvider?.notify(SilentUpdateAttemptNotification(
+                    [apps[id]!.app], id: id.hashCode));
+              } else {
+                notificationsProvider?.notify(SilentUpdateNotification(
+                    [apps[id]!.app], sayInstalled, id: id.hashCode));
+              }
             }
             if (sayInstalled) {
               installedIds.add(id);
@@ -1710,7 +1708,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   int maxRetryWaitSeconds = 5;
 
   var netResult = await (Connectivity().checkConnectivity());
-  if (netResult == ConnectivityResult.none) {
+  if (netResult.contains(ConnectivityResult.none)) {
     logs.add('BG update task: No network.');
     return;
   }
@@ -1747,8 +1745,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
 
   var networkRestricted = false;
   if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
-    networkRestricted = (netResult != ConnectivityResult.wifi) &&
-        (netResult != ConnectivityResult.ethernet);
+    networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
+        !netResult.contains(ConnectivityResult.ethernet);
   }
 
   if (toCheck.isNotEmpty) {
@@ -1792,8 +1790,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     var networkRestricted = false;
     if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
       var netResult = await (Connectivity().checkConnectivity());
-      networkRestricted = (netResult != ConnectivityResult.wifi) &&
-          (netResult != ConnectivityResult.ethernet);
+      networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
+          !netResult.contains(ConnectivityResult.ethernet);
     }
 
     try {

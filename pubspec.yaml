@@ -68,6 +68,16 @@ dependencies:
   crypto: ^3.0.3
   app_links: ^4.0.0
   background_fetch: ^1.2.1
+  equations: ^5.0.2
+  flex_color_picker: ^3.4.1
+  android_system_font:
+    git:
+      url: https://github.com/re7gog/android_system_font
+      ref: master
+  shizuku_apk_installer:
+    git:
+      url: https://github.com/re7gog/shizuku_apk_installer
+      ref: master
 
 dev_dependencies:
   flutter_test:
