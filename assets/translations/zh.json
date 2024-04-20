@@ -22,6 +22,9 @@
     "requiredInBrackets": "（必填）",
     "dropdownNoOptsError": "错误：下拉菜单必须包含至少一个选项",
     "colour": "配色",
+    "standard": "标准",
+    "custom": "定制",
+    "useMaterialYou": "使用您的材料",
     "githubStarredRepos": "已星标的 GitHub 仓库",
     "uname": "用户名",
     "wrongArgNum": "参数数量错误",
@@ -143,8 +146,10 @@
     "noNewUpdates": "全部应用已是最新。",
     "xHasAnUpdate": "“{}”可以更新了。",
     "appsUpdated": "应用已更新",
+    "appsNotUpdated": "更新应用程序失败",
     "appsUpdatedNotifDescription": "当应用在后台安装更新时发送通知",
     "xWasUpdatedToY": "“{}”已更新至 {}。",
+    "xWasNotUpdatedToY": "未能将 {} 更新为 {}。",
     "errorCheckingUpdates": "检查更新出错",
     "errorCheckingUpdatesNotifDescription": "当后台检查更新失败时显示的通知",
     "appsRemoved": "应用已删除",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "支持固定的 APK 文件链接",
     "selectX": "选择{}",
     "parallelDownloads": "启用并行下载",
-    "installMethod": "安装方式",
-    "normal": "常规",
-    "root": "root",
+    "useShizuku": "使用 Shizuku 或 Sui 安装",
     "shizukuBinderNotFound": "未发现兼容的 Shizuku 服务",
+    "shizukuOld": "旧的 Shizuku 版本 (<11) - 更新它",
+    "shizukuOldAndroidWithADB": "使用 ADB 在 Android < 8.1 上运行 Shizuku - 更新 Android 或使用 Sui 代替",
+    "shizukuPretendToBeGooglePlay": "将 Google Play 设置为安装源（如果使用 Shizuku）",
     "useSystemFont": "使用系统字体",
-    "systemFontError": "加载系统字体出错：{}",
     "useVersionCodeAsOSVersion": "使用内部版本号代替应用定义的版本号",
     "requestHeader": "请求标头",
     "useLatestAssetDateAsReleaseDate": "使用最近文件上传时间作为发行日期",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} 和另外 1 个应用已更新。",
         "other": "“{}”和另外 {} 个应用已更新。"
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "更新 {} 和另外 1 个应用程序失败。",
+        "other": "未能更新 {} 和 {} 更多应用程序。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} 和另外 1 个应用已尝试更新。",

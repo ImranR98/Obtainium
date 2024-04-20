@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Požadované)",
     "dropdownNoOptsError": "ERROR: DROPDOWN MUSÍ MÍT AŽ JEDNU MOŽNOST",
     "colour": "Barva",
+    "standard": "Standardní",
+    "custom": "Vlastní",
+    "useMaterialYou": "Použijte materiál, který jste",
     "githubStarredRepos": "GitHub označená hvězdičkou",
     "uname": "Uživatelské jméno",
     "wrongArgNum": "Nesprávný počet zadaných argumentů",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Žádné nové aktualizace.",
     "xHasAnUpdate": "{} má aktualizaci.",
     "appsUpdated": "Aplikace aktualizovány",
+    "appsNotUpdated": "Nepodařilo se aktualizovat aplikace",
     "appsUpdatedNotifDescription": "Upozornit, že byly provedeny aktualizace jedné nebo více aplikací na pozadí",
     "xWasUpdatedToY": "{} byla aktualizována na {}",
+    "xWasNotUpdatedToY": "Nepodařilo se aktualizovat {} na {}.",
     "errorCheckingUpdates": "Chyba kontroly aktualizací",
     "errorCheckingUpdatesNotifDescription": "Zobrazit oznámení při neúspěšné kontrole aktualizací na pozadí",
     "appsRemoved": "Odstraněné aplikace",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Odhadnout novější verzi na základě prvních třiceti číslic kontrolního součtu adresy URL APK, pokud není podporována jinak",
     "selectX": "Vybrat {}",
     "parallelDownloads": "Povolit souběžné stahování",
-    "installMethod": "Metoda instalace",
-    "normal": "Normální",
-    "root": "Správce",
+    "useShizuku": "K instalaci použijte Shizuku nebo Sui",
     "shizukuBinderNotFound": "Shizuku neběží",
+    "shizukuOld": "Stará verze Shizuku (<11) - aktualizujte ji",
+    "shizukuOldAndroidWithADB": "Shizuku běží na Androidu < 8.1 s ADB - aktualizujte Android nebo místo toho použijte Sui",
+    "shizukuPretendToBeGooglePlay": "Nastavení Google Play jako zdroje instalace (pokud se používá Shizuku)",
     "useSystemFont": "Použít systémové písmo",
-    "systemFontError": "Chyba při načítání systémového písma: {}",
     "useVersionCodeAsOSVersion": "Použít kód verze aplikace jako verzi zjištěnou OS",
     "requestHeader": "Hlavička požadavku",
     "useLatestAssetDateAsReleaseDate": "Použít poslední nahrané dílo jako datum vydání",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} a 1 další aplikace mají aktualizace.",
         "other": "{} a {} další aplikace byly aktualizovány."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Nepodařilo se aktualizovat {} a 1 další aplikaci.",
+        "other": "Nepodařilo se aktualizovat {} a {} další aplikace."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} a 1 další aplikace možno aktualizovat",

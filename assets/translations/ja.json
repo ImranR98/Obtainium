@@ -22,6 +22,9 @@
     "requiredInBrackets": "(必須)",
     "dropdownNoOptsError": "エラー: ドロップダウンには、少なくとも1つのオプションが必要です",
     "colour": "カラー",
+    "standard": "スタンダード",
+    "custom": "カスタム",
+    "useMaterialYou": "使用素材",
     "githubStarredRepos": "Githubでスターしたリポジトリ",
     "uname": "ユーザー名",
     "wrongArgNum": "提供する引数の数が間違っています",
@@ -143,8 +146,10 @@
     "noNewUpdates": "新しいアップデートはありません",
     "xHasAnUpdate": "{} のアップデートが利用可能です。",
     "appsUpdated": "アプリをアップデートしました",
+    "appsNotUpdated": "アプリケーションの更新に失敗",
     "appsUpdatedNotifDescription": "1つまたは複数のAppのアップデートがバックグラウンドで適用されたことをユーザーに通知する",
     "xWasUpdatedToY": "{} が {} にアップデートされました",
+    "xWasNotUpdatedToY": "への更新に失敗しました。",
     "errorCheckingUpdates": "アップデート確認中のエラー",
     "errorCheckingUpdatesNotifDescription": "バックグラウンドでのアップデート確認に失敗した際に表示される通知",
     "appsRemoved": "削除されたアプリ",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "固定されたAPKのURLをサポートする",
     "selectX": "{} 選択",
     "parallelDownloads": "並行ダウンロードを許可する",
-    "installMethod": "インストール方法",
-    "normal": "通常",
-    "root": "Root",
+    "useShizuku": "シズクまたはスイを使って設置する",
     "shizukuBinderNotFound": "Shizukuが起動していません",
+    "shizukuOld": "古い雫バージョン (<11) - アップデートしてください。",
+    "shizukuOldAndroidWithADB": "雫、Android < 8.1でADB動作 - Androidをアップデートするか、代わりにSuiを使うか",
+    "shizukuPretendToBeGooglePlay": "インストール元をGoogle Playに設定する（雫を使用する場合）",
     "useSystemFont": "システムフォントを使用する",
-    "systemFontError": "システムフォントの読み込みエラー: {}",
     "useVersionCodeAsOSVersion": "アプリのバージョンコードをOSで検出されたバージョンとして使用する",
     "requestHeader": "リクエストヘッダー",
     "useLatestAssetDateAsReleaseDate": "最新のアセットアップロードをリリース日として使用する",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} とさらに {} 個のアプリがアップデートされました。",
         "other": "{} とさらに {} 個のアプリがアップデートされました。"
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "更新に失敗しました。",
+        "other": "アプリのアップデートに失敗しました。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",

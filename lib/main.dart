@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -118,8 +119,6 @@ void main() async {
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
-var defaultThemeColour = Colors.deepPurple;
-
 class Obtainium extends StatefulWidget {
   const Obtainium({super.key});
 
@@ -213,15 +212,13 @@ class _ObtainiumState extends State<Obtainium> {
       // Decide on a colour/brightness scheme based on OS and user settings
       ColorScheme lightColorScheme;
       ColorScheme darkColorScheme;
-      if (lightDynamic != null &&
-          darkDynamic != null &&
-          settingsProvider.colour == ColourSettings.materialYou) {
+      if (lightDynamic != null && darkDynamic != null && settingsProvider.useMaterialYou) {
         lightColorScheme = lightDynamic.harmonized();
         darkColorScheme = darkDynamic.harmonized();
       } else {
-        lightColorScheme = ColorScheme.fromSeed(seedColor: defaultThemeColour);
+        lightColorScheme = ColorScheme.fromSeed(seedColor: settingsProvider.themeColor);
         darkColorScheme = ColorScheme.fromSeed(
-            seedColor: defaultThemeColour, brightness: Brightness.dark);
+            seedColor: settingsProvider.themeColor, brightness: Brightness.dark);
       }
 
       // set the background and surface colors to pure black in the amoled theme
@@ -230,6 +227,8 @@ class _ObtainiumState extends State<Obtainium> {
             .copyWith(background: Colors.black, surface: Colors.black)
             .harmonized();
       }
+
+      if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
 
       return MaterialApp(
           title: 'Obtainium',

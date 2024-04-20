@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Verplicht)",
     "dropdownNoOptsError": "FOUTMELDING: DROPDOWN MOET TENMINSTE ÉÉN OPT HEBBEN",
     "colour": "Kleur",
+    "standard": "Standaard",
+    "custom": "Aangepast",
+    "useMaterialYou": "Gebruik materiaal",
     "githubStarredRepos": "GitHub-repo's met ster",
     "uname": "Gebruikersnaam",
     "wrongArgNum": "Onjuist aantal argumenten verstrekt.",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Geen nieuwe updates.",
     "xHasAnUpdate": "{} heeft een update.",
     "appsUpdated": "Apps bijgewerkt",
+    "appsNotUpdated": "Applicaties konden niet worden bijgewerkt",
     "appsUpdatedNotifDescription": "Stelt de gebruiker op de hoogte dat updates voor één of meer apps in de achtergrond zijn toegepast.",
     "xWasUpdatedToY": "{} is bijgewerkt naar {}.",
+    "xWasNotUpdatedToY": "Het bijwerken van {} naar {} is mislukt.",
     "errorCheckingUpdates": "Fout bij het controleren op updates",
     "errorCheckingUpdatesNotifDescription": "Een melding die verschijnt wanneer het controleren op updates in de achtergrond mislukt",
     "appsRemoved": "Apps verwijderd",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Ondersteuning vaste APK URL's",
     "selectX": "Selecteer {}",
     "parallelDownloads": "Parallelle downloads toestaan",
-    "installMethod": "Installatiemethode",
-    "normal": "Normaal",
-    "root": "Wortel",
+    "useShizuku": "Gebruik Shizuku of Sui om te installeren",
     "shizukuBinderNotFound": "Shizuku draait niet",
+    "shizukuOld": "Oude Shizuku-versie (<11) - bijwerken",
+    "shizukuOldAndroidWithADB": "Shizuku draait op Android < 8.1 met ADB - update Android of gebruik Sui in plaats daarvan",
+    "shizukuPretendToBeGooglePlay": "Google Play instellen als installatiebron (als Shizuku wordt gebruikt)",
     "useSystemFont": "Gebruik het systeemlettertype",
-    "systemFontError": "Fout bij het laden van het systeemlettertype: {}",
     "useVersionCodeAsOSVersion": "Gebruik app versieCode als door OS gedetecteerde versie",
     "requestHeader": "Verzoekkoptekst",
     "useLatestAssetDateAsReleaseDate": "Gebruik laatste upload als releasedatum",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} en nog 1 app is bijgewerkt.",
         "other": "{} en {} meer apps zijn bijgewerkt."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Bijwerken mislukt {} en nog 1 app.",
+        "other": "Mislukt om {} en {} meer apps bij te werken."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} en nog 1 app zijn mogelijk bijgewerkt.",

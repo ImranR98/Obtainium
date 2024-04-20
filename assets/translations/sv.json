@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Kräver)",
     "dropdownNoOptsError": "FEL: DROPDOWN MÅSTE HA MINST ETT OPT",
     "colour": "Färg",
+    "standard": "Standard",
+    "custom": "Anpassad",
+    "useMaterialYou": "Använd material Du",
     "githubStarredRepos": "GitHub Stjärnmärkta Förråd",
     "uname": "Användarnamn",
     "wrongArgNum": "Fel antal argument har angetts",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Inga nya uppdateringar.",
     "xHasAnUpdate": "{} har en uppdatering.",
     "appsUpdated": "Appar Uppdaterade",
+    "appsNotUpdated": "Misslyckades med att uppdatera applikationer",
     "appsUpdatedNotifDescription": "Meddelar användaren att uppdateringar av en eller flera appar har tillämpats i bakgrunden",
     "xWasUpdatedToY": "{} uppdaterades till {}.",
+    "xWasNotUpdatedToY": "Det gick inte att uppdatera {} till {}.",
     "errorCheckingUpdates": "Fel vid uppdateringskoll",
     "errorCheckingUpdatesNotifDescription": "En aviserings som visar när bakgrundsuppdateringarkollar misslyckas",
     "appsRemoved": "Appar borttagna",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Stöd fasta APK-webbadresser",
     "selectX": "Välj {}",
     "parallelDownloads": "Tillåt parallella nedladdningar",
-    "installMethod": "Installationsmetod",
-    "normal": "Vanligt",
-    "root": "Rot",
+    "useShizuku": "Använd Shizuku eller Sui för att installera",
     "shizukuBinderNotFound": "Shizuku is not running",
+    "shizukuOld": "Gammal Shizuku-version (<11) - uppdatera den",
+    "shizukuOldAndroidWithADB": "Shizuku körs på Android < 8.1 med ADB - uppdatera Android eller använd Sui istället",
+    "shizukuPretendToBeGooglePlay": "Ange Google Play som installationskälla (om Shizuku används)",
     "useSystemFont": "Använd systemteckensnittet",
-    "systemFontError": "Fel vid laddning av systemteckensnittet: {}",
     "useVersionCodeAsOSVersion": "Använd appversionskoden som OS-upptäckt version",
     "requestHeader": "Rubrik för begäran",
     "useLatestAssetDateAsReleaseDate": "Använd senaste tillgångsuppladdning som releasedatum",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} och 1 till app uppdaterades.",
         "other": "{} och {} appar till uppdaterades."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Misslyckades med att uppdatera {} och ytterligare 1 app.",
+        "other": "Det gick inte att uppdatera {} och {} fler appar."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} och 1 till app kan ha uppdaterats.",

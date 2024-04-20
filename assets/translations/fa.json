@@ -22,6 +22,9 @@
     "requiredInBrackets": "(ضروری)",
     "dropdownNoOptsError": "خطا: کشویی باید حداقل یک گزینه داشته باشد",
     "colour": "رنگ",
+    "standard": "Standard",
+    "custom": "Custom",
+    "useMaterialYou": "Use Material You",
     "githubStarredRepos": "مخازن ستاره دار گیتهاب",
     "uname": "نام کاربری",
     "wrongArgNum": "تعداد آرگومان های ارائه شده اشتباه است",
@@ -143,8 +146,10 @@
     "noNewUpdates": "به روز رسانی جدیدی وجود ندارد.",
     "xHasAnUpdate": "{} یک به روز رسانی دارد.",
     "appsUpdated": "برنامه ها به روز شدند",
+    "appsNotUpdated": "Failed to update applications",
     "appsUpdatedNotifDescription": "به کاربر اطلاع می دهد که به روز رسانی یک یا چند برنامه در پس زمینه اعمال شده است",
     "xWasUpdatedToY": "{} به {} به روز شد.",
+    "xWasNotUpdatedToY": "Failed to update {} to {}.",
     "errorCheckingUpdates": "خطا در بررسی به‌روزرسانی‌ها",
     "errorCheckingUpdatesNotifDescription": "اعلانی که وقتی بررسی به‌روزرسانی پس‌زمینه ناموفق است نشان می‌دهد",
     "appsRemoved": "برنامه ها حذف شدند",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "پشتیبانی از URL های APK ثابت",
     "selectX": "انتخاب کنید {}",
     "parallelDownloads": "اجازه دانلود موازی",
-    "installMethod": "روش نصب",
-    "normal": "طبیعی",
-    "root": "ریشه",
+    "useShizuku": "Use Shizuku or Sui to install",
     "shizukuBinderNotFound": "Shizuku در حال اجرا نیست",
+    "shizukuOld": "Old Shizuku version (<11) - update it",
+    "shizukuOldAndroidWithADB": "Shizuku running on Android < 8.1 with ADB - update Android or use Sui instead",
+    "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source (if Shizuku is used)",
     "useSystemFont": "استفاده از فونت سیستم",
-    "systemFontError": "خطا در بارگیری فونت سیستم: {}",
     "useVersionCodeAsOSVersion": "استفاده کد نسخه برنامه به جای نسخه شناسایی شده توسط سیستم عامل استفاده کنید",
     "requestHeader": "درخواست سطر بالایی",
     "useLatestAssetDateAsReleaseDate": "استفاده از آخرین بارگذاری دارایی به عنوان تاریخ انتشار",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} و 1 برنامه دیگر به روز شدند.",
         "other": "{} و {} برنامه دیگر به روز شدند."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Failed to update {} and 1 more app.",
+        "other": "Failed to update {} and {} more apps."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} و 1 برنامه دیگر ممکن است به روز شده باشند.",

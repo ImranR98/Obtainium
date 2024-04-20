@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Requerido)",
     "dropdownNoOptsError": "ERROR: EL DESPLEGABLE DEBE TENER AL MENOS UNA OPCIÓN",
     "colour": "Color",
+    "standard": "Estándar",
+    "custom": "A medida",
+    "useMaterialYou": "Utilice el material que",
     "githubStarredRepos": "Repositorios favoritos en GitHub",
     "uname": "Nombre de usuario",
     "wrongArgNum": "Número de argumentos provistos inválido",
@@ -143,8 +146,10 @@
     "noNewUpdates": "No hay nuevas actualizaciones.",
     "xHasAnUpdate": "{} tiene una actualización.",
     "appsUpdated": "Aplicaciones actualizadas",
+    "appsNotUpdated": "Error al actualizar las aplicaciones",
     "appsUpdatedNotifDescription": "Notifica al usuario de que una o más aplicaciones han sido actualizadas en segundo plano",
     "xWasUpdatedToY": "{} ha sido actualizada a {}.",
+    "xWasNotUpdatedToY": "Error al actualizar {} a {}.",
     "errorCheckingUpdates": "Error al buscar actualizaciones",
     "errorCheckingUpdatesNotifDescription": "Una notificación que muestra cuándo la comprobación de actualizaciones en segundo plano falla",
     "appsRemoved": "Aplicaciones eliminadas",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Soporte para URLs fijas de APK",
     "selectX": "Selecciona {}",
     "parallelDownloads": "Permitir descargas paralelas",
-    "installMethod": "Método de instalación",
-    "normal": "Normal",
-    "root": "Raíz",
+    "useShizuku": "Utilice Shizuku o Sui para instalar",
     "shizukuBinderNotFound": "Shizuku no funciona",
+    "shizukuOld": "Versión antigua de Shizuku (<11) - actualízala",
+    "shizukuOldAndroidWithADB": "Shizuku corriendo en Android < 8.1 con ADB - actualiza Android o usa Sui en su lugar",
+    "shizukuPretendToBeGooglePlay": "Establecer Google Play como fuente de instalación (si se utiliza Shizuku)",
     "useSystemFont": "Usar la fuente de impresión del sistema",
-    "systemFontError": "Error al cargar la fuente de impresión del sistema: {}",
     "useVersionCodeAsOSVersion": "Usar la versión de la aplicación como versión detectada por el sistema operativo",
     "requestHeader": "Encabezado de solicitud",
     "useLatestAssetDateAsReleaseDate": "Usar la última carga de recursos como fecha de lanzamiento",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} y 1 aplicación más se han actualizado.",
         "other": "{} y {} aplicaciones más se han actualizado."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Error al actualizar {} y 1 aplicación más.",
+        "other": "No se han podido actualizar {} y {} aplicaciones más."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} y 1 aplicación más podría haber sido actualizada.",

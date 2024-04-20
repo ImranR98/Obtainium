@@ -22,6 +22,9 @@
     "requiredInBrackets": "(Обов'язково)",
     "dropdownNoOptsError": "ПОМИЛКА: В ВИПАДАЮЧОМУ СПИСКУ МАЄ БУТИ ХОЧА Б ОДИН ЕЛЕМЕНТ",
     "colour": "Колір",
+    "standard": "Стандартний",
+    "custom": "Нестандартний",
+    "useMaterialYou": "Використовуйте матеріал, який ви",
     "githubStarredRepos": "Відзначені репозиторії GitHub",
     "uname": "Ім'я користувача",
     "wrongArgNum": "Надано неправильну кількість аргументів",
@@ -143,8 +146,10 @@
     "noNewUpdates": "Немає нових оновлень.",
     "xHasAnUpdate": "{} має оновлення.",
     "appsUpdated": "Застосунки оновлено",
+    "appsNotUpdated": "Не вдалося оновити програми",
     "appsUpdatedNotifDescription": "Повідомляє користувача, що оновлення одного чи декількох застосунків було застосовано в фоновому режимі",
     "xWasUpdatedToY": "{} було оновлено до {}.",
+    "xWasNotUpdatedToY": "Не вдалося оновити {} на {}.",
     "errorCheckingUpdates": "Помилка перевірки оновлень",
     "errorCheckingUpdatesNotifDescription": "Повідомлення, яке з'являється, коли перевірка оновлень в фоновому режимі завершується невдачею",
     "appsRemoved": "Застосунки видалено",
@@ -282,12 +287,12 @@
     "supportFixedAPKURL": "Підтримка фіксованих посилань на APK",
     "selectX": "Вибрати {}",
     "parallelDownloads": "Дозволити паралельні завантаження",
-    "installMethod": "Метод встановлення",
-    "normal": "Звичайний",
-    "root": "Root",
+    "useShizuku": "Використовуйте Shizuku або Sui для встановлення",
     "shizukuBinderNotFound": "Сумісний сервіс Shizuku не було знайдено",
+    "shizukuOld": "Стара версія Shizuku (<11) - оновіть її",
+    "shizukuOldAndroidWithADB": "Shizuku працює на Android < 8.1 з ADB - оновіть Android або використовуйте Sui замість нього",
+    "shizukuPretendToBeGooglePlay": "Виберіть Google Play як джерело встановлення (якщо використовується Shizuku)",
     "useSystemFont": "Використовувати системний шрифт",
-    "systemFontError": "Помилка завантаження системного шрифту: {}",
     "useVersionCodeAsOSVersion": "Використовувати код версії застосунку як версію, визначену операційною системою",
     "requestHeader": "Заголовок запиту",
     "useLatestAssetDateAsReleaseDate": "Використовувати останню дату завантаження ресурсу як дату випуску",
@@ -351,6 +356,10 @@
     "xAndNMoreUpdatesInstalled": {
         "one": "{} та ще 1 застосунок було оновлено.",
         "other": "{} та ще {} застосунків було оновлено."
+    },
+    "xAndNMoreUpdatesFailed": {
+        "one": "Не вдалося оновити {} та ще 1 програму.",
+        "other": "Не вдалося оновити {} і {} та інші програми."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} та ще 1 застосунок можливо було оновлено.",
