@@ -18,7 +18,7 @@ String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 
-enum ThemeSettings { system, light, dark }
+enum ThemeSettings { light, dark, system }
 
 enum ColourSettings { basic, materialYou }
 
@@ -60,7 +60,7 @@ class SettingsProvider with ChangeNotifier {
 
   ThemeSettings get theme {
     return ThemeSettings
-        .values[prefs?.getInt('theme') ?? ThemeSettings.system.index];
+        .values[prefs?.getInt('theme') ?? ThemeSettings.light.index];
   }
 
   set theme(ThemeSettings t) {

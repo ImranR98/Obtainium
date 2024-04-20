@@ -82,28 +82,34 @@ class _SettingsPageState extends State<SettingsPage> {
     if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
     initUpdateIntervalInterpolator();
     processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
-    var themeDropdown = DropdownButtonFormField(
-        decoration: InputDecoration(labelText: tr('theme')),
-        value: settingsProvider.theme,
-        items: [
-          DropdownMenuItem(
-            value: ThemeSettings.dark,
-            child: Text(tr('dark')),
-          ),
-          DropdownMenuItem(
-            value: ThemeSettings.light,
-            child: Text(tr('light')),
-          ),
-          DropdownMenuItem(
-            value: ThemeSettings.system,
-            child: Text(tr('followSystem')),
-          )
-        ],
-        onChanged: (value) {
-          if (value != null) {
-            settingsProvider.theme = value;
-          }
-        });
+
+    var themeDropdown = FutureBuilder(
+        builder: (ctx, val) {
+          return DropdownButtonFormField(
+              decoration: InputDecoration(labelText: tr('theme')),
+              value: settingsProvider.theme,
+              items: [
+                DropdownMenuItem(
+                  value: ThemeSettings.light,
+                  child: Text(tr('light')),
+                ),
+                DropdownMenuItem(
+                  value: ThemeSettings.dark,
+                  child: Text(tr('dark')),
+                ),
+                if ((val.data?.version.sdkInt ?? 0) >= 29) DropdownMenuItem(
+                  value: ThemeSettings.system,
+                  child: Text(tr('followSystem')),
+                )
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  settingsProvider.theme = value;
+                }
+              });
+        },
+        future: DeviceInfoPlugin().androidInfo
+    );
 
     var colourDropdown = DropdownButtonFormField(
         decoration: InputDecoration(labelText: tr('colour')),
