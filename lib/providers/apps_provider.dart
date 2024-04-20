@@ -1708,7 +1708,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   int maxRetryWaitSeconds = 5;
 
   var netResult = await (Connectivity().checkConnectivity());
-  if (netResult == ConnectivityResult.none) {
+  if (netResult.contains(ConnectivityResult.none)) {
     logs.add('BG update task: No network.');
     return;
   }
@@ -1745,8 +1745,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
 
   var networkRestricted = false;
   if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
-    networkRestricted = (netResult != ConnectivityResult.wifi) &&
-        (netResult != ConnectivityResult.ethernet);
+    networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
+        !netResult.contains(ConnectivityResult.ethernet);
   }
 
   if (toCheck.isNotEmpty) {
@@ -1790,8 +1790,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     var networkRestricted = false;
     if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
       var netResult = await (Connectivity().checkConnectivity());
-      networkRestricted = (netResult != ConnectivityResult.wifi) &&
-          (netResult != ConnectivityResult.ethernet);
+      networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
+          !netResult.contains(ConnectivityResult.ethernet);
     }
 
     try {

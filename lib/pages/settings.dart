@@ -194,31 +194,6 @@ class _SettingsPageState extends State<SettingsPage> {
           }
         });
 
-    /*var intervalDropdown = DropdownButtonFormField(
-        decoration: InputDecoration(labelText: tr('bgUpdateCheckInterval')),
-        value: settingsProvider.updateInterval,
-        items: updateIntervals.map((e) {
-          int displayNum = (e < 60
-                  ? e
-                  : e < 1440
-                      ? e / 60
-                      : e / 1440)
-              .round();
-          String display = e == 0
-              ? tr('neverManualOnly')
-              : (e < 60
-                  ? plural('minute', displayNum)
-                  : e < 1440
-                      ? plural('hour', displayNum)
-                      : plural('day', displayNum));
-          return DropdownMenuItem(value: e, child: Text(display));
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            settingsProvider.updateInterval = value;
-          }
-        });*/
-
     var intervalSlider = Slider(
       value: settingsProvider.updateIntervalSliderVal,
       max: updateIntervalNodes.length.toDouble(),

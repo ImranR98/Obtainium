@@ -26,9 +26,6 @@ enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
 enum SortOrderSettings { ascending, descending }
 
-const maxAPIRateLimitMinutes = 30;
-const minUpdateIntervalMinutes = maxAPIRateLimitMinutes + 30;
-
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
