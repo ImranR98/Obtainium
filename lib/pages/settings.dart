@@ -88,30 +88,12 @@ class _SettingsPageState extends State<SettingsPage> {
     initUpdateIntervalInterpolator();
     processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
 
-    var themeDropdown = FutureBuilder(
+    var followSystemThemeExplanation = FutureBuilder(
         builder: (ctx, val) {
-          return DropdownButtonFormField(
-              decoration: InputDecoration(labelText: tr('theme')),
-              value: settingsProvider.theme,
-              items: [
-                DropdownMenuItem(
-                  value: ThemeSettings.light,
-                  child: Text(tr('light')),
-                ),
-                DropdownMenuItem(
-                  value: ThemeSettings.dark,
-                  child: Text(tr('dark')),
-                ),
-                if ((val.data?.version.sdkInt ?? 0) >= 29) DropdownMenuItem(
-                  value: ThemeSettings.system,
-                  child: Text(tr('followSystem')),
-                )
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  settingsProvider.theme = value;
-                }
-              });
+          return ((val.data?.version.sdkInt ?? 30) < 29) ?
+          Text(tr('followSystemThemeExplanation'),
+              style: Theme.of(context).textTheme.labelSmall)
+          : const SizedBox.shrink();
         },
         future: DeviceInfoPlugin().androidInfo
     );
@@ -583,7 +565,31 @@ class _SettingsPageState extends State<SettingsPage> {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            themeDropdown,
+                            DropdownButtonFormField(
+                                decoration: InputDecoration(labelText: tr('theme')),
+                                value: settingsProvider.theme,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.system,
+                                    child: Text(tr('followSystem')),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.light,
+                                    child: Text(tr('light')),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.dark,
+                                    child: Text(tr('dark')),
+                                  )
+                                ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    settingsProvider.theme = value;
+                                  }
+                                }),
+                            height8,
+                            if (settingsProvider.theme == ThemeSettings.system)
+                              followSystemThemeExplanation,
                             height16,
                             if (settingsProvider.theme != ThemeSettings.light)
                               Row(
