@@ -367,7 +367,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             intervalSlider,
                             FutureBuilder(
                                 builder: (ctx, val) {
-                                  return ((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku
+                                  return (settingsProvider.updateInterval > 0) && (((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku)
                                       ? Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -585,7 +585,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             themeDropdown,
                             height16,
-                            Row(
+                            if (settingsProvider.theme != ThemeSettings.light)
+                              Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Flexible(child: Text(tr('useBlackTheme'))),
@@ -593,10 +594,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.useBlackTheme,
                                     onChanged: (value) {
                                       settingsProvider.useBlackTheme = value;
-                                    })
-                              ],
-                            ),
-                            height16,
+                                    }
+                                )
+                              ]
+                              ),
+                            height8,
                             useMaterialThemeSwitch,
                             if (!settingsProvider.useMaterialYou) colorPicker,
                             Row(
