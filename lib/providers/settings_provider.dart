@@ -19,7 +19,7 @@ String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 Color obtainiumThemeColor = const Color(0xFF6438B5);
 
-enum ThemeSettings { light, dark, system }
+enum ThemeSettings { system, light, dark }
 
 enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
@@ -59,7 +59,7 @@ class SettingsProvider with ChangeNotifier {
 
   ThemeSettings get theme {
     return ThemeSettings
-        .values[prefs?.getInt('theme') ?? ThemeSettings.light.index];
+        .values[prefs?.getInt('theme') ?? ThemeSettings.system.index];
   }
 
   set theme(ThemeSettings t) {

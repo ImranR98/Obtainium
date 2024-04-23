@@ -88,30 +88,12 @@ class _SettingsPageState extends State<SettingsPage> {
     initUpdateIntervalInterpolator();
     processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
 
-    var themeDropdown = FutureBuilder(
+    var followSystemThemeExplanation = FutureBuilder(
         builder: (ctx, val) {
-          return DropdownButtonFormField(
-              decoration: InputDecoration(labelText: tr('theme')),
-              value: settingsProvider.theme,
-              items: [
-                DropdownMenuItem(
-                  value: ThemeSettings.light,
-                  child: Text(tr('light')),
-                ),
-                DropdownMenuItem(
-                  value: ThemeSettings.dark,
-                  child: Text(tr('dark')),
-                ),
-                if ((val.data?.version.sdkInt ?? 0) >= 29) DropdownMenuItem(
-                  value: ThemeSettings.system,
-                  child: Text(tr('followSystem')),
-                )
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  settingsProvider.theme = value;
-                }
-              });
+          return ((val.data?.version.sdkInt ?? 30) < 29) ?
+          Text(tr('followSystemThemeExplanation'),
+              style: Theme.of(context).textTheme.labelSmall)
+          : const SizedBox.shrink();
         },
         future: DeviceInfoPlugin().androidInfo
     );
@@ -367,7 +349,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             intervalSlider,
                             FutureBuilder(
                                 builder: (ctx, val) {
-                                  return ((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku
+                                  return (settingsProvider.updateInterval > 0) && (((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku)
                                       ? Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -583,9 +565,34 @@ class _SettingsPageState extends State<SettingsPage> {
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary),
                             ),
-                            themeDropdown,
+                            DropdownButtonFormField(
+                                decoration: InputDecoration(labelText: tr('theme')),
+                                value: settingsProvider.theme,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.system,
+                                    child: Text(tr('followSystem')),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.light,
+                                    child: Text(tr('light')),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: ThemeSettings.dark,
+                                    child: Text(tr('dark')),
+                                  )
+                                ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    settingsProvider.theme = value;
+                                  }
+                                }),
+                            height8,
+                            if (settingsProvider.theme == ThemeSettings.system)
+                              followSystemThemeExplanation,
                             height16,
-                            Row(
+                            if (settingsProvider.theme != ThemeSettings.light)
+                              Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Flexible(child: Text(tr('useBlackTheme'))),
@@ -593,10 +600,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.useBlackTheme,
                                     onChanged: (value) {
                                       settingsProvider.useBlackTheme = value;
-                                    })
-                              ],
-                            ),
-                            height16,
+                                    }
+                                )
+                              ]
+                              ),
+                            height8,
                             useMaterialThemeSwitch,
                             if (!settingsProvider.useMaterialYou) colorPicker,
                             Row(

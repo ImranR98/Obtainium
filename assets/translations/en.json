@@ -113,6 +113,7 @@
     "dark": "Dark",
     "light": "Light",
     "followSystem": "Follow System",
+    "followSystemThemeExplanation": "Following system theme is possible only by using third-party applications",
     "useBlackTheme": "Use pure black dark theme",
     "appSortBy": "App Sort By",
     "authorName": "Author/Name",

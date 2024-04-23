@@ -84,7 +84,7 @@ class HuaweiAppGallery extends AppSource {
     }
     var relDate = relDateStrAdj == null
         ? null
-        : DateFormat('yy-MM-dd-HH-mm').parse(relDateStrAdj.join(''));
+        : DateFormat('yy-MM-dd-HH-mm', 'en_US').parse(relDateStrAdj.join(''));
     if (relDateStr == null) {
       throw NoVersionError();
     }
