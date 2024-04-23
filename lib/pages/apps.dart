@@ -882,11 +882,10 @@ class AppsPageState extends State<AppsPage> {
                           onPressed: selectedAppIds.isEmpty
                               ? null
                               : () {
-                                  String urls =
-                                      '<p>${tr('customLinkMessage')}:</p>\n\n<ul>\n';
+                                  String urls = '';
                                   for (var a in selectedApps) {
                                     urls +=
-                                        '    <li><a href="obtainium://app/${Uri.encodeComponent(jsonEncode({
+                                        'https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({
                                           'id': a.id,
                                           'url': a.url,
                                           'author': a.author,
@@ -895,10 +894,8 @@ class AppsPageState extends State<AppsPage> {
                                               a.preferredApkIndex,
                                           'additionalSettings':
                                               jsonEncode(a.additionalSettings)
-                                        }))}">${a.name}</a></li>\n';
+                                        }))}\n\n';
                                   }
-                                  urls +=
-                                      '</ul>\n\n<p><a href="$obtainiumUrl">${tr('about')}</a></p>';
                                   Share.share(urls,
                                       subject:
                                           'Obtainium - ${tr('appsString')}');

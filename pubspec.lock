@@ -79,10 +79,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_fetch
-      sha256: dbffec0317ccdef6e2014cb543e147f52441e29c4fcb53dfd23558c4d92ddece
+      sha256: "81d0d4eeecd17c971335438a5a55554c8302f479f92c7f7bc7f147f75d3f6074"
       url: "https://pub.dev"
     source: hosted
-    version: "1.3.2"
+    version: "1.3.3"
   boolean_selector:
     dependency: transitive
     description:
@@ -135,10 +135,10 @@ packages:
     dependency: "direct main"
     description:
       name: connectivity_plus
-      sha256: ebe15d94de9dd7c31dc2ac54e42780acdf3384b1497c69290c9f3c5b0279fc57
+      sha256: db7a4e143dc72cc3cb2044ef9b052a7ebfe729513e6a82943bc3526f784365b8
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.2"
+    version: "6.0.3"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -223,10 +223,10 @@ packages:
     dependency: "direct main"
     description:
       name: easy_localization
-      sha256: c145aeb6584aedc7c862ab8c737c3277788f47488bfdf9bae0fe112bd0a4789c
+      sha256: "432698c31a488dd64c56d4759f20d04844baba5e9e4f2cb1abb9676257918b17"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.5"
+    version: "3.0.6"
   easy_logger:
     dependency: transitive
     description:
@@ -271,10 +271,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: b6283d7387310ad83bc4f3bc245b75d223a032ae6eba275afcd585de2b9a1476
+      sha256: "45c70b43df893027e441a6fa0aacc8f484fb9f9c60c746dc8f1dc4f774cf55cd"
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.1"
+    version: "8.0.2"
   fixnum:
     dependency: transitive
     description:
@@ -340,10 +340,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_local_notifications
-      sha256: a701df4866f9a38bb8e4450a54c143bbeeb0ce2381e7df5a36e1006f3b43bb28
+      sha256: "8cdc719114ab1c86c64bb7a86d3a679674c3637edd229e3a994797d4a1504ce4"
       url: "https://pub.dev"
     source: hosted
-    version: "17.0.1"
+    version: "17.1.0"
   flutter_local_notifications_linux:
     dependency: transitive
     description:
@@ -356,10 +356,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_local_notifications_platform_interface
-      sha256: "7cf643d6d5022f3baed0be777b0662cce5919c0a7b86e700299f22dc4ae660ef"
+      sha256: "340abf67df238f7f0ef58f4a26d2a83e1ab74c77ab03cd2b2d5018ac64db30b7"
       url: "https://pub.dev"
     source: hosted
-    version: "7.0.0+1"
+    version: "7.1.0"
   flutter_localizations:
     dependency: transitive
     description: flutter
@@ -715,18 +715,18 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: fb5319f3aab4c5dda5ebb92dca978179ba21f8c783ee4380910ef4c1c6824f51
+      sha256: ef3489a969683c4f3d0239010cc8b7a2a46543a8d139e111c06c558875083544
       url: "https://pub.dev"
     source: hosted
-    version: "8.0.3"
+    version: "9.0.0"
   share_plus_platform_interface:
     dependency: transitive
     description:
       name: share_plus_platform_interface
-      sha256: "251eb156a8b5fa9ce033747d73535bf53911071f8d3b6f4f0b578505ce0d4496"
+      sha256: "0f9e4418835d1b2c3ae78fdb918251959106cefdbc4dd43526e182f80e82f6d4"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.0"
+    version: "4.0.0"
   shared_preferences:
     dependency: "direct main"
     description:

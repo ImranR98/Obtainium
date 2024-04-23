@@ -243,19 +243,28 @@ class HTML extends AppSource {
     if ((additionalSettings['customLinkFilterRegex'] as String?)?.isNotEmpty ==
         true) {
       var reg = RegExp(additionalSettings['customLinkFilterRegex']);
-      links = allLinks
-          .where((element) => reg.hasMatch(
-              filterLinkByText ? element.value : Uri.decodeFull(element.key)))
-          .toList();
+      links = allLinks.where((element) {
+        var link = element.key;
+        try {
+          link = Uri.decodeFull(element.key);
+        } catch (e) {
+          // Some links may not have valid encoding
+        }
+        return reg.hasMatch(filterLinkByText ? element.value : link);
+      }).toList();
     } else {
-      links = allLinks
-          .where((element) => Uri.parse(filterLinkByText
-                  ? element.value
-                  : Uri.decodeFull(element.key))
-              .path
-              .toLowerCase()
-              .endsWith('.apk'))
-          .toList();
+      links = allLinks.where((element) {
+        var link = element.key;
+        try {
+          link = Uri.decodeFull(element.key);
+        } catch (e) {
+          // Some links may not have valid encoding
+        }
+        return Uri.parse(filterLinkByText ? element.value : link)
+            .path
+            .toLowerCase()
+            .endsWith('.apk');
+      }).toList();
     }
     if (!skipSort) {
       links.sort((a, b) => additionalSettings['sortByLastLinkSegment'] == true
@@ -310,13 +319,19 @@ class HTML extends AppSource {
       links = [MapEntry(currentUrl, currentUrl)];
     }
     var rel = links.last.key;
+    var relDecoded = rel;
+    try {
+      relDecoded = Uri.decodeFull(rel);
+    } catch (e) {
+      // Some links may not have valid encoding
+    }
     String? version;
     version = extractVersion(
         additionalSettings['versionExtractionRegEx'] as String?,
         additionalSettings['matchGroupToUse'] as String?,
         additionalSettings['versionExtractWholePage'] == true
             ? versionExtractionWholePageString
-            : Uri.decodeFull(rel));
+            : relDecoded);
     version ??=
         additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
             ? rel.hashCode.toString()
