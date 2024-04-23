@@ -258,7 +258,7 @@
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "versionExtractionRegEx": "Version String Extraction RegEx",
-    "matchGroupToUse": "Match Group to Use for Version String Extraction Regex",
+    "matchGroupToUse": "Match Group to Use for Version String Extraction RegEx",
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Pick Export Directory",
     "autoExportOnChanges": "Auto-export on changes",
