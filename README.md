@@ -44,7 +44,7 @@ You can find crowdsourced app configurations at [apps.obtainium.imranr.dev](http
 
 If you can't find the configuration for an app you want, feel free to leave a request on the [discussions page](https://github.com/ImranR98/apps.obtainium.imranr.dev/discussions/new?category=app-requests).
 
-Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/Imran98/apps.obtainium.imranr.dev).
+Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/ImranR98/apps.obtainium.imranr.dev).
 
 ## Installation
 
