@@ -29,14 +29,22 @@ Currently supported App sources:
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - Jenkins Jobs
 - Open Source - App-Specific:
-  - [Mullvad](https://mullvad.net/en/)
   - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)
 - Other - App-Specific:
   - [WhatsApp](https://whatsapp.com)
   - [Telegram App](https://telegram.org)
   - [Neutron Code](https://neutroncode.com)
+- Direct APK Link
 - "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
+
+## Finding App Configurations
+
+You can find crowdsourced app configurations at [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev).
+
+If you can't find the configuration for an app you want, feel free to leave a request on the [discussions page](https://github.com/ImranR98/apps.obtainium.imranr.dev/discussions/new?category=app-requests).
+
+Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/ImranR98/apps.obtainium.imranr.dev).
 
 ## Installation
 

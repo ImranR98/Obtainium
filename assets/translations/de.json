@@ -113,7 +113,7 @@
     "dark": "Dunkel",
     "light": "Hell",
     "followSystem": "System folgen",
-    "followSystemThemeExplanation": "Das folgende Systemthema ist nur durch die Verwendung von Drittanbieteranwendungen möglich",
+    "followSystemThemeExplanation": "Das Folgen des Systemthemes ist unter Android <10 nur mit Hilfe von Drittanbieteranwendungen möglich",
     "useBlackTheme": "Verwende Pure Black Dark Theme",
     "appSortBy": "App sortieren nach",
     "authorName": "Autor/Name",
