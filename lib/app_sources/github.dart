@@ -273,10 +273,11 @@ class GitHub extends AppSource {
 
       List<MapEntry<String, String>> getReleaseAssetUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)?.map((e) {
-            return (e['name'] != null) &&
-                    ((e['url'] ?? e['browser_download_url']) != null)
-                ? MapEntry(e['name'] as String,
-                    (e['url'] ?? e['browser_download_url']) as String)
+            var url = !e['name'].toString().toLowerCase().endsWith('.apk')
+                ? (e['browser_download_url'] ?? e['url'])
+                : (e['url'] ?? e['browser_download_url']);
+            return (e['name'] != null) && (url != null)
+                ? MapEntry(e['name'] as String, url as String)
                 : const MapEntry('', '');
           }).toList() ??
           [];
