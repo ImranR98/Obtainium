@@ -175,9 +175,8 @@ class _AppPageState extends State<AppPage> {
                 tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      decoration:
-                          changeLogFn != null ? TextDecoration.underline : null,
-                      fontStyle: changeLogFn != null ? FontStyle.italic : null,
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic,
                     ),
               ),
             ),

@@ -223,6 +223,7 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
     ext = 'apk';
   }
+  fileName = fileName.split('/').last; // Ensure the fileName is a file name
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
