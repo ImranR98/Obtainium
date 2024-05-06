@@ -133,7 +133,7 @@ class _AppPageState extends State<AppPage> {
                         child: Text(
                           app?.app.releaseDate == null
                               ? tr('changes')
-                              : app!.app.releaseDate.toString(),
+                              : app!.app.releaseDate!.toLocal().toString(),
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.labelSmall!.copyWith(

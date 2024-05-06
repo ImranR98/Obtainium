@@ -66,7 +66,7 @@ dependencies:
   connectivity_plus: ^6.0.1
   shared_storage: ^0.8.0
   crypto: ^3.0.3
-  app_links: ^4.0.0
+  app_links: ^6.0.1
   background_fetch: ^1.2.1
   equations: ^5.0.2
   flex_color_picker: ^3.4.1
