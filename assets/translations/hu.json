@@ -113,6 +113,7 @@
     "dark": "Sötét",
     "light": "Világos",
     "followSystem": "Rendszer szerint",
+    "followSystemThemeExplanation": "A következő rendszer téma csak harmadik féltől származó alkalmazások használatával lehetséges",
     "useBlackTheme": "Használjon teljesen fekete sötét témát",
     "appSortBy": "App rendezés...",
     "authorName": "Szerző/Név",
@@ -309,6 +310,8 @@
     "badDownload": "Az APK-t nem lehetett elemezni (inkompatibilis vagy részleges letöltés)",
     "beforeNewInstallsShareToAppVerifier": "Új alkalmazások megosztása az AppVerifierrel (ha elérhető)",
     "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
+    "wiki": "Súgó/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (használat saját felelősségre)",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

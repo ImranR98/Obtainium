@@ -113,6 +113,7 @@
     "dark": "Donker",
     "light": "Licht",
     "followSystem": "Volg systeem",
+    "followSystemThemeExplanation": "Het volgende systeemthema is alleen mogelijk met toepassingen van derden",
     "useBlackTheme": "Gebruik zwart thema",
     "appSortBy": "App sorteren op",
     "authorName": "Auteur/Naam",
@@ -309,6 +310,8 @@
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
     "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
     "appVerifierInstructionToast": "Deel naar AppVerifier en keer hier terug als je klaar bent.",
+    "wiki": "Help/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

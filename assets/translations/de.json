@@ -113,6 +113,7 @@
     "dark": "Dunkel",
     "light": "Hell",
     "followSystem": "System folgen",
+    "followSystemThemeExplanation": "Das folgende Systemthema ist nur durch die Verwendung von Drittanbieteranwendungen möglich",
     "useBlackTheme": "Verwende Pure Black Dark Theme",
     "appSortBy": "App sortieren nach",
     "authorName": "Autor/Name",
@@ -309,6 +310,8 @@
     "badDownload": "Die APK konnte nicht geparst werden (inkompatibler oder teilweiser Download)",
     "beforeNewInstallsShareToAppVerifier": "Neue Apps mit AppVerifier teilen (falls verfügbar)",
     "appVerifierInstructionToast": "Geben Sie die Daten an AppVerifier weiter und kehren Sie dann hierher zurück, wenn Sie fertig sind.",
+    "wiki": "Hilfe/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (Verwendung auf eigene Gefahr)",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

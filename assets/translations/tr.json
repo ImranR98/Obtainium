@@ -113,6 +113,7 @@
     "dark": "Koyu",
     "light": "Aydınlık",
     "followSystem": "Sistemi Takip Et",
+    "followSystemThemeExplanation": "Sistem temasını takip etmek yalnızca üçüncü taraf uygulamaları kullanarak mümkündür",
     "useBlackTheme": "Saf siyah koyu temasını kullan",
     "appSortBy": "Uygulama Sıralama Ölçütü",
     "authorName": "Yazar/Ad",
@@ -309,6 +310,8 @@
     "badDownload": "APK ayrıştırılamadı (uyumsuz veya kısmi indirme)",
     "beforeNewInstallsShareToAppVerifier": "Yeni Uygulamaları AppVerifier ile paylaşın (varsa)",
     "appVerifierInstructionToast": "AppVerifier ile paylaşın, hazır olduğunuzda buraya dönün.",
+    "wiki": "Yardım/Wiki",
+    "crowdsourcedConfigsLabel": "Kitle Kaynaklı Uygulama Yapılandırmaları (riski size ait olmak üzere kullanın)",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

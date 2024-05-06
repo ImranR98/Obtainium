@@ -113,6 +113,7 @@
     "dark": "Tối",
     "light": "Sáng",
     "followSystem": "Theo hệ thống",
+    "followSystemThemeExplanation": "Following system theme is possible only by using third-party applications",
     "useBlackTheme": "Nền đen",
     "appSortBy": "Sắp xếp ứng dụng",
     "authorName": "Tác giả",
@@ -309,6 +310,8 @@
     "badDownload": "Không thể phân tích cú pháp APK (tải xuống một phần hoặc không tương thích)",
     "beforeNewInstallsShareToAppVerifier": "Chia sẻ ứng dụng mới với AppVerifier (nếu có)",
     "appVerifierInstructionToast": "Chia sẻ lên AppVerifier, sau đó quay lại đây khi sẵn sàng.",
+    "wiki": "Help/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

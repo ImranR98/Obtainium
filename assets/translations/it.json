@@ -113,6 +113,7 @@
     "dark": "Scuro",
     "light": "Chiaro",
     "followSystem": "Segui il sistema",
+    "followSystemThemeExplanation": "È possibile seguire il tema di sistema solo utilizzando applicazioni di terze parti.",
     "useBlackTheme": "Usa il tema nero puro",
     "appSortBy": "App ordinate per",
     "authorName": "Autore/Nome",
@@ -309,6 +310,8 @@
     "badDownload": "Non è stato possibile analizzare l'APK (download incompatibile o parziale).",
     "beforeNewInstallsShareToAppVerifier": "Condividere le nuove applicazioni con AppVerifier (se disponibile)",
     "appVerifierInstructionToast": "Condividete con AppVerifier, quindi tornate qui quando siete pronti.",
+    "wiki": "Aiuto/Wiki",
+    "crowdsourcedConfigsLabel": "Configurazioni di app in crowdsourcing (uso a proprio rischio)",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

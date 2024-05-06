@@ -113,6 +113,7 @@
     "dark": "深色",
     "light": "浅色",
     "followSystem": "跟随系统",
+    "followSystemThemeExplanation": "只有使用第三方应用程序，才有可能跟踪系统主题",
     "useBlackTheme": "使用纯黑深色主题",
     "appSortBy": "排序依据",
     "authorName": "作者 / 应用名称",
@@ -309,6 +310,8 @@
     "badDownload": "无法解析 APK 文件（不兼容或文件不完整）",
     "beforeNewInstallsShareToAppVerifier": "与 AppVerifier 共享新应用程序（如有）",
     "appVerifierInstructionToast": "分享到 AppVerifier，准备就绪后返回此处。",
+    "wiki": "帮助/维基",
+    "crowdsourcedConfigsLabel": "众包应用程序配置（使用风险自负）",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

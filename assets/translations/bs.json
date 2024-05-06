@@ -113,6 +113,7 @@
     "dark": "Tamna",
     "light": "Svijetla",
     "followSystem": "Pratite sistem",
+    "followSystemThemeExplanation": "Following system theme is possible only by using third-party applications",
     "useBlackTheme": "Koristite čisto crnu tamnu temu",
     "appSortBy": "Aplikacije sortirane po",
     "authorName": "Autor/Ime",
@@ -309,6 +310,8 @@
     "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
     "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
+    "wiki": "Help/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

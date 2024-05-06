@@ -113,6 +113,7 @@
     "dark": "ダーク",
     "light": "ライト",
     "followSystem": "システムに従う",
+    "followSystemThemeExplanation": "以下のシステムテーマは、サードパーティのアプリケーションを使用することによってのみ可能です。",
     "useBlackTheme": "ピュアブラックダークテーマを使用する",
     "appSortBy": "アプリの並び方",
     "authorName": "作者名/アプリ名",
@@ -309,6 +310,8 @@
     "badDownload": "APK を解析できませんでした（互換性がないか、部分的にダウンロードされています）。",
     "beforeNewInstallsShareToAppVerifier": "AppVerifierで新しいアプリを共有する（利用可能な場合）",
     "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
+    "wiki": "ヘルプ/ウィキ",
+    "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
