@@ -6,7 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class HuaweiAppGallery extends AppSource {
   HuaweiAppGallery() {
     name = 'Huawei AppGallery';
-    hosts = ['appgallery.huawei.com'];
+    hosts = ['appgallery.huawei.com', 'appgallery.cloud.huawei.com'];
     versionDetectionDisallowed = true;
     showReleaseDateAsVersionToggle = true;
   }
@@ -14,7 +14,7 @@ class HuaweiAppGallery extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/app/[^/]+',
+        '^https?://(www\\.)?${getSourceRegex(hosts)}(/#)?/(app|appdl)/[^/]+',
         caseSensitive: false);
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
@@ -24,7 +24,7 @@ class HuaweiAppGallery extends AppSource {
   }
 
   getDlUrl(String standardUrl) =>
-      'https://${hosts[0].replaceAll('appgallery.', 'appgallery.cloud.')}/appdl/${standardUrl.split('/').last}';
+      'https://${hosts[0].replaceAll('appgallery.huawei', 'appgallery.cloud.huawei')}/appdl/${standardUrl.split('/').last}';
 
   requestAppdlRedirect(
       String dlUrl, Map<String, dynamic> additionalSettings) async {
