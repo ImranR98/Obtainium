@@ -113,6 +113,7 @@
     "dark": "Темна",
     "light": "Світла",
     "followSystem": "Дотримуватися системи",
+    "followSystemThemeExplanation": "Зміна теми системи можлива лише за допомогою сторонніх додатків",
     "useBlackTheme": "Використовувати чорну тему (Amoled)",
     "appSortBy": "Сортувати застосунки за",
     "authorName": "Автор/Назва",
@@ -309,6 +310,8 @@
     "badDownload": "APK не вдалося розпарсити (несумісний або часткове завантаження)",
     "beforeNewInstallsShareToAppVerifier": "Діліться новими додатками з AppVerifier (якщо доступно)",
     "appVerifierInstructionToast": "Надішліть на AppVerifier, а потім поверніться сюди, коли будете готові.",
+    "wiki": "Довідка/Вікі",
+    "crowdsourcedConfigsLabel": "Краудсорсингові конфігурації додатків (використовуйте на свій страх і ризик)",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

@@ -119,7 +119,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Check initial link if app was in cold state (terminated)
-    final appLink = await _appLinks.getInitialAppLink();
+    final appLink = await _appLinks.getInitialLink();
     if (appLink != null) {
       await interpretLink(appLink);
     }

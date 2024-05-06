@@ -142,19 +142,20 @@ List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
   return arr;
 }
 
-Future<File> downloadFileWithRetry(
-    String url, String fileNameNoExt, Function? onProgress, String destDir,
+Future<File> downloadFileWithRetry(String url, String fileName,
+    bool fileNameHasExt, Function? onProgress, String destDir,
     {bool useExisting = true,
     Map<String, String>? headers,
     int retries = 3}) async {
   try {
-    return await downloadFile(url, fileNameNoExt, onProgress, destDir,
+    return await downloadFile(
+        url, fileName, fileNameHasExt, onProgress, destDir,
         useExisting: useExisting, headers: headers);
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(const Duration(seconds: 5));
       return await downloadFileWithRetry(
-          url, fileNameNoExt, onProgress, destDir,
+          url, fileName, fileNameHasExt, onProgress, destDir,
           useExisting: useExisting, headers: headers, retries: (retries - 1));
     } else {
       rethrow;
@@ -201,8 +202,8 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
   return hashListOfLists(bytes);
 }
 
-Future<File> downloadFile(
-    String url, String fileNameNoExt, Function? onProgress, String destDir,
+Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
+    Function? onProgress, String destDir,
     {bool useExisting = true, Map<String, String>? headers}) async {
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
@@ -222,7 +223,12 @@ Future<File> downloadFile(
   if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
     ext = 'apk';
   }
-  File downloadedFile = File('$destDir/$fileNameNoExt.$ext');
+  fileName = fileName.split('/').last; // Ensure the fileName is a file name
+  File downloadedFile = File('$destDir/$fileName.$ext');
+  if (fileNameHasExt) {
+    // If the user says the filename already has an ext, ignore whatever you inferred from above
+    downloadedFile = File('$destDir/$fileName');
+  }
 
   bool rangeFeatureEnabled = false;
   if (resHeaders['accept-ranges']?.isNotEmpty == true) {
@@ -435,8 +441,8 @@ class AppsProvider with ChangeNotifier {
       var headers = await source.getRequestHeaders(app.additionalSettings,
           forAPKDownload: true);
       var downloadedFile = await downloadFileWithRetry(
-          downloadUrl, fileNameNoExt,
-          headers: headers, (double? progress) {
+          downloadUrl, fileNameNoExt, false, headers: headers,
+          (double? progress) {
         int? prog = progress?.ceil();
         if (apps[app.id] != null) {
           apps[app.id]!.downloadProgress = progress;
@@ -969,15 +975,8 @@ class AppsProvider with ChangeNotifier {
         if (!downloadsAccessible && exportDir != null) {
           downloadPath = exportDir.path;
         }
-        await downloadFile(
-            fileUrl.value,
-            fileUrl.key
-                .split('.')
-                .reversed
-                .toList()
-                .sublist(1)
-                .reversed
-                .join('.'), (double? progress) {
+        await downloadFile(fileUrl.value, fileUrl.key, true,
+            (double? progress) {
           notificationsProvider
               .notify(DownloadNotification(fileUrl.key, progress?.ceil() ?? 0));
         }, downloadPath,

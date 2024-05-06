@@ -113,6 +113,7 @@
     "dark": "تاریک",
     "light": "روشن",
     "followSystem": "هماهنگ با سیستم",
+    "followSystemThemeExplanation": "Following system theme is possible only by using third-party applications",
     "useBlackTheme": "استفاده از تم تیره سیاه خالص",
     "appSortBy": "مرتب سازی برنامه بر اساس",
     "authorName": "سازنده/اسم",
@@ -309,6 +310,8 @@
     "badDownload": "The APK could not be parsed (incompatible or partial download)",
     "beforeNewInstallsShareToAppVerifier": "Share new Apps with AppVerifier (if available)",
     "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
+    "wiki": "Help/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

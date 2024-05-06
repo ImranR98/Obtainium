@@ -113,6 +113,7 @@
     "dark": "Ciemny",
     "light": "Jasny",
     "followSystem": "Zgodny z systemem",
+    "followSystemThemeExplanation": "Podążanie za motywem systemowym jest możliwe tylko przy użyciu aplikacji firm trzecich",
     "useBlackTheme": "Użyj czarnego motywu",
     "appSortBy": "Sortuj aplikacje według",
     "authorName": "Autor/Nazwa",
@@ -309,6 +310,8 @@
     "badDownload": "Nie można przeanalizować pliku APK (niekompatybilny lub częściowo pobrany).",
     "beforeNewInstallsShareToAppVerifier": "Udostępnianie nowych aplikacji za pomocą AppVerifier (jeśli dostępne)",
     "appVerifierInstructionToast": "Udostępnij w AppVerifier, a następnie wróć tutaj, gdy będziesz gotowy.",
+    "wiki": "Pomoc/Wiki",
+    "crowdsourcedConfigsLabel": "Konfiguracje aplikacji pochodzące z crowdsourcingu (korzystanie na własne ryzyko)",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

@@ -310,6 +310,8 @@
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
     "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
     "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
+    "wiki": "Help/Wiki",
+    "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

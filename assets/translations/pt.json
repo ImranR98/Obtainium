@@ -113,6 +113,7 @@
     "dark": "Escuro",
     "light": "Claro",
     "followSystem": "Padrão do sistema",
+    "followSystemThemeExplanation": "O tema do sistema seguinte só é possível através da utilização de aplicações de terceiros",
     "useBlackTheme": "Usar tema preto AMOLED",
     "appSortBy": "Classificar aplicativo por",
     "authorName": "Autor/Nome",
@@ -309,6 +310,8 @@
     "badDownload": "Não foi possível analisar o APK (transferência incompatível ou parcial)",
     "beforeNewInstallsShareToAppVerifier": "Partilhar novas aplicações com o AppVerifier (se disponível)",
     "appVerifierInstructionToast": "Partilhe com o AppVerifier e, em seguida, regresse aqui quando estiver pronto.",
+    "wiki": "Ajuda/Wiki",
+    "crowdsourcedConfigsLabel": "Configurações de aplicações de crowdsourcing (utilização por sua conta e risco)",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

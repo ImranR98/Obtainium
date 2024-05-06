@@ -113,6 +113,7 @@
     "dark": "Tmavé",
     "light": "Světlé",
     "followSystem": "Jako systém",
+    "followSystemThemeExplanation": "Sledování motivu systému je možné pouze pomocí aplikací třetích stran.",
     "useBlackTheme": "Použít čistě černé tmavé téma",
     "appSortBy": "Seřadit podle",
     "authorName": "Autor/Jméno",
@@ -309,6 +310,8 @@
     "badDownload": "APK nelze analyzovat (nekompatibilní nebo částečné stažení)",
     "beforeNewInstallsShareToAppVerifier": "Sdílení nových aplikací s aplikací AppVerifier (pokud je k dispozici)",
     "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
+    "wiki": "Nápověda/Wiki",
+    "crowdsourcedConfigsLabel": "Konfigurace aplikací s využitím crowdsourcingu (použití na vlastní nebezpečí)",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

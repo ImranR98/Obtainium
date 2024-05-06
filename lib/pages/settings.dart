@@ -26,20 +26,33 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   List<int> updateIntervalNodes = [
-    15, 30, 60, 120, 180, 360, 720, 1440, 4320, 10080, 20160, 43200];
+    15,
+    30,
+    60,
+    120,
+    180,
+    360,
+    720,
+    1440,
+    4320,
+    10080,
+    20160,
+    43200
+  ];
   int updateInterval = 0;
-  late SplineInterpolation updateIntervalInterpolator;  // 🤓
+  late SplineInterpolation updateIntervalInterpolator; // 🤓
   String updateIntervalLabel = tr('neverManualOnly');
   bool showIntervalLabel = true;
   final Map<ColorSwatch<Object>, String> colorsNameMap =
-  <ColorSwatch<Object>, String> {
+      <ColorSwatch<Object>, String>{
     ColorTools.createPrimarySwatch(obtainiumThemeColor): 'Obtainium'
   };
 
   void initUpdateIntervalInterpolator() {
     List<InterpolationNode> nodes = [];
     for (final (index, element) in updateIntervalNodes.indexed) {
-      nodes.add(InterpolationNode(x: index.toDouble()+1, y: element.toDouble()));
+      nodes.add(
+          InterpolationNode(x: index.toDouble() + 1, y: element.toDouble()));
     }
     updateIntervalInterpolator = SplineInterpolation(nodes: nodes);
   }
@@ -69,7 +82,7 @@ class _SettingsPageState extends State<SettingsPage> {
       int valRounded = (valInterpolated / 30).floor() * 30;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded / 60);
-    } else if (valInterpolated < 7 * 24 * 60){
+    } else if (valInterpolated < 7 * 24 * 60) {
       int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
       updateInterval = valRounded;
       updateIntervalLabel = plural('day', valRounded / (24 * 60));
@@ -90,21 +103,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
     var followSystemThemeExplanation = FutureBuilder(
         builder: (ctx, val) {
-          return ((val.data?.version.sdkInt ?? 30) < 29) ?
-          Text(tr('followSystemThemeExplanation'),
-              style: Theme.of(context).textTheme.labelSmall)
-          : const SizedBox.shrink();
+          return ((val.data?.version.sdkInt ?? 30) < 29)
+              ? Text(tr('followSystemThemeExplanation'),
+                  style: Theme.of(context).textTheme.labelSmall)
+              : const SizedBox.shrink();
         },
-        future: DeviceInfoPlugin().androidInfo
-    );
+        future: DeviceInfoPlugin().androidInfo);
 
     Future<bool> colorPickerDialog() async {
       return ColorPicker(
         color: settingsProvider.themeColor,
         onColorChanged: (Color color) =>
-            setState(() =>
-            settingsProvider.themeColor = color
-            ),
+            setState(() => settingsProvider.themeColor = color),
         actionButtons: const ColorPickerActionButtons(
           okButton: true,
           closeButton: true,
@@ -137,19 +147,17 @@ class _SettingsPageState extends State<SettingsPage> {
         showColorName: true,
         materialNameTextStyle: Theme.of(context).textTheme.bodySmall,
         colorNameTextStyle: Theme.of(context).textTheme.bodySmall,
-        copyPasteBehavior: const ColorPickerCopyPasteBehavior(longPressMenu: true),
+        copyPasteBehavior:
+            const ColorPickerCopyPasteBehavior(longPressMenu: true),
       ).showPickerDialog(
         context,
-        transitionBuilder: (BuildContext context,
-            Animation<double> a1, Animation<double> a2, Widget widget) {
+        transitionBuilder: (BuildContext context, Animation<double> a1,
+            Animation<double> a2, Widget widget) {
           final double curvedValue = Curves.easeInCubic.transform(a1.value);
           return Transform(
             alignment: Alignment.center,
             transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
-            child: Opacity(
-                opacity: curvedValue,
-                child: widget
-            ),
+            child: Opacity(opacity: curvedValue, child: widget),
           );
         },
         transitionDuration: const Duration(milliseconds: 250),
@@ -157,46 +165,44 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     var colorPicker = ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      title: Text(tr('selectX', args: [tr('colour')])),
-      subtitle: Text("${ColorTools.nameThatColor(settingsProvider.themeColor)} "
-          "(${ColorTools.materialNameAndCode(settingsProvider.themeColor,
-              colorSwatchNameMap: colorsNameMap)})"),
-      trailing: ColorIndicator(
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        color: settingsProvider.themeColor,
-        onSelectFocus: false,
-        onSelect: () async {
-          final Color colorBeforeDialog = settingsProvider.themeColor;
-          if (!(await colorPickerDialog())) {
-            setState(() {
-              settingsProvider.themeColor = colorBeforeDialog;
-            });
-          }
-        }
-      )
-    );
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        title: Text(tr('selectX', args: [tr('colour')])),
+        subtitle: Text(
+            "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
+            "(${ColorTools.materialNameAndCode(settingsProvider.themeColor, colorSwatchNameMap: colorsNameMap)})"),
+        trailing: ColorIndicator(
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            color: settingsProvider.themeColor,
+            onSelectFocus: false,
+            onSelect: () async {
+              final Color colorBeforeDialog = settingsProvider.themeColor;
+              if (!(await colorPickerDialog())) {
+                setState(() {
+                  settingsProvider.themeColor = colorBeforeDialog;
+                });
+              }
+            }));
 
     var useMaterialThemeSwitch = FutureBuilder(
         builder: (ctx, val) {
-          return ((val.data?.version.sdkInt ?? 0) >= 31) ?
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(child: Text(tr('useMaterialYou'))),
-              Switch(
-                  value: settingsProvider.useMaterialYou,
-                  onChanged: (value) {
-                    settingsProvider.useMaterialYou = value;
-                  })
-            ],
-          ) : const SizedBox.shrink();
+          return ((val.data?.version.sdkInt ?? 0) >= 31)
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(child: Text(tr('useMaterialYou'))),
+                    Switch(
+                        value: settingsProvider.useMaterialYou,
+                        onChanged: (value) {
+                          settingsProvider.useMaterialYou = value;
+                        })
+                  ],
+                )
+              : const SizedBox.shrink();
         },
-        future: DeviceInfoPlugin().androidInfo
-    );
+        future: DeviceInfoPlugin().androidInfo);
 
     var sortDropdown = DropdownButtonFormField(
         isExpanded: true,
@@ -343,13 +349,20 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             //intervalDropdown,
                             height16,
-                            if (showIntervalLabel) SizedBox(
-                                child: Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-                            ) else const SizedBox(height: 16),
+                            if (showIntervalLabel)
+                              SizedBox(
+                                  child: Text(
+                                      "${tr('bgUpdateCheckInterval')}: $updateIntervalLabel"))
+                            else
+                              const SizedBox(height: 16),
                             intervalSlider,
                             FutureBuilder(
                                 builder: (ctx, val) {
-                                  return (settingsProvider.updateInterval > 0) && (((val.data?.version.sdkInt ?? 0) >= 30) || settingsProvider.useShizuku)
+                                  return (settingsProvider.updateInterval >
+                                              0) &&
+                                          (((val.data?.version.sdkInt ?? 0) >=
+                                                  30) ||
+                                              settingsProvider.useShizuku)
                                       ? Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -491,33 +504,33 @@ class _SettingsPageState extends State<SettingsPage> {
                               children: [
                                 Flexible(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(tr(
-                                            'beforeNewInstallsShareToAppVerifier')),
-                                        GestureDetector(
-                                            onTap: () {
-                                              launchUrlString(
-                                                  'https://github.com/soupslurpr/AppVerifier',
-                                                  mode: LaunchMode
-                                                      .externalApplication);
-                                            },
-                                            child: Text(
-                                              tr('about'),
-                                              style: const TextStyle(
-                                                  decoration:
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(tr(
+                                        'beforeNewInstallsShareToAppVerifier')),
+                                    GestureDetector(
+                                        onTap: () {
+                                          launchUrlString(
+                                              'https://github.com/soupslurpr/AppVerifier',
+                                              mode: LaunchMode
+                                                  .externalApplication);
+                                        },
+                                        child: Text(
+                                          tr('about'),
+                                          style: const TextStyle(
+                                              decoration:
                                                   TextDecoration.underline,
-                                                  fontSize: 12),
-                                            )),
-                                      ],
-                                    )),
+                                              fontSize: 12),
+                                        )),
+                                  ],
+                                )),
                                 Switch(
                                     value: settingsProvider
                                         .beforeNewInstallsShareToAppVerifier,
                                     onChanged: (value) {
                                       settingsProvider
-                                          .beforeNewInstallsShareToAppVerifier =
+                                              .beforeNewInstallsShareToAppVerifier =
                                           value;
                                     })
                               ],
@@ -531,17 +544,31 @@ class _SettingsPageState extends State<SettingsPage> {
                                     value: settingsProvider.useShizuku,
                                     onChanged: (useShizuku) {
                                       if (useShizuku) {
-                                        ShizukuApkInstaller.checkPermission().then((resCode) {
-                                          settingsProvider.useShizuku = resCode!.startsWith('granted');
-                                          switch(resCode){
+                                        ShizukuApkInstaller.checkPermission()
+                                            .then((resCode) {
+                                          settingsProvider.useShizuku =
+                                              resCode!.startsWith('granted');
+                                          switch (resCode) {
                                             case 'binder_not_found':
-                                              showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
+                                              showError(
+                                                  ObtainiumError(tr(
+                                                      'shizukuBinderNotFound')),
+                                                  context);
                                             case 'old_shizuku':
-                                              showError(ObtainiumError(tr('shizukuOld')), context);
+                                              showError(
+                                                  ObtainiumError(
+                                                      tr('shizukuOld')),
+                                                  context);
                                             case 'old_android_with_adb':
-                                              showError(ObtainiumError(tr('shizukuOldAndroidWithADB')), context);
+                                              showError(
+                                                  ObtainiumError(tr(
+                                                      'shizukuOldAndroidWithADB')),
+                                                  context);
                                             case 'denied':
-                                              showError(ObtainiumError(tr('cancelled')), context);
+                                              showError(
+                                                  ObtainiumError(
+                                                      tr('cancelled')),
+                                                  context);
                                           }
                                         });
                                       } else {
@@ -566,7 +593,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: Theme.of(context).colorScheme.primary),
                             ),
                             DropdownButtonFormField(
-                                decoration: InputDecoration(labelText: tr('theme')),
+                                decoration:
+                                    InputDecoration(labelText: tr('theme')),
                                 value: settingsProvider.theme,
                                 items: [
                                   DropdownMenuItem(
@@ -593,17 +621,17 @@ class _SettingsPageState extends State<SettingsPage> {
                             height16,
                             if (settingsProvider.theme != ThemeSettings.light)
                               Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(child: Text(tr('useBlackTheme'))),
-                                Switch(
-                                    value: settingsProvider.useBlackTheme,
-                                    onChanged: (value) {
-                                      settingsProvider.useBlackTheme = value;
-                                    }
-                                )
-                              ]
-                              ),
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(child: Text(tr('useBlackTheme'))),
+                                    Switch(
+                                        value: settingsProvider.useBlackTheme,
+                                        onChanged: (value) {
+                                          settingsProvider.useBlackTheme =
+                                              value;
+                                        })
+                                  ]),
                             height8,
                             useMaterialThemeSwitch,
                             if (!settingsProvider.useMaterialYou) colorPicker,
@@ -624,28 +652,39 @@ class _SettingsPageState extends State<SettingsPage> {
                                 builder: (ctx, val) {
                                   return (val.data?.version.sdkInt ?? 0) >= 34
                                       ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      height16,
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(child: Text(tr('useSystemFont'))),
-                                          Switch(
-                                              value: settingsProvider.useSystemFont,
-                                              onChanged: (useSystemFont) {
-                                                if (useSystemFont) {
-                                                  NativeFeatures.loadSystemFont().then((val) {
-                                                    settingsProvider.useSystemFont = true;
-                                                  });
-                                                } else {
-                                                  settingsProvider.useSystemFont = false;
-                                                }
-                                              })
-                                        ]
-                                      )
-                                    ]
-                                  )
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                              height16,
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Flexible(
+                                                        child: Text(tr(
+                                                            'useSystemFont'))),
+                                                    Switch(
+                                                        value: settingsProvider
+                                                            .useSystemFont,
+                                                        onChanged:
+                                                            (useSystemFont) {
+                                                          if (useSystemFont) {
+                                                            NativeFeatures
+                                                                    .loadSystemFont()
+                                                                .then((val) {
+                                                              settingsProvider
+                                                                      .useSystemFont =
+                                                                  true;
+                                                            });
+                                                          } else {
+                                                            settingsProvider
+                                                                    .useSystemFont =
+                                                                false;
+                                                          }
+                                                        })
+                                                  ])
+                                            ])
                                       : const SizedBox.shrink();
                                 },
                                 future: DeviceInfoPlugin().androidInfo),
@@ -801,17 +840,31 @@ class _SettingsPageState extends State<SettingsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    TextButton.icon(
+                    IconButton(
                       onPressed: () {
                         launchUrlString(settingsProvider.sourceUrl,
                             mode: LaunchMode.externalApplication);
                       },
                       icon: const Icon(Icons.code),
-                      label: Text(
-                        tr('appSource'),
-                      ),
+                      tooltip: tr('appSource'),
                     ),
-                    TextButton.icon(
+                    IconButton(
+                      onPressed: () {
+                        launchUrlString('${settingsProvider.sourceUrl}/wiki',
+                            mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.help_outline_rounded),
+                      tooltip: tr('wiki'),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        launchUrlString('https://apps.obtainium.imranr.dev/',
+                            mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.apps_rounded),
+                      tooltip: tr('crowdsourcedConfigsLabel'),
+                    ),
+                    IconButton(
                         onPressed: () {
                           context.read<LogsProvider>().get().then((logs) {
                             if (logs.isEmpty) {
@@ -827,7 +880,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           });
                         },
                         icon: const Icon(Icons.bug_report_outlined),
-                        label: Text(tr('appLogs'))),
+                        tooltip: tr('appLogs'))
                   ],
                 ),
                 const SizedBox(

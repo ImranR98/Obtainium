@@ -437,7 +437,7 @@ class AppsPageState extends State<AppsPage> {
               ? tr('changes')
               : ''
           : DateFormat('yyyy-MM-dd')
-              .format(listedApps[appIndex].app.releaseDate!);
+              .format(listedApps[appIndex].app.releaseDate!.toLocal());
     }
 
     getSingleAppHorizTile(int index) {
