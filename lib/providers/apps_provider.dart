@@ -1516,7 +1516,7 @@ class AppsProvider with ChangeNotifier {
     return returnPath;
   }
 
-  Future<MapEntry<int, bool>> import(String appsJSON) async {
+  Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
     var decodedJSON = jsonDecode(appsJSON);
     var newFormat = decodedJSON is! List;
     List<App> importedApps =
@@ -1550,8 +1550,8 @@ class AppsProvider with ChangeNotifier {
         }
       });
     }
-    return MapEntry<int, bool>(
-        importedApps.length, newFormat && decodedJSON['settings'] != null);
+    return MapEntry<List<App>, bool>(
+        importedApps, newFormat && decodedJSON['settings'] != null);
   }
 
   @override
