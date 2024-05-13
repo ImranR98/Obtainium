@@ -144,7 +144,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
             appsProvider.addMissingCategories(settingsProvider);
             showMessage(
                 '${tr('importedX', args: [
-                      plural('apps', value.key)
+                      plural('apps', value.key.length)
                     ])}${value.value ? ' + ${tr('settings')}' : ''}',
                 context);
           });
