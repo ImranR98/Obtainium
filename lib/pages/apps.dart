@@ -893,7 +893,8 @@ class AppsPageState extends State<AppsPage> {
                                           'preferredApkIndex':
                                               a.preferredApkIndex,
                                           'additionalSettings':
-                                              jsonEncode(a.additionalSettings)
+                                              jsonEncode(a.additionalSettings),
+                                          'overrideSource': a.overrideSource
                                         }))}\n\n';
                                   }
                                   Share.share(urls,
