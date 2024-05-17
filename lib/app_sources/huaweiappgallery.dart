@@ -73,21 +73,23 @@ class HuaweiAppGallery extends AppSource {
       throw NoReleasesError();
     }
     String appId = appIdFromRedirectDlUrl(res.headers['location']!);
+    if (appId.isEmpty) {
+      throw NoReleasesError();
+    }
     var relDateStr =
         res.headers['location']?.split('?')[0].split('.').reversed.toList()[1];
-    var relDateStrAdj = relDateStr?.split('');
-    var tempLen = relDateStrAdj?.length ?? 0;
-    var i = 2;
-    while (i < tempLen) {
-      relDateStrAdj?.insert((i + i ~/ 2 - 1), '-');
-      i += 2;
-    }
-    var relDate = relDateStrAdj == null
-        ? null
-        : DateFormat('yy-MM-dd-HH-mm', 'en_US').parse(relDateStrAdj.join(''));
-    if (relDateStr == null) {
+    if (relDateStr == null || relDateStr.length != 10) {
       throw NoVersionError();
     }
+    var relDateStrAdj = relDateStr.split('');
+    var tempLen = relDateStrAdj.length;
+    var i = 2;
+    while (i < tempLen) {
+      relDateStrAdj.insert((i + i ~/ 2 - 1), '-');
+      i += 2;
+    }
+    var relDate =
+        DateFormat('yy-MM-dd-HH-mm', 'en_US').parse(relDateStrAdj.join(''));
     return APKDetails(
         relDateStr, [MapEntry('$appId.apk', dlUrl)], AppNames(name, appId),
         releaseDate: relDate);
