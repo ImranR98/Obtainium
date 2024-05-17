@@ -421,7 +421,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<Object> downloadApp(App app, BuildContext? context,
-      {NotificationsProvider? notificationsProvider}) async {
+      {NotificationsProvider? notificationsProvider,
+      bool useExisting = true}) async {
     var notifId = DownloadNotification(app.finalName, 0).id;
     if (apps[app.id] != null) {
       apps[app.id]!.downloadProgress = 0;
@@ -453,7 +454,7 @@ class AppsProvider with ChangeNotifier {
           notificationsProvider?.notify(notif);
         }
         prevProg = prog;
-      }, APKDir.path);
+      }, APKDir.path, useExisting: useExisting);
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;
@@ -766,7 +767,8 @@ class AppsProvider with ChangeNotifier {
   Future<List<String>> downloadAndInstallLatestApps(
       List<String> appIds, BuildContext? context,
       {NotificationsProvider? notificationsProvider,
-      bool forceParallelDownloads = false}) async {
+      bool forceParallelDownloads = false,
+      bool useExisting = true}) async {
     notificationsProvider =
         notificationsProvider ?? context?.read<NotificationsProvider>();
     List<String> appsToInstall = [];
@@ -823,7 +825,8 @@ class AppsProvider with ChangeNotifier {
         var downloadedArtifact =
             // ignore: use_build_context_synchronously
             await downloadApp(apps[id]!.app, context,
-                notificationsProvider: notificationsProvider);
+                notificationsProvider: notificationsProvider,
+                useExisting: useExisting);
         DownloadedApk? downloadedFile;
         DownloadedXApkDir? downloadedDir;
         if (downloadedArtifact is DownloadedApk) {
@@ -1927,7 +1930,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         await appsProvider.downloadAndInstallLatestApps(
             toInstall.map((e) => e.key).toList(), null,
             notificationsProvider: notificationsProvider,
-            forceParallelDownloads: true);
+            forceParallelDownloads: true,
+            useExisting: false);
       } catch (e) {
         if (e is MultiAppMultiError) {
           e.idsByErrorString.forEach((key, value) {
