@@ -224,7 +224,7 @@ class _ObtainiumState extends State<Obtainium> {
       // set the background and surface colors to pure black in the amoled theme
       if (settingsProvider.useBlackTheme) {
         darkColorScheme = darkColorScheme
-            .copyWith(background: Colors.black, surface: Colors.black)
+            .copyWith(surface: Colors.black)
             .harmonized();
       }
 

@@ -286,7 +286,7 @@ class _AppPageState extends State<AppPage> {
         ? WebViewWidget(
             controller: WebViewController()
               ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..setBackgroundColor(Theme.of(context).colorScheme.background)
+              ..setBackgroundColor(Theme.of(context).colorScheme.surface)
               ..setJavaScriptMode(JavaScriptMode.unrestricted)
               ..setNavigationDelegate(
                 NavigationDelegate(

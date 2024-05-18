@@ -33,7 +33,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     var settingsProvider = context.watch<SettingsProvider>();
 
     var outlineButtonStyle = ButtonStyle(
-      shape: MaterialStateProperty.all(
+      shape: WidgetStateProperty.all(
         StadiumBorder(
           side: BorderSide(
             width: 1,

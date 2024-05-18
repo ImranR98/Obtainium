@@ -503,7 +503,7 @@ class AppsPageState extends State<AppsPage> {
       );
 
       var transparent =
-          Theme.of(context).colorScheme.background.withAlpha(0).value;
+          Theme.of(context).colorScheme.surface.withAlpha(0).value;
       List<double> stops = [
         ...listedApps[index].app.categories.asMap().entries.map(
             (e) => ((e.key / (listedApps[index].app.categories.length - 1)))),
