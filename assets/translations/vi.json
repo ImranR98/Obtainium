@@ -291,7 +291,7 @@
     "useShizuku": "Sử dụng Shizuku hoặc Sui để cài đặt",
     "shizukuBinderNotFound": "Shizuku chưa khởi động",
     "shizukuOld": "Phiên bản Shizuku lỗi thời (<11) - hãy cập nhật nó",
-    "shizukuOldAndroidWithADB": "Shizuku chạy trên Android < 8.1 với ADB - cập nhật Android or hoặc thay bằng Sui",
+    "shizukuOldAndroidWithADB": "Shizuku chạy trên Android < 8.1 với ADB - hãy cập nhật Android hoặc thay bằng Sui",
     "shizukuPretendToBeGooglePlay": "Set Google Play as the installation source (if Shizuku is used)",
     "useSystemFont": "Sử dụng phông chữ hệ thống",
     "useVersionCodeAsOSVersion": "Sử dụng Mã phiên bản ứng dụng làm phiên bản do hệ điều hành phát hiện",
