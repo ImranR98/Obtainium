@@ -329,6 +329,10 @@ Future<Map<String, String>> getHeaders(String url,
   return returnHeaders;
 }
 
+Future<List<PackageInfo>> getAllInstalledInfo() async {
+  return await pm.getInstalledPackages() ?? [];
+}
+
 Future<PackageInfo?> getInstalledInfo(String? packageName,
     {bool printErr = true}) async {
   if (packageName != null) {
@@ -1160,8 +1164,9 @@ class AppsProvider with ChangeNotifier {
         : false;
   }
 
-  Future<void> updateInstallStatusInMemory(AppInMemory app) async {
-    apps[app.app.id]?.installedInfo = await getInstalledInfo(app.app.id);
+  Future<void> updateInstallStatusInMemory(
+      AppInMemory app, PackageInfo? installedInfo) async {
+    apps[app.app.id]?.installedInfo = installedInfo;
     apps[app.app.id]?.icon =
         await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
     apps[app.app.id]?.app.name = await (apps[app.app.id]
@@ -1179,6 +1184,8 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
     var sp = SourceProvider();
     List<List<String>> errors = [];
+    var installedAppsData = await getAllInstalledInfo();
+    List<String> removedAppIds = [];
     await Future.wait((await getAppsDir()) // Parse Apps from JSON
         .listSync()
         .map((item) async {
@@ -1199,43 +1206,57 @@ class AppsProvider with ChangeNotifier {
         }
       }
       if (app != null) {
+        // Save the app to the in-memory list without grabbing any OS info first
+        apps.update(
+            app.id,
+            (value) => AppInMemory(
+                app!, value.downloadProgress, value.installedInfo, value.icon),
+            ifAbsent: () => AppInMemory(app!, null, null, null));
+        notifyListeners();
         try {
+          // Try getting the app's source to ensure no invalid apps get loaded
           sp.getSource(app.url, overrideSource: app.overrideSource);
+          // If the app is installed, grab its OS data and reconcile install statuses
+          PackageInfo? installedInfo;
+          try {
+            installedInfo =
+                installedAppsData.firstWhere((i) => i.packageName == app!.id);
+          } catch (e) {
+            // If the app isn't installed the above throws an error
+          }
+          // Reconcile differences between the installed and recorded install info
+          var moddedApp =
+              getCorrectedInstallStatusAppIfPossible(app, installedInfo);
+          if (moddedApp != null) {
+            app = moddedApp;
+            // Note the app ID if it was uninstalled externally
+            if (moddedApp.installedVersion == null) {
+              removedAppIds.add(moddedApp.id);
+            }
+          }
+          var icon = await installedInfo?.applicationInfo?.getAppIcon();
+          app.name =
+              await (installedInfo?.applicationInfo?.getAppLabel()) ?? app.name;
+          // Update the app in memory with install info and corrections
           apps.update(
               app.id,
-              (value) => AppInMemory(app!, value.downloadProgress,
-                  value.installedInfo, value.icon),
-              ifAbsent: () => AppInMemory(app!, null, null, null));
+              (value) => AppInMemory(
+                  app!, value.downloadProgress, installedInfo, icon),
+              ifAbsent: () => AppInMemory(app!, null, installedInfo, icon));
+          notifyListeners();
         } catch (e) {
-          errors.add([app.id, app.finalName, e.toString()]);
+          errors.add([app!.id, app.finalName, e.toString()]);
         }
       }
     }));
-    notifyListeners();
+
     if (errors.isNotEmpty) {
       removeApps(errors.map((e) => e[0]).toList());
       NotificationsProvider().notify(
           AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()));
     }
-    // Get install status and other OS info for each App (slow)
-    List<App> modifiedApps = [];
-    await Future.wait(apps.values.map((app) async {
-      await updateInstallStatusInMemory(app);
-      var moddedApp =
-          getCorrectedInstallStatusAppIfPossible(app.app, app.installedInfo);
-      if (moddedApp != null) {
-        modifiedApps.add(moddedApp);
-      }
-    }));
-    notifyListeners();
-    // Reconcile version differences
-    if (modifiedApps.isNotEmpty) {
-      await saveApps(modifiedApps, attemptToCorrectInstallStatus: false);
-      var removedAppIds = modifiedApps
-          .where((a) => a.installedVersion == null)
-          .map((e) => e.id)
-          .toList();
-      // After reconciliation, delete externally uninstalled Apps if needed
+    // Delete externally uninstalled Apps if needed
+    if (removedAppIds.isNotEmpty) {
       if (removedAppIds.isNotEmpty) {
         if (settingsProvider.removeOnExternalUninstall) {
           await removeApps(removedAppIds);
