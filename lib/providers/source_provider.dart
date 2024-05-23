@@ -354,11 +354,13 @@ preStandardizeUrl(String url) {
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
+  var trailingSlash = Uri.tryParse(url)?.path.endsWith('/') ?? false;
   url = url
-      .split('/')
-      .where((e) => e.isNotEmpty)
-      .join('/')
-      .replaceFirst(':/', '://');
+          .split('/')
+          .where((e) => e.isNotEmpty)
+          .join('/')
+          .replaceFirst(':/', '://') +
+      (trailingSlash ? '/' : '');
   return url;
 }
 
@@ -523,8 +525,7 @@ abstract class AppSource {
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
     [
       GeneratedFormSwitch('shizukuPretendToBeGooglePlay',
-          label: tr('shizukuPretendToBeGooglePlay'),
-          defaultValue: false)
+          label: tr('shizukuPretendToBeGooglePlay'), defaultValue: false)
     ],
     [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',

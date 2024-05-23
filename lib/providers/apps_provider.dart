@@ -368,7 +368,10 @@ class AppsProvider with ChangeNotifier {
     foregroundStream = FGBGEvents.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
-      if (isForeground) loadApps();
+      if (isForeground) {
+        await loadApps(andUpdateSuperficialDetails: false);
+        updateAppsSuperficialDetails();
+      }
     });
     () async {
       await settingsProvider.initializeSettings();
@@ -384,7 +387,9 @@ class AppsProvider with ChangeNotifier {
       }
       if (!isBg) {
         // Load Apps into memory (in background processes, this is done later instead of in the constructor)
-        await loadApps();
+        await loadApps(andUpdateSuperficialDetails: false);
+        // Update app names/icons asynchronously
+        updateAppsSuperficialDetails();
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
         APKDir.listSync()
@@ -1176,7 +1181,24 @@ class AppsProvider with ChangeNotifier {
         app.name;
   }
 
-  Future<void> loadApps({String? singleId}) async {
+  Future<void> updateAppsSuperficialDetails() async {
+    await Future.wait(apps.values.map((app) async {
+      var icon = await app.installedInfo?.applicationInfo?.getAppIcon();
+      app.app.name =
+          await (app.installedInfo?.applicationInfo?.getAppLabel()) ??
+              app.app.name;
+      // Update the app in memory with install info and corrections
+      apps.update(
+          app.app.id,
+          (value) => AppInMemory(
+              app.app, value.downloadProgress, app.installedInfo, icon),
+          ifAbsent: () => AppInMemory(app.app, null, app.installedInfo, icon));
+      notifyListeners();
+    }));
+  }
+
+  Future<void> loadApps(
+      {String? singleId, bool andUpdateSuperficialDetails = true}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
     }
@@ -1234,22 +1256,21 @@ class AppsProvider with ChangeNotifier {
               removedAppIds.add(moddedApp.id);
             }
           }
-          var icon = await installedInfo?.applicationInfo?.getAppIcon();
-          app.name =
-              await (installedInfo?.applicationInfo?.getAppLabel()) ?? app.name;
           // Update the app in memory with install info and corrections
           apps.update(
               app.id,
               (value) => AppInMemory(
-                  app!, value.downloadProgress, installedInfo, icon),
-              ifAbsent: () => AppInMemory(app!, null, installedInfo, icon));
+                  app!, value.downloadProgress, installedInfo, value.icon),
+              ifAbsent: () => AppInMemory(app!, null, installedInfo, null));
           notifyListeners();
         } catch (e) {
           errors.add([app!.id, app.finalName, e.toString()]);
         }
       }
     }));
-
+    if (andUpdateSuperficialDetails) {
+      await updateAppsSuperficialDetails();
+    }
     if (errors.isNotEmpty) {
       removeApps(errors.map((e) => e[0]).toList());
       NotificationsProvider().notify(
