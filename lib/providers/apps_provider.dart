@@ -1944,8 +1944,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         await appsProvider.downloadAndInstallLatestApps(
             toInstall.map((e) => e.key).toList(), null,
             notificationsProvider: notificationsProvider,
-            forceParallelDownloads: true,
-            useExisting: false);
+            forceParallelDownloads: true);
       } catch (e) {
         if (e is MultiAppMultiError) {
           e.idsByErrorString.forEach((key, value) {
