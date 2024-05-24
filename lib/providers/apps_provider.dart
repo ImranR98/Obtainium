@@ -42,10 +42,11 @@ class AppInMemory {
   late App app;
   double? downloadProgress;
   PackageInfo? installedInfo;
+  Uint8List? icon;
 
-  AppInMemory(this.app, this.downloadProgress, this.installedInfo);
+  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon);
   AppInMemory deepCopy() =>
-      AppInMemory(app.deepCopy(), downloadProgress, installedInfo);
+      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon);
 
   String get name => app.overrideName ?? app.finalName;
 }
@@ -1121,7 +1122,8 @@ class AppsProvider with ChangeNotifier {
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
     if (installedInfo != null &&
         versionDetectionIsStandard &&
-        !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
+        !isVersionDetectionPossible(
+            AppInMemory(app, null, installedInfo, null))) {
       app.additionalSettings['versionDetection'] = false;
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
@@ -1197,9 +1199,9 @@ class AppsProvider with ChangeNotifier {
         // Save the app to the in-memory list without grabbing any OS info first
         apps.update(
             app.id,
-            (value) =>
-                AppInMemory(app!, value.downloadProgress, value.installedInfo),
-            ifAbsent: () => AppInMemory(app!, null, null));
+            (value) => AppInMemory(
+                app!, value.downloadProgress, value.installedInfo, value.icon),
+            ifAbsent: () => AppInMemory(app!, null, null, null));
         notifyListeners();
         try {
           // Try getting the app's source to ensure no invalid apps get loaded
@@ -1225,9 +1227,9 @@ class AppsProvider with ChangeNotifier {
           // Update the app in memory with install info and corrections
           apps.update(
               app.id,
-              (value) =>
-                  AppInMemory(app!, value.downloadProgress, installedInfo),
-              ifAbsent: () => AppInMemory(app!, null, installedInfo));
+              (value) => AppInMemory(
+                  app!, value.downloadProgress, installedInfo, value.icon),
+              ifAbsent: () => AppInMemory(app!, null, installedInfo, null));
           notifyListeners();
         } catch (e) {
           errors.add([app!.id, app.finalName, e.toString()]);
@@ -1251,6 +1253,22 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateAppIcon(String? appId) async {
+    if (apps[appId]?.icon == null) {
+      var icon =
+          (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      if (icon != null) {
+        apps.update(
+            apps[appId]!.app.id,
+            (value) => AppInMemory(apps[appId]!.app, value.downloadProgress,
+                value.installedInfo, icon),
+            ifAbsent: () => AppInMemory(
+                apps[appId]!.app, null, apps[appId]?.installedInfo, icon));
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> saveApps(List<App> apps,
       {bool attemptToCorrectInstallStatus = true,
       bool onlyIfExists = true}) async {
@@ -1258,6 +1276,7 @@ class AppsProvider with ChangeNotifier {
     await Future.wait(apps.map((a) async {
       var app = a.deepCopy();
       PackageInfo? info = await getInstalledInfo(app.id);
+      var icon = await info?.applicationInfo?.getAppIcon();
       app.name = await (info?.applicationInfo?.getAppLabel()) ?? app.name;
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
@@ -1267,9 +1286,10 @@ class AppsProvider with ChangeNotifier {
             .writeAsStringSync(jsonEncode(app.toJson()));
       }
       try {
-        this.apps.update(
-            app.id, (value) => AppInMemory(app, value.downloadProgress, info),
-            ifAbsent: onlyIfExists ? null : () => AppInMemory(app, null, info));
+        this.apps.update(app.id,
+            (value) => AppInMemory(app, value.downloadProgress, info, icon),
+            ifAbsent:
+                onlyIfExists ? null : () => AppInMemory(app, null, info, icon));
       } catch (e) {
         if (e is! ArgumentError || e.name != 'key') {
           rethrow;

@@ -407,12 +407,11 @@ class AppsPageState extends State<AppsPage> {
 
     getAppIcon(int appIndex) {
       return FutureBuilder(
-          future:
-              listedApps[appIndex].installedInfo?.applicationInfo?.getAppIcon(),
+          future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
           builder: (ctx, val) {
-            return val.data != null
+            return listedApps[appIndex].icon != null
                 ? Image.memory(
-                    val.data!,
+                    listedApps[appIndex].icon!,
                     gaplessPlayback: true,
                   )
                 : Row(

@@ -227,9 +227,9 @@ class _AppPageState extends State<AppPage> {
           children: [
             const SizedBox(height: 20),
             FutureBuilder(
-                future: app?.installedInfo?.applicationInfo?.getAppIcon(),
+                future: appsProvider.updateAppIcon(app?.app.id),
                 builder: (ctx, val) {
-                  return val.data != null
+                  return app?.icon != null
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -238,7 +238,7 @@ class _AppPageState extends State<AppPage> {
                                     ? null
                                     : () => pm.openApp(app.app.id),
                                 child: Image.memory(
-                                  val.data!,
+                                  app!.icon!,
                                   height: 150,
                                   gaplessPlayback: true,
                                 ),
