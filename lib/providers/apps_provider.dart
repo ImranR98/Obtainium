@@ -42,11 +42,10 @@ class AppInMemory {
   late App app;
   double? downloadProgress;
   PackageInfo? installedInfo;
-  Uint8List? icon;
 
-  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon);
+  AppInMemory(this.app, this.downloadProgress, this.installedInfo);
   AppInMemory deepCopy() =>
-      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon);
+      AppInMemory(app.deepCopy(), downloadProgress, installedInfo);
 
   String get name => app.overrideName ?? app.finalName;
 }
@@ -369,8 +368,7 @@ class AppsProvider with ChangeNotifier {
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) {
-        await loadApps(andUpdateSuperficialDetails: false);
-        updateAppsSuperficialDetails();
+        await loadApps();
       }
     });
     () async {
@@ -387,9 +385,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (!isBg) {
         // Load Apps into memory (in background processes, this is done later instead of in the constructor)
-        await loadApps(andUpdateSuperficialDetails: false);
-        // Update app names/icons asynchronously
-        updateAppsSuperficialDetails();
+        await loadApps();
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
         APKDir.listSync()
@@ -1125,8 +1121,7 @@ class AppsProvider with ChangeNotifier {
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
     if (installedInfo != null &&
         versionDetectionIsStandard &&
-        !isVersionDetectionPossible(
-            AppInMemory(app, null, installedInfo, null))) {
+        !isVersionDetectionPossible(AppInMemory(app, null, installedInfo))) {
       app.additionalSettings['versionDetection'] = false;
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
@@ -1169,36 +1164,7 @@ class AppsProvider with ChangeNotifier {
         : false;
   }
 
-  Future<void> updateInstallStatusInMemory(
-      AppInMemory app, PackageInfo? installedInfo) async {
-    apps[app.app.id]?.installedInfo = installedInfo;
-    apps[app.app.id]?.icon =
-        await apps[app.app.id]?.installedInfo?.applicationInfo?.getAppIcon();
-    apps[app.app.id]?.app.name = await (apps[app.app.id]
-            ?.installedInfo
-            ?.applicationInfo
-            ?.getAppLabel()) ??
-        app.name;
-  }
-
-  Future<void> updateAppsSuperficialDetails() async {
-    await Future.wait(apps.values.map((app) async {
-      var icon = await app.installedInfo?.applicationInfo?.getAppIcon();
-      app.app.name =
-          await (app.installedInfo?.applicationInfo?.getAppLabel()) ??
-              app.app.name;
-      // Update the app in memory with install info and corrections
-      apps.update(
-          app.app.id,
-          (value) => AppInMemory(
-              app.app, value.downloadProgress, app.installedInfo, icon),
-          ifAbsent: () => AppInMemory(app.app, null, app.installedInfo, icon));
-      notifyListeners();
-    }));
-  }
-
-  Future<void> loadApps(
-      {String? singleId, bool andUpdateSuperficialDetails = true}) async {
+  Future<void> loadApps({String? singleId}) async {
     while (loadingApps) {
       await Future.delayed(const Duration(microseconds: 1));
     }
@@ -1231,9 +1197,9 @@ class AppsProvider with ChangeNotifier {
         // Save the app to the in-memory list without grabbing any OS info first
         apps.update(
             app.id,
-            (value) => AppInMemory(
-                app!, value.downloadProgress, value.installedInfo, value.icon),
-            ifAbsent: () => AppInMemory(app!, null, null, null));
+            (value) =>
+                AppInMemory(app!, value.downloadProgress, value.installedInfo),
+            ifAbsent: () => AppInMemory(app!, null, null));
         notifyListeners();
         try {
           // Try getting the app's source to ensure no invalid apps get loaded
@@ -1259,18 +1225,15 @@ class AppsProvider with ChangeNotifier {
           // Update the app in memory with install info and corrections
           apps.update(
               app.id,
-              (value) => AppInMemory(
-                  app!, value.downloadProgress, installedInfo, value.icon),
-              ifAbsent: () => AppInMemory(app!, null, installedInfo, null));
+              (value) =>
+                  AppInMemory(app!, value.downloadProgress, installedInfo),
+              ifAbsent: () => AppInMemory(app!, null, installedInfo));
           notifyListeners();
         } catch (e) {
           errors.add([app!.id, app.finalName, e.toString()]);
         }
       }
     }));
-    if (andUpdateSuperficialDetails) {
-      await updateAppsSuperficialDetails();
-    }
     if (errors.isNotEmpty) {
       removeApps(errors.map((e) => e[0]).toList());
       NotificationsProvider().notify(
@@ -1295,7 +1258,6 @@ class AppsProvider with ChangeNotifier {
     await Future.wait(apps.map((a) async {
       var app = a.deepCopy();
       PackageInfo? info = await getInstalledInfo(app.id);
-      var icon = await info?.applicationInfo?.getAppIcon();
       app.name = await (info?.applicationInfo?.getAppLabel()) ?? app.name;
       if (attemptToCorrectInstallStatus) {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
@@ -1305,10 +1267,9 @@ class AppsProvider with ChangeNotifier {
             .writeAsStringSync(jsonEncode(app.toJson()));
       }
       try {
-        this.apps.update(app.id,
-            (value) => AppInMemory(app, value.downloadProgress, info, icon),
-            ifAbsent:
-                onlyIfExists ? null : () => AppInMemory(app, null, info, icon));
+        this.apps.update(
+            app.id, (value) => AppInMemory(app, value.downloadProgress, info),
+            ifAbsent: onlyIfExists ? null : () => AppInMemory(app, null, info));
       } catch (e) {
         if (e is! ArgumentError || e.name != 'key') {
           rethrow;
