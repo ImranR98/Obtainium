@@ -47,18 +47,18 @@ packages:
     dependency: "direct main"
     description:
       name: app_links
-      sha256: "8c6ef5ba9e26b720d4c9073826befb87df2ab5e7a81c22b6c3145080b5e736c9"
+      sha256: "96e677810b83707ff5e10fac11e4839daa0ea4e0123c35864c092699165eb3db"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.2"
+    version: "6.1.1"
   archive:
     dependency: transitive
     description:
       name: archive
-      sha256: ecf4273855368121b1caed0d10d4513c7241dfc813f7d3c8933b36622ae9b265
+      sha256: "6bd38d335f0954f5fad9c79e614604fbf03a0e5b975923dd001b6ea965ef5b4b"
       url: "https://pub.dev"
     source: hosted
-    version: "3.5.1"
+    version: "3.6.0"
   args:
     dependency: transitive
     description:
@@ -443,10 +443,10 @@ packages:
     dependency: transitive
     description:
       name: image
-      sha256: "4c68bfd5ae83e700b5204c1e74451e7bf3cf750e6843c6e158289cf56bda018e"
+      sha256: "2237616a36c0d69aef7549ab439b833fb7f9fb9fc861af2cc9ac3eedddd69ca8"
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.7"
+    version: "4.2.0"
   intl:
     dependency: transitive
     description:
@@ -889,10 +889,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_android
-      sha256: "360a6ed2027f18b73c8d98e159dda67a61b7f2e0f6ec26e86c3ada33b0621775"
+      sha256: "17cd5e205ea615e2c6ea7a77323a11712dffa0720a8a90540db57a01347f9ad9"
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.1"
+    version: "6.3.2"
   url_launcher_ios:
     dependency: transitive
     description:
@@ -977,18 +977,18 @@ packages:
     dependency: "direct main"
     description:
       name: webview_flutter
-      sha256: "25e1b6e839e8cbfbd708abc6f85ed09d1727e24e08e08c6b8590d7c65c9a8932"
+      sha256: "6869c8786d179f929144b4a1f86e09ac0eddfe475984951ea6c634774c16b522"
       url: "https://pub.dev"
     source: hosted
-    version: "4.7.0"
+    version: "4.8.0"
   webview_flutter_android:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: dad3313c9ead95517bb1cae5e1c9d20ba83729d5a59e5e83c0a2d66203f27f91
+      sha256: "2282ba2320af34b2bd5320156c664d73f3f022341ed78847bc87723bf88c142f"
       url: "https://pub.dev"
     source: hosted
-    version: "3.16.1"
+    version: "3.16.2"
   webview_flutter_platform_interface:
     dependency: transitive
     description:

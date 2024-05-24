@@ -112,6 +112,14 @@ class GitLab extends AppSource {
   }
 
   @override
+  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
+      Map<String, dynamic> additionalSettings) async {
+    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
+    return '$apkUrl?$optionalAuth';
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,

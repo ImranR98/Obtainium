@@ -226,18 +226,26 @@ class _AppPageState extends State<AppPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            app?.icon != null
-                ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    GestureDetector(
-                      child: Image.memory(
-                        app!.icon!,
-                        height: 150,
-                        gaplessPlayback: true,
-                      ),
-                      onTap: () => pm.openApp(app.app.id),
-                    )
-                  ])
-                : Container(),
+            FutureBuilder(
+                future: appsProvider.updateAppIcon(app?.app.id),
+                builder: (ctx, val) {
+                  return app?.icon != null
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                              GestureDetector(
+                                onTap: app == null
+                                    ? null
+                                    : () => pm.openApp(app.app.id),
+                                child: Image.memory(
+                                  app!.icon!,
+                                  height: 150,
+                                  gaplessPlayback: true,
+                                ),
+                              )
+                            ])
+                      : Container();
+                }),
             const SizedBox(
               height: 25,
             ),

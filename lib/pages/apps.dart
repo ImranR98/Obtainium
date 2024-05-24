@@ -354,7 +354,11 @@ class AppsPageState extends State<AppsPage> {
           SliverFillRemaining(
               child: Center(
                   child: Text(
-            appsProvider.apps.isEmpty ? tr('noApps') : tr('noAppsForFilter'),
+            appsProvider.apps.isEmpty
+                ? appsProvider.loadingApps
+                    ? tr('pleaseWait')
+                    : tr('noApps')
+                : tr('noAppsForFilter'),
             style: Theme.of(context).textTheme.headlineMedium,
             textAlign: TextAlign.center,
           ))),
@@ -402,29 +406,36 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getAppIcon(int appIndex) {
-      return listedApps[appIndex].icon != null
-          ? Image.memory(
-              listedApps[appIndex].icon!,
-              gaplessPlayback: true,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                  Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationZ(0.31),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Image(
-                          image: const AssetImage(
-                              'assets/graphics/icon_small.png'),
-                          color: Colors.white.withOpacity(0.3),
-                          colorBlendMode: BlendMode.modulate,
-                          gaplessPlayback: true,
-                        ),
-                      )),
-                ]);
+      return FutureBuilder(
+          future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
+          builder: (ctx, val) {
+            return listedApps[appIndex].icon != null
+                ? Image.memory(
+                    listedApps[appIndex].icon!,
+                    gaplessPlayback: true,
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                        Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.rotationZ(0.31),
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Image(
+                                image: const AssetImage(
+                                    'assets/graphics/icon_small.png'),
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white.withOpacity(0.4)
+                                    : Colors.white.withOpacity(0.3),
+                                colorBlendMode: BlendMode.modulate,
+                                gaplessPlayback: true,
+                              ),
+                            )),
+                      ]);
+          });
     }
 
     getVersionText(int appIndex) {

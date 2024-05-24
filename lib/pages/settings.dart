@@ -5,6 +5,7 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -945,6 +946,25 @@ class _LogsDialogState extends State<LogsDialog> {
         ],
       ),
       actions: [
+        TextButton(
+            onPressed: () async {
+              var cont = (await showDialog<Map<String, dynamic>?>(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        return GeneratedFormModal(
+                          title: tr('appLogs'),
+                          items: const [],
+                          initValid: true,
+                          message: tr('removeFromObtainium'),
+                        );
+                      })) !=
+                  null;
+              if (cont) {
+                logsProvider.clear();
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text(tr('remove'))),
         TextButton(
             onPressed: () {
               Navigator.of(context).pop();
