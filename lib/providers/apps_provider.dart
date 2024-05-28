@@ -5,18 +5,23 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
-import 'package:crypto/crypto.dart';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:android_package_manager/android_package_manager.dart';
+import 'package:async/async.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_archive/flutter_archive.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -24,19 +29,18 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:obtainium/providers/source_provider.dart';
-import 'package:http/http.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:flutter_archive/flutter_archive.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 final pm = AndroidPackageManager();
+Client client = http.Client();
+bool cancel = false;
+late CancelableOperation<File> cancelableOperation;
 
 class AppInMemory {
   late App app;
@@ -146,22 +150,25 @@ Future<File> downloadFileWithRetry(String url, String fileName,
     bool fileNameHasExt, Function? onProgress, String destDir,
     {bool useExisting = true,
     Map<String, String>? headers,
-    int retries = 3}) async {
+    int retries = 3,
+    required CancelableOperation cancelableOperation}) async {
   try {
     return await downloadFile(
         url, fileName, fileNameHasExt, onProgress, destDir,
-        useExisting: useExisting, headers: headers);
+        useExisting: useExisting, headers: headers, cancelableOperation: cancelableOperation);
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(const Duration(seconds: 5));
       return await downloadFileWithRetry(
           url, fileName, fileNameHasExt, onProgress, destDir,
-          useExisting: useExisting, headers: headers, retries: (retries - 1));
+          useExisting: useExisting, headers: headers, retries: (retries - 1),
+          cancelableOperation: cancelableOperation); // Pass the cancelableOperation here
     } else {
       rethrow;
     }
   }
 }
+
 
 String hashListOfLists(List<List<int>> data) {
   var bytes = utf8.encode(jsonEncode(data));
@@ -204,7 +211,10 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
 
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
-    {bool useExisting = true, Map<String, String>? headers}) async {
+    {bool useExisting = true, Map<String, String>? headers, required CancelableOperation cancelableOperation}) async {
+  if (cancelableOperation.isCanceled) {
+    throw ObtainiumError('Download cancelled');
+  }
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
@@ -353,6 +363,7 @@ class AppsProvider with ChangeNotifier {
   bool loadingApps = false;
   bool gettingUpdates = false;
   LogsProvider logs = LogsProvider();
+  Client client = http.Client();
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
@@ -426,6 +437,14 @@ class AppsProvider with ChangeNotifier {
     return downloadedFile;
   }
 
+  Future<void> cancelDownload(String appId) async {
+    if (apps[appId] != null) {
+      await cancelableOperation.cancel();
+      apps[appId]!.downloadProgress = null;
+      notifyListeners();
+    }
+  }
+
   Future<Object> downloadApp(App app, BuildContext? context,
       {NotificationsProvider? notificationsProvider,
       bool useExisting = true}) async {
@@ -447,20 +466,30 @@ class AppsProvider with ChangeNotifier {
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
       var headers = await source.getRequestHeaders(app.additionalSettings,
           forAPKDownload: true);
-      var downloadedFile = await downloadFileWithRetry(
-          downloadUrl, fileNameNoExt, false, headers: headers,
-          (double? progress) {
-        int? prog = progress?.ceil();
+      cancelableOperation = CancelableOperation.fromFuture(onCancel: () async {
+        debugPrint('Download cancelled');
+        await notificationsProvider?.cancel(notifId);
         if (apps[app.id] != null) {
-          apps[app.id]!.downloadProgress = progress;
+          apps[app.id]!.downloadProgress = null;
           notifyListeners();
         }
-        notif = DownloadNotification(app.finalName, prog ?? 100);
-        if (prog != null && prevProg != prog) {
-          notificationsProvider?.notify(notif);
-        }
-        prevProg = prog;
-      }, APKDir.path, useExisting: useExisting);
+        throw ObtainiumError(tr('cancelled'));
+      },
+          downloadFileWithRetry(downloadUrl, fileNameNoExt, false,
+              headers: headers, cancelableOperation: cancelableOperation,
+               (double? progress) {
+            int? prog = progress?.ceil();
+            if (apps[app.id] != null) {
+              apps[app.id]!.downloadProgress = progress;
+              notifyListeners();
+            }
+            notif = DownloadNotification(app.finalName, prog ?? 100);
+            if (prog != null && prevProg != prog) {
+              notificationsProvider?.notify(notif);
+            }
+            prevProg = prog;
+          }, APKDir.path, useExisting: useExisting));
+      var downloadedFile = await cancelableOperation.value;
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;
@@ -506,7 +535,12 @@ class AppsProvider with ChangeNotifier {
       } else {
         return DownloadedXApkDir(app.id, downloadedFile, xapkDir!);
       }
-    } finally {
+    } catch (e) {
+      debugPrint("Download hi error: $e");
+      rethrow;
+    }
+    finally {
+      debugPrint("Download hi finally");
       notificationsProvider?.cancel(notifId);
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = null;
@@ -997,7 +1031,7 @@ class AppsProvider with ChangeNotifier {
         if (!downloadsAccessible && exportDir != null) {
           downloadPath = exportDir.path;
         }
-        await downloadFile(fileUrl.value, fileUrl.key, true,
+        await downloadFile(fileUrl.value, fileUrl.key, true, cancelableOperation: cancelableOperation,
             (double? progress) {
           notificationsProvider
               .notify(DownloadNotification(fileUrl.key, progress?.ceil() ?? 0));
