@@ -40,6 +40,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('vi'), 'Tiếng Việt'),
   MapEntry(Locale('tr'), 'Türkçe'),
   MapEntry(Locale('uk'), 'Українська'),
+  MapEntry(Locale('da'), 'Dansk'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
@@ -212,20 +213,23 @@ class _ObtainiumState extends State<Obtainium> {
       // Decide on a colour/brightness scheme based on OS and user settings
       ColorScheme lightColorScheme;
       ColorScheme darkColorScheme;
-      if (lightDynamic != null && darkDynamic != null && settingsProvider.useMaterialYou) {
+      if (lightDynamic != null &&
+          darkDynamic != null &&
+          settingsProvider.useMaterialYou) {
         lightColorScheme = lightDynamic.harmonized();
         darkColorScheme = darkDynamic.harmonized();
       } else {
-        lightColorScheme = ColorScheme.fromSeed(seedColor: settingsProvider.themeColor);
+        lightColorScheme =
+            ColorScheme.fromSeed(seedColor: settingsProvider.themeColor);
         darkColorScheme = ColorScheme.fromSeed(
-            seedColor: settingsProvider.themeColor, brightness: Brightness.dark);
+            seedColor: settingsProvider.themeColor,
+            brightness: Brightness.dark);
       }
 
       // set the background and surface colors to pure black in the amoled theme
       if (settingsProvider.useBlackTheme) {
-        darkColorScheme = darkColorScheme
-            .copyWith(surface: Colors.black)
-            .harmonized();
+        darkColorScheme =
+            darkColorScheme.copyWith(surface: Colors.black).harmonized();
       }
 
       if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();

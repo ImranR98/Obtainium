@@ -285,7 +285,9 @@ class GitHub extends AppSource {
       DateTime? getPublishDateFromRelease(dynamic rel) =>
           rel?['published_at'] != null
               ? DateTime.parse(rel['published_at'])
-              : null;
+              : rel?['commit']?['created'] != null
+                  ? DateTime.parse(rel['commit']['created'])
+                  : null;
       DateTime? getNewestAssetDateFromRelease(dynamic rel) {
         var t = (rel['assets'] as List<dynamic>?)
             ?.map((e) {

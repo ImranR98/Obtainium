@@ -161,7 +161,8 @@ class GitLab extends AppSource {
               .toList();
       var apkUrlsSet = apkUrlsFromAssets.toSet();
       apkUrlsSet.addAll(uploadedAPKsFromDescription);
-      var releaseDateString = e['released_at'] ?? e['created_at'];
+      var releaseDateString =
+          e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
       DateTime? releaseDate =
           releaseDateString != null ? DateTime.parse(releaseDateString) : null;
       return APKDetails(
