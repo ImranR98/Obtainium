@@ -5,7 +5,7 @@
     "urlMatchesNoSource": "L'URL ne correspond pas à une source connue",
     "cantInstallOlderVersion": "Impossible d'installer une ancienne version d'une application",
     "appIdMismatch": "L'ID de paquet téléchargé ne correspond pas à l'ID de l'application existante",
-    "functionNotImplemented": "Cette classe n'a pas implémentée cette fonction",
+    "functionNotImplemented": "Cette classe n'a pas implémenté cette fonction",
     "placeholder": "Espace réservé",
     "someErrors": "Des erreurs se sont produites",
     "unexpectedError": "Erreur inattendue",
