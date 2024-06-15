@@ -143,11 +143,14 @@ class AppsPageState extends State<AppsPage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
+  late final ScrollController scrollController = ScrollController();
+
+  var sourceProvider = SourceProvider();
+
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
-    var sourceProvider = SourceProvider();
     var listedApps = appsProvider.getAppValues().toList();
 
     refresh() {
@@ -1098,11 +1101,16 @@ class AppsPageState extends State<AppsPage> {
       body: RefreshIndicator(
           key: _refreshIndicatorKey,
           onRefresh: refresh,
-          child: CustomScrollView(slivers: <Widget>[
-            CustomAppBar(title: tr('appsString')),
-            ...getLoadingWidgets(),
-            getDisplayedList()
-          ])),
+          child: Scrollbar(
+              interactive: true,
+              controller: scrollController,
+              child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: <Widget>[
+                    CustomAppBar(title: tr('appsString')),
+                    ...getLoadingWidgets(),
+                    getDisplayedList()
+                  ]))),
       persistentFooterButtons: appsProvider.apps.isEmpty
           ? null
           : [
