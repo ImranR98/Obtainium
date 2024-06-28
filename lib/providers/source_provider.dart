@@ -617,7 +617,7 @@ abstract class AppSource {
   }
 
   bool canSearch = false;
-  bool excludeFromMassSearch = false;
+  bool includeAdditionalOptsInMainSearch = false;
   List<GeneratedFormItem> searchQuerySettingFormItems = [];
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) {

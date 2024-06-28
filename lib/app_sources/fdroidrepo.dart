@@ -9,7 +9,7 @@ class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
     canSearch = true;
-    excludeFromMassSearch = true;
+    includeAdditionalOptsInMainSearch = true;
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;
 

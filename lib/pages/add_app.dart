@@ -259,9 +259,7 @@ class AddAppPageState extends State<AddAppPage> {
         searching = true;
       });
       var sourceStrings = <String, List<String>>{};
-      sourceProvider.sources
-          .where((e) => e.canSearch && !e.excludeFromMassSearch)
-          .forEach((s) {
+      sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
         sourceStrings[s.name] = [s.name];
       });
       try {
@@ -286,7 +284,32 @@ class AddAppPageState extends State<AddAppPage> {
               .where((e) => searchSources.contains(e.name))
               .map((e) async {
             try {
-              return await e.search(searchQuery);
+              Map<String, dynamic>? querySettings = {};
+              if (e.includeAdditionalOptsInMainSearch) {
+                querySettings = await showDialog<Map<String, dynamic>?>(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return GeneratedFormModal(
+                        title: tr('searchX', args: [e.name]),
+                        items: [
+                          ...e.searchQuerySettingFormItems.map((e) => [e]),
+                          [
+                            GeneratedFormTextField('url',
+                                label: e.hosts.isNotEmpty
+                                    ? tr('overrideSource')
+                                    : plural('url', 1).substring(2),
+                                defaultValue:
+                                    e.hosts.isNotEmpty ? e.hosts[0] : '',
+                                required: true)
+                          ],
+                        ],
+                      );
+                    });
+                if (querySettings == null) {
+                  return <String, List<String>>{};
+                }
+              }
+              return await e.search(searchQuery, querySettings: querySettings);
             } catch (err) {
               if (err is! CredsNeededError) {
                 rethrow;
