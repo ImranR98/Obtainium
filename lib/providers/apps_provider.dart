@@ -717,7 +717,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<MapEntry<String, String>?> confirmAppFileUrl(
-      App app, BuildContext? context, bool pickAnyAsset) async {
+      App app, BuildContext? context, bool pickAnyAsset,
+      {bool evenIfSingleChoice = false}) async {
     var urlsToSelectFrom = app.apkUrls;
     if (pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
@@ -728,7 +729,8 @@ class AppsProvider with ChangeNotifier {
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-    if (urlsToSelectFrom.length > 1 && context != null) {
+    if ((urlsToSelectFrom.length > 1 || evenIfSingleChoice) &&
+        context != null) {
       appFileUrl = await showDialog(
           // ignore: use_build_context_synchronously
           context: context,
@@ -973,7 +975,8 @@ class AppsProvider with ChangeNotifier {
       if (apps[id]!.app.apkUrls.isNotEmpty ||
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true);
+        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true,
+            evenIfSingleChoice: true);
       }
       if (fileUrl != null) {
         filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
@@ -1650,7 +1653,9 @@ class _AppFilePickerState extends State<AppFilePicker> {
           ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
           : tr('pickAnAPK')),
       content: Column(children: [
-        Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName])),
+        urlsToSelectFrom.length > 1
+            ? Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName]))
+            : const SizedBox.shrink(),
         const SizedBox(height: 16),
         ...urlsToSelectFrom.map(
           (u) => RadioListTile<String>(

@@ -332,10 +332,13 @@ class HTML extends AppSource {
         additionalSettings['versionExtractWholePage'] == true
             ? versionExtractionWholePageString
             : relDecoded);
-    version ??=
-        additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
-            ? rel.hashCode.toString()
-            : (await checkPartialDownloadHashDynamic(rel)).toString();
+    version ??= additionalSettings['defaultPseudoVersioningMethod'] ==
+            'APKLinkHash'
+        ? rel.hashCode.toString()
+        : (await checkPartialDownloadHashDynamic(rel,
+                headers: await getRequestHeaders(additionalSettings,
+                    forAPKDownload: true)))
+            .toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));
   }

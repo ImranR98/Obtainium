@@ -161,25 +161,46 @@ class _AppPageState extends State<AppPage> {
           if (app?.app.apkUrls.isNotEmpty == true ||
               app?.app.otherAssetUrls.isNotEmpty == true)
             GestureDetector(
-              onTap: app?.app == null || updating
-                  ? null
-                  : () async {
-                      try {
-                        await appsProvider
-                            .downloadAppAssets([app!.app.id], context);
-                      } catch (e) {
-                        showError(e, context);
-                      }
-                    },
-              child: Text(
-                tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-            ),
+                onTap: app?.app == null || updating
+                    ? null
+                    : () async {
+                        try {
+                          await appsProvider
+                              .downloadAppAssets([app!.app.id], context);
+                        } catch (e) {
+                          showError(e, context);
+                        }
+                      },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: settingsProvider.highlightTouchTargets
+                                ? (Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Theme.of(context).primaryColor
+                                        : Theme.of(context).primaryColorLight)
+                                    .withAlpha(20)
+                                : null),
+                        padding: settingsProvider.highlightTouchTargets
+                            ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                            : const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 6),
+                        margin:
+                            const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 0),
+                        child: Text(
+                          tr('downloadX',
+                              args: [tr('releaseAsset').toLowerCase()]),
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.labelSmall!.copyWith(
+                                    decoration: TextDecoration.underline,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                        ))
+                  ],
+                )),
           const SizedBox(
             height: 48,
           ),

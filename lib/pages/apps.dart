@@ -466,7 +466,7 @@ class AppsPageState extends State<AppsPage> {
           hasUpdate ? getUpdateButton(index) : const SizedBox.shrink(),
           hasUpdate
               ? const SizedBox(
-                  width: 10,
+                  width: 5,
                 )
               : const SizedBox.shrink(),
           GestureDetector(
@@ -1105,6 +1105,7 @@ class AppsPageState extends State<AppsPage> {
               interactive: true,
               controller: scrollController,
               child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   controller: scrollController,
                   slivers: <Widget>[
                     CustomAppBar(title: tr('appsString')),
