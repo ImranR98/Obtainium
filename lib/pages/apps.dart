@@ -466,7 +466,7 @@ class AppsPageState extends State<AppsPage> {
           hasUpdate ? getUpdateButton(index) : const SizedBox.shrink(),
           hasUpdate
               ? const SizedBox(
-                  width: 10,
+                  width: 5,
                 )
               : const SizedBox.shrink(),
           GestureDetector(
