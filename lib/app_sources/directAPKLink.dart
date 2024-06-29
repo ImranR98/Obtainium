@@ -25,6 +25,14 @@ class DirectAPKLink extends AppSource {
   }
 
   @override
+  Future<Map<String, String>?> getRequestHeaders(
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) {
+    return html.getRequestHeaders(additionalSettings,
+        forAPKDownload: forAPKDownload);
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
