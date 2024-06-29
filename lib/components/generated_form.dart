@@ -28,6 +28,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late String? hint;
   late bool password;
   late TextInputType? textInputType;
+  late List<String>? autoCompleteOptions;
 
   GeneratedFormTextField(super.key,
       {super.label,
@@ -39,7 +40,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       this.max = 1,
       this.hint,
       this.password = false,
-      this.textInputType});
+      this.textInputType,
+      this.autoCompleteOptions});
 
   @override
   String ensureType(val) {
@@ -282,6 +284,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             key: formFieldKey,
             initialValue: values[formItem.key],
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            autofillHints: formItem.autoCompleteOptions,
             onChanged: (value) {
               setState(() {
                 values[formItem.key] = value;

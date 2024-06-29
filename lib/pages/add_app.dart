@@ -51,10 +51,13 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   changeUserInput(String input, bool valid, bool isBuilding,
-      {bool updateUrlInput = false}) {
+      {bool updateUrlInput = false, String? overrideSource}) {
     userInput = input;
     if (!isBuilding) {
       setState(() {
+        if (overrideSource != null) {
+          pickedSourceOverride = overrideSource;
+        }
         if (updateUrlInput) {
           urlInputKey++;
         }
@@ -280,9 +283,10 @@ class AddAppPageState extends State<AddAppPage> {
           settingsProvider.searchDeselected = sourceStrings.keys
               .where((s) => !searchSources.contains(s))
               .toList();
-          var results = await Future.wait(sourceProvider.sources
-              .where((e) => searchSources.contains(e.name))
-              .map((e) async {
+          List<MapEntry<String, Map<String, List<String>>>?> results =
+              (await Future.wait(sourceProvider.sources
+                      .where((e) => searchSources.contains(e.name))
+                      .map((e) async {
             try {
               Map<String, dynamic>? querySettings = {};
               if (e.includeAdditionalOptsInMainSearch) {
@@ -298,6 +302,18 @@ class AddAppPageState extends State<AddAppPage> {
                                 label: e.hosts.isNotEmpty
                                     ? tr('overrideSource')
                                     : plural('url', 1).substring(2),
+                                autoCompleteOptions: [
+                                  ...(e.hosts.isNotEmpty ? [e.hosts[0]] : []),
+                                  ...appsProvider.apps.values
+                                      .where((a) =>
+                                          sourceProvider
+                                              .getSource(a.app.url,
+                                                  overrideSource:
+                                                      a.app.overrideSource)
+                                              .runtimeType ==
+                                          e.runtimeType)
+                                      .map((a) => Uri.parse(a.app.url).host)
+                                ],
                                 defaultValue:
                                     e.hosts.isNotEmpty ? e.hosts[0] : '',
                                 required: true)
@@ -306,31 +322,36 @@ class AddAppPageState extends State<AddAppPage> {
                       );
                     });
                 if (querySettings == null) {
-                  return <String, List<String>>{};
+                  return null;
                 }
               }
-              return await e.search(searchQuery, querySettings: querySettings);
+              return MapEntry(e.runtimeType.toString(),
+                  await e.search(searchQuery, querySettings: querySettings));
             } catch (err) {
               if (err is! CredsNeededError) {
                 rethrow;
               } else {
                 err.unexpected = true;
                 showError(err, context);
-                return <String, List<String>>{};
+                return null;
               }
             }
-          }));
+          })))
+                  .where((a) => a != null)
+                  .toList();
 
           // Interleave results instead of simple reduce
-          Map<String, List<String>> res = {};
+          Map<String, MapEntry<String, List<String>>> res = {};
           var si = 0;
           var done = false;
           while (!done) {
             done = true;
             for (var r in results) {
-              if (r.length > si) {
+              var sourceName = r!.key;
+              if (r.value.length > si) {
                 done = false;
-                res.addEntries([r.entries.elementAt(si)]);
+                var singleRes = r.value.entries.elementAt(si);
+                res[singleRes.key] = MapEntry(sourceName, singleRes.value);
               }
             }
             si++;
@@ -345,13 +366,15 @@ class AddAppPageState extends State<AddAppPage> {
                   context: context,
                   builder: (BuildContext ctx) {
                     return SelectionModal(
-                      entries: res,
+                      entries: res.map((k, v) => MapEntry(k, v.value)),
                       selectedByDefault: false,
                       onlyOneSelectionAllowed: true,
                     );
                   });
           if (selectedUrls != null && selectedUrls.isNotEmpty) {
-            changeUserInput(selectedUrls[0], true, false, updateUrlInput: true);
+            var sourceName = res[selectedUrls[0]]?.key;
+            changeUserInput(selectedUrls[0], true, false,
+                updateUrlInput: true, overrideSource: sourceName);
           }
         }
       } catch (e) {
