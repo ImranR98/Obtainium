@@ -220,7 +220,9 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   if (ext.endsWith('"') || ext.endsWith("other")) {
     ext = ext.substring(0, ext.length - 1);
   }
-  if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+  if (((Uri.tryParse(url)?.path ?? url).toLowerCase().endsWith('.apk') ||
+          ext == 'attachment') &&
+      ext != 'apk') {
     ext = 'apk';
   }
   fileName = fileName.split('/').last; // Ensure the fileName is a file name
