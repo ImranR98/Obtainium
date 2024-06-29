@@ -333,8 +333,8 @@
         "other": "{} Aplicaciones"
     },
     "url": {
-        "uno": "{} URL",
-        "otro": "{} URL"
+        "one": "{} URL",
+        "other": "{} URL"
     },
     "minute": {
         "one": "{} minuto",
