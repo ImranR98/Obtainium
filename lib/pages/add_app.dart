@@ -71,6 +71,7 @@ class AddAppPageState extends State<AddAppPage> {
         if (pickedSource.runtimeType != source.runtimeType ||
             (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;
+          pickedSource?.runOnAddAppInputChange(userInput);
           additionalSettings = source != null
               ? getDefaultValuesFromFormItems(
                   source.combinedAppSpecificSettingFormItems)

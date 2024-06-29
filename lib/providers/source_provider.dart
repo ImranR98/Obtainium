@@ -463,6 +463,10 @@ abstract class AppSource {
     }
   }
 
+  void runOnAddAppInputChange(String inputUrl) {
+    //
+  }
+
   String sourceSpecificStandardizeURL(String url) {
     throw NotImplementedError();
   }
