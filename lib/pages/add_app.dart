@@ -399,7 +399,7 @@ class AddAppPageState extends State<AddAppPage> {
                   [
                     GeneratedFormDropdown(
                         'overrideSource',
-                        defaultValue: '',
+                        defaultValue: pickedSourceOverride ?? '',
                         [
                           MapEntry('', tr('none')),
                           ...sourceProvider.sources.map(

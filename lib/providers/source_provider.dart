@@ -354,7 +354,9 @@ preStandardizeUrl(String url) {
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  var trailingSlash = Uri.tryParse(url)?.path.endsWith('/') ?? false;
+  var uri = Uri.tryParse(url);
+  var trailingSlash = (uri?.path.endsWith('/') ?? false) &&
+      (uri?.queryParameters.isEmpty ?? false);
   url = url
           .split('/')
           .where((e) => e.isNotEmpty)

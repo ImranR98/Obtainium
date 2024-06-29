@@ -163,6 +163,7 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
+    additionalSettings['appIdOrName'] = appIdOrName;
     var res =
         await sourceRequestWithURLVariants(standardUrl, additionalSettings);
     if (res.statusCode == 200) {
