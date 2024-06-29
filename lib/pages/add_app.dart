@@ -312,7 +312,10 @@ class AddAppPageState extends State<AddAppPage> {
                                                       a.app.overrideSource)
                                               .runtimeType ==
                                           e.runtimeType)
-                                      .map((a) => Uri.parse(a.app.url).host)
+                                      .map((a) {
+                                    var uri = Uri.parse(a.app.url);
+                                    return '${uri.origin}${uri.path}';
+                                  })
                                 ],
                                 defaultValue:
                                     e.hosts.isNotEmpty ? e.hosts[0] : '',
