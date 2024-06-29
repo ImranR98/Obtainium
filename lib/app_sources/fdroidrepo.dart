@@ -88,8 +88,8 @@ class FDroidRepo extends AppSource {
 
   @override
   void runOnAddAppInputChange(String userInput) {
-    this.additionalSourceAppSpecificSettingFormItems =
-        this.additionalSourceAppSpecificSettingFormItems.map((row) {
+    additionalSourceAppSpecificSettingFormItems =
+        additionalSourceAppSpecificSettingFormItems.map((row) {
       row = row.map((item) {
         if (item.key == 'appIdOrName') {
           try {
