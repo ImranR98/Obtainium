@@ -9,9 +9,6 @@ on:
       draft:
         type: boolean
         description: Is draft?
-      checkout:
-        required: true
-        default: "main"
 
 jobs:
   build:
@@ -37,17 +34,6 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.PGP_KEY_BASE64 }}
           passphrase: ${{ secrets.PGP_PASSPHRASE }}
-
-      - name: Checkout branch
-        id: checkout_branch
-        run: |
-          SUBMODULE_COMMIT_LONG="$(git submodule status | head -1 | tail -c +2 | awk '{print $1}')"
-          FLUTTER_COMMIT_SHORT="$(flutter --version | head -2 | tail -1 | awk '{print $4}')"
-          echo "SUBMODULE_COMMIT_LONG=$SUBMODULE_COMMIT_LONG, FLUTTER_COMMIT_SHORT=$FLUTTER_COMMIT_SHORT"
-          if ! [[ "$SUBMODULE_COMMIT_LONG" =~ ^$FLUTTER_COMMIT_SHORT ]]; then
-            echo "Your submodule has not been updated!"
-            exit 1
-          fi
 
       - name: Check submodule
         id: check_submodule
