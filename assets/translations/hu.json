@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Tiltsa le a háttérben frissítéseket, ha nincs Wi-Fi-n",
     "autoSelectHighestVersionCode": "A legmagasabb verziószámú APK auto. kiválasztása",
     "versionExtractionRegEx": "Verzió kibontása reguláris kifejezéssel",
+    "trimVersionString": "Trim Version String RegEx-szel",
+    "matchGroupToUseForX": "A \"{}\" csoporthoz használandó csoport egyeztetése",
     "matchGroupToUse": "Párosítsa a csoportot a használathoz",
     "highlightTouchTargets": "Emelje ki a kevésbé nyilvánvaló érintési célokat",
     "pickExportDir": "Válassza az Exportálási könyvtárat",

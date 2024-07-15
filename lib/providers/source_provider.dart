@@ -493,13 +493,15 @@ abstract class AppSource {
     ],
     [
       GeneratedFormTextField('versionExtractionRegEx',
-          label: tr('versionExtractionRegEx'),
+          label: tr('trimVersionString'),
           required: false,
           additionalValidators: [(value) => regExValidator(value)]),
     ],
     [
       GeneratedFormTextField('matchGroupToUse',
-          label: tr('matchGroupToUse'), required: false, hint: '\$0')
+          label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
+          required: false,
+          hint: '\$0')
     ],
     [
       GeneratedFormSwitch('versionDetection',

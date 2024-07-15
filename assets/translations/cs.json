@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Deaktivovat aktualizace na pozadí, pokud není k dispozici Wi-Fi",
     "autoSelectHighestVersionCode": "Automaticky vybrat nejvyšší verzi APK",
     "versionExtractionRegEx": "Extrakce verze pomocí RegEx",
+    "trimVersionString": "Oříznutí řetězce verze pomocí příkazu RegEx",
+    "matchGroupToUseForX": "Skupina shody, která se použije pro \"{}\"",
     "matchGroupToUse": "Odpovídá použité skupině",
     "highlightTouchTargets": "Zvýraznit méně zjevné cíle dotyku",
     "pickExportDir": "Vybrat adresář pro export",

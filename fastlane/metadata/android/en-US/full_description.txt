@@ -9,7 +9,7 @@
 		<ul>
 			<li>GitHub</li>
 			<li>GitLab</li>
-			<li>Codeberg</li>
+			<li>Forgejo (Codeberg)</li>
 			<li>F-Droid</li>
 			<li>Third Party F-Droid Repos</li>
 			<li>IzzyOnDroid</li>

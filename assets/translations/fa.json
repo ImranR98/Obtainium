@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال به WiFi غیرفعال کنید",
     "autoSelectHighestVersionCode": "انتخاب خودکار بالاترین نسخه کد APK",
     "versionExtractionRegEx": "نسخه استخراج RegEx",
+    "trimVersionString": "Trim Version String With RegEx",
+    "matchGroupToUseForX": "Match Group to Use for \"{}\"",
     "matchGroupToUse": "گروه مورد استفاده را مطابقت دهید",
     "highlightTouchTargets": "اهداف لمسی کمتر واضح را برجسته کنید",
     "pickExportDir": "فهرست برون ریزی را انتخاب کنید",

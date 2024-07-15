@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "WiFi olmadığında arka plan güncellemelerini devre dışı bırak",
     "autoSelectHighestVersionCode": "Otomatik olarak en yüksek sürüm kodunu seç",
     "versionExtractionRegEx": "Sürüm Çıkarma Düzenli İfade",
+    "trimVersionString": "RegEx ile Sürüm Dizesini Kırpma",
+    "matchGroupToUseForX": "\"{}\" için Kullanılacak Grubu Eşleştirin",
     "matchGroupToUse": "Sürüm Çıkarma Regex için Kullanılacak Eşleşme Grubu",
     "highlightTouchTargets": "Daha az belirgin dokunma hedeflerini vurgula",
     "pickExportDir": "Dışa Aktarılacak Klasörü Seç",

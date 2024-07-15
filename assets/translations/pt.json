@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Desative as atualizações em segundo-plano quando não estiver conectado no Wi-Fi",
     "autoSelectHighestVersionCode": "Auto-selecionar a versão mais recente",
     "versionExtractionRegEx": "Regex de extração de versão",
+    "trimVersionString": "Cortar a cadeia de caracteres da versão com RegEx",
+    "matchGroupToUseForX": "Grupo de correspondência a utilizar para \"{}\"",
     "matchGroupToUse": "Grupo correspondente a ser usado no Regex de extração de versão",
     "highlightTouchTargets": "Realçar áreas sensíveis ao toque que são menos óbvias",
     "pickExportDir": "Escolher diretório para exportação",

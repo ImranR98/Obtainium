@@ -16,7 +16,7 @@ Currently supported App sources:
 - Open Source - General:
   - [GitHub](https://github.com/)
   - [GitLab](https://gitlab.com/)
-  - [Codeberg](https://codeberg.org/)
+  - [Forgejo](https://forgejo.org/) ([Codeberg](https://codeberg.org/))
   - [F-Droid](https://f-droid.org/)
   - Third Party F-Droid Repos
   - [IzzyOnDroid](https://android.izzysoft.de/)

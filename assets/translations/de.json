@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
     "autoSelectHighestVersionCode": "Automatisch höchste APK-Version auswählen",
     "versionExtractionRegEx": "Versions-Extraktion per RegEx",
+    "trimVersionString": "Trim Version String mit RegEx",
+    "matchGroupToUseForX": "Zu verwendende Abgleichsgruppe für \"{}\"",
     "matchGroupToUse": "zu verwendende Gruppe abgleichen",
     "highlightTouchTargets": "Weniger offensichtliche Touch-Ziele hervorheben",
     "pickExportDir": "Export-Verzeichnis wählen",
