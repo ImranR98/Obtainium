@@ -93,6 +93,21 @@ bool _isNumeric(String s) {
 }
 
 class HTML extends AppSource {
+  @override
+  List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
+    return super.combinedAppSpecificSettingFormItems.map((r) {
+      return r.map((e) {
+        if (e.key == 'versionExtractionRegEx') {
+          e.label = tr('versionExtractionRegEx');
+        }
+        if (e.key == 'matchGroupToUse') {
+          e.label = tr('matchGroupToUse');
+        }
+        return e;
+      }).toList();
+    }).toList();
+  }
+
   var finalStepFormitems = [
     [
       GeneratedFormTextField('customLinkFilterRegex',

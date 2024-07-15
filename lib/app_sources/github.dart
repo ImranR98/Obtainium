@@ -171,7 +171,7 @@ class GitHub extends AppSource {
       {bool forAPKDownload = false}) async {
     var token = await getTokenIfAny(additionalSettings);
     var headers = <String, String>{};
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       headers[HttpHeaders.authorizationHeader] = 'Token $token';
     }
     if (forAPKDownload == true) {

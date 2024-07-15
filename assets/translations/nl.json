@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Achtergrond-updates uitschakelen wanneer niet verbonden met WiFi",
     "autoSelectHighestVersionCode": "De APK met de hoogste versiecode automatisch selecteren",
     "versionExtractionRegEx": "Reguliere expressie voor versie-extractie",
+    "trimVersionString": "Versie string trimmen met RegEx",
+    "matchGroupToUseForX": "Overeenkomende groep te gebruiken voor \"{}\"",
     "matchGroupToUse": "Overeenkomende groep om te gebruiken voor de reguliere expressie voor versie-extractie",
     "highlightTouchTargets": "Minder voor de hand liggende aanraakdoelen markeren.",
     "pickExportDir": "Kies de exportmap",

@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Tắt cập nhật nền khi không có WiFi",
     "autoSelectHighestVersionCode": "Tự động chọn APK mã phiên bản cao nhất",
     "versionExtractionRegEx": "Trích xuất phiên bản RegEx",
+    "trimVersionString": "Trim Version String With RegEx",
+    "matchGroupToUseForX": "Match Group to Use for \"{}\"",
     "matchGroupToUse": "Nhóm đối sánh để sử dụng cho Regex trích xuất phiên bản",
     "highlightTouchTargets": "Đánh dấu các mục tiêu cảm ứng ít rõ ràng hơn",
     "pickExportDir": "Chọn thư mục xuất",

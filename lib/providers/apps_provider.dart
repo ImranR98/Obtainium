@@ -1770,7 +1770,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   int maxRetryWaitSeconds = 5;
 
   var netResult = await (Connectivity().checkConnectivity());
-  if (netResult.contains(ConnectivityResult.none)) {
+  if (netResult.contains(ConnectivityResult.none) ||
+      netResult.isEmpty ||
+      (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
     logs.add('BG update task: No network.');
     return;
   }

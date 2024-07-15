@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合、バックグラウンドアップデートを無効にする",
     "autoSelectHighestVersionCode": "最も高いバージョンコードのAPKを自動で選択する",
     "versionExtractionRegEx": "バージョン抽出の正規表現",
+    "trimVersionString": "RegExでバージョン文字列をトリムする",
+    "matchGroupToUseForX": "\"{}\"に使用するマッチグループ",
     "matchGroupToUse": "使用するマッチしたグループ",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
     "pickExportDir": "エクスポートディレクトリを選択",

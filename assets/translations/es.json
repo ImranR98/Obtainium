@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Deshabilitar las actualizaciones en segundo plano sin WiFi",
     "autoSelectHighestVersionCode": "Auto selección del paquete APK con versión más reciente",
     "versionExtractionRegEx": "Versión de extracción regex",
+    "trimVersionString": "Recortar cadena de versión con RegEx",
+    "matchGroupToUseForX": "Grupo de coincidencia a utilizar para \"{}\"",
     "matchGroupToUse": "Grupo a usar para versión de extracción regex",
     "highlightTouchTargets": "Resaltar objetivos menos obvios",
     "pickExportDir": "Directorio para exportar",
@@ -333,8 +335,8 @@
         "other": "{} Aplicaciones"
     },
     "url": {
-        "uno": "{} URL",
-        "otro": "{} URL"
+        "one": "{} URL",
+        "other": "{} URL"
     },
     "minute": {
         "one": "{} minuto",

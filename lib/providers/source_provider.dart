@@ -355,8 +355,10 @@ preStandardizeUrl(String url) {
     url = 'https://$url';
   }
   var uri = Uri.tryParse(url);
-  var trailingSlash = (uri?.path.endsWith('/') ?? false) &&
+  var trailingSlash = ((uri?.path.endsWith('/') ?? false) ||
+          ((uri?.path.isEmpty ?? false) && url.endsWith('/'))) &&
       (uri?.queryParameters.isEmpty ?? false);
+
   url = url
           .split('/')
           .where((e) => e.isNotEmpty)
@@ -493,13 +495,15 @@ abstract class AppSource {
     ],
     [
       GeneratedFormTextField('versionExtractionRegEx',
-          label: tr('versionExtractionRegEx'),
+          label: tr('trimVersionString'),
           required: false,
           additionalValidators: [(value) => regExValidator(value)]),
     ],
     [
       GeneratedFormTextField('matchGroupToUse',
-          label: tr('matchGroupToUse'), required: false, hint: '\$0')
+          label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
+          required: false,
+          hint: '\$0')
     ],
     [
       GeneratedFormSwitch('versionDetection',

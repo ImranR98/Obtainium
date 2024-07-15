@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
     "autoSelectHighestVersionCode": "Automatisch höchste APK-Version auswählen",
     "versionExtractionRegEx": "Versions-Extraktion per RegEx",
+    "trimVersionString": "Trim Version String mit RegEx",
+    "matchGroupToUseForX": "Zu verwendende Abgleichsgruppe für \"{}\"",
     "matchGroupToUse": "zu verwendende Gruppe abgleichen",
     "highlightTouchTargets": "Weniger offensichtliche Touch-Ziele hervorheben",
     "pickExportDir": "Export-Verzeichnis wählen",
@@ -329,12 +331,12 @@
         "other": "Die Hintergrundaktualisierungsprüfung fand {} Aktualisierungen – benachrichtigt den Benutzer, falls erforderlich"
     },
     "apps": {
-        "eine": "{} App",
-        "andere": "{} Apps"
+        "one": "{} App",
+        "other": "{} Apps"
     },
     "url": {
-        "eine": "{} URL",
-        "andere": "{} URLs"
+        "one": "{} URL",
+        "other": "{} URLs"
     },
     "minute": {
         "one": "{} Minute",

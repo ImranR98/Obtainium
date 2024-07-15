@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",
     "autoSelectHighestVersionCode": "Välj automatiskt högsta versionskod APK",
     "versionExtractionRegEx": "Version Extraction RegEx",
+    "trimVersionString": "Trimma versionssträng med RegEx",
+    "matchGroupToUseForX": "Matchningsgrupp att använda för \"{}\"",
     "matchGroupToUse": "Match Group to Use",
     "highlightTouchTargets": "Markera mindre uppenbara beröringsobjekt",
     "pickExportDir": "Välj Exportsökväg",

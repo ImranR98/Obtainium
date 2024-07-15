@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Вимкнути фонові оновлення поза Wi-Fi",
     "autoSelectHighestVersionCode": "Автоматичний вибір APK з найвищим кодом версії",
     "versionExtractionRegEx": "Регулярний вираз для вилучення рядка версії",
+    "trimVersionString": "Обрізати рядок версії за допомогою RegEx",
+    "matchGroupToUseForX": "Група збігів для \"{}\"",
     "matchGroupToUse": "Група співпадінь для використання в регулярному виразі вилучення версії",
     "highlightTouchTargets": "Підсвічувати менш очевидні області дотику",
     "pickExportDir": "Вибрати каталог експорту",

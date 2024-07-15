@@ -259,6 +259,8 @@
     "bgUpdatesOnWiFiOnly": "Isključite ažuriranje u pozadini kada niste na WiFi-ju",
     "autoSelectHighestVersionCode": "Automatski izaberite najveću (verziju) versionCode APK-a",
     "versionExtractionRegEx": "RegEx ekstrakcija verzije",
+    "trimVersionString": "Trim Version String With RegEx",
+    "matchGroupToUseForX": "Match Group to Use for \"{}\"",
     "matchGroupToUse": "Podjesite grupu za upotebu",
     "highlightTouchTargets": "Istaknite manje vidljive touch mete",
     "pickExportDir": "Izaberite datoteku za izvoz",
