@@ -57,6 +57,9 @@ Or, contribute some configurations to the website by creating a PR at [this repo
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
     alt="Get it on F-Droid"
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
+[<img src="https://www.openapk.net/images/openapk-badge.png"
+    alt="Get it on OpenAPK"
+    height="80">](https://www.openapk.net/obtainium/dev.imranr.obtainium/apk/download)
      
 [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index)
 
