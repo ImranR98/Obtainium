@@ -145,6 +145,6 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
   fonts:
-      - family: Metropolis
+      - family: Wix-Madefor-Display
         fonts:
-          - asset: assets/fonts/Metropolis-Regular.otf
+          - asset: assets/fonts/WixMadeforDisplay-Regular.otf
