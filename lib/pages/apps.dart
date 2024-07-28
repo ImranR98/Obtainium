@@ -918,6 +918,27 @@ class AppsPageState extends State<AppsPage> {
                           child: Text(tr('shareAppConfigLinks'))),
                       const Divider(),
                       TextButton(
+                          onPressed: selectedAppIds.isEmpty
+                              ? null
+                              : () {
+                                  var exportJSON = jsonEncode(
+                                      appsProvider.generateExportJSON(
+                                          appIds: selectedApps
+                                              .map((e) => e.id)
+                                              .toList(),
+                                          overrideExportSettings: false));
+                                  XFile f = XFile.fromData(
+                                      Uint8List.fromList(
+                                          utf8.encode(exportJSON)),
+                                      mimeType: 'application/json',
+                                      name:
+                                          '${tr('obtainiumExportHyphenatedLowercase')}-${selectedApps.length}-${DateTime.now().millisecondsSinceEpoch}');
+                                  Share.shareXFiles([f]);
+                                },
+                          child: Text(
+                              '${tr('share')} - ${tr('obtainiumExport')}')),
+                      const Divider(),
+                      TextButton(
                           onPressed: () {
                             appsProvider
                                 .downloadAppAssets(
