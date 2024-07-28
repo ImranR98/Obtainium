@@ -1501,6 +1501,34 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
+  Map<String, dynamic> generateExportJSON(
+      {List<String>? appIds, bool? overrideExportSettings}) {
+    Map<String, dynamic> finalExport = {};
+    finalExport['apps'] = apps.values
+        .where((e) {
+          if (appIds == null) {
+            return true;
+          } else {
+            return appIds.contains(e.app.id);
+          }
+        })
+        .map((e) => e.app.toJson())
+        .toList();
+    bool shouldExportSettings = settingsProvider.exportSettings;
+    if (overrideExportSettings != null) {
+      shouldExportSettings = overrideExportSettings;
+    }
+    if (shouldExportSettings) {
+      finalExport['settings'] = Map<String, Object?>.fromEntries(
+          (settingsProvider.prefs
+                  ?.getKeys()
+                  .map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
+                  .toList()) ??
+              []);
+    }
+    return finalExport;
+  }
+
   Future<String?> export(
       {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
@@ -1531,17 +1559,7 @@ class AppsProvider with ChangeNotifier {
     }
     String? returnPath;
     if (!pickOnly) {
-      Map<String, dynamic> finalExport = {};
-      finalExport['apps'] = apps.values.map((e) => e.app.toJson()).toList();
-      if (settingsProvider.exportSettings) {
-        finalExport['settings'] = Map<String, Object?>.fromEntries(
-            (settingsProvider.prefs
-                    ?.getKeys()
-                    .map((key) =>
-                        MapEntry(key, settingsProvider.prefs?.get(key)))
-                    .toList()) ??
-                []);
-      }
+      Map<String, dynamic> finalExport = generateExportJSON();
       var result = await saf.createFile(exportDir,
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
