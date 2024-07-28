@@ -131,6 +131,18 @@ class GitLab extends AppSource {
 
     bool trackOnly = additionalSettings['trackOnly'] == true;
 
+    // Get project ID
+    Response res0 = await sourceRequest(
+        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}?$optionalAuth',
+        additionalSettings);
+    if (res0.statusCode != 200) {
+      throw getObtainiumHttpError(res0);
+    }
+    int? projectId = jsonDecode(res0.body)['id'];
+    if (projectId == null) {
+      throw NoReleasesError();
+    }
+
     // Request data from REST API
     Response res = await sourceRequest(
         'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
@@ -157,7 +169,7 @@ class GitLab extends AppSource {
               .join('.apk\n')
               .split('\n')
               .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
-              .map((s) => '$standardUrl$s')
+              .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
               .toList();
       var apkUrlsSet = apkUrlsFromAssets.toSet();
       apkUrlsSet.addAll(uploadedAPKsFromDescription);
