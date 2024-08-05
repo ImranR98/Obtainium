@@ -1,5 +1,5 @@
 name: obtainium
-description: Get Android App Updates Directly From the Source.
+description: Get Android app updates straight from the source.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
