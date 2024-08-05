@@ -367,7 +367,7 @@ class AppsProvider with ChangeNotifier {
 
   AppsProvider({isBg = false}) {
     // Subscribe to changes in the app foreground status
-    foregroundStream = FGBGEvents.stream.asBroadcastStream();
+    foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) {
@@ -572,7 +572,7 @@ class AppsProvider with ChangeNotifier {
     if (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      while (await FGBGEvents.stream.first != FGBGType.foreground) {}
+      while (await FGBGEvents.instance.stream.first != FGBGType.foreground) {}
       await notificationsProvider.cancel(completeInstallationNotification.id);
     }
   }

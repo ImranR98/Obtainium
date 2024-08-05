@@ -1077,7 +1077,9 @@ class AppsPageState extends State<AppsPage> {
           IconButton(
               color: Theme.of(context).colorScheme.primary,
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              tooltip: '${tr('filter')}${isFilterOff ? '' : ' *'}',
+              tooltip: isFilterOff
+                  ? tr('filterApps')
+                  : '${tr('filter')} - ${tr('remove')}',
               onPressed: isFilterOff
                   ? showFilterDialog
                   : () {
@@ -1086,8 +1088,8 @@ class AppsPageState extends State<AppsPage> {
                       });
                     },
               icon: Icon(isFilterOff
-                  ? Icons.filter_list_rounded
-                  : Icons.filter_list_off_rounded)),
+                  ? Icons.search_rounded
+                  : Icons.search_off_rounded)),
           const SizedBox(
             width: 10,
           ),
