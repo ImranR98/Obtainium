@@ -82,8 +82,8 @@ class APKPure extends AppSource {
       throw NoReleasesError();
     }
 
-    List<APKDetails?> versionDetails =
-        (await Future.wait(versionLinks.map((link) async {
+    for (var i = 0; i < versionLinks.length; i++) {
+      var link = versionLinks[i];
       var res = await sourceRequest(link.key, additionalSettings);
       if (res.statusCode == 200) {
         var html = parse(res.body);
@@ -129,7 +129,7 @@ class APKPure extends AppSource {
                 .toList() ??
             [];
         if (apkUrls.isEmpty) {
-          return null;
+          continue;
         }
         String version = Uri.parse(link.key).pathSegments.last;
         String author = html
@@ -150,12 +150,7 @@ class APKPure extends AppSource {
       } else {
         throw getObtainiumHttpError(res);
       }
-    })))
-            .where((e) => e != null)
-            .toList();
-    if (versionDetails.isEmpty) {
-      throw NoAPKError();
     }
-    return versionDetails[0]!;
+    throw NoAPKError();
   }
 }
