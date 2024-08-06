@@ -93,7 +93,11 @@ class APKPure extends AppSource {
         var apkUrls = apksDiv
                 ?.querySelectorAll('div.group-title')
                 .map((e) {
-                  String? architecture = e.text.trim();
+                  String architecture = e.text.trim();
+                  if (architecture.toLowerCase() == 'unlimited' ||
+                      architecture.toLowerCase() == 'universal') {
+                    architecture = '';
+                  }
                   // Only take the first APK for each architecture, ignore others for now, for simplicity
                   // Unclear why there can even be multiple APKs for the same version and arch
                   var apkInfo = e.nextElementSibling?.querySelector('div.info');
@@ -116,6 +120,7 @@ class APKPure extends AppSource {
                   DateTime? releaseDate =
                       parseDateTimeMMMddCommayyyy(dateString);
                   if (additionalSettings['autoApkFilterByArch'] == true &&
+                      architecture.isNotEmpty &&
                       !supportedArchs.contains(architecture)) {
                     return const MapEntry('', '');
                   }
