@@ -68,11 +68,6 @@ class APKPure extends AppSource {
       'customLinkFilterRegex': '$standardUrl/download/[^/]+\$'
     });
 
-    // if (versionLinks.length > 7) {
-    //   // Returns up to 30 which is too much - would take too long and possibly get blocked/rate-limited
-    //   versionLinks = versionLinks.sublist(0, 7);
-    // }
-
     var supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
     if (additionalSettings['autoApkFilterByArch'] != true) {
@@ -94,11 +89,15 @@ class APKPure extends AppSource {
         var apkUrls = apksDiv
                 ?.querySelectorAll('div.group-title')
                 .map((e) {
-                  String architecture = e.text.trim();
-                  if (architecture.toLowerCase() == 'unlimited' ||
-                      architecture.toLowerCase() == 'universal') {
-                    architecture = '';
+                  String architectureString = e.text.trim();
+                  if (architectureString.toLowerCase() == 'unlimited' ||
+                      architectureString.toLowerCase() == 'universal') {
+                    architectureString = '';
                   }
+                  List<String> architectures = architectureString
+                      .split(',')
+                      .map((e) => e.trim())
+                      .toList();
                   // Only take the first APK for each architecture, ignore others for now, for simplicity
                   // Unclear why there can even be multiple APKs for the same version and arch
                   var apkInfo = e.nextElementSibling?.querySelector('div.info');
@@ -121,14 +120,16 @@ class APKPure extends AppSource {
                   DateTime? releaseDate =
                       parseDateTimeMMMddCommayyyy(dateString);
                   if (additionalSettings['autoApkFilterByArch'] == true &&
-                      architecture.isNotEmpty &&
-                      !supportedArchs.contains(architecture)) {
+                      architectures.isNotEmpty &&
+                      architectures
+                          .where((a) => supportedArchs.contains(a))
+                          .isEmpty) {
                     return const MapEntry('', '');
                   }
                   topReleaseDate ??=
                       releaseDate; // Just use the release date of the first APK in the list as the release date for this version
                   return MapEntry(
-                      '$appId-$versionCode-$architecture.${type.toLowerCase()}',
+                      '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
                       'https://d.${hosts.contains(host) ? 'cdnpure.com' : host}/b/$type/$appId?versionCode=$versionCode');
                 })
                 .where((e) => e.key.isNotEmpty)
