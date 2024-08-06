@@ -97,6 +97,7 @@ class APKPure extends AppSource {
                   List<String> architectures = architectureString
                       .split(',')
                       .map((e) => e.trim())
+                      .where((e) => e.isNotEmpty)
                       .toList();
                   // Only take the first APK for each architecture, ignore others for now, for simplicity
                   // Unclear why there can even be multiple APKs for the same version and arch
