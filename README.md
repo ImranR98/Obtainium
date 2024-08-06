@@ -25,9 +25,9 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - Jenkins Jobs
+  - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Open Source - App-Specific:
   - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)

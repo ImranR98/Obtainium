@@ -31,14 +31,15 @@ class APKPure extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url) {
     RegExp standardUrlRegExB = RegExp(
-        '^https?://m.${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?',
+        '^https?://m.${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
         caseSensitive: false);
     RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
-      url = 'https://${getSourceRegex(hosts)}${Uri.parse(url).path}';
+      var uri = Uri.parse(url);
+      url = 'https://${uri.host.substring(2)}${uri.path}';
     }
     RegExp standardUrlRegExA = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+(/+[^/]+)?',
+        '^https?://(www\\.)?${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
         caseSensitive: false);
     match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
@@ -93,7 +94,11 @@ class APKPure extends AppSource {
         var apkUrls = apksDiv
                 ?.querySelectorAll('div.group-title')
                 .map((e) {
-                  String? architecture = e.text.trim();
+                  String architecture = e.text.trim();
+                  if (architecture.toLowerCase() == 'unlimited' ||
+                      architecture.toLowerCase() == 'universal') {
+                    architecture = '';
+                  }
                   // Only take the first APK for each architecture, ignore others for now, for simplicity
                   // Unclear why there can even be multiple APKs for the same version and arch
                   var apkInfo = e.nextElementSibling?.querySelector('div.info');
@@ -116,6 +121,7 @@ class APKPure extends AppSource {
                   DateTime? releaseDate =
                       parseDateTimeMMMddCommayyyy(dateString);
                   if (additionalSettings['autoApkFilterByArch'] == true &&
+                      architecture.isNotEmpty &&
                       !supportedArchs.contains(architecture)) {
                     return const MapEntry('', '');
                   }
