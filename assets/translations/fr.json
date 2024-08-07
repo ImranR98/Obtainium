@@ -267,7 +267,7 @@
     "autoExportOnChanges": "Exportation automatique lors de modification",
     "includeSettings": "Inclure les paramètres",
     "filterVersionsByRegEx": "Filtrer les versions par expression régulière",
-    "trySelectingSuggestedVersionCode": "Essayer de sélectionner la version suggérée du Code APK",
+    "trySelectingSuggestedVersionCode": "Essayer de sélectionner la version suggérée du code APK",
     "dontSortReleasesList": "Conserver l'ordre de la version de l'API",
     "reverseSort": "Tri inversé",
     "takeFirstLink": "Utiliser le premier lien",
