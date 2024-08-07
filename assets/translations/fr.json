@@ -1,5 +1,5 @@
 {
-    "invalidURLForSource": "URL de l'application {} n'es pas valide",
+    "invalidURLForSource": "URL de l'application {} n'est pas valide",
     "noReleaseFound": "Impossible de trouver une publication correspondante",
     "noVersionFound": "Impossible de déterminer la version de la publication",
     "urlMatchesNoSource": "L'URL ne correspond pas à une source connue",
@@ -48,8 +48,8 @@
     "trackOnlyInBrackets": "(Suivi uniquement)",
     "searchableInBrackets": "(Interrogeable)",
     "appsString": "Applications",
-    "noApps": "Aucune applications",
-    "noAppsForFilter": "Aucune application à Filtrer",
+    "noApps": "Aucune application",
+    "noAppsForFilter": "Aucune application à filtrer",
     "byX": "Par {}",
     "percentProgress": "Progression: {}%",
     "pleaseWait": "Veuillez patienter",
@@ -299,7 +299,7 @@
     "useVersionCodeAsOSVersion": "Utiliser le code de version de l'application détectée par le système d'exploitation",
     "requestHeader": "Intitulé de la demande",
     "useLatestAssetDateAsReleaseDate": "Utiliser le dernier élément mis en ligne comme date de sortie",
-    "defaultPseudoVersioningMethod": "Methode de version fictive par défaut",
+    "defaultPseudoVersioningMethod": "Méthode de version fictive par défaut",
     "partialAPKHash": "Hash partiel de l'APK",
     "APKLinkHash": "Hash du lien APK",
     "directAPKLink": "Lien direct de l'APK",
@@ -308,7 +308,7 @@
     "latest": "Dernière version",
     "invertRegEx": "Inverser l'expression régulière",
     "note": "Note",
-    "selfHostedNote": "La liste déroulante \"{}\" peut être utilisé pour accéder à des instances auto-hébergées/personnalisées de n'importe quelle source.",
+    "selfHostedNote": "La liste déroulante \"{}\" peut être utilisée pour accéder à des instances auto-hébergées/personnalisées de n'importe quelle source.",
     "badDownload": "L'APK n'a pas pu être analysé (téléchargement incompatible ou partiel)",
     "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
     "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque tout est prêt.",
@@ -359,7 +359,7 @@
         "other": "{} et {} autres applications ont des mises à jour."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} et 1 autre application ont étés mis à jour.",
+        "one": "{} et 1 autre application ont été mises à jour.",
         "other": "{} et {} autres applications ont étés mis à jour."
     },
     "xAndNMoreUpdatesFailed": {
@@ -367,7 +367,7 @@
         "other": "Échec de la mise à jour de {} et {} autres applications."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} et 1 autre application ont peut-être étés mis à jour.",
+        "one": "{} et 1 autre application ont peut-être été mises à jour.",
         "other": "{} et {} autres applications ont peut-être étés mis à jour."
     },
     "apk": {
