@@ -33,7 +33,7 @@
     "app": "Application",
     "appsFromSourceAreTrackOnly": "Les applications de cette source sont en 'Suivi uniquement'.",
     "youPickedTrackOnly": "Vous avez sélectionné l'option 'Suivi uniquement'.",
-    "trackOnlyAppDescription": "L'application sera suivie pour les mises à jour, mais Obtainium ne pourra pas le télécharger ou l'installer.",
+    "trackOnlyAppDescription": "L'application sera suivie pour les mises à jour, mais Obtainium ne pourra pas la télécharger ou l'installer.",
     "cancelled": "Annulé",
     "appAlreadyAdded": "L'application a déjà été ajoutée",
     "alreadyUpToDateQuestion": "L'application est déjà à jour ?",
