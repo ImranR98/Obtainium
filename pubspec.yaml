@@ -145,6 +145,6 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
   fonts:
-      - family: Wix-Madefor-Display
+      - family: Wix-Madefor-Text
         fonts:
-          - asset: assets/fonts/WixMadeforDisplay-Regular.otf
+          - asset: assets/fonts/WixMadeforDisplay-Text.otf

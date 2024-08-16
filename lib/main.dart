@@ -226,7 +226,7 @@ class _ObtainiumState extends State<Obtainium> {
             brightness: Brightness.dark);
       }
 
-      // set the background and surface colors to pure black in the amoled theme
+      // set the background and surface colors to pure black in the AMOLED theme
       if (settingsProvider.useBlackTheme) {
         darkColorScheme =
             darkColorScheme.copyWith(surface: Colors.black).harmonized();
@@ -246,14 +246,14 @@ class _ObtainiumState extends State<Obtainium> {
                   ? darkColorScheme
                   : lightColorScheme,
               fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Display'),
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Text'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
               fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Display'),
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Text'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));
