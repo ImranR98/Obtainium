@@ -147,4 +147,4 @@ flutter:
   fonts:
       - family: Wix-Madefor-Text
         fonts:
-          - asset: assets/fonts/WixMadeforDisplay-Text.otf
+          - asset: assets/fonts/WixMadeforText-Regular.otf
