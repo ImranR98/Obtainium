@@ -884,7 +884,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "2250b63fddd8a9d52cfcf461bcfe4d7cfd82eaf8"
+      resolved-ref: "25acc02612c2e0fcae40d312e047ac48106f8f6b"
       url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git
     version: "0.0.1"
