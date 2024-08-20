@@ -202,7 +202,7 @@ class GitLab extends AppSource {
     }
 
     finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
-      if (RegExp('^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+\$')
+      if (RegExp('^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+')
           .hasMatch(apkUrl.value)) {
         return MapEntry(
             apkUrl.key, apkUrl.value.replaceFirst('/file/', '/raw/'));

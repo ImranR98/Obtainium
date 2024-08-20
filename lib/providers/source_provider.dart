@@ -412,6 +412,7 @@ abstract class AppSource {
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
   List<String> excludeCommonSettingKeys = [];
+  bool urlsAlwaysHaveExtension = false;
 
   AppSource() {
     name = runtimeType.toString();
