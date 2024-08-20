@@ -10,6 +10,7 @@ class Uptodown extends AppSource {
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
+    urlsAlwaysHaveExtension = true;
   }
 
   @override
@@ -39,20 +40,29 @@ class Uptodown extends AppSource {
     }
     var html = parse(res.body);
     String? version = html.querySelector('div.version')?.innerHtml;
-    String? apkUrl =
-        '${standardUrl.split('/').reversed.toList().sublist(1).reversed.join('/')}/post-download';
     String? name = html.querySelector('#detail-app-name')?.innerHtml.trim();
     String? author = html.querySelector('#author-link')?.innerHtml.trim();
     var detailElements = html.querySelectorAll('#technical-information td');
     String? appId = (detailElements.elementAtOrNull(2))?.innerHtml.trim();
     String? dateStr = (detailElements.elementAtOrNull(29))?.innerHtml.trim();
+    String? fileId =
+        html.querySelector('#detail-app-name')?.attributes['data-file-id'];
+    String? extension = html
+        .querySelectorAll('td')
+        .where((e) => e.text.toLowerCase().trim() == 'file type')
+        .firstOrNull
+        ?.nextElementSibling
+        ?.text
+        .toLowerCase()
+        .trim();
     return Map.fromEntries([
       MapEntry('version', version),
-      MapEntry('apkUrl', apkUrl),
       MapEntry('appId', appId),
       MapEntry('name', name),
       MapEntry('author', author),
-      MapEntry('dateStr', dateStr)
+      MapEntry('dateStr', dateStr),
+      MapEntry('fileId', fileId),
+      MapEntry('extension', extension)
     ]);
   }
 
@@ -64,14 +74,16 @@ class Uptodown extends AppSource {
     var appDetails =
         await getAppDetailsFromPage(standardUrl, additionalSettings);
     var version = appDetails['version'];
-    var apkUrl = appDetails['apkUrl'];
     var appId = appDetails['appId'];
+    var fileId = appDetails['fileId'];
+    var extension = appDetails['extension'];
     if (version == null) {
       throw NoVersionError();
     }
-    if (apkUrl == null) {
+    if (fileId == null) {
       throw NoAPKError();
     }
+    var apkUrl = '$standardUrl/$fileId-x';
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -82,8 +94,8 @@ class Uptodown extends AppSource {
     if (dateStr != null) {
       relDate = parseDateTimeMMMddCommayyyy(dateStr);
     }
-    return APKDetails(
-        version, getApkUrlsFromUrls([apkUrl]), AppNames(author, appName),
+    return APKDetails(version, [MapEntry('$appId.$extension', apkUrl)],
+        AppNames(author, appName),
         releaseDate: relDate);
   }
 
@@ -96,7 +108,7 @@ class Uptodown extends AppSource {
     }
     var html = parse(res.body);
     var finalUrlKey =
-        html.querySelector('.post-download')?.attributes['data-url'];
+        html.querySelector('#detail-download-button')?.attributes['data-url'];
     if (finalUrlKey == null) {
       throw NoAPKError();
     }

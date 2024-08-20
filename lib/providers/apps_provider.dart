@@ -225,7 +225,9 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
       ext != 'apk') {
     ext = 'apk';
   }
-  fileName = fileName.split('/').last; // Ensure the fileName is a file name
+  fileName = fileNameHasExt
+      ? fileName
+      : fileName.split('/').last; // Ensure the fileName is a file name
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
@@ -447,11 +449,15 @@ class AppsProvider with ChangeNotifier {
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
+      if (source.urlsAlwaysHaveExtension) {
+        fileNameNoExt =
+            '$fileNameNoExt.${app.apkUrls[app.preferredApkIndex].key.split('.').last}';
+      }
       var headers = await source.getRequestHeaders(app.additionalSettings,
           forAPKDownload: true);
       var downloadedFile = await downloadFileWithRetry(
-          downloadUrl, fileNameNoExt, false, headers: headers,
-          (double? progress) {
+          downloadUrl, fileNameNoExt, source.urlsAlwaysHaveExtension,
+          headers: headers, (double? progress) {
         int? prog = progress?.ceil();
         if (apps[app.id] != null) {
           apps[app.id]!.downloadProgress = progress;
