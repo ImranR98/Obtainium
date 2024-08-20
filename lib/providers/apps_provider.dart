@@ -485,8 +485,17 @@ class AppsProvider with ChangeNotifier {
             .listSync()
             .where((e) => e.path.toLowerCase().endsWith('.apk'))
             .toList();
-        newInfo =
-            await pm.getPackageArchiveInfo(archiveFilePath: apks.first.path);
+        for (var i = 0; i < apks.length; i++) {
+          try {
+            newInfo = await pm.getPackageArchiveInfo(
+                archiveFilePath: apks.first.path);
+            break;
+          } catch (e) {
+            if (i == apks.length - 1) {
+              rethrow;
+            }
+          }
+        }
       }
       if (newInfo == null) {
         downloadedFile.delete();
@@ -844,7 +853,11 @@ class AppsProvider with ChangeNotifier {
           if (needBGWorkaround) {
             // ignore: use_build_context_synchronously
             installApk(downloadedFile, contextIfNewInstall,
-                needsBGWorkaround: true);
+                needsBGWorkaround: true,
+                shizukuPretendToBeGooglePlay: apps[id]!
+                        .app
+                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
+                    true);
           } else {
             // ignore: use_build_context_synchronously
             sayInstalled = await installApk(downloadedFile, contextIfNewInstall,
