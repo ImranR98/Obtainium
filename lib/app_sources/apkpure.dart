@@ -114,7 +114,7 @@ class APKPure extends AppSource {
                           .map((e) => e.text.trim())
                           .map((t) => t == 'APKs' ? 'APK' : t) ??
                       [];
-                  String type = types.length == 0
+                  String type = types.isEmpty
                       ? 'APK'
                       : types.length == 1
                           ? types.first
