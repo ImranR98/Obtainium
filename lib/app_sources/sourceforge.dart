@@ -9,7 +9,7 @@ class SourceForge extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     var sourceRegex = getSourceRegex(hosts);
     RegExp standardUrlRegExC =
         RegExp('^https?://(www\\.)?$sourceRegex/p/.+', caseSensitive: false);

@@ -472,7 +472,7 @@ abstract class AppSource {
     //
   }
 
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     throw NotImplementedError();
   }
 
@@ -809,7 +809,7 @@ class SourceProvider {
       for (var s in sources.where(
           (element) => element.hosts.isEmpty && !element.neverAutoSelect)) {
         try {
-          s.sourceSpecificStandardizeURL(url);
+          s.sourceSpecificStandardizeURL(url, forSelection: true);
           source = s;
           break;
         } catch (e) {
