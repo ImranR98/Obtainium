@@ -967,11 +967,16 @@ class AppsProvider with ChangeNotifier {
     }
     for (var res in downloadResults) {
       if (!errors.appIdNames.containsKey(res['id'])) {
-        await installFn(
-            res['id'] as String,
-            res['willBeSilent'] as bool,
-            res['downloadedFile'] as DownloadedApk?,
-            res['downloadedDir'] as DownloadedXApkDir?);
+        try {
+          await installFn(
+              res['id'] as String,
+              res['willBeSilent'] as bool,
+              res['downloadedFile'] as DownloadedApk?,
+              res['downloadedDir'] as DownloadedXApkDir?);
+        } catch (e) {
+          var id = res['id'] as String;
+          errors.add(id, e, appName: apps[id]?.name);
+        }
       }
     }
 
