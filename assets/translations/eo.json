@@ -102,7 +102,7 @@
     "searchX": "Serĉi {}",
     "noResults": "Neniu rezulto",
     "importX": "Importi {}",
-    "importedAppsIdDisclaimer": "La importitaj apoj povas montriĝi malĝuste kiel \"Neinstalitaj\".\nPor solvi tion, reinstalu ilin per Obtainium.\Tiu ne afekcios la apodatumoj.\n\nAkefcias nur la URL-ajn lak triajn importmetodojn.",
+    "importedAppsIdDisclaimer": "La importitaj apoj povas montriĝi malĝuste kiel \"Neinstalitaj\".\nPor solvi tion, reinstalu ilin per Obtainium.\nTiu ne afekcios la apodatumoj.\n\nAkefcias nur la URL-ajn lak triajn importmetodojn.",
     "importErrors": "Eraroj de importado",
     "importedXOfYApps": "{} apoj el {} importitaj.",
     "followingURLsHadErrors": "La sekvantaj URLj havis erarojn:",
