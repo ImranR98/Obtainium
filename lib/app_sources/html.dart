@@ -350,7 +350,8 @@ class HTML extends AppSource {
         ? rel.hashCode.toString()
         : (await checkPartialDownloadHashDynamic(rel,
                 headers: await getRequestHeaders(additionalSettings,
-                    forAPKDownload: true)))
+                    forAPKDownload: true),
+                allowInsecure: additionalSettings['allowInsecure'] == true))
             .toString();
     return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
         AppNames(uri.host, tr('app')));

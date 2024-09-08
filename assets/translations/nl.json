@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
+    "allowInsecure": "Onveilige HTTP-verzoeken toestaan",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

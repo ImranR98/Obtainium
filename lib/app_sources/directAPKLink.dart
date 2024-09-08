@@ -26,7 +26,6 @@ class DirectAPKLink extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    print('AAA');
     if (!forSelection) {
       return url;
     }

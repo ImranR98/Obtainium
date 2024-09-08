@@ -2,11 +2,13 @@
 // AppSource is an abstract class with a concrete implementation for each source
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
+import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
@@ -399,6 +401,15 @@ getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
 
+HttpClient createHttpClient(bool insecure) {
+  final client = HttpClient();
+  if (insecure) {
+    client.badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+  }
+  return client;
+}
+
 abstract class AppSource {
   List<String> hosts = [];
   bool hostChanged = false;
@@ -462,7 +473,9 @@ abstract class AppSource {
       if (requestHeaders != null) {
         req.headers.addAll(requestHeaders);
       }
-      return Response.fromStream(await Client().send(req));
+      return Response.fromStream(await IOClient(
+              createHttpClient(additionalSettings['allowInsecure'] == true))
+          .send(req));
     } else {
       return get(Uri.parse(url));
     }
@@ -537,6 +550,10 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('shizukuPretendToBeGooglePlay',
           label: tr('shizukuPretendToBeGooglePlay'), defaultValue: false)
+    ],
+    [
+      GeneratedFormSwitch('allowInsecure',
+          label: tr('allowInsecure'), defaultValue: false)
     ],
     [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',

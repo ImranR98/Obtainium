@@ -17,6 +17,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/io_client.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -146,17 +147,23 @@ Future<File> downloadFileWithRetry(String url, String fileName,
     bool fileNameHasExt, Function? onProgress, String destDir,
     {bool useExisting = true,
     Map<String, String>? headers,
-    int retries = 3}) async {
+    int retries = 3,
+    bool allowInsecure = false}) async {
   try {
     return await downloadFile(
         url, fileName, fileNameHasExt, onProgress, destDir,
-        useExisting: useExisting, headers: headers);
+        useExisting: useExisting,
+        headers: headers,
+        allowInsecure: allowInsecure);
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(const Duration(seconds: 5));
       return await downloadFileWithRetry(
           url, fileName, fileNameHasExt, onProgress, destDir,
-          useExisting: useExisting, headers: headers, retries: (retries - 1));
+          useExisting: useExisting,
+          headers: headers,
+          retries: (retries - 1),
+          allowInsecure: allowInsecure);
     } else {
       rethrow;
     }
@@ -173,11 +180,14 @@ String hashListOfLists(List<List<int>> data) {
 Future<String> checkPartialDownloadHashDynamic(String url,
     {int startingSize = 1024,
     int lowerLimit = 128,
-    Map<String, String>? headers}) async {
+    Map<String, String>? headers,
+    bool allowInsecure = false}) async {
   for (int i = startingSize; i >= lowerLimit; i -= 256) {
     List<String> ab = await Future.wait([
-      checkPartialDownloadHash(url, i, headers: headers),
-      checkPartialDownloadHash(url, i, headers: headers)
+      checkPartialDownloadHash(url, i,
+          headers: headers, allowInsecure: allowInsecure),
+      checkPartialDownloadHash(url, i,
+          headers: headers, allowInsecure: allowInsecure)
     ]);
     if (ab[0] == ab[1]) {
       return ab[0];
@@ -187,13 +197,13 @@ Future<String> checkPartialDownloadHashDynamic(String url,
 }
 
 Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
-    {Map<String, String>? headers}) async {
+    {Map<String, String>? headers, bool allowInsecure = false}) async {
   var req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   var response = await client.send(req);
   if (response.statusCode < 200 || response.statusCode > 299) {
     throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
@@ -204,12 +214,14 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
 
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
-    {bool useExisting = true, Map<String, String>? headers}) async {
+    {bool useExisting = true,
+    Map<String, String>? headers,
+    bool allowInsecure = false}) async {
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
 
@@ -275,7 +287,7 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   IOSink? sink;
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
     client.close();
-    client = http.Client();
+    client = IOClient(createHttpClient(allowInsecure));
     req = Request('GET', Uri.parse(url));
     req.headers.addAll(reqHeaders);
     req.headers.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
@@ -318,12 +330,12 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
 }
 
 Future<Map<String, String>> getHeaders(String url,
-    {Map<String, String>? headers}) async {
+    {Map<String, String>? headers, bool allowInsecure = false}) async {
   var req = http.Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   var response = await client.send(req);
   if (response.statusCode < 200 || response.statusCode > 299) {
     throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
@@ -468,7 +480,9 @@ class AppsProvider with ChangeNotifier {
           notificationsProvider?.notify(notif);
         }
         prevProg = prog;
-      }, APKDir.path, useExisting: useExisting);
+      }, APKDir.path,
+          useExisting: useExisting,
+          allowInsecure: app.additionalSettings['allowInsecure'] == true);
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;
@@ -1036,7 +1050,8 @@ class AppsProvider with ChangeNotifier {
                 .getRequestHeaders(app.additionalSettings,
                     forAPKDownload:
                         fileUrl.key.endsWith('.apk') ? true : false),
-            useExisting: false);
+            useExisting: false,
+            allowInsecure: app.additionalSettings['allowInsecure'] == true);
         notificationsProvider
             .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
       } catch (e) {

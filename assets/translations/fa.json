@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "در AppVerifier به اشتراک بگذارید، سپس پس از آماده شدن به اینجا برگردید.",
     "wiki": "راهنما/ویکی",
     "crowdsourcedConfigsLabel": "تنظیمات برنامه Crowdsourced (با مسئولیت خود استفاده کنید)",
+    "allowInsecure": "Allow insecure HTTP requests",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

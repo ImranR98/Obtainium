@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Del til AppVerifier, og vend tilbage hertil, når du er klar.",
     "wiki": "Hjælp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcede app-konfigurationer (brug på egen risiko)",
+    "allowInsecure": "Tillad usikre HTTP-anmodninger",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"
