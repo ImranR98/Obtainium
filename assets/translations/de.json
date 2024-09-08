@@ -250,7 +250,7 @@
     "enableBackgroundUpdates": "Hintergrundaktualisierungen aktivieren",
     "backgroundUpdateReqsExplanation": "Die Hintergrundaktualisierung ist möglicherweise nicht für alle Apps möglich.",
     "backgroundUpdateLimitsExplanation": "Der Erfolg einer Hintergrundinstallation kann nur festgestellt werden, wenn Obtainium geöffnet wird.",
-    "verifyLatestTag": "Überprüfe das „latest“ Tag",
+    "verifyLatestTag": "„Latest“-Tag überprüfen",
     "intermediateLinkRegex": "Filter für einen „Zwischen“-Link, der zuerst besucht werden soll",
     "filterByLinkText": "Links durch Linktext filtern",
     "intermediateLinkNotFound": "„Zwischen“-Link nicht gefunden",
