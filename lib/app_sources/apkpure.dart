@@ -29,7 +29,7 @@ class APKPure extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegExB = RegExp(
         '^https?://m.${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
         caseSensitive: false);
@@ -109,11 +109,16 @@ class APKPure extends AppSource {
                           '')
                       ?.group(0)
                       ?.trim();
-                  String? type = apkInfo
-                          ?.querySelector('div.info-top span.tag')
-                          ?.text
-                          .trim() ??
-                      'APK';
+                  var types = apkInfo
+                          ?.querySelectorAll('div.info-top span.tag')
+                          .map((e) => e.text.trim())
+                          .map((t) => t == 'APKs' ? 'APK' : t) ??
+                      [];
+                  String type = types.isEmpty
+                      ? 'APK'
+                      : types.length == 1
+                          ? types.first
+                          : types.last;
                   String? dateString = apkInfo
                       ?.querySelector('div.info-bottom span.time')
                       ?.text

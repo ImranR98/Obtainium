@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque tout est prêt.",
     "wiki": "Aide/Wiki",
     "crowdsourcedConfigsLabel": "Configurations d'applications par la communauté (à utiliser à vos risques et périls)",
+    "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

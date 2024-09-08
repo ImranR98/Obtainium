@@ -23,6 +23,7 @@ import 'package:easy_localization/src/localization.dart';
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
   MapEntry(Locale('zh'), '简体中文'),
+  MapEntry(Locale('zh_Hant_TW'), '臺灣話'),
   MapEntry(Locale('it'), 'Italiano'),
   MapEntry(Locale('ja'), '日本語'),
   MapEntry(Locale('hu'), 'Magyar'),
@@ -41,6 +42,8 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('tr'), 'Türkçe'),
   MapEntry(Locale('uk'), 'Українська'),
   MapEntry(Locale('da'), 'Dansk'),
+  MapEntry(Locale('en', 'EO'),
+      'Esperanto'), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
@@ -245,15 +248,17 @@ class _ObtainiumState extends State<Obtainium> {
               colorScheme: settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Display'),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Wix-Madefor-Display'),
           darkTheme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Wix-Madefor-Display'),
+              fontFamily: settingsProvider.useSystemFont
+                  ? 'SystemFont'
+                  : 'Wix-Madefor-Display'),
           home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
             LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
           }, child: const HomePage()));

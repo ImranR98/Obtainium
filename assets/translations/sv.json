@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "wiki": "Hjälp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcade appkonfigurationer (använd på egen risk)",
+    "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

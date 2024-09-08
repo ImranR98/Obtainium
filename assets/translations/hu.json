@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (használat saját felelősségre)",
+    "allowInsecure": "Bizonytalan HTTP-kérések engedélyezése",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

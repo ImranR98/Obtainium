@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
     "wiki": "Nápověda/Wiki",
     "crowdsourcedConfigsLabel": "Konfigurace aplikací s využitím crowdsourcingu (použití na vlastní nebezpečí)",
+    "allowInsecure": "Povolení nezabezpečených požadavků HTTP",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

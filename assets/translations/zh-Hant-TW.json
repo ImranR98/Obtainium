@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "分享至 AppVerifier，然後準備好時回到此處。",
     "wiki": "幫助/維基",
     "crowdsourcedConfigsLabel": "群眾外包的應用程式設定（使用風險自負）",
+    "allowInsecure": "Allow insecure HTTP requests",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

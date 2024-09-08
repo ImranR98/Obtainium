@@ -38,7 +38,7 @@ class FDroid extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegExB = RegExp(
         '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+',
         caseSensitive: false);

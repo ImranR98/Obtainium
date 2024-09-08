@@ -314,6 +314,7 @@
     "appVerifierInstructionToast": "Chia sẻ lên AppVerifier, sau đó quay lại đây khi sẵn sàng.",
     "wiki": "Trợ giúp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
+    "allowInsecure": "Allow insecure HTTP requests",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"
