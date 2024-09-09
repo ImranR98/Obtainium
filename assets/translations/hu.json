@@ -141,7 +141,7 @@
     "deviceSupportsXArch": "Ez az eszköz támogatja a(z) {} CPU architektúrát.",
     "deviceSupportsFollowingArchs": "Ez az eszköz a következő CPU architektúrákat támogatja:",
     "warning": "Figyelem",
-    "sourceIsXButPackageFromYPrompt": "Az alkalmazás forrása „{}”, de a kiadási csomag innen származik: „{}”. Folytatja?",
+    "sourceIsXButPackageFromYPrompt": "Az alkalmazás forrása a(z) „{}” tároló, de a kiadási csomag innen származik: „{}”. Folytatja?",
     "updatesAvailable": "Frissítések érhetőek el",
     "updatesAvailableNotifDescription": "Értesíti a felhasználót, hogy egy vagy több, az Obtainium által nyomonkövetett alkalmazáshoz frissítések állnak rendelkezésre",
     "noNewUpdates": "Nincsenek új frissítések.",
