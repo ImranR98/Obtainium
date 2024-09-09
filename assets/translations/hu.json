@@ -41,7 +41,7 @@
     "appSourceURL": "Alkalmazás forrásának hivatkozása",
     "error": "Hiba",
     "add": "Hozzáadás",
-    "searchSomeSourcesLabel": "Keresés (csak egyes források)",
+    "searchSomeSourcesLabel": "Keresés (csak bizonyos források)",
     "search": "Keresés",
     "additionalOptsFor": "További lehetőségek a következőhöz: {}",
     "supportedSources": "Támogatott források",
