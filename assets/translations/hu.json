@@ -11,7 +11,7 @@
     "unexpectedError": "Váratlan hiba",
     "ok": "Rendben",
     "and": "és",
-    "githubPATLabel": "GitHub személyes hozzáférési token (megnöveli a sebességkorlátozást)",
+    "githubPATLabel": "GitHub személyes hozzáférési token (megnöveli lekérdezés-korlátozást)",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "fallbackToOlderReleases": "Visszatérés a régebbi kiadásokhoz",
     "filterReleaseTitlesByRegEx": "A kiadás címeinek szűrése reguláris kifejezéssel",
@@ -240,7 +240,7 @@
     "minStarCount": "Minimális csillag szám",
     "addInfoBelow": "Adja hozzá ezt az információt alább.",
     "addInfoInSettings": "Adja hozzá ezt az információt a beállításokban.",
-    "githubSourceNote": "A GitHub sebességkorlátozás elkerülhető egy API-kulcs használatával.",
+    "githubSourceNote": "A GitHub/GitLab lekérdezés-korlátozás elkerülhető egy API-kulcs használatával.",
     "sortByLastLinkSegment": "Rendezés csak a hivatkozás utolsó szegmense szerint",
     "filterReleaseNotesByRegEx": "Kiadási megjegyzések szűrése reguláris kifejezéssel",
     "customLinkFilterRegex": "Egyéni APK hivatkozásszűrő reguláris kifejezéssel (Alapértelmezett „.apk$”)",
@@ -320,8 +320,8 @@
         "other": "Eltávolítja az alkalmazásokat?"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva",
-        "other": "Túl sok kérés (korlátozott arány) – próbálja újra {} perc múlva"
+        "one": "Túl sok kérés (lekérdezés-korlátozás) – próbálja újra {} perc múlva,\nvagy adjon meg egy GitHub/GitLab API-kulcsot",
+        "other": "Túl sok kérés (lekérdezés-korlátozás) – próbálja újra {} perc múlva,\nvagy adjon meg egy GitHub/GitLab API-kulcsot"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "Frissítések ellenőrzése a háttérben a következőt észlelte: {} - Újrapróbálkozás: {} perc múlva",
