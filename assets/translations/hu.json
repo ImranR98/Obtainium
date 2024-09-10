@@ -11,7 +11,7 @@
     "unexpectedError": "Váratlan hiba",
     "ok": "Rendben",
     "and": "és",
-    "githubPATLabel": "GitHub személyes hozzáférési token (megnöveli lekérdezés-korlátozást)",
+    "githubPATLabel": "GitHub személyes hozzáférési token (megnöveli a lekérdezés-korlátozást)",
     "includePrereleases": "Tartalmazza az előzetes kiadásokat",
     "fallbackToOlderReleases": "Visszatérés a régebbi kiadásokhoz",
     "filterReleaseTitlesByRegEx": "A kiadás címeinek szűrése reguláris kifejezéssel",
