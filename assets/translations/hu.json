@@ -56,8 +56,8 @@
     "updateAvailable": "Frissítés érhető el",
     "notInstalled": "Nem telepített",
     "pseudoVersion": "pszeudo-verzió",
-    "selectAll": "Mindet kiválaszt",
-    "deselectX": "{} kijelölésének elvetése",
+    "selectAll": "Összes kiválasztása",
+    "deselectX": "A(z) {} kiválasztásának elvetése",
     "xWillBeRemovedButRemainInstalled": "A(z) {} el lesz távolítva az Obtainiumból, de továbbra is telepítve marad az eszközön.",
     "removeSelectedAppsQuestion": "A kiválasztott alkalmazások eltávolítása?",
     "removeSelectedApps": "A kiválasztott alkalmazások eltávolítása",
@@ -122,7 +122,7 @@
     "appSortOrder": "Rendezési sorrend",
     "ascending": "Emelkedő",
     "descending": "Csökkenő",
-    "bgUpdateCheckInterval": "Frissítéskeresés időköze a háttérben",
+    "bgUpdateCheckInterval": "Időtartam a frissítések háttér-ellenőrzése között",
     "neverManualOnly": "Soha – csak kézi",
     "appearance": "Megjelenés",
     "showWebInAppView": "Forrás megjelenítése az alkalmazásnézetben",
@@ -340,16 +340,16 @@
         "other": "{} hivatkozás"
     },
     "minute": {
-        "one": "{} percenként",
-        "other": "{} percenként"
+        "one": "{} perc",
+        "other": "{} perc"
     },
     "hour": {
-        "one": "{} óránként",
-        "other": "{} óránként"
+        "one": "{} óra",
+        "other": "{} óra"
     },
     "day": {
-        "one": "{} naponta",
-        "other": "{} naponta"
+        "one": "{} nap",
+        "other": "{} nap"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "{n} napló törölve lett ({after} után és {before} előtt)",
