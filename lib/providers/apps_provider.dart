@@ -375,6 +375,7 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
   late Directory APKDir;
+  late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
@@ -393,11 +394,20 @@ class AppsProvider with ChangeNotifier {
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         APKDir = cacheDirs!.first;
+        iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
+        }
       } else {
         APKDir =
             Directory('${(await getExternalStorageDirectory())!.path}/apks');
         if (!APKDir.existsSync()) {
           APKDir.createSync();
+        }
+        iconsCacheDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
         }
       }
       if (!isBg) {
@@ -1297,10 +1307,16 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAppIcon(String? appId) async {
+  Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
     if (apps[appId]?.icon == null) {
-      var icon =
-          (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      var cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+      var alreadyCached = cachedIcon.existsSync() && !ignoreCache;
+      var icon = alreadyCached
+          ? (await cachedIcon.readAsBytes())
+          : (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      if (icon != null && !alreadyCached) {
+        cachedIcon.writeAsBytes(icon.toList());
+      }
       if (icon != null) {
         apps.update(
             apps[appId]!.app.id,
