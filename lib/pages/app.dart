@@ -248,7 +248,8 @@ class _AppPageState extends State<AppPage> {
           children: [
             const SizedBox(height: 20),
             FutureBuilder(
-                future: appsProvider.updateAppIcon(app?.app.id),
+                future:
+                    appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
                 builder: (ctx, val) {
                   return app?.icon != null
                       ? Row(
