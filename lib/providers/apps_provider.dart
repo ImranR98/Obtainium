@@ -1598,12 +1598,13 @@ class AppsProvider with ChangeNotifier {
     }
     String? returnPath;
     if (!pickOnly) {
+      var encoder = const JsonEncoder.withIndent("    ");
       Map<String, dynamic> finalExport = generateExportJSON();
       var result = await saf.createFile(exportDir,
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          bytes: Uint8List.fromList(utf8.encode(jsonEncode(finalExport))));
+          bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }
