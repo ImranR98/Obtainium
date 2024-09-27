@@ -1367,10 +1367,6 @@ class AppsProvider with ChangeNotifier {
       if (file.existsSync()) {
         file.deleteSync(recursive: true);
       }
-      File iconFile = File('$iconsCacheDir/$appId.png');
-      if (iconFile.existsSync()) {
-        iconFile.deleteSync(recursive: true);
-      }
       apkFiles
           .where(
               (element) => element.path.split('/').last.startsWith('$appId-'))
