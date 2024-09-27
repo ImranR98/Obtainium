@@ -28,6 +28,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/app_sources/whatsapp.dart';
@@ -465,19 +466,25 @@ abstract class AppSource {
 
   Future<Response> sourceRequest(
       String url, Map<String, dynamic> additionalSettings,
-      {bool followRedirects = true}) async {
+      {bool followRedirects = true, Object? postBody}) async {
     var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
-      var req = Request('GET', Uri.parse(url));
+      var req = Request(postBody == null ? 'GET' : 'POST', Uri.parse(url));
       req.followRedirects = followRedirects;
       if (requestHeaders != null) {
         req.headers.addAll(requestHeaders);
+      }
+      if (postBody != null) {
+        req.headers[HttpHeaders.contentTypeHeader] = 'application/json';
+        req.body = jsonEncode(postBody);
       }
       return Response.fromStream(await IOClient(
               createHttpClient(additionalSettings['allowInsecure'] == true))
           .send(req));
     } else {
-      return get(Uri.parse(url));
+      return postBody == null
+          ? get(Uri.parse(url))
+          : post(Uri.parse(url), body: jsonEncode(postBody));
     }
   }
 
@@ -782,6 +789,7 @@ class SourceProvider {
         Aptoide(),
         Uptodown(),
         HuaweiAppGallery(),
+        Tencent(),
         Jenkins(),
         APKMirror(),
         Signal(),
