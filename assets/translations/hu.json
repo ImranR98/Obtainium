@@ -308,7 +308,7 @@
     "latest": "Legújabb",
     "invertRegEx": "Reguláris kifejezés invertálása",
     "note": "Megjegyzés",
-    "selfHostedNote": "A(z) \"{}\" legördülő menü segítségével elérhetővé válnak a bármilyen más forrásból származó saját üzemeltetésű- vagy egyéni példányok.",
+    "selfHostedNote": "A(z) „{}” legördülő menü segítségével elérhetővé válnak a bármilyen más forrásból származó saját üzemeltetésű- vagy egyéni példányok.",
     "badDownload": "Az APK-t nem lehetett elemezni (inkompatibilis vagy részleges letöltés)",
     "beforeNewInstallsShareToAppVerifier": "Új alkalmazások megosztása az AppVerifierrel (ha elérhető)",
     "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
