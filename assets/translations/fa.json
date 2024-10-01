@@ -315,6 +315,7 @@
     "wiki": "راهنما/ویکی",
     "crowdsourcedConfigsLabel": "تنظیمات برنامه Crowdsourced (با مسئولیت خود استفاده کنید)",
     "allowInsecure": "درخواست های HTTP ناامن را مجاز کنید",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

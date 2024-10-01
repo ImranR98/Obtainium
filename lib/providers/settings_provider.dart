@@ -48,7 +48,7 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get useShizuku{
+  bool get useShizuku {
     return prefs?.getBool('useShizuku') ?? false;
   }
 
@@ -69,8 +69,7 @@ class SettingsProvider with ChangeNotifier {
 
   Color get themeColor {
     int? colorCode = prefs?.getInt('themeColor');
-    return (colorCode != null) ?
-        Color(colorCode) : obtainiumThemeColor;
+    return (colorCode != null) ? Color(colorCode) : obtainiumThemeColor;
   }
 
   set themeColor(Color themeColor) {
@@ -467,6 +466,15 @@ class SettingsProvider with ChangeNotifier {
 
   set beforeNewInstallsShareToAppVerifier(bool val) {
     prefs?.setBool('beforeNewInstallsShareToAppVerifier', val);
+    notifyListeners();
+  }
+
+  bool get shizukuPretendToBeGooglePlay {
+    return prefs?.getBool('shizukuPretendToBeGooglePlay') ?? false;
+  }
+
+  set shizukuPretendToBeGooglePlay(bool val) {
+    prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
   }
 }

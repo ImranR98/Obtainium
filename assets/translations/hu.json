@@ -315,6 +315,7 @@
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsource-ből származó alkalmazások beállítása (saját felelősségére használja)",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
+    "stayOneVersionBehind": "Maradjon egy verzióval a legfrissebb mögött",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

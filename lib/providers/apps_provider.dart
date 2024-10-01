@@ -879,22 +879,20 @@ class AppsProvider with ChangeNotifier {
             apps[id]?.installedInfo == null ? context : null;
         bool needBGWorkaround =
             willBeSilent && context == null && !settingsProvider.useShizuku;
+        bool shizukuPretendToBeGooglePlay = settingsProvider
+                .shizukuPretendToBeGooglePlay ||
+            apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
+                true;
         if (downloadedFile != null) {
           if (needBGWorkaround) {
             // ignore: use_build_context_synchronously
             installApk(downloadedFile, contextIfNewInstall,
                 needsBGWorkaround: true,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           } else {
             // ignore: use_build_context_synchronously
             sayInstalled = await installApk(downloadedFile, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         } else {
           if (needBGWorkaround) {
@@ -905,10 +903,7 @@ class AppsProvider with ChangeNotifier {
             // ignore: use_build_context_synchronously
             sayInstalled = await installXApkDir(
                 downloadedDir!, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         }
         if (willBeSilent && context == null) {

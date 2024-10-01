@@ -315,6 +315,7 @@
     "wiki": "Hjälp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcade appkonfigurationer (använd på egen risk)",
     "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
+    "stayOneVersionBehind": "Håll dig en version bakom den senaste",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

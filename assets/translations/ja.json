@@ -315,6 +315,7 @@
     "wiki": "ヘルプ/ウィキ",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
+    "stayOneVersionBehind": "最新バージョンから1つ遅れ",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

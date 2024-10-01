@@ -315,6 +315,7 @@
     "wiki": "Yardım/Wiki",
     "crowdsourcedConfigsLabel": "Kitle Kaynaklı Uygulama Yapılandırmaları (riski size ait olmak üzere kullanın)",
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
+    "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

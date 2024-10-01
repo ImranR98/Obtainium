@@ -204,7 +204,7 @@
     "categoryDeleteWarning": "Semua aplikasi dalam kategori yang dihapus akan diatur sebagai tidak terkategori.",
     "addCategory": "Tambah kategori",
     "label": "Label",
-    "language": "Language",
+    "language": "Bahasa",
     "copiedToClipboard": "Disalin ke papan klip",
     "storagePermissionDenied": "Izin penyimpanan ditolak",
     "selectedCategorizeWarning": "Ini akan mengganti pengaturan kategori yang ada untuk aplikasi terpilih.",
@@ -315,6 +315,7 @@
     "wiki": "Bantuan/Wiki",
     "crowdsourcedConfigsLabel": "Konfigurasi aplikasi Crowdsourced (risiko penggunaan ditanggung sendiri)",
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
+    "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

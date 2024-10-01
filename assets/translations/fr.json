@@ -315,6 +315,7 @@
     "wiki": "Aide/Wiki",
     "crowdsourcedConfigsLabel": "Configurations d'applications par la communauté (à utiliser à vos risques et périls)",
     "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
+    "stayOneVersionBehind": "Rester à une version de la dernière",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"
