@@ -315,6 +315,7 @@
     "wiki": "Pomoć/Wiki",
     "crowdsourcedConfigsLabel": "Konfiguracije aplikacije obezbeđene pomoću velikog broja ljudi (crowdsourcing) (koristite na svoju odgovornost)",
     "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

@@ -315,6 +315,7 @@
     "wiki": "Trợ giúp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
     "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

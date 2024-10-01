@@ -315,6 +315,7 @@
     "wiki": "幫助/維基",
     "crowdsourcedConfigsLabel": "群眾外包的應用程式設定（使用風險自負）",
     "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

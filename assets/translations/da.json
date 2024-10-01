@@ -315,6 +315,7 @@
     "wiki": "Hjælp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcede app-konfigurationer (brug på egen risiko)",
     "allowInsecure": "Tillad usikre HTTP-anmodninger",
+    "stayOneVersionBehind": "Vær en version bagud i forhold til den nyeste",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

@@ -315,6 +315,7 @@
     "wiki": "Nápověda/Wiki",
     "crowdsourcedConfigsLabel": "Konfigurace aplikací s využitím crowdsourcingu (použití na vlastní nebezpečí)",
     "allowInsecure": "Povolení nezabezpečených požadavků HTTP",
+    "stayOneVersionBehind": "Zůstaňte o jednu verzi pozadu za nejnovější",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

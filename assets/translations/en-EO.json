@@ -315,6 +315,7 @@
     "wiki": "Helpo/Vikio",
     "crowdsourcedConfigsLabel": "Komunumaj apo-agordoj (uzu kun singardo)",
     "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Forigi la aplikaĵon?",
         "other": "Forigi la aplikaĵojn?"

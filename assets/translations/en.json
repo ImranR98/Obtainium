@@ -315,6 +315,7 @@
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
     "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"
