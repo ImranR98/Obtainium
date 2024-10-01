@@ -242,11 +242,11 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getFullInfoColumn() => Column(
+    getFullInfoColumn({bool small = false}) => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 20),
+            SizedBox(height: small ? 5 : 20),
             FutureBuilder(
                 future:
                     appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
@@ -261,24 +261,28 @@ class _AppPageState extends State<AppPage> {
                                     : () => pm.openApp(app.app.id),
                                 child: Image.memory(
                                   app!.icon!,
-                                  height: 150,
+                                  height: small ? 70 : 150,
                                   gaplessPlayback: true,
                                 ),
                               )
                             ])
                       : Container();
                 }),
-            const SizedBox(
-              height: 25,
+            SizedBox(
+              height: small ? 10 : 25,
             ),
             Text(
               app?.name ?? tr('app'),
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displayLarge,
+              style: small
+                  ? Theme.of(context).textTheme.displaySmall
+                  : Theme.of(context).textTheme.displayLarge,
             ),
             Text(tr('byX', args: [app?.app.author ?? tr('unknown')]),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium),
+                style: small
+                    ? Theme.of(context).textTheme.headlineSmall
+                    : Theme.of(context).textTheme.headlineMedium),
             const SizedBox(
               height: 24,
             ),
@@ -496,11 +500,8 @@ class _AppPageState extends State<AppPage> {
                                   builder: (BuildContext ctx) {
                                     return AlertDialog(
                                       scrollable: true,
-                                      content: getInfoColumn(),
-                                      title: Text(
-                                          '${app.name} ${tr('byX', args: [
-                                            app.app.author
-                                          ])}'),
+                                      content: getFullInfoColumn(small: true),
+                                      title: Text(app.name),
                                       actions: [
                                         TextButton(
                                             onPressed: () {
