@@ -30,6 +30,7 @@ class AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   String? pickedSourceOverride;
+  String? previousPickedSourceOverride;
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
@@ -58,6 +59,9 @@ class AddAppPageState extends State<AddAppPage> {
         if (overrideSource != null) {
           pickedSourceOverride = overrideSource;
         }
+        bool overrideChanged =
+            pickedSourceOverride != previousPickedSourceOverride;
+        previousPickedSourceOverride = pickedSourceOverride;
         if (updateUrlInput) {
           urlInputKey++;
         }
@@ -69,6 +73,7 @@ class AddAppPageState extends State<AddAppPage> {
                 overrideSource: pickedSourceOverride)
             : null;
         if (pickedSource.runtimeType != source.runtimeType ||
+            overrideChanged ||
             (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;
           pickedSource?.runOnAddAppInputChange(userInput);
@@ -487,7 +492,8 @@ class AddAppPageState extends State<AddAppPage> {
               height: 16,
             ),
             GeneratedForm(
-                key: Key(pickedSource.runtimeType.toString()),
+                key: Key(
+                    '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}'),
                 items: [
                   ...pickedSource!.combinedAppSpecificSettingFormItems,
                   ...(pickedSourceOverride != null

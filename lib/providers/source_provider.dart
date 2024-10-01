@@ -414,6 +414,7 @@ HttpClient createHttpClient(bool insecure) {
 abstract class AppSource {
   List<String> hosts = [];
   bool hostChanged = false;
+  bool hostIdenticalDespiteAnyChange = false;
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
@@ -628,9 +629,10 @@ abstract class AppSource {
       SettingsProvider settingsProvider) async {
     Map<String, String> results = {};
     for (var e in sourceConfigSettingFormItems) {
-      var val = hostChanged
+      var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
-          : settingsProvider.getSettingString(e.key);
+          : additionalSettings[e.key] ??
+              settingsProvider.getSettingString(e.key);
       if (val != null) {
         results[e.key] = val;
       }
@@ -813,9 +815,14 @@ class SourceProvider {
         throw UnsupportedURLError();
       }
       var res = srcs.first;
-      res.hosts = [Uri.parse(url).host];
+      var originalHosts = res.hosts;
+      var newHost = Uri.parse(url).host;
+      res.hosts = [newHost];
       res.hostChanged = true;
-      return srcs.first;
+      if (originalHosts.contains(newHost)) {
+        res.hostIdenticalDespiteAnyChange = true;
+      }
+      return res;
     }
     AppSource? source;
     for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
