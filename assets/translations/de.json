@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Geben Sie die Daten an AppVerifier weiter und kehren Sie dann hierher zurück, wenn Sie fertig sind.",
     "wiki": "Hilfe/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (Verwendung auf eigene Gefahr)",
+    "communityAppSources": "Community-App-Quellen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

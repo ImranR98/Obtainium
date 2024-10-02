@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
+    "communityAppSources": "Bronnen voor community-apps",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

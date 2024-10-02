@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "wiki": "ヘルプ/ウィキ",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
+    "communityAppSources": "コミュニティのアプリソース",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

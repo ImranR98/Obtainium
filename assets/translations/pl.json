@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Udostępnij w AppVerifier, a następnie wróć tutaj, gdy będziesz gotowy.",
     "wiki": "Pomoc/Wiki",
     "crowdsourcedConfigsLabel": "Konfiguracje aplikacji pochodzące z crowdsourcingu (korzystanie na własne ryzyko)",
+    "communityAppSources": "Zrodliny aplikacji komunity",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

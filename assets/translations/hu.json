@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (használat saját felelősségre)",
+    "communityAppSources": "Közösségi alkalmazásforrások",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

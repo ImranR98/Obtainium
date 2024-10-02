@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Condividete con AppVerifier, quindi tornate qui quando siete pronti.",
     "wiki": "Aiuto/Wiki",
     "crowdsourcedConfigsLabel": "Configurazioni di app in crowdsourcing (uso a proprio rischio)",
+    "communityAppSources": "Fonti di app comunitarie",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

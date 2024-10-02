@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Надішліть на AppVerifier, а потім поверніться сюди, коли будете готові.",
     "wiki": "Довідка/Вікі",
     "crowdsourcedConfigsLabel": "Краудсорсингові конфігурації додатків (використовуйте на свій страх і ризик)",
+    "communityAppSources": "Ресурси програми спільноти",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

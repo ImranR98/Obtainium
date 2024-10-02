@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
+    "communityAppSources": "Community App Sources",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

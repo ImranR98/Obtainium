@@ -312,6 +312,7 @@
     "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "wiki": "Hjälp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcade appkonfigurationer (använd på egen risk)",
+    "communityAppSources": "Gemenskapsappresurser",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
