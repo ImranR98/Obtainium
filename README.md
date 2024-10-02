@@ -2,7 +2,7 @@
 
 [![Ceasefire Now](https://badge.techforpalestine.org/default)](https://techforpalestine.org/learn-more)
 
-Get Android App Updates Directly From the Source.
+Get Android app updates straight from the source.
 
 Obtainium allows you to install and update apps directly from their releases pages, and receive notifications when new releases are made available.
 
@@ -16,7 +16,7 @@ Currently supported App sources:
 - Open Source - General:
   - [GitHub](https://github.com/)
   - [GitLab](https://gitlab.com/)
-  - [Codeberg](https://codeberg.org/)
+  - [Forgejo](https://forgejo.org/) ([Codeberg](https://codeberg.org/))
   - [F-Droid](https://f-droid.org/)
   - Third Party F-Droid Repos
   - [IzzyOnDroid](https://android.izzysoft.de/)
@@ -25,9 +25,10 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
+  - [Tencent App Store](https://sj.qq.com/)
   - Jenkins Jobs
+  - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Open Source - App-Specific:
   - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)

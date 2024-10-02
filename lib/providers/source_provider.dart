@@ -2,11 +2,13 @@
 // AppSource is an abstract class with a concrete implementation for each source
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
+import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
@@ -26,6 +28,7 @@ import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
+import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/app_sources/whatsapp.dart';
@@ -354,7 +357,11 @@ preStandardizeUrl(String url) {
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  var trailingSlash = Uri.tryParse(url)?.path.endsWith('/') ?? false;
+  var uri = Uri.tryParse(url);
+  var trailingSlash = ((uri?.path.endsWith('/') ?? false) ||
+          ((uri?.path.isEmpty ?? false) && url.endsWith('/'))) &&
+      (uri?.queryParameters.isEmpty ?? false);
+
   url = url
           .split('/')
           .where((e) => e.isNotEmpty)
@@ -395,9 +402,19 @@ getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
 
+HttpClient createHttpClient(bool insecure) {
+  final client = HttpClient();
+  if (insecure) {
+    client.badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+  }
+  return client;
+}
+
 abstract class AppSource {
   List<String> hosts = [];
   bool hostChanged = false;
+  bool hostIdenticalDespiteAnyChange = false;
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
@@ -408,6 +425,7 @@ abstract class AppSource {
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
   List<String> excludeCommonSettingKeys = [];
+  bool urlsAlwaysHaveExtension = false;
 
   AppSource() {
     name = runtimeType.toString();
@@ -449,21 +467,33 @@ abstract class AppSource {
 
   Future<Response> sourceRequest(
       String url, Map<String, dynamic> additionalSettings,
-      {bool followRedirects = true}) async {
+      {bool followRedirects = true, Object? postBody}) async {
     var requestHeaders = await getRequestHeaders(additionalSettings);
     if (requestHeaders != null || followRedirects == false) {
-      var req = Request('GET', Uri.parse(url));
+      var req = Request(postBody == null ? 'GET' : 'POST', Uri.parse(url));
       req.followRedirects = followRedirects;
       if (requestHeaders != null) {
         req.headers.addAll(requestHeaders);
       }
-      return Response.fromStream(await Client().send(req));
+      if (postBody != null) {
+        req.headers[HttpHeaders.contentTypeHeader] = 'application/json';
+        req.body = jsonEncode(postBody);
+      }
+      return Response.fromStream(await IOClient(
+              createHttpClient(additionalSettings['allowInsecure'] == true))
+          .send(req));
     } else {
-      return get(Uri.parse(url));
+      return postBody == null
+          ? get(Uri.parse(url))
+          : post(Uri.parse(url), body: jsonEncode(postBody));
     }
   }
 
-  String sourceSpecificStandardizeURL(String url) {
+  void runOnAddAppInputChange(String inputUrl) {
+    //
+  }
+
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     throw NotImplementedError();
   }
 
@@ -487,13 +517,15 @@ abstract class AppSource {
     ],
     [
       GeneratedFormTextField('versionExtractionRegEx',
-          label: tr('versionExtractionRegEx'),
+          label: tr('trimVersionString'),
           required: false,
           additionalValidators: [(value) => regExValidator(value)]),
     ],
     [
       GeneratedFormTextField('matchGroupToUse',
-          label: tr('matchGroupToUse'), required: false, hint: '\$0')
+          label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
+          required: false,
+          hint: '\$0')
     ],
     [
       GeneratedFormSwitch('versionDetection',
@@ -526,6 +558,10 @@ abstract class AppSource {
     [
       GeneratedFormSwitch('shizukuPretendToBeGooglePlay',
           label: tr('shizukuPretendToBeGooglePlay'), defaultValue: false)
+    ],
+    [
+      GeneratedFormSwitch('allowInsecure',
+          label: tr('allowInsecure'), defaultValue: false)
     ],
     [
       GeneratedFormSwitch('exemptFromBackgroundUpdates',
@@ -593,9 +629,10 @@ abstract class AppSource {
       SettingsProvider settingsProvider) async {
     Map<String, String> results = {};
     for (var e in sourceConfigSettingFormItems) {
-      var val = hostChanged
+      var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
-          : settingsProvider.getSettingString(e.key);
+          : additionalSettings[e.key] ??
+              settingsProvider.getSettingString(e.key);
       if (val != null) {
         results[e.key] = val;
       }
@@ -617,7 +654,7 @@ abstract class AppSource {
   }
 
   bool canSearch = false;
-  bool excludeFromMassSearch = false;
+  bool includeAdditionalOptsInMainSearch = false;
   List<GeneratedFormItem> searchQuerySettingFormItems = [];
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) {
@@ -753,9 +790,10 @@ class SourceProvider {
         APKPure(),
         Aptoide(),
         Uptodown(),
-        APKMirror(),
         HuaweiAppGallery(),
+        Tencent(),
         Jenkins(),
+        APKMirror(),
         Signal(),
         VLC(),
         WhatsApp(),
@@ -777,9 +815,14 @@ class SourceProvider {
         throw UnsupportedURLError();
       }
       var res = srcs.first;
-      res.hosts = [Uri.parse(url).host];
+      var originalHosts = res.hosts;
+      var newHost = Uri.parse(url).host;
+      res.hosts = [newHost];
       res.hostChanged = true;
-      return srcs.first;
+      if (originalHosts.contains(newHost)) {
+        res.hostIdenticalDespiteAnyChange = true;
+      }
+      return res;
     }
     AppSource? source;
     for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
@@ -798,7 +841,7 @@ class SourceProvider {
       for (var s in sources.where(
           (element) => element.hosts.isEmpty && !element.neverAutoSelect)) {
         try {
-          s.sourceSpecificStandardizeURL(url);
+          s.sourceSpecificStandardizeURL(url, forSelection: true);
           source = s;
           break;
         } catch (e) {

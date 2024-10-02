@@ -14,7 +14,7 @@ class IzzyOnDroid extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegExA = RegExp(
         '^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+',
         caseSensitive: false);

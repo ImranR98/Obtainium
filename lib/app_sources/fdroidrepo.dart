@@ -9,7 +9,7 @@ class FDroidRepo extends AppSource {
   FDroidRepo() {
     name = tr('fdroidThirdPartyRepo');
     canSearch = true;
-    excludeFromMassSearch = true;
+    includeAdditionalOptsInMainSearch = true;
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;
 
@@ -43,7 +43,7 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     var standardUri = Uri.parse(url);
     var pathSegments = standardUri.pathSegments;
     if (pathSegments.isNotEmpty && pathSegments.last == 'index.xml') {
@@ -84,6 +84,27 @@ class FDroidRepo extends AppSource {
     } else {
       throw getObtainiumHttpError(res);
     }
+  }
+
+  @override
+  void runOnAddAppInputChange(String userInput) {
+    additionalSourceAppSpecificSettingFormItems =
+        additionalSourceAppSpecificSettingFormItems.map((row) {
+      row = row.map((item) {
+        if (item.key == 'appIdOrName') {
+          try {
+            var appId = Uri.parse(userInput).queryParameters['appId'];
+            if (appId != null && item is GeneratedFormTextField) {
+              item.required = false;
+            }
+          } catch (e) {
+            //
+          }
+        }
+        return item;
+      }).toList();
+      return row;
+    }).toList();
   }
 
   @override
@@ -142,6 +163,7 @@ class FDroidRepo extends AppSource {
     if (appIdOrName == null) {
       throw NoReleasesError();
     }
+    additionalSettings['appIdOrName'] = appIdOrName;
     var res =
         await sourceRequestWithURLVariants(standardUrl, additionalSettings);
     if (res.statusCode == 200) {

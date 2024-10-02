@@ -6,7 +6,10 @@ on:
       beta:
         type: boolean
         description: Is beta?
-    
+      draft:
+        type: boolean
+        description: Is draft?
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,13 +38,7 @@ jobs:
       - name: Check submodule
         id: check_submodule
         run: |
-          SUBMODULE_COMMIT_LONG="$(git submodule status | head -1 | tail -c +2 | awk '{print $1}')"
-          FLUTTER_COMMIT_SHORT="$(flutter --version | head -2 | tail -1 | awk '{print $4}')"
-          echo "SUBMODULE_COMMIT_LONG=$SUBMODULE_COMMIT_LONG, FLUTTER_COMMIT_SHORT=$FLUTTER_COMMIT_SHORT"
-          if ! [[ "$SUBMODULE_COMMIT_LONG" =~ ^$FLUTTER_COMMIT_SHORT ]]; then
-            echo "Your submodule has not been updated!"
-            exit 1
-          fi
+          git checkout ${{ inputs.checkout }}
 
       - name: Extract Version
         id: extract_version      
@@ -92,5 +89,6 @@ jobs:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           tag: "${{ steps.extract_version.outputs.tag }}"
           prerelease: "${{ steps.extract_version.outputs.beta }}"
+          draft: "${{ inputs.draft }}"
           artifacts: ./build/app/outputs/flutter-apk/*-release*.apk*
           generateReleaseNotes: true

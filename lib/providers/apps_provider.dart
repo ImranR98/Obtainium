@@ -17,11 +17,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_archive/flutter_archive.dart';
-import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
+import 'package:http/io_client.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -151,18 +147,22 @@ Future<File> downloadFileWithRetry(String url, String fileName,
     {bool useExisting = true,
     Map<String, String>? headers,
     int retries = 3,
-    required CancelableOperation cancelableOperation}) async {
+    bool allowInsecure = false}) async {
   try {
     return await downloadFile(
         url, fileName, fileNameHasExt, onProgress, destDir,
-        useExisting: useExisting, headers: headers, cancelableOperation: cancelableOperation);
+        useExisting: useExisting,
+        headers: headers,
+        allowInsecure: allowInsecure);
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(const Duration(seconds: 5));
       return await downloadFileWithRetry(
           url, fileName, fileNameHasExt, onProgress, destDir,
-          useExisting: useExisting, headers: headers, retries: (retries - 1),
-          cancelableOperation: cancelableOperation); // Pass the cancelableOperation here
+          useExisting: useExisting,
+          headers: headers,
+          retries: (retries - 1),
+          allowInsecure: allowInsecure);
     } else {
       rethrow;
     }
@@ -180,11 +180,14 @@ String hashListOfLists(List<List<int>> data) {
 Future<String> checkPartialDownloadHashDynamic(String url,
     {int startingSize = 1024,
     int lowerLimit = 128,
-    Map<String, String>? headers}) async {
+    Map<String, String>? headers,
+    bool allowInsecure = false}) async {
   for (int i = startingSize; i >= lowerLimit; i -= 256) {
     List<String> ab = await Future.wait([
-      checkPartialDownloadHash(url, i, headers: headers),
-      checkPartialDownloadHash(url, i, headers: headers)
+      checkPartialDownloadHash(url, i,
+          headers: headers, allowInsecure: allowInsecure),
+      checkPartialDownloadHash(url, i,
+          headers: headers, allowInsecure: allowInsecure)
     ]);
     if (ab[0] == ab[1]) {
       return ab[0];
@@ -194,13 +197,13 @@ Future<String> checkPartialDownloadHashDynamic(String url,
 }
 
 Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
-    {Map<String, String>? headers}) async {
+    {Map<String, String>? headers, bool allowInsecure = false}) async {
   var req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   var response = await client.send(req);
   if (response.statusCode < 200 || response.statusCode > 299) {
     throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
@@ -211,15 +214,14 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
 
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
-    {bool useExisting = true, Map<String, String>? headers, required CancelableOperation cancelableOperation}) async {
-  if (cancelableOperation.isCanceled) {
-    throw ObtainiumError('Download cancelled');
-  }
+    {bool useExisting = true,
+    Map<String, String>? headers,
+    bool allowInsecure = false}) async {
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
 
@@ -230,10 +232,14 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   if (ext.endsWith('"') || ext.endsWith("other")) {
     ext = ext.substring(0, ext.length - 1);
   }
-  if (url.toLowerCase().endsWith('.apk') && ext != 'apk') {
+  if (((Uri.tryParse(url)?.path ?? url).toLowerCase().endsWith('.apk') ||
+          ext == 'attachment') &&
+      ext != 'apk') {
     ext = 'apk';
   }
-  fileName = fileName.split('/').last; // Ensure the fileName is a file name
+  fileName = fileNameHasExt
+      ? fileName
+      : fileName.split('/').last; // Ensure the fileName is a file name
   File downloadedFile = File('$destDir/$fileName.$ext');
   if (fileNameHasExt) {
     // If the user says the filename already has an ext, ignore whatever you inferred from above
@@ -281,7 +287,7 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   IOSink? sink;
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
     client.close();
-    client = http.Client();
+    client = IOClient(createHttpClient(allowInsecure));
     req = Request('GET', Uri.parse(url));
     req.headers.addAll(reqHeaders);
     req.headers.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
@@ -324,12 +330,12 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
 }
 
 Future<Map<String, String>> getHeaders(String url,
-    {Map<String, String>? headers}) async {
+    {Map<String, String>? headers, bool allowInsecure = false}) async {
   var req = http.Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
-  var client = http.Client();
+  var client = IOClient(createHttpClient(allowInsecure));
   var response = await client.send(req);
   if (response.statusCode < 200 || response.statusCode > 299) {
     throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
@@ -370,13 +376,14 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
   late Directory APKDir;
+  late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
 
   AppsProvider({isBg = false}) {
     // Subscribe to changes in the app foreground status
-    foregroundStream = FGBGEvents.stream.asBroadcastStream();
+    foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
       isForeground = event == FGBGType.foreground;
       if (isForeground) {
@@ -388,11 +395,20 @@ class AppsProvider with ChangeNotifier {
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         APKDir = cacheDirs!.first;
+        iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
+        }
       } else {
         APKDir =
             Directory('${(await getExternalStorageDirectory())!.path}/apks');
         if (!APKDir.existsSync()) {
           APKDir.createSync();
+        }
+        iconsCacheDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
         }
       }
       if (!isBg) {
@@ -464,32 +480,28 @@ class AppsProvider with ChangeNotifier {
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
+      if (source.urlsAlwaysHaveExtension) {
+        fileNameNoExt =
+            '$fileNameNoExt.${app.apkUrls[app.preferredApkIndex].key.split('.').last}';
+      }
       var headers = await source.getRequestHeaders(app.additionalSettings,
           forAPKDownload: true);
-      cancelableOperation = CancelableOperation.fromFuture(onCancel: () async {
-        debugPrint('Download cancelled');
-        await notificationsProvider?.cancel(notifId);
+      var downloadedFile = await downloadFileWithRetry(
+          downloadUrl, fileNameNoExt, source.urlsAlwaysHaveExtension,
+          headers: headers, (double? progress) {
+        int? prog = progress?.ceil();
         if (apps[app.id] != null) {
-          apps[app.id]!.downloadProgress = null;
+          apps[app.id]!.downloadProgress = progress;
           notifyListeners();
         }
-        throw ObtainiumError(tr('cancelled'));
-      },
-          downloadFileWithRetry(downloadUrl, fileNameNoExt, false,
-              headers: headers, cancelableOperation: cancelableOperation,
-               (double? progress) {
-            int? prog = progress?.ceil();
-            if (apps[app.id] != null) {
-              apps[app.id]!.downloadProgress = progress;
-              notifyListeners();
-            }
-            notif = DownloadNotification(app.finalName, prog ?? 100);
-            if (prog != null && prevProg != prog) {
-              notificationsProvider?.notify(notif);
-            }
-            prevProg = prog;
-          }, APKDir.path, useExisting: useExisting));
-      var downloadedFile = await cancelableOperation.value;
+        notif = DownloadNotification(app.finalName, prog ?? 100);
+        if (prog != null && prevProg != prog) {
+          notificationsProvider?.notify(notif);
+        }
+        prevProg = prog;
+      }, APKDir.path,
+          useExisting: useExisting,
+          allowInsecure: app.additionalSettings['allowInsecure'] == true);
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;
@@ -512,8 +524,17 @@ class AppsProvider with ChangeNotifier {
             .listSync()
             .where((e) => e.path.toLowerCase().endsWith('.apk'))
             .toList();
-        newInfo =
-            await pm.getPackageArchiveInfo(archiveFilePath: apks.first.path);
+        for (var i = 0; i < apks.length; i++) {
+          try {
+            newInfo = await pm.getPackageArchiveInfo(
+                archiveFilePath: apks.first.path);
+            break;
+          } catch (e) {
+            if (i == apks.length - 1) {
+              rethrow;
+            }
+          }
+        }
       }
       if (newInfo == null) {
         downloadedFile.delete();
@@ -604,7 +625,7 @@ class AppsProvider with ChangeNotifier {
     if (!isForeground) {
       await notificationsProvider.notify(completeInstallationNotification,
           cancelExisting: true);
-      while (await FGBGEvents.stream.first != FGBGType.foreground) {}
+      while (await FGBGEvents.instance.stream.first != FGBGType.foreground) {}
       await notificationsProvider.cancel(completeInstallationNotification.id);
     }
   }
@@ -751,7 +772,8 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<MapEntry<String, String>?> confirmAppFileUrl(
-      App app, BuildContext? context, bool pickAnyAsset) async {
+      App app, BuildContext? context, bool pickAnyAsset,
+      {bool evenIfSingleChoice = false}) async {
     var urlsToSelectFrom = app.apkUrls;
     if (pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
@@ -762,7 +784,8 @@ class AppsProvider with ChangeNotifier {
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-    if (urlsToSelectFrom.length > 1 && context != null) {
+    if ((urlsToSelectFrom.length > 1 || evenIfSingleChoice) &&
+        context != null) {
       appFileUrl = await showDialog(
           // ignore: use_build_context_synchronously
           context: context,
@@ -870,18 +893,20 @@ class AppsProvider with ChangeNotifier {
             apps[id]?.installedInfo == null ? context : null;
         bool needBGWorkaround =
             willBeSilent && context == null && !settingsProvider.useShizuku;
+        bool shizukuPretendToBeGooglePlay = settingsProvider
+                .shizukuPretendToBeGooglePlay ||
+            apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
+                true;
         if (downloadedFile != null) {
           if (needBGWorkaround) {
             // ignore: use_build_context_synchronously
             installApk(downloadedFile, contextIfNewInstall,
-                needsBGWorkaround: true);
+                needsBGWorkaround: true,
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           } else {
             // ignore: use_build_context_synchronously
             sayInstalled = await installApk(downloadedFile, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         } else {
           if (needBGWorkaround) {
@@ -892,10 +917,7 @@ class AppsProvider with ChangeNotifier {
             // ignore: use_build_context_synchronously
             sayInstalled = await installXApkDir(
                 downloadedDir!, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         }
         if (willBeSilent && context == null) {
@@ -978,11 +1000,16 @@ class AppsProvider with ChangeNotifier {
     }
     for (var res in downloadResults) {
       if (!errors.appIdNames.containsKey(res['id'])) {
-        await installFn(
-            res['id'] as String,
-            res['willBeSilent'] as bool,
-            res['downloadedFile'] as DownloadedApk?,
-            res['downloadedDir'] as DownloadedXApkDir?);
+        try {
+          await installFn(
+              res['id'] as String,
+              res['willBeSilent'] as bool,
+              res['downloadedFile'] as DownloadedApk?,
+              res['downloadedDir'] as DownloadedXApkDir?);
+        } catch (e) {
+          var id = res['id'] as String;
+          errors.add(id, e, appName: apps[id]?.name);
+        }
       }
     }
 
@@ -1007,7 +1034,8 @@ class AppsProvider with ChangeNotifier {
       if (apps[id]!.app.apkUrls.isNotEmpty ||
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true);
+        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true,
+            evenIfSingleChoice: true);
       }
       if (fileUrl != null) {
         filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
@@ -1041,7 +1069,8 @@ class AppsProvider with ChangeNotifier {
                 .getRequestHeaders(app.additionalSettings,
                     forAPKDownload:
                         fileUrl.key.endsWith('.apk') ? true : false),
-            useExisting: false);
+            useExisting: false,
+            allowInsecure: app.additionalSettings['allowInsecure'] == true);
         notificationsProvider
             .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
       } catch (e) {
@@ -1287,10 +1316,16 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAppIcon(String? appId) async {
+  Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
     if (apps[appId]?.icon == null) {
-      var icon =
-          (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      var cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+      var alreadyCached = cachedIcon.existsSync() && !ignoreCache;
+      var icon = alreadyCached
+          ? (await cachedIcon.readAsBytes())
+          : (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      if (icon != null && !alreadyCached) {
+        cachedIcon.writeAsBytes(icon.toList());
+      }
       if (icon != null) {
         apps.update(
             apps[appId]!.app.id,
@@ -1530,6 +1565,34 @@ class AppsProvider with ChangeNotifier {
     return updateAppIds;
   }
 
+  Map<String, dynamic> generateExportJSON(
+      {List<String>? appIds, bool? overrideExportSettings}) {
+    Map<String, dynamic> finalExport = {};
+    finalExport['apps'] = apps.values
+        .where((e) {
+          if (appIds == null) {
+            return true;
+          } else {
+            return appIds.contains(e.app.id);
+          }
+        })
+        .map((e) => e.app.toJson())
+        .toList();
+    bool shouldExportSettings = settingsProvider.exportSettings;
+    if (overrideExportSettings != null) {
+      shouldExportSettings = overrideExportSettings;
+    }
+    if (shouldExportSettings) {
+      finalExport['settings'] = Map<String, Object?>.fromEntries(
+          (settingsProvider.prefs
+                  ?.getKeys()
+                  .map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
+                  .toList()) ??
+              []);
+    }
+    return finalExport;
+  }
+
   Future<String?> export(
       {bool pickOnly = false, isAuto = false, SettingsProvider? sp}) async {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
@@ -1560,22 +1623,13 @@ class AppsProvider with ChangeNotifier {
     }
     String? returnPath;
     if (!pickOnly) {
-      Map<String, dynamic> finalExport = {};
-      finalExport['apps'] = apps.values.map((e) => e.app.toJson()).toList();
-      if (settingsProvider.exportSettings) {
-        finalExport['settings'] = Map<String, Object?>.fromEntries(
-            (settingsProvider.prefs
-                    ?.getKeys()
-                    .map((key) =>
-                        MapEntry(key, settingsProvider.prefs?.get(key)))
-                    .toList()) ??
-                []);
-      }
+      var encoder = const JsonEncoder.withIndent("    ");
+      Map<String, dynamic> finalExport = generateExportJSON();
       var result = await saf.createFile(exportDir,
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          bytes: Uint8List.fromList(utf8.encode(jsonEncode(finalExport))));
+          bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }
@@ -1684,7 +1738,9 @@ class _AppFilePickerState extends State<AppFilePicker> {
           ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
           : tr('pickAnAPK')),
       content: Column(children: [
-        Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName])),
+        urlsToSelectFrom.length > 1
+            ? Text(tr('appHasMoreThanOnePackage', args: [widget.app.finalName]))
+            : const SizedBox.shrink(),
         const SizedBox(height: 16),
         ...urlsToSelectFrom.map(
           (u) => RadioListTile<String>(
@@ -1797,7 +1853,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   int maxRetryWaitSeconds = 5;
 
   var netResult = await (Connectivity().checkConnectivity());
-  if (netResult.contains(ConnectivityResult.none)) {
+  if (netResult.contains(ConnectivityResult.none) ||
+      netResult.isEmpty ||
+      (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
     logs.add('BG update task: No network.');
     return;
   }

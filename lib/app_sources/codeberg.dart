@@ -5,6 +5,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class Codeberg extends AppSource {
   GitHub gh = GitHub();
   Codeberg() {
+    name = 'Forgejo (Codeberg)';
     hosts = ['codeberg.org'];
 
     additionalSourceAppSpecificSettingFormItems =
@@ -15,7 +16,7 @@ class Codeberg extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
         '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
         caseSensitive: false);

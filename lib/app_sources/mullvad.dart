@@ -10,7 +10,7 @@ class Mullvad extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
         '^https?://(www\\.)?${getSourceRegex(hosts)}',
         caseSensitive: false);

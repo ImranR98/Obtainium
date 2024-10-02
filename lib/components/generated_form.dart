@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 abstract class GeneratedFormItem {
   late String key;
@@ -28,6 +29,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late String? hint;
   late bool password;
   late TextInputType? textInputType;
+  late List<String>? autoCompleteOptions;
 
   GeneratedFormTextField(super.key,
       {super.label,
@@ -39,7 +41,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
       this.max = 1,
       this.hint,
       this.password = false,
-      this.textInputType});
+      this.textInputType,
+      this.autoCompleteOptions});
 
   @override
   String ensureType(val) {
@@ -274,38 +277,62 @@ class _GeneratedFormState extends State<GeneratedForm> {
         var formItem = e.value;
         if (formItem is GeneratedFormTextField) {
           final formFieldKey = GlobalKey<FormFieldState>();
-          return TextFormField(
-            keyboardType: formItem.textInputType,
-            obscureText: formItem.password,
-            autocorrect: !formItem.password,
-            enableSuggestions: !formItem.password,
-            key: formFieldKey,
-            initialValue: values[formItem.key],
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            onChanged: (value) {
+          var ctrl = TextEditingController(text: values[formItem.key]);
+          return TypeAheadField<String>(
+            controller: ctrl,
+            builder: (context, controller, focusNode) {
+              return TextFormField(
+                controller: ctrl,
+                focusNode: focusNode,
+                keyboardType: formItem.textInputType,
+                obscureText: formItem.password,
+                autocorrect: !formItem.password,
+                enableSuggestions: !formItem.password,
+                key: formFieldKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onChanged: (value) {
+                  setState(() {
+                    values[formItem.key] = value;
+                    someValueChanged();
+                  });
+                },
+                decoration: InputDecoration(
+                    helperText:
+                        formItem.label + (formItem.required ? ' *' : ''),
+                    hintText: formItem.hint),
+                minLines: formItem.max <= 1 ? null : formItem.max,
+                maxLines: formItem.max <= 1 ? 1 : formItem.max,
+                validator: (value) {
+                  if (formItem.required &&
+                      (value == null || value.trim().isEmpty)) {
+                    return '${formItem.label} ${tr('requiredInBrackets')}';
+                  }
+                  for (var validator in formItem.additionalValidators) {
+                    String? result = validator(value);
+                    if (result != null) {
+                      return result;
+                    }
+                  }
+                  return null;
+                },
+              );
+            },
+            itemBuilder: (context, value) {
+              return ListTile(title: Text(value));
+            },
+            onSelected: (value) {
+              ctrl.text = value;
               setState(() {
                 values[formItem.key] = value;
                 someValueChanged();
               });
             },
-            decoration: InputDecoration(
-                helperText: formItem.label + (formItem.required ? ' *' : ''),
-                hintText: formItem.hint),
-            minLines: formItem.max <= 1 ? null : formItem.max,
-            maxLines: formItem.max <= 1 ? 1 : formItem.max,
-            validator: (value) {
-              if (formItem.required &&
-                  (value == null || value.trim().isEmpty)) {
-                return '${formItem.label} ${tr('requiredInBrackets')}';
-              }
-              for (var validator in formItem.additionalValidators) {
-                String? result = validator(value);
-                if (result != null) {
-                  return result;
-                }
-              }
-              return null;
+            suggestionsCallback: (search) {
+              return formItem.autoCompleteOptions
+                  ?.where((t) => t.toLowerCase().contains(search.toLowerCase()))
+                  .toList();
             },
+            hideOnEmpty: true,
           );
         } else if (formItem is GeneratedFormDropdown) {
           if (formItem.opts!.isEmpty) {

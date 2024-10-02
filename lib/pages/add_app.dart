@@ -30,6 +30,7 @@ class AddAppPageState extends State<AddAppPage> {
   String userInput = '';
   String searchQuery = '';
   String? pickedSourceOverride;
+  String? previousPickedSourceOverride;
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
@@ -51,10 +52,16 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   changeUserInput(String input, bool valid, bool isBuilding,
-      {bool updateUrlInput = false}) {
+      {bool updateUrlInput = false, String? overrideSource}) {
     userInput = input;
     if (!isBuilding) {
       setState(() {
+        if (overrideSource != null) {
+          pickedSourceOverride = overrideSource;
+        }
+        bool overrideChanged =
+            pickedSourceOverride != previousPickedSourceOverride;
+        previousPickedSourceOverride = pickedSourceOverride;
         if (updateUrlInput) {
           urlInputKey++;
         }
@@ -66,8 +73,10 @@ class AddAppPageState extends State<AddAppPage> {
                 overrideSource: pickedSourceOverride)
             : null;
         if (pickedSource.runtimeType != source.runtimeType ||
+            overrideChanged ||
             (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;
+          pickedSource?.runOnAddAppInputChange(userInput);
           additionalSettings = source != null
               ? getDefaultValuesFromFormItems(
                   source.combinedAppSpecificSettingFormItems)
@@ -259,9 +268,7 @@ class AddAppPageState extends State<AddAppPage> {
         searching = true;
       });
       var sourceStrings = <String, List<String>>{};
-      sourceProvider.sources
-          .where((e) => e.canSearch && !e.excludeFromMassSearch)
-          .forEach((s) {
+      sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
         sourceStrings[s.name] = [s.name];
       });
       try {
@@ -282,32 +289,78 @@ class AddAppPageState extends State<AddAppPage> {
           settingsProvider.searchDeselected = sourceStrings.keys
               .where((s) => !searchSources.contains(s))
               .toList();
-          var results = await Future.wait(sourceProvider.sources
-              .where((e) => searchSources.contains(e.name))
-              .map((e) async {
+          List<MapEntry<String, Map<String, List<String>>>?> results =
+              (await Future.wait(sourceProvider.sources
+                      .where((e) => searchSources.contains(e.name))
+                      .map((e) async {
             try {
-              return await e.search(searchQuery);
+              Map<String, dynamic>? querySettings = {};
+              if (e.includeAdditionalOptsInMainSearch) {
+                querySettings = await showDialog<Map<String, dynamic>?>(
+                    context: context,
+                    builder: (BuildContext ctx) {
+                      return GeneratedFormModal(
+                        title: tr('searchX', args: [e.name]),
+                        items: [
+                          ...e.searchQuerySettingFormItems.map((e) => [e]),
+                          [
+                            GeneratedFormTextField('url',
+                                label: e.hosts.isNotEmpty
+                                    ? tr('overrideSource')
+                                    : plural('url', 1).substring(2),
+                                autoCompleteOptions: [
+                                  ...(e.hosts.isNotEmpty ? [e.hosts[0]] : []),
+                                  ...appsProvider.apps.values
+                                      .where((a) =>
+                                          sourceProvider
+                                              .getSource(a.app.url,
+                                                  overrideSource:
+                                                      a.app.overrideSource)
+                                              .runtimeType ==
+                                          e.runtimeType)
+                                      .map((a) {
+                                    var uri = Uri.parse(a.app.url);
+                                    return '${uri.origin}${uri.path}';
+                                  })
+                                ],
+                                defaultValue:
+                                    e.hosts.isNotEmpty ? e.hosts[0] : '',
+                                required: true)
+                          ],
+                        ],
+                      );
+                    });
+                if (querySettings == null) {
+                  return null;
+                }
+              }
+              return MapEntry(e.runtimeType.toString(),
+                  await e.search(searchQuery, querySettings: querySettings));
             } catch (err) {
               if (err is! CredsNeededError) {
                 rethrow;
               } else {
                 err.unexpected = true;
                 showError(err, context);
-                return <String, List<String>>{};
+                return null;
               }
             }
-          }));
+          })))
+                  .where((a) => a != null)
+                  .toList();
 
           // Interleave results instead of simple reduce
-          Map<String, List<String>> res = {};
+          Map<String, MapEntry<String, List<String>>> res = {};
           var si = 0;
           var done = false;
           while (!done) {
             done = true;
             for (var r in results) {
-              if (r.length > si) {
+              var sourceName = r!.key;
+              if (r.value.length > si) {
                 done = false;
-                res.addEntries([r.entries.elementAt(si)]);
+                var singleRes = r.value.entries.elementAt(si);
+                res[singleRes.key] = MapEntry(sourceName, singleRes.value);
               }
             }
             si++;
@@ -322,13 +375,15 @@ class AddAppPageState extends State<AddAppPage> {
                   context: context,
                   builder: (BuildContext ctx) {
                     return SelectionModal(
-                      entries: res,
+                      entries: res.map((k, v) => MapEntry(k, v.value)),
                       selectedByDefault: false,
                       onlyOneSelectionAllowed: true,
                     );
                   });
           if (selectedUrls != null && selectedUrls.isNotEmpty) {
-            changeUserInput(selectedUrls[0], true, false, updateUrlInput: true);
+            var sourceName = res[selectedUrls[0]]?.key;
+            changeUserInput(selectedUrls[0], true, false,
+                updateUrlInput: true, overrideSource: sourceName);
           }
         }
       } catch (e) {
@@ -349,7 +404,7 @@ class AddAppPageState extends State<AddAppPage> {
                   [
                     GeneratedFormDropdown(
                         'overrideSource',
-                        defaultValue: '',
+                        defaultValue: pickedSourceOverride ?? '',
                         [
                           MapEntry('', tr('none')),
                           ...sourceProvider.sources.map(
@@ -437,7 +492,8 @@ class AddAppPageState extends State<AddAppPage> {
               height: 16,
             ),
             GeneratedForm(
-                key: Key(pickedSource.runtimeType.toString()),
+                key: Key(
+                    '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}'),
                 items: [
                   ...pickedSource!.combinedAppSpecificSettingFormItems,
                   ...(pickedSourceOverride != null
