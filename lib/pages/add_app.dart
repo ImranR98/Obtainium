@@ -618,6 +618,12 @@ class AddAppPageState extends State<AddAppPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      ElevatedButton(onPressed: 
+                          doingSomething ? null :
+                      (){
+                        launchUrlString('https://apps.obtainium.imranr.dev/',
+                            mode: LaunchMode.externalApplication);
+                      }, child: Text(tr('communityAppSources'))),
                       getUrlInputRow(),
                       const SizedBox(
                         height: 16,
