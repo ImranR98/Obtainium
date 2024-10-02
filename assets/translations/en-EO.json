@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Malinstali el la disponaĵo",
     "onlyWorksWithNonVersionDetectApps": "Funkcias nur por apoj kun malaktiva versiodetekto.",
     "releaseDateAsVersion": "Uzi eldondato kiel versioĉeno",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "Tiu opcio devas esti uzata nur por apoj, por kiu la versiodetekto ne funkcias ĝuste, sed eldondato estas havebla.",
     "changes": "Modifoj",
     "releaseDate": "Eldondato",

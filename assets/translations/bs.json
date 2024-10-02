@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Deinstaliraj s uređaja",
     "onlyWorksWithNonVersionDetectApps": "Radi samo za aplikacije s onemogućenom detekcijom verzije.",
     "releaseDateAsVersion": "Koristi datum izdanja kao verziju",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "Ova opcija bi se trebala koristiti samo za aplikacije gdje detekcija verzije ne radi ispravno, ali je datum izdavanja dostupan.",
     "changes": "Promjene",
     "releaseDate": "Datum izdavanja",

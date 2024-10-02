@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Avinstallera från Enheten",
     "onlyWorksWithNonVersionDetectApps": "Fungerar bara för Appar med versionsdetektering inaktiverat..",
     "releaseDateAsVersion": "Använd releasedatum som version",
+    "releaseTitleAsVersion": "Använd release-titel som versionssträng",
     "releaseDateAsVersionExplanation": "Det här alternativet bör endast användas för appar där versionsidentifiering inte fungerar korrekt, men ett releasedatum är tillgängligt.",
     "changes": "Ändringar",
     "releaseDate": "Releasedatum",

@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Odinstalovat ze zařízení",
     "onlyWorksWithNonVersionDetectApps": "Funguje pouze pro aplikace s vypnutou detekcí verze.",
     "releaseDateAsVersion": "Použít datum vydání jako verzi",
+    "releaseTitleAsVersion": "Použít název verze jako řetězec verze",
     "releaseDateAsVersionExplanation": "Tato možnost by měla být použita pouze u aplikace, kde detekce verzí nefunguje správně, ale je k dispozici datum vydání.",
     "changes": "Změny",
     "releaseDate": "Datum vydání",

@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Van apparaat verwijderen",
     "onlyWorksWithNonVersionDetectApps": "Werkt alleen voor apps waarbij versieherkenning is uitgeschakeld.",
     "releaseDateAsVersion": "Releasedatum als versie gebruiken",
+    "releaseTitleAsVersion": "Gebruik releasetitel als versiestring",
     "releaseDateAsVersionExplanation": "Deze optie moet alleen worden gebruikt voor apps waar versieherkenning niet correct werkt, maar waar wel een releasedatum beschikbaar is.",
     "changes": "Aanpassingen",
     "releaseDate": "Releasedatum",

@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Видалити з пристрою",
     "onlyWorksWithNonVersionDetectApps": "Працює лише з застосунками з вимкненим визначенням версії.",
     "releaseDateAsVersion": "Використовувати дату випуску як рядок версії",
+    "releaseTitleAsVersion": "Використовувати назву випуску як рядок версії",
     "releaseDateAsVersionExplanation": "Цю опцію слід використовувати лише для застосунків, де визначення версії працює неправильно, але є дата випуску.",
     "changes": "Зміни",
     "releaseDate": "Дата випуску",

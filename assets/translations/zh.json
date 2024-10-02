@@ -213,6 +213,7 @@
     "uninstallFromDevice": "从设备中卸载",
     "onlyWorksWithNonVersionDetectApps": "仅适用于禁用版本检测的应用。",
     "releaseDateAsVersion": "将发行日期作为版本号",
+    "releaseTitleAsVersion": "使用版本标题作为版本字符串",
     "releaseDateAsVersionExplanation": "此选项应该仅用于无法进行版本检测但能够获取发行日期的应用。",
     "changes": "更新日志",
     "releaseDate": "发行日期",

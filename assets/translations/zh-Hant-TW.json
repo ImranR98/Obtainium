@@ -213,6 +213,7 @@
     "uninstallFromDevice": "從裝置解除安裝",
     "onlyWorksWithNonVersionDetectApps": "僅適用於停用版本偵測的應用程式。",
     "releaseDateAsVersion": "使用發佈日期作為版本字串",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "此選項僅應用於版本偵測無法正確工作但有發佈日期的應用程式。",
     "changes": "變更",
     "releaseDate": "發佈日期",

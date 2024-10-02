@@ -213,6 +213,7 @@
     "uninstallFromDevice": "حذف نصب از دستگاه",
     "onlyWorksWithNonVersionDetectApps": "فقط برای برنامه‌هایی کار می‌کند که تشخیص نسخه غیرفعال است.",
     "releaseDateAsVersion": "از تاریخ انتشار به عنوان نسخه استفاده کنید",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "این گزینه فقط باید برای برنامه هایی استفاده شود که تشخیص نسخه به درستی کار نمی کند، اما تاریخ انتشار در دسترس است.",
     "changes": "تغییرات",
     "releaseDate": "تاریخ انتشار",

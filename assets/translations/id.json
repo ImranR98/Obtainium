@@ -154,7 +154,7 @@
     "errorCheckingUpdates": "Kesalahan dalam memeriksa pembaruan",
     "errorCheckingUpdatesNotifDescription": "Notifikasi yang ditampilkan saat pemeriksaan pembaruan latar belakang gagal",
     "appsRemoved": "Aplikasi dihapus",
-    "appsRemovedNotifDescription": "Memberi tahu pengguna bahwa aplikasi aplikasi dihapus karena kesalahan saat memuatnya",
+    "appsRemovedNotifDescription": "Memberi tahu pengguna bahwa aplikasi dihapus karena kesalahan saat memuatnya",
     "xWasRemovedDueToErrorY": "{} dihapus karena kesalahan berikut: {}",
     "completeAppInstallation": "Selesaikan pemasangan aplikasi",
     "obtainiumMustBeOpenToInstallApps": "Obtainium harus terbuka untuk memasang aplikasi",
@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Copot pemasangan dari perangkat",
     "onlyWorksWithNonVersionDetectApps": "Hanya bekerja untuk aplikasi dengan pendeteksi versi yang nonaktif.",
     "releaseDateAsVersion": "Gunakan tanggal rilis sebagai versi string",
+    "releaseTitleAsVersion": "Gunakan judul rilis sebagai string versi",
     "releaseDateAsVersionExplanation": "Opsi ini hanya boleh digunakan untuk aplikasi dengan pendeteksi versi yang tidak berfungsi dengan benar, tetapi tanggal rilisnya tersedia.",
     "changes": "Perubahan",
     "releaseDate": "Tanggal rilis",
@@ -231,8 +232,8 @@
     "about": "Tentang",
     "requiresCredentialsInSettings": "{} memerlukan kredensial tambahan (dalam pengaturan)",
     "checkOnStart": "Periksa pembaruan saat proses memulai",
-    "tryInferAppIdFromCode": "Coba simpulkan ID aplikasi dari kode sumber",
-    "removeOnExternalUninstall": "Secara otomatis menghapus aplikasi yang dicopot pemasangannya dari luar",
+    "tryInferAppIdFromCode": "Coba untuk menebak ID aplikasi dari kode sumber",
+    "removeOnExternalUninstall": "Hapus otomatis aplikasi yang dicopot pemasangannya dari luar",
     "pickHighestVersionCode": "Pilih otomatis APK dengan versi kode tertinggi",
     "checkUpdateOnDetailPage": "Periksa pembaruan saat membuka halaman detail aplikasi",
     "disablePageTransitions": "Nonaktifkan animasi transisi halaman",
@@ -257,7 +258,7 @@
     "intermediateLink": "Tautan perantara",
     "exemptFromBackgroundUpdates": "Dikecualikan dari pembaruan latar belakang (jika diaktifkan)",
     "bgUpdatesOnWiFiOnly": "Nonaktifkan pembaruan latar belakang saat tidak menggunakan WiFi",
-    "autoSelectHighestVersionCode": "Secara otomatis pilih APK dengan versi kode tertinggi",
+    "autoSelectHighestVersionCode": "Pilih otomatis APK dengan versi kode tertinggi",
     "versionExtractionRegEx": "Reguler ekspresi terkait ekstraksi versi string",
     "trimVersionString": "Potong versi string dengan reguler ekspresi",
     "matchGroupToUseForX": "Cocokkan grup yang akan digunakan untuk \"{}\"",
@@ -357,8 +358,8 @@
         "other": "Menghapus {n} catatan (sebelum = {before}, setelah = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} dan 1 aplikasi lainnya mendapat pembaruan.",
-        "other": "{} dan {} aplikasi lainnya mendapat pembaruan."
+        "one": "{} dan 1 aplikasi lainnya memiliki pembaruan.",
+        "other": "{} dan {} aplikasi lainnya memiliki pembaruan."
     },
     "xAndNMoreUpdatesInstalled": {
         "one": "{} dan 1 aplikasi lainnya telah diperbarui.",

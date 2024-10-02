@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Afinstaller fra enhed",
     "onlyWorksWithNonVersionDetectApps": "Virker kun for apps med versionsregistrering deaktiveret.",
     "releaseDateAsVersion": "Brug udgivelsesdato som versionsstreng",
+    "releaseTitleAsVersion": "Brug udgivelsestitel som versionsstreng",
     "releaseDateAsVersionExplanation": "Denne indstilling bør kun bruges til apps, hvor versionsregistrering ikke virker korrekt, men hvor en udgivelsesdato er tilgængelig.",
     "changes": "Ændringer",
     "releaseDate": "Udgivelsesdato",
