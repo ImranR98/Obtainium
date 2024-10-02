@@ -10,7 +10,7 @@ class WhatsApp extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     return 'https://${hosts[0]}';
   }
 

@@ -20,7 +20,7 @@ class SourceHut extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url) {
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
         '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
         caseSensitive: false);
@@ -60,8 +60,17 @@ class SourceHut extends AppSource {
       int ind = 0;
 
       for (var entry in parsedHtml.querySelectorAll('item').sublist(0, 6)) {
-        // Limit 5 for speed
-        if (!fallbackToOlderReleases && ind > 0) {
+        ind++;
+        String releasePage = // querySelector('link') fails for some reason
+            entry
+                    .querySelector('guid') // Luckily guid is identical
+                    ?.innerHtml
+                    .trim() ??
+                '';
+        if (!releasePage.startsWith('$standardUrl/refs')) {
+          continue;
+        }
+        if (!fallbackToOlderReleases && ind > 1) {
           break;
         }
         String? version = entry.querySelector('title')?.text.trim();
@@ -69,7 +78,6 @@ class SourceHut extends AppSource {
           throw NoVersionError();
         }
         String? releaseDateString = entry.querySelector('pubDate')?.innerHtml;
-        String releasePage = '$standardUrl/refs/$version';
         DateTime? releaseDate;
         try {
           releaseDate = releaseDateString != null
@@ -98,7 +106,6 @@ class SourceHut extends AppSource {
             AppNames(entry.querySelector('author')?.innerHtml.trim() ?? appName,
                 appName),
             releaseDate: releaseDate));
-        ind++;
       }
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();

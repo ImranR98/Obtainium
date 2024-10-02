@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Desinstalar do dispositivo",
     "onlyWorksWithNonVersionDetectApps": "Apenas funciona para aplicativos com detecção de versão desativada.",
     "releaseDateAsVersion": "Usar data de lançamento como versão",
+    "releaseTitleAsVersion": "Utilizar o título da versão como cadeia de versões",
     "releaseDateAsVersionExplanation": "Esta opção só deve ser usada para aplicativos onde a detecção de versão não funciona corretamente, mas há uma data de lançamento disponível.",
     "changes": "Alterações",
     "releaseDate": "Data de lançamento",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Desative as atualizações em segundo-plano quando não estiver conectado no Wi-Fi",
     "autoSelectHighestVersionCode": "Auto-selecionar a versão mais recente",
     "versionExtractionRegEx": "Regex de extração de versão",
+    "trimVersionString": "Cortar a cadeia de caracteres da versão com RegEx",
+    "matchGroupToUseForX": "Grupo de correspondência a utilizar para \"{}\"",
     "matchGroupToUse": "Grupo correspondente a ser usado no Regex de extração de versão",
     "highlightTouchTargets": "Realçar áreas sensíveis ao toque que são menos óbvias",
     "pickExportDir": "Escolher diretório para exportação",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Partilhe com o AppVerifier e, em seguida, regresse aqui quando estiver pronto.",
     "wiki": "Ajuda/Wiki",
     "crowdsourcedConfigsLabel": "Configurações de aplicações de crowdsourcing (utilização por sua conta e risco)",
+    "allowInsecure": "Permitir pedidos HTTP inseguros",
+    "stayOneVersionBehind": "Manter-se uma versão atrás da mais recente",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

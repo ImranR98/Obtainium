@@ -213,6 +213,7 @@
     "uninstallFromDevice": "デバイスからアンインストールする",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ動作します。",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",
+    "releaseTitleAsVersion": "リリースタイトルをバージョン文字列として使用",
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
     "changes": "変更点",
     "releaseDate": "リリース日",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合、バックグラウンドアップデートを無効にする",
     "autoSelectHighestVersionCode": "最も高いバージョンコードのAPKを自動で選択する",
     "versionExtractionRegEx": "バージョン抽出の正規表現",
+    "trimVersionString": "正規表現でバージョン文字列をトリムする",
+    "matchGroupToUseForX": "\"{}\"に使用するマッチしたグループ",
     "matchGroupToUse": "使用するマッチしたグループ",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
     "pickExportDir": "エクスポートディレクトリを選択",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "wiki": "ヘルプ/ウィキ",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
+    "allowInsecure": "安全でないHTTPリクエストを許可する",
+    "stayOneVersionBehind": "最新バージョンから1つ遅れ",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

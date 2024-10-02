@@ -161,25 +161,46 @@ class _AppPageState extends State<AppPage> {
           if (app?.app.apkUrls.isNotEmpty == true ||
               app?.app.otherAssetUrls.isNotEmpty == true)
             GestureDetector(
-              onTap: app?.app == null || updating
-                  ? null
-                  : () async {
-                      try {
-                        await appsProvider
-                            .downloadAppAssets([app!.app.id], context);
-                      } catch (e) {
-                        showError(e, context);
-                      }
-                    },
-              child: Text(
-                tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-            ),
+                onTap: app?.app == null || updating
+                    ? null
+                    : () async {
+                        try {
+                          await appsProvider
+                              .downloadAppAssets([app!.app.id], context);
+                        } catch (e) {
+                          showError(e, context);
+                        }
+                      },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: settingsProvider.highlightTouchTargets
+                                ? (Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Theme.of(context).primaryColor
+                                        : Theme.of(context).primaryColorLight)
+                                    .withAlpha(20)
+                                : null),
+                        padding: settingsProvider.highlightTouchTargets
+                            ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                            : const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 6),
+                        margin:
+                            const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 0),
+                        child: Text(
+                          tr('downloadX',
+                              args: [tr('releaseAsset').toLowerCase()]),
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.labelSmall!.copyWith(
+                                    decoration: TextDecoration.underline,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                        ))
+                  ],
+                )),
           const SizedBox(
             height: 48,
           ),
@@ -221,13 +242,14 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getFullInfoColumn() => Column(
+    getFullInfoColumn({bool small = false}) => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 20),
+            SizedBox(height: small ? 5 : 20),
             FutureBuilder(
-                future: appsProvider.updateAppIcon(app?.app.id),
+                future:
+                    appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
                 builder: (ctx, val) {
                   return app?.icon != null
                       ? Row(
@@ -239,24 +261,28 @@ class _AppPageState extends State<AppPage> {
                                     : () => pm.openApp(app.app.id),
                                 child: Image.memory(
                                   app!.icon!,
-                                  height: 150,
+                                  height: small ? 70 : 150,
                                   gaplessPlayback: true,
                                 ),
                               )
                             ])
                       : Container();
                 }),
-            const SizedBox(
-              height: 25,
+            SizedBox(
+              height: small ? 10 : 25,
             ),
             Text(
               app?.name ?? tr('app'),
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displayLarge,
+              style: small
+                  ? Theme.of(context).textTheme.displaySmall
+                  : Theme.of(context).textTheme.displayLarge,
             ),
             Text(tr('byX', args: [app?.app.author ?? tr('unknown')]),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium),
+                style: small
+                    ? Theme.of(context).textTheme.headlineSmall
+                    : Theme.of(context).textTheme.headlineMedium),
             const SizedBox(
               height: 24,
             ),
@@ -474,11 +500,8 @@ class _AppPageState extends State<AppPage> {
                                   builder: (BuildContext ctx) {
                                     return AlertDialog(
                                       scrollable: true,
-                                      content: getInfoColumn(),
-                                      title: Text(
-                                          '${app.name} ${tr('byX', args: [
-                                            app.app.author
-                                          ])}'),
+                                      content: getFullInfoColumn(small: true),
+                                      title: Text(app.name),
                                       actions: [
                                         TextButton(
                                             onPressed: () {

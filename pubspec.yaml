@@ -1,5 +1,5 @@
 name: obtainium
-description: Get Android App Updates Directly From the Source.
+description: Get Android app updates straight from the source.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.10+2267
+version: 1.1.26+2283
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -37,7 +37,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.5
   path_provider: ^2.0.11
-  flutter_fgbg: ^0.3.0 # Try removing reliance on this
+  flutter_fgbg: ^0.6.0
   flutter_local_notifications: ^17.0.0
   provider: ^6.0.3
   http: ^1.0.0
@@ -56,7 +56,7 @@ dependencies:
       url: https://github.com/ImranR98/android_package_installer
       ref: main
   android_package_manager: ^0.7.0
-  share_plus: ^9.0.0
+  share_plus: ^10.0.0
   sqflite: ^2.2.0+3
   easy_localization: ^3.0.1
   android_intent_plus: ^5.0.1
@@ -80,18 +80,18 @@ dependencies:
       ref: master
 
   markdown: any
-  async: ^2.11.0
+  flutter_typeahead: ^5.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
 
 flutter_launcher_icons:
   android: "ic_launcher"
@@ -145,6 +145,6 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
   fonts:
-      - family: Metropolis
+      - family: Wix-Madefor-Display
         fonts:
-          - asset: assets/fonts/Metropolis-Regular.otf
+          - asset: assets/fonts/WixMadeforDisplay-Regular.otf

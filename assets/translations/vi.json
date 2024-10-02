@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Gỡ cài đặt khỏi thiết bị",
     "onlyWorksWithNonVersionDetectApps": "Chỉ hoạt động với Ứng dụng đã tắt tính năng phát hiện phiên bản.",
     "releaseDateAsVersion": "Sử dụng ngày phát hành làm phiên bản",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "Chỉ nên sử dụng tùy chọn này cho Ứng dụng trong đó tính năng phát hiện phiên bản không hoạt động chính xác nhưng đã có ngày phát hành.",
     "changes": "Thay đổi",
     "releaseDate": "Ngày phát hành",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Tắt cập nhật nền khi không có WiFi",
     "autoSelectHighestVersionCode": "Tự động chọn APK mã phiên bản cao nhất",
     "versionExtractionRegEx": "Trích xuất phiên bản RegEx",
+    "trimVersionString": "Trim Version String With RegEx",
+    "matchGroupToUseForX": "Match Group to Use for \"{}\"",
     "matchGroupToUse": "Nhóm đối sánh để sử dụng cho Regex trích xuất phiên bản",
     "highlightTouchTargets": "Đánh dấu các mục tiêu cảm ứng ít rõ ràng hơn",
     "pickExportDir": "Chọn thư mục xuất",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Chia sẻ lên AppVerifier, sau đó quay lại đây khi sẵn sàng.",
     "wiki": "Trợ giúp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
+    "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

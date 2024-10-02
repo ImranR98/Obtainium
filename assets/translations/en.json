@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Uninstall from Device",
     "onlyWorksWithNonVersionDetectApps": "Only works for Apps with version detection disabled.",
     "releaseDateAsVersion": "Use release date as version string",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "This option should only be used for Apps where version detection does not work correctly, but a release date is available.",
     "changes": "Changes",
     "releaseDate": "Release Date",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "versionExtractionRegEx": "Version String Extraction RegEx",
+    "trimVersionString": "Trim Version String With RegEx",
+    "matchGroupToUseForX": "Match Group to Use for \"{}\"",
     "matchGroupToUse": "Match Group to Use for Version String Extraction RegEx",
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Pick Export Directory",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
+    "allowInsecure": "Allow insecure HTTP requests",
+    "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

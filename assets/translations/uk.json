@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Видалити з пристрою",
     "onlyWorksWithNonVersionDetectApps": "Працює лише з застосунками з вимкненим визначенням версії.",
     "releaseDateAsVersion": "Використовувати дату випуску як рядок версії",
+    "releaseTitleAsVersion": "Використовувати назву випуску як рядок версії",
     "releaseDateAsVersionExplanation": "Цю опцію слід використовувати лише для застосунків, де визначення версії працює неправильно, але є дата випуску.",
     "changes": "Зміни",
     "releaseDate": "Дата випуску",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Вимкнути фонові оновлення поза Wi-Fi",
     "autoSelectHighestVersionCode": "Автоматичний вибір APK з найвищим кодом версії",
     "versionExtractionRegEx": "Регулярний вираз для вилучення рядка версії",
+    "trimVersionString": "Обрізати рядок версії за допомогою RegEx",
+    "matchGroupToUseForX": "Група збігів для \"{}\"",
     "matchGroupToUse": "Група співпадінь для використання в регулярному виразі вилучення версії",
     "highlightTouchTargets": "Підсвічувати менш очевидні області дотику",
     "pickExportDir": "Вибрати каталог експорту",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Надішліть на AppVerifier, а потім поверніться сюди, коли будете готові.",
     "wiki": "Довідка/Вікі",
     "crowdsourcedConfigsLabel": "Краудсорсингові конфігурації додатків (використовуйте на свій страх і ризик)",
+    "allowInsecure": "Дозволити незахищені HTTP-запити",
+    "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

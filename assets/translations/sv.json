@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Avinstallera från Enheten",
     "onlyWorksWithNonVersionDetectApps": "Fungerar bara för Appar med versionsdetektering inaktiverat..",
     "releaseDateAsVersion": "Använd releasedatum som version",
+    "releaseTitleAsVersion": "Använd release-titel som versionssträng",
     "releaseDateAsVersionExplanation": "Det här alternativet bör endast användas för appar där versionsidentifiering inte fungerar korrekt, men ett releasedatum är tillgängligt.",
     "changes": "Ändringar",
     "releaseDate": "Releasedatum",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",
     "autoSelectHighestVersionCode": "Välj automatiskt högsta versionskod APK",
     "versionExtractionRegEx": "Version Extraction RegEx",
+    "trimVersionString": "Trimma versionssträng med RegEx",
+    "matchGroupToUseForX": "Matchningsgrupp att använda för \"{}\"",
     "matchGroupToUse": "Match Group to Use",
     "highlightTouchTargets": "Markera mindre uppenbara beröringsobjekt",
     "pickExportDir": "Välj Exportsökväg",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "wiki": "Hjälp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcade appkonfigurationer (använd på egen risk)",
+    "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
+    "stayOneVersionBehind": "Håll dig en version bakom den senaste",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

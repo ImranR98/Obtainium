@@ -213,6 +213,7 @@
     "uninstallFromDevice": "从设备中卸载",
     "onlyWorksWithNonVersionDetectApps": "仅适用于禁用版本检测的应用。",
     "releaseDateAsVersion": "将发行日期作为版本号",
+    "releaseTitleAsVersion": "使用版本标题作为版本字符串",
     "releaseDateAsVersionExplanation": "此选项应该仅用于无法进行版本检测但能够获取发行日期的应用。",
     "changes": "更新日志",
     "releaseDate": "发行日期",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "未连接 Wi-Fi 时禁用后台更新",
     "autoSelectHighestVersionCode": "自动选择内部版本号最高的 APK 文件",
     "versionExtractionRegEx": "提取版本号的正则表达式",
+    "trimVersionString": "使用 RegEx 修剪版本字符串",
+    "matchGroupToUseForX": "用于\"{}\"的匹配组",
     "matchGroupToUse": "从上述匹配结果中引用的捕获组",
     "highlightTouchTargets": "突出展示不明显的可交互区域",
     "pickExportDir": "选择导出文件夹",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "分享至 AppVerifier，完成后返回此处。",
     "wiki": "帮助/Wiki",
     "crowdsourcedConfigsLabel": "众包应用程序配置（使用风险自负）",
+    "allowInsecure": "允许不安全的 HTTP 请求",
+    "stayOneVersionBehind": "比最新版本晚一个版本",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

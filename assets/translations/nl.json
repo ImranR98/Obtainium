@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Van apparaat verwijderen",
     "onlyWorksWithNonVersionDetectApps": "Werkt alleen voor apps waarbij versieherkenning is uitgeschakeld.",
     "releaseDateAsVersion": "Releasedatum als versie gebruiken",
+    "releaseTitleAsVersion": "Gebruik releasetitel als versiestring",
     "releaseDateAsVersionExplanation": "Deze optie moet alleen worden gebruikt voor apps waar versieherkenning niet correct werkt, maar waar wel een releasedatum beschikbaar is.",
     "changes": "Aanpassingen",
     "releaseDate": "Releasedatum",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Achtergrond-updates uitschakelen wanneer niet verbonden met WiFi",
     "autoSelectHighestVersionCode": "De APK met de hoogste versiecode automatisch selecteren",
     "versionExtractionRegEx": "Reguliere expressie voor versie-extractie",
+    "trimVersionString": "Versie string trimmen met RegEx",
+    "matchGroupToUseForX": "Overeenkomende groep te gebruiken voor \"{}\"",
     "matchGroupToUse": "Overeenkomende groep om te gebruiken voor de reguliere expressie voor versie-extractie",
     "highlightTouchTargets": "Minder voor de hand liggende aanraakdoelen markeren.",
     "pickExportDir": "Kies de exportmap",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
+    "allowInsecure": "Onveilige HTTP-verzoeken toestaan",
+    "stayOneVersionBehind": "Blijf een versie achter op de nieuwste",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

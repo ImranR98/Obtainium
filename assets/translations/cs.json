@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Odinstalovat ze zařízení",
     "onlyWorksWithNonVersionDetectApps": "Funguje pouze pro aplikace s vypnutou detekcí verze.",
     "releaseDateAsVersion": "Použít datum vydání jako verzi",
+    "releaseTitleAsVersion": "Použít název verze jako řetězec verze",
     "releaseDateAsVersionExplanation": "Tato možnost by měla být použita pouze u aplikace, kde detekce verzí nefunguje správně, ale je k dispozici datum vydání.",
     "changes": "Změny",
     "releaseDate": "Datum vydání",
@@ -259,6 +260,8 @@
     "bgUpdatesOnWiFiOnly": "Deaktivovat aktualizace na pozadí, pokud není k dispozici Wi-Fi",
     "autoSelectHighestVersionCode": "Automaticky vybrat nejvyšší verzi APK",
     "versionExtractionRegEx": "Extrakce verze pomocí RegEx",
+    "trimVersionString": "Oříznutí řetězce verze pomocí příkazu RegEx",
+    "matchGroupToUseForX": "Skupina shody, která se použije pro \"{}\"",
     "matchGroupToUse": "Odpovídá použité skupině",
     "highlightTouchTargets": "Zvýraznit méně zjevné cíle dotyku",
     "pickExportDir": "Vybrat adresář pro export",
@@ -312,6 +315,8 @@
     "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
     "wiki": "Nápověda/Wiki",
     "crowdsourcedConfigsLabel": "Konfigurace aplikací s využitím crowdsourcingu (použití na vlastní nebezpečí)",
+    "allowInsecure": "Povolení nezabezpečených požadavků HTTP",
+    "stayOneVersionBehind": "Zůstaňte o jednu verzi pozadu za nejnovější",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"
