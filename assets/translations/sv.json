@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
     "wiki": "Hjälp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourcade appkonfigurationer (använd på egen risk)",
+    "communityAppSources": "Gemenskapsappresurser",
     "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
     "stayOneVersionBehind": "Håll dig en version bakom den senaste",
     "removeAppQuestion": {
