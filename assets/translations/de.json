@@ -314,7 +314,7 @@
     "beforeNewInstallsShareToAppVerifier": "Neue Apps mit AppVerifier teilen (falls verfügbar)",
     "appVerifierInstructionToast": "Geben Sie die Daten an AppVerifier weiter und kehren Sie dann hierher zurück, wenn Sie fertig sind.",
     "wiki": "Hilfe/Wiki",
-    "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (Verwendung auf eigene Gefahr)",
+    "crowdsourcedConfigsLabel": "Crowdsourced App-Konfigurationen (Verwendung auf eigene Gefahr)",
     "communityAppSources": "Community-App-Quellen",
     "allowInsecure": "Unsichere HTTP-Anfragen zulassen",
     "stayOneVersionBehind": "Eine Version hinter der neuesten Version bleiben",
