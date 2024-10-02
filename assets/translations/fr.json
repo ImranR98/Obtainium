@@ -314,7 +314,7 @@
     "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
     "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque tout est prêt.",
     "wiki": "Aide/Wiki",
-    "crowdsourcedConfigsLabel": "Configurations d'applications par la foule (utilisation à vos risques et périls)",
+    "crowdsourcedConfigsLabel": "Crowdsource-ből származó alkalmazások beállítása (saját felelősségére használja)",
     "communityAppSources": "Sources d'applications communautaires",
     "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
     "stayOneVersionBehind": "Rester à une version de la dernière",
