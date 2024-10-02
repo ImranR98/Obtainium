@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Gỡ cài đặt khỏi thiết bị",
     "onlyWorksWithNonVersionDetectApps": "Chỉ hoạt động với Ứng dụng đã tắt tính năng phát hiện phiên bản.",
     "releaseDateAsVersion": "Sử dụng ngày phát hành làm phiên bản",
+    "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "Chỉ nên sử dụng tùy chọn này cho Ứng dụng trong đó tính năng phát hiện phiên bản không hoạt động chính xác nhưng đã có ngày phát hành.",
     "changes": "Thay đổi",
     "releaseDate": "Ngày phát hành",

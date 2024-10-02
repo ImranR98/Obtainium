@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Eltávolítás az eszközről",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verzióérzékelés le van tiltva.",
     "releaseDateAsVersion": "Használja a kiadás dátumát verzióként",
+    "releaseTitleAsVersion": "A kiadás címét verziószálként használja",
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verzióérzékelés nem működik megfelelően, de elérhető a kiadás dátuma.",
     "changes": "Változások",
     "releaseDate": "Kiadás dátuma",

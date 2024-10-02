@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Cihazdan Kaldır",
     "onlyWorksWithNonVersionDetectApps": "Yalnızca Sürüm Algılaması Devre Dışı Uygulamalar İçin Çalışır.",
     "releaseDateAsVersion": "Sürüm Olarak Yayın Tarihi Kullan",
+    "releaseTitleAsVersion": "Sürüm dizesi olarak sürüm başlığını kullan",
     "releaseDateAsVersionExplanation": "Bu seçenek, sürüm algılamanın doğru çalışmadığı ancak bir sürüm tarihinin mevcut olduğu uygulamalar için kullanılmalıdır.",
     "changes": "Değişiklikler",
     "releaseDate": "Yayın Tarihi",

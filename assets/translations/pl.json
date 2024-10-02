@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Odinstaluj z urządzenia",
     "onlyWorksWithNonVersionDetectApps": "Działa tylko w przypadku aplikacji z wyłączonym wykrywaniem wersji.",
     "releaseDateAsVersion": "Użyj daty wydania jako wersji",
+    "releaseTitleAsVersion": "Użyj tytułu wydania jako ciągu znaków wersji",
     "releaseDateAsVersionExplanation": "Opcja ta powinna być używana tylko w przypadku aplikacji, w których wykrywanie wersji nie działa poprawnie, ale dostępna jest data wydania.",
     "changes": "Zmiany",
     "releaseDate": "Data wydania",

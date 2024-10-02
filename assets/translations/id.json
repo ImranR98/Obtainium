@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Copot pemasangan dari perangkat",
     "onlyWorksWithNonVersionDetectApps": "Hanya bekerja untuk aplikasi dengan pendeteksi versi yang nonaktif.",
     "releaseDateAsVersion": "Gunakan tanggal rilis sebagai versi string",
+    "releaseTitleAsVersion": "Gunakan judul rilis sebagai string versi",
     "releaseDateAsVersionExplanation": "Opsi ini hanya boleh digunakan untuk aplikasi dengan pendeteksi versi yang tidak berfungsi dengan benar, tetapi tanggal rilisnya tersedia.",
     "changes": "Perubahan",
     "releaseDate": "Tanggal rilis",

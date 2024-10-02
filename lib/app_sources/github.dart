@@ -81,6 +81,10 @@ class GitHub extends AppSource {
       [
         GeneratedFormSwitch('useLatestAssetDateAsReleaseDate',
             label: tr('useLatestAssetDateAsReleaseDate'), defaultValue: false)
+      ],
+      [
+        GeneratedFormSwitch('releaseTitleAsVersion',
+            label: tr('releaseTitleAsVersion'), defaultValue: false)
       ]
     ];
 
@@ -396,7 +400,9 @@ class GitHub extends AppSource {
         targetRelease = releases[i];
         targetRelease['apkUrls'] = apkUrls;
         targetRelease['version'] =
-            targetRelease['tag_name'] ?? targetRelease['name'];
+            additionalSettings['releaseTitleAsVersion'] == true
+                ? nameToFilter
+                : targetRelease['tag_name'] ?? targetRelease['name'];
         if (targetRelease['tarball_url'] != null) {
           allAssetUrls.add(MapEntry(
               (targetRelease['version'] ?? 'source') + '.tar.gz',
