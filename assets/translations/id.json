@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "Bagikan ke AppVerifier, lalu kembali ke sini jika sudah siap.",
     "wiki": "Bantuan/Wiki",
     "crowdsourcedConfigsLabel": "Konfigurasi aplikasi Crowdsourced (risiko penggunaan ditanggung sendiri)",
+    "crowdsourcedConfigsShort": "Konfigurasi Aplikasi Crowdsourced",
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
     "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
     "removeAppQuestion": {

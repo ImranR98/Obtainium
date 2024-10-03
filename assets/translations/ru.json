@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "Поделитесь с AppVerifier, а затем вернитесь сюда, когда будете готовы.",
     "wiki": "Помощь/Вики",
     "crowdsourcedConfigsLabel": "Конфигурации приложений на основе краудсорсинга (используйте на свой страх и риск)",
+    "crowdsourcedConfigsShort": "Конфиги приложений с помощью краудсорсинга",
     "allowInsecure": "Разрешить небезопасные HTTP-запросы",
     "stayOneVersionBehind": "Не отставайте от последней версии",
     "removeAppQuestion": {

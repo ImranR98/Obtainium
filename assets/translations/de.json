@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "Geben Sie die Daten an AppVerifier weiter und kehren Sie dann hierher zurück, wenn Sie fertig sind.",
     "wiki": "Hilfe/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App-Konfigurationen (Verwendung auf eigene Gefahr)",
+    "crowdsourcedConfigsShort": "Crowdsourced App-Konfigurationen",
     "allowInsecure": "Unsichere HTTP-Anfragen zulassen",
     "stayOneVersionBehind": "Eine Version hinter der neuesten Version bleiben",
     "removeAppQuestion": {

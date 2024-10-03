@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "AppVerifier ile paylaşın, hazır olduğunuzda buraya dönün.",
     "wiki": "Yardım/Wiki",
     "crowdsourcedConfigsLabel": "Kitle Kaynaklı Uygulama Yapılandırmaları (riski size ait olmak üzere kullanın)",
+    "crowdsourcedConfigsShort": "Kitle Kaynaklı Uygulama Yapılandırmaları",
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
     "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
     "removeAppQuestion": {

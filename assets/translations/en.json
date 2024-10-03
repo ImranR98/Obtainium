@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
     "wiki": "Help/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
     "allowInsecure": "Allow insecure HTTP requests",
     "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {
