@@ -315,9 +315,9 @@
     "appVerifierInstructionToast": "Dijeli sa AppVerifier-om, zatim se vratite kada ste spremni.",
     "wiki": "Pomoć/Wiki",
     "crowdsourcedConfigsLabel": "Konfiguracije aplikacije obezbeđene pomoću velikog broja ljudi (crowdsourcing) (koristite na svoju odgovornost)",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
     "allowInsecure": "Allow insecure HTTP requests",
     "stayOneVersionBehind": "Stay one version behind latest",
-    "communityAppSources": "Community App Sources",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

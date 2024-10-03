@@ -315,7 +315,7 @@
     "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "wiki": "ヘルプ/ウィキ",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
-    "communityAppSources": "コミュニティのアプリソース",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
     "stayOneVersionBehind": "最新バージョンから1つ遅れ",
     "removeAppQuestion": {
