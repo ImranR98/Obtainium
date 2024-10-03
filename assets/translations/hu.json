@@ -213,7 +213,7 @@
     "uninstallFromDevice": "Eltávolítás az eszközről",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verzióérzékelés le van tiltva.",
     "releaseDateAsVersion": "Használja a kiadás dátumát verzióként",
-    "releaseTitleAsVersion": "A kiadás címét verziószálként használja",
+    "releaseTitleAsVersion": "Használja a kiadás címét verzióként",
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verzióérzékelés nem működik megfelelően, de elérhető a kiadás dátuma.",
     "changes": "Változások",
     "releaseDate": "Kiadás dátuma",
@@ -316,7 +316,7 @@
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsource-ből származó alkalmazások beállítása (saját felelősségére használja)",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
-    "stayOneVersionBehind": "Maradjon egy verzióval a legfrissebb mögött",
+    "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
