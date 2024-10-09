@@ -61,10 +61,10 @@
     "xWillBeRemovedButRemainInstalled": "A(z) {} el lesz távolítva az Obtainiumból, de továbbra is telepítve marad az eszközön.",
     "removeSelectedAppsQuestion": "A kiválasztott alkalmazások eltávolítása?",
     "removeSelectedApps": "A kiválasztott alkalmazások eltávolítása",
-    "updateX": "A(z) {} frissítése",
-    "installX": "A(z) {} telepítése",
+    "updateX": "{} frissítése",
+    "installX": "{} telepítése",
     "markXTrackOnlyAsUpdated": "Megjelölés: {}\n(Csak nyomonkövetés)\nFrissítettként",
-    "changeX": "{} változtatás",
+    "changeX": "{}-változás",
     "installUpdateApps": "Alkalmazások telepítése/frissítése",
     "installUpdateSelectedApps": "A kiválasztott alkalmazások telepítése/frissítése",
     "markXSelectedAppsAsUpdated": "A(z) {} kiválasztott alkalmazás megjelölése frissítettként?",
@@ -80,7 +80,7 @@
     "shareSelectedAppURLs": "A kiválasztott alkalmazás hivatkozásának megosztása",
     "resetInstallStatus": "Telepítési állapot visszaállítása",
     "more": "További",
-    "removeOutdatedFilter": "Elavult-alkalmazás szűrő eltávolítása",
+    "removeOutdatedFilter": "Elavult alkalmazás-szűrő eltávolítása",
     "showOutdatedOnly": "Csak az elavult alkalmazások megjelenítése",
     "filter": "Szűrő",
     "filterApps": "Alkalmazások szűrése",
@@ -213,7 +213,7 @@
     "uninstallFromDevice": "Eltávolítás az eszközről",
     "onlyWorksWithNonVersionDetectApps": "Csak azoknál az alkalmazásoknál működik, amelyeknél a verzióérzékelés le van tiltva.",
     "releaseDateAsVersion": "Használja a kiadás dátumát verzióként",
-    "releaseTitleAsVersion": "A kiadás címét verziószálként használja",
+    "releaseTitleAsVersion": "Használja a kiadás címét verzióként",
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verzióérzékelés nem működik megfelelően, de elérhető a kiadás dátuma.",
     "changes": "Változások",
     "releaseDate": "Kiadás dátuma",
@@ -316,7 +316,7 @@
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsource-ből származó alkalmazások beállítása (saját felelősségére használja)",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
-    "stayOneVersionBehind": "Maradjon egy verzióval a legfrissebb mögött",
+    "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
@@ -354,8 +354,8 @@
         "other": "{} nap"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "{n} napló törölve lett ({after} után és {before} előtt)",
-        "other": "{n} napló törölve lett ({after} után és {before} előtt)"
+        "one": "{n} napló törölve lett ({after} után, és {before} előtt)",
+        "other": "{n} napló törölve lett ({after} után, és {before} előtt)"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "A(z) {} és 1 további alkalmazás frissítést kapott.",
