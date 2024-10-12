@@ -544,6 +544,7 @@ class AddAppPageState extends State<AddAppPage> {
     Widget getSourcesListWidget() => Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
                   onTap: () {
@@ -600,7 +601,20 @@ class AddAppPageState extends State<AddAppPage> {
                         fontWeight: FontWeight.bold,
                         decoration: TextDecoration.underline,
                         fontStyle: FontStyle.italic),
-                  ))
+                  )),
+              GestureDetector(
+                onTap: () {
+                  launchUrlString('https://apps.obtainium.imranr.dev/',
+                      mode: LaunchMode.externalApplication);
+                },
+                child: Text(
+                  tr('crowdsourcedConfigsShort'),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic),
+                ),
+              ),
             ],
           ),
         );
