@@ -213,6 +213,7 @@
     "uninstallFromDevice": "デバイスからアンインストールする",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ動作します。",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",
+    "releaseTitleAsVersion": "リリースタイトルをバージョン文字列として使用",
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
     "changes": "変更点",
     "releaseDate": "リリース日",
@@ -314,7 +315,9 @@
     "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
     "wiki": "ヘルプ/ウィキ",
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
+    "crowdsourcedConfigsShort": "クラウドソーシングによるアプリの設定",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
+    "stayOneVersionBehind": "最新バージョンから1つ遅れ",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

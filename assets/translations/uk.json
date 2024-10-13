@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Видалити з пристрою",
     "onlyWorksWithNonVersionDetectApps": "Працює лише з застосунками з вимкненим визначенням версії.",
     "releaseDateAsVersion": "Використовувати дату випуску як рядок версії",
+    "releaseTitleAsVersion": "Використовувати назву випуску як рядок версії",
     "releaseDateAsVersionExplanation": "Цю опцію слід використовувати лише для застосунків, де визначення версії працює неправильно, але є дата випуску.",
     "changes": "Зміни",
     "releaseDate": "Дата випуску",
@@ -314,7 +315,9 @@
     "appVerifierInstructionToast": "Надішліть на AppVerifier, а потім поверніться сюди, коли будете готові.",
     "wiki": "Довідка/Вікі",
     "crowdsourcedConfigsLabel": "Краудсорсингові конфігурації додатків (використовуйте на свій страх і ризик)",
+    "crowdsourcedConfigsShort": "Налаштування краудсорсингових додатків",
     "allowInsecure": "Дозволити незахищені HTTP-запити",
+    "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

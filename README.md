@@ -26,6 +26,7 @@ Currently supported App sources:
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
+  - [Tencent App Store](https://sj.qq.com/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Open Source - App-Specific:

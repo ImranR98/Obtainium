@@ -375,6 +375,7 @@ class AppsProvider with ChangeNotifier {
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
   late Directory APKDir;
+  late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
   Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
@@ -393,11 +394,20 @@ class AppsProvider with ChangeNotifier {
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         APKDir = cacheDirs!.first;
+        iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
+        }
       } else {
         APKDir =
             Directory('${(await getExternalStorageDirectory())!.path}/apks');
         if (!APKDir.existsSync()) {
           APKDir.createSync();
+        }
+        iconsCacheDir =
+            Directory('${(await getExternalStorageDirectory())!.path}/icons');
+        if (!iconsCacheDir.existsSync()) {
+          iconsCacheDir.createSync();
         }
       }
       if (!isBg) {
@@ -869,22 +879,20 @@ class AppsProvider with ChangeNotifier {
             apps[id]?.installedInfo == null ? context : null;
         bool needBGWorkaround =
             willBeSilent && context == null && !settingsProvider.useShizuku;
+        bool shizukuPretendToBeGooglePlay = settingsProvider
+                .shizukuPretendToBeGooglePlay ||
+            apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
+                true;
         if (downloadedFile != null) {
           if (needBGWorkaround) {
             // ignore: use_build_context_synchronously
             installApk(downloadedFile, contextIfNewInstall,
                 needsBGWorkaround: true,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           } else {
             // ignore: use_build_context_synchronously
             sayInstalled = await installApk(downloadedFile, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         } else {
           if (needBGWorkaround) {
@@ -895,10 +903,7 @@ class AppsProvider with ChangeNotifier {
             // ignore: use_build_context_synchronously
             sayInstalled = await installXApkDir(
                 downloadedDir!, contextIfNewInstall,
-                shizukuPretendToBeGooglePlay: apps[id]!
-                        .app
-                        .additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                    true);
+                shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
           }
         }
         if (willBeSilent && context == null) {
@@ -1297,10 +1302,16 @@ class AppsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAppIcon(String? appId) async {
+  Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
     if (apps[appId]?.icon == null) {
-      var icon =
-          (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      var cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+      var alreadyCached = cachedIcon.existsSync() && !ignoreCache;
+      var icon = alreadyCached
+          ? (await cachedIcon.readAsBytes())
+          : (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
+      if (icon != null && !alreadyCached) {
+        cachedIcon.writeAsBytes(icon.toList());
+      }
       if (icon != null) {
         apps.update(
             apps[appId]!.app.id,
@@ -1598,12 +1609,13 @@ class AppsProvider with ChangeNotifier {
     }
     String? returnPath;
     if (!pickOnly) {
+      var encoder = const JsonEncoder.withIndent("    ");
       Map<String, dynamic> finalExport = generateExportJSON();
       var result = await saf.createFile(exportDir,
           displayName:
               '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
           mimeType: 'application/json',
-          bytes: Uint8List.fromList(utf8.encode(jsonEncode(finalExport))));
+          bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))));
       if (result == null) {
         throw ObtainiumError(tr('unexpectedError'));
       }

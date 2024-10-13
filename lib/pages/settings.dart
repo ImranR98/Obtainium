@@ -578,6 +578,22 @@ class _SettingsPageState extends State<SettingsPage> {
                                     })
                               ],
                             ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                    child: Text(
+                                        tr('shizukuPretendToBeGooglePlay'))),
+                                Switch(
+                                    value: settingsProvider
+                                        .shizukuPretendToBeGooglePlay,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                          .shizukuPretendToBeGooglePlay = value;
+                                    })
+                              ],
+                            ),
                             height32,
                             Text(
                               tr('sourceSpecific'),

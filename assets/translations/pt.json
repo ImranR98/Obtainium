@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Desinstalar do dispositivo",
     "onlyWorksWithNonVersionDetectApps": "Apenas funciona para aplicativos com detecção de versão desativada.",
     "releaseDateAsVersion": "Usar data de lançamento como versão",
+    "releaseTitleAsVersion": "Utilizar o título da versão como cadeia de versões",
     "releaseDateAsVersionExplanation": "Esta opção só deve ser usada para aplicativos onde a detecção de versão não funciona corretamente, mas há uma data de lançamento disponível.",
     "changes": "Alterações",
     "releaseDate": "Data de lançamento",
@@ -314,7 +315,9 @@
     "appVerifierInstructionToast": "Partilhe com o AppVerifier e, em seguida, regresse aqui quando estiver pronto.",
     "wiki": "Ajuda/Wiki",
     "crowdsourcedConfigsLabel": "Configurações de aplicações de crowdsourcing (utilização por sua conta e risco)",
+    "crowdsourcedConfigsShort": "Configurações de aplicações com base em crowdsourcing",
     "allowInsecure": "Permitir pedidos HTTP inseguros",
+    "stayOneVersionBehind": "Manter-se uma versão atrás da mais recente",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

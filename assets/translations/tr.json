@@ -213,6 +213,7 @@
     "uninstallFromDevice": "Cihazdan Kaldır",
     "onlyWorksWithNonVersionDetectApps": "Yalnızca Sürüm Algılaması Devre Dışı Uygulamalar İçin Çalışır.",
     "releaseDateAsVersion": "Sürüm Olarak Yayın Tarihi Kullan",
+    "releaseTitleAsVersion": "Sürüm dizesi olarak sürüm başlığını kullan",
     "releaseDateAsVersionExplanation": "Bu seçenek, sürüm algılamanın doğru çalışmadığı ancak bir sürüm tarihinin mevcut olduğu uygulamalar için kullanılmalıdır.",
     "changes": "Değişiklikler",
     "releaseDate": "Yayın Tarihi",
@@ -314,7 +315,9 @@
     "appVerifierInstructionToast": "AppVerifier ile paylaşın, hazır olduğunuzda buraya dönün.",
     "wiki": "Yardım/Wiki",
     "crowdsourcedConfigsLabel": "Kitle Kaynaklı Uygulama Yapılandırmaları (riski size ait olmak üzere kullanın)",
+    "crowdsourcedConfigsShort": "Kitle Kaynaklı Uygulama Yapılandırmaları",
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
+    "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

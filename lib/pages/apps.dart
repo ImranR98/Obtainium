@@ -416,6 +416,8 @@ class AppsPageState extends State<AppsPage> {
                 ? Image.memory(
                     listedApps[appIndex].icon!,
                     gaplessPlayback: true,
+                    opacity: AlwaysStoppedAnimation(
+                        listedApps[appIndex].installedInfo == null ? 0.6 : 1),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,
