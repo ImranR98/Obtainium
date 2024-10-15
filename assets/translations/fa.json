@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "در AppVerifier به اشتراک بگذارید، سپس پس از آماده شدن به اینجا برگردید.",
     "wiki": "راهنما/ویکی",
     "crowdsourcedConfigsLabel": "تنظیمات برنامه Crowdsourced (با مسئولیت خود استفاده کنید)",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
     "allowInsecure": "درخواست های HTTP ناامن را مجاز کنید",
     "stayOneVersionBehind": "Stay one version behind latest",
     "removeAppQuestion": {

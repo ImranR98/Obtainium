@@ -315,6 +315,7 @@
     "appVerifierInstructionToast": "分享至 AppVerifier，完成后返回此处。",
     "wiki": "帮助/Wiki",
     "crowdsourcedConfigsLabel": "众包应用程序配置（使用风险自负）",
+    "crowdsourcedConfigsShort": "众包应用程序配置",
     "allowInsecure": "允许不安全的 HTTP 请求",
     "stayOneVersionBehind": "比最新版本晚一个版本",
     "removeAppQuestion": {
