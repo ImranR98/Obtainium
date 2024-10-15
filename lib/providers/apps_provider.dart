@@ -565,9 +565,11 @@ class AppsProvider with ChangeNotifier {
       return false;
     }
     if (app.additionalSettings['exemptFromBackgroundUpdates'] == true) {
+      logs.add('Exempted from BG updates: ${app.id}');
       return false;
     }
     if (app.apkUrls.length > 1) {
+      logs.add('Multiple APK URLs: ${app.id}');
       return false; // Manual API selection means silent install is not possible
     }
 
@@ -579,6 +581,8 @@ class AppsProvider with ChangeNotifier {
               ?.installingPackageName
           : (await pm.getInstallerPackageName(packageName: app.id));
     } catch (e) {
+      logs.add(
+          'Failed to get installed package details: ${app.id} (${e.toString()})');
       return false; // App probably not installed
     }
 
@@ -587,6 +591,7 @@ class AppsProvider with ChangeNotifier {
     // The APK should target a new enough API
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
     if (!(targetSDK != null && targetSDK >= (osInfo.version.sdkInt - 3))) {
+      logs.add('Multiple APK URLs: ${app.id}');
       return false;
     }
 
@@ -601,8 +606,12 @@ class AppsProvider with ChangeNotifier {
       // If we did not install the app, silent install is not possible
       return false;
     }
-    // The OS must also be new enough
-    return osInfo.version.sdkInt >= 31;
+    if (osInfo.version.sdkInt < 31) {
+      // The OS must also be new enough
+      logs.add('Android SDK too old: ${osInfo.version.sdkInt}');
+      return false;
+    }
+    return true;
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
