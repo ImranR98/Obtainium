@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="dev.imranr.obtainium">
     <application
-        android:label="Obtainium"
+        android:label="@string/label"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true"
