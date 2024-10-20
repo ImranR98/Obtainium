@@ -540,11 +540,27 @@ class AddAppPageState extends State<AddAppPage> {
                   }),
             if (pickedSource != null)
               GeneratedForm(
-                  key: const Key('appId'),
+                  key: Key(
+                      '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}-appId'),
                   items: [
                     [
                       GeneratedFormTextField('appId',
-                          label: tr('appId'), required: false),
+                          label: tr('appId'),
+                          required: false,
+                          additionalValidators: [
+                            (value) {
+                              if (value == null || value.isEmpty) {
+                                return null;
+                              }
+                              final isValid = RegExp(
+                                      r'^([A-Za-z]{1}[A-Za-z\d_]*\.)+[A-Za-z][A-Za-z\d_]*$')
+                                  .hasMatch(value);
+                              if (!isValid) {
+                                return tr('invalidInput');
+                              }
+                              return null;
+                            }
+                          ]),
                     ]
                   ],
                   onValueChanges: (values, valid, isBuilding) {
