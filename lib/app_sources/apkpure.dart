@@ -167,7 +167,7 @@ class APKPure extends AppSource {
     var res0 = await sourceRequest('$standardUrl/versions', additionalSettings);
     var versionLinks = await grabLinksCommon(res0, {
       'skipSort': true,
-      'customLinkFilterRegex': '$standardUrl/download/[^/]+\$'
+      'customLinkFilterRegex': '${Uri.decodeFull(standardUrl)}/download/[^/]+\$'
     });
 
     var supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
