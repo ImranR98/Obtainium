@@ -258,6 +258,7 @@
     "intermediateLink": "Pera ligilo",
     "exemptFromBackgroundUpdates": "Escepti el la fonaj ĝisdatigoj (se aktiva)",
     "bgUpdatesOnWiFiOnly": "Malaktivigi fonajn ĝisdatigojn se sen vifio",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "Aŭtomate selekti la plej ĵusan version de la APK-kodo",
     "versionExtractionRegEx": "Ekstrakti la versioĉenon per regula esprimo",
     "trimVersionString": "Mallongigi la versioĉenon per regula esprimo",

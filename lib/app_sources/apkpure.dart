@@ -95,10 +95,9 @@ class APKPure extends AppSource {
                 // Unclear why there can even be multiple APKs for the same version and arch
                 var apkInfo = e.nextElementSibling?.querySelector('div.info');
                 String? versionCode = RegExp('[0-9]+')
-                    .firstMatch(apkInfo
-                            ?.querySelector('div.info-top span.code')
-                            ?.text ??
-                        '')
+                    .firstMatch(
+                        apkInfo?.querySelector('div.info-top .code')?.text ??
+                            '')
                     ?.group(0)
                     ?.trim();
                 var types = apkInfo
@@ -167,7 +166,7 @@ class APKPure extends AppSource {
     var res0 = await sourceRequest('$standardUrl/versions', additionalSettings);
     var versionLinks = await grabLinksCommon(res0, {
       'skipSort': true,
-      'customLinkFilterRegex': '$standardUrl/download/[^/]+\$'
+      'customLinkFilterRegex': '${Uri.decodeFull(standardUrl)}/download/[^/]+\$'
     });
 
     var supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;

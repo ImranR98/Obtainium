@@ -258,6 +258,7 @@
     "intermediateLink": "Připojený odkaz",
     "exemptFromBackgroundUpdates": "Vyloučit z aktualizací na pozadí (je-li povoleno)",
     "bgUpdatesOnWiFiOnly": "Deaktivovat aktualizace na pozadí, pokud není k dispozici Wi-Fi",
+    "bgUpdatesWhileChargingOnly": "Zakázat aktualizace na pozadí, když se nenabíjí",
     "autoSelectHighestVersionCode": "Automaticky vybrat nejvyšší verzi APK",
     "versionExtractionRegEx": "Extrakce verze pomocí RegEx",
     "trimVersionString": "Oříznutí řetězce verze pomocí příkazu RegEx",

@@ -349,6 +349,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get bgUpdatesWhileChargingOnly {
+    return prefs?.getBool('bgUpdatesWhileChargingOnly') ?? false;
+  }
+
+  set bgUpdatesWhileChargingOnly(bool val) {
+    prefs?.setBool('bgUpdatesWhileChargingOnly', val);
+    notifyListeners();
+  }
+
   DateTime get lastCompletedBGCheckTime {
     int? temp = prefs?.getInt('lastCompletedBGCheckTime');
     return temp != null

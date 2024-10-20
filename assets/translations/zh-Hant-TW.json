@@ -258,6 +258,7 @@
     "intermediateLink": "中間連結",
     "exemptFromBackgroundUpdates": "免除背景更新（若已啟用）",
     "bgUpdatesOnWiFiOnly": "停用非 WiFi 的背景更新",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "自動選擇最高 versionCode 的 APK",
     "versionExtractionRegEx": "版本字串提取正則表達式",
     "trimVersionString": "用正則表達式修剪版本字串",

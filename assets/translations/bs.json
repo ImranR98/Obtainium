@@ -258,6 +258,7 @@
     "intermediateLink": "Intermediate veza",
     "exemptFromBackgroundUpdates": "Izuzmi iz ažuriranja u pozadini (ako su uključeni)",
     "bgUpdatesOnWiFiOnly": "Isključite ažuriranje u pozadini kada niste na WiFi-ju",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "Automatski izaberite najveću (verziju) versionCode APK-a",
     "versionExtractionRegEx": "RegEx ekstrakcija verzije",
     "trimVersionString": "Trim Version String With RegEx",

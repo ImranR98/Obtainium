@@ -258,6 +258,7 @@
     "intermediateLink": "Liên kết trung gian",
     "exemptFromBackgroundUpdates": "Miễn cập nhật nền (nếu được bật)",
     "bgUpdatesOnWiFiOnly": "Tắt cập nhật nền khi không có WiFi",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "Tự động chọn APK mã phiên bản cao nhất",
     "versionExtractionRegEx": "Trích xuất phiên bản RegEx",
     "trimVersionString": "Trim Version String With RegEx",

@@ -258,6 +258,7 @@
     "intermediateLink": "Łącze pośrednie",
     "exemptFromBackgroundUpdates": "Wyklucz z uaktualnień w tle (jeśli są włączone)",
     "bgUpdatesOnWiFiOnly": "Wyłącz aktualizacje w tle, gdy nie ma połączenia z Wi-Fi",
+    "bgUpdatesWhileChargingOnly": "Wyłącz aktualizacje w tle, gdy urządzenie nie jest ładowane",
     "autoSelectHighestVersionCode": "Automatycznie wybierz najwyższy kod wersji APK",
     "versionExtractionRegEx": "Wyrażenie regularne wyodrębniające wersję",
     "trimVersionString": "Przycinanie łańcucha wersji za pomocą RegEx",

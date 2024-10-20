@@ -258,6 +258,7 @@
     "intermediateLink": "Tautan perantara",
     "exemptFromBackgroundUpdates": "Dikecualikan dari pembaruan latar belakang (jika diaktifkan)",
     "bgUpdatesOnWiFiOnly": "Nonaktifkan pembaruan latar belakang saat tidak menggunakan WiFi",
+    "bgUpdatesWhileChargingOnly": "Menonaktifkan pembaruan latar belakang saat tidak mengisi daya",
     "autoSelectHighestVersionCode": "Pilih otomatis APK dengan versi kode tertinggi",
     "versionExtractionRegEx": "Reguler ekspresi terkait ekstraksi versi string",
     "trimVersionString": "Potong versi string dengan reguler ekspresi",

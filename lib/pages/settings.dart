@@ -419,6 +419,25 @@ class _SettingsPageState extends State<SettingsPage> {
                                                           })
                                                     ],
                                                   ),
+                                                  height16,
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                          child: Text(tr(
+                                                              'bgUpdatesWhileChargingOnly'))),
+                                                      Switch(
+                                                          value: settingsProvider
+                                                              .bgUpdatesWhileChargingOnly,
+                                                          onChanged: (value) {
+                                                            settingsProvider
+                                                                    .bgUpdatesWhileChargingOnly =
+                                                                value;
+                                                          })
+                                                    ],
+                                                  ),
                                                 ],
                                               ),
                                           ],

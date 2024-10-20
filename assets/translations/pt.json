@@ -258,6 +258,7 @@
     "intermediateLink": "Link intermediário",
     "exemptFromBackgroundUpdates": "Isento de atualizações em segundo-plano (se ativadas)",
     "bgUpdatesOnWiFiOnly": "Desative as atualizações em segundo-plano quando não estiver conectado no Wi-Fi",
+    "bgUpdatesWhileChargingOnly": "Desativar actualizações em segundo plano quando não estiver a carregar",
     "autoSelectHighestVersionCode": "Auto-selecionar a versão mais recente",
     "versionExtractionRegEx": "Regex de extração de versão",
     "trimVersionString": "Cortar a cadeia de caracteres da versão com RegEx",

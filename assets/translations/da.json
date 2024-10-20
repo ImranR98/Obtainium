@@ -258,6 +258,7 @@
     "intermediateLink": "Mellemliggende link",
     "exemptFromBackgroundUpdates": "Undtag fra baggrundsopdateringer (hvis aktiveret)",
     "bgUpdatesOnWiFiOnly": "Deaktivér baggrundsopdateringer, når du ikke er på WiFi",
+    "bgUpdatesWhileChargingOnly": "Deaktiver baggrundsopdateringer, når der ikke oplades",
     "autoSelectHighestVersionCode": "Auto-vælg højeste versionKode af APK",
     "versionExtractionRegEx": "RegEx for versionsstrengsudtrækning",
     "trimVersionString": "Trim versionsstrengen med RegEx",

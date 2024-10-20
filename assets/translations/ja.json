@@ -258,6 +258,7 @@
     "intermediateLink": "中間リンク",
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合、バックグラウンドアップデートを無効にする",
+    "bgUpdatesWhileChargingOnly": "非充電時にバックグラウンド更新を無効にする",
     "autoSelectHighestVersionCode": "最も高いバージョンコードのAPKを自動で選択する",
     "versionExtractionRegEx": "バージョン抽出の正規表現",
     "trimVersionString": "正規表現でバージョン文字列をトリムする",
