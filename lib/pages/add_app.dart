@@ -538,6 +538,22 @@ class AddAppPageState extends State<AddAppPage> {
                       });
                     }
                   }),
+            if (pickedSource != null)
+              GeneratedForm(
+                  key: const Key('appId'),
+                  items: [
+                    [
+                      GeneratedFormTextField('appId',
+                          label: tr('appId'), required: false),
+                    ]
+                  ],
+                  onValueChanges: (values, valid, isBuilding) {
+                    if (!isBuilding) {
+                      setState(() {
+                        additionalSettings['appId'] = values['appId'];
+                      });
+                    }
+                  }),
           ],
         );
 
