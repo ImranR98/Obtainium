@@ -258,6 +258,7 @@
     "intermediateLink": "Köztes hivatkozás",
     "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",
     "bgUpdatesOnWiFiOnly": "A háttérben történő frissítések letiltása, ha nincs Wi-Fi",
+    "bgUpdatesWhileChargingOnly": "Háttérfrissítések letiltása, ha nincs töltés",
     "autoSelectHighestVersionCode": "A legmagasabb verziókódú APK automatikus kiválasztása",
     "versionExtractionRegEx": "Verzió-karakterlánc kivonatolása reguláris kifejezéssel",
     "trimVersionString": "Verzió-karakterlánc levágása reguláris kifejezéssel",

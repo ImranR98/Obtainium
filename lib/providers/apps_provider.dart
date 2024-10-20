@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
@@ -1885,10 +1886,20 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         (<List<MapEntry<String, int>>>[]))
   ];
 
-  var networkRestricted = false;
-  if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
-    networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
-        !netResult.contains(ConnectivityResult.ethernet);
+  var networkRestricted = appsProvider.settingsProvider.bgUpdatesOnWiFiOnly &&
+      !netResult.contains(ConnectivityResult.wifi) &&
+      !netResult.contains(ConnectivityResult.ethernet);
+
+  var chargingRestricted =
+      appsProvider.settingsProvider.bgUpdatesWhileChargingOnly &&
+          (await Battery().batteryState) != BatteryState.charging;
+
+  if (networkRestricted) {
+    logs.add('BG update task: Network restriction in effect.');
+  }
+
+  if (chargingRestricted) {
+    logs.add('BG update task: Charging restriction in effect.');
   }
 
   if (toCheck.isNotEmpty) {
@@ -1927,14 +1938,6 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         MultiAppMultiError(); // All errors that will not lead to a retry, just a notification
     CheckingUpdatesNotification notif = CheckingUpdatesNotification(
         plural('apps', toCheck.length)); // The notif. to show while checking
-
-    // Set a bool for when we're no on wifi/wired and the user doesn't want to download apps in that state
-    var networkRestricted = false;
-    if (appsProvider.settingsProvider.bgUpdatesOnWiFiOnly) {
-      var netResult = await (Connectivity().checkConnectivity());
-      networkRestricted = !netResult.contains(ConnectivityResult.wifi) &&
-          !netResult.contains(ConnectivityResult.ethernet);
-    }
 
     try {
       // Check for updates
@@ -1983,6 +1986,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     // Filter out updates that will be installed silently (the rest go into toNotify)
     for (var i = 0; i < updates.length; i++) {
       if (networkRestricted ||
+          chargingRestricted ||
           !(await appsProvider.canInstallSilently(updates[i]))) {
         if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
           toNotify.add(updates[i]);
@@ -2029,7 +2033,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   } else {
     // In install mode...
     // If you haven't explicitly been given updates to install, grab all available silent updates
-    if (toInstall.isEmpty && !networkRestricted) {
+    if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
       var temp = appsProvider.findExistingUpdates(installedOnly: true);
       for (var i = 0; i < temp.length; i++) {
         if (await appsProvider

@@ -258,6 +258,7 @@
     "intermediateLink": "پیوند میانی",
     "exemptFromBackgroundUpdates": "معاف از به‌روزرسانی‌های پس‌زمینه (در صورت فعال بودن)",
     "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال به WiFi غیرفعال کنید",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "انتخاب خودکار بالاترین نسخه کد APK",
     "versionExtractionRegEx": "نسخه استخراج RegEx",
     "trimVersionString": "برش رشته نسخه با RegEx",

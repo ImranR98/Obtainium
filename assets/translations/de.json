@@ -258,6 +258,7 @@
     "intermediateLink": "„Zwischen“-Link",
     "exemptFromBackgroundUpdates": "Ausschluss von Hintergrundaktualisierungen (falls aktiviert)",
     "bgUpdatesOnWiFiOnly": "Hintergrundaktualisierungen deaktivieren, wenn kein WLAN vorhanden ist",
+    "bgUpdatesWhileChargingOnly": "Hintergrundaktualisierungen deaktivieren, wenn nicht geladen wird",
     "autoSelectHighestVersionCode": "Automatisch höchste APK-Version auswählen",
     "versionExtractionRegEx": "Versionsextraktion per RegEx",
     "trimVersionString": "Versionszeichenfolge mit RegEx kürzen",

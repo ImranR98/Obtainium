@@ -258,6 +258,7 @@
     "intermediateLink": "Ara bağlantı",
     "exemptFromBackgroundUpdates": "Arka plan güncellemelerinden muaf tut (etkinse)",
     "bgUpdatesOnWiFiOnly": "WiFi olmadığında arka plan güncellemelerini devre dışı bırak",
+    "bgUpdatesWhileChargingOnly": "Şarj olmadığında arka plan güncellemelerini devre dışı bırakma",
     "autoSelectHighestVersionCode": "Otomatik olarak en yüksek sürüm kodunu seç",
     "versionExtractionRegEx": "Sürüm Çıkarma Düzenli İfade",
     "trimVersionString": "RegEx ile Sürüm Dizesini Kırpma",

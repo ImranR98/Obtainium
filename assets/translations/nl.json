@@ -258,6 +258,7 @@
     "intermediateLink": "Intermediaire link",
     "exemptFromBackgroundUpdates": "Vrijgesteld van achtergrond-updates (indien ingeschakeld)",
     "bgUpdatesOnWiFiOnly": "Achtergrond-updates uitschakelen wanneer niet verbonden met WiFi",
+    "bgUpdatesWhileChargingOnly": "Achtergrondupdates uitschakelen als er niet wordt opgeladen",
     "autoSelectHighestVersionCode": "De APK met de hoogste versiecode automatisch selecteren",
     "versionExtractionRegEx": "Reguliere expressie voor versie-extractie",
     "trimVersionString": "Versie string trimmen met RegEx",

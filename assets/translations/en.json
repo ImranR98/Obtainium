@@ -258,6 +258,7 @@
     "intermediateLink": "Intermediate link",
     "exemptFromBackgroundUpdates": "Exempt from background updates (if enabled)",
     "bgUpdatesOnWiFiOnly": "Disable background updates when not on WiFi",
+    "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",
     "versionExtractionRegEx": "Version String Extraction RegEx",
     "trimVersionString": "Trim Version String With RegEx",

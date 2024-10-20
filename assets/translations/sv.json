@@ -258,6 +258,7 @@
     "intermediateLink": "Mellanlänk",
     "exemptFromBackgroundUpdates": "Undta från bakgrundsuppdateringar (om aktiverad)",
     "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",
+    "bgUpdatesWhileChargingOnly": "Inaktivera bakgrundsuppdateringar när du inte laddar",
     "autoSelectHighestVersionCode": "Välj automatiskt högsta versionskod APK",
     "versionExtractionRegEx": "Version Extraction RegEx",
     "trimVersionString": "Trimma versionssträng med RegEx",
