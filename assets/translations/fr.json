@@ -315,8 +315,8 @@
     "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
     "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici lorsque tout est prêt.",
     "wiki": "Aide/Wiki",
-    "crowdsourcedConfigsLabel": "Configurations d'applications par la communauté (à utiliser à vos risques et périls)",
-    "crowdsourcedConfigsShort": "Configurations d'applications par la communauté",
+    "crowdsourcedConfigsLabel": "Configurations d'applis communautaire (à utiliser à vos risques et périls)",
+    "crowdsourcedConfigsShort": "Configuration d'applis communautaire",
     "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
     "stayOneVersionBehind": "Rester à une version de la dernière",
     "removeAppQuestion": {
