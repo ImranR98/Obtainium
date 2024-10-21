@@ -538,7 +538,7 @@ class AddAppPageState extends State<AddAppPage> {
                       });
                     }
                   }),
-            if (pickedSource != null)
+            if (pickedSource != null && pickedSource!.enforceTrackOnly)
               GeneratedForm(
                   key: Key(
                       '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}-appId'),
