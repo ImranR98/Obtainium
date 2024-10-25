@@ -571,7 +571,7 @@ abstract class AppSource {
       GeneratedFormSwitch('skipUpdateNotifications',
           label: tr('skipUpdateNotifications'))
     ],
-    [GeneratedFormTextField('about', label: tr('about'), required: false)]
+    [GeneratedFormTextField('about', label: tr('about'), required: false)],
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -922,6 +922,9 @@ class SourceProvider {
     name = name.isNotEmpty ? name : apk.names.name;
     App finalApp = App(
         currentApp?.id ??
+            ((additionalSettings['appId'] != null)
+                ? additionalSettings['appId']
+                : null) ??
             (!trackOnly &&
                     (!source.appIdInferIsOptional ||
                         (source.appIdInferIsOptional && inferAppIdIfOptional))
