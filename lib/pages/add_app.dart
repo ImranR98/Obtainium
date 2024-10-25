@@ -545,7 +545,7 @@ class AddAppPageState extends State<AddAppPage> {
                   items: [
                     [
                       GeneratedFormTextField('appId',
-                          label: tr('appId'),
+                          label: '${tr('appId')} - ${tr('custom')}',
                           required: false,
                           additionalValidators: [
                             (value) {
