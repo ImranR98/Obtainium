@@ -700,6 +700,8 @@ class AppsProvider with ChangeNotifier {
       }
     }
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
+    logs.add(
+        'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}');
     if (appInfo != null &&
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
