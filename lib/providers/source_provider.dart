@@ -206,8 +206,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
         json['overrideSource'] == null &&
         additionalSettings['trackOnly'] == false &&
         additionalSettings['versionExtractionRegEx'] == '' &&
-        json['lastUpdateCheck'] != null &&
-        json['lastUpdateCheck'] <= 1730484400402000) {
+        json['lastUpdateCheck'] != null) {
       json['url'] = 'https://updates.signal.org/android/latest.json';
       var replacementAdditionalSettings = getDefaultValuesFromFormItems(
           HTML().combinedAppSpecificSettingFormItems);
