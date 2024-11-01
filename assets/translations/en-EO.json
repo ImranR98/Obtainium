@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Neniu apo estas trovita kun tiu identigilo aŭ nomo",
     "reposHaveMultipleApps": "Deponejoj povas enhavi plurajn apojn",
     "fdroidThirdPartyRepo": "Tria deponejo de F-Droid",
-    "steamMobile": "Telefona Steam",
-    "steamChat": "Steam Babilejo",
     "install": "Instali",
     "markInstalled": "Marki kiel instalita",
     "update": "Ĝisdatigi",

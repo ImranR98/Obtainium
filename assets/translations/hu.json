@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Nem található alkalmazás ezzel az azonosítóval vagy névvel",
     "reposHaveMultipleApps": "A tárolók több alkalmazást is tartalmazhatnak",
     "fdroidThirdPartyRepo": "F-Droid harmadik féltől származó tároló",
-    "steamMobile": "Steam Mobil",
-    "steamChat": "Steam Chat",
     "install": "Telepítés",
     "markInstalled": "Telepítettnek jelölés",
     "update": "Frissítés",

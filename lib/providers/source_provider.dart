@@ -25,7 +25,6 @@ import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
-import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
@@ -182,7 +181,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       }).toList();
     }
     // Steam source apps should be converted to HTML (#1244)
-    var legacySteamSourceApps = SteamMobile().apks.keys;
+    var legacySteamSourceApps = ['steam', 'steam-chat-app'];
     if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
       json['url'] = '${json['url']}/mobile';
       var replacementAdditionalSettings = getDefaultValuesFromFormItems(

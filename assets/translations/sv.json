@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Ingen App funnen med det namnet eller ID",
     "reposHaveMultipleApps": "Förråd kan innehålla flera ApparR",
     "fdroidThirdPartyRepo": "F-Droid Tredjeparts Förråd",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Steam Chat",
     "install": "Installera",
     "markInstalled": "Märk Installerad",
     "update": "Uppdatera",

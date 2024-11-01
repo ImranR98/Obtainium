@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Nenhum aplicativo foi encontrado com esse ID ou nome",
     "reposHaveMultipleApps": "Repositórios podem conter múltiplos aplicativos",
     "fdroidThirdPartyRepo": "Repositórios de terceiros F-Droid",
-    "steamMobile": "Steam para celular",
-    "steamChat": "Chat do Steam",
     "install": "Instalar",
     "markInstalled": "Marcar instalado",
     "update": "Atualizar",

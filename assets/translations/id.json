@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Tidak ada aplikasi yang ditemukan dengan ID atau nama tersebut",
     "reposHaveMultipleApps": "Repositori dapat berisi beberapa aplikasi",
     "fdroidThirdPartyRepo": "Repositori pihak ketiga F-Droid",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Obrolan Steam",
     "install": "Pasang",
     "markInstalled": "Tandai terpasang",
     "update": "perbarui",

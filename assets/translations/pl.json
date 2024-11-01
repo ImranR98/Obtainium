@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Nie znaleziono aplikacji o tym identyfikatorze lub nazwie",
     "reposHaveMultipleApps": "Repozytoria mogą zawierać wiele aplikacji",
     "fdroidThirdPartyRepo": "Zewnętrzne repo F-Droid",
-    "steamMobile": "Mobilny Steam",
-    "steamChat": "Steam Chat",
     "install": "Instaluj",
     "markInstalled": "Oznacz jako zainstalowane",
     "update": "Zaktualizuj",

@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "未找到符合此 ID 或名称的应用",
     "reposHaveMultipleApps": "存储库中可能包含多个应用",
     "fdroidThirdPartyRepo": "F-Droid 第三方存储库",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Steam Chat",
     "install": "安装",
     "markInstalled": "标记为已安装",
     "update": "更新",

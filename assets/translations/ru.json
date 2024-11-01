@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Приложение с таким ID или названием не было найдено",
     "reposHaveMultipleApps": "В хранилище несколько приложений",
     "fdroidThirdPartyRepo": "Сторонние репозитории F-Droid",
-    "steamMobile": "Приложение Steam",
-    "steamChat": "Steam Chat",
     "install": "Установить",
     "markInstalled": "Пометить как установленное",
     "update": "Обновить",
