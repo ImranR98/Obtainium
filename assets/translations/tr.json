@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Bu kimlik veya ada sahip bir uygulama bulunamadı",
     "reposHaveMultipleApps": "Depolar birden fazla uygulama içerebilir",
     "fdroidThirdPartyRepo": "F-Droid Üçüncü Parti Depo",
-    "steamMobile": "Steam Mobil",
-    "steamChat": "Steam Sohbet",
     "install": "Yükle",
     "markInstalled": "Yüklendi olarak İşaretle",
     "update": "Güncelle",

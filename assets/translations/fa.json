@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "هیچ برنامه ای با آن شناسه یا نام یافت نشد",
     "reposHaveMultipleApps": "مخازن ممکن است شامل چندین برنامه باشد",
     "fdroidThirdPartyRepo": "مخازن شخص ثالث F-Droid",
-    "steamMobile": "استیم موبایل",
-    "steamChat": "چت استیم",
     "install": "نصب",
     "markInstalled": "علامت گذاری به عنوان نصب شده",
     "update": "به روز رسانی",

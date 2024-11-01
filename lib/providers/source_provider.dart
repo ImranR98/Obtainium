@@ -23,10 +23,8 @@ import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
-import 'package:obtainium/app_sources/signal.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
-import 'package:obtainium/app_sources/steammobile.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
@@ -183,7 +181,7 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       }).toList();
     }
     // Steam source apps should be converted to HTML (#1244)
-    var legacySteamSourceApps = SteamMobile().apks.keys;
+    var legacySteamSourceApps = ['steam', 'steam-chat-app'];
     if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
       json['url'] = '${json['url']}/mobile';
       var replacementAdditionalSettings = getDefaultValuesFromFormItems(
@@ -198,6 +196,23 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       replacementAdditionalSettings['versionExtractionRegEx'] =
           replacementAdditionalSettings['customLinkFilterRegex'];
       replacementAdditionalSettings['matchGroupToUse'] = '\$1';
+      additionalSettings = replacementAdditionalSettings;
+    }
+    // Signal apps from before it was removed should be converted to HTML (#1928)
+    if (json['url'] == 'https://signal.org' &&
+        json['id'] == 'org.thoughtcrime.securesms' &&
+        json['author'] == 'Signal' &&
+        json['name'] == 'Signal' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null &&
+        json['lastUpdateCheck'] <= 1730484400402000) {
+      json['url'] = 'https://updates.signal.org/android/latest.json';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      replacementAdditionalSettings['versionExtractionRegEx'] =
+          '\\d+.\\d+.\\d+';
       additionalSettings = replacementAdditionalSettings;
     }
   }
@@ -794,7 +809,6 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
-        Signal(),
         VLC(),
         WhatsApp(),
         TelegramApp(),

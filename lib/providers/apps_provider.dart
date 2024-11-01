@@ -700,6 +700,8 @@ class AppsProvider with ChangeNotifier {
       }
     }
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
+    logs.add(
+        'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}');
     if (appInfo != null &&
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
@@ -743,6 +745,10 @@ class AppsProvider with ChangeNotifier {
     return installed;
   }
 
+  Future<String> getStorageRootPath() async {
+    return '/${(await getExternalStorageDirectory())!.uri.pathSegments.sublist(0, 3).join('/')}';
+  }
+
   Future<void> moveObbFile(File file, String appId) async {
     if (!file.path.toLowerCase().endsWith('.obb')) return;
 
@@ -751,7 +757,7 @@ class AppsProvider with ChangeNotifier {
       await Permission.storage.request();
     }
 
-    String obbDirPath = "/storage/emulated/0/Android/obb/$appId";
+    String obbDirPath = "${await getStorageRootPath()}/Android/obb/$appId";
     Directory(obbDirPath).createSync(recursive: true);
 
     String obbFileName = file.path.split("/").last;
@@ -1045,10 +1051,11 @@ class AppsProvider with ChangeNotifier {
     Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
       try {
         var exportDir = await settingsProvider.getExportDir();
-        String downloadPath = '/storage/emulated/0/Download';
+        String downloadPath = '${await getStorageRootPath()}/Download';
         bool downloadsAccessible = false;
         try {
-          downloadsAccessible = Directory(downloadPath).existsSync();
+          Directory(downloadPath).listSync();
+          downloadsAccessible = true;
         } catch (e) {
           //
         }

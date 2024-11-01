@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Nije pronađena aplikacija s tim ID-om ili imenom",
     "reposHaveMultipleApps": "Repo-i mogu sadržavati više aplikacija",
     "fdroidThirdPartyRepo": "F-Droid Repo treće strane",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Razgovor na Steamu (chat)",
     "install": "Instaliraj",
     "markInstalled": "Označi kao instalirano",
     "update": "Nadogradi",

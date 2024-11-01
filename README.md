@@ -30,7 +30,6 @@ Currently supported App sources:
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Open Source - App-Specific:
-  - [Signal](https://signal.org/)
   - [VLC](https://videolan.org/)
 - Other - App-Specific:
   - [WhatsApp](https://whatsapp.com)

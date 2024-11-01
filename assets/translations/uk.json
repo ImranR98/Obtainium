@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Застосунок з таким ідентифікатором або назвою не знайдено",
     "reposHaveMultipleApps": "Сховища можуть містити кілька застосунків",
     "fdroidThirdPartyRepo": "F-Droid Стороннє сховище",
-    "steamMobile": "Мобільний Steam",
-    "steamChat": "Чат Steam",
     "install": "Встановити",
     "markInstalled": "Позначити як встановлене",
     "update": "Оновити",

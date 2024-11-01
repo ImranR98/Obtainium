@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Không tìm thấy ứng dụng nào có ID hoặc tên đó",
     "reposHaveMultipleApps": "Kho có thể chứa nhiều Ứng dụng",
     "fdroidThirdPartyRepo": "Kho lưu trữ bên thứ ba F-Droid",
-    "steamMobile": "Điện thoại di động hơi nước",
-    "steamChat": "Trò chuyện hơi nước",
     "install": "Cài đặt",
     "markInstalled": "Đánh dấu là đã cài đặt",
     "update": "Cập nhật",

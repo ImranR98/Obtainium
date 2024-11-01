@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Non è stata trovata alcuna app con quell'ID o nome",
     "reposHaveMultipleApps": "I repository possono contenere più app",
     "fdroidThirdPartyRepo": "Repository F-Droid di terze parti",
-    "steamMobile": "Mobile a vapore",
-    "steamChat": "Chat di vapore",
     "install": "Installa",
     "markInstalled": "Contrassegna come installata",
     "update": "Aggiorna",

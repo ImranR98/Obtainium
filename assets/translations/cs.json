@@ -179,8 +179,6 @@
     "appWithIdOrNameNotFound": "Žádná aplikace s tímto ID nebo názvem nebyla nalezena",
     "reposHaveMultipleApps": "Repozitáře mohou obsahovat více aplikací",
     "fdroidThirdPartyRepo": "F-Droid repozitář třetí strany",
-    "steamMobile": "Steam Mobile",
-    "steamChat": "Steam Chat",
     "install": "Nainstalujte",
     "markInstalled": "Označit jako nainstalovaný",
     "update": "Aktualizovat",
