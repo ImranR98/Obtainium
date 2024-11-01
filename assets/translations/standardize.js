@@ -12,7 +12,8 @@ const neverAutoTranslate = {
     root: ['*'],
     obtainiumExportHyphenatedLowercase: ['*'],
     theme: ['de'],
-    appId: ['de']
+    appId: ['de'],
+    placeholder: ['pl']
 }
 
 const translateText = async (text, targetLang, authKey) => {
