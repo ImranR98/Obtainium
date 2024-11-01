@@ -45,7 +45,7 @@ class FDroid extends AppSource {
     RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       url =
-          'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.last}';
+          'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.where((s) => s.trim().isNotEmpty).last}';
     }
     RegExp standardUrlRegExA = RegExp(
         '^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+',
