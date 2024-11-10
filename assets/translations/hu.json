@@ -213,7 +213,7 @@
     "releaseDateAsVersion": "Használja a kiadás dátumát verzió-karakterláncként",
     "releaseTitleAsVersion": "Használja a kiadás címét verzió-karakterláncként",
     "releaseDateAsVersionExplanation": "Ezt a beállítást csak olyan alkalmazásoknál szabad használni, ahol a verzió-érzékelés nem működik megfelelően, de elérhető a kiadás dátuma.",
-    "changes": "napló",
+    "changes": "Változásnapló",
     "releaseDate": "Kiadás dátuma",
     "importFromURLsInFile": "Importálás fájlban található webcímből (pl. OPML)",
     "versionDetectionExplanation": "A verzió-karakterlánc egyeztetése az rendszer által érzékelt verzióval",
