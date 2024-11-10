@@ -58,7 +58,13 @@ Or, contribute some configurations to the website by creating a PR at [this repo
     alt="Get it on F-Droid"
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
      
-[PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index)
+Verification info:
+- Package ID: `dev.imranr.obtainium`
+- SHA-256 Hash of Signing Certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
+  - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
+- [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
+
+
 
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
