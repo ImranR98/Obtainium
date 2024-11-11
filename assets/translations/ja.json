@@ -147,10 +147,10 @@
     "noNewUpdates": "新しいアップデートはありません",
     "xHasAnUpdate": "{} のアップデートが利用可能です。",
     "appsUpdated": "アプリをアップデートしました",
-    "appsNotUpdated": "アプリケーションの更新に失敗",
+    "appsNotUpdated": "アプリのアップデートに失敗しました",
     "appsUpdatedNotifDescription": "1つまたは複数のAppのアップデートがバックグラウンドで適用されたことをユーザーに通知する",
     "xWasUpdatedToY": "{} が {} にアップデートされました",
-    "xWasNotUpdatedToY": "への更新に失敗しました。",
+    "xWasNotUpdatedToY": "へのアップデートに失敗しました。",
     "errorCheckingUpdates": "アップデート確認中のエラー",
     "errorCheckingUpdatesNotifDescription": "バックグラウンドでのアップデート確認に失敗した際に表示される通知",
     "appsRemoved": "削除されたアプリ",
@@ -211,7 +211,7 @@
     "uninstallFromDevice": "デバイスからアンインストールする",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ動作します。",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",
-    "releaseTitleAsVersion": "リリースタイトルをバージョン文字列として使用",
+    "releaseTitleAsVersion": "リリースタイトルをバージョンとして使用する",
     "releaseDateAsVersionExplanation": "このオプションは、バージョン検出が正しく機能しないアプリで、リリース日が利用可能な場合にのみ使用する必要があります。",
     "changes": "変更点",
     "releaseDate": "リリース日",
@@ -256,7 +256,7 @@
     "intermediateLink": "中間リンク",
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",
     "bgUpdatesOnWiFiOnly": "WiFiを使用していない場合、バックグラウンドアップデートを無効にする",
-    "bgUpdatesWhileChargingOnly": "非充電時にバックグラウンド更新を無効にする",
+    "bgUpdatesWhileChargingOnly": "非充電時にバックグラウンドアップデートを無効にする",
     "autoSelectHighestVersionCode": "最も高いバージョンコードのAPKを自動で選択する",
     "versionExtractionRegEx": "バージョン抽出の正規表現",
     "trimVersionString": "正規表現でバージョン文字列をトリムする",
@@ -316,7 +316,7 @@
     "crowdsourcedConfigsLabel": "クラウドソーシングによるアプリの設定（利用は自己責任で）",
     "crowdsourcedConfigsShort": "クラウドソーシングによるアプリの設定",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
-    "stayOneVersionBehind": "最新バージョンから1つ遅れ",
+    "stayOneVersionBehind": "最新のバージョンから1つ前のものを使用する",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -358,23 +358,23 @@
         "other": "{n} 個のログをクリアしました (前 = {before}, 後 = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} とさらに {} 個のアプリのアップデートが利用可能です。",
+        "one": "{} とさらに 1 個のアプリのアップデートが利用可能です。",
         "other": "{} とさらに {} 個のアプリのアップデートが利用可能です。"
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} とさらに {} 個のアプリがアップデートされました。",
+        "one": "{} とさらに 1 個のアプリがアップデートされました。",
         "other": "{} とさらに {} 個のアプリがアップデートされました。"
     },
     "xAndNMoreUpdatesFailed": {
-        "one": "更新に失敗しました。",
-        "other": "アプリのアップデートに失敗しました。"
+        "one": "{} とさらに 1 個のアプリのアップデートに失敗しました。",
+        "other": "{} とさらに {} 個のアプリのアップデートに失敗しました。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",
         "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります。"
     },
     "apk": {
-        "one": "{}APK",
-        "other": "{}APK"
+        "one": "{} APK",
+        "other": "{} APK"
     }
 }
