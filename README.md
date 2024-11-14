@@ -79,4 +79,4 @@ Verification info:
 
 - App – https://github.com/ImranR98/Obtainium
 - [Website](https://obtainium.imranr.dev) – https://github.com/ImranR98/obtainium.imranr.dev
-- [App-Konfiguration Repository](https://apps.obtainium.imranr.dev/) – https://github.com/ImranR98/apps.obtainium.imranr.dev
+- [app configuration repository](https://apps.obtainium.imranr.dev/) – https://github.com/ImranR98/apps.obtainium.imranr.dev
