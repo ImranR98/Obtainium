@@ -1059,18 +1059,7 @@ class AppsProvider with ChangeNotifier {
 
     Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
       try {
-        var exportDir = await settingsProvider.getExportDir();
         String downloadPath = '${await getStorageRootPath()}/Download';
-        bool downloadsAccessible = false;
-        try {
-          Directory(downloadPath).listSync();
-          downloadsAccessible = true;
-        } catch (e) {
-          //
-        }
-        if (!downloadsAccessible && exportDir != null) {
-          downloadPath = exportDir.path;
-        }
         await downloadFile(fileUrl.value, fileUrl.key, true,
             (double? progress) {
           notificationsProvider
