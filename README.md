@@ -7,10 +7,12 @@ Get Android app updates straight from the source.
 Obtainium allows you to install and update apps directly from their releases pages, and receive notifications when new releases are made available.
 
 More info:
-- [Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
-- [AppVerifier](https://github.com/soupslurpr/AppVerifier) – App verification tool (recommended, integrates with Obtainium)
-- [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) – Crowdsourced app configurations
-- [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) – Original motivation for this app
+- [Obtainium Wiki](https://github.com/ImranR98/Obtainium/wiki)
+- [AppVerifier](https://github.com/soupslurpr/AppVerifier) - App verification tool (recommended, integrates with Obtainium)
+- [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.imranr.dev))
+- [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
+- [Website](https://obtainium.imranr.dev) ([repository](https://github.com/ImranR98/obtainium.imranr.dev))
+- [Source code](https://github.com/ImranR98/Obtainium)
 
 Currently supported App sources:
 - Open Source - General:
@@ -64,8 +66,6 @@ Verification info:
   - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 - [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
 
-
-
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
@@ -74,9 +74,3 @@ Verification info:
 | <img src="./assets/screenshots/1.apps.png" alt="Apps Page" /> | <img src="./assets/screenshots/2.dark_theme.png" alt="Dark Theme" />           | <img src="./assets/screenshots/3.material_you.png" alt="Material You" />    |
 | ------------------------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | <img src="./assets/screenshots/4.app.png" alt="App Page" />   | <img src="./assets/screenshots/5.app_opts.png" alt="App Options" /> | <img src="./assets/screenshots/6.app_webview.png" alt="App Web View" /> |
-
-## All repositories
-
-- App – https://github.com/ImranR98/Obtainium
-- [Website](https://obtainium.imranr.dev) – https://github.com/ImranR98/obtainium.imranr.dev
-- [app configuration repository](https://apps.obtainium.imranr.dev/) – https://github.com/ImranR98/apps.obtainium.imranr.dev
