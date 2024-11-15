@@ -8,9 +8,9 @@ Obtainium allows you to install and update apps directly from their releases pag
 
 More info:
 - [Obtainium/wiki](https://github.com/ImranR98/Obtainium/wiki)
-- [AppVerifier](https://github.com/soupslurpr/AppVerifier) - App verification tool (recommended, integrates with Obtainium)
-- [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) - Crowdsourced app configurations
-- [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
+- [AppVerifier](https://github.com/soupslurpr/AppVerifier) – App verification tool (recommended, integrates with Obtainium)
+- [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) – Crowdsourced app configurations
+- [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) – Original motivation for this app
 
 Currently supported App sources:
 - Open Source - General:
@@ -74,3 +74,9 @@ Verification info:
 | <img src="./assets/screenshots/1.apps.png" alt="Apps Page" /> | <img src="./assets/screenshots/2.dark_theme.png" alt="Dark Theme" />           | <img src="./assets/screenshots/3.material_you.png" alt="Material You" />    |
 | ------------------------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | <img src="./assets/screenshots/4.app.png" alt="App Page" />   | <img src="./assets/screenshots/5.app_opts.png" alt="App Options" /> | <img src="./assets/screenshots/6.app_webview.png" alt="App Web View" /> |
+
+## All repositories
+
+- App – https://github.com/ImranR98/Obtainium
+- [Website](https://obtainium.imranr.dev) – https://github.com/ImranR98/obtainium.imranr.dev
+- [app configuration repository](https://apps.obtainium.imranr.dev/) – https://github.com/ImranR98/apps.obtainium.imranr.dev
