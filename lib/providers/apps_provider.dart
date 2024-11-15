@@ -1036,8 +1036,17 @@ class AppsProvider with ChangeNotifier {
       if (apps[id]!.app.apkUrls.isNotEmpty ||
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        fileUrl = await confirmAppFileUrl(apps[id]!.app, context, true,
+        MapEntry<String, String>? tempFileUrl = await confirmAppFileUrl(
+            apps[id]!.app, context, true,
             evenIfSingleChoice: true);
+        if (tempFileUrl != null) {
+          fileUrl = MapEntry(
+              tempFileUrl.key,
+              await (SourceProvider().getSource(apps[id]!.app.url,
+                      overrideSource: apps[id]!.app.overrideSource))
+                  .apkUrlPrefetchModifier(tempFileUrl.value, apps[id]!.app.url,
+                      apps[id]!.app.additionalSettings));
+        }
       }
       if (fileUrl != null) {
         filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
