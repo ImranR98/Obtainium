@@ -1,0 +1,73 @@
+site_name: Obtainium Wiki
+repo_url: https://github.com/ImranR98/Obtainium
+docs_dir: wiki
+site_description: Help page for Obtainium
+site_author: ImranR98
+edit_uri: edit/main/wiki/
+
+nav:
+  - Home: index.md
+  - UI Overview: ui_overview.md
+  - How Apps are Tracked: app_tracking.md
+  - App Sources: sources.md
+  - Settings: settings.md
+
+theme:
+  name: material
+  logo: assets/logo.png
+  custom_dir: wiki/overrides
+  favicon: https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/icon_small.png
+
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tooltips
+    
+  icon:
+    repo: fontawesome/brands/github
+    annotation: material/arrow-right-circle
+
+  palette:
+    - primary: deep purple
+    - accent: green
+  
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - attr_list
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  social:
+    - icon: simple/github
+      link: https://github.com/ImranR98/
+      name: GitHub
+    - icon: simple/mastodon
+      link: https://freeradical.zone/@imran
+      name: Mastodon
+    - icon: simple/kofi
+      link: https://ko-fi.com/imranr
+      name: Ko-fi
+    - icon: material/heart
+      link: https://github.com/sponsors/ImranR98
+      name: GitHub Sponsors
+    - icon: material/web
+      link: https://imranr.dev/
+      name: Website
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/custom.css

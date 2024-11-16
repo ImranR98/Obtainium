@@ -886,7 +886,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     IconButton(
                       onPressed: () {
-                        launchUrlString('${settingsProvider.sourceUrl}/wiki',
+                        launchUrlString(settingsProvider.wikiUrl,
                             mode: LaunchMode.externalApplication);
                       },
                       icon: const Icon(Icons.help_outline_rounded),

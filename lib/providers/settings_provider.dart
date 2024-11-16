@@ -31,6 +31,7 @@ class SettingsProvider with ChangeNotifier {
   bool justStarted = true;
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
+  String wikiUrl = 'https://imranr98.github.io/Obtainium';
 
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {

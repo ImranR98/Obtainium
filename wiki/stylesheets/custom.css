@@ -1,0 +1,39 @@
+/* Download badges styling */
+.md-content img[alt*="Get it on"] {
+    height: 75px !important;
+    margin: 10px;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+
+.md-content img[alt*="Get it on"]:hover {
+    transform: scale(1.05);
+}
+
+/* Copyright section styling */
+
+.md-copyright {
+    padding: 1rem 0;
+  }
+  
+.md-copyright__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.md-copyright__separator {
+    color: var(--md-primary-fg-color--light);
+}
+
+.md-copyright__link {
+    color: var(--md-primary-fg-color);
+    text-decoration: none;
+    transition: color 125ms;
+}
+
+.md-copyright__link:hover {
+    color: var(--md-accent-fg-color);
+    text-decoration: underline;
+}
