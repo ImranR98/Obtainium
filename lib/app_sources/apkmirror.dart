@@ -5,6 +5,8 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class APKMirror extends AppSource {
@@ -29,6 +31,16 @@ class APKMirror extends AppSource {
             ])
       ]
     ];
+  }
+
+  @override
+  Future<Map<String, String>?> getRequestHeaders(
+      Map<String, dynamic> additionalSettings,
+      {bool forAPKDownload = false}) async {
+    return {
+      "User-Agent":
+          "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}"
+    };
   }
 
   @override
