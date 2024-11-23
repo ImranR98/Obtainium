@@ -516,11 +516,29 @@ class AppsProvider with ChangeNotifier {
             .listSync()
             .where((e) => e.path.toLowerCase().endsWith('.apk'))
             .toList();
+
+        FileSystemEntity? temp;
+        apks.removeWhere((element) {
+          bool res = element.uri.pathSegments.last.startsWith(app.id);
+          if (res) {
+            temp = element;
+          }
+          return res;
+        });
+        if (temp != null) {
+          apks = [
+            temp!,
+            ...apks,
+          ];
+        }
+
         for (var i = 0; i < apks.length; i++) {
           try {
-            newInfo = await pm.getPackageArchiveInfo(
-                archiveFilePath: apks.first.path);
-            break;
+            newInfo =
+                await pm.getPackageArchiveInfo(archiveFilePath: apks[i].path);
+            if (newInfo != null) {
+              break;
+            }
           } catch (e) {
             if (i == apks.length - 1) {
               rethrow;
@@ -654,13 +672,22 @@ class AppsProvider with ChangeNotifier {
           await moveObbFile(file, dir.appId);
         }
       }
-      APKFiles.sort((a, b) {
-        if (a.uri.pathSegments.last.startsWith(dir.appId)) {
-          return -1;
-        } else {
-          return 0;
+
+      File? temp;
+      APKFiles.removeWhere((element) {
+        bool res = element.uri.pathSegments.last.startsWith(dir.appId);
+        if (res) {
+          temp = element;
         }
+        return res;
       });
+      if (temp != null) {
+        APKFiles = [
+          temp!,
+          ...APKFiles,
+        ];
+      }
+
       try {
         await installApk(
             DownloadedApk(dir.appId, APKFiles[0]), firstTimeWithContext,
