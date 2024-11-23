@@ -1,5 +1,5 @@
 <p>Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.</p>
-<p>Read the <a href="https://github.com/ImranR98/Obtainium/wiki">Wiki</a></p>
+<p>Read the <a href="https://wiki.obtainium.imranr.dev/">Wiki</a></p>
 <p>
 	<b>Currently supported App sources:</b>
 </p>
