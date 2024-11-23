@@ -105,11 +105,7 @@ class APKPure extends AppSource {
                         .map((e) => e.text.trim())
                         .map((t) => t == 'APKs' ? 'APK' : t) ??
                     [];
-                String type = types.isEmpty
-                    ? 'APK'
-                    : types.length == 1
-                        ? types.first
-                        : types.last;
+                String type = types.isEmpty ? 'APK' : types.first;
                 String? dateString = apkInfo
                     ?.querySelector('div.info-bottom span.time')
                     ?.text
