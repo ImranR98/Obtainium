@@ -644,28 +644,38 @@ class AppsProvider with ChangeNotifier {
     var somethingInstalled = false;
     try {
       MultiAppMultiError errors = MultiAppMultiError();
+      List<File> APKFiles = [];
       for (var file in dir.extracted
           .listSync(recursive: true, followLinks: false)
           .whereType<File>()) {
         if (file.path.toLowerCase().endsWith('.apk')) {
-          try {
-            somethingInstalled = somethingInstalled ||
-                await installApk(
-                    DownloadedApk(dir.appId, file), firstTimeWithContext,
-                    needsBGWorkaround: needsBGWorkaround,
-                    shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay);
-          } catch (e) {
-            logs.add(
-                'Could not install APK from XAPK \'${file.path}\': ${e.toString()}');
-            errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
-          }
+          APKFiles.add(file);
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
         }
       }
-      if (somethingInstalled) {
+      APKFiles.sort((a, b) {
+        if (a.uri.pathSegments.last.startsWith(dir.appId)) {
+          return -1;
+        } else {
+          return 0;
+        }
+      });
+      try {
+        await installApk(
+            DownloadedApk(dir.appId, APKFiles[0]), firstTimeWithContext,
+            needsBGWorkaround: needsBGWorkaround,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+            additionalAPKs: APKFiles.sublist(1)
+                .map((a) => DownloadedApk(dir.appId, a))
+                .toList());
+        somethingInstalled = true;
         dir.file.delete(recursive: true);
-      } else if (errors.idsByErrorString.isNotEmpty) {
+      } catch (e) {
+        logs.add('Could not install APKs from XAPK: ${e.toString()}');
+        errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
+      }
+      if (errors.idsByErrorString.isNotEmpty) {
         throw errors;
       }
     } finally {
@@ -677,7 +687,8 @@ class AppsProvider with ChangeNotifier {
   Future<bool> installApk(
       DownloadedApk file, BuildContext? firstTimeWithContext,
       {bool needsBGWorkaround = false,
-      bool shizukuPretendToBeGooglePlay = false}) async {
+      bool shizukuPretendToBeGooglePlay = false,
+      List<DownloadedApk> additionalAPKs = const []}) async {
     if (firstTimeWithContext != null &&
         settingsProvider.beforeNewInstallsShareToAppVerifier &&
         (await getInstalledInfo('dev.soupslurpr.appverifier')) != null) {
@@ -693,6 +704,7 @@ class AppsProvider with ChangeNotifier {
     if (newInfo == null) {
       try {
         file.file.deleteSync(recursive: true);
+        additionalAPKs.forEach((a) => a.file.deleteSync(recursive: true));
       } catch (e) {
         //
       } finally {
@@ -720,8 +732,10 @@ class AppsProvider with ChangeNotifier {
     }
     int? code;
     if (!settingsProvider.useShizuku) {
-      code =
-          await AndroidPackageInstaller.installApk(apkFilePath: file.file.path);
+      var allAPKs = [file.file.path];
+      allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
+      code = await AndroidPackageInstaller.installApk(
+          apkFilePath: allAPKs.join(','));
     } else {
       code = await ShizukuApkInstaller.installAPK(file.file.uri.toString(),
           shizukuPretendToBeGooglePlay ? "com.android.vending" : "");
