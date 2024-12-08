@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Appkonfigurationer med hjälp av crowdsourcing",
     "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
     "stayOneVersionBehind": "Håll dig en version bakom den senaste",
+    "refreshBeforeDownload": "Uppdatera appdetaljerna före nedladdning",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

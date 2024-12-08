@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Crowdsourcede app-konfigurationer",
     "allowInsecure": "Tillad usikre HTTP-anmodninger",
     "stayOneVersionBehind": "Forbliv én version bagud den seneste",
+    "refreshBeforeDownload": "Opdater app-detaljer før download",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

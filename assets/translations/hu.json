@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Crowdsourced App Configs",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
+    "refreshBeforeDownload": "Az alkalmazás adatainak frissítése letöltés előtt",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Configurazioni di app in crowdsourcing",
     "allowInsecure": "Consentire le richieste HTTP non sicure",
     "stayOneVersionBehind": "Rimanere una versione indietro rispetto alla più recente",
+    "refreshBeforeDownload": "Aggiornare i dettagli dell'app prima del download",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

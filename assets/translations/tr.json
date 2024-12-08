@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Kitle Kaynaklı Uygulama Yapılandırmaları",
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
     "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
+    "refreshBeforeDownload": "İndirmeden önce uygulama ayrıntılarını yenileyin",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

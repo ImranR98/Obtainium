@@ -25,11 +25,8 @@ import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
-import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
-import 'package:obtainium/app_sources/vlc.dart';
-import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -214,6 +211,72 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
           '\\d+.\\d+.\\d+';
       additionalSettings = replacementAdditionalSettings;
     }
+    // WhatsApp from before it was removed should be converted to HTML (#1943)
+    if (json['url'] == 'https://whatsapp.com' &&
+        json['id'] == 'com.whatsapp' &&
+        json['author'] == 'Meta' &&
+        json['name'] == 'WhatsApp' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null) {
+      json['url'] = 'https://whatsapp.com/android';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      replacementAdditionalSettings['refreshBeforeDownload'] = true;
+      additionalSettings = replacementAdditionalSettings;
+    }
+    // VLC from before it was removed should be converted to HTML (#1943)
+    if (json['url'] == 'https://videolan.org' &&
+        json['id'] == 'org.videolan.vlc' &&
+        json['author'] == 'VideoLAN' &&
+        json['name'] == 'VLC' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null) {
+      json['url'] = 'https://www.videolan.org/vlc/download-android.html';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      replacementAdditionalSettings['refreshBeforeDownload'] = true;
+      replacementAdditionalSettings['intermediateLink'] =
+          <Map<String, dynamic>>[
+        {
+          'customLinkFilterRegex': 'APK',
+          'filterByLinkText': true,
+          'skipSort': false,
+          'reverseSort': false,
+          'sortByLastLinkSegment': false
+        },
+        {
+          'customLinkFilterRegex': 'arm64-v8a\\.apk\$',
+          'filterByLinkText': false,
+          'skipSort': false,
+          'reverseSort': false,
+          'sortByLastLinkSegment': false
+        }
+      ];
+      replacementAdditionalSettings['versionExtractionRegEx'] =
+          '/vlc-android/([^/]+)/';
+      replacementAdditionalSettings['matchGroupToUse'] = "1";
+      additionalSettings = replacementAdditionalSettings;
+    }
+    // Telegram App from before it was removed should be converted to Direct APK Link (#1943)
+    if (json['url'] == 'https://telegram.org' &&
+        json['id'] == 'org.telegram.messenger.web' &&
+        json['author'] == 'Telegram' &&
+        json['name'] == 'Telegram' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null) {
+      json['url'] = 'https://telegram.org/dl/android/apk';
+      var newSource = DirectAPKLink();
+      json['overrideSource'] = newSource.runtimeType.toString();
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          newSource.combinedAppSpecificSettingFormItems);
+      additionalSettings = replacementAdditionalSettings;
+    }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
   // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
@@ -240,7 +303,7 @@ class App {
   late String name;
   String? installedVersion;
   late String latestVersion;
-  List<MapEntry<String, String>> apkUrls = [];
+  List<MapEntry<String, String>> apkUrls = []; // Key is name, value is URL
   List<MapEntry<String, String>> otherAssetUrls = [];
   late int preferredApkIndex;
   late Map<String, dynamic> additionalSettings;
@@ -586,6 +649,10 @@ abstract class AppSource {
           label: tr('skipUpdateNotifications'))
     ],
     [GeneratedFormTextField('about', label: tr('about'), required: false)],
+    [
+      GeneratedFormSwitch('refreshBeforeDownload',
+          label: tr('refreshBeforeDownload'))
+    ]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -808,9 +875,6 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
-        VLC(),
-        WhatsApp(),
-        TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
         HTML() // This should ALWAYS be the last option as they are tried in order

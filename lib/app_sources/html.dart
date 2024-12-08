@@ -7,6 +7,9 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
+  if (ambiguousUrl.startsWith('//')) {
+    ambiguousUrl = '${referenceAbsoluteUrl.scheme}:$ambiguousUrl';
+  }
   try {
     Uri.parse(ambiguousUrl).origin;
     return ambiguousUrl;
@@ -353,7 +356,12 @@ class HTML extends AppSource {
                     forAPKDownload: true),
                 allowInsecure: additionalSettings['allowInsecure'] == true))
             .toString();
-    return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
+    return APKDetails(
+        version,
+        [rel]
+            .map((e) =>
+                MapEntry('${e.hashCode}-${Uri.parse(e).pathSegments.last}', e))
+            .toList(),
         AppNames(uri.host, tr('app')));
   }
 }

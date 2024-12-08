@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Konfigurasi Aplikasi Crowdsourced",
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
     "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
+    "refreshBeforeDownload": "Segarkan detail aplikasi sebelum mengunduh",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"
