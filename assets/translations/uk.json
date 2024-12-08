@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Налаштування краудсорсингових додатків",
     "allowInsecure": "Дозволити незахищені HTTP-запити",
     "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
+    "refreshBeforeDownload": "Оновіть інформацію про програму перед завантаженням",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

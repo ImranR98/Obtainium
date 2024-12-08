@@ -29,7 +29,6 @@ import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vlc.dart';
-import 'package:obtainium/app_sources/whatsapp.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -212,6 +211,21 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
           HTML().combinedAppSpecificSettingFormItems);
       replacementAdditionalSettings['versionExtractionRegEx'] =
           '\\d+.\\d+.\\d+';
+      additionalSettings = replacementAdditionalSettings;
+    }
+    // WhatsApp from before it was removed should be converted to HTML (#1943)
+    if (json['url'] == 'https://whatsapp.com' &&
+        json['id'] == 'com.whatsapp' &&
+        json['author'] == 'Meta' &&
+        json['name'] == 'WhatsApp' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null) {
+      json['url'] = 'https://whatsapp.com/android';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      replacementAdditionalSettings['refreshBeforeDownload'] = true;
       additionalSettings = replacementAdditionalSettings;
     }
   }
@@ -586,6 +600,10 @@ abstract class AppSource {
           label: tr('skipUpdateNotifications'))
     ],
     [GeneratedFormTextField('about', label: tr('about'), required: false)],
+    [
+      GeneratedFormSwitch('refreshBeforeDownload',
+          label: tr('refreshBeforeDownload'))
+    ]
   ];
 
   // Previous 2 variables combined into one at runtime for convenient usage
@@ -809,7 +827,6 @@ class SourceProvider {
         Jenkins(),
         APKMirror(),
         VLC(),
-        WhatsApp(),
         TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),

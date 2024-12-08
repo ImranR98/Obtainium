@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "App-configuraties door menigte",
     "allowInsecure": "Onveilige HTTP-verzoeken toestaan",
     "stayOneVersionBehind": "Blijf een versie achter op de nieuwste",
+    "refreshBeforeDownload": "Vernieuw app details voor download",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

@@ -34,7 +34,6 @@ Currently supported App sources:
 - Open Source - App-Specific:
   - [VLC](https://videolan.org/)
 - Other - App-Specific:
-  - [WhatsApp](https://whatsapp.com)
   - [Telegram App](https://telegram.org)
   - [Neutron Code](https://neutroncode.com)
 - Direct APK Link

@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "クラウドソーシングによるアプリの設定",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
     "stayOneVersionBehind": "最新のバージョンから1つ前のものを使用する",
+    "refreshBeforeDownload": "ダウンロード前にアプリの詳細を更新する",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

@@ -888,6 +888,11 @@ class AppsProvider with ChangeNotifier {
       }
       MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
+      var refreshBeforeDownload =
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+      if (refreshBeforeDownload) {
+        await checkUpdate(apps[id]!.app.id);
+      }
       if (!trackOnly) {
         // ignore: use_build_context_synchronously
         apkUrl = await confirmAppFileUrl(apps[id]!.app, context, false);
@@ -1074,6 +1079,11 @@ class AppsProvider with ChangeNotifier {
         throw ObtainiumError(tr('appNotFound'));
       }
       MapEntry<String, String>? fileUrl;
+      var refreshBeforeDownload =
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+      if (refreshBeforeDownload) {
+        await checkUpdate(apps[id]!.app.id);
+      }
       if (apps[id]!.app.apkUrls.isNotEmpty ||
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
         // ignore: use_build_context_synchronously

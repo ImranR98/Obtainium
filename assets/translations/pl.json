@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Baza konfiguracji",
     "allowInsecure": "Zezwalaj na niezabezpieczone żądania HTTP",
     "stayOneVersionBehind": "Pozostań jedną wersję w tyle za najnowszą",
+    "refreshBeforeDownload": "Odśwież szczegóły aplikacji przed pobraniem",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

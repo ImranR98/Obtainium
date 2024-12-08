@@ -317,6 +317,7 @@
     "crowdsourcedConfigsShort": "Конфиги приложений с помощью краудсорсинга",
     "allowInsecure": "Разрешить небезопасные HTTP-запросы",
     "stayOneVersionBehind": "Не отставайте от последней версии",
+    "refreshBeforeDownload": "Обновляйте информацию о приложении перед загрузкой",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"
