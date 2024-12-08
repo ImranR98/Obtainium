@@ -353,7 +353,12 @@ class HTML extends AppSource {
                     forAPKDownload: true),
                 allowInsecure: additionalSettings['allowInsecure'] == true))
             .toString();
-    return APKDetails(version, [rel].map((e) => MapEntry(e, e)).toList(),
+    return APKDetails(
+        version,
+        [rel]
+            .map((e) =>
+                MapEntry('${e.hashCode}-${Uri.parse(e).pathSegments.last}', e))
+            .toList(),
         AppNames(uri.host, tr('app')));
   }
 }

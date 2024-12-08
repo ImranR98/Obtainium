@@ -240,7 +240,7 @@ class App {
   late String name;
   String? installedVersion;
   late String latestVersion;
-  List<MapEntry<String, String>> apkUrls = [];
+  List<MapEntry<String, String>> apkUrls = []; // Key is name, value is URL
   List<MapEntry<String, String>> otherAssetUrls = [];
   late int preferredApkIndex;
   late Map<String, dynamic> additionalSettings;
