@@ -31,8 +31,6 @@ Currently supported App sources:
   - [Tencent App Store](https://sj.qq.com/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
-- Open Source - App-Specific:
-  - [VLC](https://videolan.org/)
 - Other - App-Specific:
   - [Telegram App](https://telegram.org)
   - [Neutron Code](https://neutroncode.com)

@@ -28,7 +28,6 @@ import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
-import 'package:obtainium/app_sources/vlc.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -226,6 +225,41 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       var replacementAdditionalSettings = getDefaultValuesFromFormItems(
           HTML().combinedAppSpecificSettingFormItems);
       replacementAdditionalSettings['refreshBeforeDownload'] = true;
+      additionalSettings = replacementAdditionalSettings;
+    }
+    // VLC from before it was removed should be converted to HTML (#1943)
+    if (json['url'] == 'https://videolan.org' &&
+        json['id'] == 'org.videolan.vlc' &&
+        json['author'] == 'VideoLAN' &&
+        json['name'] == 'VLC' &&
+        json['overrideSource'] == null &&
+        additionalSettings['trackOnly'] == false &&
+        additionalSettings['versionExtractionRegEx'] == '' &&
+        json['lastUpdateCheck'] != null) {
+      json['url'] = 'https://www.videolan.org/vlc/download-android.html';
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+          HTML().combinedAppSpecificSettingFormItems);
+      replacementAdditionalSettings['refreshBeforeDownload'] = true;
+      replacementAdditionalSettings['intermediateLink'] =
+          <Map<String, dynamic>>[
+        {
+          'customLinkFilterRegex': 'APK',
+          'filterByLinkText': true,
+          'skipSort': false,
+          'reverseSort': false,
+          'sortByLastLinkSegment': false
+        },
+        {
+          'customLinkFilterRegex': 'arm64-v8a\\.apk\$',
+          'filterByLinkText': false,
+          'skipSort': false,
+          'reverseSort': false,
+          'sortByLastLinkSegment': false
+        }
+      ];
+      replacementAdditionalSettings['versionExtractionRegEx'] =
+          '/vlc-android/([^/]+)/';
+      replacementAdditionalSettings['matchGroupToUse'] = "1";
       additionalSettings = replacementAdditionalSettings;
     }
   }
@@ -826,7 +860,6 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
-        VLC(),
         TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
