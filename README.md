@@ -32,7 +32,6 @@ Currently supported App sources:
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Other - App-Specific:
-  - [Telegram App](https://telegram.org)
   - [Neutron Code](https://neutroncode.com)
 - Direct APK Link
 - "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
