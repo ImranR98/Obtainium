@@ -3,6 +3,7 @@
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class ObtainiumNotification {
@@ -44,23 +45,19 @@ class SilentUpdateNotification extends ObtainiumNotification {
   SilentUpdateNotification(List<App> updates, bool succeeded, {int? id})
       : super(
             id ?? 3,
-            succeeded
-                ? tr('appsUpdated')
-                : tr('appsNotUpdated'),
+            succeeded ? tr('appsUpdated') : tr('appsNotUpdated'),
             '',
             'APPS_UPDATED',
             tr('appsUpdatedNotifChannel'),
             tr('appsUpdatedNotifDescription'),
             Importance.defaultImportance) {
     message = updates.length == 1
-        ? tr(succeeded
-            ? 'xWasUpdatedToY'
-            : 'xWasNotUpdatedToY',
-                args: [updates[0].finalName, updates[0].latestVersion])
-        : plural(succeeded
-            ? 'xAndNMoreUpdatesInstalled'
-            : "xAndNMoreUpdatesFailed",
-                updates.length - 1, args: [updates[0].finalName, (updates.length - 1).toString()]);
+        ? tr(succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
+            args: [updates[0].finalName, updates[0].latestVersion])
+        : plural(
+            succeeded ? 'xAndNMoreUpdatesInstalled' : "xAndNMoreUpdatesFailed",
+            updates.length - 1,
+            args: [updates[0].finalName, (updates.length - 1).toString()]);
   }
 }
 
@@ -214,7 +211,7 @@ class NotificationsProvider {
                 channelDescription: channelDescription,
                 importance: importance,
                 priority: importanceToPriority[importance]!,
-                groupKey: 'dev.imranr.obtainium.$channelCode',
+                groupKey: '$obtainiumId.$channelCode',
                 progress: progPercent ?? 0,
                 maxProgress: 100,
                 showProgress: progPercent != null,
