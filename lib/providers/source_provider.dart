@@ -30,6 +30,7 @@ import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
@@ -367,7 +368,14 @@ class App {
       otherAssetUrls: otherAssetUrls);
 
   factory App.fromJson(Map<String, dynamic> json) {
-    json = appJSONCompatibilityModifiers(json);
+    Map<String, dynamic> originalJSON = new Map.from(json);
+    try {
+      json = appJSONCompatibilityModifiers(json);
+    } catch (e) {
+      json = originalJSON;
+      LogsProvider().add(
+          'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}');
+    }
     return App(
       json['id'] as String,
       json['url'] as String,
