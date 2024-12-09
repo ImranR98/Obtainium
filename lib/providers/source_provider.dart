@@ -368,11 +368,13 @@ class App {
       otherAssetUrls: otherAssetUrls);
 
   factory App.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> originalJSON = new Map.from(json);
     try {
       json = appJSONCompatibilityModifiers(json);
     } catch (e) {
-      LogsProvider()
-          .add('Error running JSON compat modifiers: ${e.toString()}');
+      json = originalJSON;
+      LogsProvider().add(
+          'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}');
     }
     return App(
       json['id'] as String,
