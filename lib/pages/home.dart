@@ -130,13 +130,18 @@ class _HomePageState extends State<HomePage> {
 
     // Check initial link if app was in cold state (terminated)
     final appLink = await _appLinks.getInitialLink();
+    var initLinked = false;
     if (appLink != null) {
       await interpretLink(appLink);
+      initLinked = true;
     }
-
     // Handle link when app is in warm state (front or background)
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
-      await interpretLink(uri);
+      if (!initLinked) {
+        await interpretLink(uri);
+      } else {
+        initLinked = false;
+      }
     });
   }
 
