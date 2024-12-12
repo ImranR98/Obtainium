@@ -275,14 +275,15 @@ class GitHub extends AppSource {
         }
       }
 
-      List<MapEntry<String, String>> getReleaseAssetUrls(dynamic release) =>
+      findReleaseAssetUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)?.map((e) {
             var url = !e['name'].toString().toLowerCase().endsWith('.apk')
                 ? (e['browser_download_url'] ?? e['url'])
                 : (e['url'] ?? e['browser_download_url']);
-            return (e['name'] != null) && (url != null)
+            e['final_url'] = (e['name'] != null) && (url != null)
                 ? MapEntry(e['name'] as String, url as String)
                 : const MapEntry('', '');
+            return e;
           }).toList() ??
           [];
 
@@ -293,7 +294,9 @@ class GitHub extends AppSource {
                   ? DateTime.parse(rel['commit']['created'])
                   : null;
       DateTime? getNewestAssetDateFromRelease(dynamic rel) {
-        var t = (rel['assets'] as List<dynamic>?)
+        var allAssets = rel['assets'] as List<dynamic>?;
+        var filteredAssets = rel['filteredAssets'] as List<dynamic>?;
+        var t = (filteredAssets ?? allAssets)
             ?.map((e) {
               return e?['updated_at'] != null
                   ? DateTime.parse(e['updated_at'])
@@ -387,18 +390,38 @@ class GitHub extends AppSource {
                 .hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
           continue;
         }
-        var allAssetUrls = getReleaseAssetUrls(releases[i]);
-        List<MapEntry<String, String>> apkUrls = allAssetUrls
-            .where((element) => element.key.toLowerCase().endsWith('.apk'))
+        var allAssetsWithUrls = findReleaseAssetUrls(releases[i]);
+        List<MapEntry<String, String>> allAssetUrls = allAssetsWithUrls
+            .map((e) => e['final_url'] as MapEntry<String, String>)
+            .toList();
+        var apkAssetsWithUrls = allAssetsWithUrls
+            .where((element) =>
+                (element['final_url'] as MapEntry<String, String>)
+                    .key
+                    .toLowerCase()
+                    .endsWith('.apk'))
             .toList();
 
-        apkUrls = filterApks(apkUrls, additionalSettings['apkFilterRegEx'],
+        var filteredApkUrls = filterApks(
+            apkAssetsWithUrls
+                .map((e) => e['final_url'] as MapEntry<String, String>)
+                .toList(),
+            additionalSettings['apkFilterRegEx'],
             additionalSettings['invertAPKFilter']);
-        if (apkUrls.isEmpty && additionalSettings['trackOnly'] != true) {
+        var filteredApks = apkAssetsWithUrls
+            .where((e) => filteredApkUrls
+                .where((e2) =>
+                    e2.key == (e['final_url'] as MapEntry<String, String>).key)
+                .isNotEmpty)
+            .toList();
+
+        if (apkAssetsWithUrls.isEmpty &&
+            additionalSettings['trackOnly'] != true) {
           continue;
         }
         targetRelease = releases[i];
-        targetRelease['apkUrls'] = apkUrls;
+        targetRelease['apkUrls'] = filteredApkUrls;
+        targetRelease['filteredAssets'] = filteredApks;
         targetRelease['version'] =
             additionalSettings['releaseTitleAsVersion'] == true
                 ? nameToFilter
@@ -420,6 +443,7 @@ class GitHub extends AppSource {
         throw NoReleasesError();
       }
       String? version = targetRelease['version'];
+
       DateTime? releaseDate = getReleaseDateFromRelease(
           targetRelease, useLatestAssetDateAsReleaseDate);
       if (version == null) {

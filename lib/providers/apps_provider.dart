@@ -19,6 +19,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
+import 'package:obtainium/app_sources/directAPKLink.dart';
+import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -1159,17 +1161,25 @@ class AppsProvider with ChangeNotifier {
     if (app?.app == null) {
       return false;
     }
+    var source = SourceProvider()
+        .getSource(app!.app.url, overrideSource: app.app.overrideSource);
     var naiveStandardVersionDetection =
-        app!.app.additionalSettings['naiveStandardVersionDetection'] == true ||
-            SourceProvider()
-                .getSource(app.app.url, overrideSource: app.app.overrideSource)
-                .naiveStandardVersionDetection;
+        app.app.additionalSettings['naiveStandardVersionDetection'] == true ||
+            source.naiveStandardVersionDetection;
     String? realInstalledVersion =
         app.app.additionalSettings['useVersionCodeAsOSVersion'] == true
             ? app.installedInfo?.versionCode.toString()
             : app.installedInfo?.versionName;
+    bool isHTMLWithNoVersionDetection =
+        (source.runtimeType == HTML().runtimeType &&
+            (app.app.additionalSettings['versionExtractionRegEx'] as String?)
+                    ?.isNotEmpty !=
+                true);
+    bool isDirectAPKLink = source.runtimeType == DirectAPKLink().runtimeType;
     return app.app.additionalSettings['trackOnly'] != true &&
         app.app.additionalSettings['releaseDateAsVersion'] != true &&
+        !isHTMLWithNoVersionDetection &&
+        !isDirectAPKLink &&
         realInstalledVersion != null &&
         app.app.installedVersion != null &&
         (reconcileVersionDifferences(
@@ -1240,6 +1250,7 @@ class AppsProvider with ChangeNotifier {
         !isVersionDetectionPossible(
             AppInMemory(app, null, installedInfo, null))) {
       app.additionalSettings['versionDetection'] = false;
+      app.installedVersion = app.latestVersion;
       logs.add('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }
