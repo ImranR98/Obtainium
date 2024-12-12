@@ -838,30 +838,6 @@ class AppsPageState extends State<AppsPage> {
       Navigator.of(context).pop();
     }
 
-    resetSelectedAppsInstallStatuses() async {
-      try {
-        var values = await showDialog(
-            context: context,
-            builder: (BuildContext ctx) {
-              return GeneratedFormModal(
-                title: tr('resetInstallStatusForSelectedAppsQuestion'),
-                items: const [],
-                initValid: true,
-                message: tr('installStatusOfXWillBeResetExplanation',
-                    args: [plural('apps', selectedAppIds.length)]),
-              );
-            });
-        if (values != null) {
-          appsProvider.saveApps(selectedApps.map((e) {
-            e.installedVersion = null;
-            return e;
-          }).toList());
-        }
-      } finally {
-        Navigator.of(context).pop();
-      }
-    }
-
     showMoreOptionsDialog() {
       return showDialog(
           context: context,
