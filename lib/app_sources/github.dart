@@ -415,8 +415,7 @@ class GitHub extends AppSource {
                 .isNotEmpty)
             .toList();
 
-        if (apkAssetsWithUrls.isEmpty &&
-            additionalSettings['trackOnly'] != true) {
+        if (filteredApks.isEmpty && additionalSettings['trackOnly'] != true) {
           continue;
         }
         targetRelease = releases[i];
