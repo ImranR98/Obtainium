@@ -151,10 +151,6 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     additionalSettings['autoApkFilterByArch'] = false;
   }
   if (source.runtimeType == HTML().runtimeType) {
-    // HTML 'fixed URL' support should be disabled if it previously did not exist
-    if (originalAdditionalSettings['supportFixedAPKURL'] == null) {
-      additionalSettings['supportFixedAPKURL'] = false;
-    }
     // HTML key rename
     if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
       additionalSettings['sortByLastLinkSegment'] =
