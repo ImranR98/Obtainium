@@ -44,6 +44,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('da'), 'Dansk'),
   MapEntry(Locale('en', 'EO'),
       'Esperanto'), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
+  MapEntry(Locale('en', 'SH'), '𐑦𐑙𐑜𐑤𐑦𐑖 (𐑖𐑱𐑝𐑾𐑯)'),
   MapEntry(Locale('in'), 'Bahasa Indonesia')
 ];
 const fallbackLocale = Locale('en');
