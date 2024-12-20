@@ -25,6 +25,7 @@ import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
+import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -256,22 +257,6 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       replacementAdditionalSettings['versionExtractionRegEx'] =
           '/vlc-android/([^/]+)/';
       replacementAdditionalSettings['matchGroupToUse'] = "1";
-      additionalSettings = replacementAdditionalSettings;
-    }
-    // Telegram App from before it was removed should be converted to Direct APK Link (#1943)
-    if (json['url'] == 'https://telegram.org' &&
-        json['id'] == 'org.telegram.messenger.web' &&
-        json['author'] == 'Telegram' &&
-        json['name'] == 'Telegram' &&
-        json['overrideSource'] == null &&
-        additionalSettings['trackOnly'] == false &&
-        additionalSettings['versionExtractionRegEx'] == '' &&
-        json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://telegram.org/dl/android/apk';
-      var newSource = DirectAPKLink();
-      json['overrideSource'] = newSource.runtimeType.toString();
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-          newSource.combinedAppSpecificSettingFormItems);
       additionalSettings = replacementAdditionalSettings;
     }
   }
@@ -879,6 +864,7 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
+        TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
         HTML() // This should ALWAYS be the last option as they are tried in order
