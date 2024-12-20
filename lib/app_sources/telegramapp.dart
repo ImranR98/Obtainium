@@ -33,7 +33,9 @@ class TelegramApp extends AppSource {
         throw NoVersionError();
       }
       String? apkUrl = 'https://telegram.org/dl/android/apk';
-      return APKDetails(version, getApkUrlsFromUrls([apkUrl]),
+      return APKDetails(
+          version,
+          [MapEntry<String, String>('telegram-$version.apk', apkUrl)],
           AppNames('Telegram', 'Telegram'));
     } else {
       throw getObtainiumHttpError(res);

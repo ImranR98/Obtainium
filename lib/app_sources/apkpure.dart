@@ -131,12 +131,18 @@ class APKPure extends AppSource {
         throw NoAPKError();
       }
       String version = Uri.parse(link).pathSegments.last;
-      String author = html
-              .querySelector('span.info-sdk')
-              ?.text
-              .trim()
-              .substring(version.length + 4) ??
-          Uri.parse(standardUrl).pathSegments.reversed.last;
+      String? author;
+      try {
+        author = html
+                .querySelector('span.info-sdk')
+                ?.text
+                .trim()
+                .substring(version.length + 4) ??
+            Uri.parse(standardUrl).pathSegments.reversed.last;
+      } catch (e) {
+        author = html.querySelector('span.info-sdk')?.text.trim() ??
+            Uri.parse(standardUrl).pathSegments.reversed.last;
+      }
       String appName =
           html.querySelector('h1.info-title')?.text.trim() ?? appId;
       String? changeLog = html
