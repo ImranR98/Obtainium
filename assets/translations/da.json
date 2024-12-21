@@ -318,6 +318,7 @@
     "allowInsecure": "Tillad usikre HTTP-anmodninger",
     "stayOneVersionBehind": "Forbliv én version bagud den seneste",
     "refreshBeforeDownload": "Opdater app-detaljer før download",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

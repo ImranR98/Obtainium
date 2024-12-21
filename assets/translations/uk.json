@@ -318,6 +318,7 @@
     "allowInsecure": "Дозволити незахищені HTTP-запити",
     "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
     "refreshBeforeDownload": "Оновіть інформацію про програму перед завантаженням",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

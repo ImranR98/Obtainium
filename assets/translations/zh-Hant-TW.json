@@ -318,6 +318,7 @@
     "allowInsecure": "Allow insecure HTTP requests",
     "stayOneVersionBehind": "Stay one version behind latest",
     "refreshBeforeDownload": "Refresh app details before download",
+    "tencentAppStore": "騰訊應用寶",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

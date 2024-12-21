@@ -318,6 +318,7 @@
     "allowInsecure": "Povolení nezabezpečených požadavků HTTP",
     "stayOneVersionBehind": "Zůstaňte o jednu verzi pozadu za nejnovější",
     "refreshBeforeDownload": "Obnovení údajů o aplikaci před stažením",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

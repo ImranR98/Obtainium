@@ -318,6 +318,7 @@
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
     "refreshBeforeDownload": "Az alkalmazás adatainak frissítése a letöltés előtt",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

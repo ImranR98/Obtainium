@@ -318,6 +318,7 @@
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
     "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
     "refreshBeforeDownload": "İndirmeden önce uygulama ayrıntılarını yenileyin",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"
