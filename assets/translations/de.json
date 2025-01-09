@@ -294,7 +294,7 @@
     "shizukuBinderNotFound": "Kompatibler Shizuku-Dienst wurde nicht gefunden",
     "shizukuOld": "Alte Shizuku-Version (< 11) - aktualisieren Sie sie",
     "shizukuOldAndroidWithADB": "Shizuku läuft auf Android < 8.1 mit ADB - aktualisieren Sie Android oder verwenden Sie stattdessen Sui",
-    "shizukuPretendToBeGooglePlay": "Google Play als Installationsquelle festlegen (wenn Shizuku verwendet wird)",
+    "shizukuPretendToBeGooglePlay": "(Mittels Shizuku) Google Play als Installationsquelle registrieren",
     "useSystemFont": "Systemschriftart verwenden",
     "useVersionCodeAsOSVersion": "App-Version als erkannte Version vom Betriebssystem verwenden",
     "requestHeader": "Kopfzeile anfordern",
