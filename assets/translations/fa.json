@@ -318,6 +318,7 @@
     "allowInsecure": "درخواست های HTTP ناامن را مجاز کنید",
     "stayOneVersionBehind": "یک نسخه از آخرین نسخه پشت سر بگذارید",
     "refreshBeforeDownload": "قبل از دانلود، جزئیات برنامه را بازخوانی کنید",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

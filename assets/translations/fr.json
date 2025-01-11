@@ -318,6 +318,7 @@
     "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
     "stayOneVersionBehind": "Rester à une version de la dernière",
     "refreshBeforeDownload": "Actualiser les détails de l'application avant de la télécharger",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

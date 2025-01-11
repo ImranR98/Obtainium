@@ -318,6 +318,7 @@
     "allowInsecure": "Onveilige HTTP-verzoeken toestaan",
     "stayOneVersionBehind": "Blijf een versie achter op de nieuwste",
     "refreshBeforeDownload": "Vernieuw app details voor download",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

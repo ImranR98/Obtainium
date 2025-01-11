@@ -318,6 +318,7 @@
     "allowInsecure": "Permitir pedidos HTTP inseguros",
     "stayOneVersionBehind": "Manter-se uma versão atrás da mais recente",
     "refreshBeforeDownload": "Atualizar os detalhes da aplicação antes da transferência",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

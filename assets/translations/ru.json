@@ -318,6 +318,7 @@
     "allowInsecure": "Разрешить небезопасные HTTP-запросы",
     "stayOneVersionBehind": "Не отставайте от последней версии",
     "refreshBeforeDownload": "Обновляйте информацию о приложении перед загрузкой",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

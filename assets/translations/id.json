@@ -318,6 +318,7 @@
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
     "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
     "refreshBeforeDownload": "Segarkan detail aplikasi sebelum mengunduh",
+    "tencentAppStore": "Tencent App Store",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"
