@@ -481,7 +481,10 @@ class AppsPageState extends State<AppsPage> {
                           ? (Theme.of(context).brightness == Brightness.light
                                   ? Theme.of(context).primaryColor
                                   : Theme.of(context).primaryColorLight)
-                              .withAlpha(20)
+                              .withAlpha(Theme.of(context).brightness ==
+                                      Brightness.light
+                                  ? 20
+                                  : 40)
                           : null),
                   padding: settingsProvider.highlightTouchTargets
                       ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
