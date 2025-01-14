@@ -5,10 +5,10 @@ packages:
     dependency: "direct main"
     description:
       name: android_intent_plus
-      sha256: "53136214d506d3128c9f4e5bfce3d026abe7e8038958629811a8d3223b1757c1"
+      sha256: "884b01361fe3756c4abbb56a382a00b16a2519079794a585afa7019a73cc0add"
       url: "https://pub.dev"
     source: hosted
-    version: "5.2.1"
+    version: "5.2.2"
   android_package_installer:
     dependency: "direct main"
     description:
@@ -176,10 +176,10 @@ packages:
     dependency: "direct main"
     description:
       name: connectivity_plus
-      sha256: e0817759ec6d2d8e57eb234e6e57d2173931367a865850c7acea40d4b4f9c27d
+      sha256: "8a68739d3ee113e51ad35583fdf9ab82c55d09d693d3c39da1aebab87c938412"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.1"
+    version: "6.1.2"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -232,10 +232,10 @@ packages:
     dependency: "direct main"
     description:
       name: device_info_plus
-      sha256: "4fa68e53e26ab17b70ca39f072c285562cfc1589df5bb1e9295db90f6645f431"
+      sha256: b37d37c2f912ad4e8ec694187de87d05de2a3cb82b465ff1f65f65a2d05de544
       url: "https://pub.dev"
     source: hosted
-    version: "11.2.0"
+    version: "11.2.1"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -596,10 +596,10 @@ packages:
     dependency: "direct main"
     description:
       name: markdown
-      sha256: ef2a1298144e3f985cc736b22e0ccdaf188b5b3970648f2d9dc13efd1d9df051
+      sha256: "935e23e1ff3bc02d390bad4d4be001208ee92cc217cb5b5a6c19bc14aaa318c1"
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.2"
+    version: "7.3.0"
   matcher:
     dependency: transitive
     description:
@@ -828,10 +828,10 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: "6327c3f233729374d0abaafd61f6846115b2a481b4feddd8534211dc10659400"
+      sha256: fce43200aa03ea87b91ce4c3ac79f0cecd52e2a7a56c7a4185023c271fbfa6da
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.3"
+    version: "10.1.4"
   share_plus_platform_interface:
     dependency: transitive
     description:
@@ -1155,10 +1155,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: "3d535126f7244871542b2f0b0fcf94629c9a14883250461f9abe1a6644c1c379"
+      sha256: d1ee28f44894cbabb1d94cc42f9980297f689ff844d067ec50ff88d86e27d63f
       url: "https://pub.dev"
     source: hosted
-    version: "4.2.0"
+    version: "4.3.0"
   webview_flutter_platform_interface:
     dependency: transitive
     description:
