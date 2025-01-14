@@ -524,12 +524,12 @@ class AppsPageState extends State<AppsPage> {
       var transparent =
           Theme.of(context).colorScheme.surface.withAlpha(0).value;
       List<double> stops = [
-        ...listedApps[index].app.categories.asMap().entries.map(
-            (e) => ((e.key / (listedApps[index].app.categories.length - 1)))),
+        ...listedApps[index].app.categories.asMap().entries.map((e) =>
+            ((e.key / (listedApps[index].app.categories.length - 1)) - 0.0001)),
         1
       ];
       if (stops.length == 2) {
-        stops[0] = 1;
+        stops[0] = 0.9999;
       }
       return Container(
           decoration: BoxDecoration(
