@@ -60,6 +60,9 @@ showChangeLogDialog(BuildContext context, App app, String? changesUrl,
                     width: MediaQuery.of(context).size.width,
                     height: MediaQuery.of(context).size.height - 350,
                     child: Markdown(
+                      styleSheet: MarkdownStyleSheet(
+                          blockquoteDecoration: BoxDecoration(
+                              color: Theme.of(context).cardColor)),
                       data: changeLog,
                       onTapLink: (text, href, title) {
                         if (href != null) {
@@ -524,12 +527,12 @@ class AppsPageState extends State<AppsPage> {
       var transparent =
           Theme.of(context).colorScheme.surface.withAlpha(0).value;
       List<double> stops = [
-        ...listedApps[index].app.categories.asMap().entries.map(
-            (e) => ((e.key / (listedApps[index].app.categories.length - 1)))),
+        ...listedApps[index].app.categories.asMap().entries.map((e) =>
+            ((e.key / (listedApps[index].app.categories.length - 1)) - 0.0001)),
         1
       ];
       if (stops.length == 2) {
-        stops[0] = 1;
+        stops[0] = 0.9999;
       }
       return Container(
           decoration: BoxDecoration(
