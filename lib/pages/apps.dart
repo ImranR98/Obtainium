@@ -60,6 +60,9 @@ showChangeLogDialog(BuildContext context, App app, String? changesUrl,
                     width: MediaQuery.of(context).size.width,
                     height: MediaQuery.of(context).size.height - 350,
                     child: Markdown(
+                      styleSheet: MarkdownStyleSheet(
+                          blockquoteDecoration: BoxDecoration(
+                              color: Theme.of(context).cardColor)),
                       data: changeLog,
                       onTapLink: (text, href, title) {
                         if (href != null) {
