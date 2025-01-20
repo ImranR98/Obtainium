@@ -865,7 +865,7 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
-        RuStore,
+        RuStore(),
         TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
