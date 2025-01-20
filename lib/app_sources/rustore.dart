@@ -38,7 +38,7 @@ class RuStore extends AppSource {
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
     Response res0 = await sourceRequest(
-        'https://backapi.${hosts[0]}/applicationData/overallInfo/${appId}',
+        'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
         additionalSettings);
     if (res0.statusCode != 200) {
       throw getObtainiumHttpError(res0);
@@ -61,7 +61,7 @@ class RuStore extends AppSource {
     }
 
     Response res1 = await sourceRequest(
-        'https://backapi.${hosts[0]}/applicationData/download-link',
+        'https://backapi.rustore.ru/applicationData/download-link',
         additionalSettings,
         followRedirects: false,
         postBody: {"appId": appDetails['appId'], "firstInstall": true});
