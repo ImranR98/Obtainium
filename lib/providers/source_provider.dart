@@ -23,6 +23,7 @@ import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
+import 'package:obtainium/app_sources/rustore.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
@@ -864,6 +865,7 @@ class SourceProvider {
         Tencent(),
         Jenkins(),
         APKMirror(),
+        RuStore,
         TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
