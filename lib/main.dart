@@ -245,6 +245,7 @@ class _ObtainiumState extends State<Obtainium> {
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           navigatorKey: globalNavigatorKey,
+          debugShowCheckedModeBanner: false,
           theme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.dark
