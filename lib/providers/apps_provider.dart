@@ -151,13 +151,15 @@ Future<File> downloadFileWithRetry(String url, String fileName,
     {bool useExisting = true,
     Map<String, String>? headers,
     int retries = 3,
-    bool allowInsecure = false}) async {
+    bool allowInsecure = false,
+    LogsProvider? logs}) async {
   try {
     return await downloadFile(
         url, fileName, fileNameHasExt, onProgress, destDir,
         useExisting: useExisting,
         headers: headers,
-        allowInsecure: allowInsecure);
+        allowInsecure: allowInsecure,
+        logs: logs);
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(const Duration(seconds: 5));
@@ -166,7 +168,8 @@ Future<File> downloadFileWithRetry(String url, String fileName,
           useExisting: useExisting,
           headers: headers,
           retries: (retries - 1),
-          allowInsecure: allowInsecure);
+          allowInsecure: allowInsecure,
+          logs: logs);
     } else {
       rethrow;
     }
@@ -219,7 +222,8 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
     {bool useExisting = true,
     Map<String, String>? headers,
-    bool allowInsecure = false}) async {
+    bool allowInsecure = false,
+    LogsProvider? logs}) async {
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
@@ -279,6 +283,42 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
 
   // Download to a '.temp' file (to distinguish btn. complete/incomplete files)
   File tempDownloadedFile = File('${downloadedFile.path}.part');
+
+  // If there is already a temp file, a download may already be in progress - account for this (see #2073)
+  bool tempFileExists = tempDownloadedFile.existsSync();
+  if (tempFileExists && useExisting) {
+    logs?.add(
+        'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}');
+    bool isDownloading = true;
+    int currentTempFileSize = await tempDownloadedFile.length();
+    bool shouldReturn = false;
+    while (isDownloading) {
+      await Future.delayed(Duration(seconds: 7));
+      if (tempDownloadedFile.existsSync()) {
+        int newTempFileSize = await tempDownloadedFile.length();
+        if (newTempFileSize > currentTempFileSize) {
+          currentTempFileSize = newTempFileSize;
+          logs?.add(
+              'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}');
+        } else {
+          logs?.add(
+              'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}');
+          break;
+        }
+      } else {
+        shouldReturn = downloadedFile.existsSync();
+      }
+    }
+    if (shouldReturn) {
+      logs?.add(
+          'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}');
+      client.close();
+      return downloadedFile;
+    } else {
+      logs?.add(
+          'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}');
+    }
+  }
 
   // If the range feature is not available (or you need to start a ranged req from 0),
   // complete the already-started request, else cancel it and start a ranged request,
@@ -419,9 +459,7 @@ class AppsProvider with ChangeNotifier {
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
         APKDir.listSync()
-            .where((element) =>
-                element.path.endsWith('.part') ||
-                element.statSync().modified.isBefore(cutoff))
+            .where((element) => element.statSync().modified.isBefore(cutoff))
             .forEach((partialApk) {
           if (!areDownloadsRunning()) {
             partialApk.delete(recursive: true);
@@ -495,7 +533,8 @@ class AppsProvider with ChangeNotifier {
         prevProg = prog;
       }, APKDir.path,
           useExisting: useExisting,
-          allowInsecure: app.additionalSettings['allowInsecure'] == true);
+          allowInsecure: app.additionalSettings['allowInsecure'] == true,
+          logs: logs);
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = -1;
@@ -1124,7 +1163,8 @@ class AppsProvider with ChangeNotifier {
                     forAPKDownload:
                         fileUrl.key.endsWith('.apk') ? true : false),
             useExisting: false,
-            allowInsecure: app.additionalSettings['allowInsecure'] == true);
+            allowInsecure: app.additionalSettings['allowInsecure'] == true,
+            logs: logs);
         notificationsProvider
             .notify(DownloadedNotification(fileUrl.key, fileUrl.value));
       } catch (e) {
@@ -1414,8 +1454,10 @@ class AppsProvider with ChangeNotifier {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
       if (!onlyIfExists || this.apps.containsKey(app.id)) {
-        File('${(await getAppsDir()).path}/${app.id}.json')
-            .writeAsStringSync(jsonEncode(app.toJson()));
+        String filePath = '${(await getAppsDir()).path}/${app.id}.json';
+        File('$filePath.tmp')
+            .writeAsStringSync(jsonEncode(app.toJson())); // #2089
+        File('$filePath.tmp').renameSync(filePath);
       }
       try {
         this.apps.update(app.id,

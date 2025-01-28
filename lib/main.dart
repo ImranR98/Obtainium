@@ -44,7 +44,8 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('da'), 'Dansk'),
   MapEntry(Locale('en', 'EO'),
       'Esperanto'), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
-  MapEntry(Locale('in'), 'Bahasa Indonesia')
+  MapEntry(Locale('in'), 'Bahasa Indonesia'),
+  MapEntry(Locale('ko'), '한국어'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
@@ -244,6 +245,7 @@ class _ObtainiumState extends State<Obtainium> {
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           navigatorKey: globalNavigatorKey,
+          debugShowCheckedModeBanner: false,
           theme: ThemeData(
               useMaterial3: true,
               colorScheme: settingsProvider.theme == ThemeSettings.dark
