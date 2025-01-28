@@ -1454,8 +1454,10 @@ class AppsProvider with ChangeNotifier {
         app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
       }
       if (!onlyIfExists || this.apps.containsKey(app.id)) {
-        File('${(await getAppsDir()).path}/${app.id}.json')
-            .writeAsStringSync(jsonEncode(app.toJson()));
+        String filePath = '${(await getAppsDir()).path}/${app.id}.json';
+        File('$filePath.tmp')
+            .writeAsStringSync(jsonEncode(app.toJson())); // #2089
+        File('$filePath.tmp').renameSync(filePath);
       }
       try {
         this.apps.update(app.id,
