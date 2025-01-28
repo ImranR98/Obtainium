@@ -54,7 +54,7 @@ class GitLab extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^/]+){1,20}',
         caseSensitive: false);
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
@@ -126,6 +126,8 @@ class GitLab extends AppSource {
   ) async {
     // Prepare request params
     var names = GitHub().getAppNames(standardUrl);
+    String projectUriComponent =
+        '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
     String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
 
@@ -133,7 +135,7 @@ class GitLab extends AppSource {
 
     // Get project ID
     Response res0 = await sourceRequest(
-        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}?$optionalAuth',
+        'https://${hosts[0]}/api/v4/projects/$projectUriComponent?$optionalAuth',
         additionalSettings);
     if (res0.statusCode != 200) {
       throw getObtainiumHttpError(res0);
@@ -145,7 +147,7 @@ class GitLab extends AppSource {
 
     // Request data from REST API
     Response res = await sourceRequest(
-        'https://${hosts[0]}/api/v4/projects/${names.author}%2F${names.name}/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
+        'https://${hosts[0]}/api/v4/projects/$projectUriComponent/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
         additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -180,7 +182,7 @@ class GitLab extends AppSource {
       return APKDetails(
           e['tag_name'] ?? e['name'],
           getApkUrlsFromUrls(apkUrlsSet.toList()),
-          GitHub().getAppNames(standardUrl),
+          AppNames(names.author, names.name.split('/').last),
           releaseDate: releaseDate);
     });
     if (apkDetailsList.isEmpty) {
