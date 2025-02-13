@@ -29,11 +29,12 @@ Currently supported App sources:
   - [Uptodown](https://uptodown.com/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
+  - [RuStore](https://rustore.ru/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Other - App-Specific:
-  - [Telegram App](https://telegram.org)
-  - [Neutron Code](https://neutroncode.com)
+  - [Telegram App](https://telegram.org/)
+  - [Neutron Code](https://neutroncode.com/)
 - Direct APK Link
 - "HTML" (Fallback): Any other URL that returns an HTML page with links to APK files
 
