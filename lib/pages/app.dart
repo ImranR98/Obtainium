@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -12,6 +13,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:markdown/markdown.dart' as md;
 
 class AppPage extends StatefulWidget {
   const AppPage({super.key, required this.appId});
@@ -221,24 +223,41 @@ class _AppPageState extends State<AppPage> {
           if (app?.app.additionalSettings['about'] is String &&
               app?.app.additionalSettings['about'].isNotEmpty)
             Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(
                   height: 48,
                 ),
                 GestureDetector(
-                  onLongPress: () {
-                    Clipboard.setData(ClipboardData(
-                        text: app?.app.additionalSettings['about'] ?? ''));
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(tr('copiedToClipboard')),
-                    ));
-                  },
-                  child: Text(
-                    app?.app.additionalSettings['about'],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontStyle: FontStyle.italic),
-                  ),
-                )
+                    onLongPress: () {
+                      Clipboard.setData(ClipboardData(
+                          text: app?.app.additionalSettings['about'] ?? ''));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(tr('copiedToClipboard')),
+                      ));
+                    },
+                    child: Markdown(
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      styleSheet: MarkdownStyleSheet(
+                          blockquoteDecoration:
+                              BoxDecoration(color: Theme.of(context).cardColor),
+                          textAlign: WrapAlignment.center),
+                      data: app?.app.additionalSettings['about'],
+                      onTapLink: (text, href, title) {
+                        if (href != null) {
+                          launchUrlString(href,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      extensionSet: md.ExtensionSet(
+                        md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+                        [
+                          md.EmojiSyntax(),
+                          ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes
+                        ],
+                      ),
+                    ))
               ],
             ),
         ],

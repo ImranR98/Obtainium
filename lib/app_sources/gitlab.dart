@@ -53,8 +53,12 @@ class GitLab extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
+    var urlSegments = url.split('/');
+    var cutOffIndex = urlSegments.indexWhere((s) => s == '-');
+    url =
+        urlSegments.sublist(0, cutOffIndex <= 0 ? null : cutOffIndex).join('/');
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^/]+){1,20}',
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^/-]+){1,20}',
         caseSensitive: false);
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
