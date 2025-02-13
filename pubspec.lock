@@ -345,6 +345,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
+  flutter_charset_detector:
+    dependency: "direct main"
+    description:
+      name: flutter_charset_detector
+      sha256: d7c11a82c2c51cb35a010b42c64001afb8a9e4d7be1f57620604d386d3467ad1
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
+  flutter_charset_detector_android:
+    dependency: transitive
+    description:
+      name: flutter_charset_detector_android
+      sha256: "443145e8fc8515b3b32aee375691e40dd59197a86a2ae153166bc88c8200d83b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
+  flutter_charset_detector_darwin:
+    dependency: transitive
+    description:
+      name: flutter_charset_detector_darwin
+      sha256: daac20390275efb92fbb14350fe11286c5e29c7b80d6b0867f52d760f0d69763
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  flutter_charset_detector_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_charset_detector_platform_interface
+      sha256: "1c09ed7b314a5a9dde76057b98b7d35458ba881eed03d5e5b6f7f74b4869d18c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  flutter_charset_detector_web:
+    dependency: transitive
+    description:
+      name: flutter_charset_detector_web
+      sha256: b547194e97e15d2cca17e957ad7f373b48abf35080e645ac5b6976d129b0265d
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   flutter_fgbg:
     dependency: "direct main"
     description:
@@ -552,6 +592,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.19.0"
+  js:
+    dependency: transitive
+    description:
+      name: js
+      sha256: "53385261521cc4a0c4658fd0ad07a7d14591cf8fc33abbceae306ddb974888dc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.2"
   json_annotation:
     dependency: transitive
     description:
