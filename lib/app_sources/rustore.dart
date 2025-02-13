@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_charset_detector/flutter_charset_detector.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -52,6 +54,7 @@ class RuStore extends AppSource {
     String author = appDetails['companyName'] ?? name;
     String? dateStr = appDetails['updatedAt'];
     String? version = appDetails['versionName'];
+    String? changeLog = appDetails['whatsNew'];
     if (version == null) {
       throw NoVersionError();
     }
@@ -70,6 +73,18 @@ class RuStore extends AppSource {
       throw NoAPKError();
     }
 
+    appName = (await CharsetDetector.autoDecode(
+            Uint8List.fromList(appName.codeUnits)))
+        .string;
+    author =
+        (await CharsetDetector.autoDecode(Uint8List.fromList(author.codeUnits)))
+            .string;
+    changeLog = changeLog != null
+        ? (await CharsetDetector.autoDecode(
+                Uint8List.fromList(changeLog.codeUnits)))
+            .string
+        : null;
+
     return APKDetails(
         version,
         getApkUrlsFromUrls([
@@ -77,6 +92,7 @@ class RuStore extends AppSource {
               .replaceAll(RegExp('\\.zip\$'), '.apk')
         ]),
         AppNames(author, appName),
-        releaseDate: relDate);
+        releaseDate: relDate,
+        changeLog: changeLog);
   }
 }
