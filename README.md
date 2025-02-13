@@ -27,11 +27,11 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
-  - Jenkins Jobs
   - [RuStore](https://rustore.ru/)
+  - Jenkins Jobs
+  - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)

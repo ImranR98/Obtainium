@@ -65,12 +65,17 @@ class RuStore extends AppSource {
         additionalSettings,
         followRedirects: false,
         postBody: {"appId": appDetails['appId'], "firstInstall": true});
-    var downloadDetails = jsonDecode(res0.body)['body'];
-    if (res1.statusCode != 200 && downloadDetails['apkUrl'] == null) {
+    var downloadDetails = jsonDecode(res1.body)['body'];
+    if (res1.statusCode != 200 || downloadDetails['apkUrl'] == null) {
       throw NoAPKError();
     }
 
-    return APKDetails(version, getApkUrlsFromUrls([downloadDetails['apkUrl']]),
+    return APKDetails(
+        version,
+        getApkUrlsFromUrls([
+          (downloadDetails['apkUrl'] as String)
+              .replaceAll(RegExp('\\.zip\$'), '.apk')
+        ]),
         AppNames(author, appName),
         releaseDate: relDate);
   }
