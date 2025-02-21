@@ -151,6 +151,6 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   fonts:
-      - family: Wix-Madefor-Display
+      - family: Montserrat
         fonts:
-          - asset: assets/fonts/WixMadeforDisplay-Regular.otf
+          - asset: assets/fonts/Montserrat-Regular.ttf
