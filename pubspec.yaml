@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.41+2298
+version: 1.1.42+2299
 
 environment:
   sdk: ^3.6.0
@@ -47,7 +47,7 @@ dependencies:
   permission_handler: ^11.0.0
   fluttertoast: ^8.0.9
   device_info_plus: ^11.0.0
-  file_picker: ^8.0.0+1
+  file_picker: ^9.0.0
   animations: ^2.0.4
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
     git:
@@ -151,6 +151,6 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   fonts:
-      - family: Wix-Madefor-Display
+      - family: Montserrat
         fonts:
-          - asset: assets/fonts/WixMadeforDisplay-Regular.otf
+          - asset: assets/fonts/Montserrat-Regular.ttf

@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "Mellanlänk hittades inte",
     "intermediateLink": "Mellanlänk",
     "exemptFromBackgroundUpdates": "Undta från bakgrundsuppdateringar (om aktiverad)",
-    "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utan WiFi",
+    "bgUpdatesOnWiFiOnly": "Inaktivera Bakgrundsuppdateringar utanWi-Fi",
     "bgUpdatesWhileChargingOnly": "Inaktivera bakgrundsuppdateringar när du inte laddar",
     "autoSelectHighestVersionCode": "Välj automatiskt högsta versionskod APK",
     "versionExtractionRegEx": "Version Extraction RegEx",

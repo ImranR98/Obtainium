@@ -163,29 +163,39 @@ class GitLab extends AppSource {
     apkDetailsList = json.map((e) {
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
           .map((e) {
-            return (e['direct_asset_url'] ?? e['url'] ?? '') as String;
+            var url = (e['direct_asset_url'] ?? e['url'] ?? '') as String;
+            var parsedUrl = url.isNotEmpty ? Uri.parse(url) : null;
+            return MapEntry(
+                (e['name'] ??
+                    (parsedUrl != null && parsedUrl.pathSegments.isNotEmpty
+                        ? parsedUrl.pathSegments.last
+                        : 'unknown')) as String,
+                (e['direct_asset_url'] ?? e['url'] ?? '') as String);
           })
-          .where((s) => s.isNotEmpty)
+          .where((s) => s.key.isNotEmpty)
           .toList();
-      List<String> uploadedAPKsFromDescription =
-          ((e['description'] ?? '') as String)
-              .split('](')
-              .join('\n')
-              .split('.apk)')
-              .join('.apk\n')
-              .split('\n')
-              .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
-              .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
-              .toList();
-      var apkUrlsSet = apkUrlsFromAssets.toSet();
-      apkUrlsSet.addAll(uploadedAPKsFromDescription);
+      var uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
+          .split('](')
+          .join('\n')
+          .split('.apk)')
+          .join('.apk\n')
+          .split('\n')
+          .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
+          .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
+          .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))
+          .toList();
+      Map<String, String> apkUrls = {};
+      for (var entry in apkUrlsFromAssets) {
+        apkUrls[entry.key] = entry.value;
+      }
+      for (var entry in uploadedAPKsFromDescription) {
+        apkUrls[entry.key] = entry.value;
+      }
       var releaseDateString =
           e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
       DateTime? releaseDate =
           releaseDateString != null ? DateTime.parse(releaseDateString) : null;
-      return APKDetails(
-          e['tag_name'] ?? e['name'],
-          getApkUrlsFromUrls(apkUrlsSet.toList()),
+      return APKDetails(e['tag_name'] ?? e['name'], apkUrls.entries.toList(),
           AppNames(names.author, names.name.split('/').last),
           releaseDate: releaseDate);
     });

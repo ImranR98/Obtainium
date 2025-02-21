@@ -358,10 +358,12 @@ class HTML extends AppSource {
             .toString();
     return APKDetails(
         version,
-        [rel]
-            .map((e) =>
-                MapEntry('${e.hashCode}-${Uri.parse(e).pathSegments.last}', e))
-            .toList(),
+        [rel].map((e) {
+          var uri = Uri.parse(e);
+          var fileName =
+              uri.pathSegments.isNotEmpty ? uri.pathSegments.last : uri.origin;
+          return MapEntry('${e.hashCode}-$fileName', e);
+        }).toList(),
         AppNames(uri.host, tr('app')));
   }
 }

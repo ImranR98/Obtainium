@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "Lien intermédiaire introuvable",
     "intermediateLink": "Lien intermédiaire",
     "exemptFromBackgroundUpdates": "Exclure de la mise à jour en arrière-plan (si activé)",
-    "bgUpdatesOnWiFiOnly": "Désactiver les mises à jour en arrière-plan lorsque vous n'êtes pas en WiFi",
+    "bgUpdatesOnWiFiOnly": "Désactiver les mises à jour en arrière-plan lorsque vous n'êtes pas enWi-Fi",
     "bgUpdatesWhileChargingOnly": "Désactiver les mises à jour en arrière-plan lorsque le véhicule n'est pas en charge",
     "autoSelectHighestVersionCode": "Sélectionner automatiquement la version la plus récente du code APK",
     "versionExtractionRegEx": "Extraire la version par Expression régulière",
