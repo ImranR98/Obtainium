@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "沒有找到中間連結",
     "intermediateLink": "中間連結",
     "exemptFromBackgroundUpdates": "免除背景更新（若已啟用）",
-    "bgUpdatesOnWiFiOnly": "停用非Wi-Fi 的背景更新",
+    "bgUpdatesOnWiFiOnly": "停用非 Wi-Fi 的背景更新",
     "bgUpdatesWhileChargingOnly": "Disable background updates when not charging",
     "autoSelectHighestVersionCode": "自動選擇最高 versionCode 的 APK",
     "versionExtractionRegEx": "版本字串提取正則表達式",

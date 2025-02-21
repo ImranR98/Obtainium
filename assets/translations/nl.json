@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "Intermediaire link niet gevonden",
     "intermediateLink": "Intermediaire link",
     "exemptFromBackgroundUpdates": "Vrijgesteld van achtergrond-updates (indien ingeschakeld)",
-    "bgUpdatesOnWiFiOnly": "Achtergrond-updates uitschakelen wanneer niet verbonden metWi-Fi",
+    "bgUpdatesOnWiFiOnly": "Achtergrond-updates uitschakelen wanneer niet verbonden met Wi-Fi",
     "bgUpdatesWhileChargingOnly": "Achtergrondupdates uitschakelen als er niet wordt opgeladen",
     "autoSelectHighestVersionCode": "De APK met de hoogste versiecode automatisch selecteren",
     "versionExtractionRegEx": "Reguliere expressie voor versie-extractie",
