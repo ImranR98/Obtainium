@@ -911,13 +911,15 @@ class AppsPageState extends State<AppsPage> {
                                               .map((e) => e.id)
                                               .toList(),
                                           overrideExportSettings: false));
+                                  String fn =
+                                      '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
                                   XFile f = XFile.fromData(
                                       Uint8List.fromList(
                                           utf8.encode(exportJSON)),
                                       mimeType: 'application/json',
-                                      name:
-                                          '${tr('obtainiumExportHyphenatedLowercase')}-${selectedApps.length}-${DateTime.now().millisecondsSinceEpoch}');
-                                  Share.shareXFiles([f]);
+                                      name: fn);
+                                  Share.shareXFiles([f],
+                                      fileNameOverrides: ['$fn.json']);
                                 },
                           child: Text(
                               '${tr('share')} - ${tr('obtainiumExport')}')),
