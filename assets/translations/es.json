@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "Enlace intermedio no encontrado",
     "intermediateLink": "Enlace intermedio",
     "exemptFromBackgroundUpdates": "Exenta de actualizciones en segundo plano (si están habilitadas)",
-    "bgUpdatesOnWiFiOnly": "Deshabilitar las actualizaciones en segundo plano sinWi-Fi",
+    "bgUpdatesOnWiFiOnly": "Deshabilitar las actualizaciones en segundo plano sin Wi-Fi",
     "bgUpdatesWhileChargingOnly": "Desactiva las actualizaciones en segundo plano cuando no estés cargando",
     "autoSelectHighestVersionCode": "Auto selección del paquete APK con versión más reciente",
     "versionExtractionRegEx": "Versión de extracción RegEx",

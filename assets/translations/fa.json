@@ -255,7 +255,7 @@
     "intermediateLinkNotFound": "لینک میانی پیدا نشد",
     "intermediateLink": "پیوند میانی",
     "exemptFromBackgroundUpdates": "معاف از به‌روزرسانی‌های پس‌زمینه (در صورت فعال بودن)",
-    "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال بهWi-Fi غیرفعال کنید",
+    "bgUpdatesOnWiFiOnly": "به‌روزرسانی‌های پس‌زمینه را در صورت عدم اتصال به Wi-Fi غیرفعال کنید",
     "bgUpdatesWhileChargingOnly": "به‌روزرسانی‌های پس‌زمینه را هنگام شارژ نشدن غیرفعال کنید",
     "autoSelectHighestVersionCode": "انتخاب خودکار بالاترین نسخه کد APK",
     "versionExtractionRegEx": "نسخه استخراج RegEx",
