@@ -23,7 +23,7 @@ import 'package:easy_localization/src/localization.dart';
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
   MapEntry(Locale('zh'), '简体中文'),
-  MapEntry(Locale('zh_Hant_TW'), '臺灣話'),
+  MapEntry(Locale('zh', 'Hant_TW'), '臺灣話'),
   MapEntry(Locale('it'), 'Italiano'),
   MapEntry(Locale('ja'), '日本語'),
   MapEntry(Locale('hu'), 'Magyar'),
@@ -61,11 +61,11 @@ Future<void> loadTranslations() async {
   var forceLocale = s.forcedLocale;
   final controller = EasyLocalizationController(
     saveLocale: true,
-    forceLocale: forceLocale != null ? Locale(forceLocale) : null,
+    forceLocale: forceLocale,
     fallbackLocale: fallbackLocale,
     supportedLocales: supportedLocales.map((e) => e.key).toList(),
     assetLoader: const RootBundleAssetLoader(),
-    useOnlyLangCode: true,
+    useOnlyLangCode: false,
     useFallbackTranslations: true,
     path: localeDir,
     onLoadError: (FlutterError e) {
@@ -119,7 +119,7 @@ void main() async {
         supportedLocales: supportedLocales.map((e) => e.key).toList(),
         path: localeDir,
         fallbackLocale: fallbackLocale,
-        useOnlyLangCode: true,
+        useOnlyLangCode: false,
         child: const Obtainium()),
   ));
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
@@ -203,12 +203,9 @@ class _ObtainiumState extends State<Obtainium> {
           });
         }
       }
-      if (!supportedLocales
-              .map((e) => e.key.languageCode)
-              .contains(context.locale.languageCode) ||
+      if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
           (settingsProvider.forcedLocale == null &&
-              context.deviceLocale.languageCode !=
-                  context.locale.languageCode)) {
+              context.deviceLocale != context.locale)) {
         settingsProvider.resetLocaleSafe(context);
       }
     }
