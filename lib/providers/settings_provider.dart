@@ -261,22 +261,24 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String? get forcedLocale {
-    var fl = prefs?.getString('forcedLocale');
-    return supportedLocales
-            .where((element) => element.key.toLanguageTag() == fl)
-            .isNotEmpty
+  Locale? get forcedLocale {
+    var flSegs = prefs?.getString('forcedLocale')?.split('-');
+    var fl = flSegs != null && flSegs.isNotEmpty
+        ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
+        : null;
+    var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
+    return set;
   }
 
-  set forcedLocale(String? fl) {
+  set forcedLocale(Locale? fl) {
     if (fl == null) {
       prefs?.remove('forcedLocale');
     } else if (supportedLocales
-        .where((element) => element.key.toLanguageTag() == fl)
+        .where((element) => element.key == fl)
         .isNotEmpty) {
-      prefs?.setString('forcedLocale', fl);
+      prefs?.setString('forcedLocale', fl.toLanguageTag());
     }
     notifyListeners();
   }
@@ -285,9 +287,7 @@ class SettingsProvider with ChangeNotifier {
       a.length == b.length && a.union(b).length == a.length;
 
   void resetLocaleSafe(BuildContext context) {
-    if (context.supportedLocales
-        .map((e) => e.languageCode)
-        .contains(context.deviceLocale.languageCode)) {
+    if (context.supportedLocales.contains(context.deviceLocale)) {
       context.resetLocale();
     } else {
       context.setLocale(context.fallbackLocale!);

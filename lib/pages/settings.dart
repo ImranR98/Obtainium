@@ -262,14 +262,14 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(tr('followSystem')),
           ),
           ...supportedLocales.map((e) => DropdownMenuItem(
-                value: e.key.toLanguageTag(),
+                value: e.key,
                 child: Text(e.value),
               ))
         ],
         onChanged: (value) {
           settingsProvider.forcedLocale = value;
           if (value != null) {
-            context.setLocale(Locale(value));
+            context.setLocale(value);
           } else {
             settingsProvider.resetLocaleSafe(context);
           }
