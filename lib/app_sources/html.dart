@@ -313,7 +313,7 @@ class HTML extends AppSource {
           await sourceRequest(currentUrl, additionalSettings),
           additionalSettings['intermediateLink'][i]);
       if (intLinks.isEmpty) {
-        throw NoReleasesError();
+        throw NoReleasesError(note: currentUrl);
       } else {
         currentUrl = intLinks.last.key;
       }
@@ -329,7 +329,7 @@ class HTML extends AppSource {
       links = filterApks(links, additionalSettings['apkFilterRegEx'],
           additionalSettings['invertAPKFilter']);
       if (links.isEmpty) {
-        throw NoReleasesError();
+        throw NoReleasesError(note: currentUrl);
       }
     } else {
       links = [MapEntry(currentUrl, currentUrl)];
