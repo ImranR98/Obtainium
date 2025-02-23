@@ -53,6 +53,7 @@ class AppInMemory {
       AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon);
 
   String get name => app.overrideName ?? app.finalName;
+  String get author => app.overrideAuthor ?? app.finalAuthor;
 }
 
 class DownloadedApk {

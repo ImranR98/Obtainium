@@ -216,7 +216,7 @@ class AppsPageState extends State<AppsPage> {
           }
         }
         for (var t in authorTokens) {
-          if (!app.app.author.toLowerCase().contains(t.toLowerCase())) {
+          if (!app.author.toLowerCase().contains(t.toLowerCase())) {
             return false;
           }
         }
@@ -247,11 +247,11 @@ class AppsPageState extends State<AppsPage> {
     listedApps.sort((a, b) {
       int result = 0;
       if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result = ((a.app.author + a.name).toLowerCase())
-            .compareTo((b.app.author + b.name).toLowerCase());
+        result = ((a.author + a.name).toLowerCase())
+            .compareTo((b.author + b.name).toLowerCase());
       } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result = ((a.name + a.app.author).toLowerCase())
-            .compareTo((b.name + b.app.author).toLowerCase());
+        result = ((a.name + a.author).toLowerCase())
+            .compareTo((b.name + b.author).toLowerCase());
       } else if (settingsProvider.sortColumn ==
           SortColumnSettings.releaseDate) {
         result = (a.app.releaseDate)?.compareTo(
@@ -570,7 +570,7 @@ class AppsPageState extends State<AppsPage> {
                     : FontWeight.normal,
               ),
             ),
-            subtitle: Text(tr('byX', args: [listedApps[index].app.author]),
+            subtitle: Text(tr('byX', args: [listedApps[index].author]),
                 maxLines: 1,
                 style: TextStyle(
                     overflow: TextOverflow.ellipsis,
