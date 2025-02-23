@@ -58,7 +58,7 @@ class GitLab extends AppSource {
     url =
         urlSegments.sublist(0, cutOffIndex <= 0 ? null : cutOffIndex).join('/');
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^/-]+){1,20}',
+        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^((\b/\b)|(\b/-/\b))]+){1,20}',
         caseSensitive: false);
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
