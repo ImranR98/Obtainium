@@ -300,7 +300,7 @@ class _AppPageState extends State<AppPage> {
                   ? Theme.of(context).textTheme.displaySmall
                   : Theme.of(context).textTheme.displayLarge,
             ),
-            Text(tr('byX', args: [app?.app.author ?? tr('unknown')]),
+            Text(tr('byX', args: [app?.author ?? tr('unknown')]),
                 textAlign: TextAlign.center,
                 style: small
                     ? Theme.of(context).textTheme.headlineSmall

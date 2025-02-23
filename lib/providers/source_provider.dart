@@ -330,6 +330,15 @@ class App {
     return overrideName ?? name;
   }
 
+  String? get overrideAuthor =>
+      additionalSettings['appAuthor']?.toString().trim().isNotEmpty == true
+          ? additionalSettings['appAuthor']
+          : null;
+
+  String get finalAuthor {
+    return overrideAuthor ?? author;
+  }
+
   App deepCopy() => App(
       id,
       url,
@@ -622,6 +631,7 @@ abstract class AppSource {
           label: tr('autoApkFilterByArch'), defaultValue: true)
     ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
+    [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
     [
       GeneratedFormSwitch('shizukuPretendToBeGooglePlay',
           label: tr('shizukuPretendToBeGooglePlay'), defaultValue: false)
