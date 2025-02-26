@@ -45,6 +45,7 @@ class SettingsProvider with ChangeNotifier {
 
   set useSystemFont(bool useSystemFont) {
     prefs?.setBool('useSystemFont', useSystemFont);
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
     notifyListeners();
   }
 
@@ -54,6 +55,7 @@ class SettingsProvider with ChangeNotifier {
 
   set useShizuku(bool useShizuku) {
     prefs?.setBool('useShizuku', useShizuku);
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
     notifyListeners();
   }
 
@@ -65,6 +67,7 @@ class SettingsProvider with ChangeNotifier {
   set theme(ThemeSettings t) {
     prefs?.setInt('theme', t.index);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   Color get themeColor {
@@ -75,6 +78,7 @@ class SettingsProvider with ChangeNotifier {
   set themeColor(Color themeColor) {
     prefs?.setInt('themeColor', themeColor.value);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get useMaterialYou {
@@ -84,6 +88,7 @@ class SettingsProvider with ChangeNotifier {
   set useMaterialYou(bool useMaterialYou) {
     prefs?.setBool('useMaterialYou', useMaterialYou);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get useBlackTheme {
@@ -93,6 +98,7 @@ class SettingsProvider with ChangeNotifier {
   set useBlackTheme(bool useBlackTheme) {
     prefs?.setBool('useBlackTheme', useBlackTheme);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   int get updateInterval {
@@ -102,6 +108,7 @@ class SettingsProvider with ChangeNotifier {
   set updateInterval(int min) {
     prefs?.setInt('updateInterval', min);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   double get updateIntervalSliderVal {
@@ -111,6 +118,66 @@ class SettingsProvider with ChangeNotifier {
   set updateIntervalSliderVal(double val) {
     prefs?.setDouble('updateIntervalSliderVal', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
+  }
+
+  bool get sxncdEnabled {
+    return prefs?.getBool('sxncdEnabled') ?? false;
+  }
+
+  set sxncdEnabled(bool sxncdEnabled) {
+    prefs?.setBool('sxncdEnabled', sxncdEnabled);
+    notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
+  }
+
+  String get sxncdSavedTs {
+    return prefs?.getString('sxncdSavedTs') ?? '1900-01-01T00:00:00.000';
+  }
+
+  set sxncdSavedTs(String sxncdSavedTs) {
+    prefs?.setString('sxncdSavedTs', sxncdSavedTs);
+    notifyListeners();
+  }
+
+  String get sxncdUrl {
+    return prefs?.getString('sxncdUrl') ?? '';
+  }
+
+  set sxncdUrl(String sxncdUrl) {
+    prefs?.setString('sxncdUrl', sxncdUrl);
+    notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
+  }
+
+  String get sxncdApiKey {
+    return prefs?.getString('sxncdApiKey') ?? '';
+  }
+
+  set sxncdApiKey(String sxncdApiKey) {
+    prefs?.setString('sxncdApiKey', sxncdApiKey);
+    notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
+  }
+
+  String get sxncdDeviceName {
+    return prefs?.getString('sxncdDeviceName') ?? '';
+  }
+
+  set sxncdDeviceName(String sxncdDeviceName) {
+    prefs?.setString('sxncdDeviceName', sxncdDeviceName);
+    notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
+  }
+
+  String get sxncdEncryptionPassword {
+    return prefs?.getString('sxncdEncryptionPassword') ?? '';
+  }
+
+  set sxncdEncryptionPassword(String sxncdEncryptionPassword) {
+    prefs?.setString('sxncdEncryptionPassword', sxncdEncryptionPassword);
+    notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get checkOnStart {
@@ -120,6 +187,7 @@ class SettingsProvider with ChangeNotifier {
   set checkOnStart(bool checkOnStart) {
     prefs?.setBool('checkOnStart', checkOnStart);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   SortColumnSettings get sortColumn {
@@ -130,6 +198,7 @@ class SettingsProvider with ChangeNotifier {
   set sortColumn(SortColumnSettings s) {
     prefs?.setInt('sortColumn', s.index);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   SortOrderSettings get sortOrder {
@@ -140,6 +209,7 @@ class SettingsProvider with ChangeNotifier {
   set sortOrder(SortOrderSettings s) {
     prefs?.setInt('sortOrder', s.index);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool checkAndFlipFirstRun() {
@@ -181,6 +251,7 @@ class SettingsProvider with ChangeNotifier {
   set showAppWebpage(bool show) {
     prefs?.setBool('showAppWebpage', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get pinUpdates {
@@ -190,6 +261,7 @@ class SettingsProvider with ChangeNotifier {
   set pinUpdates(bool show) {
     prefs?.setBool('pinUpdates', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get buryNonInstalled {
@@ -199,6 +271,7 @@ class SettingsProvider with ChangeNotifier {
   set buryNonInstalled(bool show) {
     prefs?.setBool('buryNonInstalled', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get groupByCategory {
@@ -208,6 +281,7 @@ class SettingsProvider with ChangeNotifier {
   set groupByCategory(bool show) {
     prefs?.setBool('groupByCategory', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get hideTrackOnlyWarning {
@@ -217,6 +291,7 @@ class SettingsProvider with ChangeNotifier {
   set hideTrackOnlyWarning(bool show) {
     prefs?.setBool('hideTrackOnlyWarning', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get hideAPKOriginWarning {
@@ -226,6 +301,7 @@ class SettingsProvider with ChangeNotifier {
   set hideAPKOriginWarning(bool show) {
     prefs?.setBool('hideAPKOriginWarning', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   String? getSettingString(String settingId) {
@@ -281,6 +357,7 @@ class SettingsProvider with ChangeNotifier {
       prefs?.setString('forcedLocale', fl.toLanguageTag());
     }
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool setEqual(Set<String> a, Set<String> b) =>
@@ -302,6 +379,7 @@ class SettingsProvider with ChangeNotifier {
   set removeOnExternalUninstall(bool show) {
     prefs?.setBool('removeOnExternalUninstall', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get checkUpdateOnDetailPage {
@@ -311,6 +389,7 @@ class SettingsProvider with ChangeNotifier {
   set checkUpdateOnDetailPage(bool show) {
     prefs?.setBool('checkUpdateOnDetailPage', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get disablePageTransitions {
@@ -320,6 +399,7 @@ class SettingsProvider with ChangeNotifier {
   set disablePageTransitions(bool show) {
     prefs?.setBool('disablePageTransitions', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get reversePageTransitions {
@@ -329,6 +409,7 @@ class SettingsProvider with ChangeNotifier {
   set reversePageTransitions(bool show) {
     prefs?.setBool('reversePageTransitions', show);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get enableBackgroundUpdates {
@@ -338,6 +419,7 @@ class SettingsProvider with ChangeNotifier {
   set enableBackgroundUpdates(bool val) {
     prefs?.setBool('enableBackgroundUpdates', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get bgUpdatesOnWiFiOnly {
@@ -347,6 +429,7 @@ class SettingsProvider with ChangeNotifier {
   set bgUpdatesOnWiFiOnly(bool val) {
     prefs?.setBool('bgUpdatesOnWiFiOnly', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get bgUpdatesWhileChargingOnly {
@@ -356,6 +439,7 @@ class SettingsProvider with ChangeNotifier {
   set bgUpdatesWhileChargingOnly(bool val) {
     prefs?.setBool('bgUpdatesWhileChargingOnly', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   DateTime get lastCompletedBGCheckTime {
@@ -368,6 +452,7 @@ class SettingsProvider with ChangeNotifier {
   set lastCompletedBGCheckTime(DateTime val) {
     prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get showDebugOpts {
@@ -377,6 +462,7 @@ class SettingsProvider with ChangeNotifier {
   set showDebugOpts(bool val) {
     prefs?.setBool('showDebugOpts', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get highlightTouchTargets {
@@ -386,6 +472,7 @@ class SettingsProvider with ChangeNotifier {
   set highlightTouchTargets(bool val) {
     prefs?.setBool('highlightTouchTargets', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   Future<Uri?> getExportDir() async {
@@ -431,6 +518,7 @@ class SettingsProvider with ChangeNotifier {
   set autoExportOnChanges(bool val) {
     prefs?.setBool('autoExportOnChanges', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get onlyCheckInstalledOrTrackOnlyApps {
@@ -440,6 +528,7 @@ class SettingsProvider with ChangeNotifier {
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
     prefs?.setBool('onlyCheckInstalledOrTrackOnlyApps', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get exportSettings {
@@ -449,6 +538,7 @@ class SettingsProvider with ChangeNotifier {
   set exportSettings(bool val) {
     prefs?.setBool('exportSettings', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get parallelDownloads {
@@ -458,6 +548,7 @@ class SettingsProvider with ChangeNotifier {
   set parallelDownloads(bool val) {
     prefs?.setBool('parallelDownloads', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   List<String> get searchDeselected {
@@ -467,6 +558,7 @@ class SettingsProvider with ChangeNotifier {
   set searchDeselected(List<String> list) {
     prefs?.setStringList('searchDeselected', list);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get beforeNewInstallsShareToAppVerifier {
@@ -476,6 +568,7 @@ class SettingsProvider with ChangeNotifier {
   set beforeNewInstallsShareToAppVerifier(bool val) {
     prefs?.setBool('beforeNewInstallsShareToAppVerifier', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 
   bool get shizukuPretendToBeGooglePlay {
@@ -485,5 +578,6 @@ class SettingsProvider with ChangeNotifier {
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
+    prefs?.setString('sxncdSavedTs', DateTime.now().toIso8601String());
   }
 }

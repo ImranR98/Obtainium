@@ -39,6 +39,7 @@ import 'package:flutter_archive/flutter_archive.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+import 'package:sxncd/sxncd.dart';
 
 final pm = AndroidPackageManager();
 
@@ -796,6 +797,7 @@ class AppsProvider with ChangeNotifier {
       // TODO: When fixed, update this function and the calls to it accordingly
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
+
       await saveApps([apps[file.appId]!.app],
           attemptToCorrectInstallStatus: false);
     }
@@ -1540,6 +1542,7 @@ class AppsProvider with ChangeNotifier {
       if (remove) {
         await removeApps(apps.map((e) => e.id).toList());
       }
+      settingsProvider.sxncdSavedTs = DateTime.now().toIso8601String();
       return uninstall || remove;
     }
     return false;
@@ -1606,12 +1609,59 @@ class AppsProvider with ChangeNotifier {
     return appIds;
   }
 
+  Future<void> syncApps(SettingsProvider sp) async {
+    if (sp.sxncdEnabled) {
+      try {
+        Map<String, dynamic> exportMap = generateExportJSON();
+        var encoder = const JsonEncoder.withIndent("    ");
+        String export = encoder.convert(exportMap);
+        SxncdResponse syncResponse = await sxncdSync(
+          sp.sxncdUrl,
+          sp.sxncdApiKey,
+          sp.sxncdDeviceName,
+          export,
+          DateTime.parse(sp.sxncdSavedTs),
+          sp.sxncdEncryptionPassword,
+        );
+        if (syncResponse != null) {
+          if (syncResponse.error != null) {
+            throw ObtainiumError(syncResponse.error!);
+          }
+          if (syncResponse.data != null) {
+            if (syncResponse.action == 'existingNewer') {
+              SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+              import(syncResponse.data!).then((value) {
+                var cats = settingsProvider.categories;
+                apps.forEach((key, value) {
+                  for (var c in value.app.categories) {
+                    if (!cats.containsKey(c)) {
+                      cats[c] = generateRandomLightColor().value;
+                    }
+                  }
+                });
+                addMissingCategories(settingsProvider);
+              });
+            }
+          } else {
+            throw ObtainiumError(tr('sxncdError'));
+          }
+        } else {
+          throw ObtainiumError(tr('sxncdError'));
+        }
+      } catch (e) {
+        print(e);
+        throw ObtainiumError(e.toString());
+      }
+    }
+  }
+
   Future<List<App>> checkUpdates(
       {DateTime? ignoreAppsCheckedAfter,
       bool throwErrorsForRetry = false,
       List<String>? specificIds,
       SettingsProvider? sp}) async {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    await syncApps(settingsProvider);
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
     if (!gettingUpdates) {
