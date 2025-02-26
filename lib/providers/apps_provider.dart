@@ -797,7 +797,6 @@ class AppsProvider with ChangeNotifier {
       // TODO: When fixed, update this function and the calls to it accordingly
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
-
       await saveApps([apps[file.appId]!.app],
           attemptToCorrectInstallStatus: false);
     }
