@@ -449,6 +449,108 @@ class _SettingsPageState extends State<SettingsPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Flexible(child: Text(tr('sxncdEnabled'))),
+                                Switch(
+                                    value: settingsProvider.sxncdEnabled,
+                                    onChanged: (value) {
+                                      settingsProvider.sxncdEnabled = value;
+                                    })
+                              ],
+                            ),
+                            if (settingsProvider.sxncdEnabled)
+                              Column(
+                                children: [
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(child: Text(tr('sxncdConfig'))),
+                                    ],
+                                  ),
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: TextFormField(
+                                          decoration: InputDecoration(
+                                            labelText: tr('sxncdUrl'),
+                                          ),
+                                          initialValue: settingsProvider.sxncdUrl,
+                                          onChanged: (value) {
+                                            if (value != null && !value.isEmpty) {
+                                              settingsProvider.sxncdUrl = value;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: TextFormField(
+                                          decoration: InputDecoration(
+                                            labelText: tr('sxncdApiKey'),
+                                          ),
+                                          obscureText: true,
+                                          initialValue: settingsProvider.sxncdApiKey,
+                                          onChanged: (value) {
+                                            if (value != null && !value.isEmpty) {
+                                              settingsProvider.sxncdApiKey = value;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: TextFormField(
+                                          decoration: InputDecoration(
+                                            labelText: tr('sxncdDeviceName'),
+                                          ),
+                                          initialValue: settingsProvider.sxncdDeviceName,
+                                          onChanged: (value) {
+                                            if (value != null && !value.isEmpty) {
+                                              settingsProvider.sxncdDeviceName = value;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  height16,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: TextFormField(
+                                          decoration: InputDecoration(
+                                            labelText: tr('sxncdEncryptionPassword'),
+                                          ),
+                                          obscureText: true,
+                                          initialValue: settingsProvider.sxncdEncryptionPassword,
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              settingsProvider.sxncdEncryptionPassword = value;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ]
+                              ),
+                            height16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
                                 Flexible(child: Text(tr('checkOnStart'))),
                                 Switch(
                                     value: settingsProvider.checkOnStart,

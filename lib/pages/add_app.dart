@@ -195,6 +195,7 @@ class AddAppPageState extends State<AddAppPage> {
           await appsProvider.saveApps([app], onlyIfExists: false);
         }
         if (app != null) {
+          settingsProvider.sxncdSavedTs = DateTime.now().toIso8601String();
           Navigator.push(globalNavigatorKey.currentContext ?? context,
               MaterialPageRoute(builder: (context) => AppPage(appId: app!.id)));
         }

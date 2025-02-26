@@ -87,6 +87,7 @@ dependencies:
   flutter_typeahead: ^5.2.0
   battery_plus: ^6.1.0
   flutter_charset_detector: ^4.0.0
+  sxncd: ^0.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
