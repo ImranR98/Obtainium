@@ -441,6 +441,7 @@ class _AppPageState extends State<AppPage> {
           app.app.additionalSettings['versionDetection'] = true;
           app.app.additionalSettings['releaseDateAsVersion'] = false;
         }
+        settingsProvider.sxncdSavedTs = DateTime.now().toIso8601String();
         appsProvider.saveApps([app.app]).then((value) {
           getUpdate(app.app.id, resetVersion: versionDetectionEnabled);
         });
