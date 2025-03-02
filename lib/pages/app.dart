@@ -352,6 +352,10 @@ class _AppPageState extends State<AppPage> {
                           context);
                     }
                   },
+                  onNavigationRequest: (NavigationRequest request) =>
+                      request.url.startsWith("rustore://")
+                          ? NavigationDecision.prevent
+                          : NavigationDecision.navigate,
                 ),
               )
               ..loadRequest(Uri.parse(app.app.url)))
