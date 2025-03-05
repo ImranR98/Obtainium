@@ -343,7 +343,6 @@ class _AppPageState extends State<AppPage> {
             controller: WebViewController()
               ..setJavaScriptMode(JavaScriptMode.unrestricted)
               ..setBackgroundColor(Theme.of(context).colorScheme.surface)
-              ..setJavaScriptMode(JavaScriptMode.unrestricted)
               ..setNavigationDelegate(
                 NavigationDelegate(
                   onWebResourceError: (WebResourceError error) {
@@ -353,6 +352,10 @@ class _AppPageState extends State<AppPage> {
                           context);
                     }
                   },
+                  onNavigationRequest: (NavigationRequest request) =>
+                      request.url.startsWith("rustore://")
+                          ? NavigationDecision.prevent
+                          : NavigationDecision.navigate,
                 ),
               )
               ..loadRequest(Uri.parse(app.app.url)))
