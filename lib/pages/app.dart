@@ -25,8 +25,31 @@ class AppPage extends StatefulWidget {
 }
 
 class _AppPageState extends State<AppPage> {
+  late final WebViewController _webViewController;
+  bool _wasWebViewOpened = false;
   AppInMemory? prevApp;
   bool updating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onWebResourceError: (WebResourceError error) {
+            if (error.isForMainFrame == true) {
+              showError(
+                  ObtainiumError(error.description, unexpected: true), context);
+            }
+          },
+          onNavigationRequest: (NavigationRequest request) =>
+              request.url.startsWith("rustore://")
+                  ? NavigationDecision.prevent
+                  : NavigationDecision.navigate,
+        ),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +103,11 @@ class _AppPageState extends State<AppPage> {
     bool installedVersionIsEstimate = trackOnly ||
         (app?.app.installedVersion != null &&
             app?.app.additionalSettings['versionDetection'] != true);
+
+    if (app != null && !_wasWebViewOpened) {
+      _wasWebViewOpened = true;
+      _webViewController.loadRequest(Uri.parse(app.app.url));
+    }
 
     getInfoColumn() {
       String versionLines = '';
@@ -340,22 +368,9 @@ class _AppPageState extends State<AppPage> {
 
     getAppWebView() => app != null
         ? WebViewWidget(
-            controller: WebViewController()
-              ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..setBackgroundColor(Theme.of(context).colorScheme.surface)
-              ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..setNavigationDelegate(
-                NavigationDelegate(
-                  onWebResourceError: (WebResourceError error) {
-                    if (error.isForMainFrame == true) {
-                      showError(
-                          ObtainiumError(error.description, unexpected: true),
-                          context);
-                    }
-                  },
-                ),
-              )
-              ..loadRequest(Uri.parse(app.app.url)))
+            key: ObjectKey(_webViewController),
+            controller: _webViewController
+              ..setBackgroundColor(Theme.of(context).colorScheme.surface))
         : Container();
 
     showMarkUpdatedDialog() {
