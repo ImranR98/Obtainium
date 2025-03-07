@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
     "refreshBeforeDownload": "İndirmeden önce uygulama ayrıntılarını yenileyin",
     "tencentAppStore": "Tencent App Store",
+    "name": "İsim",
+    "smartname": "İsim (Akıllı)",
+    "sortMethod": "Sıralama Yöntemi",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

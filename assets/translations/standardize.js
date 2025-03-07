@@ -13,7 +13,10 @@ const neverAutoTranslate = {
     obtainiumExportHyphenatedLowercase: ['*'],
     theme: ['de'],
     appId: ['de'],
-    placeholder: ['pl']
+    placeholder: ['pl'],
+    importExport: ['fr'],
+    url: ['fr'],
+    tencentAppStore: ['*']
 }
 
 const translateText = async (text, targetLang, authKey) => {
@@ -76,40 +79,49 @@ const main = async () => {
         const translationKeys = Object.keys(templateTranslation)
         for (let j in translationKeys) {
             const k = translationKeys[j]
-            if (JSON.stringify(thisTranslation[k]) == JSON.stringify(templateTranslation[k])) {
-                const lang = file.split('/').pop().split('.')[0]
-                if (!neverAutoTranslate[k] || (neverAutoTranslate[k].indexOf('*') < 0 && neverAutoTranslate[k].indexOf(lang) < 0)) {
-                    const reportLine = `${file} :::: ${k} :::: ${JSON.stringify(thisTranslation[k])}`
-                    if (deeplAPIKey) {
-                        const translateFunc = async (str) => {
-                            const response = await translateText(str, lang, deeplAPIKey)
-                            if (response.translations) {
-                                return response.translations[0].text
-                            } else {
-                                throw JSON.stringify(response)
-                            }
-                        }
-                        try {
-                            if (typeof templateTranslation[k] == 'string') {
-                                thisTranslation[k] = await translateFunc(thisTranslation[k])
-                            } else {
-                                const subKeys = Object.keys(templateTranslation[k])
-                                for (let n in subKeys) {
-                                    const kk = subKeys[n]
-                                    thisTranslation[k][kk] = await translateFunc(thisTranslation[k][kk])
+            try {
+                if (JSON.stringify(thisTranslation[k]) == JSON.stringify(templateTranslation[k])) {
+                    const lang = file.split('/').pop().split('.')[0]
+                    if (!neverAutoTranslate[k] || (neverAutoTranslate[k].indexOf('*') < 0 && neverAutoTranslate[k].indexOf(lang) < 0)) {
+                        const reportLine = `${file} :::: ${k} :::: ${JSON.stringify(thisTranslation[k])}`
+                        if (deeplAPIKey) {
+                            const translateFunc = async (str) => {
+                                await new Promise((resolve, reject) => {
+                                    setTimeout(() => {
+                                        resolve()
+                                    }, Math.random() * 1000); // Try to avoid rate limit
+                                })
+                                const response = await translateText(str, lang, deeplAPIKey)
+                                if (response.translations) {
+                                    return response.translations[0].text
+                                } else {
+                                    throw JSON.stringify(response)
                                 }
                             }
-                        } catch (e) {
-                            if (typeof e == 'string') {
-                                console.log(`${reportLine} :::: ${e}`)
-                            } else {
-                                throw e
+                            try {
+                                if (typeof templateTranslation[k] == 'string') {
+                                    thisTranslation[k] = await translateFunc(thisTranslation[k])
+                                } else {
+                                    const subKeys = Object.keys(templateTranslation[k])
+                                    for (let n in subKeys) {
+                                        const kk = subKeys[n]
+                                        thisTranslation[k][kk] = await translateFunc(thisTranslation[k][kk])
+                                    }
+                                }
+                            } catch (e) {
+                                if (typeof e == 'string') {
+                                    console.log(`${reportLine} :::: ${e}`)
+                                } else {
+                                    throw e
+                                }
                             }
+                        } else {
+                            console.log(reportLine)
                         }
-                    } else {
-                        console.log(reportLine)
                     }
                 }
+            } catch (err) {
+                console.error(err)
             }
         }
         fs.writeFileSync(file, `${JSON.stringify(thisTranslation, null, '    ')}\n`)

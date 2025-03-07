@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
     "refreshBeforeDownload": "Оновіть інформацію про програму перед завантаженням",
     "tencentAppStore": "Tencent App Store",
+    "name": "Ім'я",
+    "smartname": "Ім'я (Smart)",
+    "sortMethod": "Метод сортування",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

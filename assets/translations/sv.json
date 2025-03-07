@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Håll dig en version bakom den senaste",
     "refreshBeforeDownload": "Uppdatera appdetaljerna före nedladdning",
     "tencentAppStore": "Tencent App Store",
+    "name": "Namn",
+    "smartname": "Namn (Smart)",
+    "sortMethod": "Sorteringsmetod",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "최신 버전보다 한 버전 뒤에 머무르기",
     "refreshBeforeDownload": "다운로드 전에 앱 세부 정보 새로 고침",
     "tencentAppStore": "텐센트 앱 스토어",
+    "name": "이름",
+    "smartname": "이름(스마트)",
+    "sortMethod": "정렬 방법",
     "removeAppQuestion": {
         "one": "앱을 제거하시겠습니까?",
         "other": "앱을 제거하시겠습니까?"

@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Blijf een versie achter op de nieuwste",
     "refreshBeforeDownload": "Vernieuw app details voor download",
     "tencentAppStore": "Tencent App Store",
+    "name": "Naam",
+    "smartname": "Naam (Slim)",
+    "sortMethod": "Sorteermethode",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

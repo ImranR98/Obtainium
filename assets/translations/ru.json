@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Не отставайте от последней версии",
     "refreshBeforeDownload": "Обновляйте информацию о приложении перед загрузкой",
     "tencentAppStore": "Tencent App Store",
+    "name": "Имя",
+    "smartname": "Имя (умное)",
+    "sortMethod": "Метод сортировки",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

@@ -75,8 +75,18 @@ class GitHub extends AppSource {
       ],
       [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
       [
-        GeneratedFormSwitch('dontSortReleasesList',
-            label: tr('dontSortReleasesList'))
+        GeneratedFormDropdown(
+            'sortMethodChoice',
+            [
+              MapEntry('date', tr('releaseDate')),
+              MapEntry('smartname', tr('smartname')),
+              MapEntry('none', tr('none')),
+              MapEntry('smartname-datefallback',
+                  '${tr('smartname')} x ${tr('releaseDate')}'),
+              MapEntry('name', tr('name')),
+            ],
+            label: tr('sortMethod'),
+            defaultValue: 'date')
       ],
       [
         GeneratedFormSwitch('useLatestAssetDateAsReleaseDate',
@@ -244,10 +254,10 @@ class GitHub extends AppSource {
             ? additionalSettings['filterReleaseNotesByRegEx']
             : null;
     bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
-    bool dontSortReleasesList =
-        additionalSettings['dontSortReleasesList'] == true;
     bool useLatestAssetDateAsReleaseDate =
         additionalSettings['useLatestAssetDateAsReleaseDate'] == true;
+    String sortMethod =
+        additionalSettings['sortMethodChoice'] ?? 'smartname-datefallback';
     dynamic latestRelease;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
@@ -316,7 +326,7 @@ class GitHub extends AppSource {
               ? getPublishDateFromRelease(rel)
               : getNewestAssetDateFromRelease(rel);
 
-      if (dontSortReleasesList) {
+      if (sortMethod == 'none') {
         releases = releases.reversed.toList();
       } else {
         releases.sort((a, b) {
@@ -330,22 +340,30 @@ class GitHub extends AppSource {
           } else {
             var nameA = a['tag_name'] ?? a['name'];
             var nameB = b['tag_name'] ?? b['name'];
-            var stdFormats = findStandardFormatsForVersion(nameA, true)
-                .intersection(findStandardFormatsForVersion(nameB, true));
-            if (stdFormats.isNotEmpty) {
-              var reg = RegExp(stdFormats.first);
-              var matchA = reg.firstMatch(nameA);
-              var matchB = reg.firstMatch(nameB);
-              return compareAlphaNumeric(
-                  (nameA as String).substring(matchA!.start, matchA.end),
-                  (nameB as String).substring(matchB!.start, matchB.end));
-            } else {
+            var stdFormats = findStandardFormatsForVersion(nameA, false)
+                .intersection(findStandardFormatsForVersion(nameB, false));
+            if (sortMethod == 'date' ||
+                (sortMethod == 'smartname-datefallback' &&
+                    stdFormats.isEmpty)) {
               return (getReleaseDateFromRelease(
                           a, useLatestAssetDateAsReleaseDate) ??
                       DateTime(1))
                   .compareTo(getReleaseDateFromRelease(
                           b, useLatestAssetDateAsReleaseDate) ??
                       DateTime(0));
+            } else {
+              if (sortMethod != 'name' && stdFormats.isNotEmpty) {
+                var reg = RegExp(stdFormats.last);
+                var matchA = reg.firstMatch(nameA);
+                var matchB = reg.firstMatch(nameB);
+                return compareAlphaNumeric(
+                    (nameA as String).substring(matchA!.start, matchA.end),
+                    (nameB as String).substring(matchB!.start, matchB.end));
+              } else {
+                // 'name'
+                return compareAlphaNumeric(
+                    (nameA as String), (nameB as String));
+              }
             }
           }
         });

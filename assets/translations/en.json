@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Stay one version behind latest",
     "refreshBeforeDownload": "Refresh app details before download",
     "tencentAppStore": "Tencent App Store",
+    "name": "Name",
+    "smartname": "Name (Smart)",
+    "sortMethod": "Sort Method",
     "removeAppQuestion": {
         "one": "Remove App?",
         "other": "Remove Apps?"

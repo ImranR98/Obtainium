@@ -152,6 +152,10 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   if (additionalSettings['autoApkFilterByArch'] == null) {
     additionalSettings['autoApkFilterByArch'] = false;
   }
+  // GitHub "don't sort" option to new dropdown format
+  if (additionalSettings['dontSortReleasesList'] == true) {
+    additionalSettings['sortMethodChoice'] = 'none';
+  }
   if (source.runtimeType == HTML().runtimeType) {
     // HTML key rename
     if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
