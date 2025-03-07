@@ -152,6 +152,10 @@ appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   if (additionalSettings['autoApkFilterByArch'] == null) {
     additionalSettings['autoApkFilterByArch'] = false;
   }
+  // GitHub "don't sort" option to new dropdown format
+  if (additionalSettings['dontSortReleasesList'] == true) {
+    additionalSettings['sortMethodChoice'] = 'none';
+  }
   if (source.runtimeType == HTML().runtimeType) {
     // HTML key rename
     if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
@@ -473,6 +477,23 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       var apkSegs = segments.where((s) => s.toLowerCase().endsWith('.apk'));
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
+
+Future<List<MapEntry<String, String>>> filterApksByArch(
+    List<MapEntry<String, String>> apkUrls) async {
+  if (apkUrls.length > 1) {
+    var abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+    for (var abi in abis) {
+      var urls2 = apkUrls
+          .where((element) => RegExp('.*$abi.*').hasMatch(element.key))
+          .toList();
+      if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
+        apkUrls = urls2;
+        break;
+      }
+    }
+  }
+  return apkUrls;
+}
 
 getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
@@ -984,18 +1005,8 @@ class SourceProvider {
     if (apk.apkUrls.isEmpty && !trackOnly) {
       throw NoAPKError();
     }
-    if (apk.apkUrls.length > 1 &&
-        additionalSettings['autoApkFilterByArch'] == true) {
-      var abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
-      for (var abi in abis) {
-        var urls2 = apk.apkUrls
-            .where((element) => RegExp('.*$abi.*').hasMatch(element.key))
-            .toList();
-        if (urls2.isNotEmpty && urls2.length < apk.apkUrls.length) {
-          apk.apkUrls = urls2;
-          break;
-        }
-      }
+    if (additionalSettings['autoApkFilterByArch'] == true) {
+      apk.apkUrls = await filterApksByArch(apk.apkUrls);
     }
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;

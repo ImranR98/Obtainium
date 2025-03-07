@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "最新のバージョンから1つ前のものを使用する",
     "refreshBeforeDownload": "ダウンロード前にアプリの詳細を更新する",
     "tencentAppStore": "Tencent App Store",
+    "name": "Name",
+    "smartname": "名前（スマート）",
+    "sortMethod": "ソート方法",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

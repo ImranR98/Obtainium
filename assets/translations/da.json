@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Forbliv én version bagud den seneste",
     "refreshBeforeDownload": "Opdater app-detaljer før download",
     "tencentAppStore": "Tencent App Store",
+    "name": "Navn",
+    "smartname": "Navn (Smart)",
+    "sortMethod": "Sorteringsmetode",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
     "refreshBeforeDownload": "Segarkan detail aplikasi sebelum mengunduh",
     "tencentAppStore": "Tencent App Store",
+    "name": "Nama",
+    "smartname": "Nama (Cerdas)",
+    "sortMethod": "Metode Penyortiran",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

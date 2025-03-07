@@ -319,6 +319,9 @@
     "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
     "refreshBeforeDownload": "Az alkalmazás adatainak frissítése a letöltés előtt",
     "tencentAppStore": "Tencent Appstore",
+    "name": "Név",
+    "smartname": "Név (Smart)",
+    "sortMethod": "Rendezési módszer",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
