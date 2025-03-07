@@ -347,19 +347,20 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   var received = 0;
   double? progress;
   DateTime? lastProgressUpdate; // Track last progress update time
-  const throttleDuration = Duration(milliseconds: 100); // Throttle interval
   if (rangeStart > 0 && fullContentLength != null) {
     received = rangeStart;
   }
-  const bufferSizeThreshold = 64 * 1024; // 64KB
-  final buffer = BytesBuilder(); // Efficiently accumulates bytes
+  const downloadUIUpdateInterval = Duration(milliseconds: 500);
+  const downloadBufferSize = 32 * 1024; // 32KB
+  final downloadBuffer = BytesBuilder();
   await response.stream
       .map((chunk) {
         received += chunk.length;
         final now = DateTime.now();
         if (onProgress != null &&
             (lastProgressUpdate == null ||
-                now.difference(lastProgressUpdate!) >= throttleDuration)) {
+                now.difference(lastProgressUpdate!) >=
+                    downloadUIUpdateInterval)) {
           progress = fullContentLength != null
               ? (received / fullContentLength) * 100
               : 30;
@@ -369,17 +370,17 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
         return chunk;
       })
       .transform(StreamTransformer<List<int>, List<int>>.fromHandlers(
-        handleData: (List<int> data, EventSink<List<int>> sink) {
-          buffer.add(data);
-          if (buffer.length >= bufferSizeThreshold) {
-            sink.add(buffer.takeBytes());
+        handleData: (List<int> data, EventSink<List<int>> s) {
+          downloadBuffer.add(data);
+          if (downloadBuffer.length >= downloadBufferSize) {
+            s.add(downloadBuffer.takeBytes());
           }
         },
-        handleDone: (EventSink<List<int>> sink) {
-          if (buffer.isNotEmpty) {
-            sink.add(buffer.takeBytes());
+        handleDone: (EventSink<List<int>> s) {
+          if (downloadBuffer.isNotEmpty) {
+            s.add(downloadBuffer.takeBytes());
           }
-          sink.close();
+          s.close();
         },
       ))
       .pipe(sink);
