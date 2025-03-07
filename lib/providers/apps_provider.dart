@@ -9,6 +9,7 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import 'dart:typed_data';
 
 import 'package:android_intent_plus/flag.dart';
 import 'package:android_package_installer/android_package_installer.dart';
@@ -345,18 +346,43 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   // Perform the download
   var received = 0;
   double? progress;
+  DateTime? lastProgressUpdate; // Track last progress update time
+  const throttleDuration = Duration(milliseconds: 100); // Throttle interval
   if (rangeStart > 0 && fullContentLength != null) {
     received = rangeStart;
   }
-  await response.stream.map((s) {
-    received += s.length;
-    progress =
-        (fullContentLength != null ? (received / fullContentLength) * 100 : 30);
-    if (onProgress != null) {
-      onProgress(progress);
-    }
-    return s;
-  }).pipe(sink);
+  const bufferSizeThreshold = 64 * 1024; // 64KB
+  final buffer = BytesBuilder(); // Efficiently accumulates bytes
+  await response.stream
+      .map((chunk) {
+        received += chunk.length;
+        final now = DateTime.now();
+        if (onProgress != null &&
+            (lastProgressUpdate == null ||
+                now.difference(lastProgressUpdate!) >= throttleDuration)) {
+          progress = fullContentLength != null
+              ? (received / fullContentLength) * 100
+              : 30;
+          onProgress(progress);
+          lastProgressUpdate = now;
+        }
+        return chunk;
+      })
+      .transform(StreamTransformer<List<int>, List<int>>.fromHandlers(
+        handleData: (List<int> data, EventSink<List<int>> sink) {
+          buffer.add(data);
+          if (buffer.length >= bufferSizeThreshold) {
+            sink.add(buffer.takeBytes());
+          }
+        },
+        handleDone: (EventSink<List<int>> sink) {
+          if (buffer.isNotEmpty) {
+            sink.add(buffer.takeBytes());
+          }
+          sink.close();
+        },
+      ))
+      .pipe(sink);
   await sink.close();
   progress = null;
   if (onProgress != null) {
