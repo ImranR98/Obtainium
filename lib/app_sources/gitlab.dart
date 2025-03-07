@@ -120,7 +120,7 @@ class GitLab extends AppSource {
       Map<String, dynamic> additionalSettings) async {
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
     String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
-    return '$apkUrl?$optionalAuth';
+    return '$apkUrl${(Uri.parse(apkUrl).query.isEmpty ? '?' : '&')}$optionalAuth';
   }
 
   @override
