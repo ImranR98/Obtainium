@@ -294,7 +294,7 @@
     "shizukuBinderNotFound": "A Shizuku szolgáltatás nem fut",
     "shizukuOld": "Régi Shizuku verzió (<11) - frissítse",
     "shizukuOldAndroidWithADB": "A Shizuku csak Android < 8.1 ADB-vel fut - frissítse az Androidot vagy használja a Sui-t helyette",
-    "shizukuPretendToBeGooglePlay": "Állítsa be a Google Playt telepítési forrásként (ha Shizukut használ)",
+    "shizukuPretendToBeGooglePlay": "A Google Play beállítása telepítési forrásként (ha Shizukut használ)",
     "useSystemFont": "A rendszer betűtípusának használata",
     "useVersionCodeAsOSVersion": "Az alkalmazás verziókódjának használata a rendszer által érzékelt verzióként",
     "requestHeader": "Kérelemfejléc",
