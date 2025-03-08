@@ -1,0 +1,15 @@
+LICENSE.md
+README.md
+analysis_options.yaml
+android
+assets
+build
+build.sh
+data
+docker
+fastlane
+lib
+pubspec.lock
+pubspec.yaml
+sign.sh
+test
