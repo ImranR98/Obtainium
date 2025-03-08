@@ -320,8 +320,8 @@
     "refreshBeforeDownload": "Az alkalmazás adatainak frissítése a letöltés előtt",
     "tencentAppStore": "Tencent Appstore",
     "name": "Név",
-    "smartname": "Név (Smart)",
-    "sortMethod": "Rendezési módszer",
+    "smartname": "Név (Okos)",
+    "sortMethod": "Rendezési eljárás",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
