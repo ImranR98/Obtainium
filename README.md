@@ -29,6 +29,7 @@ Currently supported App sources:
   - [Uptodown](https://uptodown.com/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
+  - [CoolApk](https://coolapk.com/)
   - [RuStore](https://rustore.ru/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
