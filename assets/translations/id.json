@@ -221,6 +221,7 @@
     "standardVersionDetection": "Pendeteksi versi standar",
     "groupByCategory": "Kelompokkan berdasarkan kategori",
     "autoApkFilterByArch": "Coba filter APK berdasarkan arsitektur CPU jika memungkinkan",
+    "autoLinkFilterByArch": "Mencoba memfilter tautan berdasarkan arsitektur CPU jika memungkinkan",
     "overrideSource": "Ganti sumber",
     "dontShowAgain": "Jangan tampilkan lagi",
     "dontShowTrackOnlyWarnings": "Jangan tampilkan peringatan 'Pelacakan Saja'",

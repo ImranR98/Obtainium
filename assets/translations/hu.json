@@ -221,6 +221,7 @@
     "standardVersionDetection": "Alapértelmezett verzió-érzékelés",
     "groupByCategory": "Csoportosítás kategória alapján",
     "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-kat",
+    "autoLinkFilterByArch": "Ha lehetséges, próbálja meg a linkeket CPU-architektúra szerint szűrni.",
     "overrideSource": "Forrás felülírása",
     "dontShowAgain": "Ne jelenítse meg ezt többé",
     "dontShowTrackOnlyWarnings": "Ne jelenítse meg a „Csak nyomon-követés” figyelmeztetést",

@@ -221,6 +221,7 @@
     "standardVersionDetection": "표준 버전 감지",
     "groupByCategory": "카테고리별 그룹화",
     "autoApkFilterByArch": "가능한 경우 CPU 아키텍처별로 APK 필터링 시도",
+    "autoLinkFilterByArch": "가능하면 CPU 아키텍처별로 링크를 필터링해 보세요.",
     "overrideSource": "소스 재정의",
     "dontShowAgain": "다시 표시하지 않기",
     "dontShowTrackOnlyWarnings": "'추적 전용' 경고 표시 안 함",

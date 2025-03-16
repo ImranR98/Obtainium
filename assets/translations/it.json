@@ -221,6 +221,7 @@
     "standardVersionDetection": "Rilevamento di versione standard",
     "groupByCategory": "Raggruppa per categoria",
     "autoApkFilterByArch": "Tenta di filtrare gli APK in base all'architettura della CPU, se possibile",
+    "autoLinkFilterByArch": "Tentare di filtrare i collegamenti in base all'architettura della CPU, se possibile.",
     "overrideSource": "Sovrascrivi fonte",
     "dontShowAgain": "Non mostrarlo più",
     "dontShowTrackOnlyWarnings": "Non mostrare gli avvisi 'Solo-Monitoraggio'",

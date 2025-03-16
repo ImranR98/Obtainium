@@ -16,7 +16,6 @@ const neverAutoTranslate = {
     placeholder: ['pl'],
     importExport: ['fr'],
     url: ['fr'],
-    name: ['ja'],
     tencentAppStore: ['*']
 }
 

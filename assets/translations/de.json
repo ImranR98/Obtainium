@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standardversionserkennung",
     "groupByCategory": "Nach Kategorie gruppieren",
     "autoApkFilterByArch": "Nach Möglichkeit versuchen, APKs nach CPU-Architektur zu filtern",
+    "autoLinkFilterByArch": "Versuchen Sie, Links nach CPU-Architektur zu filtern, wenn möglich",
     "overrideSource": "Quelle überschreiben",
     "dontShowAgain": "Nicht noch einmal anzeigen",
     "dontShowTrackOnlyWarnings": "Warnung für „Nur nachverfolgen“ nicht anzeigen",

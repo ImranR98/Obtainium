@@ -213,8 +213,8 @@ class HTML extends AppSource {
           additionalValidators: [(value) => regExValidator(value)])
     ],
     [
-      GeneratedFormSwitch('autoApkFilterByArch',
-          label: tr('autoApkFilterByArch'), defaultValue: false)
+      GeneratedFormSwitch('autoLinkFilterByArch',
+          label: tr('autoLinkFilterByArch'), defaultValue: false)
     ],
   ];
   HTML() {
@@ -319,7 +319,7 @@ class HTML extends AppSource {
       if (intLinks.isEmpty) {
         throw NoReleasesError(note: currentUrl);
       } else {
-        if (additionalSettings['intermediateLink'][i]['autoApkFilterByArch'] ==
+        if (additionalSettings['intermediateLink'][i]['autoLinkFilterByArch'] ==
             true) {
           intLinks = await filterApksByArch(intLinks);
         }

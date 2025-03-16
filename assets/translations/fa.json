@@ -221,6 +221,7 @@
     "standardVersionDetection": "تشخیص نسخه استاندارد",
     "groupByCategory": "گروه بر اساس دسته",
     "autoApkFilterByArch": "در صورت امکان سعی کنید APKها را بر اساس معماری CPU فیلتر کنید",
+    "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
     "overrideSource": "نادیده گرفتن منبع",
     "dontShowAgain": "دوباره این را نشان نده",
     "dontShowTrackOnlyWarnings": "هشدار 'فقط ردیابی' را نشان ندهید",

@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standardowe wykrywanie wersji",
     "groupByCategory": "Grupuj według kategorii",
     "autoApkFilterByArch": "Spróbuj filtrować pliki APK według architektury procesora, jeśli to możliwe",
+    "autoLinkFilterByArch": "Spróbuj filtrować linki według architektury procesora, jeśli to możliwe.",
     "overrideSource": "Nadpisz źródło",
     "dontShowAgain": "Nie pokazuj tego ponownie",
     "dontShowTrackOnlyWarnings": "Nie pokazuj ostrzeżeń \"Tylko obserwowana\"",

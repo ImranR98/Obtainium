@@ -221,6 +221,7 @@
     "standardVersionDetection": "常规版本检测",
     "groupByCategory": "按类别分组显示",
     "autoApkFilterByArch": "如果可能，尝试按设备支持的 CPU 架构筛选 APK 文件",
+    "autoLinkFilterByArch": "尽可能按 CPU 架构过滤链接",
     "overrideSource": "覆盖来源",
     "dontShowAgain": "不再显示",
     "dontShowTrackOnlyWarnings": "忽略“仅追踪”模式警告",

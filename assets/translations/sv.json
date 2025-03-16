@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standardversionsdetektering",
     "groupByCategory": "Gruppera via Kategori",
     "autoApkFilterByArch": "Försök att filtrera APK-filer efter CPU-arkitektur om möjligt",
+    "autoLinkFilterByArch": "Försök att filtrera länkar efter CPU-arkitektur om möjligt",
     "overrideSource": "Överskrid Källa",
     "dontShowAgain": "Visa inte detta igen",
     "dontShowTrackOnlyWarnings": "Visa inte 'Följ-Endast' varningar",
