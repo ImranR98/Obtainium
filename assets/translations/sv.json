@@ -322,6 +322,8 @@
     "name": "Namn",
     "smartname": "Namn (Smart)",
     "sortMethod": "Sorteringsmetod",
+    "welcome": "Välkommen",
+    "documentationLinksNote": "Obtainium GitHub-sidan som länkas nedan innehåller länkar till videor, artiklar, diskussioner och andra resurser som hjälper dig att förstå hur du använder appen.",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

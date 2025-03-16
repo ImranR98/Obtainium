@@ -322,6 +322,8 @@
     "name": "名称",
     "smartname": "姓名（智能）",
     "sortMethod": "排序方法",
+    "welcome": "欢迎光临",
+    "documentationLinksNote": "下面链接的 Obtainium GitHub 页面包含视频、文章、讨论和其他资源的链接，可帮助您了解如何使用该应用程序。",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

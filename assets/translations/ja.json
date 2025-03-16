@@ -322,6 +322,8 @@
     "name": "Name",
     "smartname": "名前（スマート）",
     "sortMethod": "ソート方法",
+    "welcome": "ようこそ",
+    "documentationLinksNote": "以下のリンクにあるObtainium GitHubページには、ビデオ、記事、ディスカッション、その他のリソースへのリンクがあり、アプリの使い方を理解するのに役立ちます。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

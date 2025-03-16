@@ -322,6 +322,8 @@
     "name": "Név",
     "smartname": "Név (Okos)",
     "sortMethod": "Rendezési eljárás",
+    "welcome": "Üdvözöljük",
+    "documentationLinksNote": "Az alább linkelt Obtainium GitHub oldal videókra, cikkekre, beszélgetésekre és egyéb forrásokra mutató linkeket tartalmaz, amelyek segítenek megérteni az alkalmazás használatát.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

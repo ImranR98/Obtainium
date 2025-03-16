@@ -322,6 +322,8 @@
     "name": "Nazwa",
     "smartname": "Nazwa (Smart)",
     "sortMethod": "Metoda sortowania",
+    "welcome": "Witamy",
+    "documentationLinksNote": "Strona Obtainium GitHub, do której link znajduje się poniżej, zawiera linki do filmów, artykułów, dyskusji i innych zasobów, które pomogą ci zrozumieć, jak korzystać z aplikacji.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

@@ -16,6 +16,7 @@ const neverAutoTranslate = {
     placeholder: ['pl'],
     importExport: ['fr'],
     url: ['fr'],
+    name: ['ja'],
     tencentAppStore: ['*']
 }
 
@@ -89,7 +90,7 @@ const main = async () => {
                                 await new Promise((resolve, reject) => {
                                     setTimeout(() => {
                                         resolve()
-                                    }, Math.random() * 1000); // Try to avoid rate limit
+                                    }, Math.random() * 10000); // Try to avoid rate limit
                                 })
                                 const response = await translateText(str, lang, deeplAPIKey)
                                 if (response.translations) {

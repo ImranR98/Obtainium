@@ -15,6 +15,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -54,6 +55,45 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     initDeepLinks();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      var sp = context.read<SettingsProvider>();
+      if (!sp.welcomeShown) {
+        await showDialog(
+            context: context,
+            builder: (BuildContext ctx) {
+              return AlertDialog(
+                title: Text(tr('welcome')),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 20,
+                  children: [
+                    Text(tr('documentationLinksNote')),
+                    GestureDetector(
+                        onTap: () {
+                          launchUrlString(
+                              'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                              mode: LaunchMode.externalApplication);
+                        },
+                        child: Text(
+                          'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                          style: const TextStyle(
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold),
+                        )),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        sp.welcomeShown = true;
+                        Navigator.of(context).pop(null);
+                      },
+                      child: Text(tr('ok'))),
+                ],
+              );
+            });
+      }
+    });
   }
 
   Future<void> initDeepLinks() async {
