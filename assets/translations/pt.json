@@ -221,6 +221,7 @@
     "standardVersionDetection": "Detecção de versão padrão",
     "groupByCategory": "Agroupar por categoria",
     "autoApkFilterByArch": "Tente filtrar APKs por arquitetura de CPU, se possível",
+    "autoLinkFilterByArch": "Tentativa de filtrar as ligações por arquitetura de CPU, se possível",
     "overrideSource": "Substituir fonte",
     "dontShowAgain": "Não mostrar isso novamente",
     "dontShowTrackOnlyWarnings": "Não mostrar avisos 'Apenas monitorar'",
@@ -322,6 +323,8 @@
     "name": "Nome",
     "smartname": "Nome (Smart)",
     "sortMethod": "Método de ordenação",
+    "welcome": "Bem-vindo",
+    "documentationLinksNote": "A página do Obtainium no GitHub com a ligação abaixo contém ligações para vídeos, artigos, discussões e outros recursos que o ajudarão a compreender como utilizar a aplicação.",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

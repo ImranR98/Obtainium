@@ -150,6 +150,15 @@ class SettingsProvider with ChangeNotifier {
     return result;
   }
 
+  bool get welcomeShown {
+    return prefs?.getBool('welcomeShown') ?? false;
+  }
+
+  set welcomeShown(bool welcomeShown) {
+    prefs?.setBool('welcomeShown', welcomeShown);
+    notifyListeners();
+  }
+
   bool checkJustStarted() {
     if (justStarted) {
       justStarted = false;

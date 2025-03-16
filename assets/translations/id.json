@@ -221,6 +221,7 @@
     "standardVersionDetection": "Pendeteksi versi standar",
     "groupByCategory": "Kelompokkan berdasarkan kategori",
     "autoApkFilterByArch": "Coba filter APK berdasarkan arsitektur CPU jika memungkinkan",
+    "autoLinkFilterByArch": "Mencoba memfilter tautan berdasarkan arsitektur CPU jika memungkinkan",
     "overrideSource": "Ganti sumber",
     "dontShowAgain": "Jangan tampilkan lagi",
     "dontShowTrackOnlyWarnings": "Jangan tampilkan peringatan 'Pelacakan Saja'",
@@ -322,6 +323,8 @@
     "name": "Nama",
     "smartname": "Nama (Cerdas)",
     "sortMethod": "Metode Penyortiran",
+    "welcome": "Selamat datang.",
+    "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

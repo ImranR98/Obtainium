@@ -221,6 +221,7 @@
     "standardVersionDetection": "Norma versiodetekto",
     "groupByCategory": "Grupigi per kategorio",
     "autoApkFilterByArch": "Provi filtri APKj per CPU-arkitekturo se ebla",
+    "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
     "overrideSource": "Substitui la fonton",
     "dontShowAgain": "Ne plu montri",
     "dontShowTrackOnlyWarnings": "Ne plu montri 'Nur sekvita' avertojn",
@@ -322,6 +323,8 @@
     "name": "Name",
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
+    "welcome": "Welcome",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
     "removeAppQuestion": {
         "one": "Forigi la aplikaĵon?",
         "other": "Forigi la aplikaĵojn?"

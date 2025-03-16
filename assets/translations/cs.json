@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standardní detekce verze",
     "groupByCategory": "Seskupit podle kategorie",
     "autoApkFilterByArch": "Pokud je to možné, pokuste se filtrovat soubory APK podle architektury procesoru",
+    "autoLinkFilterByArch": "Pokus o filtrování odkazů podle architektury procesoru, pokud je to možné.",
     "overrideSource": "Přepsat zdroj",
     "dontShowAgain": "Nezobrazovat znovu",
     "dontShowTrackOnlyWarnings": "Nezobrazovat varování pro 'Jen sledované'",
@@ -322,6 +323,8 @@
     "name": "Název",
     "smartname": "Název (Smart)",
     "sortMethod": "Metoda třídění",
+    "welcome": "Vítejte na",
+    "documentationLinksNote": "Níže odkazovaná stránka Obtainium GitHub obsahuje odkazy na videa, články, diskuse a další zdroje, které vám pomohou pochopit, jak aplikaci používat.",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

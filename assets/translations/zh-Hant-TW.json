@@ -221,6 +221,7 @@
     "standardVersionDetection": "標準版本偵測",
     "groupByCategory": "按類別分組",
     "autoApkFilterByArch": "如果可能，嘗試按 CPU 架構過濾 APK",
+    "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
     "overrideSource": "覆蓋來源",
     "dontShowAgain": "不要再顯示",
     "dontShowTrackOnlyWarnings": "不要顯示「僅追蹤」警告",
@@ -322,6 +323,8 @@
     "name": "Name",
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
+    "welcome": "Welcome",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

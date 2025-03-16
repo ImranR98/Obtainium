@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standaard versieherkenning",
     "groupByCategory": "Groeperen op categorie",
     "autoApkFilterByArch": "Probeer APK's te filteren op CPU-architectuur, indien mogelijk",
+    "autoLinkFilterByArch": "Probeer links zo mogelijk te filteren op CPU-architectuur",
     "overrideSource": "Bron overschrijven",
     "dontShowAgain": "Laat dit niet meer zien",
     "dontShowTrackOnlyWarnings": "Geen waarschuwingen weergeven voor 'Alleen volgen'",
@@ -322,6 +323,8 @@
     "name": "Naam",
     "smartname": "Naam (Slim)",
     "sortMethod": "Sorteermethode",
+    "welcome": "Welkom",
+    "documentationLinksNote": "De GitHub pagina van Obtainium waarnaar hieronder wordt gelinkt bevat links naar video's, artikelen, discussies en andere bronnen die je zullen helpen begrijpen hoe je de app kunt gebruiken.",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

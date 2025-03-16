@@ -221,6 +221,7 @@
     "standardVersionDetection": "Alapértelmezett verzió-érzékelés",
     "groupByCategory": "Csoportosítás kategória alapján",
     "autoApkFilterByArch": "Ha lehetséges, próbálja CPU architektúra szerint szűrni az APK-kat",
+    "autoLinkFilterByArch": "Ha lehetséges, próbálja meg a linkeket CPU-architektúra szerint szűrni.",
     "overrideSource": "Forrás felülírása",
     "dontShowAgain": "Ne jelenítse meg ezt többé",
     "dontShowTrackOnlyWarnings": "Ne jelenítse meg a „Csak nyomon-követés” figyelmeztetést",
@@ -322,6 +323,8 @@
     "name": "Név",
     "smartname": "Név (Okos)",
     "sortMethod": "Rendezési eljárás",
+    "welcome": "Üdvözöljük",
+    "documentationLinksNote": "Az alább linkelt Obtainium GitHub oldal videókra, cikkekre, beszélgetésekre és egyéb forrásokra mutató linkeket tartalmaz, amelyek segítenek megérteni az alkalmazás használatát.",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

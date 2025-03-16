@@ -221,6 +221,7 @@
     "standardVersionDetection": "Standardversionsdetektering",
     "groupByCategory": "Gruppera via Kategori",
     "autoApkFilterByArch": "Försök att filtrera APK-filer efter CPU-arkitektur om möjligt",
+    "autoLinkFilterByArch": "Försök att filtrera länkar efter CPU-arkitektur om möjligt",
     "overrideSource": "Överskrid Källa",
     "dontShowAgain": "Visa inte detta igen",
     "dontShowTrackOnlyWarnings": "Visa inte 'Följ-Endast' varningar",
@@ -322,6 +323,8 @@
     "name": "Namn",
     "smartname": "Namn (Smart)",
     "sortMethod": "Sorteringsmetod",
+    "welcome": "Välkommen",
+    "documentationLinksNote": "Obtainium GitHub-sidan som länkas nedan innehåller länkar till videor, artiklar, diskussioner och andra resurser som hjälper dig att förstå hur du använder appen.",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

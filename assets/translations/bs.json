@@ -221,6 +221,7 @@
     "standardVersionDetection": "Detekcija standardne verzije",
     "groupByCategory": "Grupiši po kategoriji",
     "autoApkFilterByArch": "Pokušajte filtrirati APK-ove po arhitekturi procesora ako je moguće",
+    "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
     "overrideSource": "Premosti izvor",
     "dontShowAgain": "Ne prikazuj ovo ponovo",
     "dontShowTrackOnlyWarnings": "Ne prikazuj upozorenja „Samo za  praćenje”",
@@ -322,6 +323,8 @@
     "name": "Name",
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
+    "welcome": "Welcome",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

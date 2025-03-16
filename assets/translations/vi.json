@@ -221,6 +221,7 @@
     "standardVersionDetection": "Phát hiện phiên bản tiêu chuẩn",
     "groupByCategory": "Nhóm theo danh mục",
     "autoApkFilterByArch": "Cố gắng lọc APK theo kiến trúc CPU nếu có thể",
+    "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
     "overrideSource": "Ghi đè nguồn",
     "dontShowAgain": "Đừng hiển thị thông tin này nữa",
     "dontShowTrackOnlyWarnings": "Không hiển thị cảnh báo 'Chỉ theo dõi'",
@@ -322,6 +323,8 @@
     "name": "Name",
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
+    "welcome": "Welcome",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"
