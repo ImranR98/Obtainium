@@ -72,7 +72,8 @@ class APKMirror extends AppSource {
                 true
             ? additionalSettings['filterReleaseTitlesByRegEx']
             : null;
-    Response res = await sourceRequest('$standardUrl/feed', additionalSettings);
+    Response res =
+        await sourceRequest('$standardUrl/feed/', additionalSettings);
     if (res.statusCode == 200) {
       var items = parse(res.body).querySelectorAll('item');
       dynamic targetRelease;
