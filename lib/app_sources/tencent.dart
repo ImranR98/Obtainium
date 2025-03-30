@@ -65,7 +65,7 @@ class Tencent extends AppSource {
       var releaseDate =
           json['app_detail_records'][appId]['app_info']['update_time'];
       var apkName = Uri.parse(apkUrl).queryParameters['fsname'] ??
-          '${appId}_${version}.apk';
+          '${appId}_$version.apk';
 
       return APKDetails(
           version, [MapEntry(apkName, apkUrl)], AppNames(author, appName),

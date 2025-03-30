@@ -315,7 +315,7 @@
     "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
     "wiki": "Súgó/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsource-ből származó alkalmazások beállítása (saját felelősségére használja)",
-    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configurations",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
     "refreshBeforeDownload": "Az alkalmazás adatainak frissítése a letöltés előtt",

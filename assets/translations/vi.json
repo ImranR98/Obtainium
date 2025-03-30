@@ -315,7 +315,7 @@
     "appVerifierInstructionToast": "Chia sẻ lên AppVerifier, sau đó quay lại đây khi sẵn sàng.",
     "wiki": "Trợ giúp/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use at your own risk)",
-    "crowdsourcedConfigsShort": "Crowdsourced App Configs",
+    "crowdsourcedConfigsShort": "Crowdsourced App Configurations",
     "allowInsecure": "Allow insecure HTTP requests",
     "stayOneVersionBehind": "Stay one version behind latest",
     "refreshBeforeDownload": "Refresh app details before download",

@@ -80,10 +80,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: "0c64e928dcbefddecd234205422bcfc2b5e6d31be0b86fef0d0dd48d7b4c9742"
+      sha256: "7dcbd0f87fe5f61cb28da39a1a8b70dbc106e2fe0516f7836eb7bb2948481a12"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.4"
+    version: "4.0.5"
   args:
     dependency: transitive
     description:
@@ -104,10 +104,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_fetch
-      sha256: e9f26ae54d88310b7ac2a68f2f9fcee0081a4d5f11100f233a70702021e7ac4f
+      sha256: "442e82f508708be89fd0cc7e1dc3b27bc7c6c8c39a47967ccb7ed1c57b9108b5"
       url: "https://pub.dev"
     source: hosted
-    version: "1.3.7"
+    version: "1.3.8"
   battery_plus:
     dependency: "direct main"
     description:
@@ -304,10 +304,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: ee11ce89f8937c39181bc88d57a455972f7545b86150d8f287d0d9cf95bcdf0a
+      sha256: "09b474c0c8117484b80cbebc043801ff91e05cfbd2874d512825c899e1754694"
       url: "https://pub.dev"
     source: hosted
-    version: "9.1.0"
+    version: "9.2.3"
   fixnum:
     dependency: transitive
     description:
@@ -580,10 +580,10 @@ packages:
     dependency: transitive
     description:
       name: image
-      sha256: "13d3349ace88f12f4a0d175eb5c12dcdd39d35c4c109a8a13dfeb6d0bd9e31c3"
+      sha256: "4e973fcf4caae1a4be2fa0a13157aa38a8f9cb049db6529aa00b4d71abc4d928"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.3"
+    version: "4.5.4"
   intl:
     dependency: transitive
     description:
@@ -860,10 +860,10 @@ packages:
     dependency: "direct main"
     description:
       name: provider
-      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
+      sha256: "489024f942069c2920c844ee18bb3d467c69e48955a4f32d1677f71be103e310"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.2"
+    version: "6.1.4"
   share_plus:
     dependency: "direct main"
     description:
@@ -884,10 +884,10 @@ packages:
     dependency: "direct main"
     description:
       name: shared_preferences
-      sha256: "846849e3e9b68f3ef4b60c60cf4b3e02e9321bc7f4d8c4692cf87ffa82fc8a3a"
+      sha256: "6e8bf70b7fef813df4e9a36f658ac46d107db4b4cfe1048b477d4e453a8159f5"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.2"
+    version: "2.5.3"
   shared_preferences_android:
     dependency: transitive
     description:
@@ -950,8 +950,8 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "25acc02612c2e0fcae40d312e047ac48106f8f6b"
-      url: "https://github.com/re7gog/shizuku_apk_installer"
+      resolved-ref: c4349ceb03ae7293987cc0290ef06761e62c082e
+      url: "https://github.com/wilver06w/shizuku_apk_installer"
     source: git
     version: "0.0.1"
   sky_engine:
@@ -1195,10 +1195,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: "631093a7fbd93e9690ac61d8c8f3e857efbc189fc33f712b9ad6c01a623517ef"
+      sha256: e09150b28a07933839adef0e4a088bb43e8c8d9e6b93025b01882d4067a58ab0
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.3"
+    version: "4.3.4"
   webview_flutter_platform_interface:
     dependency: transitive
     description:

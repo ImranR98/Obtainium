@@ -490,8 +490,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                       searchSource[0]);
                                                 }
                                               },
-                                        child: Text(tr('searchX',
-                                            args: [tr('source')])))),
+                                        child: Text(tr('searchX', args: [
+                                          tr('source').toLowerCase()
+                                        ])))),
                               ],
                             ),
                             const SizedBox(height: 8),
