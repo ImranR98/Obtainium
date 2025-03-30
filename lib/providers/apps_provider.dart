@@ -800,7 +800,9 @@ class AppsProvider with ChangeNotifier {
     if (newInfo == null) {
       try {
         file.file.deleteSync(recursive: true);
-        additionalAPKs.forEach((a) => a.file.deleteSync(recursive: true));
+        for (var a in additionalAPKs) {
+          a.file.deleteSync(recursive: true);
+        }
       } catch (e) {
         //
       } finally {

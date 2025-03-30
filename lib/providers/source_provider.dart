@@ -363,7 +363,7 @@ class App {
       otherAssetUrls: otherAssetUrls);
 
   factory App.fromJson(Map<String, dynamic> json) {
-    Map<String, dynamic> originalJSON = new Map.from(json);
+    Map<String, dynamic> originalJSON = Map.from(json);
     try {
       json = appJSONCompatibilityModifiers(json);
     } catch (e) {
