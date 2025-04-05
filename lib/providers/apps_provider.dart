@@ -220,6 +220,19 @@ Future<String> checkPartialDownloadHash(String url, int bytesToGrab,
   return hashListOfLists(bytes);
 }
 
+Future<String?> checkETagHeader(String url,
+    {Map<String, String>? headers, bool allowInsecure = false}) async {
+  // Send the initial request but cancel it as soon as you have the headers
+  var reqHeaders = headers ?? {};
+  var req = Request('GET', Uri.parse(url));
+  req.headers.addAll(reqHeaders);
+  var client = IOClient(createHttpClient(allowInsecure));
+  StreamedResponse response = await client.send(req);
+  var resHeaders = response.headers;
+  client.close();
+  return resHeaders[HttpHeaders.etagHeader];
+}
+
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
     {bool useExisting = true,

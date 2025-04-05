@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -8,12 +9,23 @@ class DirectAPKLink extends AppSource {
 
   DirectAPKLink() {
     name = tr('directAPKLink');
-    additionalSourceAppSpecificSettingFormItems = html
-        .additionalSourceAppSpecificSettingFormItems
-        .where((element) => element
-            .where((element) => element.key == 'requestHeader')
-            .isNotEmpty)
-        .toList();
+    additionalSourceAppSpecificSettingFormItems = [
+      ...html.additionalSourceAppSpecificSettingFormItems
+          .where((element) => element
+              .where((element) => element.key == 'requestHeader')
+              .isNotEmpty)
+          .toList(),
+      [
+        GeneratedFormDropdown(
+            'defaultPseudoVersioningMethod',
+            [
+              MapEntry('partialAPKHash', tr('partialAPKHash')),
+              MapEntry('ETag', 'ETag')
+            ],
+            label: tr('defaultPseudoVersioningMethod'),
+            defaultValue: 'partialAPKHash')
+      ]
+    ];
     excludeCommonSettingKeys = [
       'versionExtractionRegEx',
       'matchGroupToUse',
@@ -57,9 +69,8 @@ class DirectAPKLink extends AppSource {
         additionalSettingsNew[s] = additionalSettings[s];
       }
     }
-    additionalSettingsNew['defaultPseudoVersioningMethod'] = 'partialAPKHash';
     additionalSettingsNew['directAPKLink'] = true;
-    additionalSettings['versionDetection'] = false;
+    additionalSettingsNew['versionDetection'] = false;
     return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
   }
 }
