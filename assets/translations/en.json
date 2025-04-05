@@ -265,7 +265,7 @@
     "matchGroupToUse": "Match group to use for version string extraction RegEx",
     "highlightTouchTargets": "Highlight less obvious touch targets",
     "pickExportDir": "Pick export directory",
-    "autoExportOnChanges": "Auto-export on changes",
+    "autoExportOnChanges": "Automatically export on changes",
     "includeSettings": "Include settings",
     "filterVersionsByRegEx": "Filter versions by regular expression",
     "trySelectingSuggestedVersionCode": "Try selecting suggested versionCode APK",
