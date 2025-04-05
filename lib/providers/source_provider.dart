@@ -3,12 +3,12 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
-import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
@@ -566,23 +566,59 @@ abstract class AppSource {
       String url, Map<String, dynamic> additionalSettings,
       {bool followRedirects = true, Object? postBody}) async {
     var requestHeaders = await getRequestHeaders(additionalSettings);
+
     if (requestHeaders != null || followRedirects == false) {
-      var req = Request(postBody == null ? 'GET' : 'POST', Uri.parse(url));
-      req.followRedirects = followRedirects;
-      if (requestHeaders != null) {
-        req.headers.addAll(requestHeaders);
+      var method = postBody == null ? 'GET' : 'POST';
+      var currentUrl = url;
+      var redirectCount = 0;
+      const maxRedirects = 10;
+      while (redirectCount < maxRedirects) {
+        var httpClient =
+            createHttpClient(additionalSettings['allowInsecure'] == true);
+        var request = await httpClient.openUrl(method, Uri.parse(currentUrl));
+        if (requestHeaders != null) {
+          requestHeaders.forEach((key, value) {
+            request.headers.set(key, value);
+          });
+        }
+        request.followRedirects = false;
+        if (postBody != null) {
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode(postBody));
+        }
+        final response = await request.close();
+
+        if (followRedirects &&
+            (response.statusCode == 301 || response.statusCode == 302)) {
+          final location = response.headers.value(HttpHeaders.locationHeader);
+          if (location != null) {
+            currentUrl = location;
+            redirectCount++;
+            httpClient.close();
+            continue;
+          }
+        }
+
+        final headers = <String, String>{};
+        response.headers.forEach((name, values) {
+          headers[name] = values.join(', ');
+        });
+
+        final body = await response.transform(utf8.decoder).join();
+        httpClient.close();
+
+        return http.Response(
+          body,
+          response.statusCode,
+          headers: headers,
+          request: http.Request(method, Uri.parse(url)),
+        );
       }
-      if (postBody != null) {
-        req.headers[HttpHeaders.contentTypeHeader] = 'application/json';
-        req.body = jsonEncode(postBody);
-      }
-      return Response.fromStream(await IOClient(
-              createHttpClient(additionalSettings['allowInsecure'] == true))
-          .send(req));
+      throw ObtainiumError('Too many redirects ($maxRedirects)');
     } else {
       return postBody == null
-          ? get(Uri.parse(url))
-          : post(Uri.parse(url), body: jsonEncode(postBody));
+          ? http.get(Uri.parse(url))
+          : http.post(Uri.parse(url), body: jsonEncode(postBody));
     }
   }
 
