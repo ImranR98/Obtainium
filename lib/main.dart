@@ -46,7 +46,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
       'Esperanto'), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
   MapEntry(Locale('in'), 'Bahasa Indonesia'),
   MapEntry(Locale('ko'), '한국어'),
-  MapEntry(Locale('ca'), 'català'),
+  MapEntry(Locale('ca'), 'Català'),
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
