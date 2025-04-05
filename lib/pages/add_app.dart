@@ -575,8 +575,10 @@ class AddAppPageState extends State<AddAppPage> {
 
     Widget getSourcesListWidget() => Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Wrap(
+            direction: Axis.horizontal,
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 12,
             children: [
               GestureDetector(
                   onTap: () {
