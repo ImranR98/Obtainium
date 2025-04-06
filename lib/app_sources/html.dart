@@ -263,7 +263,8 @@ class HTML extends AppSource {
             'defaultPseudoVersioningMethod',
             [
               MapEntry('partialAPKHash', tr('partialAPKHash')),
-              MapEntry('APKLinkHash', tr('APKLinkHash'))
+              MapEntry('APKLinkHash', tr('APKLinkHash')),
+              MapEntry('ETag', 'ETag')
             ],
             label: tr('defaultPseudoVersioningMethod'),
             defaultValue: 'partialAPKHash')
@@ -356,14 +357,24 @@ class HTML extends AppSource {
         additionalSettings['versionExtractWholePage'] == true
             ? versionExtractionWholePageString
             : relDecoded);
-    version ??= additionalSettings['defaultPseudoVersioningMethod'] ==
-            'APKLinkHash'
-        ? rel.hashCode.toString()
-        : (await checkPartialDownloadHashDynamic(rel,
-                headers: await getRequestHeaders(additionalSettings,
-                    forAPKDownload: true),
-                allowInsecure: additionalSettings['allowInsecure'] == true))
-            .toString();
+    var apkReqHeaders =
+        await getRequestHeaders(additionalSettings, forAPKDownload: true);
+    if (version == null &&
+        additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
+      version = await checkETagHeader(rel,
+          headers: apkReqHeaders,
+          allowInsecure: additionalSettings['allowInsecure'] == true);
+      if (version == null) {
+        throw NoVersionError();
+      }
+    }
+    version ??=
+        additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
+            ? rel.hashCode.toString()
+            : (await checkPartialDownloadHashDynamic(rel,
+                    headers: apkReqHeaders,
+                    allowInsecure: additionalSettings['allowInsecure'] == true))
+                .toString();
     return APKDetails(
         version,
         [rel].map((e) {
