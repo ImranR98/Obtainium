@@ -320,6 +320,7 @@
     "stayOneVersionBehind": "Stay one version behind latest",
     "refreshBeforeDownload": "Refresh app details before download",
     "tencentAppStore": "Tencent App Store",
+    "coolApk": "CoolApk",
     "name": "Name",
     "smartname": "Name (smart)",
     "sortMethod": "Sort method",
