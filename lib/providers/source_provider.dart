@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -599,16 +600,19 @@ abstract class AppSource {
           }
         }
 
+        final bytes = (await response.fold<BytesBuilder>(
+                BytesBuilder(), (b, d) => b..add(d)))
+            .toBytes();
+
         final headers = <String, String>{};
         response.headers.forEach((name, values) {
           headers[name] = values.join(', ');
         });
 
-        final body = await response.transform(utf8.decoder).join();
         httpClient.close();
 
-        return http.Response(
-          body,
+        return http.Response.bytes(
+          bytes,
           response.statusCode,
           headers: headers,
           request: http.Request(method, Uri.parse(url)),

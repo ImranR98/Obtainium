@@ -230,7 +230,10 @@ Future<String?> checkETagHeader(String url,
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
   client.close();
-  return resHeaders[HttpHeaders.etagHeader];
+  return resHeaders[HttpHeaders.etagHeader]
+      ?.replaceAll('"', '')
+      .hashCode
+      .toString();
 }
 
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
