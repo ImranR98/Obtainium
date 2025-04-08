@@ -12,6 +12,7 @@ import 'package:html/dom.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
+import 'package:obtainium/app_sources/appcenterms.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/directAPKLink.dart';
@@ -937,6 +938,7 @@ class SourceProvider {
         Jenkins(),
         APKMirror(),
         RuStore(),
+        AppCenterMs(),
         TelegramApp(),
         NeutronCode(),
         DirectAPKLink(),
