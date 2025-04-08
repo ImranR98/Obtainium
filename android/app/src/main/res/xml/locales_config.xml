@@ -9,6 +9,7 @@
     <locale android:name="fr"/>
     <locale android:name="hu"/>
     <locale android:name="it"/>
+    <locale android:name="iw"/>
     <locale android:name="ja"/>
     <locale android:name="nl"/>
     <locale android:name="pl"/>
