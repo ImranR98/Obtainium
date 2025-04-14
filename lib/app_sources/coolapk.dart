@@ -17,26 +17,21 @@ class CoolApk extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    print('Debug: Standardizing URL: $url');
     RegExp standardUrlRegEx = RegExp(
         r'^https?://(www\.)?coolapk\.com/apk/[^/]+',
         caseSensitive: false);
     var match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
-      print('Debug: Invalid URL for CoolApk: $url');
       throw InvalidURLError(name);
     }
     String standardizedUrl = match.group(0)!;
-    print('Debug: Standardized URL: $standardizedUrl');
     return standardizedUrl;
   }
 
   @override
   Future<String?> tryInferringAppId(String standardUrl,
       {Map<String, dynamic> additionalSettings = const {}}) async {
-    print('Debug: Inferring appId from URL: $standardUrl');
     String appId = Uri.parse(standardUrl).pathSegments.last;
-    print('Debug: Inferred appId: $appId');
     return appId;
   }
 
@@ -47,24 +42,18 @@ class CoolApk extends AppSource {
       ) async {
     String appId = (await tryInferringAppId(standardUrl))!;
     String apiUrl = 'https://api2.coolapk.com';
-    print('Debug: Fetching details for appId: $appId');
 
     // get latest
     var detailUrl = '$apiUrl/v6/apk/detail?id=$appId';
     var headers = await getRequestHeaders(additionalSettings);
-    print('Debug: Requesting URL: $detailUrl with headers: $headers');
     var res = await sourceRequest(detailUrl, additionalSettings);
 
-    print('Debug: Response status code: ${res.statusCode}');
     if (res.statusCode != 200) {
-      print('Debug: HTTP error: ${res.statusCode} - ${res.body}');
       throw getObtainiumHttpError(res);
     }
 
     var json = jsonDecode(res.body);
-    print('Debug: Parsed JSON: $json');
     if (json['status'] == -2 || json['data'] == null) {
-      print('Debug: No releases found or invalid status: ${json['status']}');
       throw NoReleasesError();
     }
 
@@ -80,15 +69,11 @@ class CoolApk extends AppSource {
         : null;
     String aid = detail['id'].toString();
 
-    print('Debug: Version: $version, AppName: $appName, Author: $author, AID: $aid');
-
     // get apk url
     String apkUrl = await _getLatestApkUrl(apiUrl, appId, aid, version, headers);
     if (apkUrl.isEmpty) {
-      print('Debug: No APK URL found for $appId');
       throw NoAPKError();
     }
-    print('Debug: APK URL: $apkUrl');
 
     String apkName = '${appId}_$version.apk';
 
@@ -106,15 +91,11 @@ class CoolApk extends AppSource {
   Future<String> _getLatestApkUrl(String apiUrl, String appId, String aid,
       String version, Map<String, String>? headers) async {
     String url = '$apiUrl/v6/apk/download?pn=$appId&aid=$aid';
-    print('Debug: Fetching APK URL: $url');
     var res = await sourceRequest(url, {}, followRedirects: false);
-    print('Debug: APK request status code: ${res.statusCode}');
     if (res.statusCode >= 300 && res.statusCode < 400) {
       String location = res.headers['location'] ?? '';
-      print('Debug: Redirect location: $location');
       return location;
     }
-    print('Debug: No redirect found for APK URL');
     return '';
   }
 
@@ -123,7 +104,6 @@ class CoolApk extends AppSource {
       Map<String, dynamic> additionalSettings,
       {bool forAPKDownload = false}) async {
     var tokenPair = _getToken();
-    print('Debug: Generated tokenPair: $tokenPair');
     // CoolAPK header
     return {
       'User-Agent':
@@ -168,14 +148,12 @@ class CoolApk extends AppSource {
     // generate deviceCode
     String deviceCode =
     base64.encode('$aid; ; ; $mac; $manufactor; $brand; $model; $buildNumber'.codeUnits);
-    print('Debug: DeviceCode: $deviceCode');
 
     // generate timestamp
     String timeStamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
     String base64TimeStamp = base64.encode(timeStamp.codeUnits);
     String md5TimeStamp = md5.convert(timeStamp.codeUnits).toString();
     String md5DeviceCode = md5.convert(deviceCode.codeUnits).toString();
-    print('Debug: TimeStamp: $timeStamp, MD5TimeStamp: $md5TimeStamp, MD5DeviceCode: $md5DeviceCode');
 
     // generate token
     String token =
@@ -183,14 +161,12 @@ class CoolApk extends AppSource {
     String base64Token = base64.encode(token.codeUnits);
     String md5Base64Token = md5.convert(base64Token.codeUnits).toString();
     String md5Token = md5.convert(token.codeUnits).toString();
-    print('Debug: Token: $token, Base64Token: $base64Token, MD5Base64Token: $md5Base64Token');
 
     // generate salt and hash
     String bcryptSalt = '\$2a\$10\$${base64TimeStamp.substring(0, 14)}/${md5Token.substring(0, 6)}u';
     String bcryptResult = BCrypt.hashpw(md5Base64Token, bcryptSalt);
     String reBcryptResult = bcryptResult.replaceRange(0, 3, '\$2y');
     String finalToken = 'v2${base64.encode(reBcryptResult.codeUnits)}';
-    print('Debug: BCryptSalt: $bcryptSalt, BCryptResult: $bcryptResult, FinalToken: $finalToken');
 
     return {'deviceCode': deviceCode, 'token': finalToken};
   }
