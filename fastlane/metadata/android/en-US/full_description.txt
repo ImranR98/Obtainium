@@ -25,6 +25,7 @@
 			<li>APKMirror (Track-Only)</li>
 			<li>Huawei AppGallery</li>
 			<li>Tencent App Store</li>
+			<li>CoolApk</li>
 			<li>Jenkins Jobs</li>
 			<li>RuStore</li>
 		</ul>
