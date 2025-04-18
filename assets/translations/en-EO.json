@@ -320,11 +320,12 @@
     "stayOneVersionBehind": "Stay one version behind latest",
     "refreshBeforeDownload": "Refresh app details before download",
     "tencentAppStore": "Tencent App Store",
+    "coolApk": "CoolApk",
     "name": "Name",
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
     "welcome": "Welcome",
-    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions and other resources that will help you understand how to use the app.",
     "removeAppQuestion": {
         "one": "Forigi la aplikaĵon?",
         "other": "Forigi la aplikaĵojn?"

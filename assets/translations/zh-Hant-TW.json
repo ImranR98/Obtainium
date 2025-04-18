@@ -320,6 +320,7 @@
     "stayOneVersionBehind": "保持比最新版本落後一個版本",
     "refreshBeforeDownload": "下載前刷新應用程式詳細資訊",
     "tencentAppStore": "騰訊應用寶",
+    "coolApk": "CoolApk",
     "name": "名稱",
     "smartname": "名稱（智慧）",
     "sortMethod": "排序方式",

@@ -2,7 +2,9 @@
 // Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -16,10 +18,11 @@ class ObtainiumNotification {
   Importance importance;
   int? progPercent;
   bool onlyAlertOnce;
+  String? payload;
 
   ObtainiumNotification(this.id, this.title, this.message, this.channelCode,
       this.channelName, this.channelDescription, this.importance,
-      {this.onlyAlertOnce = false, this.progPercent});
+      {this.onlyAlertOnce = false, this.progPercent, this.payload});
 }
 
 class UpdateNotification extends ObtainiumNotification {
@@ -88,7 +91,8 @@ class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
             'BG_UPDATE_CHECK_ERROR',
             tr('errorCheckingUpdatesNotifChannel'),
             tr('errorCheckingUpdatesNotifDescription'),
-            Importance.high);
+            Importance.high,
+            payload: "${tr('errorCheckingUpdates')}\n$error");
 }
 
 class AppsRemovedNotification extends ObtainiumNotification {
@@ -173,9 +177,46 @@ class NotificationsProvider {
   };
 
   Future<void> initialize() async {
-    isInitialized = await notifications.initialize(const InitializationSettings(
-            android: AndroidInitializationSettings('ic_notification'))) ??
+    isInitialized = await notifications.initialize(
+          const InitializationSettings(
+              android: AndroidInitializationSettings('ic_notification')),
+          onDidReceiveNotificationResponse: (NotificationResponse response) {
+            _showNotificationPayload(response.payload);
+          },
+        ) ??
         false;
+  }
+
+  checkLaunchByNotif() async {
+    final NotificationAppLaunchDetails? launchDetails =
+        await notifications.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      _showNotificationPayload(launchDetails!.notificationResponse?.payload,
+          doublePop: true);
+    }
+  }
+
+  _showNotificationPayload(String? payload, {bool doublePop = false}) {
+    var title = (payload ?? '\n\n').split('\n').first;
+    var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
+    globalNavigatorKey.currentState?.push(
+      PageRouteBuilder(
+        pageBuilder: (context, _, __) => AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(null);
+                  if (doublePop) {
+                    Navigator.of(context).pop(null);
+                  }
+                },
+                child: Text(tr('ok'))),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> cancel(int id) async {
@@ -195,7 +236,8 @@ class NotificationsProvider {
       Importance importance,
       {bool cancelExisting = false,
       int? progPercent,
-      bool onlyAlertOnce = false}) async {
+      bool onlyAlertOnce = false,
+      String? payload}) async {
     if (cancelExisting) {
       await cancel(id);
     }
@@ -216,7 +258,8 @@ class NotificationsProvider {
                 maxProgress: 100,
                 showProgress: progPercent != null,
                 onlyAlertOnce: onlyAlertOnce,
-                indeterminate: progPercent != null && progPercent < 0)));
+                indeterminate: progPercent != null && progPercent < 0)),
+        payload: payload);
   }
 
   Future<void> notify(ObtainiumNotification notif,
@@ -225,5 +268,6 @@ class NotificationsProvider {
           notif.channelName, notif.channelDescription, notif.importance,
           cancelExisting: cancelExisting,
           onlyAlertOnce: notif.onlyAlertOnce,
-          progPercent: notif.progPercent);
+          progPercent: notif.progPercent,
+          payload: notif.payload);
 }

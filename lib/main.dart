@@ -34,7 +34,8 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('pl'), 'Polski'),
   MapEntry(Locale('ru'), 'Русский'),
   MapEntry(Locale('bs'), 'Bosanski'),
-  MapEntry(Locale('pt'), 'Brasileiro'),
+  MapEntry(Locale('pt'), 'Português'),
+  MapEntry(Locale('pt', 'BR'), 'Brasileiro'),
   MapEntry(Locale('cs'), 'Česky'),
   MapEntry(Locale('sv'), 'Svenska'),
   MapEntry(Locale('nl'), 'Nederlands'),
@@ -109,11 +110,13 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
+  final np = NotificationsProvider();
+  await np.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => AppsProvider()),
       ChangeNotifierProvider(create: (context) => SettingsProvider()),
-      Provider(create: (context) => NotificationsProvider()),
+      Provider(create: (context) => np),
       Provider(create: (context) => LogsProvider())
     ],
     child: EasyLocalization(
@@ -168,6 +171,7 @@ class _ObtainiumState extends State<Obtainium> {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     AppsProvider appsProvider = context.read<AppsProvider>();
     LogsProvider logs = context.read<LogsProvider>();
+    NotificationsProvider notifs = context.read<NotificationsProvider>();
 
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
@@ -210,6 +214,10 @@ class _ObtainiumState extends State<Obtainium> {
         settingsProvider.resetLocaleSafe(context);
       }
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifs.checkLaunchByNotif();
+    });
 
     return DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
