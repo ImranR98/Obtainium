@@ -197,26 +197,28 @@ class NotificationsProvider {
   }
 
   _showNotificationPayload(String? payload, {bool doublePop = false}) {
-    var title = (payload ?? '\n\n').split('\n').first;
-    var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
-    globalNavigatorKey.currentState?.push(
-      PageRouteBuilder(
-        pageBuilder: (context, _, __) => AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(null);
-                  if (doublePop) {
+    if (payload?.isNotEmpty == true) {
+      var title = (payload ?? '\n\n').split('\n').first;
+      var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
+      globalNavigatorKey.currentState?.push(
+        PageRouteBuilder(
+          pageBuilder: (context, _, __) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                  onPressed: () {
                     Navigator.of(context).pop(null);
-                  }
-                },
-                child: Text(tr('ok'))),
-          ],
+                    if (doublePop) {
+                      Navigator.of(context).pop(null);
+                    }
+                  },
+                  child: Text(tr('ok'))),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> cancel(int id) async {
