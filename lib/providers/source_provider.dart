@@ -639,7 +639,7 @@ abstract class AppSource {
     var method = postBody == null ? 'GET' : 'POST';
     var requestHeaders = await getRequestHeaders(additionalSettings);
     var streamedResponseAndClient = await sourceRequestStreamResponse(
-        method, url, requestHeaders, additionalSettings);
+        method, url, requestHeaders, additionalSettings, followRedirects: followRedirects);
     return await httpClientResponseStreamToFinalResponse(
         streamedResponseAndClient.key,
         method,
