@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
@@ -67,6 +69,27 @@ int compareAlphaNumeric(String a, String b) {
   return aParts.length.compareTo(bParts.length);
 }
 
+List<String> collectAllStringsFromJSONObject(dynamic obj) {
+  List<String> extractor(dynamic obj) {
+    final results = <String>[];
+    if (obj is String) {
+      results.add(obj);
+    } else if (obj is List) {
+      for (final item in obj) {
+        results.addAll(extractor(item));
+      }
+    } else if (obj is Map<String, dynamic>) {
+      for (final value in obj.values) {
+        results.addAll(extractor(value));
+      }
+    }
+
+    return results;
+  }
+
+  return extractor(obj);
+}
+
 List<String> _splitAlphaNumeric(String s) {
   List<String> parts = [];
   StringBuffer sb = StringBuffer();
@@ -95,6 +118,13 @@ bool _isNumeric(String s) {
   return s.codeUnitAt(0) >= 48 && s.codeUnitAt(0) <= 57;
 }
 
+List<MapEntry<String, String>> getLinksInLines(String lines) => RegExp(
+        r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
+    .allMatches(lines)
+    .map((match) =>
+        MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''))
+    .toList();
+
 // Given an HTTP response, grab some links according to the common additional settings
 // (those that apply to intermediate and final steps)
 Future<List<MapEntry<String, String>>> grabLinksCommon(
@@ -114,12 +144,21 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       .map((e) => MapEntry(ensureAbsoluteUrl(e.key, res.request!.url), e.value))
       .toList();
   if (allLinks.isEmpty) {
-    allLinks = RegExp(
-            r'(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?')
-        .allMatches(res.body)
-        .map((match) =>
-            MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''))
-        .toList();
+    allLinks = getLinksInLines(res.body);
+  }
+  if (allLinks.isEmpty) {
+    // Getting desperate
+    try {
+      var jsonStrings = collectAllStringsFromJSONObject(jsonDecode(res.body));
+      allLinks = getLinksInLines(jsonStrings.join('\n'));
+      if (allLinks.isEmpty) {
+        allLinks = getLinksInLines(jsonStrings.map((l) {
+          return ensureAbsoluteUrl(l, res.request!.url);
+        }).join('\n'));
+      }
+    } catch (e) {
+      //
+    }
   }
   List<MapEntry<String, String>> links = [];
   bool skipSort = additionalSettings['skipSort'] == true;

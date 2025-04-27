@@ -7,7 +7,6 @@ import 'dart:io';
 import 'dart:math';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'dart:typed_data';
 
@@ -246,9 +245,9 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  var client = IOClient(createHttpClient(allowInsecure));
-  StreamedResponse response = await client.send(req);
-  var resHeaders = response.headers;
+  var headersClient = IOClient(createHttpClient(allowInsecure));
+  StreamedResponse headersResponse = await headersClient.send(req);
+  var resHeaders = headersResponse.headers;
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
@@ -276,21 +275,20 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     rangeFeatureEnabled =
         resHeaders['accept-ranges']?.trim().toLowerCase() == 'bytes';
   }
+  headersClient.close();
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
-  var fullContentLength = response.contentLength;
+  var fullContentLength = headersResponse.contentLength;
   if (useExisting && downloadedFile.existsSync()) {
     var length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
       // If there is no content length reported, assume it the existing file is fully downloaded
       // Also if the range feature is not supported, don't trust the content length if any (#1542)
-      client.close();
       return downloadedFile;
     } else {
       // Check if resume needed/possible
       if (length == fullContentLength) {
-        client.close();
         return downloadedFile;
       }
       if (length > fullContentLength) {
@@ -330,7 +328,6 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     if (shouldReturn) {
       logs?.add(
           'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}');
-      client.close();
       return downloadedFile;
     } else {
       logs?.add(
@@ -346,17 +343,18 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
       : null;
   int rangeStart = targetFileLength ?? 0;
   IOSink? sink;
+  req = Request('GET', Uri.parse(url));
+  req.headers.addAll(reqHeaders);
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
-    client.close();
-    client = IOClient(createHttpClient(allowInsecure));
-    req = Request('GET', Uri.parse(url));
-    req.headers.addAll(reqHeaders);
-    req.headers.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
-    response = await client.send(req);
+    reqHeaders.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
     sink = tempDownloadedFile.openWrite(mode: FileMode.writeOnlyAppend);
   } else if (tempDownloadedFile.existsSync()) {
     tempDownloadedFile.deleteSync(recursive: true);
   }
+  var responseWithClient =
+      await sourceRequestStreamResponse('GET', url, reqHeaders, {});
+  HttpClient responseClient = responseWithClient.key;
+  HttpClientResponse response = responseWithClient.value;
   sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
 
   // Perform the download
@@ -369,7 +367,8 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   const downloadUIUpdateInterval = Duration(milliseconds: 500);
   const downloadBufferSize = 32 * 1024; // 32KB
   final downloadBuffer = BytesBuilder();
-  await response.stream
+  await response
+      .asBroadcastStream()
       .map((chunk) {
         received += chunk.length;
         final now = DateTime.now();
@@ -407,29 +406,13 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   }
   if (response.statusCode < 200 || response.statusCode > 299) {
     tempDownloadedFile.deleteSync(recursive: true);
-    throw response.reasonPhrase ?? tr('unexpectedError');
+    throw response.reasonPhrase;
   }
   if (tempDownloadedFile.existsSync()) {
     tempDownloadedFile.renameSync(downloadedFile.path);
   }
-  client.close();
+  responseClient.close();
   return downloadedFile;
-}
-
-Future<Map<String, String>> getHeaders(String url,
-    {Map<String, String>? headers, bool allowInsecure = false}) async {
-  var req = http.Request('GET', Uri.parse(url));
-  if (headers != null) {
-    req.headers.addAll(headers);
-  }
-  var client = IOClient(createHttpClient(allowInsecure));
-  var response = await client.send(req);
-  if (response.statusCode < 200 || response.statusCode > 299) {
-    throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
-  }
-  var returnHeaders = response.headers;
-  client.close();
-  return returnHeaders;
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
