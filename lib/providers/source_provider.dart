@@ -31,6 +31,7 @@ import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
+import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -954,6 +955,7 @@ class SourceProvider {
         HuaweiAppGallery(),
         Tencent(),
         CoolApk(),
+        VivoAppStore(),
         Jenkins(),
         APKMirror(),
         RuStore(),

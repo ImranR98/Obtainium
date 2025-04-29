@@ -31,6 +31,7 @@ Currently supported App sources:
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
   - [CoolApk](https://coolapk.com/)
+  - [vivo App Store](https://h5.appstore.vivo.com.cn/)
   - [RuStore](https://rustore.ru/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
