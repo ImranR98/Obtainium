@@ -9,32 +9,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
-  if (ambiguousUrl.startsWith('//')) {
-    ambiguousUrl = '${referenceAbsoluteUrl.scheme}:$ambiguousUrl';
-  }
-  try {
-    Uri.parse(ambiguousUrl).origin;
-    return ambiguousUrl;
-  } catch (err) {
-    // is relative
-  }
-  var currPathSegments = referenceAbsoluteUrl.path
-      .split('/')
-      .where((element) => element.trim().isNotEmpty)
-      .toList();
-  String absoluteUrl;
-  if (ambiguousUrl.startsWith('/')) {
-    absoluteUrl = '${referenceAbsoluteUrl.origin}$ambiguousUrl';
-  } else if (currPathSegments.isEmpty) {
-    absoluteUrl = '${referenceAbsoluteUrl.origin}/$ambiguousUrl';
-  } else if (ambiguousUrl.split('/').where((e) => e.isNotEmpty).length == 1) {
-    absoluteUrl =
-        '${referenceAbsoluteUrl.origin}/${currPathSegments.join('/')}/$ambiguousUrl';
-  } else {
-    absoluteUrl =
-        '${referenceAbsoluteUrl.origin}/${currPathSegments.sublist(0, currPathSegments.length - (currPathSegments.last.contains('.') ? 1 : 0)).join('/')}/$ambiguousUrl';
-  }
-  return Uri.parse(absoluteUrl).toString();
+  return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
 }
 
 int compareAlphaNumeric(String a, String b) {
