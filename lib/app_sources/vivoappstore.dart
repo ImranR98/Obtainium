@@ -17,11 +17,7 @@ class VivoAppStore extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    var vivoAppId =
-        Uri.parse(url.replaceAll('/#', '')).queryParameters['appId'];
-    if (vivoAppId == null) {
-      throw InvalidURLError(name);
-    }
+    var vivoAppId = parseVivoAppId(url);
     return '$appDetailUrl$vivoAppId';
   }
 
@@ -76,20 +72,26 @@ class VivoAppStore extends AppSource {
 
   Future<Map<String, dynamic>> getDetailJson(
       String standardUrl, Map<String, dynamic> additionalSettings) async {
-    var vivoAppId = Uri.parse(standardUrl).queryParameters['appId'];
+    var vivoAppId = parseVivoAppId(standardUrl);
     var apiBaseUrl = 'https://h5-api.appstore.vivo.com.cn/detail/';
     var params = '?frompage=messageh5&app_version=2100';
-
     var detailUrl = '$apiBaseUrl$vivoAppId$params';
     var response = await sourceRequest(detailUrl, additionalSettings);
     if (response.statusCode != 200) {
       throw getObtainiumHttpError(response);
     }
-
     var json = jsonDecode(response.body);
     if (json['id'] == null) {
       throw NoReleasesError();
     }
     return json;
+  }
+
+  String parseVivoAppId(String url) {
+    var appId = Uri.parse(url.replaceAll('/#', '')).queryParameters['appId'];
+    if (appId == null) {
+      throw InvalidURLError(name);
+    }
+    return appId;
   }
 }
