@@ -50,16 +50,6 @@ class VivoAppStore extends AppSource {
   }
 
   @override
-  Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      {bool forAPKDownload = false}) async {
-    return {
-      'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
-    };
-  }
-
-  @override
   Future<Map<String, List<String>>> search(String query,
       {Map<String, dynamic> querySettings = const {}}) async {
     var apiBaseUrl =
