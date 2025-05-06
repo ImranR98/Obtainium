@@ -89,7 +89,7 @@ class VivoAppStore extends AppSource {
 
   String parseVivoAppId(String url) {
     var appId = Uri.parse(url.replaceAll('/#', '')).queryParameters['appId'];
-    if (appId == null) {
+    if (appId == null || appId.isEmpty) {
       throw InvalidURLError(name);
     }
     return appId;
