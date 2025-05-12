@@ -407,8 +407,14 @@ class AddAppPageState extends State<AddAppPage> {
                         defaultValue: pickedSourceOverride ?? '',
                         [
                           MapEntry('', tr('none')),
-                          ...sourceProvider.sources.map(
-                              (s) => MapEntry(s.runtimeType.toString(), s.name))
+                          ...sourceProvider.sources
+                              .where((s) =>
+                                  s.allowOverride ||
+                                  (pickedSource != null &&
+                                      pickedSource.runtimeType ==
+                                          s.runtimeType))
+                              .map((s) =>
+                                  MapEntry(s.runtimeType.toString(), s.name))
                         ],
                         label: tr('overrideSource'))
                   ]
