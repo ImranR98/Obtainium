@@ -326,6 +326,7 @@
     "sortMethod": "Метод сортування",
     "welcome": "Ласкаво просимо.",
     "documentationLinksNote": "Сторінка Obtainium на GitHub, посилання на яку наведено нижче, містить посилання на відео, статті, дискусії та інші ресурси, які допоможуть вам зрозуміти, як користуватися додатком.",
+    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"

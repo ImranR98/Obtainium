@@ -326,6 +326,7 @@
     "sortMethod": "Metoda třídění",
     "welcome": "Vítejte na",
     "documentationLinksNote": "Níže odkazovaná stránka Obtainium GitHub obsahuje odkazy na videa, články, diskuse a další zdroje, které vám pomohou pochopit, jak aplikaci používat.",
+    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

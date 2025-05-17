@@ -326,6 +326,7 @@
     "sortMethod": "Metode Penyortiran",
     "welcome": "Selamat datang.",
     "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",
+    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"
