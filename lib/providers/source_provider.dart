@@ -31,6 +31,7 @@ import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
+import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
@@ -586,6 +587,7 @@ abstract class AppSource {
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
+  bool allowOverride = true;
   bool neverAutoSelect = false;
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
@@ -954,6 +956,7 @@ class SourceProvider {
         HuaweiAppGallery(),
         Tencent(),
         CoolApk(),
+        VivoAppStore(),
         Jenkins(),
         APKMirror(),
         RuStore(),

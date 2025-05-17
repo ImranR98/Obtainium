@@ -26,6 +26,7 @@
 			<li>Huawei AppGallery</li>
 			<li>Tencent App Store</li>
 			<li>CoolApk</li>
+			<li>vivo App Store (CN)</li>
 			<li>Jenkins Jobs</li>
 			<li>RuStore</li>
 		</ul>

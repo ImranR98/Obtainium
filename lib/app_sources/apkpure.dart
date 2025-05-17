@@ -128,7 +128,21 @@ class APKPure extends AppSource {
               .toList() ??
           [];
       if (apkUrls.isEmpty) {
-        throw NoAPKError();
+        var link =
+            html.querySelector("a.download-start-btn")?.attributes['href'];
+        RegExp downloadLinkRegEx = RegExp(
+            r'^https:\/\/d\.[^/]+\/b\/([^/]+)\/[^/?]+\?versionCode=([0-9]+).$',
+            caseSensitive: false);
+        RegExpMatch? match = downloadLinkRegEx.firstMatch(link ?? '');
+        if (match == null) {
+          throw NoAPKError();
+        }
+        String type = match.group(1)!;
+        String versionCode = match.group(2)!;
+        apkUrls = [
+          MapEntry('$appId-$versionCode-.${type.toLowerCase()}',
+              'https://d.${hosts.contains(host) ? 'cdnpure.com' : host}/b/$type/$appId?versionCode=$versionCode')
+        ];
       }
       String version = Uri.parse(link).pathSegments.last;
       String? author;
