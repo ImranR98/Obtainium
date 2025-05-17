@@ -586,6 +586,7 @@ abstract class AppSource {
   bool appIdInferIsOptional = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
+  bool allowOverride = true;
   bool neverAutoSelect = false;
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
