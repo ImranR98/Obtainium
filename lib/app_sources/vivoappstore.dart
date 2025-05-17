@@ -13,6 +13,7 @@ class VivoAppStore extends AppSource {
     hosts = ['h5.appstore.vivo.com.cn', 'h5coml.vivo.com.cn'];
     naiveStandardVersionDetection = true;
     canSearch = true;
+    allowOverride = false;
   }
 
   @override

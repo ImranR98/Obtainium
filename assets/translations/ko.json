@@ -326,6 +326,7 @@
     "sortMethod": "정렬 방법",
     "welcome": "환영",
     "documentationLinksNote": "아래에 링크된 Obtainium 깃허브 페이지에는 앱 사용 방법을 이해하는 데 도움이 되는 동영상, 기사, 토론 및 기타 리소스에 대한 링크가 포함되어 있습니다.",
+    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "removeAppQuestion": {
         "one": "앱을 제거하시겠습니까?",
         "other": "앱을 제거하시겠습니까?"

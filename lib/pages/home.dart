@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:animations/animations.dart';
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -80,6 +81,30 @@ class _HomePageState extends State<HomePage> {
                               decoration: TextDecoration.underline,
                               fontWeight: FontWeight.bold),
                         )),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(tr('batteryOptimizationNote')),
+                        GestureDetector(
+                          onTap: () {
+                            final intent = AndroidIntent(
+                              action:
+                                  'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS',
+                              package:
+                                  obtainiumId, // Replace with your app's package name
+                            );
+
+                            intent.launch();
+                          },
+                          child: Text(
+                            tr('settings'),
+                            style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      ],
+                    )
                   ],
                 ),
                 actions: [

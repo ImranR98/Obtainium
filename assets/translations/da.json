@@ -326,6 +326,7 @@
     "sortMethod": "Sorteringsmetode",
     "welcome": "Velkommen",
     "documentationLinksNote": "Obtainiums GitHub-side, som der linkes til nedenfor, indeholder links til videoer, artikler, diskussioner og andre ressourcer, som kan hjælpe dig med at forstå, hvordan du bruger appen.",
+    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"
