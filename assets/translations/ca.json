@@ -326,7 +326,7 @@
     "sortMethod": "Mètode d'ordenació",
     "welcome": "Benvinguda",
     "documentationLinksNote": "La pàgina GitHub d'Obtainium enllaçada a sota conté enllaços a vídeos, articles, debats i altres recursos que t'ajudaran a entendre com usar l'aplicació.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Tingues present que les descàrregues en segon pla funcionaran millor si inhabilites l'optimització de bateria per a Obtainium.",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"
