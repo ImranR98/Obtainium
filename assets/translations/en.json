@@ -321,6 +321,7 @@
     "refreshBeforeDownload": "Refresh app details before download",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
+    "vivoAppStore": "vivo App Store (CN)",
     "name": "Name",
     "smartname": "Name (smart)",
     "sortMethod": "Sort method",
