@@ -671,6 +671,7 @@ class AppsPageState extends State<AppsPage> {
                 formItems.add(GeneratedFormSwitch('updates',
                     label: tr('updateX', args: [
                       plural('apps', existingUpdateIdsAllOrSelected.length)
+                          .toLowerCase()
                     ]),
                     defaultValue: true));
               }
@@ -678,6 +679,7 @@ class AppsPageState extends State<AppsPage> {
                 formItems.add(GeneratedFormSwitch('installs',
                     label: tr('installX', args: [
                       plural('apps', newInstallIdsAllOrSelected.length)
+                          .toLowerCase()
                     ]),
                     defaultValue: existingUpdateIdsAllOrSelected.isEmpty));
               }
@@ -696,7 +698,8 @@ class AppsPageState extends State<AppsPage> {
                         newInstallIdsAllOrSelected.length +
                         trackOnlyUpdateIdsAllOrSelected.length;
                     return GeneratedFormModal(
-                      title: tr('changeX', args: [plural('apps', totalApps)]),
+                      title: tr('changeX',
+                          args: [plural('apps', totalApps).toLowerCase()]),
                       items: formItems.map((e) => [e]).toList(),
                       initValid: true,
                     );
