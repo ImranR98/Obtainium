@@ -131,7 +131,7 @@ class APKPure extends AppSource {
         var link =
             html.querySelector("a.download-start-btn")?.attributes['href'];
         RegExp downloadLinkRegEx = RegExp(
-            r'^https:\/\/d\.[^/]+\/b\/([^/]+)\/[^/?]+\?versionCode=([0-9]+).$',
+            r'^https:\/\/d\.[^/]+\/b\/([^/]+)\/[^/?]+\?versionCode=([0-9]+)$',
             caseSensitive: false);
         RegExpMatch? match = downloadLinkRegEx.firstMatch(link ?? '');
         if (match == null) {
