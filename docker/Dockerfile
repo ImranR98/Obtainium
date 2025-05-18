@@ -42,9 +42,10 @@ RUN \
         openssl \
         wget \
         unzip
+
 # Android SDK
 RUN \
-    wget --quiet  https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/tools.zip && \
+    wget --quiet  https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O /tmp/tools.zip && \
     mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
     unzip -q /tmp/tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools && \
     mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
@@ -53,25 +54,26 @@ RUN \
     apt-get install -y --no-install-recommends openjdk-17-jdk openjdk-17-jre &&\
     yes | sdkmanager --licenses &&\
     sdkmanager --update
-# Platform tools
+
+    # Platform tools
 # Get latest with sdkmanager --list
 RUN sdkmanager --install "build-tools;33.0.1"
 RUN sdkmanager --install "ndk;26.3.11579264"
-RUN sdkmanager --install "cmake;3.31.4"
+RUN sdkmanager --install "cmake;4.0.2"
 RUN sdkmanager --install platform-tools
 RUN sdkmanager --install emulator
 RUN sdkmanager --install tools
 RUN sdkmanager --install "platforms;android-28"
 RUN sdkmanager --install "platforms;android-31"
-RUN sdkmanager --install "platforms;android-33"
-RUN sdkmanager --install "platforms;android-35"
-RUN sdkmanager --install "platforms;android-34"
 RUN sdkmanager --install "platforms;android-32"
+RUN sdkmanager --install "platforms;android-33"
+RUN sdkmanager --install "platforms;android-34"
+RUN sdkmanager --install "platforms;android-35"
 
 # Flutter
 ARG DEV_UID=0
 RUN \
-    wget --quiet https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.29.0-stable.tar.xz -O /tmp/flutter.tar.xz &&\
+    wget --quiet https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.29.3-stable.tar.xz -O /tmp/flutter.tar.xz &&\
     mkdir -p /opt &&\
     cd /opt &&\
     tar xf /tmp/flutter.tar.xz &&\
