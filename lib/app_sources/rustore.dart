@@ -33,6 +33,16 @@ class RuStore extends AppSource {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
+  Future<String> decodeString(String str) async {
+    try {
+      return (await CharsetDetector.autoDecode(
+              Uint8List.fromList(str.codeUnits)))
+          .string;
+    } catch (e) {
+      return str;
+    }
+  }
+
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
@@ -73,17 +83,9 @@ class RuStore extends AppSource {
       throw NoAPKError();
     }
 
-    appName = (await CharsetDetector.autoDecode(
-            Uint8List.fromList(appName.codeUnits)))
-        .string;
-    author =
-        (await CharsetDetector.autoDecode(Uint8List.fromList(author.codeUnits)))
-            .string;
-    changeLog = changeLog != null
-        ? (await CharsetDetector.autoDecode(
-                Uint8List.fromList(changeLog.codeUnits)))
-            .string
-        : null;
+    appName = await decodeString(appName);
+    author = await decodeString(author);
+    changeLog = changeLog != null ? await decodeString(changeLog) : null;
 
     return APKDetails(
         version,
