@@ -1,8 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
-import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+parseDateTimeMMMddCommayyyy(String? dateString) {
+  DateTime? releaseDate;
+  try {
+    releaseDate = dateString != null
+        ? DateFormat('MMM dd, yyyy').parse(dateString)
+        : null;
+    releaseDate = dateString != null && releaseDate == null
+        ? DateFormat('MMMM dd, yyyy').parse(dateString)
+        : releaseDate;
+  } catch (err) {
+    // ignore
+  }
+  return releaseDate;
+}
 
 class Uptodown extends AppSource {
   Uptodown() {
