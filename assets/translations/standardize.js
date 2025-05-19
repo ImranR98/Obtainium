@@ -16,6 +16,10 @@ const neverAutoTranslate = {
     placeholder: ['pl'],
     importExport: ['fr'],
     url: ['fr'],
+    vivoAppStore: ['cs', 'ja', 'ko'],
+    coolapk: ['ja'],
+    obtainiumImport: ['nl'],
+    appLogs: ['nl'],
     tencentAppStore: ['*']
 }
 

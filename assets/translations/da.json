@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Crowdsourcede app-konfigurationer",
     "allowInsecure": "Tillad usikre HTTP-anmodninger",
     "stayOneVersionBehind": "Forbliv én version bagud den seneste",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Vælg automatisk den første af flere APK'er",
     "refreshBeforeDownload": "Opdater app-detaljer før download",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Sorteringsmetode",
     "welcome": "Velkommen",
     "documentationLinksNote": "Obtainiums GitHub-side, som der linkes til nedenfor, indeholder links til videoer, artikler, diskussioner og andre ressourcer, som kan hjælpe dig med at forstå, hvordan du bruger appen.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Bemærk, at baggrundsdownloads kan fungere mere pålideligt, hvis du deaktiverer OS-batterioptimering for Obtainium.",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

@@ -318,6 +318,7 @@
     "crowdsourcedConfigsShort": "تكوينات التطبيقات المقدمة من الجمهور",
     "allowInsecure": "السماح بطلبات HTTP غير الآمنة",
     "stayOneVersionBehind": "البقاء بإصدار واحد خلف الأحدث",
+    "useFirstApkOfVersion": "التحديد التلقائي الأول من بين عدة ملفات APK",
     "refreshBeforeDownload": "تحديث تفاصيل التطبيق قبل التنزيل",
     "tencentAppStore": "متجر Tencent للتطبيقات",
     "coolApk": "CoolApk",

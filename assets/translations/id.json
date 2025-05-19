@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Konfigurasi Aplikasi Crowdsourced",
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
     "stayOneVersionBehind": "Tetap satu versi di belakang versi terbaru",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Pilih otomatis yang pertama dari beberapa APK",
     "refreshBeforeDownload": "Segarkan detail aplikasi sebelum mengunduh",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Metode Penyortiran",
     "welcome": "Selamat datang.",
     "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Perhatikan bahwa unduhan latar belakang dapat bekerja lebih andal jika Anda menonaktifkan optimasi baterai OS untuk Obtainium.",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

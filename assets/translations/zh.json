@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "众包应用程序配置",
     "allowInsecure": "允许不安全的 HTTP 请求",
     "stayOneVersionBehind": "比最新版本晚一个版本",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "从多个 APK 中自动选择第一个",
     "refreshBeforeDownload": "下载前刷新应用程序详细信息",
     "tencentAppStore": "腾讯应用宝",
     "coolApk": "酷安",
@@ -328,7 +328,7 @@
     "sortMethod": "排序方法",
     "welcome": "欢迎光临",
     "documentationLinksNote": "下面链接的 Obtainium GitHub 页面包含视频、文章、讨论和其他资源的链接，可帮助您了解如何使用该应用程序。",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "请注意，如果为 Obtainium 禁用操作系统电池优化功能，后台下载可能会更稳定。",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

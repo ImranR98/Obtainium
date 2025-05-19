@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Налаштування краудсорсингових додатків",
     "allowInsecure": "Дозволити незахищені HTTP-запити",
     "stayOneVersionBehind": "Залишайтеся на одну версію актуальнішою",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Автоматичний вибір першого з декількох APK",
     "refreshBeforeDownload": "Оновіть інформацію про програму перед завантаженням",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Метод сортування",
     "welcome": "Ласкаво просимо.",
     "documentationLinksNote": "Сторінка Obtainium на GitHub, посилання на яку наведено нижче, містить посилання на відео, статті, дискусії та інші ресурси, які допоможуть вам зрозуміти, як користуватися додатком.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Зауважте, що фонові завантаження можуть працювати надійніше, якщо ви вимкнете оптимізацію батареї ОС для Obtainium.",
     "removeAppQuestion": {
         "one": "Видалити застосунок?",
         "other": "Видалити застосунки?"
