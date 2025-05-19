@@ -31,8 +31,8 @@ class APKPure extends AppSource {
             label: tr('stayOneVersionBehind'), defaultValue: false)
       ],
       [
-        GeneratedFormSwitch('selectNewestApk',
-            label: tr('selectNewestApk'), defaultValue: true)
+        GeneratedFormSwitch('useFirstApkOfVersion',
+            label: tr('useFirstApkOfVersion'), defaultValue: true)
       ]
     ];
   }
@@ -102,7 +102,7 @@ class APKPure extends AppSource {
       changeLog = null;
     }
 
-    if (additionalSettings['selectNewestApk'] == true) {
+    if (additionalSettings['useFirstApkOfVersion'] == true) {
       apkUrls = [apkUrls.first];
     }
 
