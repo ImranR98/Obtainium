@@ -177,6 +177,10 @@ class APKPure extends AppSource {
         .values
         .toList();
 
+    if (versions.isEmpty) {
+      throw NoReleasesError();
+    }
+
     for (var i = 0; i < versions.length; i++) {
       var v = versions[i];
       try {
