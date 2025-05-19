@@ -87,9 +87,18 @@ class APKPure extends AppSource {
             type = 'APK';
           }
 
+          var downloadUri = Uri.parse("https://d.cdnpure.com/b/$type/$appId");
+          var queryParameters = {
+            "versionCode": versionCode,
+          };
+          if (architectureString.isNotEmpty) {
+            queryParameters["nc"] = architectureString;
+          }
+          downloadUri = downloadUri.replace(queryParameters: queryParameters);
+
           return MapEntry(
               '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
-              'https://d.cdnpure.com/b/$type/$appId?versionCode=$versionCode&nc=$architectureString');
+              downloadUri.toString());
         })
         .nonNulls
         .toList()
