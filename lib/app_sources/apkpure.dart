@@ -104,6 +104,10 @@ class APKPure extends AppSource {
         .toList()
         .unique((e) => e.key);
 
+    if (apkUrls.isEmpty) {
+      throw NoAPKError();
+    }
+
     // get version details from first variant
     var v = versionVariants.first;
     String version = v['version_name'];
