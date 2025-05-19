@@ -83,9 +83,6 @@ class APKPure extends AppSource {
           }
 
           String type = e['asset']['type'];
-          if (e['is_a_p_ks'] == true) {
-            type = 'APK';
-          }
 
           var downloadUri = Uri.parse("https://d.cdnpure.com/b/$type/$appId");
           var queryParameters = {
