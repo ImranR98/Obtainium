@@ -72,6 +72,10 @@ class APKPure extends AppSource {
 
           List<String> architectures = e['native_code']?.cast<String>();
           String architectureString = architectures.join(',');
+          if (architectures.contains("universal") ||
+              architectures.contains("unlimited")) {
+            architectures = [];
+          }
           if (additionalSettings['autoApkFilterByArch'] == true &&
               architectures.isNotEmpty &&
               architectures.where((a) => supportedArchs.contains(a)).isEmpty) {
