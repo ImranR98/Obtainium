@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Kitle Kaynaklı Uygulama Yapılandırmaları",
     "allowInsecure": "Güvensiz HTTP isteklerine izin ver",
     "stayOneVersionBehind": "En son sürümün bir sürüm gerisinde kalın",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Birden fazla APK arasından ilkini otomatik seçme",
     "refreshBeforeDownload": "İndirmeden önce uygulama ayrıntılarını yenileyin",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Sıralama Yöntemi",
     "welcome": "Hoş geldiniz",
     "documentationLinksNote": "Aşağıda bağlantısı verilen Obtainium GitHub sayfası, uygulamayı nasıl kullanacağınızı anlamanıza yardımcı olacak videolara, makalelere, tartışmalara ve diğer kaynaklara bağlantılar içerir.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Obtainium için işletim sistemi pil optimizasyonlarını devre dışı bırakırsanız arka planda indirmelerin daha güvenilir şekilde çalışabileceğini unutmayın.",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

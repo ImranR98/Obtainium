@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Configurações de aplicações com base em crowdsourcing",
     "allowInsecure": "Permitir pedidos HTTP inseguros",
     "stayOneVersionBehind": "Manter-se uma versão atrás da mais recente",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Seleção automática do primeiro de vários APKs",
     "refreshBeforeDownload": "Atualizar os detalhes da aplicação antes da transferência",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Método de ordenação",
     "welcome": "Bem-vindo",
     "documentationLinksNote": "A página do Obtainium no GitHub com a ligação abaixo contém ligações para vídeos, artigos, discussões e outros recursos que o ajudarão a compreender como utilizar a aplicação.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Note que os downloads em segundo plano podem funcionar de forma mais fiável se desativar as optimizações da bateria do SO para o Obtainium.",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Конфиги приложений с помощью краудсорсинга",
     "allowInsecure": "Разрешить небезопасные HTTP-запросы",
     "stayOneVersionBehind": "Не отставайте от последней версии",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Автоматический выбор первого из нескольких APK",
     "refreshBeforeDownload": "Обновляйте информацию о приложении перед загрузкой",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
@@ -328,7 +328,7 @@
     "sortMethod": "Метод сортировки",
     "welcome": "Добро пожаловать",
     "documentationLinksNote": "На странице Obtainium GitHub, ссылка на которую приведена ниже, содержатся ссылки на видео, статьи, обсуждения и другие ресурсы, которые помогут вам понять, как пользоваться приложением.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Обратите внимание, что фоновая загрузка может работать более надежно, если отключить оптимизацию батареи ОС для Obtainium.",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

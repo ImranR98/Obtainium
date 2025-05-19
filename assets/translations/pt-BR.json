@@ -30,7 +30,7 @@
     "wrongArgNum": "Número errado de argumentos fornecidos",
     "xIsTrackOnly": "{} é somente de rastreio",
     "source": "Fonte",
-    "app": "App",
+    "app": "Aplicativo",
     "appsFromSourceAreTrackOnly": "Apps desta fonte são somente para rastreamento.",
     "youPickedTrackOnly": "Você selecionou a opção de somente rastreamento.",
     "trackOnlyAppDescription": "As atualizações do app serão rastreadas, mas o Obtainium não baixará ou instalará elas.",
@@ -47,7 +47,7 @@
     "supportedSources": "Fontes suportadas",
     "trackOnlyInBrackets": "(somente rastreamento)",
     "searchableInBrackets": "(pesquisável)",
-    "appsString": "Apps",
+    "appsString": "Aplicativos",
     "noApps": "Nenhum app",
     "noAppsForFilter": "Nenhum app pro filtro",
     "byX": "Por {}",
@@ -318,17 +318,17 @@
     "crowdsourcedConfigsShort": "Configurações de app da comunidade",
     "allowInsecure": "Permitir solicitações de HTTP inseguras",
     "stayOneVersionBehind": "Ficar uma versão antes da mais recente",
-    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
+    "useFirstApkOfVersion": "Seleção automática do primeiro de vários APKs",
     "refreshBeforeDownload": "Atualizar detalhes do app antes de baixar",
     "tencentAppStore": "Loja de Apps da Tencent",
     "coolApk": "CoolApk",
-    "vivoAppStore": "vivo App Store (CN)",
+    "vivoAppStore": "Vivo App Store (CN)",
     "name": "Nome",
     "smartname": "Nome (inteligente)",
     "sortMethod": "Método de ordenação",
     "welcome": "Boas vindas",
     "documentationLinksNote": "A página do Obtainium no GitHub visível abaixo contém links de vídeos, artigos, discussões, e outros recursos que podem te ajudar ao usar o app.",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "Observe que os downloads em segundo plano podem funcionar de forma mais confiável se você desativar as otimizações de bateria do sistema operacional para o Obtainium.",
     "removeAppQuestion": {
         "one": "Remover app?",
         "other": "Remover apps?"
@@ -342,8 +342,8 @@
         "other": "A busca de atualizações em segundo plano encontrou um {}, será agendado uma nova tentativa em {} minutos"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "BG update checking found {} update - will notify user if needed",
-        "other": "BG update checking found {} updates - will notify user if needed"
+        "one": "Verificação da atualização do BG encontrada {} atualização - notificará o usuário se necessário",
+        "other": "Verificação de atualização do BG encontrou atualizações {} - notificará o usuário se necessário"
     },
     "apps": {
         "one": "{} app",
@@ -366,8 +366,8 @@
         "other": "{} dias"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "Cleared {n} log (before = {before}, after = {after})",
-        "other": "Cleared {n} logs (before = {before}, after = {after})"
+        "one": "Limpou {n} registros (before = {before}, after = {after})",
+        "other": "Limpou {n} registros (antes = {before}, depois = {after})"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} e mais 1 app têm atualizações.",
