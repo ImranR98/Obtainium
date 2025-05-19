@@ -85,19 +85,11 @@ class APKPure extends AppSource {
           }
 
           String type = e['asset']['type'];
-
-          var downloadUri = Uri.parse("https://d.cdnpure.com/b/$type/$appId");
-          var queryParameters = {
-            "versionCode": versionCode,
-          };
-          if (architectureString.isNotEmpty) {
-            queryParameters["nc"] = architectureString;
-          }
-          downloadUri = downloadUri.replace(queryParameters: queryParameters);
+          String downloadUri = e['asset']['url'];
 
           return MapEntry(
               '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
-              downloadUri.toString());
+              downloadUri);
         })
         .nonNulls
         .toList()
