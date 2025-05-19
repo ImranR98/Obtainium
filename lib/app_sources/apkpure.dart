@@ -63,7 +63,9 @@ class APKPure extends AppSource {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
-  getDetailsForVersion(List<Map> versionVariants, List<String> supportedArchs,
+  getDetailsForVersion(
+      List<Map<String, dynamic>> versionVariants,
+      List<String> supportedArchs,
       Map<String, dynamic> additionalSettings) async {
     var apkUrls = versionVariants
         .map((e) {
@@ -160,7 +162,7 @@ class APKPure extends AppSource {
         jsonDecode(res.body)['version_list'].cast<Map<String, dynamic>>();
 
     // group by version
-    List versions = apks
+    List<List<Map<String, dynamic>>> versions = apks
         .fold<Map<String, List<Map<String, dynamic>>>>({},
             (Map<String, List<Map<String, dynamic>>> val,
                 Map<String, dynamic> element) {
