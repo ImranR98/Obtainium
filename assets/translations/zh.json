@@ -318,6 +318,7 @@
     "crowdsourcedConfigsShort": "众包应用程序配置",
     "allowInsecure": "允许不安全的 HTTP 请求",
     "stayOneVersionBehind": "比最新版本晚一个版本",
+    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
     "refreshBeforeDownload": "下载前刷新应用程序详细信息",
     "tencentAppStore": "腾讯应用宝",
     "coolApk": "酷安",

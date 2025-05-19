@@ -318,6 +318,7 @@
     "crowdsourcedConfigsShort": "Crowdsourced app configurations",
     "allowInsecure": "Allow insecure HTTP requests",
     "stayOneVersionBehind": "Stay one version behind latest",
+    "useFirstApkOfVersion": "Auto-select first of multiple APKs",
     "refreshBeforeDownload": "Refresh app details before download",
     "tencentAppStore": "Tencent App Store",
     "coolApk": "CoolApk",
