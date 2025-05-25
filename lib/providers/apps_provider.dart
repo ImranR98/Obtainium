@@ -70,7 +70,6 @@ class DownloadedXApkDir {
 }
 
 List<String> generateStandardVersionRegExStrings() {
-  // TODO: Look into RegEx for non-Latin characters / non-Arabic numerals
   var basics = [
     '[0-9]+',
     '[0-9]+\\.[0-9]+',
@@ -78,7 +77,7 @@ List<String> generateStandardVersionRegExStrings() {
     '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'
   ];
   var preSuffixes = ['-', '\\+'];
-  var suffixes = ['alpha', 'beta', 'ose'];
+  var suffixes = ['alpha', 'beta', 'ose', '[0-9]+'];
   var finals = ['\\+[0-9]+', '[0-9]+'];
   List<String> results = [];
   for (var b in basics) {
