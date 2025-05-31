@@ -329,6 +329,7 @@
     "welcome": "Benvenuti",
     "documentationLinksNote": "La pagina GitHub di Obtainium collegata qui sotto contiene collegamenti a video, articoli, discussioni e altre risorse che vi aiuteranno a capire come utilizzare l'applicazione.",
     "batteryOptimizationNote": "Si noti che i download in background potrebbero funzionare in modo più affidabile se si disabilita l'ottimizzazione della batteria del sistema operativo per Obtainium.",
+    "fileDeletionError": "Errore nell'eliminazione del file (provare a cancellarlo manualmente e poi riprovare): \"{}\"",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

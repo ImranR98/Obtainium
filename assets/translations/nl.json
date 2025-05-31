@@ -329,6 +329,7 @@
     "welcome": "Welkom",
     "documentationLinksNote": "De GitHub pagina van Obtainium waarnaar hieronder wordt gelinkt bevat links naar video's, artikelen, discussies en andere bronnen die je zullen helpen begrijpen hoe je de app kunt gebruiken.",
     "batteryOptimizationNote": "Merk op dat downloads op de achtergrond mogelijk betrouwbaarder werken als je de batterijoptimalisatie van het besturingssysteem voor Obtainium uitschakelt.",
+    "fileDeletionError": "Bestand is niet verwijderd (probeer het handmatig te verwijderen en probeer het opnieuw): \"{}\"",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

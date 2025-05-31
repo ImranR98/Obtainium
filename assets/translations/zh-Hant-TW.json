@@ -329,6 +329,7 @@
     "welcome": "歡迎",
     "documentationLinksNote": "下方連結的 Obtainium GitHub 頁面包含影片、文章、討論及其他資源，能幫助你瞭解如何使用這款應用程式。",
     "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "fileDeletionError": "Failed to delete file (try deleting it manually then try again): \"{}\"",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

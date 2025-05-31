@@ -329,6 +329,7 @@
     "welcome": "Välkommen",
     "documentationLinksNote": "Obtainium GitHub-sidan som länkas nedan innehåller länkar till videor, artiklar, diskussioner och andra resurser som hjälper dig att förstå hur du använder appen.",
     "batteryOptimizationNote": "Observera att nedladdningar i bakgrunden kan fungera mer tillförlitligt om du inaktiverar OS-batterioptimeringar för Obtainium.",
+    "fileDeletionError": "Misslyckades med att radera filen (försök radera den manuellt och försök sedan igen): \"{}\"",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
