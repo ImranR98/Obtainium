@@ -318,7 +318,7 @@
     "crowdsourcedConfigsShort": "Alkalmazáslista",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "stayOneVersionBehind": "Maradjon egy verzióval a legújabb mögött",
-    "useFirstApkOfVersion": "Több APK közül az első automatikus kiválasztása",
+    "useFirstApkOfVersion": "A legelső APK automatikus kiválasztása, ha több APK is található",
     "refreshBeforeDownload": "Az alkalmazás adatainak frissítése a letöltés előtt",
     "tencentAppStore": "Tencent Appstore",
     "coolApk": "CoolApk",
