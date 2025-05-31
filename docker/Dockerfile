@@ -51,7 +51,7 @@ RUN \
     mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
     rm -v /tmp/tools.zip && \
     mkdir -p /root/.android/ && touch /root/.android/repositories.cfg &&\
-    apt-get install -y --no-install-recommends openjdk-17-jdk openjdk-17-jre &&\
+    apt-get install -y --no-install-recommends openjdk-21-jdk openjdk-21-jre &&\
     yes | sdkmanager --licenses &&\
     sdkmanager --update
 
