@@ -329,7 +329,7 @@
     "welcome": "Benvinguda",
     "documentationLinksNote": "La pàgina GitHub d'Obtainium enllaçada a sota conté enllaços a vídeos, articles, debats i altres recursos que t'ajudaran a entendre com usar l'aplicació.",
     "batteryOptimizationNote": "Tingues present que les descàrregues en segon pla funcionaran millor si inhabilites l'optimització de bateria per a Obtainium.",
-    "fileDeletionError": "Failed to delete file (try deleting it manually then try again): \"{}\"",
+    "fileDeletionError": "No s'ha pogut suprimir el fitxer (intenta suprimir-lo manualment i torna-ho a provar): \"{}\"",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"
