@@ -1335,7 +1335,11 @@ class AppsProvider with ChangeNotifier {
     var templateVersionFormats =
         findStandardFormatsForVersion(templateVersion, true);
     var comparisonVersionFormats =
-        findStandardFormatsForVersion(comparisonVersion, false);
+        findStandardFormatsForVersion(comparisonVersion, true);
+    if (comparisonVersionFormats.isEmpty) {
+      comparisonVersionFormats =
+          findStandardFormatsForVersion(comparisonVersion, false);
+    }
     var commonStandardFormats =
         templateVersionFormats.intersection(comparisonVersionFormats);
     if (commonStandardFormats.isEmpty) {
