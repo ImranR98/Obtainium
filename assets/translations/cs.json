@@ -329,6 +329,7 @@
     "welcome": "Vítejte na",
     "documentationLinksNote": "Níže odkazovaná stránka Obtainium GitHub obsahuje odkazy na videa, články, diskuse a další zdroje, které vám pomohou pochopit, jak aplikaci používat.",
     "batteryOptimizationNote": "Všimněte si, že stahování na pozadí může fungovat spolehlivěji, pokud vypnete optimalizaci baterie operačního systému pro Obtainium.",
+    "fileDeletionError": "Soubor se nepodařilo odstranit (zkuste jej odstranit ručně a pak to zkuste znovu): \"{}\"",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

@@ -329,6 +329,7 @@
     "welcome": "Selamat datang.",
     "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",
     "batteryOptimizationNote": "Perhatikan bahwa unduhan latar belakang dapat bekerja lebih andal jika Anda menonaktifkan optimasi baterai OS untuk Obtainium.",
+    "fileDeletionError": "Gagal menghapus file (coba hapus secara manual, lalu coba lagi): \"{}\"",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

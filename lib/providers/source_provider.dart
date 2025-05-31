@@ -940,6 +940,11 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
+isVersionPseudo(App app) =>
+  app.additionalSettings['trackOnly'] == true ||
+      (app.installedVersion != null &&
+          app.additionalSettings['versionDetection'] != true);
+
 class SourceProvider {
   // Add more source classes here so they are available via the service
   List<AppSource> get sources => [

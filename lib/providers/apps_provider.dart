@@ -70,7 +70,6 @@ class DownloadedXApkDir {
 }
 
 List<String> generateStandardVersionRegExStrings() {
-  // TODO: Look into RegEx for non-Latin characters / non-Arabic numerals
   var basics = [
     '[0-9]+',
     '[0-9]+\\.[0-9]+',
@@ -78,7 +77,7 @@ List<String> generateStandardVersionRegExStrings() {
     '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'
   ];
   var preSuffixes = ['-', '\\+'];
-  var suffixes = ['alpha', 'beta', 'ose'];
+  var suffixes = ['alpha', 'beta', 'ose', '[0-9]+'];
   var finals = ['\\+[0-9]+', '[0-9]+'];
   List<String> results = [];
   for (var b in basics) {
@@ -235,6 +234,14 @@ Future<String?> checkETagHeader(String url,
       .toString();
 }
 
+deleteFile(File file) {
+  try {
+    file.deleteSync(recursive: true);
+  } on PathAccessException catch (e) {
+    throw ObtainiumError(tr('fileDeletionError', args: [e.path ?? tr('unknown')]));
+  }
+}
+
 Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     Function? onProgress, String destDir,
     {bool useExisting = true,
@@ -349,7 +356,7 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     reqHeaders.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
     sink = tempDownloadedFile.openWrite(mode: FileMode.writeOnlyAppend);
   } else if (tempDownloadedFile.existsSync()) {
-    tempDownloadedFile.deleteSync(recursive: true);
+    deleteFile(tempDownloadedFile);
   }
   var responseWithClient =
       await sourceRequestStreamResponse('GET', url, reqHeaders, {});
@@ -405,7 +412,7 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
     onProgress(progress);
   }
   if (response.statusCode < 200 || response.statusCode > 299) {
-    tempDownloadedFile.deleteSync(recursive: true);
+    deleteFile(tempDownloadedFile);
     throw response.reasonPhrase;
   }
   if (tempDownloadedFile.existsSync()) {
@@ -798,9 +805,9 @@ class AppsProvider with ChangeNotifier {
         await pm.getPackageArchiveInfo(archiveFilePath: file.file.path);
     if (newInfo == null) {
       try {
-        file.file.deleteSync(recursive: true);
+        deleteFile(file.file);
         for (var a in additionalAPKs) {
-          a.file.deleteSync(recursive: true);
+          deleteFile(a.file);
         }
       } catch (e) {
         //
@@ -840,7 +847,7 @@ class AppsProvider with ChangeNotifier {
     bool installed = false;
     if (code != null && code != 0 && code != 3) {
       try {
-        file.file.deleteSync(recursive: true);
+        deleteFile(file.file);
       } catch (e) {
         //
       } finally {
@@ -1336,7 +1343,11 @@ class AppsProvider with ChangeNotifier {
     var templateVersionFormats =
         findStandardFormatsForVersion(templateVersion, true);
     var comparisonVersionFormats =
-        findStandardFormatsForVersion(comparisonVersion, false);
+        findStandardFormatsForVersion(comparisonVersion, true);
+    if (comparisonVersionFormats.isEmpty) {
+      comparisonVersionFormats =
+          findStandardFormatsForVersion(comparisonVersion, false);
+    }
     var commonStandardFormats =
         templateVersionFormats.intersection(comparisonVersionFormats);
     if (commonStandardFormats.isEmpty) {
@@ -1508,7 +1519,7 @@ class AppsProvider with ChangeNotifier {
     await Future.wait(appIds.map((appId) async {
       File file = File('${(await getAppsDir()).path}/$appId.json');
       if (file.existsSync()) {
-        file.deleteSync(recursive: true);
+        deleteFile(file);
       }
       apkFiles
           .where(

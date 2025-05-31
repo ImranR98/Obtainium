@@ -447,7 +447,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getVersionText(int appIndex) {
-      return '${listedApps[appIndex].app.installedVersion ?? tr('notInstalled')}${listedApps[appIndex].app.additionalSettings['trackOnly'] == true ? ' ${tr('pseudoVersion')}' : ''}';
+      return listedApps[appIndex].app.installedVersion ?? tr('notInstalled');
     }
 
     getChangesButtonString(int appIndex, bool hasChangeLogFn) {
@@ -503,7 +503,10 @@ class AppsPageState extends State<AppsPage> {
                                     MediaQuery.of(context).size.width / 4),
                             child: Text(getVersionText(index),
                                 overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.end)),
+                                textAlign: TextAlign.end,
+                                style: isVersionPseudo(listedApps[index].app)
+                                    ? TextStyle(fontStyle: FontStyle.italic)
+                                    : null)),
                       ]),
                       Row(
                         mainAxisSize: MainAxisSize.min,

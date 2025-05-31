@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '17'
+          java-version: '21'
 
       - name: Flutter Doctor
         id: flutter_doctor
@@ -44,7 +44,7 @@ jobs:
 
       - name: Build APKs
         run: |
-          sed -i 's/signingConfig signingConfigs.release//g' android/app/build.gradle
+          sed -i 's/signingConfig = signingConfigs.getByName("release")//g' android/app/build.gradle.kts
           flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
           flutter build apk --flavor fdroid -t lib/main_fdroid.dart && flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart

@@ -329,6 +329,7 @@
     "welcome": "Üdvözöljük!",
     "documentationLinksNote": "Az alábbi hivatkozás az Obtainium GitHub oldalára vezet, amely további videók, cikkek, beszélgetések és egyéb források hivatkozásait tartalmazza, amelyek segítenek megérteni az alkalmazás használatát.",
     "batteryOptimizationNote": "Megjegyzés: A háttérfrissítések megbízhatóbban működhetnek, ha kikapcsolja a rendszer akkumulátor-optimalizálását az Obtainium számára.",
+    "fileDeletionError": "Nem sikerült törölni a fájlt (próbálja meg kézzel törölni, majd próbálja meg újra): \"{}\"",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

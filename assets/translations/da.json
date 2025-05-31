@@ -329,6 +329,7 @@
     "welcome": "Velkommen",
     "documentationLinksNote": "Obtainiums GitHub-side, som der linkes til nedenfor, indeholder links til videoer, artikler, diskussioner og andre ressourcer, som kan hjælpe dig med at forstå, hvordan du bruger appen.",
     "batteryOptimizationNote": "Bemærk, at baggrundsdownloads kan fungere mere pålideligt, hvis du deaktiverer OS-batterioptimering for Obtainium.",
+    "fileDeletionError": "Kunne ikke slette filen (prøv at slette den manuelt og prøv igen): \"{}\"",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"
