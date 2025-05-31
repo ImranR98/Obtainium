@@ -100,9 +100,7 @@ class _AppPageState extends State<AppPage> {
     bool isVersionDetectionStandard =
         app?.app.additionalSettings['versionDetection'] == true;
 
-    bool installedVersionIsEstimate = trackOnly ||
-        (app?.app.installedVersion != null &&
-            app?.app.additionalSettings['versionDetection'] != true);
+    bool installedVersionIsEstimate = app?.app != null ? isVersionPseudo(app!.app) : false;
 
     if (app != null && !_wasWebViewOpened) {
       _wasWebViewOpened = true;
