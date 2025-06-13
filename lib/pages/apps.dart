@@ -911,7 +911,8 @@ class AppsPageState extends State<AppsPage> {
                           onPressed: selectedAppIds.isEmpty
                               ? null
                               : () {
-                                  var exportJSON = jsonEncode(
+                                  var encoder = const JsonEncoder.withIndent("    ");
+                                  var exportJSON = encoder.convert(
                                       appsProvider.generateExportJSON(
                                           appIds: selectedApps
                                               .map((e) => e.id)
