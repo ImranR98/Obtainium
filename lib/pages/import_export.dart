@@ -88,7 +88,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
               .then((errors) {
                 if (errors.isEmpty) {
                   showMessage(
-                    tr('importedX', args: [plural('apps', urls.length)]),
+                    tr(
+                      'importedX',
+                      args: [plural('apps', urls.length).toLowerCase()],
+                    ),
                     context,
                   );
                 } else {
@@ -159,7 +162,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 });
                 appsProvider.addMissingCategories(settingsProvider);
                 showMessage(
-                  '${tr('importedX', args: [plural('apps', value.key.length)])}${value.value ? ' + ${tr('settings')}' : ''}',
+                  '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
                   context,
                 );
               });

@@ -165,7 +165,10 @@ class _HomePageState extends State<HomePage> {
                   return GeneratedFormModal(
                     title: tr(
                       'importX',
-                      args: [action == 'app' ? tr('app') : tr('appsString')],
+                      args: [
+                        (action == 'app' ? tr('app') : tr('appsString'))
+                            .toLowerCase(),
+                      ],
                     ),
                     items: const [],
                     additionalWidgets: [
@@ -192,7 +195,10 @@ class _HomePageState extends State<HomePage> {
             );
             // ignore: use_build_context_synchronously
             showMessage(
-              tr('importedX', args: [plural('apps', result.key.length)]),
+              tr(
+                'importedX',
+                args: [plural('apps', result.key.length).toLowerCase()],
+              ),
               context,
             );
             await appsProvider
