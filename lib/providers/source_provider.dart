@@ -511,7 +511,7 @@ HttpClient createHttpClient(bool insecure) {
   return client;
 }
 
-Future<MapEntry<HttpClient, HttpClientResponse>> sourceRequestStreamResponse(
+Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>> sourceRequestStreamResponse(
     String method,
     String url,
     Map<String, String>? requestHeaders,
@@ -551,7 +551,7 @@ Future<MapEntry<HttpClient, HttpClientResponse>> sourceRequestStreamResponse(
       }
     }
 
-    return MapEntry(httpClient, response);
+    return MapEntry(currentUrl, MapEntry(httpClient, response));
   }
   throw ObtainiumError('Too many redirects ($maxRedirects)');
 }
@@ -637,14 +637,14 @@ abstract class AppSource {
       {bool followRedirects = true, Object? postBody}) async {
     var method = postBody == null ? 'GET' : 'POST';
     var requestHeaders = await getRequestHeaders(additionalSettings);
-    var streamedResponseAndClient = await sourceRequestStreamResponse(
+    var streamedResponseUrlWithResponseAndClient = await sourceRequestStreamResponse(
         method, url, requestHeaders, additionalSettings,
         followRedirects: followRedirects, postBody: postBody);
     return await httpClientResponseStreamToFinalResponse(
-        streamedResponseAndClient.key,
+        streamedResponseUrlWithResponseAndClient.value.key,
         method,
-        url,
-        streamedResponseAndClient.value);
+        streamedResponseUrlWithResponseAndClient.key.toString(),
+        streamedResponseUrlWithResponseAndClient.value.value);
   }
 
   void runOnAddAppInputChange(String inputUrl) {

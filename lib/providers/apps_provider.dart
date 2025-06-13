@@ -360,8 +360,8 @@ Future<File> downloadFile(String url, String fileName, bool fileNameHasExt,
   }
   var responseWithClient =
       await sourceRequestStreamResponse('GET', url, reqHeaders, {});
-  HttpClient responseClient = responseWithClient.key;
-  HttpClientResponse response = responseWithClient.value;
+  HttpClient responseClient = responseWithClient.value.key;
+  HttpClientResponse response = responseWithClient.value.value;
   sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
 
   // Perform the download

@@ -9,6 +9,13 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
+  try {
+    if (Uri.parse(ambiguousUrl).isAbsolute) {
+      return ambiguousUrl; // #2315
+    }
+  } catch (e) {
+    //
+  }
   return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
 }
 
