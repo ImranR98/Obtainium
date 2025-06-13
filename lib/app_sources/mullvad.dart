@@ -12,8 +12,9 @@ class Mullvad extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -31,7 +32,9 @@ class Mullvad extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     Response res = await sourceRequest(
-        '$standardUrl/en/download/android', additionalSettings);
+      '$standardUrl/en/download/android',
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       var versions = parse(res.body)
           .querySelectorAll('p')
@@ -53,17 +56,18 @@ class Mullvad extends AppSource {
       String? changeLog;
       try {
         changeLog = (await GitHub().getLatestAPKDetails(
-                'https://github.com/mullvad/mullvadvpn-app',
-                {'fallbackToOlderReleases': true}))
-            .changeLog;
+          'https://github.com/mullvad/mullvadvpn-app',
+          {'fallbackToOlderReleases': true},
+        )).changeLog;
       } catch (e) {
         // Ignore
       }
       return APKDetails(
-          versions[0],
-          getApkUrlsFromUrls(['https://mullvad.net/download/app/apk/latest']),
-          AppNames(name, 'Mullvad-VPN'),
-          changeLog: changeLog);
+        versions[0],
+        getApkUrlsFromUrls(['https://mullvad.net/download/app/apk/latest']),
+        AppNames(name, 'Mullvad-VPN'),
+        changeLog: changeLog,
+      );
     } else {
       throw getObtainiumHttpError(res);
     }

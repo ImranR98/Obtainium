@@ -19,145 +19,185 @@ class GitHub extends AppSource {
     showReleaseDateAsVersionToggle = true;
 
     sourceConfigSettingFormItems = [
-      GeneratedFormTextField('github-creds',
-          label: tr('githubPATLabel'),
-          password: true,
-          required: false,
-          belowWidgets: [
-            const SizedBox(
-              height: 4,
+      GeneratedFormTextField(
+        'github-creds',
+        label: tr('githubPATLabel'),
+        password: true,
+        required: false,
+        belowWidgets: [
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () {
+              launchUrlString(
+                'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
+                mode: LaunchMode.externalApplication,
+              );
+            },
+            child: Text(
+              tr('about'),
+              style: const TextStyle(
+                decoration: TextDecoration.underline,
+                fontSize: 12,
+              ),
             ),
-            GestureDetector(
-                onTap: () {
-                  launchUrlString(
-                      'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
-                      mode: LaunchMode.externalApplication);
-                },
-                child: Text(
-                  tr('about'),
-                  style: const TextStyle(
-                      decoration: TextDecoration.underline, fontSize: 12),
-                )),
-            const SizedBox(
-              height: 4,
-            ),
-          ])
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
     ];
 
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormSwitch('includePrereleases',
-            label: tr('includePrereleases'), defaultValue: false)
+        GeneratedFormSwitch(
+          'includePrereleases',
+          label: tr('includePrereleases'),
+          defaultValue: false,
+        ),
       ],
       [
-        GeneratedFormSwitch('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'), defaultValue: true)
+        GeneratedFormSwitch(
+          'fallbackToOlderReleases',
+          label: tr('fallbackToOlderReleases'),
+          defaultValue: true,
+        ),
       ],
       [
-        GeneratedFormTextField('filterReleaseTitlesByRegEx',
-            label: tr('filterReleaseTitlesByRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              }
-            ])
+        GeneratedFormTextField(
+          'filterReleaseTitlesByRegEx',
+          label: tr('filterReleaseTitlesByRegEx'),
+          required: false,
+          additionalValidators: [
+            (value) {
+              return regExValidator(value);
+            },
+          ],
+        ),
       ],
       [
-        GeneratedFormTextField('filterReleaseNotesByRegEx',
-            label: tr('filterReleaseNotesByRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              }
-            ])
+        GeneratedFormTextField(
+          'filterReleaseNotesByRegEx',
+          label: tr('filterReleaseNotesByRegEx'),
+          required: false,
+          additionalValidators: [
+            (value) {
+              return regExValidator(value);
+            },
+          ],
+        ),
       ],
       [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
       [
         GeneratedFormDropdown(
-            'sortMethodChoice',
-            [
-              MapEntry('date', tr('releaseDate')),
-              MapEntry('smartname', tr('smartname')),
-              MapEntry('none', tr('none')),
-              MapEntry('smartname-datefallback',
-                  '${tr('smartname')} x ${tr('releaseDate')}'),
-              MapEntry('name', tr('name')),
-            ],
-            label: tr('sortMethod'),
-            defaultValue: 'date')
+          'sortMethodChoice',
+          [
+            MapEntry('date', tr('releaseDate')),
+            MapEntry('smartname', tr('smartname')),
+            MapEntry('none', tr('none')),
+            MapEntry(
+              'smartname-datefallback',
+              '${tr('smartname')} x ${tr('releaseDate')}',
+            ),
+            MapEntry('name', tr('name')),
+          ],
+          label: tr('sortMethod'),
+          defaultValue: 'date',
+        ),
       ],
       [
-        GeneratedFormSwitch('useLatestAssetDateAsReleaseDate',
-            label: tr('useLatestAssetDateAsReleaseDate'), defaultValue: false)
+        GeneratedFormSwitch(
+          'useLatestAssetDateAsReleaseDate',
+          label: tr('useLatestAssetDateAsReleaseDate'),
+          defaultValue: false,
+        ),
       ],
       [
-        GeneratedFormSwitch('releaseTitleAsVersion',
-            label: tr('releaseTitleAsVersion'), defaultValue: false)
-      ]
+        GeneratedFormSwitch(
+          'releaseTitleAsVersion',
+          label: tr('releaseTitleAsVersion'),
+          defaultValue: false,
+        ),
+      ],
     ];
 
     canSearch = true;
     searchQuerySettingFormItems = [
-      GeneratedFormTextField('minStarCount',
-          label: tr('minStarCount'),
-          defaultValue: '0',
-          additionalValidators: [
-            (value) {
-              try {
-                int.parse(value ?? '0');
-              } catch (e) {
-                return tr('invalidInput');
-              }
-              return null;
+      GeneratedFormTextField(
+        'minStarCount',
+        label: tr('minStarCount'),
+        defaultValue: '0',
+        additionalValidators: [
+          (value) {
+            try {
+              int.parse(value ?? '0');
+            } catch (e) {
+              return tr('invalidInput');
             }
-          ])
+            return null;
+          },
+        ],
+      ),
     ];
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     const possibleBuildGradleLocations = [
       '/app/build.gradle',
       'android/app/build.gradle',
-      'src/app/build.gradle'
+      'src/app/build.gradle',
     ];
     for (var path in possibleBuildGradleLocations) {
       try {
         var res = await sourceRequest(
-            '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path',
-            additionalSettings);
+          '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/contents/$path',
+          additionalSettings,
+        );
         if (res.statusCode == 200) {
           try {
             var body = jsonDecode(res.body);
             var trimmedLines = utf8
-                .decode(base64
-                    .decode(body['content'].toString().split('\n').join('')))
+                .decode(
+                  base64.decode(
+                    body['content'].toString().split('\n').join(''),
+                  ),
+                )
                 .split('\n')
                 .map((e) => e.trim());
-            var appIds = trimmedLines.where((l) =>
-                l.startsWith('applicationId "') ||
-                l.startsWith('applicationId \''));
-            appIds = appIds.map((appId) => appId
-                .split(appId.startsWith('applicationId "') ? '"' : '\'')[1]);
-            appIds = appIds.map((appId) {
-              if (appId.startsWith('\${') && appId.endsWith('}')) {
-                appId = trimmedLines
-                    .where((l) => l.startsWith(
-                        'def ${appId.substring(2, appId.length - 1)}'))
-                    .first;
-                appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
-              }
-              return appId;
-            }).where((appId) => appId.isNotEmpty);
+            var appIds = trimmedLines.where(
+              (l) =>
+                  l.startsWith('applicationId "') ||
+                  l.startsWith('applicationId \''),
+            );
+            appIds = appIds.map(
+              (appId) => appId.split(
+                appId.startsWith('applicationId "') ? '"' : '\'',
+              )[1],
+            );
+            appIds = appIds
+                .map((appId) {
+                  if (appId.startsWith('\${') && appId.endsWith('}')) {
+                    appId = trimmedLines
+                        .where(
+                          (l) => l.startsWith(
+                            'def ${appId.substring(2, appId.length - 1)}',
+                          ),
+                        )
+                        .first;
+                    appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
+                  }
+                  return appId;
+                })
+                .where((appId) => appId.isNotEmpty);
             if (appIds.length == 1) {
               return appIds.first;
             }
           } catch (err) {
             LogsProvider().add(
-                'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}');
+              'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}',
+            );
           }
         }
       } catch (err) {
@@ -170,8 +210,9 @@ class GitHub extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -181,8 +222,9 @@ class GitHub extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      {bool forAPKDownload = false}) async {
+    Map<String, dynamic> additionalSettings, {
+    bool forAPKDownload = false,
+  }) async {
     var token = await getTokenIfAny(additionalSettings);
     var headers = <String, String>{};
     if (token != null && token.isNotEmpty) {
@@ -201,14 +243,17 @@ class GitHub extends AppSource {
   Future<String?> getTokenIfAny(Map<String, dynamic> additionalSettings) async {
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    var sourceConfig =
-        await getSourceConfigValues(additionalSettings, settingsProvider);
+    var sourceConfig = await getSourceConfigValues(
+      additionalSettings,
+      settingsProvider,
+    );
     String? creds = sourceConfig['github-creds'];
     if (creds != null) {
       var userNameEndIndex = creds.indexOf(':');
       if (userNameEndIndex > 0) {
         creds = creds.substring(
-            userNameEndIndex + 1); // For old username-included token inputs
+          userNameEndIndex + 1,
+        ); // For old username-included token inputs
       }
       return creds;
     } else {
@@ -228,31 +273,36 @@ class GitHub extends AppSource {
       'https://api.${hosts[0]}';
 
   Future<String> convertStandardUrlToAPIUrl(
-          String standardUrl, Map<String, dynamic> additionalSettings) async =>
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async =>
       '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://${hosts[0]}'.length)}';
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 
-  Future<APKDetails> getLatestAPKDetailsCommon(String requestUrl,
-      String standardUrl, Map<String, dynamic> additionalSettings,
-      {Function(Response)? onHttpErrorCode}) async {
+  Future<APKDetails> getLatestAPKDetailsCommon(
+    String requestUrl,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings, {
+    Function(Response)? onHttpErrorCode,
+  }) async {
     bool includePrereleases = additionalSettings['includePrereleases'] == true;
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
     String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
-                    ?.isNotEmpty ==
-                true
-            ? additionalSettings['filterReleaseTitlesByRegEx']
-            : null;
+                ?.isNotEmpty ==
+            true
+        ? additionalSettings['filterReleaseTitlesByRegEx']
+        : null;
     String? regexNotesFilter =
         (additionalSettings['filterReleaseNotesByRegEx'] as String?)
-                    ?.isNotEmpty ==
-                true
-            ? additionalSettings['filterReleaseNotesByRegEx']
-            : null;
+                ?.isNotEmpty ==
+            true
+        ? additionalSettings['filterReleaseNotesByRegEx']
+        : null;
     bool verifyLatestTag = additionalSettings['verifyLatestTag'] == true;
     bool useLatestAssetDateAsReleaseDate =
         additionalSettings['useLatestAssetDateAsReleaseDate'] == true;
@@ -262,8 +312,9 @@ class GitHub extends AppSource {
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
       Response res = await sourceRequest(
-          '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}',
-          additionalSettings);
+        '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}',
+        additionalSettings,
+      );
       if (res.statusCode != 200) {
         if (onHttpErrorCode != null) {
           onHttpErrorCode(res);
@@ -278,8 +329,10 @@ class GitHub extends AppSource {
       if (latestRelease != null) {
         var latestTag = latestRelease['tag_name'] ?? latestRelease['name'];
         if (releases
-            .where((element) =>
-                (element['tag_name'] ?? element['name']) == latestTag)
+            .where(
+              (element) =>
+                  (element['tag_name'] ?? element['name']) == latestTag,
+            )
             .isEmpty) {
           releases = [latestRelease, ...releases];
         }
@@ -299,10 +352,10 @@ class GitHub extends AppSource {
 
       DateTime? getPublishDateFromRelease(dynamic rel) =>
           rel?['published_at'] != null
-              ? DateTime.parse(rel['published_at'])
-              : rel?['commit']?['created'] != null
-                  ? DateTime.parse(rel['commit']['created'])
-                  : null;
+          ? DateTime.parse(rel['published_at'])
+          : rel?['commit']?['created'] != null
+          ? DateTime.parse(rel['commit']['created'])
+          : null;
       DateTime? getNewestAssetDateFromRelease(dynamic rel) {
         var allAssets = rel['assets'] as List<dynamic>?;
         var filteredAssets = rel['filteredAssets'] as List<dynamic>?;
@@ -323,8 +376,8 @@ class GitHub extends AppSource {
 
       DateTime? getReleaseDateFromRelease(dynamic rel, bool useAssetDate) =>
           !useAssetDate
-              ? getPublishDateFromRelease(rel)
-              : getNewestAssetDateFromRelease(rel);
+          ? getPublishDateFromRelease(rel)
+          : getNewestAssetDateFromRelease(rel);
 
       if (sortMethod == 'none') {
         releases = releases.reversed.toList();
@@ -340,29 +393,40 @@ class GitHub extends AppSource {
           } else {
             var nameA = a['tag_name'] ?? a['name'];
             var nameB = b['tag_name'] ?? b['name'];
-            var stdFormats = findStandardFormatsForVersion(nameA, false)
-                .intersection(findStandardFormatsForVersion(nameB, false));
+            var stdFormats = findStandardFormatsForVersion(
+              nameA,
+              false,
+            ).intersection(findStandardFormatsForVersion(nameB, false));
             if (sortMethod == 'date' ||
                 (sortMethod == 'smartname-datefallback' &&
                     stdFormats.isEmpty)) {
               return (getReleaseDateFromRelease(
-                          a, useLatestAssetDateAsReleaseDate) ??
+                        a,
+                        useLatestAssetDateAsReleaseDate,
+                      ) ??
                       DateTime(1))
-                  .compareTo(getReleaseDateFromRelease(
-                          b, useLatestAssetDateAsReleaseDate) ??
-                      DateTime(0));
+                  .compareTo(
+                    getReleaseDateFromRelease(
+                          b,
+                          useLatestAssetDateAsReleaseDate,
+                        ) ??
+                        DateTime(0),
+                  );
             } else {
               if (sortMethod != 'name' && stdFormats.isNotEmpty) {
                 var reg = RegExp(stdFormats.last);
                 var matchA = reg.firstMatch(nameA);
                 var matchB = reg.firstMatch(nameB);
                 return compareAlphaNumeric(
-                    (nameA as String).substring(matchA!.start, matchA.end),
-                    (nameB as String).substring(matchB!.start, matchB.end));
+                  (nameA as String).substring(matchA!.start, matchA.end),
+                  (nameB as String).substring(matchB!.start, matchB.end),
+                );
               } else {
                 // 'name'
                 return compareAlphaNumeric(
-                    (nameA as String), (nameB as String));
+                  (nameA as String),
+                  (nameB as String),
+                );
               }
             }
           }
@@ -374,9 +438,11 @@ class GitHub extends AppSource {
           latestRelease !=
               (releases[releases.length - 1]['tag_name'] ??
                   releases[0]['name'])) {
-        var ind = releases.indexWhere((element) =>
-            (latestRelease['tag_name'] ?? latestRelease['name']) ==
-            (element['tag_name'] ?? element['name']));
+        var ind = releases.indexWhere(
+          (element) =>
+              (latestRelease['tag_name'] ?? latestRelease['name']) ==
+              (element['tag_name'] ?? element['name']),
+        );
         if (ind >= 0) {
           releases.add(releases.removeAt(ind));
         }
@@ -404,8 +470,9 @@ class GitHub extends AppSource {
           continue;
         }
         if (regexNotesFilter != null &&
-            !RegExp(regexNotesFilter)
-                .hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
+            !RegExp(
+              regexNotesFilter,
+            ).hasMatch(((releases[i]['body'] as String?) ?? '').trim())) {
           continue;
         }
         var allAssetsWithUrls = findReleaseAssetUrls(releases[i]);
@@ -413,24 +480,31 @@ class GitHub extends AppSource {
             .map((e) => e['final_url'] as MapEntry<String, String>)
             .toList();
         var apkAssetsWithUrls = allAssetsWithUrls
-            .where((element) =>
-                (element['final_url'] as MapEntry<String, String>)
-                    .key
-                    .toLowerCase()
-                    .endsWith('.apk'))
+            .where(
+              (element) => (element['final_url'] as MapEntry<String, String>)
+                  .key
+                  .toLowerCase()
+                  .endsWith('.apk'),
+            )
             .toList();
 
         var filteredApkUrls = filterApks(
-            apkAssetsWithUrls
-                .map((e) => e['final_url'] as MapEntry<String, String>)
-                .toList(),
-            additionalSettings['apkFilterRegEx'],
-            additionalSettings['invertAPKFilter']);
+          apkAssetsWithUrls
+              .map((e) => e['final_url'] as MapEntry<String, String>)
+              .toList(),
+          additionalSettings['apkFilterRegEx'],
+          additionalSettings['invertAPKFilter'],
+        );
         var filteredApks = apkAssetsWithUrls
-            .where((e) => filteredApkUrls
-                .where((e2) =>
-                    e2.key == (e['final_url'] as MapEntry<String, String>).key)
-                .isNotEmpty)
+            .where(
+              (e) => filteredApkUrls
+                  .where(
+                    (e2) =>
+                        e2.key ==
+                        (e['final_url'] as MapEntry<String, String>).key,
+                  )
+                  .isNotEmpty,
+            )
             .toList();
 
         if (filteredApks.isEmpty && additionalSettings['trackOnly'] != true) {
@@ -441,17 +515,23 @@ class GitHub extends AppSource {
         targetRelease['filteredAssets'] = filteredApks;
         targetRelease['version'] =
             additionalSettings['releaseTitleAsVersion'] == true
-                ? nameToFilter
-                : targetRelease['tag_name'] ?? targetRelease['name'];
+            ? nameToFilter
+            : targetRelease['tag_name'] ?? targetRelease['name'];
         if (targetRelease['tarball_url'] != null) {
-          allAssetUrls.add(MapEntry(
+          allAssetUrls.add(
+            MapEntry(
               (targetRelease['version'] ?? 'source') + '.tar.gz',
-              targetRelease['tarball_url']));
+              targetRelease['tarball_url'],
+            ),
+          );
         }
         if (targetRelease['zipball_url'] != null) {
-          allAssetUrls.add(MapEntry(
+          allAssetUrls.add(
+            MapEntry(
               (targetRelease['version'] ?? 'source') + '.zip',
-              targetRelease['zipball_url']));
+              targetRelease['zipball_url'],
+            ),
+          );
         }
         targetRelease['allAssetUrls'] = allAssetUrls;
         break;
@@ -462,19 +542,22 @@ class GitHub extends AppSource {
       String? version = targetRelease['version'];
 
       DateTime? releaseDate = getReleaseDateFromRelease(
-          targetRelease, useLatestAssetDateAsReleaseDate);
+        targetRelease,
+        useLatestAssetDateAsReleaseDate,
+      );
       if (version == null) {
         throw NoVersionError();
       }
       var changeLog = (targetRelease['body'] ?? '').toString();
       return APKDetails(
-          version,
-          targetRelease['apkUrls'] as List<MapEntry<String, String>>,
-          getAppNames(standardUrl),
-          releaseDate: releaseDate,
-          changeLog: changeLog.isEmpty ? null : changeLog,
-          allAssetUrls:
-              targetRelease['allAssetUrls'] as List<MapEntry<String, String>>);
+        version,
+        targetRelease['apkUrls'] as List<MapEntry<String, String>>,
+        getAppNames(standardUrl),
+        releaseDate: releaseDate,
+        changeLog: changeLog.isEmpty ? null : changeLog,
+        allAssetUrls:
+            targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
+      );
     } else {
       if (onHttpErrorCode != null) {
         onHttpErrorCode(res);
@@ -483,20 +566,27 @@ class GitHub extends AppSource {
     }
   }
 
-  getLatestAPKDetailsCommon2(
-      String standardUrl,
-      Map<String, dynamic> additionalSettings,
-      Future<String> Function(bool) reqUrlGenerator,
-      dynamic Function(Response)? onHttpErrorCode) async {
+  Future<APKDetails> getLatestAPKDetailsCommon2(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+    Future<String> Function(bool) reqUrlGenerator,
+    dynamic Function(Response)? onHttpErrorCode,
+  ) async {
     try {
       return await getLatestAPKDetailsCommon(
-          await reqUrlGenerator(false), standardUrl, additionalSettings,
-          onHttpErrorCode: onHttpErrorCode);
+        await reqUrlGenerator(false),
+        standardUrl,
+        additionalSettings,
+        onHttpErrorCode: onHttpErrorCode,
+      );
     } catch (err) {
       if (err is NoReleasesError && additionalSettings['trackOnly'] == true) {
         return await getLatestAPKDetailsCommon(
-            await reqUrlGenerator(true), standardUrl, additionalSettings,
-            onHttpErrorCode: onHttpErrorCode);
+          await reqUrlGenerator(true),
+          standardUrl,
+          additionalSettings,
+          onHttpErrorCode: onHttpErrorCode,
+        );
       } else {
         rethrow;
       }
@@ -508,12 +598,16 @@ class GitHub extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
-        (bool useTagUrl) async {
-      return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
-    }, (Response res) {
-      rateLimitErrorCheck(res);
-    });
+    return await getLatestAPKDetailsCommon2(
+      standardUrl,
+      additionalSettings,
+      (bool useTagUrl) async {
+        return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+      },
+      (Response res) {
+        rateLimitErrorCheck(res);
+      },
+    );
   }
 
   AppNames getAppNames(String standardUrl) {
@@ -523,9 +617,12 @@ class GitHub extends AppSource {
   }
 
   Future<Map<String, List<String>>> searchCommon(
-      String query, String requestUrl, String rootProp,
-      {Function(Response)? onHttpErrorCode,
-      Map<String, dynamic> querySettings = const {}}) async {
+    String query,
+    String requestUrl,
+    String rootProp, {
+    Function(Response)? onHttpErrorCode,
+    Map<String, dynamic> querySettings = const {},
+  }) async {
     Response res = await sourceRequest(requestUrl, {});
     if (res.statusCode == 200) {
       int minStarCount = querySettings['minStarCount'] != null
@@ -540,8 +637,8 @@ class GitHub extends AppSource {
               ((e['archived'] == true ? '[ARCHIVED] ' : '') +
                   (e['description'] != null
                       ? e['description'] as String
-                      : tr('noDescription')))
-            ]
+                      : tr('noDescription'))),
+            ],
           });
         }
       }
@@ -555,22 +652,27 @@ class GitHub extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query,
-      {Map<String, dynamic> querySettings = const {}}) async {
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
     return searchCommon(
-        query,
-        '${await getAPIHost({})}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
-        'items', onHttpErrorCode: (Response res) {
-      rateLimitErrorCheck(res);
-    }, querySettings: querySettings);
+      query,
+      '${await getAPIHost({})}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
+      'items',
+      onHttpErrorCode: (Response res) {
+        rateLimitErrorCheck(res);
+      },
+      querySettings: querySettings,
+    );
   }
 
-  rateLimitErrorCheck(Response res) {
+  void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
       throw RateLimitError(
-          (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') /
-                  60000000)
-              .round());
+        (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000)
+            .round(),
+      );
     }
   }
 }

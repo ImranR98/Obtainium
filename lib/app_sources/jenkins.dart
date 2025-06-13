@@ -31,14 +31,17 @@ class Jenkins extends AppSource {
   ) async {
     standardUrl = trimJobUrl(standardUrl);
     Response res = await sourceRequest(
-        '$standardUrl/lastSuccessfulBuild/api/json', additionalSettings);
+      '$standardUrl/lastSuccessfulBuild/api/json',
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
       var releaseDate = json['timestamp'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int);
-      var version =
-          json['number'] == null ? null : (json['number'] as int).toString();
+      var version = json['number'] == null
+          ? null
+          : (json['number'] as int).toString();
       if (version == null) {
         throw NoVersionError();
       }
@@ -51,16 +54,21 @@ class Jenkins extends AppSource {
             return path == null
                 ? const MapEntry<String, String>('', '')
                 : MapEntry<String, String>(
-                    (e['fileName'] ?? e['relativePath']) as String, path);
+                    (e['fileName'] ?? e['relativePath']) as String,
+                    path,
+                  );
           })
-          .where((url) =>
-              url.value.isNotEmpty && url.key.toLowerCase().endsWith('.apk'))
+          .where(
+            (url) =>
+                url.value.isNotEmpty && url.key.toLowerCase().endsWith('.apk'),
+          )
           .toList();
       return APKDetails(
-          version,
-          apkUrls,
-          releaseDate: releaseDate,
-          AppNames(Uri.parse(standardUrl).host, standardUrl.split('/').last));
+        version,
+        apkUrls,
+        releaseDate: releaseDate,
+        AppNames(Uri.parse(standardUrl).host, standardUrl.split('/').last),
+      );
     } else {
       throw getObtainiumHttpError(res);
     }

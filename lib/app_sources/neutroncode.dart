@@ -12,8 +12,9 @@ class NeutronCode extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -55,7 +56,7 @@ class NeutronCode extends AppSource {
     }
   }
 
-  customDateParse(String dateString) {
+  String? customDateParse(String dateString) {
     List<String> parts = dateString.split(' ');
     if (parts.length != 3) {
       return null;
@@ -89,24 +90,31 @@ class NeutronCode extends AppSource {
       if (filename == null) {
         throw NoReleasesError();
       }
-      var version =
-          http.querySelector('.pd-version-txt')?.nextElementSibling?.innerHtml;
+      var version = http
+          .querySelector('.pd-version-txt')
+          ?.nextElementSibling
+          ?.innerHtml;
       if (version == null) {
         throw NoVersionError();
       }
       String? apkUrl = 'https://${hosts[0]}/download/$filename';
-      var dateStringOriginal =
-          http.querySelector('.pd-date-txt')?.nextElementSibling?.innerHtml;
+      var dateStringOriginal = http
+          .querySelector('.pd-date-txt')
+          ?.nextElementSibling
+          ?.innerHtml;
       var dateString = dateStringOriginal != null
           ? (customDateParse(dateStringOriginal))
           : null;
       var changeLogElements = http.querySelectorAll('.pd-fdesc p');
-      return APKDetails(version, getApkUrlsFromUrls([apkUrl]),
-          AppNames(runtimeType.toString(), name ?? standardUrl.split('/').last),
-          releaseDate: dateString != null ? DateTime.parse(dateString) : null,
-          changeLog: changeLogElements.isNotEmpty
-              ? changeLogElements.last.innerHtml
-              : null);
+      return APKDetails(
+        version,
+        getApkUrlsFromUrls([apkUrl]),
+        AppNames(runtimeType.toString(), name ?? standardUrl.split('/').last),
+        releaseDate: dateString != null ? DateTime.parse(dateString) : null,
+        changeLog: changeLogElements.isNotEmpty
+            ? changeLogElements.last.innerHtml
+            : null,
+      );
     } else {
       throw getObtainiumHttpError(res);
     }

@@ -4,15 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form.dart';
 
 class GeneratedFormModal extends StatefulWidget {
-  const GeneratedFormModal(
-      {super.key,
-      required this.title,
-      required this.items,
-      this.initValid = false,
-      this.message = '',
-      this.additionalWidgets = const [],
-      this.singleNullReturnButton,
-      this.primaryActionColour});
+  const GeneratedFormModal({
+    super.key,
+    required this.title,
+    required this.items,
+    this.initValid = false,
+    this.message = '',
+    this.additionalWidgets = const [],
+    this.singleNullReturnButton,
+    this.primaryActionColour,
+  });
 
   final String title;
   final String message;
@@ -41,14 +42,12 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title),
-      content:
-          Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (widget.message.isNotEmpty) Text(widget.message),
-        if (widget.message.isNotEmpty)
-          const SizedBox(
-            height: 16,
-          ),
-        GeneratedForm(
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.message.isNotEmpty) Text(widget.message),
+          if (widget.message.isNotEmpty) const SizedBox(height: 16),
+          GeneratedForm(
             items: widget.items,
             onValueChanges: (values, valid, isBuilding) {
               if (isBuilding) {
@@ -60,23 +59,29 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                   this.valid = valid;
                 });
               }
-            }),
-        if (widget.additionalWidgets.isNotEmpty) ...widget.additionalWidgets
-      ]),
+            },
+          ),
+          if (widget.additionalWidgets.isNotEmpty) ...widget.additionalWidgets,
+        ],
+      ),
       actions: [
         TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(null);
-            },
-            child: Text(widget.singleNullReturnButton == null
+          onPressed: () {
+            Navigator.of(context).pop(null);
+          },
+          child: Text(
+            widget.singleNullReturnButton == null
                 ? tr('cancel')
-                : widget.singleNullReturnButton!)),
+                : widget.singleNullReturnButton!,
+          ),
+        ),
         widget.singleNullReturnButton == null
             ? TextButton(
                 style: widget.primaryActionColour == null
                     ? null
                     : TextButton.styleFrom(
-                        foregroundColor: widget.primaryActionColour),
+                        foregroundColor: widget.primaryActionColour,
+                      ),
                 onPressed: !valid
                     ? null
                     : () {
@@ -85,8 +90,9 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                           Navigator.of(context).pop(values);
                         }
                       },
-                child: Text(tr('continue')))
-            : const SizedBox.shrink()
+                child: Text(tr('continue')),
+              )
+            : const SizedBox.shrink(),
       ],
     );
   }

@@ -23,15 +23,19 @@ class VivoAppStore extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     var json = await getDetailJson(standardUrl, additionalSettings);
     return json['package_name'];
   }
 
   @override
   Future<APKDetails> getLatestAPKDetails(
-      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var json = await getDetailJson(standardUrl, additionalSettings);
     var appName = json['title_zh'].toString();
     var packageName = json['package_name'].toString();
@@ -42,13 +46,18 @@ class VivoAppStore extends AppSource {
     var apkUrl = json['download_url'].toString();
     var apkName = '${packageName}_$versionCode.apk';
     return APKDetails(
-        versionName, [MapEntry(apkName, apkUrl)], AppNames(developer, appName),
-        releaseDate: DateTime.parse(uploadTime));
+      versionName,
+      [MapEntry(apkName, apkUrl)],
+      AppNames(developer, appName),
+      releaseDate: DateTime.parse(uploadTime),
+    );
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query,
-      {Map<String, dynamic> querySettings = const {}}) async {
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
     var apiBaseUrl =
         'https://h5-api.appstore.vivo.com.cn/h5appstore/search/result-list?app_version=2100&page_index=1&apps_per_page=20&target=local&cfrom=2&key=';
     var searchUrl = '$apiBaseUrl${Uri.encodeQueryComponent(query)}';
@@ -65,14 +74,16 @@ class VivoAppStore extends AppSource {
     for (var item in (resultsJson as List<dynamic>)) {
       results['$appDetailUrl${item['id']}'] = [
         item['title_zh'].toString(),
-        item['developer'].toString()
+        item['developer'].toString(),
       ];
     }
     return results;
   }
 
   Future<Map<String, dynamic>> getDetailJson(
-      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var vivoAppId = parseVivoAppId(standardUrl);
     var apiBaseUrl = 'https://h5-api.appstore.vivo.com.cn/detail/';
     var params = '?frompage=messageh5&app_version=2100';

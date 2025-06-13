@@ -18,8 +18,9 @@ class RuStore extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/catalog/app/+[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/catalog/app/+[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -28,16 +29,18 @@ class RuStore extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
   Future<String> decodeString(String str) async {
     try {
       return (await CharsetDetector.autoDecode(
-              Uint8List.fromList(str.codeUnits)))
-          .string;
+        Uint8List.fromList(str.codeUnits),
+      )).string;
     } catch (e) {
       return str;
     }
@@ -50,8 +53,9 @@ class RuStore extends AppSource {
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
     Response res0 = await sourceRequest(
-        'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
-        additionalSettings);
+      'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
+      additionalSettings,
+    );
     if (res0.statusCode != 200) {
       throw getObtainiumHttpError(res0);
     }
@@ -74,10 +78,11 @@ class RuStore extends AppSource {
     }
 
     Response res1 = await sourceRequest(
-        'https://backapi.rustore.ru/applicationData/download-link',
-        additionalSettings,
-        followRedirects: false,
-        postBody: {"appId": appDetails['appId'], "firstInstall": true});
+      'https://backapi.rustore.ru/applicationData/download-link',
+      additionalSettings,
+      followRedirects: false,
+      postBody: {"appId": appDetails['appId'], "firstInstall": true},
+    );
     var downloadDetails = jsonDecode(res1.body)['body'];
     if (res1.statusCode != 200 || downloadDetails['apkUrl'] == null) {
       throw NoAPKError();
@@ -88,13 +93,16 @@ class RuStore extends AppSource {
     changeLog = changeLog != null ? await decodeString(changeLog) : null;
 
     return APKDetails(
-        version,
-        getApkUrlsFromUrls([
-          (downloadDetails['apkUrl'] as String)
-              .replaceAll(RegExp('\\.zip\$'), '.apk')
-        ]),
-        AppNames(author, appName),
-        releaseDate: relDate,
-        changeLog: changeLog);
+      version,
+      getApkUrlsFromUrls([
+        (downloadDetails['apkUrl'] as String).replaceAll(
+          RegExp('\\.zip\$'),
+          '.apk',
+        ),
+      ]),
+      AppNames(author, appName),
+      releaseDate: relDate,
+      changeLog: changeLog,
+    );
   }
 }

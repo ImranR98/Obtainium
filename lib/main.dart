@@ -43,8 +43,10 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('tr'), 'Türkçe'),
   MapEntry(Locale('uk'), 'Українська'),
   MapEntry(Locale('da'), 'Dansk'),
-  MapEntry(Locale('en', 'EO'),
-      'Esperanto'), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
+  MapEntry(
+    Locale('en', 'EO'),
+    'Esperanto',
+  ), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
   MapEntry(Locale('in'), 'Bahasa Indonesia'),
   MapEntry(Locale('ko'), '한국어'),
   MapEntry(Locale('ca'), 'Català'),
@@ -76,9 +78,11 @@ Future<void> loadTranslations() async {
     },
   );
   await controller.loadTranslations();
-  Localization.load(controller.locale,
-      translations: controller.translations,
-      fallbackTranslations: controller.fallbackTranslations);
+  Localization.load(
+    controller.locale,
+    translations: controller.translations,
+    fallbackTranslations: controller.fallbackTranslations,
+  );
 }
 
 @pragma('vm:entry-point')
@@ -97,10 +101,12 @@ void backgroundFetchHeadlessTask(HeadlessTask task) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    ByteData data =
-        await PlatformAssetBundle().load('assets/ca/lets-encrypt-r3.pem');
-    SecurityContext.defaultContext
-        .setTrustedCertificatesBytes(data.buffer.asUint8List());
+    ByteData data = await PlatformAssetBundle().load(
+      'assets/ca/lets-encrypt-r3.pem',
+    );
+    SecurityContext.defaultContext.setTrustedCertificatesBytes(
+      data.buffer.asUint8List(),
+    );
   } catch (e) {
     // Already added, do nothing (see #375)
   }
@@ -113,20 +119,23 @@ void main() async {
   }
   final np = NotificationsProvider();
   await np.initialize();
-  runApp(MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (context) => AppsProvider()),
-      ChangeNotifierProvider(create: (context) => SettingsProvider()),
-      Provider(create: (context) => np),
-      Provider(create: (context) => LogsProvider())
-    ],
-    child: EasyLocalization(
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AppsProvider()),
+        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        Provider(create: (context) => np),
+        Provider(create: (context) => LogsProvider()),
+      ],
+      child: EasyLocalization(
         supportedLocales: supportedLocales.map((e) => e.key).toList(),
         path: localeDir,
         fallbackLocale: fallbackLocale,
         useOnlyLangCode: false,
-        child: const Obtainium()),
-  ));
+        child: const Obtainium(),
+      ),
+    ),
+  );
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
@@ -148,22 +157,26 @@ class _ObtainiumState extends State<Obtainium> {
 
   Future<void> initPlatformState() async {
     await BackgroundFetch.configure(
-        BackgroundFetchConfig(
-            minimumFetchInterval: 15,
-            stopOnTerminate: false,
-            startOnBoot: true,
-            enableHeadless: true,
-            requiresBatteryNotLow: false,
-            requiresCharging: false,
-            requiresStorageNotLow: false,
-            requiresDeviceIdle: false,
-            requiredNetworkType: NetworkType.ANY), (String taskId) async {
-      await bgUpdateCheck(taskId, null);
-      BackgroundFetch.finish(taskId);
-    }, (String taskId) async {
-      context.read<LogsProvider>().add('BG update task timed out.');
-      BackgroundFetch.finish(taskId);
-    });
+      BackgroundFetchConfig(
+        minimumFetchInterval: 15,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        enableHeadless: true,
+        requiresBatteryNotLow: false,
+        requiresCharging: false,
+        requiresStorageNotLow: false,
+        requiresDeviceIdle: false,
+        requiredNetworkType: NetworkType.ANY,
+      ),
+      (String taskId) async {
+        await bgUpdateCheck(taskId, null);
+        BackgroundFetch.finish(taskId);
+      },
+      (String taskId) async {
+        context.read<LogsProvider>().add('BG update task timed out.');
+        BackgroundFetch.finish(taskId);
+      },
+    );
     if (!mounted) return;
   }
 
@@ -183,30 +196,33 @@ class _ObtainiumState extends State<Obtainium> {
         // If this is the first run, ask for notification permissions and add Obtainium to the Apps list
         Permission.notification.request();
         if (!fdroid) {
-          getInstalledInfo(obtainiumId).then((value) {
-            if (value?.versionName != null) {
-              appsProvider.saveApps([
-                App(
-                    obtainiumId,
-                    obtainiumUrl,
-                    'ImranR98',
-                    'Obtainium',
-                    value!.versionName,
-                    value.versionName!,
-                    [],
-                    0,
-                    {
-                      'versionDetection': true,
-                      'apkFilterRegEx': 'fdroid',
-                      'invertAPKFilter': true
-                    },
-                    null,
-                    false)
-              ], onlyIfExists: false);
-            }
-          }).catchError((err) {
-            print(err);
-          });
+          getInstalledInfo(obtainiumId)
+              .then((value) {
+                if (value?.versionName != null) {
+                  appsProvider.saveApps([
+                    App(
+                      obtainiumId,
+                      obtainiumUrl,
+                      'ImranR98',
+                      'Obtainium',
+                      value!.versionName,
+                      value.versionName!,
+                      [],
+                      0,
+                      {
+                        'versionDetection': true,
+                        'apkFilterRegEx': 'fdroid',
+                        'invertAPKFilter': true,
+                      },
+                      null,
+                      false,
+                    ),
+                  ], onlyIfExists: false);
+                }
+              })
+              .catchError((err) {
+                print(err);
+              });
         }
       }
       if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
@@ -221,32 +237,35 @@ class _ObtainiumState extends State<Obtainium> {
     });
 
     return DynamicColorBuilder(
-        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-      // Decide on a colour/brightness scheme based on OS and user settings
-      ColorScheme lightColorScheme;
-      ColorScheme darkColorScheme;
-      if (lightDynamic != null &&
-          darkDynamic != null &&
-          settingsProvider.useMaterialYou) {
-        lightColorScheme = lightDynamic.harmonized();
-        darkColorScheme = darkDynamic.harmonized();
-      } else {
-        lightColorScheme =
-            ColorScheme.fromSeed(seedColor: settingsProvider.themeColor);
-        darkColorScheme = ColorScheme.fromSeed(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        // Decide on a colour/brightness scheme based on OS and user settings
+        ColorScheme lightColorScheme;
+        ColorScheme darkColorScheme;
+        if (lightDynamic != null &&
+            darkDynamic != null &&
+            settingsProvider.useMaterialYou) {
+          lightColorScheme = lightDynamic.harmonized();
+          darkColorScheme = darkDynamic.harmonized();
+        } else {
+          lightColorScheme = ColorScheme.fromSeed(
             seedColor: settingsProvider.themeColor,
-            brightness: Brightness.dark);
-      }
+          );
+          darkColorScheme = ColorScheme.fromSeed(
+            seedColor: settingsProvider.themeColor,
+            brightness: Brightness.dark,
+          );
+        }
 
-      // set the background and surface colors to pure black in the amoled theme
-      if (settingsProvider.useBlackTheme) {
-        darkColorScheme =
-            darkColorScheme.copyWith(surface: Colors.black).harmonized();
-      }
+        // set the background and surface colors to pure black in the amoled theme
+        if (settingsProvider.useBlackTheme) {
+          darkColorScheme = darkColorScheme
+              .copyWith(surface: Colors.black)
+              .harmonized();
+        }
 
-      if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
+        if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
 
-      return MaterialApp(
+        return MaterialApp(
           title: 'Obtainium',
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
@@ -254,22 +273,31 @@ class _ObtainiumState extends State<Obtainium> {
           navigatorKey: globalNavigatorKey,
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.dark
-                  ? darkColorScheme
-                  : lightColorScheme,
-              fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat'),
+            useMaterial3: true,
+            colorScheme: settingsProvider.theme == ThemeSettings.dark
+                ? darkColorScheme
+                : lightColorScheme,
+            fontFamily: settingsProvider.useSystemFont
+                ? 'SystemFont'
+                : 'Montserrat',
+          ),
           darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.light
-                  ? lightColorScheme
-                  : darkColorScheme,
-              fontFamily:
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat'),
-          home: Shortcuts(shortcuts: <LogicalKeySet, Intent>{
-            LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
-          }, child: const HomePage()));
-    });
+            useMaterial3: true,
+            colorScheme: settingsProvider.theme == ThemeSettings.light
+                ? lightColorScheme
+                : darkColorScheme,
+            fontFamily: settingsProvider.useSystemFont
+                ? 'SystemFont'
+                : 'Montserrat',
+          ),
+          home: Shortcuts(
+            shortcuts: <LogicalKeySet, Intent>{
+              LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+            },
+            child: const HomePage(),
+          ),
+        );
+      },
+    );
   }
 }
