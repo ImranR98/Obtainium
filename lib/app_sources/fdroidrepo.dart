@@ -15,15 +15,20 @@ class FDroidRepo extends AppSource {
 
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormTextField('appIdOrName',
-            label: tr('appIdOrName'),
-            hint: tr('reposHaveMultipleApps'),
-            required: true)
+        GeneratedFormTextField(
+          'appIdOrName',
+          label: tr('appIdOrName'),
+          hint: tr('reposHaveMultipleApps'),
+          required: true,
+        ),
       ],
       [
-        GeneratedFormSwitch('pickHighestVersionCode',
-            label: tr('pickHighestVersionCode'), defaultValue: false)
-      ]
+        GeneratedFormSwitch(
+          'pickHighestVersionCode',
+          label: tr('pickHighestVersionCode'),
+          defaultValue: false,
+        ),
+      ],
     ];
   }
 
@@ -54,8 +59,10 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query,
-      {Map<String, dynamic> querySettings = const {}}) async {
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
     String? url = querySettings['url'];
     if (url == null) {
       throw NoReleasesError();
@@ -73,11 +80,8 @@ class FDroidRepo extends AppSource {
             appId.contains(query) ||
             appName.contains(query) ||
             appDesc.contains(query)) {
-          results[
-              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] = [
-            appName,
-            appDesc
-          ];
+          results['${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] =
+              [appName, appDesc];
         }
       });
       return results;
@@ -90,21 +94,21 @@ class FDroidRepo extends AppSource {
   void runOnAddAppInputChange(String userInput) {
     additionalSourceAppSpecificSettingFormItems =
         additionalSourceAppSpecificSettingFormItems.map((row) {
-      row = row.map((item) {
-        if (item.key == 'appIdOrName') {
-          try {
-            var appId = Uri.parse(userInput).queryParameters['appId'];
-            if (appId != null && item is GeneratedFormTextField) {
-              item.required = false;
+          row = row.map((item) {
+            if (item.key == 'appIdOrName') {
+              try {
+                var appId = Uri.parse(userInput).queryParameters['appId'];
+                if (appId != null && item is GeneratedFormTextField) {
+                  item.required = false;
+                }
+              } catch (e) {
+                //
+              }
             }
-          } catch (e) {
-            //
-          }
-        }
-        return item;
-      }).toList();
-      return row;
-    }).toList();
+            return item;
+          }).toList();
+          return row;
+        }).toList();
   }
 
   @override
@@ -119,8 +123,11 @@ class FDroidRepo extends AppSource {
     if (appId != null) {
       app.url = uri
           .replace(
-              queryParameters: Map.fromEntries(
-                  [...uri.queryParameters.entries, MapEntry('appId', appId)]))
+            queryParameters: Map.fromEntries([
+              ...uri.queryParameters.entries,
+              MapEntry('appId', appId),
+            ]),
+          )
           .toString();
       app.additionalSettings['appIdOrName'] = appId;
       app.id = appId;
@@ -133,8 +140,9 @@ class FDroidRepo extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     var res = await sourceRequest(
-        '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
-        additionalSettings);
+      '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
+      additionalSettings,
+    );
     if (res.statusCode != 200) {
       var base = url.endsWith('/index.xml')
           ? url.split('/').reversed.toList().sublist(1).reversed.join('/')
@@ -142,7 +150,9 @@ class FDroidRepo extends AppSource {
       res = await sourceRequest('$base/repo/index.xml', additionalSettings);
       if (res.statusCode != 200) {
         res = await sourceRequest(
-            '$base/fdroid/repo/index.xml', additionalSettings);
+          '$base/fdroid/repo/index.xml',
+          additionalSettings,
+        );
       }
     }
     return res;
@@ -164,8 +174,10 @@ class FDroidRepo extends AppSource {
       throw NoReleasesError();
     }
     additionalSettings['appIdOrName'] = appIdOrName;
-    var res =
-        await sourceRequestWithURLVariants(standardUrl, additionalSettings);
+    var res = await sourceRequestWithURLVariants(
+      standardUrl,
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       var body = parse(res.body);
       var foundApps = body.querySelectorAll('application').where((element) {
@@ -202,24 +214,32 @@ class FDroidRepo extends AppSource {
         throw NoVersionError();
       }
       var latestVersionReleases = releases
-          .where((element) =>
-              element.querySelector('version')?.innerHtml == latestVersion &&
-              element.querySelector('apkname') != null)
+          .where(
+            (element) =>
+                element.querySelector('version')?.innerHtml == latestVersion &&
+                element.querySelector('apkname') != null,
+          )
           .toList();
       if (latestVersionReleases.length > 1 && pickHighestVersionCode) {
         latestVersionReleases.sort((e1, e2) {
-          return int.parse(e2.querySelector('versioncode')!.innerHtml)
-              .compareTo(int.parse(e1.querySelector('versioncode')!.innerHtml));
+          return int.parse(
+            e2.querySelector('versioncode')!.innerHtml,
+          ).compareTo(int.parse(e1.querySelector('versioncode')!.innerHtml));
         });
         latestVersionReleases = [latestVersionReleases[0]];
       }
       List<String> apkUrls = latestVersionReleases
-          .map((e) =>
-              '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}')
+          .map(
+            (e) =>
+                '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}',
+          )
           .toList();
-      return APKDetails(latestVersion, getApkUrlsFromUrls(apkUrls),
-          AppNames(authorName, appName),
-          releaseDate: releaseDate);
+      return APKDetails(
+        latestVersion,
+        getApkUrlsFromUrls(apkUrls),
+        AppNames(authorName, appName),
+        releaseDate: releaseDate,
+      );
     } else {
       throw getObtainiumHttpError(res);
     }

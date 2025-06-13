@@ -43,13 +43,22 @@ class _HomePageState extends State<HomePage> {
   bool isLinkActivity = false;
 
   List<NavigationPageItem> pages = [
-    NavigationPageItem(tr('appsString'), Icons.apps,
-        AppsPage(key: GlobalKey<AppsPageState>())),
     NavigationPageItem(
-        tr('addApp'), Icons.add, AddAppPage(key: GlobalKey<AddAppPageState>())),
+      tr('appsString'),
+      Icons.apps,
+      AppsPage(key: GlobalKey<AppsPageState>()),
+    ),
     NavigationPageItem(
-        tr('importExport'), Icons.import_export, const ImportExportPage()),
-    NavigationPageItem(tr('settings'), Icons.settings, const SettingsPage())
+      tr('addApp'),
+      Icons.add,
+      AddAppPage(key: GlobalKey<AddAppPageState>()),
+    ),
+    NavigationPageItem(
+      tr('importExport'),
+      Icons.import_export,
+      const ImportExportPage(),
+    ),
+    NavigationPageItem(tr('settings'), Icons.settings, const SettingsPage()),
   ];
 
   @override
@@ -60,63 +69,69 @@ class _HomePageState extends State<HomePage> {
       var sp = context.read<SettingsProvider>();
       if (!sp.welcomeShown) {
         await showDialog(
-            context: context,
-            builder: (BuildContext ctx) {
-              return AlertDialog(
-                title: Text(tr('welcome')),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 20,
-                  children: [
-                    Text(tr('documentationLinksNote')),
-                    GestureDetector(
+          context: context,
+          builder: (BuildContext ctx) {
+            return AlertDialog(
+              title: Text(tr('welcome')),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 20,
+                children: [
+                  Text(tr('documentationLinksNote')),
+                  GestureDetector(
+                    onTap: () {
+                      launchUrlString(
+                        'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
+                    child: Text(
+                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                      style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(tr('batteryOptimizationNote')),
+                      GestureDetector(
                         onTap: () {
-                          launchUrlString(
-                              'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                              mode: LaunchMode.externalApplication);
+                          final intent = AndroidIntent(
+                            action:
+                                'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS',
+                            package:
+                                obtainiumId, // Replace with your app's package name
+                          );
+
+                          intent.launch();
                         },
                         child: Text(
-                          'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                          tr('settings'),
                           style: const TextStyle(
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.bold),
-                        )),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(tr('batteryOptimizationNote')),
-                        GestureDetector(
-                          onTap: () {
-                            final intent = AndroidIntent(
-                              action:
-                                  'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS',
-                              package:
-                                  obtainiumId, // Replace with your app's package name
-                            );
-
-                            intent.launch();
-                          },
-                          child: Text(
-                            tr('settings'),
-                            style: const TextStyle(
-                                decoration: TextDecoration.underline,
-                                fontWeight: FontWeight.bold),
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.bold,
                           ),
-                        )
-                      ],
-                    )
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        sp.welcomeShown = true;
-                        Navigator.of(context).pop(null);
-                      },
-                      child: Text(tr('ok'))),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
-              );
-            });
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    sp.welcomeShown = true;
+                    Navigator.of(context).pop(null);
+                  },
+                  child: Text(tr('ok')),
+                ),
+              ],
+            );
+          },
+        );
       }
     });
   }
@@ -126,13 +141,12 @@ class _HomePageState extends State<HomePage> {
 
     goToAddApp(String data) async {
       switchToPage(1);
-      while (
-          (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState ==
-              null) {
+      while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
+              ?.currentState ==
+          null) {
         await Future.delayed(const Duration(microseconds: 1));
       }
-      (pages[1].widget.key as GlobalKey<AddAppPageState>?)
-          ?.currentState
+      (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
           ?.linkFn(data);
     }
 
@@ -146,44 +160,49 @@ class _HomePageState extends State<HomePage> {
         } else if (action == 'app' || action == 'apps') {
           var dataStr = Uri.decodeComponent(data);
           if (await showDialog(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return GeneratedFormModal(
-                      title: tr('importX', args: [
-                        action == 'app' ? tr('app') : tr('appsString')
-                      ]),
-                      items: const [],
-                      additionalWidgets: [
-                        ExpansionTile(
-                          title: const Text('Raw JSON'),
-                          children: [
-                            Text(
-                              dataStr,
-                              style: const TextStyle(fontFamily: 'monospace'),
-                            )
-                          ],
-                        )
-                      ],
-                    );
-                  }) !=
+                context: context,
+                builder: (BuildContext ctx) {
+                  return GeneratedFormModal(
+                    title: tr(
+                      'importX',
+                      args: [action == 'app' ? tr('app') : tr('appsString')],
+                    ),
+                    items: const [],
+                    additionalWidgets: [
+                      ExpansionTile(
+                        title: const Text('Raw JSON'),
+                        children: [
+                          Text(
+                            dataStr,
+                            style: const TextStyle(fontFamily: 'monospace'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ) !=
               null) {
             // ignore: use_build_context_synchronously
             var appsProvider = context.read<AppsProvider>();
-            var result = await appsProvider.import(action == 'app'
-                ? '{ "apps": [$dataStr] }'
-                : '{ "apps": $dataStr }');
+            var result = await appsProvider.import(
+              action == 'app'
+                  ? '{ "apps": [$dataStr] }'
+                  : '{ "apps": $dataStr }',
+            );
             // ignore: use_build_context_synchronously
             showMessage(
-                tr('importedX', args: [plural('apps', result.key.length)]),
-                context);
+              tr('importedX', args: [plural('apps', result.key.length)]),
+              context,
+            );
             await appsProvider
                 .checkUpdates(specificIds: result.key.map((e) => e.id).toList())
                 .catchError((e) {
-              if (e is Map && e['errors'] is MultiAppMultiError) {
-                showError(e['errors'].toString(), context);
-              }
-              return <App>[];
-            });
+                  if (e is Map && e['errors'] is MultiAppMultiError) {
+                    showError(e['errors'].toString(), context);
+                  }
+                  return <App>[];
+                });
           }
         } else {
           throw ObtainiumError(tr('unknown'));
@@ -211,7 +230,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   setIsReversing(int targetIndex) {
-    bool reversing = selectedIndexHistory.isNotEmpty &&
+    bool reversing =
+        selectedIndexHistory.isNotEmpty &&
         selectedIndexHistory.last > targetIndex;
     setState(() {
       isReversing = reversing;
@@ -259,65 +279,71 @@ class _HomePageState extends State<HomePage> {
     prevIsLoading = appsProvider.loadingApps;
 
     return WillPopScope(
-        child: Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: PageTransitionSwitcher(
-            duration: Duration(
-                milliseconds:
-                    settingsProvider.disablePageTransitions ? 0 : 300),
-            reverse: settingsProvider.reversePageTransitions
-                ? !isReversing
-                : isReversing,
-            transitionBuilder: (
-              Widget child,
-              Animation<double> animation,
-              Animation<double> secondaryAnimation,
-            ) {
-              return SharedAxisTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                transitionType: SharedAxisTransitionType.horizontal,
-                child: child,
-              );
-            },
-            child: pages
-                .elementAt(selectedIndexHistory.isEmpty
-                    ? 0
-                    : selectedIndexHistory.last)
-                .widget,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: PageTransitionSwitcher(
+          duration: Duration(
+            milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
           ),
-          bottomNavigationBar: NavigationBar(
-            destinations: pages
-                .map((e) =>
-                    NavigationDestination(icon: Icon(e.icon), label: e.title))
-                .toList(),
-            onDestinationSelected: (int index) async {
-              HapticFeedback.selectionClick();
-              switchToPage(index);
-            },
-            selectedIndex:
+          reverse: settingsProvider.reversePageTransitions
+              ? !isReversing
+              : isReversing,
+          transitionBuilder:
+              (
+                Widget child,
+                Animation<double> animation,
+                Animation<double> secondaryAnimation,
+              ) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.horizontal,
+                  child: child,
+                );
+              },
+          child: pages
+              .elementAt(
                 selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,
-          ),
+              )
+              .widget,
         ),
-        onWillPop: () async {
-          if (isLinkActivity &&
-              selectedIndexHistory.length == 1 &&
-              selectedIndexHistory.last == 1) {
-            return true;
-          }
-          setIsReversing(selectedIndexHistory.length >= 2
+        bottomNavigationBar: NavigationBar(
+          destinations: pages
+              .map(
+                (e) =>
+                    NavigationDestination(icon: Icon(e.icon), label: e.title),
+              )
+              .toList(),
+          onDestinationSelected: (int index) async {
+            HapticFeedback.selectionClick();
+            switchToPage(index);
+          },
+          selectedIndex: selectedIndexHistory.isEmpty
+              ? 0
+              : selectedIndexHistory.last,
+        ),
+      ),
+      onWillPop: () async {
+        if (isLinkActivity &&
+            selectedIndexHistory.length == 1 &&
+            selectedIndexHistory.last == 1) {
+          return true;
+        }
+        setIsReversing(
+          selectedIndexHistory.length >= 2
               ? selectedIndexHistory.reversed.toList()[1]
-              : 0);
-          if (selectedIndexHistory.isNotEmpty) {
-            setState(() {
-              selectedIndexHistory.removeLast();
-            });
-            return false;
-          }
-          return !(pages[0].widget.key as GlobalKey<AppsPageState>)
-              .currentState
-              ?.clearSelected();
-        });
+              : 0,
+        );
+        if (selectedIndexHistory.isNotEmpty) {
+          setState(() {
+            selectedIndexHistory.removeLast();
+          });
+          return false;
+        }
+        return !(pages[0].widget.key as GlobalKey<AppsPageState>).currentState
+            ?.clearSelected();
+      },
+    );
   }
 
   @override

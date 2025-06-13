@@ -30,8 +30,9 @@ class Uptodown extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
-        caseSensitive: false);
+      '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -40,14 +41,20 @@ class Uptodown extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return (await getAppDetailsFromPage(
-        standardUrl, additionalSettings))['appId'];
+      standardUrl,
+      additionalSettings,
+    ))['appId'];
   }
 
   Future<Map<String, String?>> getAppDetailsFromPage(
-      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -63,8 +70,9 @@ class Uptodown extends AppSource {
         .toList();
     String? appId = detailElements.elementAtOrNull(0);
     String? dateStr = detailElements.elementAtOrNull(6);
-    String? fileId =
-        html.querySelector('#detail-app-name')?.attributes['data-file-id'];
+    String? fileId = html
+        .querySelector('#detail-app-name')
+        ?.attributes['data-file-id'];
     String? extension = detailElements.elementAtOrNull(7)?.toLowerCase();
     return Map.fromEntries([
       MapEntry('version', version),
@@ -73,7 +81,7 @@ class Uptodown extends AppSource {
       MapEntry('author', author),
       MapEntry('dateStr', dateStr),
       MapEntry('fileId', fileId),
-      MapEntry('extension', extension)
+      MapEntry('extension', extension),
     ]);
   }
 
@@ -82,8 +90,10 @@ class Uptodown extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var appDetails =
-        await getAppDetailsFromPage(standardUrl, additionalSettings);
+    var appDetails = await getAppDetailsFromPage(
+      standardUrl,
+      additionalSettings,
+    );
     var version = appDetails['version'];
     var appId = appDetails['appId'];
     var fileId = appDetails['fileId'];
@@ -105,21 +115,28 @@ class Uptodown extends AppSource {
     if (dateStr != null) {
       relDate = parseDateTimeMMMddCommayyyy(dateStr);
     }
-    return APKDetails(version, [MapEntry('$appId.$extension', apkUrl)],
-        AppNames(author, appName),
-        releaseDate: relDate);
+    return APKDetails(
+      version,
+      [MapEntry('$appId.$extension', apkUrl)],
+      AppNames(author, appName),
+      releaseDate: relDate,
+    );
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
-      Map<String, dynamic> additionalSettings) async {
+  Future<String> apkUrlPrefetchModifier(
+    String apkUrl,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var res = await sourceRequest(apkUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
     var html = parse(res.body);
-    var finalUrlKey =
-        html.querySelector('#detail-download-button')?.attributes['data-url'];
+    var finalUrlKey = html
+        .querySelector('#detail-download-button')
+        ?.attributes['data-url'];
     if (finalUrlKey == null) {
       throw NoAPKError();
     }

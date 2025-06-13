@@ -23,33 +23,44 @@ class APKPure extends AppSource {
     showReleaseDateAsVersionToggle = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormSwitch('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'), defaultValue: true)
+        GeneratedFormSwitch(
+          'fallbackToOlderReleases',
+          label: tr('fallbackToOlderReleases'),
+          defaultValue: true,
+        ),
       ],
       [
-        GeneratedFormSwitch('stayOneVersionBehind',
-            label: tr('stayOneVersionBehind'), defaultValue: false)
+        GeneratedFormSwitch(
+          'stayOneVersionBehind',
+          label: tr('stayOneVersionBehind'),
+          defaultValue: false,
+        ),
       ],
       [
-        GeneratedFormSwitch('useFirstApkOfVersion',
-            label: tr('useFirstApkOfVersion'), defaultValue: true)
-      ]
+        GeneratedFormSwitch(
+          'useFirstApkOfVersion',
+          label: tr('useFirstApkOfVersion'),
+          defaultValue: true,
+        ),
+      ],
     ];
   }
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegExB = RegExp(
-        '^https?://m.${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
-        caseSensitive: false);
+      '^https?://m.${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
       var uri = Uri.parse(url);
       url = 'https://${uri.host.substring(2)}${uri.path}';
     }
     RegExp standardUrlRegExA = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
+      caseSensitive: false,
+    );
     match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -58,15 +69,18 @@ class APKPure extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
   getDetailsForVersion(
-      List<Map<String, dynamic>> versionVariants,
-      List<String> supportedArchs,
-      Map<String, dynamic> additionalSettings) async {
+    List<Map<String, dynamic>> versionVariants,
+    List<String> supportedArchs,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var apkUrls = versionVariants
         .map((e) {
           String appId = e['package_name'];
@@ -88,8 +102,9 @@ class APKPure extends AppSource {
           String downloadUri = e['asset']['url'];
 
           return MapEntry(
-              '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
-              downloadUri);
+            '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
+            downloadUri,
+          );
         })
         .nonNulls
         .toList()
@@ -114,14 +129,20 @@ class APKPure extends AppSource {
       apkUrls = [apkUrls.first];
     }
 
-    return APKDetails(version, apkUrls, AppNames(author, appName),
-        releaseDate: releaseDate, changeLog: changeLog);
+    return APKDetails(
+      version,
+      apkUrls,
+      AppNames(author, appName),
+      releaseDate: releaseDate,
+      changeLog: changeLog,
+    );
   }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      {bool forAPKDownload = false}) async {
+    Map<String, dynamic> additionalSettings, {
+    bool forAPKDownload = false,
+  }) async {
     if (forAPKDownload) {
       return null;
     } else {
@@ -145,19 +166,22 @@ class APKPure extends AppSource {
 
     // request versions from API
     var res = await sourceRequest(
-        "https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en",
-        additionalSettings);
+      "https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en",
+      additionalSettings,
+    );
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    List<Map<String, dynamic>> apks =
-        jsonDecode(res.body)['version_list'].cast<Map<String, dynamic>>();
+    List<Map<String, dynamic>> apks = jsonDecode(
+      res.body,
+    )['version_list'].cast<Map<String, dynamic>>();
 
     // group by version
     List<List<Map<String, dynamic>>> versions = apks
-        .fold<Map<String, List<Map<String, dynamic>>>>({},
-            (Map<String, List<Map<String, dynamic>>> val,
-                Map<String, dynamic> element) {
+        .fold<Map<String, List<Map<String, dynamic>>>>({}, (
+          Map<String, List<Map<String, dynamic>>> val,
+          Map<String, dynamic> element,
+        ) {
           String v = element['version_name'];
           if (!val.containsKey(v)) {
             val[v] = [];
@@ -179,7 +203,10 @@ class APKPure extends AppSource {
           throw NoReleasesError();
         }
         return await getDetailsForVersion(
-            v, supportedArchs, additionalSettings);
+          v,
+          supportedArchs,
+          additionalSettings,
+        );
       } catch (e) {
         if (additionalSettings['fallbackToOlderReleases'] != true ||
             i == versions.length - 1) {

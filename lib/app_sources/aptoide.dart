@@ -16,8 +16,9 @@ class Aptoide extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
-        caseSensitive: false);
+      '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -26,14 +27,20 @@ class Aptoide extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return (await getAppDetailsJSON(
-        standardUrl, additionalSettings))['package'];
+      standardUrl,
+      additionalSettings,
+    ))['package'];
   }
 
   Future<Map<String, dynamic>> getAppDetailsJSON(
-      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -46,7 +53,9 @@ class Aptoide extends AppSource {
       throw NoReleasesError();
     }
     var res2 = await sourceRequest(
-        'https://ws2.aptoide.com/api/7/getApp/app_id/$id', additionalSettings);
+      'https://ws2.aptoide.com/api/7/getApp/app_id/$id',
+      additionalSettings,
+    );
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
@@ -76,7 +85,10 @@ class Aptoide extends AppSource {
     }
 
     return APKDetails(
-        version, getApkUrlsFromUrls([apkUrl]), AppNames(author, appName),
-        releaseDate: relDate);
+      version,
+      getApkUrlsFromUrls([apkUrl]),
+      AppNames(author, appName),
+      releaseDate: relDate,
+    );
   }
 }

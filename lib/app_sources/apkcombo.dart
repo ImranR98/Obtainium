@@ -12,8 +12,9 @@ class APKCombo extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+',
+      caseSensitive: false,
+    );
     var match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -22,25 +23,30 @@ class APKCombo extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      {bool forAPKDownload = false}) async {
+    Map<String, dynamic> additionalSettings, {
+    bool forAPKDownload = false,
+  }) async {
     return {
       "User-Agent": "curl/8.0.1",
       "Accept": "*/*",
       "Connection": "keep-alive",
-      "Host": hosts[0]
+      "Host": hosts[0],
     };
   }
 
   Future<List<MapEntry<String, String>>> getApkUrls(
-      String standardUrl, Map<String, dynamic> additionalSettings) async {
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var res = await sourceRequest('$standardUrl/download/apk', {});
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
@@ -65,7 +71,9 @@ class APKCombo extends AppSource {
             String verCode =
                 e.querySelector('.info .header .vercode')?.text.trim() ?? '';
             return MapEntry<String, String>(
-                arch != null ? '$arch-$verCode.apk' : '', url ?? '');
+              arch != null ? '$arch-$verCode.apk' : '',
+              url ?? '',
+            );
           }).toList();
         })
         .reduce((value, element) => [...value, ...element])
@@ -74,8 +82,11 @@ class APKCombo extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(String apkUrl, String standardUrl,
-      Map<String, dynamic> additionalSettings) async {
+  Future<String> apkUrlPrefetchModifier(
+    String apkUrl,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
     var freshURLs = await getApkUrls(standardUrl, additionalSettings);
     var path2Match = Uri.parse(apkUrl).path;
     for (var url in freshURLs) {
@@ -116,9 +127,10 @@ class APKCombo extends AppSource {
       }
     }
     return APKDetails(
-        version,
-        await getApkUrls(standardUrl, additionalSettings),
-        AppNames(author, appName),
-        releaseDate: releaseDate);
+      version,
+      await getApkUrls(standardUrl, additionalSettings),
+      AppNames(author, appName),
+      releaseDate: releaseDate,
+    );
   }
 }
