@@ -26,7 +26,7 @@ class AppsPage extends StatefulWidget {
   State<AppsPage> createState() => AppsPageState();
 }
 
-showChangeLogDialog(
+void showChangeLogDialog(
   BuildContext context,
   App app,
   String? changesUrl,
@@ -100,7 +100,7 @@ showChangeLogDialog(
   );
 }
 
-getChangeLogFn(BuildContext context, App app) {
+Null Function()? getChangeLogFn(BuildContext context, App app) {
   AppSource appSource = SourceProvider().getSource(
     app.url,
     overrideSource: app.overrideSource,
@@ -138,7 +138,7 @@ class AppsPageState extends State<AppsPage> {
   Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
 
-  clearSelected() {
+  bool clearSelected() {
     if (selectedAppIds.isNotEmpty) {
       setState(() {
         selectedAppIds.clear();
@@ -148,7 +148,7 @@ class AppsPageState extends State<AppsPage> {
     return false;
   }
 
-  selectThese(List<App> apps) {
+  void selectThese(List<App> apps) {
     if (selectedAppIds.isEmpty) {
       setState(() {
         for (var a in apps) {
@@ -1063,6 +1063,7 @@ class AppsPageState extends State<AppsPage> {
                             globalNavigatorKey.currentContext ?? context,
                           )
                           .catchError(
+                            // ignore: invalid_return_type_for_catch_error
                             (e) => showError(
                               e,
                               globalNavigatorKey.currentContext ?? context,
@@ -1317,7 +1318,7 @@ class AppsFilter {
     };
   }
 
-  setFormValuesFromMap(Map<String, dynamic> values) {
+  void setFormValuesFromMap(Map<String, dynamic> values) {
     nameFilter = values['appName']!;
     authorFilter = values['author']!;
     idFilter = values['appId']!;

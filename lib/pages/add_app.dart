@@ -39,7 +39,7 @@ class AddAppPageState extends State<AddAppPage> {
   int urlInputKey = 0;
   SourceProvider sourceProvider = SourceProvider();
 
-  linkFn(String input) {
+  void linkFn(String input) {
     try {
       if (input.isEmpty) {
         throw UnsupportedURLError();
@@ -51,7 +51,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
   }
 
-  changeUserInput(
+  void changeUserInput(
     String input,
     bool valid,
     bool isBuilding, {

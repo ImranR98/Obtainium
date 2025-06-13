@@ -56,7 +56,7 @@ class NeutronCode extends AppSource {
     }
   }
 
-  customDateParse(String dateString) {
+  String? customDateParse(String dateString) {
     List<String> parts = dateString.split(' ');
     if (parts.length != 3) {
       return null;

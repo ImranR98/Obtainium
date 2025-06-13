@@ -695,7 +695,7 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
-  selectOnlyOne(String url) {
+  void selectOnlyOne(String url) {
     for (var e in entrySelections.keys) {
       entrySelections[e] = e.key == url;
     }

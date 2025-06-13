@@ -76,7 +76,7 @@ class MultiAppMultiError extends ObtainiumError {
 
   MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
-  add(String appId, dynamic error, {String? appName}) {
+  void add(String appId, dynamic error, {String? appName}) {
     if (error is SocketException) {
       error = error.message;
     }
@@ -107,7 +107,7 @@ class MultiAppMultiError extends ObtainiumError {
       .join('\n\n');
 }
 
-showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
   Provider.of<LogsProvider>(
     context,
     listen: false,
@@ -150,7 +150,7 @@ showMessage(dynamic e, BuildContext context, {bool isError = false}) {
   }
 }
 
-showError(dynamic e, BuildContext context) {
+void showError(dynamic e, BuildContext context) {
   showMessage(e, context, isError: true);
 }
 

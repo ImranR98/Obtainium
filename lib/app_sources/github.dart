@@ -566,7 +566,7 @@ class GitHub extends AppSource {
     }
   }
 
-  getLatestAPKDetailsCommon2(
+  Future<APKDetails> getLatestAPKDetailsCommon2(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
     Future<String> Function(bool) reqUrlGenerator,
@@ -667,7 +667,7 @@ class GitHub extends AppSource {
     );
   }
 
-  rateLimitErrorCheck(Response res) {
+  void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
       throw RateLimitError(
         (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000)

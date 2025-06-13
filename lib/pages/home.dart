@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  setIsReversing(int targetIndex) {
+  void setIsReversing(int targetIndex) {
     bool reversing =
         selectedIndexHistory.isNotEmpty &&
         selectedIndexHistory.last > targetIndex;
@@ -238,7 +238,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  switchToPage(int index) async {
+  Future<void> switchToPage(int index) async {
     setIsReversing(index);
     if (index == 0) {
       while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
@@ -340,8 +340,8 @@ class _HomePageState extends State<HomePage> {
           });
           return false;
         }
-        return !(pages[0].widget.key as GlobalKey<AppsPageState>).currentState
-            ?.clearSelected();
+        return !(pages[0].widget.key as GlobalKey<AppsPageState>).currentState!
+            .clearSelected();
       },
     );
   }

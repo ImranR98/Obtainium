@@ -63,15 +63,15 @@ class APKDetails {
   });
 }
 
-stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
+List<List<String>> stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
     mapList.map((e) => [e.key, e.value]).toList();
 
-assumed2DlistToStringMapList(List<dynamic> arr) =>
+List<MapEntry<String, String>> assumed2DlistToStringMapList(List<dynamic> arr) =>
     arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
 
 // App JSON schema has changed multiple times over the many versions of Obtainium
 // This function takes an App JSON and modifies it if needed to conform to the latest (current) version
-appJSONCompatibilityModifiers(Map<String, dynamic> json) {
+Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   var source = SourceProvider().getSource(
     json['url'],
     overrideSource: json['overrideSource'],
@@ -454,7 +454,7 @@ class App {
 }
 
 // Ensure the input is starts with HTTPS and has no WWW
-preStandardizeUrl(String url) {
+String preStandardizeUrl(String url) {
   var firstDotIndex = url.indexOf('.');
   if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1)) {
     throw UnsupportedURLError();
@@ -529,7 +529,7 @@ Future<List<MapEntry<String, String>>> filterApksByArch(
   return apkUrls;
 }
 
-getSourceRegex(List<String> hosts) {
+String getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
 
@@ -637,7 +637,7 @@ abstract class AppSource {
     name = runtimeType.toString();
   }
 
-  overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(
+  void overrideAdditionalAppSpecificSourceAgnosticSettingSwitch(
     String key, {
     bool disabled = true,
     bool defaultValue = true,
@@ -949,7 +949,7 @@ abstract class MassAppUrlSource {
   Future<Map<String, List<String>>> getUrlsWithDescriptions(List<String> args);
 }
 
-regExValidator(String? value) {
+String? regExValidator(String? value) {
   if (value == null || value.isEmpty) {
     return null;
   }
@@ -961,7 +961,7 @@ regExValidator(String? value) {
   return null;
 }
 
-intValidator(String? value, {bool positive = false}) {
+String? intValidator(String? value, {bool positive = false}) {
   if (value == null) {
     return tr('invalidInput');
   }
@@ -980,7 +980,7 @@ bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
-replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
+String? replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
   if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
     matchGroupString = '\$$matchGroupString';
   }
@@ -1049,7 +1049,7 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
-isVersionPseudo(App app) =>
+bool isVersionPseudo(App app) =>
     app.additionalSettings['trackOnly'] == true ||
     (app.installedVersion != null &&
         app.additionalSettings['versionDetection'] != true);

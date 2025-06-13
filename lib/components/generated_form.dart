@@ -293,7 +293,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
-  initForm() {
+  void initForm() {
     initKey = widget.key.toString();
     // Initialize form values as all empty
     values.clear();

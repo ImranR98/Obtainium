@@ -112,7 +112,7 @@ Set<String> findStandardFormatsForVersion(String version, bool strict) {
   return results;
 }
 
-moveStrToEnd(List<String> arr, String str, {String? strB}) {
+List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) {
   String? temp;
   arr.removeWhere((element) {
     bool res = element == str || element == strB;
@@ -269,7 +269,7 @@ Future<String?> checkETagHeader(
       .toString();
 }
 
-deleteFile(File file) {
+void deleteFile(File file) {
   try {
     file.deleteSync(recursive: true);
   } on PathAccessException catch (e) {
@@ -1826,7 +1826,7 @@ class AppsProvider with ChangeNotifier {
     await intent.launch();
   }
 
-  addMissingCategories(SettingsProvider settingsProvider) {
+  void addMissingCategories(SettingsProvider settingsProvider) {
     var cats = settingsProvider.categories;
     apps.forEach((key, value) {
       for (var c in value.app.categories) {

@@ -3,7 +3,7 @@ import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-parseDateTimeMMMddCommayyyy(String? dateString) {
+DateTime? parseDateTimeMMMddCommayyyy(String? dateString) {
   DateTime? releaseDate;
   try {
     releaseDate = dateString != null

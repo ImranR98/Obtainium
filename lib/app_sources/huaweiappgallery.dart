@@ -24,10 +24,10 @@ class HuaweiAppGallery extends AppSource {
     return match.group(0)!;
   }
 
-  getDlUrl(String standardUrl) =>
+  String getDlUrl(String standardUrl) =>
       'https://${hosts[0].replaceAll('appgallery.huawei', 'appgallery.cloud.huawei')}/appdl/${standardUrl.split('/').last}';
 
-  requestAppdlRedirect(
+  Future<Response> requestAppdlRedirect(
     String dlUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
@@ -45,7 +45,7 @@ class HuaweiAppGallery extends AppSource {
     }
   }
 
-  appIdFromRedirectDlUrl(String redirectDlUrl) {
+  String appIdFromRedirectDlUrl(String redirectDlUrl) {
     var parts = redirectDlUrl
         .split('?')[0]
         .split('/')

@@ -218,7 +218,7 @@ class NotificationsProvider {
         false;
   }
 
-  checkLaunchByNotif() async {
+  Future<void> checkLaunchByNotif() async {
     final NotificationAppLaunchDetails? launchDetails = await notifications
         .getNotificationAppLaunchDetails();
     if (launchDetails?.didNotificationLaunchApp ?? false) {
@@ -229,7 +229,7 @@ class NotificationsProvider {
     }
   }
 
-  _showNotificationPayload(String? payload, {bool doublePop = false}) {
+  void _showNotificationPayload(String? payload, {bool doublePop = false}) {
     if (payload?.isNotEmpty == true) {
       var title = (payload ?? '\n\n').split('\n').first;
       var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
