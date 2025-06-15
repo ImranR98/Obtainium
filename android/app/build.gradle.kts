@@ -90,7 +90,7 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val name = output.filters.find { it.filterType == ABI }?.identifier
-            val baseAbiCode = abiCodes[name]
+            val baseAbiCode = abiCodes[name] ?: 0
             if (baseAbiCode != null) {
                 output.versionCode.set(baseAbiCode + ((output.versionCode.get() ?: 0) * 10))
             }
