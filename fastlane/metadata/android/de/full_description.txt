@@ -1,5 +1,5 @@
 <p>Obtainium erlaubt Ihnen die Installation und Aktualisierung von Apps direkt von deren Veröffentlichungsseiten aus; Sie erhalten außerdem Benachrichtigungen, wenn neue Versionen verfügbar sind.</p>
-<p>Lesen Sie das <a href="https://wiki.obtainium.imranr.dev/">Wiki</a></p>
+<p>Lesen Sie das <a href="https://wiki.obtainium.imranr.dev/de/">Wiki</a></p>
 <p>
 	<b>Derzeit unterstützte App-Quellen:</b>
 </p>
