@@ -94,6 +94,7 @@ dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_foreground_task: ^9.1.0
 
 flutter_launcher_icons:
   android: "ic_launcher"
