@@ -92,26 +92,22 @@ void startCallback() {
 class MyTaskHandler extends TaskHandler {
   static const String incrementCountCommand = 'incrementCount';
 
-  // Called when the task is started.
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     print('onStart(starter: ${starter.name})');
     bgUpdateCheck('bg_check', null);
   }
 
-  // Called based on the eventAction set in ForegroundTaskOptions.
   @override
   void onRepeatEvent(DateTime timestamp) {
-    bgUpdateCheck('Foreground service bg_check', null);
+    bgUpdateCheck('bg_check', null);
   }
 
-  // Called when the task is destroyed.
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
     print('Foreground service onDestroy(isTimeout: $isTimeout)');
   }
 
-  // Called when data is sent using `FlutterForegroundTask.sendDataToTask`.
   @override
   void onReceiveData(Object data) {}
 }
@@ -192,8 +188,8 @@ class _ObtainiumState extends State<Obtainium> {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'bg_update',
-        channelName: tr('placeholder'),
-        channelDescription: tr('placeholder'),
+        channelName: tr('foregroundService'),
+        channelDescription: tr('foregroundService'),
         onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
@@ -210,20 +206,29 @@ class _ObtainiumState extends State<Obtainium> {
     );
   }
 
-  Future<ServiceRequestResult> startForegroundService() async {
+  Future<ServiceRequestResult?> startForegroundService(bool restart) async {
     if (await FlutterForegroundTask.isRunningService) {
-      return FlutterForegroundTask.restartService();
+      if (restart) {
+        return FlutterForegroundTask.restartService();
+      }
     } else {
       return FlutterForegroundTask.startService(
         serviceTypes: [ForegroundServiceTypes.specialUse],
         serviceId: 666,
-        notificationTitle: tr('placeholder'),
-        notificationText: tr('placeholder'),
+        notificationTitle: tr('foregroundService'),
+        notificationText: tr('fgServiceNotice'),
         notificationIcon: NotificationIcon(
           metaDataName: 'dev.imranr.obtainium.service.NOTIFICATION_ICON',
         ),
         callback: startCallback,
       );
+    }
+    return null;
+  }
+
+  stopForegroundService() async {
+    if (await FlutterForegroundTask.isRunningService) {
+      return FlutterForegroundTask.stopService();
     }
   }
 
@@ -244,7 +249,11 @@ class _ObtainiumState extends State<Obtainium> {
     AppsProvider appsProvider = context.read<AppsProvider>();
     LogsProvider logs = context.read<LogsProvider>();
     NotificationsProvider notifs = context.read<NotificationsProvider>();
-    startForegroundService();
+    if (settingsProvider.updateInterval == 0) {
+      stopForegroundService();
+    } else {
+      startForegroundService(false);
+    }
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     } else {
