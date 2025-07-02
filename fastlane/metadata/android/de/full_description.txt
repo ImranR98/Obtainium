@@ -1,0 +1,48 @@
+<p>Obtainium erlaubt Ihnen die Installation und Aktualisierung von Apps direkt von deren Veröffentlichungsseiten aus; Sie erhalten außerdem Benachrichtigungen, wenn neue Versionen verfügbar sind.</p>
+<p>Lesen Sie das <a href="https://wiki.obtainium.imranr.dev/de/">Wiki</a></p>
+<p>
+	<b>Derzeit unterstützte App-Quellen:</b>
+</p>
+<ul>
+	<li>
+		<p>Open Source – Allgemein:</p>
+		<ul>
+			<li>GitHub</li>
+			<li>GitLab</li>
+			<li>Forgejo (Codeberg)</li>
+			<li>F-Droid</li>
+			<li>Third Party F-Droid Repos</li>
+			<li>IzzyOnDroid</li>
+			<li>SourceHut</li>
+		</ul>
+	</li>
+	<li>
+		<p>Andere – Allgemein:</p>
+		<ul>
+			<li>APKPure</li>
+			<li>Aptoide</li>
+			<li>Uptodown</li>
+			<li>APKMirror (Track-Only)</li>
+			<li>Huawei AppGallery</li>
+			<li>Tencent App Store</li>
+			<li>CoolApk</li>
+			<li>vivo App Store (China)</li>
+			<li>Jenkins Jobs</li>
+			<li>RuStore</li>
+		</ul>
+	</li>
+	<li>
+		<p>Andere - App-Spezifisch:</p>
+		<ul>
+			<li>Telegram App</li>
+			<li>Neutron Code</li>
+		</ul>
+	</li>
+	<li><p>„HTML“ (Fallback): Jede andere URL, die eine HTML-Seite mit Links zu APK-Dateien zurückgibt.</p></li>
+</ul>
+<p>
+	<b>Einschränkungen:</b>
+</p>
+<p>
+	Bei einigen Quellen werden die Daten mit Hilfe von Web Scraping gesammelt und können aufgrund von Änderungen am Design der Website leicht beschädigt werden. In solchen Fällen sind zuverlässigere Methoden nicht verfügbar.
+</p>
