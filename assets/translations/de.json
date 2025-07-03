@@ -224,7 +224,7 @@
     "autoLinkFilterByArch": "Nach Möglichkeit versuchen, APKs nach CPU-Architektur zu filtern",
     "overrideSource": "Quelle überschreiben",
     "dontShowAgain": "Nicht noch einmal anzeigen",
-    "dontShowTrackOnlyWarnings": Warnung für ‚Nur nachverfolgen‘ nicht anzeigen",
+    "dontShowTrackOnlyWarnings": "Warnung für ‚Nur nachverfolgen‘ nicht anzeigen",
     "dontShowAPKOriginWarnings": "Warnung für APK-Herkunft nicht anzeigen",
     "moveNonInstalledAppsToBottom": "Nicht installierte Apps ans Ende der App-Ansicht verschieben",
     "gitlabPATLabel": "Persönlicher Zugangstoken für GitLab",
@@ -330,6 +330,9 @@
     "documentationLinksNote": "Die unten verlinkte GitHub-Seite von Obtainium enthält Links zu Videos, Artikeln, Diskussionen und anderen Ressourcen, die Ihnen helfen werden, die Verwendung der App zu verstehen.",
     "batteryOptimizationNote": "Beachten Sie, dass Downloads im Hintergrund möglicherweise zuverlässiger funktionieren, wenn Sie die Batterieoptimierung des Betriebssystems für Obtainium deaktivieren.",
     "fileDeletionError": "Die Datei konnte nicht gelöscht werden (versuchen Sie, sie manuell zu löschen und versuchen Sie es dann erneut): \"{}\"",
+    "foregroundService": "Obtainium-Vordergrunddienst",
+    "foregroundServiceExplanation": "Verwendung eines Dienstes im Vordergrund für die Aktualisierungsprüfung (zuverlässiger, verbraucht mehr Strom)",
+    "fgServiceNotice": "Diese Benachrichtigung ist für die Prüfung von Updates im Hintergrund erforderlich (sie kann in den Betriebssystemeinstellungen ausgeblendet werden)",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

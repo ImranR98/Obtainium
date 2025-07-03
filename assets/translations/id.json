@@ -330,6 +330,9 @@
     "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",
     "batteryOptimizationNote": "Perhatikan bahwa unduhan latar belakang dapat bekerja lebih andal jika Anda menonaktifkan optimasi baterai OS untuk Obtainium.",
     "fileDeletionError": "Gagal menghapus file (coba hapus secara manual, lalu coba lagi): \"{}\"",
+    "foregroundService": "Layanan latar depan Obtainium",
+    "foregroundServiceExplanation": "Gunakan layanan latar depan untuk pemeriksaan pembaruan (lebih dapat diandalkan, menghabiskan lebih banyak daya)",
+    "fgServiceNotice": "Pemberitahuan ini diperlukan untuk pemeriksaan pembaruan latar belakang (dapat disembunyikan dalam pengaturan OS)",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

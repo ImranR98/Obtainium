@@ -330,6 +330,9 @@
     "documentationLinksNote": "Níže odkazovaná stránka Obtainium GitHub obsahuje odkazy na videa, články, diskuse a další zdroje, které vám pomohou pochopit, jak aplikaci používat.",
     "batteryOptimizationNote": "Všimněte si, že stahování na pozadí může fungovat spolehlivěji, pokud vypnete optimalizaci baterie operačního systému pro Obtainium.",
     "fileDeletionError": "Soubor se nepodařilo odstranit (zkuste jej odstranit ručně a pak to zkuste znovu): \"{}\"",
+    "foregroundService": "Služba Obtainium na popředí",
+    "foregroundServiceExplanation": "Použití služby v popředí pro kontrolu aktualizací (spolehlivější, spotřebovává více energie).",
+    "fgServiceNotice": "Toto oznámení je nutné pro kontrolu aktualizací na pozadí (lze jej skrýt v nastavení operačního systému).",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

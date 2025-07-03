@@ -916,7 +916,7 @@ class AppsProvider with ChangeNotifier {
     if (appInfo != null &&
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
-      throw DowngradeError();
+      throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
     }
     if (needsBGWorkaround) {
       // The below 'await' will never return if we are in a background process
@@ -2272,7 +2272,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 ///
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   // ignore: avoid_print
-  print('Started $taskId: ${params.toString()}');
+  print('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
@@ -2441,10 +2441,14 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
 
     // Filter out updates that will be installed silently (the rest go into toNotify)
     for (var i = 0; i < updates.length; i++) {
-      if (networkRestricted ||
-          chargingRestricted ||
-          !(await appsProvider.canInstallSilently(updates[i]))) {
+      var canInstallSilently = await appsProvider.canInstallSilently(
+        updates[i],
+      );
+      if (networkRestricted || chargingRestricted || !canInstallSilently) {
         if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
+          logs.add(
+            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
+          );
           toNotify.add(updates[i]);
         }
       }
@@ -2470,7 +2474,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     logs.add('BG update task: Done checking for updates.');
     if (toRetry.isNotEmpty) {
       logs.add(
-        'BG update task $taskId: Will retry in $retryAfterXSeconds seconds.',
+        'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
       );
       return await bgUpdateCheck(taskId, {
         'toCheck': toRetry
@@ -2482,7 +2486,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       });
     } else {
       // If there are no more update checks, call the function in install mode
-      logs.add('BG update task: Done checking for updates.');
+      logs.add(
+        'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
+      );
       return await bgUpdateCheck(taskId, {
         'toCheck': [],
         'toInstall': toInstall
@@ -2493,6 +2499,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   } else {
     // In install mode...
     // If you haven't explicitly been given updates to install, grab all available silent updates
+    logs.add('BG install task: Started (${toInstall.length}).');
     if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
       var temp = appsProvider.findExistingUpdates(installedOnly: true);
       for (var i = 0; i < temp.length; i++) {
@@ -2504,7 +2511,6 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
     }
     if (toInstall.isNotEmpty) {
-      logs.add('BG install task: Started (${toInstall.length}).');
       var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
       if (tempObtArr.isNotEmpty) {
         // Move obtainium to the end of the list as it must always install last

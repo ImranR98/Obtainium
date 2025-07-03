@@ -138,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ColorPickerType.wheel: tr('custom'),
         },
         title: Text(
-          tr('selectX', args: [tr('colour')]),
+          tr('selectX', args: [tr('colour').toLowerCase()]),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         wheelDiameter: 192,
@@ -180,7 +180,7 @@ class _SettingsPageState extends State<SettingsPage> {
     var colorPicker = ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      title: Text(tr('selectX', args: [tr('colour')])),
+      title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
       subtitle: Text(
         "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
         "(${ColorTools.materialNameAndCode(settingsProvider.themeColor, colorSwatchNameMap: colorsNameMap)})",
@@ -381,6 +381,27 @@ class _SettingsPageState extends State<SettingsPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              tr(
+                                                'foregroundServiceExplanation',
+                                              ),
+                                            ),
+                                          ),
+                                          Switch(
+                                            value:
+                                                settingsProvider.useFGService,
+                                            onChanged: (value) {
+                                              settingsProvider.useFGService =
+                                                  value;
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,

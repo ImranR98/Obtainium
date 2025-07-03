@@ -330,6 +330,9 @@
     "documentationLinksNote": "La page GitHub d'Obtainium, dont le lien figure ci-dessous, contient des liens vers des vidéos, des articles, des discussions et d'autres ressources qui vous aideront à comprendre comment utiliser l'application.",
     "batteryOptimizationNote": "Notez que les téléchargements en arrière-plan peuvent fonctionner de manière plus fiable si vous désactivez les optimisations de la batterie du système d'exploitation pour Obtainium.",
     "fileDeletionError": "Échec de la suppression du fichier (essayez de le supprimer manuellement puis réessayez) : \"{}\"",
+    "foregroundService": "Service d'avant-plan Obtainium",
+    "foregroundServiceExplanation": "Utiliser un service de premier plan pour la vérification des mises à jour (plus fiable, consomme plus d'énergie)",
+    "fgServiceNotice": "Cette notification est nécessaire pour la vérification des mises à jour en arrière-plan (elle peut être masquée dans les paramètres du système d'exploitation).",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

@@ -312,7 +312,10 @@ class AddAppPageState extends State<AddAppPage> {
               context: context,
               builder: (BuildContext ctx) {
                 return SelectionModal(
-                  title: tr('selectX', args: [plural('source', 2)]),
+                  title: tr(
+                    'selectX',
+                    args: [plural('source', 2).toLowerCase()],
+                  ),
                   entries: sourceStrings,
                   selectedByDefault: true,
                   onlyOneSelectionAllowed: false,

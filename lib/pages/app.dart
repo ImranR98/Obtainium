@@ -46,7 +46,10 @@ class _AppPageState extends State<AppPage> {
             }
           },
           onNavigationRequest: (NavigationRequest request) =>
-              request.url.startsWith("rustore://")
+              !(request.url.startsWith("http://") ||
+                  request.url.startsWith("https://") ||
+                  request.url.startsWith("ftp://") ||
+                  request.url.startsWith("ftps://"))
               ? NavigationDecision.prevent
               : NavigationDecision.navigate,
         ),
