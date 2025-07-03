@@ -20,8 +20,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
         titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         title: Text(
           widget.title,
-          style:
-              TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium!.color,
+          ),
         ),
       ),
     );

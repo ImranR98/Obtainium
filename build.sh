@@ -2,15 +2,35 @@
 # Convenience script
 
 CURR_DIR="$(pwd)"
-trap "cd "$CURR_DIR"" EXIT
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+trap "cd \"$CURR_DIR\"" EXIT
+cd "$SCRIPT_DIR"
 
 if [ -z "$1" ]; then
     git fetch && git merge origin/main && git push # Typically run after a PR to main, so bring dev up to date
 fi
+
+# Update local Flutter
+git submodule update --remote
 cd .flutter
 git fetch
-git checkout "$(flutter --version | head -2 | tail -1 | awk '{print $4}')" # Ensure included Flutter submodule version equals my environment
+git checkout stable
+git pull
+FLUTTER_GIT_URL="https://github.com/flutter/flutter/" ./bin/flutter upgrade
 cd ..
+
+# Keep global Flutter, if any, in sync
+if [ -f ~/flutter/bin/flutter ]; then
+    cd ~/flutter
+    ./bin/flutter channel stable
+    ./bin/flutter upgrade
+    cd "$SCRIPT_DIR"
+fi
+
+if [ -z "$(which flutter)" ]; then
+    export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
+fi
+
 rm ./build/app/outputs/flutter-apk/* 2>/dev/null                                       # Get rid of older builds if any
 flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal # Build (both split and combined APKs)
 for file in ./build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done

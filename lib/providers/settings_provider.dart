@@ -58,8 +58,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeSettings get theme {
-    return ThemeSettings
-        .values[prefs?.getInt('theme') ?? ThemeSettings.system.index];
+    return ThemeSettings.values[prefs?.getInt('theme') ??
+        ThemeSettings.system.index];
   }
 
   set theme(ThemeSettings t) {
@@ -123,8 +123,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings.values[
-        prefs?.getInt('sortColumn') ?? SortColumnSettings.nameAuthor.index];
+    return SortColumnSettings.values[prefs?.getInt('sortColumn') ??
+        SortColumnSettings.nameAuthor.index];
   }
 
   set sortColumn(SortColumnSettings s) {
@@ -133,8 +133,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortOrderSettings get sortOrder {
-    return SortOrderSettings.values[
-        prefs?.getInt('sortOrder') ?? SortOrderSettings.ascending.index];
+    return SortOrderSettings.values[prefs?.getInt('sortOrder') ??
+        SortOrderSettings.ascending.index];
   }
 
   set sortOrder(SortOrderSettings s) {
@@ -171,7 +171,9 @@ class SettingsProvider with ChangeNotifier {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
       Fluttertoast.showToast(
-          msg: tr('pleaseAllowInstallPerm'), toastLength: Toast.LENGTH_LONG);
+        msg: tr('pleaseAllowInstallPerm'),
+        toastLength: Toast.LENGTH_LONG,
+      );
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
         return true;
@@ -470,7 +472,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   List<String> get searchDeselected {
-    return prefs?.getStringList('searchDeselected') ?? [];
+    return prefs?.getStringList('searchDeselected') ??
+        SourceProvider().sources.map((s) => s.name).toList();
   }
 
   set searchDeselected(List<String> list) {
@@ -493,6 +496,15 @@ class SettingsProvider with ChangeNotifier {
 
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
+    notifyListeners();
+  }
+
+  bool get useFGService {
+    return prefs?.getBool('useFGService') ?? false;
+  }
+
+  set useFGService(bool val) {
+    prefs?.setBool('useFGService', val);
     notifyListeners();
   }
 }

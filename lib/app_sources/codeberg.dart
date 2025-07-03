@@ -18,8 +18,9 @@ class Codeberg extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -36,8 +37,9 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings,
-        (bool useTagUrl) async {
+    return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings, (
+      bool useTagUrl,
+    ) async {
       return 'https://${hosts[0]}/api/v1/repos${standardUrl.substring('https://${hosts[0]}'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
     }, null);
   }
@@ -49,12 +51,15 @@ class Codeberg extends AppSource {
   }
 
   @override
-  Future<Map<String, List<String>>> search(String query,
-      {Map<String, dynamic> querySettings = const {}}) async {
+  Future<Map<String, List<String>>> search(
+    String query, {
+    Map<String, dynamic> querySettings = const {},
+  }) async {
     return gh.searchCommon(
-        query,
-        'https://${hosts[0]}/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
-        'data',
-        querySettings: querySettings);
+      query,
+      'https://${hosts[0]}/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
+      'data',
+      querySettings: querySettings,
+    );
   }
 }

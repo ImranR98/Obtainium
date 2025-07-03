@@ -16,13 +16,15 @@ class IzzyOnDroid extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegExA = RegExp(
-        '^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+',
-        caseSensitive: false);
+      '^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       RegExp standardUrlRegExB = RegExp(
-          '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+',
-          caseSensitive: false);
+        '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+',
+        caseSensitive: false,
+      );
       match = standardUrlRegExB.firstMatch(url);
     }
     if (match == null) {
@@ -32,8 +34,10 @@ class IzzyOnDroid extends AppSource {
   }
 
   @override
-  Future<String?> tryInferringAppId(String standardUrl,
-      {Map<String, dynamic> additionalSettings = const {}}) async {
+  Future<String?> tryInferringAppId(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
     return fd.tryInferringAppId(standardUrl);
   }
 
@@ -44,12 +48,14 @@ class IzzyOnDroid extends AppSource {
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
     return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
-        await sourceRequest(
-            'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
-            additionalSettings),
-        'https://android.izzysoft.de/frepo/$appId',
-        standardUrl,
-        name,
-        additionalSettings: additionalSettings);
+      await sourceRequest(
+        'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
+        additionalSettings,
+      ),
+      'https://android.izzysoft.de/frepo/$appId',
+      standardUrl,
+      name,
+      additionalSettings: additionalSettings,
+    );
   }
 }

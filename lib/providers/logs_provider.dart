@@ -22,7 +22,7 @@ class Log {
       idColumn: id,
       levelColumn: level.index,
       messageColumn: message,
-      timestampColumn: timestamp.millisecondsSinceEpoch
+      timestampColumn: timestamp.millisecondsSinceEpoch,
     };
     return map;
   }
@@ -33,8 +33,9 @@ class Log {
     id = map[idColumn] as int;
     level = LogLevels.values.elementAt(map[levelColumn] as int);
     message = map[messageColumn] as String;
-    timestamp =
-        DateTime.fromMillisecondsSinceEpoch(map[timestampColumn] as int);
+    timestamp = DateTime.fromMillisecondsSinceEpoch(
+      map[timestampColumn] as int,
+    );
   }
 
   @override
@@ -51,16 +52,19 @@ class LogsProvider {
   Database? db;
 
   Future<Database> getDB() async {
-    db ??= await openDatabase(dbPath, version: 1,
-        onCreate: (Database db, int version) async {
-      await db.execute('''
+    db ??= await openDatabase(
+      dbPath,
+      version: 1,
+      onCreate: (Database db, int version) async {
+        await db.execute('''
 create table if not exists $logTable ( 
   $idColumn integer primary key autoincrement, 
   $levelColumn integer not null,
   $messageColumn text not null,
   $timestampColumn integer not null)
 ''');
-    });
+      },
+    );
     return db!;
   }
 
@@ -75,27 +79,38 @@ create table if not exists $logTable (
 
   Future<List<Log>> get({DateTime? before, DateTime? after}) async {
     var where = getWhereDates(before: before, after: after);
-    return (await (await getDB())
-            .query(logTable, where: where.key, whereArgs: where.value))
-        .map((e) => Log.fromMap(e))
-        .toList();
+    return (await (await getDB()).query(
+      logTable,
+      where: where.key,
+      whereArgs: where.value,
+    )).map((e) => Log.fromMap(e)).toList();
   }
 
   Future<int> clear({DateTime? before, DateTime? after}) async {
     var where = getWhereDates(before: before, after: after);
-    var res = await (await getDB())
-        .delete(logTable, where: where.key, whereArgs: where.value);
+    var res = await (await getDB()).delete(
+      logTable,
+      where: where.key,
+      whereArgs: where.value,
+    );
     if (res > 0) {
-      add(plural('clearedNLogsBeforeXAfterY', res,
+      add(
+        plural(
+          'clearedNLogsBeforeXAfterY',
+          res,
           namedArgs: {'before': before.toString(), 'after': after.toString()},
-          name: 'n'));
+          name: 'n',
+        ),
+      );
     }
     return res;
   }
 }
 
-MapEntry<String?, List<int>?> getWhereDates(
-    {DateTime? before, DateTime? after}) {
+MapEntry<String?, List<int>?> getWhereDates({
+  DateTime? before,
+  DateTime? after,
+}) {
   List<String> where = [];
   List<int> whereArgs = [];
   if (before != null) {

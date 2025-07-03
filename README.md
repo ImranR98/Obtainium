@@ -1,6 +1,6 @@
-# ![Obtainium Icon](./assets/graphics/icon_small.png) Obtainium
+<div align="center"><a href="https://github.com/Safouene1/support-palestine-banner/blob/master/Markdown-pages/Support.md"><img src="https://raw.githubusercontent.com/Safouene1/support-palestine-banner/master/banner-support.svg" alt="Support Palestine" style="width: 100%;"></a></div>
 
-[![Ceasefire Now](https://badge.techforpalestine.org/default)](https://techforpalestine.org/learn-more)
+# ![Obtainium Icon](./assets/graphics/icon_small.png) Obtainium
 
 Get Android app updates straight from the source.
 
@@ -31,6 +31,7 @@ Currently supported App sources:
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
   - [CoolApk](https://coolapk.com/)
+  - [vivo App Store (CN)](https://h5.appstore.vivo.com.cn/)
   - [RuStore](https://rustore.ru/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
@@ -62,7 +63,7 @@ Or, contribute some configurations to the website by creating a PR at [this repo
      
 Verification info:
 - Package ID: `dev.imranr.obtainium`
-- SHA-256 Hash of Signing Certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
+- SHA-256 hash of signing certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
   - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 - [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
 

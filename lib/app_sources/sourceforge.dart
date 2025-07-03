@@ -11,23 +11,27 @@ class SourceForge extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     var sourceRegex = getSourceRegex(hosts);
-    RegExp standardUrlRegExC =
-        RegExp('^https?://(www\\.)?$sourceRegex/p/.+', caseSensitive: false);
+    RegExp standardUrlRegExC = RegExp(
+      '^https?://(www\\.)?$sourceRegex/p/.+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegExC.firstMatch(url);
     if (match != null) {
       url =
           'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
     RegExp standardUrlRegExB = RegExp(
-        '^https?://(www\\.)?$sourceRegex/projects/[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?$sourceRegex/projects/[^/]+',
+      caseSensitive: false,
+    );
     match = standardUrlRegExB.firstMatch(url);
     if (match != null && match.group(0) == url) {
       url = '$url/files';
     }
     RegExp standardUrlRegExA = RegExp(
-        '^https?://(www\\.)?$sourceRegex/projects/[^/]+/files(/.+)?',
-        caseSensitive: false);
+      '^https?://(www\\.)?$sourceRegex/projects/[^/]+/files(/.+)?',
+      caseSensitive: false,
+    );
     match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -46,8 +50,9 @@ class SourceForge extends AppSource {
       standardUri = Uri.parse(standardUrl);
     }
     Response res = await sourceRequest(
-        '${standardUri.origin}/${standardUri.pathSegments.sublist(0, 2).join('/')}/rss?path=/',
-        additionalSettings);
+      '${standardUri.origin}/${standardUri.pathSegments.sublist(0, 2).join('/')}/rss?path=/',
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       var parsedHtml = parse(res.body);
       var allDownloadLinks = parsedHtml
@@ -74,9 +79,10 @@ class SourceForge extends AppSource {
           if (version != null) {
             try {
               var extractedVersion = extractVersion(
-                  additionalSettings['versionExtractionRegEx'] as String?,
-                  additionalSettings['matchGroupToUse'] as String?,
-                  version);
+                additionalSettings['versionExtractionRegEx'] as String?,
+                additionalSettings['matchGroupToUse'] as String?,
+                version,
+              );
               if (extractedVersion != null) {
                 version = extractedVersion;
               }
@@ -111,8 +117,11 @@ class SourceForge extends AppSource {
               .where((element) => getVersion(element) == version)
               .toList();
       var segments = standardUrl.split('/');
-      return APKDetails(version, getApkUrlsFromUrls(apkUrlList),
-          AppNames(name, segments[segments.indexOf('files') - 1]));
+      return APKDetails(
+        version,
+        getApkUrlsFromUrls(apkUrlList),
+        AppNames(name, segments[segments.indexOf('files') - 1]),
+      );
     } else {
       throw getObtainiumHttpError(res);
     }

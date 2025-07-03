@@ -20,23 +20,24 @@ class ObtainiumError {
 class RateLimitError extends ObtainiumError {
   late int remainingMinutes;
   RateLimitError(this.remainingMinutes)
-      : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
+    : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
 }
 
 class InvalidURLError extends ObtainiumError {
   InvalidURLError(String sourceName)
-      : super(tr('invalidURLForSource', args: [sourceName]));
+    : super(tr('invalidURLForSource', args: [sourceName]));
 }
 
 class CredsNeededError extends ObtainiumError {
   CredsNeededError(String sourceName)
-      : super(tr('requiresCredentialsInSettings', args: [sourceName]));
+    : super(tr('requiresCredentialsInSettings', args: [sourceName]));
 }
 
 class NoReleasesError extends ObtainiumError {
   NoReleasesError({String? note})
-      : super(
-            '${tr('noReleaseFound')}${note?.isNotEmpty == true ? '\n\n$note' : ''}');
+    : super(
+        '${tr('noReleaseFound')}${note?.isNotEmpty == true ? '\n\n$note' : ''}',
+      );
 }
 
 class NoAPKError extends ObtainiumError {
@@ -52,12 +53,15 @@ class UnsupportedURLError extends ObtainiumError {
 }
 
 class DowngradeError extends ObtainiumError {
-  DowngradeError() : super(tr('cantInstallOlderVersion'));
+  DowngradeError(int currentVersionCode, int newVersionCode)
+    : super(
+        '${tr('cantInstallOlderVersion')} (versionCode $currentVersionCode ➔ $newVersionCode)',
+      );
 }
 
 class InstallError extends ObtainiumError {
   InstallError(int code)
-      : super(PackageInstallerStatus.byCode(code).name.substring(7));
+    : super(PackageInstallerStatus.byCode(code).name.substring(7));
 }
 
 class IDChangedError extends ObtainiumError {
@@ -75,7 +79,7 @@ class MultiAppMultiError extends ObtainiumError {
 
   MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
 
-  add(String appId, dynamic error, {String? appName}) {
+  void add(String appId, dynamic error, {String? appName}) {
     if (error is SocketException) {
       error = error.message;
     }
@@ -93,8 +97,11 @@ class MultiAppMultiError extends ObtainiumError {
   String errorString(String appId, {bool includeIdsWithNames = false}) =>
       '${appIdNames.containsKey(appId) ? '${appIdNames[appId]}${includeIdsWithNames ? ' ($appId)' : ''}' : appId}: ${rawErrors[appId].toString()}';
 
-  String errorsAppsString(String errString, List<String> appIds,
-          {bool includeIdsWithNames = false}) =>
+  String errorsAppsString(
+    String errString,
+    List<String> appIds, {
+    bool includeIdsWithNames = false,
+  }) =>
       '$errString [${list2FriendlyString(appIds.map((id) => appIdNames.containsKey(id) == true ? '${appIdNames[id]}${includeIdsWithNames ? ' ($id)' : ''}' : id).toList())}]';
 
   @override
@@ -103,43 +110,50 @@ class MultiAppMultiError extends ObtainiumError {
       .join('\n\n');
 }
 
-showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  Provider.of<LogsProvider>(context, listen: false)
-      .add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
+void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+  Provider.of<LogsProvider>(
+    context,
+    listen: false,
+  ).add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(e.toString())));
   } else {
     showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            scrollable: true,
-            title: Text(e is MultiAppMultiError
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          scrollable: true,
+          title: Text(
+            e is MultiAppMultiError
                 ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown')),
-            content: GestureDetector(
-                onLongPress: () {
-                  Clipboard.setData(ClipboardData(text: e.toString()));
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(tr('copiedToClipboard')),
-                  ));
-                },
-                child: Text(e.toString())),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(null);
-                  },
-                  child: Text(tr('ok'))),
-            ],
-          );
-        });
+                : tr(isError ? 'unexpectedError' : 'unknown'),
+          ),
+          content: GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: e.toString()));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+            },
+            child: Text(e.toString()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              child: Text(tr('ok')),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
-showError(dynamic e, BuildContext context) {
+void showError(dynamic e, BuildContext context) {
   showMessage(e, context, isError: true);
 }
 
@@ -147,14 +161,16 @@ String list2FriendlyString(List<String> list) {
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list
-          .asMap()
-          .entries
-          .map((e) =>
-              e.value +
-              (e.key == list.length - 1
-                  ? ''
-                  : e.key == list.length - 2
+            .asMap()
+            .entries
+            .map(
+              (e) =>
+                  e.value +
+                  (e.key == list.length - 1
+                      ? ''
+                      : e.key == list.length - 2
                       ? ' and '
-                      : ', '))
-          .join('');
+                      : ', '),
+            )
+            .join('');
 }

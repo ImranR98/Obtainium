@@ -17,37 +17,44 @@ class APKMirror extends AppSource {
 
     additionalSourceAppSpecificSettingFormItems = [
       [
-        GeneratedFormSwitch('fallbackToOlderReleases',
-            label: tr('fallbackToOlderReleases'), defaultValue: true)
+        GeneratedFormSwitch(
+          'fallbackToOlderReleases',
+          label: tr('fallbackToOlderReleases'),
+          defaultValue: true,
+        ),
       ],
       [
-        GeneratedFormTextField('filterReleaseTitlesByRegEx',
-            label: tr('filterReleaseTitlesByRegEx'),
-            required: false,
-            additionalValidators: [
-              (value) {
-                return regExValidator(value);
-              }
-            ])
-      ]
+        GeneratedFormTextField(
+          'filterReleaseTitlesByRegEx',
+          label: tr('filterReleaseTitlesByRegEx'),
+          required: false,
+          additionalValidators: [
+            (value) {
+              return regExValidator(value);
+            },
+          ],
+        ),
+      ],
     ];
   }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-      Map<String, dynamic> additionalSettings,
-      {bool forAPKDownload = false}) async {
+    Map<String, dynamic> additionalSettings, {
+    bool forAPKDownload = false,
+  }) async {
     return {
       "User-Agent":
-          "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}"
+          "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}",
     };
   }
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-        '^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+',
-        caseSensitive: false);
+      '^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+',
+      caseSensitive: false,
+    );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -68,12 +75,14 @@ class APKMirror extends AppSource {
         additionalSettings['fallbackToOlderReleases'] == true;
     String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
-                    ?.isNotEmpty ==
-                true
-            ? additionalSettings['filterReleaseTitlesByRegEx']
-            : null;
-    Response res =
-        await sourceRequest('$standardUrl/feed/', additionalSettings);
+                ?.isNotEmpty ==
+            true
+        ? additionalSettings['filterReleaseTitlesByRegEx']
+        : null;
+    Response res = await sourceRequest(
+      '$standardUrl/feed/',
+      additionalSettings,
+    );
     if (res.statusCode == 200) {
       var items = parse(res.body).querySelectorAll('item');
       dynamic targetRelease;
@@ -95,11 +104,14 @@ class APKMirror extends AppSource {
           .split(' ')
           .sublist(0, 5)
           .join(' ');
-      DateTime? releaseDate =
-          dateString != null ? HttpDate.parse('$dateString GMT') : null;
+      DateTime? releaseDate = dateString != null
+          ? HttpDate.parse('$dateString GMT')
+          : null;
       String? version = titleString
-          ?.substring(RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-              RegExp(' by ').allMatches(titleString).last.start)
+          ?.substring(
+            RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
+            RegExp(' by ').allMatches(titleString).last.start,
+          )
           .trim();
       if (version == null || version.isEmpty) {
         version = titleString;
@@ -107,8 +119,12 @@ class APKMirror extends AppSource {
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
-      return APKDetails(version, [], getAppNames(standardUrl),
-          releaseDate: releaseDate);
+      return APKDetails(
+        version,
+        [],
+        getAppNames(standardUrl),
+        releaseDate: releaseDate,
+      );
     } else {
       throw getObtainiumHttpError(res);
     }
