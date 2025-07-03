@@ -330,6 +330,9 @@
     "documentationLinksNote": "下面链接的 Obtainium GitHub 页面包含视频、文章、讨论和其他资源的链接，可帮助您了解如何使用该应用程序。",
     "batteryOptimizationNote": "请注意，如果为 Obtainium 禁用操作系统电池优化功能，后台下载可能会更稳定。",
     "fileDeletionError": "删除文件失败（尝试手动删除，然后再试一次）：\"{}\"",
+    "foregroundService": "获取前台服务",
+    "foregroundServiceExplanation": "使用前台服务进行更新检查（更可靠，耗电量更大）",
+    "fgServiceNotice": "后台更新检查需要此通知（可在操作系统设置中隐藏）。",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

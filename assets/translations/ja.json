@@ -330,6 +330,9 @@
     "documentationLinksNote": "以下のリンクにあるObtainium GitHubページには、ビデオ、記事、ディスカッション、その他のリソースへのリンクがあり、アプリの使い方を理解するのに役立ちます。",
     "batteryOptimizationNote": "ObtainiumのOSバッテリー最適化を無効にすると、バックグラウンドダウンロードがより確実に動作するようになります。",
     "fileDeletionError": "ファイルの削除に失敗しました（手動で削除してから再試行してください）：\"{}\"",
+    "foregroundService": "フォアグラウンド・サービス",
+    "foregroundServiceExplanation": "更新チェックにフォアグラウンド・サービスを使用する（より信頼性が高いが、より電力を消費する）",
+    "fgServiceNotice": "この通知は、バックグラウンドでアップデートをチェックするために必要です（OSの設定で非表示にできます）。",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

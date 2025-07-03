@@ -330,6 +330,9 @@
     "documentationLinksNote": "Az alábbi hivatkozás az Obtainium GitHub oldalára vezet, amely további videók, cikkek, beszélgetések és egyéb források hivatkozásait tartalmazza, amelyek segítenek megérteni az alkalmazás használatát.",
     "batteryOptimizationNote": "Megjegyzés: A háttérfrissítések megbízhatóbban működhetnek, ha kikapcsolja a rendszer akkumulátor-optimalizálását az Obtainium számára.",
     "fileDeletionError": "Nem sikerült törölni a fájlt (próbálja meg kézzel törölni, majd próbálja meg újra): \"{}\"",
+    "foregroundService": "Obtainium új szolgáltatás",
+    "foregroundServiceExplanation": "Frissítésellenőrzéshez előtérben lévő szolgáltatás használata (megbízhatóbb, de több energiát fogyaszt)",
+    "fgServiceNotice": "Ez az értesítés a háttérben történő frissítésellenőrzéshez szükséges (az operációs rendszer beállításaiban elrejthető).",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"

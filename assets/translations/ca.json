@@ -330,6 +330,9 @@
     "documentationLinksNote": "La pàgina GitHub d'Obtainium enllaçada a sota conté enllaços a vídeos, articles, debats i altres recursos que t'ajudaran a entendre com usar l'aplicació.",
     "batteryOptimizationNote": "Tingues present que les descàrregues en segon pla funcionaran millor si inhabilites l'optimització de bateria per a Obtainium.",
     "fileDeletionError": "No s'ha pogut suprimir el fitxer (intenta suprimir-lo manualment i torna-ho a provar): \"{}\"",
+    "foregroundService": "Obtainium foreground service",
+    "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
+    "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"

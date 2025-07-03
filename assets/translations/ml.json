@@ -330,6 +330,9 @@
     "documentationLinksNote": "താഴെ ലിങ്ക് ചെയ്തിട്ടുള്ള ഒബ്‌റ്റേനിയം GitHub പേജിൽ ആപ്പ് എങ്ങനെ ഉപയോഗിക്കാമെന്ന് മനസ്സിലാക്കാൻ സഹായിക്കുന്ന വീഡിയോകൾ, ലേഖനങ്ങൾ, ചർച്ചകൾ, മറ്റ് വിഭവങ്ങൾ എന്നിവയുടെ ലിങ്കുകൾ അടങ്ങിയിരിക്കുന്നു.",
     "batteryOptimizationNote": "ഒബ്‌റ്റേനിയത്തിനായുള്ള OS ബാറ്ററി ഒപ്റ്റിമൈസേഷനുകൾ പ്രവർത്തനരഹിതമാക്കുകയാണെങ്കിൽ ബാക്ക്ഗ്രൗണ്ട് ഡൗൺലോഡുകൾ കൂടുതൽ വിശ്വസനീയമായി പ്രവർത്തിച്ചേക്കാം എന്നത് ശ്രദ്ധിക്കുക.",
     "fileDeletionError": "ഫയൽ ഇല്ലാതാക്കാൻ പരാജയപ്പെട്ടു (സ്വമേധയാ ഇല്ലാതാക്കാൻ ശ്രമിക്കുക, എന്നിട്ട് വീണ്ടും ശ്രമിക്കുക): \"{}\"",
+    "foregroundService": "Obtainium foreground service",
+    "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
+    "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
     "removeAppQuestion": {
         "one": "ആപ്പ് നീക്കം ചെയ്യണോ?",
         "other": "ആപ്പുകൾ നീക്കം ചെയ്യണോ?"

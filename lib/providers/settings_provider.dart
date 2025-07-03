@@ -498,4 +498,13 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
     notifyListeners();
   }
+
+  bool get useFGService {
+    return prefs?.getBool('useFGService') ?? false;
+  }
+
+  set useFGService(bool val) {
+    prefs?.setBool('useFGService', val);
+    notifyListeners();
+  }
 }

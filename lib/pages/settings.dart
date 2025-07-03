@@ -387,6 +387,27 @@ class _SettingsPageState extends State<SettingsPage> {
                                         children: [
                                           Flexible(
                                             child: Text(
+                                              tr(
+                                                'foregroundServiceExplanation',
+                                              ),
+                                            ),
+                                          ),
+                                          Switch(
+                                            value:
+                                                settingsProvider.useFGService,
+                                            onChanged: (value) {
+                                              settingsProvider.useFGService =
+                                                  value;
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
                                               tr('enableBackgroundUpdates'),
                                             ),
                                           ),
