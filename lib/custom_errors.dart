@@ -53,7 +53,10 @@ class UnsupportedURLError extends ObtainiumError {
 }
 
 class DowngradeError extends ObtainiumError {
-  DowngradeError() : super(tr('cantInstallOlderVersion'));
+  DowngradeError(int currentVersionCode, int newVersionCode)
+    : super(
+        '${tr('cantInstallOlderVersion')} (versionCode $currentVersionCode ➔ $newVersionCode)',
+      );
 }
 
 class InstallError extends ObtainiumError {
