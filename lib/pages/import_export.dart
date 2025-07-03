@@ -272,7 +272,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
                     showMessage(
                       tr(
                         'importedX',
-                        args: [plural('apps', selectedUrls.length)],
+                        args: [
+                          plural('apps', selectedUrls.length).toLowerCase(),
+                        ],
                       ),
                       context,
                     );
@@ -339,7 +341,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   showMessage(
                     tr(
                       'importedX',
-                      args: [plural('apps', selectedUrls.length)],
+                      args: [plural('apps', selectedUrls.length).toLowerCase()],
                     ),
                     context,
                   );
@@ -512,7 +514,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                                 return SelectionModal(
                                                   title: tr(
                                                     'selectX',
-                                                    args: [tr('source')],
+                                                    args: [
+                                                      tr(
+                                                        'source',
+                                                      ).toLowerCase(),
+                                                    ],
                                                   ),
                                                   entries: sourceStrings,
                                                   selectedByDefault: false,
