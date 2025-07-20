@@ -23,7 +23,7 @@
     "dropdownNoOptsError": "错误：下拉菜单必须包含至少一个选项",
     "colour": "配色",
     "standard": "标准",
-    "custom": "定制",
+    "custom": "自定义",
     "useMaterialYou": "使用 Material You",
     "githubStarredRepos": "已星标的 GitHub 仓库",
     "uname": "用户名",
@@ -50,7 +50,7 @@
     "appsString": "应用列表",
     "noApps": "无应用",
     "noAppsForFilter": "没有符合条件的应用",
-    "byX": "作者：{}",
+    "byX": "开发者：{}",
     "percentProgress": "进度：{}%",
     "pleaseWait": "请稍候",
     "updateAvailable": "更新可用",
@@ -157,8 +157,8 @@
     "appsRemovedNotifDescription": "当应用因加载出错而被删除时发送通知",
     "xWasRemovedDueToErrorY": "“{}”由于以下错误被删除：{}",
     "completeAppInstallation": "完成应用安装",
-    "obtainiumMustBeOpenToInstallApps": "必须启动 Obtainium 才能安装应用",
-    "completeAppInstallationNotifDescription": "提示返回 Obtainium 以完成应用的安装",
+    "obtainiumMustBeOpenToInstallApps": "必须开启 Obtainium 才能安装应用",
+    "completeAppInstallationNotifDescription": "提示返回 Obtainium 以完成应用安装",
     "checkingForUpdates": "正在检查更新",
     "checkingForUpdatesNotifDescription": "检查更新时短暂显示的通知",
     "pleaseAllowInstallPerm": "请授予 Obtainium 安装应用的权限",
@@ -199,7 +199,7 @@
     "noCategory": "无类别",
     "noCategories": "无类别",
     "deleteCategoriesQuestion": "是否删除选中的类别？",
-    "categoryDeleteWarning": "被删除类别的应用将恢复为未分类状态。",
+    "categoryDeleteWarning": "被删除类别下的应用将恢复为未分类状态。",
     "addCategory": "添加类别",
     "label": "标签",
     "language": "语言",
@@ -211,7 +211,7 @@
     "uninstallFromDevice": "从设备中卸载",
     "onlyWorksWithNonVersionDetectApps": "仅适用于禁用版本检测的应用。",
     "releaseDateAsVersion": "将发行日期作为版本号",
-    "releaseTitleAsVersion": "使用版本标题作为版本字符串",
+    "releaseTitleAsVersion": "将发行标题作为版本字符串",
     "releaseDateAsVersionExplanation": "此选项应该仅用于无法进行版本检测但能够获取发行日期的应用。",
     "changes": "更新日志",
     "releaseDate": "发行日期",
@@ -220,8 +220,8 @@
     "versionDetection": "版本检测",
     "standardVersionDetection": "常规版本检测",
     "groupByCategory": "按类别分组显示",
-    "autoApkFilterByArch": "如果可能，尝试按设备支持的 CPU 架构筛选 APK 文件",
-    "autoLinkFilterByArch": "尽可能按 CPU 架构过滤链接",
+    "autoApkFilterByArch": "尽可能按设备支持的 CPU 架构筛选 APK 文件",
+    "autoLinkFilterByArch": "尽可能按设备支持的 CPU 架构筛选链接",
     "overrideSource": "覆盖来源",
     "dontShowAgain": "不再显示",
     "dontShowTrackOnlyWarnings": "忽略“仅追踪”模式警告",
@@ -249,7 +249,7 @@
     "xWasPossiblyUpdatedToY": "已尝试将“{}”更新至 {}。",
     "enableBackgroundUpdates": "启用全局后台更新",
     "backgroundUpdateReqsExplanation": "后台更新未必适用于所有的应用。",
-    "backgroundUpdateLimitsExplanation": "只有在启动 Obtainium 时才能确认安装是否成功。",
+    "backgroundUpdateLimitsExplanation": "只有在开启 Obtainium 时才能确认是否安装成功。",
     "verifyLatestTag": "验证“Latest”标签",
     "intermediateLinkRegex": "筛选中转链接的正则表达式",
     "filterByLinkText": "根据链接文本进行筛选",
@@ -257,12 +257,12 @@
     "intermediateLink": "中转链接",
     "exemptFromBackgroundUpdates": "禁用后台更新（仅此应用生效，即使已启用全局后台更新）",
     "bgUpdatesOnWiFiOnly": "未连接 Wi-Fi 时禁用后台更新",
-    "bgUpdatesWhileChargingOnly": "不充电时禁用后台更新",
+    "bgUpdatesWhileChargingOnly": "未充电时禁用后台更新",
     "autoSelectHighestVersionCode": "自动选择内部版本号最高的 APK 文件",
     "versionExtractionRegEx": "提取版本号的正则表达式",
-    "trimVersionString": "使用 RegEx 修剪版本字符串",
-    "matchGroupToUseForX": "用于\"{}\"的匹配组",
-    "matchGroupToUse": "从上述匹配结果中引用的捕获组",
+    "trimVersionString": "修剪版本字符串的正则表达式",
+    "matchGroupToUseForX": "“{}”中引用的捕获组",
+    "matchGroupToUse": "“提取版本字符串的正则表达式”中引用的捕获组",
     "highlightTouchTargets": "突出展示不明显的可交互区域",
     "pickExportDir": "选择导出文件夹",
     "autoExportOnChanges": "数据变更时自动导出",
@@ -314,32 +314,32 @@
     "beforeNewInstallsShareToAppVerifier": "通过 AppVerifier 校验新应用（如果可用）",
     "appVerifierInstructionToast": "分享至 AppVerifier，完成后返回此处。",
     "wiki": "帮助/Wiki",
-    "crowdsourcedConfigsLabel": "众包应用程序配置（使用风险自负）",
-    "crowdsourcedConfigsShort": "众包应用程序配置",
+    "crowdsourcedConfigsLabel": "来自社区的应用配置（谨慎使用）",
+    "crowdsourcedConfigsShort": "来自社区的应用配置",
     "allowInsecure": "允许不安全的 HTTP 请求",
-    "stayOneVersionBehind": "比最新版本晚一个版本",
-    "useFirstApkOfVersion": "从多个 APK 中自动选择第一个",
-    "refreshBeforeDownload": "下载前刷新应用程序详细信息",
+    "stayOneVersionBehind": "始终延后一个版本进行更新",
+    "useFirstApkOfVersion": "存在多个 APK 文件时自动选择第一个",
+    "refreshBeforeDownload": "下载前刷新应用详情",
     "tencentAppStore": "腾讯应用宝",
     "coolApk": "酷安",
-    "vivoAppStore": "vivo 应用商店（中国）",
-    "name": "名称",
-    "smartname": "姓名（智能）",
+    "vivoAppStore": "（中国）vivo应用商店",
+    "name": "发行名称",
+    "smartname": "发行名称（智能）",
     "sortMethod": "排序方法",
-    "welcome": "欢迎光临",
-    "documentationLinksNote": "下面链接的 Obtainium GitHub 页面包含视频、文章、讨论和其他资源的链接，可帮助您了解如何使用该应用程序。",
-    "batteryOptimizationNote": "请注意，如果为 Obtainium 禁用操作系统电池优化功能，后台下载可能会更稳定。",
-    "fileDeletionError": "删除文件失败（尝试手动删除，然后再试一次）：\"{}\"",
-    "foregroundService": "获取前台服务",
-    "foregroundServiceExplanation": "使用前台服务进行更新检查（更可靠，耗电量更大）",
-    "fgServiceNotice": "后台更新检查需要此通知（可在操作系统设置中隐藏）。",
+    "welcome": "欢迎",
+    "documentationLinksNote": "下方链接的 GitHub 页面中包含关于 Obtainium 的视频、文章、讨论及其他资源，可帮助您了解本应用的使用方法。",
+    "batteryOptimizationNote": "请注意，在设置中切换为“前台服务”，并/或关闭操作系统对 Obtainium 的电池优化，可能会让后台下载更稳定。",
+    "fileDeletionError": "删除文件失败（请手动删除后再次尝试）：\"{}\"",
+    "foregroundService": "Obtainium 前台服务",
+    "foregroundServiceExplanation": "使用前台服务检查更新（更稳定，但也更耗电）",
+    "fgServiceNotice": "后台检查更新时需要此通知（可在操作系统设置中隐藏）",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "API 请求过于频繁（速率限制）- 请在 {} 分钟后重试",
-        "other": "API 请求过于频繁（速率限制）- 请在 {} 分钟后重试"
+        "one": "请求过于频繁（API 速率限制）- 请在 {} 分钟后重试",
+        "other": "请求过于频繁（API 速率限制）- 请在 {} 分钟后重试"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "后台更新检查遇到了“{}”问题，将于 {} 分钟后重试",
@@ -370,27 +370,27 @@
         "other": "{} 天"
     },
     "clearedNLogsBeforeXAfterY": {
-        "one": "清除了 {n} 个日志（{before} 之前，{after} 之后）",
-        "other": "清除了 {n} 个日志（{before} 之前，{after} 之后）"
+        "one": "清除了 {n} 条日志（早于 {before}，晚于 {after}）",
+        "other": "清除了 {n} 条日志（早于 {before}，晚于 {after}）"
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "“{}”和另外 1 个应用可以更新了。",
         "other": "“{}”和另外 {} 个应用可以更新了。"
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} 和另外 1 个应用已更新。",
+        "one": "“{}”和另外 1 个应用已更新。",
         "other": "“{}”和另外 {} 个应用已更新。"
     },
     "xAndNMoreUpdatesFailed": {
-        "one": "{} 和另外 1 个应用更新失败。",
-        "other": "{} 和另外 {} 个应用更新失败。"
+        "one": "“{}”和另外 1 个应用更新失败。",
+        "other": "“{}”和另外 {} 个应用更新失败。"
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} 和另外 1 个应用已尝试更新。",
-        "other": "“{}”和另外 {} 个应用已尝试更新。"
+        "one": "已尝试更新“{}”和另外 1 个应用。",
+        "other": "已尝试更新“{}”和另外 {} 个应用。"
     },
     "apk": {
-        "one": "{}APK",
-        "other": "{}APK"
+        "one": "{} 个 APK 文件",
+        "other": "{} 个 APK 文件"
     }
 }
