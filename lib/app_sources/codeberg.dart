@@ -3,7 +3,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Codeberg extends AppSource {
-  GitHub gh = GitHub();
+  GitHub gh = GitHub(hostChanged: true);
   Codeberg() {
     name = 'Forgejo (Codeberg)';
     hosts = ['codeberg.org'];

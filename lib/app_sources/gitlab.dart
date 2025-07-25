@@ -12,10 +12,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class GitLab extends AppSource {
-  GitLab() {
+  GitLab({bool hostChanged = false}) {
     hosts = ['gitlab.com'];
     canSearch = true;
     showReleaseDateAsVersionToggle = true;
+    this.hostChanged = hostChanged;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField(
@@ -144,7 +145,7 @@ class GitLab extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     // Prepare request params
-    var names = GitHub().getAppNames(standardUrl);
+    var names = GitHub(hostChanged: true).getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
     String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
