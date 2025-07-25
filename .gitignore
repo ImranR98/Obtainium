@@ -46,6 +46,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/app/.cxx
+/android/build/reports
+/android/.kotlin
 
 # Custom
 TODO.txt
