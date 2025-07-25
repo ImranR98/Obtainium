@@ -112,13 +112,17 @@ class FDroid extends AppSource {
           bool isGitHub = false;
           bool isGitLab = false;
           try {
-            GitHub().sourceSpecificStandardizeURL(details.changeLog!);
+            GitHub(
+              hostChanged: true,
+            ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitHub = true;
           } catch (e) {
             //
           }
           try {
-            GitLab().sourceSpecificStandardizeURL(details.changeLog!);
+            GitLab(
+              hostChanged: true,
+            ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitLab = true;
           } catch (e) {
             //

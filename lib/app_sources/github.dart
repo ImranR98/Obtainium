@@ -13,10 +13,11 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub extends AppSource {
-  GitHub() {
+  GitHub({hostChanged = false}) {
     hosts = ['github.com'];
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
+    this.hostChanged = hostChanged;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField(

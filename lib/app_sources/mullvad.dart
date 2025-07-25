@@ -55,7 +55,7 @@ class Mullvad extends AppSource {
       }
       String? changeLog;
       try {
-        changeLog = (await GitHub().getLatestAPKDetails(
+        changeLog = (await GitHub(hostChanged: true).getLatestAPKDetails(
           'https://github.com/mullvad/mullvadvpn-app',
           {'fallbackToOlderReleases': true},
         )).changeLog;
