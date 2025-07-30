@@ -358,16 +358,16 @@
         "other": "{} URL:er"
     },
     "minute": {
-        "one": "{} Minut",
-        "other": "{} Minuter"
+        "one": "{} minut",
+        "other": "{} minuter"
     },
     "hour": {
-        "one": "{} Timme",
-        "other": "{} Timmar"
+        "one": "{} timme",
+        "other": "{} timmar"
     },
     "day": {
-        "one": "{} Dag",
-        "other": "{} Dagar"
+        "one": "{} dag",
+        "other": "{} dagar"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Rensade {n} logg (före = {before}, efter = {after})",
