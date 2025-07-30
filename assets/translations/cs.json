@@ -358,16 +358,16 @@
         "other": "{} Adres"
     },
     "minute": {
-        "one": "{} Minuta",
-        "other": "{} Minut"
+        "one": "{} minuta",
+        "other": "{} minut"
     },
     "hour": {
-        "one": "{} Hodina",
-        "other": "{} Hodin"
+        "one": "{} hodina",
+        "other": "{} hodin"
     },
     "day": {
-        "one": "{} Den",
-        "other": "{} Dnů"
+        "one": "{} den",
+        "other": "{} dnů"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "{n} Záznam vymazán (před = {before}, po = {after})",
