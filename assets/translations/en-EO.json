@@ -358,16 +358,16 @@
         "other": "{} URLj"
     },
     "minute": {
-        "one": "{} Minuto",
-        "other": "{} Minutoj"
+        "one": "{} minuto",
+        "other": "{} minutoj"
     },
     "hour": {
-        "one": "{} Horo",
-        "other": "{} Horoj"
+        "one": "{} horo",
+        "other": "{} horoj"
     },
     "day": {
-        "one": "{} Tago",
-        "other": "{} Tagoj"
+        "one": "{} tago",
+        "other": "{} tagoj"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Purigis {n} protokolon (antaŭe = {before}, malantaŭe = {after})",
