@@ -158,6 +158,7 @@ void showError(dynamic e, BuildContext context) {
 }
 
 String list2FriendlyString(List<String> list) {
+  var isEnglish = tr('and') == 'and'; // Quick hack, find better way;
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list
@@ -169,7 +170,7 @@ String list2FriendlyString(List<String> list) {
                   (e.key == list.length - 1
                       ? ''
                       : e.key == list.length - 2
-                      ? ' and '
+                      ? '${isEnglish ? ',' : ''} and '
                       : ', '),
             )
             .join('');

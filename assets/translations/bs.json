@@ -327,7 +327,7 @@
     "smartname": "Name (Smart)",
     "sortMethod": "Sort Method",
     "welcome": "Welcome",
-    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions and other resources that will help you understand how to use the app.",
+    "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",
     "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
     "fileDeletionError": "Failed to delete file (try deleting it manually then try again): \"{}\"",
     "foregroundService": "Obtainium foreground service",
