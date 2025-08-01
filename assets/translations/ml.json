@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "പതിപ്പ് തിരുത്തൽ പ്രവർത്തനരഹിതമാക്കി (പ്ലഗിൻ പ്രവർത്തിക്കുന്നതായി തോന്നുന്നില്ല)",
     "unknown": "അജ്ഞാതം",
     "none": "ഒന്നുമില്ല",
+    "all": "All",
     "never": "ഒരിക്കലുമില്ല",
     "latestVersionX": "ഏറ്റവും പുതിയത്: {}",
     "installedVersionX": "ഇൻസ്റ്റാൾ ചെയ്തത്: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "ആപ്പ് നീക്കം ചെയ്യണോ?",
         "other": "ആപ്പുകൾ നീക്കം ചെയ്യണോ?"

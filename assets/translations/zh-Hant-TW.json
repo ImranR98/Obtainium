@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "版本校正已停用（外掛程式似乎無法正常工作）",
     "unknown": "未知",
     "none": "無",
+    "all": "All",
     "never": "從不",
     "latestVersionX": "最新版本：{}",
     "installedVersionX": "已安裝版本：{}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"

@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "تصحیح نسخه غیرفعال شد (به نظر می رسد افزونه کار نمی کند)",
     "unknown": "ناشناخته",
     "none": "هیچ",
+    "all": "All",
     "never": "هرگز",
     "latestVersionX": "آخرین نسخه: {}",
     "installedVersionX": "نسخه نصب شده: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "برنامه حذف شود؟",
         "other": "برنامه ها حذف شوند؟"

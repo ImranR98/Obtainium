@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Korekta wersji wyłączona (wtyczka wydaje się nie działać)",
     "unknown": "Nieznane",
     "none": "Brak",
+    "all": "Wszystkie",
     "never": "Nigdy",
     "latestVersionX": "Najnowsza wersja: {}",
     "installedVersionX": "Zainstalowana wersja: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Usługa nowej generacji Obtainium",
     "foregroundServiceExplanation": "Używanie usługi pierwszoplanowej do sprawdzania aktualizacji (bardziej niezawodne, zużywa więcej energii)",
     "fgServiceNotice": "To powiadomienie jest wymagane do sprawdzania aktualizacji w tle (można je ukryć w ustawieniach systemu operacyjnego).",
+    "excludeSecrets": "Wyklucz sekrety",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

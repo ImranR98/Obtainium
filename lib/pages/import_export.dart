@@ -412,9 +412,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 child: TextButton(
                                   style: outlineButtonStyle,
                                   onPressed:
-                                      appsProvider.apps.isEmpty ||
-                                          importInProgress ||
-                                          snapshot.data == null
+                                      importInProgress || snapshot.data == null
                                       ? null
                                       : runObtainiumExport,
                                   child: Text(
@@ -457,11 +455,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       ),
                                     ],
                                     [
-                                      GeneratedFormSwitch(
+                                      GeneratedFormDropdown(
                                         'exportSettings',
+                                        [
+                                          MapEntry('0', tr('none')),
+                                          MapEntry('1', tr('excludeSecrets')),
+                                          MapEntry('2', tr('all')),
+                                        ],
                                         label: tr('includeSettings'),
-                                        defaultValue:
-                                            settingsProvider.exportSettings,
+                                        defaultValue: settingsProvider
+                                            .exportSettings
+                                            .toString(),
                                       ),
                                     ],
                                   ],
@@ -475,7 +479,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       }
                                       if (value['exportSettings'] != null) {
                                         settingsProvider.exportSettings =
-                                            value['exportSettings'] == true;
+                                            int.parse(value['exportSettings']);
                                       }
                                     }
                                   },
@@ -497,7 +501,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   else
                     Column(
                       children: [
-                        const Divider(height: 32),
+                        SizedBox(height: 32),
                         Row(
                           children: [
                             Expanded(

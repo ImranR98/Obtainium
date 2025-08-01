@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Tính năng sửa phiên bản bị vô hiệu hóa (plugin dường như không hoạt động)",
     "unknown": "Không xác định",
     "none": "Không",
+    "all": "Tất cả",
     "never": "Không bao giờ",
     "latestVersionX": "Phiên bản mới nhất: {}",
     "installedVersionX": "Phiên bản đã cài đặt: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Dịch vụ nền Obtainium",
     "foregroundServiceExplanation": "Sử dụng dịch vụ nền trước để kiểm tra cập nhật (đáng tin cậy hơn, tiêu tốn nhiều pin hơn)",
     "fgServiceNotice": "Thông báo này là bắt buộc để kiểm tra cập nhật nền (có thể ẩn trong cài đặt hệ điều hành).",
+    "excludeSecrets": "Loại trừ thông tin bí mật",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

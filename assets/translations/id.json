@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Koreksi versi dinonaktifkan (sepertinya plugin tidak berfungsi)",
     "unknown": "Tidak diketahui",
     "none": "Tidak ada",
+    "all": "Semua",
     "never": "Tidak pernah",
     "latestVersionX": "Terbaru: {}",
     "installedVersionX": "Terpasang: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Layanan latar depan Obtainium",
     "foregroundServiceExplanation": "Gunakan layanan latar depan untuk pemeriksaan pembaruan (lebih dapat diandalkan, menghabiskan lebih banyak daya)",
     "fgServiceNotice": "Pemberitahuan ini diperlukan untuk pemeriksaan pembaruan latar belakang (dapat disembunyikan dalam pengaturan OS)",
+    "excludeSecrets": "Mengecualikan rahasia",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

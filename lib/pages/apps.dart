@@ -1037,7 +1037,7 @@ class AppsPageState extends State<AppsPage> {
                             var exportJSON = encoder.convert(
                               appsProvider.generateExportJSON(
                                 appIds: selectedApps.map((e) => e.id).toList(),
-                                overrideExportSettings: false,
+                                overrideExportSettings: 0,
                               ),
                             );
                             String fn =

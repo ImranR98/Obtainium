@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Versionskorrigering inaktiverat (plugin verkar inte fungera)",
     "unknown": "Okänd",
     "none": "Ingen",
+    "all": "Alla",
     "never": "Aldrig",
     "latestVersionX": "Senaste Version: {}",
     "installedVersionX": "Installerad Version: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium förgrundstjänst",
     "foregroundServiceExplanation": "Använd en förgrundstjänst för uppdateringskontroll (mer tillförlitlig, förbrukar mer ström)",
     "fgServiceNotice": "Detta meddelande krävs för bakgrundsuppdateringskontroll (det kan döljas i OS-inställningarna)",
+    "excludeSecrets": "Utesluta hemligheter",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

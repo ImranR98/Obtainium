@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Versionskorrektion deaktiveret (plugin ser ikke ud til at virke)",
     "unknown": "Ukendt",
     "none": "Ingen",
+    "all": "Alle",
     "never": "Aldrig",
     "latestVersionX": "Seneste: {}",
     "installedVersionX": "Installeret: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium forgrundstjeneste",
     "foregroundServiceExplanation": "Brug en forgrundstjeneste til opdateringskontrol (mere pålidelig, bruger mere strøm)",
     "fgServiceNotice": "Denne meddelelse er nødvendig for baggrundsopdateringskontrol (den kan skjules i OS-indstillingerne).",
+    "excludeSecrets": "Udeluk hemmeligheder",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

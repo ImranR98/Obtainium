@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Oprava verze zakázána (zásuvný modul zřejmě nefunguje)",
     "unknown": "Neznám",
     "none": "Žádný",
+    "all": "Všechny",
     "never": "Nikdy",
     "latestVersionX": "Nejnovější verze: {}",
     "installedVersionX": "Nainstalovaná verze: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Služba Obtainium na popředí",
     "foregroundServiceExplanation": "Použití služby v popředí pro kontrolu aktualizací (spolehlivější, spotřebovává více energie).",
     "fgServiceNotice": "Toto oznámení je nutné pro kontrolu aktualizací na pozadí (lze jej skrýt v nastavení operačního systému).",
+    "excludeSecrets": "Vyloučit tajemství",
     "removeAppQuestion": {
         "one": "Odstranit Apku?",
         "other": "Odstranit Apky?"

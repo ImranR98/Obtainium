@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Versiokorekto malaktivigita (ŝajnas, ke la kromaĵo ne funkcias)",
     "unknown": "Nekonata",
     "none": "Nenio",
+    "all": "All",
     "never": "Neniam",
     "latestVersionX": "Lasta versio: {}",
     "installedVersionX": "Instalita versio: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "Forigi la aplikaĵon?",
         "other": "Forigi la aplikaĵojn?"

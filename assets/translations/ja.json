@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "バージョン補正無効 (プラグインが動作していません)",
     "unknown": "不明",
     "none": "なし",
+    "all": "すべて",
     "never": "しない",
     "latestVersionX": "最新のバージョン: {}",
     "installedVersionX": "インストールされたバージョン: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium フォアグラウンドサービス",
     "foregroundServiceExplanation": "アップデート確認にフォアグラウンドサービスを使用する（より信頼性が高いが、より電力を消費する）",
     "fgServiceNotice": "この通知は、バックグラウンドでアップデートを確認するために必要です（OSの設定で非表示にできます）。",
+    "excludeSecrets": "秘密を除く",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

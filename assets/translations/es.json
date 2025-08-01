@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Corrección de versiones desactivada (el plugin parece no funcionar)",
     "unknown": "Desconocido",
     "none": "Ninguno",
+    "all": "Todos",
     "never": "Nunca",
     "latestVersionX": "Última versión: {}",
     "installedVersionX": "Versión instalada: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium servicio en primer plano",
     "foregroundServiceExplanation": "Utilizar un servicio en primer plano para comprobar las actualizaciones (más fiable, consume más energía).",
     "fgServiceNotice": "Esta notificación es necesaria para la comprobación de actualizaciones en segundo plano (puede ocultarse en la configuración del sistema operativo).",
+    "excludeSecrets": "Excluir secretos",
     "removeAppQuestion": {
         "one": "¿Eliminar aplicación?",
         "other": "¿Eliminar aplicaciones?"

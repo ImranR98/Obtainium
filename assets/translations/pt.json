@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Correção de versão desativada (plugin parece não funcionar)",
     "unknown": "Desconhecido",
     "none": "Nenhum",
+    "all": "Todos",
     "never": "Nunca",
     "latestVersionX": "Última versão: {}",
     "installedVersionX": "Versão instalada: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Serviço de primeiro plano Obtainium",
     "foregroundServiceExplanation": "Utilizar um serviço em primeiro plano para verificação de actualizações (mais fiável, consome mais energia)",
     "fgServiceNotice": "Esta notificação é necessária para a verificação de actualizações em segundo plano (pode ser ocultada nas definições do SO)",
+    "excludeSecrets": "Excluir segredos",
     "removeAppQuestion": {
         "one": "Remover aplicativo?",
         "other": "Remover aplicativos?"

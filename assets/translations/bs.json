@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Ispravka verzije je onemogućena (izgleda da plugin ne radi)",
     "unknown": "Nepoznato",
     "none": "Ništa",
+    "all": "All",
     "never": "Nikad",
     "latestVersionX": "Najnovija verzija: {}",
     "installedVersionX": "Instalirana verzija: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Use a foreground service for update checking (more reliable, consumes more power)",
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

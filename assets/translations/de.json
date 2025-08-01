@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Versionskorrektur deaktiviert (Plugin scheint nicht zu funktionieren)",
     "unknown": "Unbekannt",
     "none": "Keine",
+    "all": "Alle",
     "never": "Nie",
     "latestVersionX": "Neueste Version: {}",
     "installedVersionX": "Installierte Version: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium-Vordergrunddienst",
     "foregroundServiceExplanation": "Aktualisierungsprüfung im Vordergrund durchführen (zuverlässiger, verbraucht mehr Strom)",
     "fgServiceNotice": "Diese Benachrichtigung ist für die Prüfung von Updates im Hintergrund erforderlich (sie kann in den Betriebssystemeinstellungen ausgeblendet werden)",
+    "excludeSecrets": "Geheimnisse ausschließen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

@@ -1965,7 +1965,7 @@ class AppsProvider with ChangeNotifier {
 
   Map<String, dynamic> generateExportJSON({
     List<String>? appIds,
-    bool? overrideExportSettings,
+    int? overrideExportSettings,
   }) {
     Map<String, dynamic> finalExport = {};
     finalExport['apps'] = apps.values
@@ -1978,15 +1978,18 @@ class AppsProvider with ChangeNotifier {
         })
         .map((e) => e.app.toJson())
         .toList();
-    bool shouldExportSettings = settingsProvider.exportSettings;
+    int shouldExportSettings = settingsProvider.exportSettings;
     if (overrideExportSettings != null) {
       shouldExportSettings = overrideExportSettings;
     }
-    if (shouldExportSettings) {
+    if (shouldExportSettings > 0) {
+      var settingsValueKeys = settingsProvider.prefs?.getKeys();
+      if (shouldExportSettings < 2) {
+        settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
+      }
       finalExport['settings'] = Map<String, Object?>.fromEntries(
-        (settingsProvider.prefs
-                ?.getKeys()
-                .map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
+        (settingsValueKeys
+                ?.map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
                 .toList()) ??
             [],
       );
