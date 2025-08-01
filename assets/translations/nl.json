@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Versiecorrectie uitgeschakeld (de plug-in lijkt niet te werken)",
     "unknown": "Onbekend",
     "none": "Geen",
+    "all": "Alle",
     "never": "Nooit",
     "latestVersionX": "Laatste versie: {}",
     "installedVersionX": "Geïnstalleerde versie: {}",
@@ -313,7 +314,7 @@
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
     "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
     "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
-    "wiki": "Help/Wiki",
+    "wiki": "Help/wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App-configuraties (gebruik op eigen risico)",
     "crowdsourcedConfigsShort": "App-configuraties door menigte",
     "allowInsecure": "Onveilige HTTP-verzoeken toestaan",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium foreground service",
     "foregroundServiceExplanation": "Gebruik een voorgronddienst voor het controleren van updates (betrouwbaarder, verbruikt meer stroom)",
     "fgServiceNotice": "Deze melding is nodig voor het controleren van updates op de achtergrond (kan worden verborgen in de OS-instellingen)",
+    "excludeSecrets": "Geheimen uitsluiten",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

@@ -1037,7 +1037,7 @@ class AppsPageState extends State<AppsPage> {
                             var exportJSON = encoder.convert(
                               appsProvider.generateExportJSON(
                                 appIds: selectedApps.map((e) => e.id).toList(),
-                                overrideExportSettings: false,
+                                overrideExportSettings: 0,
                               ),
                             );
                             String fn =
@@ -1072,7 +1072,10 @@ class AppsPageState extends State<AppsPage> {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
+                      tr(
+                        'downloadX',
+                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                      ),
                     ),
                   ),
                   const Divider(),

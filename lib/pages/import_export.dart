@@ -396,9 +396,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               Expanded(
                                 child: TextButton(
                                   style: outlineButtonStyle,
-                                  onPressed:
-                                      appsProvider.apps.isEmpty ||
-                                          importInProgress
+                                  onPressed: importInProgress
                                       ? null
                                       : () {
                                           runObtainiumExport(pickOnly: true);
@@ -414,9 +412,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 child: TextButton(
                                   style: outlineButtonStyle,
                                   onPressed:
-                                      appsProvider.apps.isEmpty ||
-                                          importInProgress ||
-                                          snapshot.data == null
+                                      importInProgress || snapshot.data == null
                                       ? null
                                       : runObtainiumExport,
                                   child: Text(
@@ -459,11 +455,17 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       ),
                                     ],
                                     [
-                                      GeneratedFormSwitch(
+                                      GeneratedFormDropdown(
                                         'exportSettings',
+                                        [
+                                          MapEntry('0', tr('none')),
+                                          MapEntry('1', tr('excludeSecrets')),
+                                          MapEntry('2', tr('all')),
+                                        ],
                                         label: tr('includeSettings'),
-                                        defaultValue:
-                                            settingsProvider.exportSettings,
+                                        defaultValue: settingsProvider
+                                            .exportSettings
+                                            .toString(),
                                       ),
                                     ],
                                   ],
@@ -477,7 +479,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                       }
                                       if (value['exportSettings'] != null) {
                                         settingsProvider.exportSettings =
-                                            value['exportSettings'] == true;
+                                            int.parse(value['exportSettings']);
                                       }
                                     }
                                   },
@@ -499,7 +501,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   else
                     Column(
                       children: [
-                        const Divider(height: 32),
+                        SizedBox(height: 32),
                         Row(
                           children: [
                             Expanded(
@@ -543,7 +545,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 child: Text(
                                   tr(
                                     'searchX',
-                                    args: [tr('source').toLowerCase()],
+                                    args: [lowerCaseIfEnglish(tr('source'))],
                                   ),
                                 ),
                               ),
@@ -710,6 +712,12 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
+  void selectAll({bool deselect = false}) {
+    for (var e in entrySelections.keys) {
+      entrySelections[e] = !deselect;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<MapEntry<String, List<String>>, bool> filteredEntrySelections = {};
@@ -731,6 +739,32 @@ class _SelectionModalState extends State<SelectionModal> {
         }
       });
     }
+    getSelectAllButton() {
+      if (widget.onlyOneSelectionAllowed) {
+        return SizedBox.shrink();
+      }
+      var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
+      return noneSelected
+          ? TextButton(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onPressed: () {
+                setState(() {
+                  selectAll();
+                });
+              },
+              child: Text(tr('selectAll')),
+            )
+          : TextButton(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onPressed: () {
+                setState(() {
+                  selectAll(deselect: true);
+                });
+              },
+              child: Text(tr('deselectX', args: [''])),
+            );
+    }
+
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title ?? tr('pick')),
@@ -900,6 +934,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ],
       ),
       actions: [
+        getSelectAllButton(),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();

@@ -1025,13 +1025,19 @@ class AppsProvider with ChangeNotifier {
       );
     }
     getHost(String url) {
+      if (url == 'placeholder') {
+        return null;
+      }
       var temp = Uri.parse(url).host.split('.');
       return temp.sublist(temp.length - 2).join('.');
     }
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
     if (appFileUrl != null &&
-        getHost(appFileUrl.value) != getHost(app.url) &&
+        ![
+          getHost(app.url),
+          'placeholder',
+        ].contains(getHost(appFileUrl.value)) &&
         context != null) {
       if (!(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
@@ -1077,7 +1083,8 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       var refreshBeforeDownload =
-          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
+          apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
@@ -1121,6 +1128,7 @@ class AppsProvider with ChangeNotifier {
       obtainiumId,
       strB: obtainiumTempId,
     );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
 
     Future<void> installFn(
       String id,
@@ -1300,7 +1308,8 @@ class AppsProvider with ChangeNotifier {
       }
       MapEntry<String, String>? fileUrl;
       var refreshBeforeDownload =
-          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
+          apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
@@ -1964,7 +1973,7 @@ class AppsProvider with ChangeNotifier {
 
   Map<String, dynamic> generateExportJSON({
     List<String>? appIds,
-    bool? overrideExportSettings,
+    int? overrideExportSettings,
   }) {
     Map<String, dynamic> finalExport = {};
     finalExport['apps'] = apps.values
@@ -1977,15 +1986,18 @@ class AppsProvider with ChangeNotifier {
         })
         .map((e) => e.app.toJson())
         .toList();
-    bool shouldExportSettings = settingsProvider.exportSettings;
+    int shouldExportSettings = settingsProvider.exportSettings;
     if (overrideExportSettings != null) {
       shouldExportSettings = overrideExportSettings;
     }
-    if (shouldExportSettings) {
+    if (shouldExportSettings > 0) {
+      var settingsValueKeys = settingsProvider.prefs?.getKeys();
+      if (shouldExportSettings < 2) {
+        settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
+      }
       finalExport['settings'] = Map<String, Object?>.fromEntries(
-        (settingsProvider.prefs
-                ?.getKeys()
-                .map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
+        (settingsValueKeys
+                ?.map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
                 .toList()) ??
             [],
       );
@@ -2152,7 +2164,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
       scrollable: true,
       title: Text(
         widget.pickAnyAsset
-            ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
+            ? tr('selectX', args: [lowerCaseIfEnglish(tr('releaseAsset'))])
             : tr('pickAnAPK'),
       ),
       content: Column(
@@ -2511,7 +2523,10 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
     }
     if (toInstall.isNotEmpty) {
-      var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
+      var tempObtArr = toInstall.where(
+        (element) =>
+            element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
+      );
       if (tempObtArr.isNotEmpty) {
         // Move obtainium to the end of the list as it must always install last
         var obt = tempObtArr.first;

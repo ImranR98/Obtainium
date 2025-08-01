@@ -453,12 +453,19 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get exportSettings {
-    return prefs?.getBool('exportSettings') ?? false;
+  int get exportSettings {
+    try {
+      return prefs?.getInt('exportSettings') ??
+          1; // 0 for no, 1 for yes but no secrets, 2 for everything
+    } catch (e) {
+      var val = prefs?.getBool('exportSettings') == true ? 1 : 0;
+      prefs?.setInt('exportSettings', val);
+      return val;
+    }
   }
 
-  set exportSettings(bool val) {
-    prefs?.setBool('exportSettings', val);
+  set exportSettings(int val) {
+    prefs?.setInt('exportSettings', val > 2 || val < 0 ? 1 : val);
     notifyListeners();
   }
 

@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 
 class ObtainiumError {
@@ -158,6 +159,7 @@ void showError(dynamic e, BuildContext context) {
 }
 
 String list2FriendlyString(List<String> list) {
+  var isUsingEnglish = isEnglish();
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list
@@ -169,7 +171,7 @@ String list2FriendlyString(List<String> list) {
                   (e.key == list.length - 1
                       ? ''
                       : e.key == list.length - 2
-                      ? ' and '
+                      ? '${isUsingEnglish ? ',' : ''} and '
                       : ', '),
             )
             .join('');

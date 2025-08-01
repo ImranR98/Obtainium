@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "버전 수정 비활성화됨 (플러그인이 작동하지 않는 것 같습니다)",
     "unknown": "알 수 없음",
     "none": "없음",
+    "all": "모두",
     "never": "절대",
     "latestVersionX": "최신: {}",
     "installedVersionX": "설치됨: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "오베티움 포그라운드 서비스",
     "foregroundServiceExplanation": "업데이트 확인을 위해 포그라운드 서비스 사용(안정성 향상, 전력 소비량 증가)",
     "fgServiceNotice": "이 알림은 백그라운드 업데이트 확인에 필요합니다(OS 설정에서 숨길 수 있음).",
+    "excludeSecrets": "비밀 제외",
     "removeAppQuestion": {
         "one": "앱을 제거하시겠습니까?",
         "other": "앱을 제거하시겠습니까?"

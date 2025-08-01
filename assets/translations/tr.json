@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Sürüm düzeltme devre dışı bırakıldı (eklenti çalışmıyor gibi görünüyor)",
     "unknown": "Bilinmiyor",
     "none": "Hiçbiri",
+    "all": "Tümü",
     "never": "Asla",
     "latestVersionX": "En Son Sürüm: {}",
     "installedVersionX": "Yüklenen Sürüm: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Obtainium ön plan hizmeti",
     "foregroundServiceExplanation": "Güncelleme denetimi için bir ön plan hizmeti kullanın (daha güvenilir, daha fazla güç tüketir)",
     "fgServiceNotice": "Bu bildirim arka planda güncelleme kontrolü için gereklidir (işletim sistemi ayarlarından gizlenebilir)",
+    "excludeSecrets": "Sırları hariç tut",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

@@ -16,6 +16,7 @@ import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/coolapk.dart';
 import 'package:obtainium/app_sources/directAPKLink.dart';
+import 'package:obtainium/app_sources/farsroid.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/app_sources/github.dart';
@@ -63,11 +64,13 @@ class APKDetails {
   });
 }
 
-List<List<String>> stringMapListTo2DList(List<MapEntry<String, String>> mapList) =>
-    mapList.map((e) => [e.key, e.value]).toList();
+List<List<String>> stringMapListTo2DList(
+  List<MapEntry<String, String>> mapList,
+) => mapList.map((e) => [e.key, e.value]).toList();
 
-List<MapEntry<String, String>> assumed2DlistToStringMapList(List<dynamic> arr) =>
-    arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
+List<MapEntry<String, String>> assumed2DlistToStringMapList(
+  List<dynamic> arr,
+) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
 
 // App JSON schema has changed multiple times over the many versions of Obtainium
 // This function takes an App JSON and modifies it if needed to conform to the latest (current) version
@@ -1049,6 +1052,9 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
+bool isEnglish() => tr('and') == 'and'; // Quick hack, find a better way
+String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
+
 bool isVersionPseudo(App app) =>
     app.additionalSettings['trackOnly'] == true ||
     (app.installedVersion != null &&
@@ -1074,6 +1080,7 @@ class SourceProvider {
     Jenkins(),
     APKMirror(),
     RuStore(),
+    Farsroid(),
     TelegramApp(),
     NeutronCode(),
     DirectAPKLink(),

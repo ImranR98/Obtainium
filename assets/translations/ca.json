@@ -167,6 +167,7 @@
     "versionCorrectionDisabled": "Correcció de versions desactivada (el plugin sembla que no funciona)",
     "unknown": "Desconegut",
     "none": "Cap",
+    "all": "All",
     "never": "Mai",
     "latestVersionX": "Última versió: {}",
     "installedVersionX": "Versió instal·lada: {}",
@@ -333,6 +334,7 @@
     "foregroundService": "Servei d'Obtainium en primer pla",
     "foregroundServiceExplanation": "Usa el servei d'Obtainium en primer pla per comprovar les actualitzacions (és més fiable però consumeix més bateria)",
     "fgServiceNotice": "Aquesta notificació és necessària per comprovar les actualitzacions en segon pla (la pots ocultar als paràmetres del Sistema Operatiu)",
+    "excludeSecrets": "Exclude secrets",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"

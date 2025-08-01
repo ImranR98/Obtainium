@@ -113,14 +113,23 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
 
 // Given an HTTP response, grab some links according to the common additional settings
 // (those that apply to intermediate and final steps)
-Future<List<MapEntry<String, String>>> grabLinksCommon(
+Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   Response res,
   Map<String, dynamic> additionalSettings,
 ) async {
   if (res.statusCode != 200) {
     throw getObtainiumHttpError(res);
   }
-  var html = parse(res.body);
+  return grabLinksCommon(res.body, res.request!.url, additionalSettings);
+}
+
+// Note keys are URLs, values are filenames (opposite to the AppSource apkUrls)
+Future<List<MapEntry<String, String>>> grabLinksCommon(
+  String rawBody,
+  Uri reqUrl,
+  Map<String, dynamic> additionalSettings,
+) async {
+  var html = parse(rawBody);
   List<MapEntry<String, String>> allLinks = html
       .querySelectorAll('a')
       .map(
@@ -132,21 +141,21 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
         ),
       )
       .where((element) => element.key.isNotEmpty)
-      .map((e) => MapEntry(ensureAbsoluteUrl(e.key, res.request!.url), e.value))
+      .map((e) => MapEntry(ensureAbsoluteUrl(e.key, reqUrl), e.value))
       .toList();
   if (allLinks.isEmpty) {
-    allLinks = getLinksInLines(res.body);
+    allLinks = getLinksInLines(rawBody);
   }
   if (allLinks.isEmpty) {
     // Getting desperate
     try {
-      var jsonStrings = collectAllStringsFromJSONObject(jsonDecode(res.body));
+      var jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
       allLinks = getLinksInLines(jsonStrings.join('\n'));
       if (allLinks.isEmpty) {
         allLinks = getLinksInLines(
           jsonStrings
               .map((l) {
-                return ensureAbsoluteUrl(l, res.request!.url);
+                return ensureAbsoluteUrl(l, reqUrl);
               })
               .join('\n'),
         );
@@ -368,7 +377,7 @@ class HTML extends AppSource {
             .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
             .toList();
     for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
-      var intLinks = await grabLinksCommon(
+      var intLinks = await grabLinksCommonFromRes(
         await sourceRequest(currentUrl, additionalSettings),
         additionalSettings['intermediateLink'][i],
       );
@@ -392,7 +401,7 @@ class HTML extends AppSource {
           .join('\n')
           .split('\n')
           .join('\\n');
-      links = await grabLinksCommon(res, additionalSettings);
+      links = await grabLinksCommonFromRes(res, additionalSettings);
       links = filterApks(
         links,
         additionalSettings['apkFilterRegEx'],

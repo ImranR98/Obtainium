@@ -185,7 +185,6 @@ class _ObtainiumState extends State<Obtainium> {
     initPlatformState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
-      initForegroundService();
     });
   }
 
@@ -201,28 +200,32 @@ class _ObtainiumState extends State<Obtainium> {
   }
 
   void initForegroundService() {
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'bg_update',
-        channelName: tr('foregroundService'),
-        channelDescription: tr('foregroundService'),
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(900000),
-        autoRunOnBoot: true,
-        autoRunOnMyPackageReplaced: true,
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
-    );
+    // ignore: invalid_use_of_visible_for_testing_member
+    if (!FlutterForegroundTask.isInitialized) {
+      FlutterForegroundTask.init(
+        androidNotificationOptions: AndroidNotificationOptions(
+          channelId: 'bg_update',
+          channelName: tr('foregroundService'),
+          channelDescription: tr('foregroundService'),
+          onlyAlertOnce: true,
+        ),
+        iosNotificationOptions: const IOSNotificationOptions(
+          showNotification: false,
+          playSound: false,
+        ),
+        foregroundTaskOptions: ForegroundTaskOptions(
+          eventAction: ForegroundTaskEventAction.repeat(900000),
+          autoRunOnBoot: true,
+          autoRunOnMyPackageReplaced: true,
+          allowWakeLock: true,
+          allowWifiLock: true,
+        ),
+      );
+    }
   }
 
   Future<ServiceRequestResult?> startForegroundService(bool restart) async {
+    initForegroundService();
     if (await FlutterForegroundTask.isRunningService) {
       if (restart) {
         return FlutterForegroundTask.restartService();
