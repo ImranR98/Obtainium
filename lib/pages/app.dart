@@ -232,7 +232,10 @@ class _AppPageState extends State<AppPage> {
                         : const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 6),
                     margin: const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 0),
                     child: Text(
-                      tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
+                      tr(
+                        'downloadX',
+                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                      ),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelSmall!.copyWith(
                         decoration: TextDecoration.underline,

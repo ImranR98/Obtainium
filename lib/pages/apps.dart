@@ -1072,7 +1072,10 @@ class AppsPageState extends State<AppsPage> {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      tr('downloadX', args: [tr('releaseAsset').toLowerCase()]),
+                      tr(
+                        'downloadX',
+                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                      ),
                     ),
                   ),
                   const Divider(),

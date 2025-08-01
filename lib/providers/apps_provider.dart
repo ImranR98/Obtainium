@@ -2164,7 +2164,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
       scrollable: true,
       title: Text(
         widget.pickAnyAsset
-            ? tr('selectX', args: [tr('releaseAsset').toLowerCase()])
+            ? tr('selectX', args: [lowerCaseIfEnglish(tr('releaseAsset'))])
             : tr('pickAnAPK'),
       ),
       content: Column(

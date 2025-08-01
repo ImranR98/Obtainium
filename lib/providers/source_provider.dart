@@ -1052,6 +1052,9 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
+bool isEnglish() => tr('and') == 'and'; // Quick hack, find a better way
+String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
+
 bool isVersionPseudo(App app) =>
     app.additionalSettings['trackOnly'] == true ||
     (app.installedVersion != null &&

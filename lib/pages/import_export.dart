@@ -545,7 +545,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                 child: Text(
                                   tr(
                                     'searchX',
-                                    args: [tr('source').toLowerCase()],
+                                    args: [lowerCaseIfEnglish(tr('source'))],
                                   ),
                                 ),
                               ),
