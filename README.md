@@ -33,6 +33,7 @@ Currently supported App sources:
   - [CoolApk](https://coolapk.com/)
   - [vivo App Store (CN)](https://h5.appstore.vivo.com.cn/)
   - [RuStore](https://rustore.ru/)
+  - [Farsroid](https://www.farsroid.com)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Other - App-Specific:
