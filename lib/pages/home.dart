@@ -14,7 +14,6 @@ import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -201,14 +200,6 @@ class _HomePageState extends State<HomePage> {
               ),
               context,
             );
-            await appsProvider
-                .checkUpdates(specificIds: result.key.map((e) => e.id).toList())
-                .catchError((e) {
-                  if (e is Map && e['errors'] is MultiAppMultiError) {
-                    showError(e['errors'].toString(), context);
-                  }
-                  return <App>[];
-                });
           }
         } else {
           throw ObtainiumError(tr('unknown'));

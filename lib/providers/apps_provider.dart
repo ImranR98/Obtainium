@@ -1025,13 +1025,19 @@ class AppsProvider with ChangeNotifier {
       );
     }
     getHost(String url) {
+      if (url == 'placeholder') {
+        return null;
+      }
       var temp = Uri.parse(url).host.split('.');
       return temp.sublist(temp.length - 2).join('.');
     }
 
     // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
     if (appFileUrl != null &&
-        getHost(appFileUrl.value) != getHost(app.url) &&
+        ![
+          getHost(app.url),
+          'placeholder',
+        ].contains(getHost(appFileUrl.value)) &&
         context != null) {
       if (!(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
@@ -1077,7 +1083,8 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? apkUrl;
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       var refreshBeforeDownload =
-          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
+          apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
@@ -1301,7 +1308,8 @@ class AppsProvider with ChangeNotifier {
       }
       MapEntry<String, String>? fileUrl;
       var refreshBeforeDownload =
-          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true;
+          apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
+          apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
