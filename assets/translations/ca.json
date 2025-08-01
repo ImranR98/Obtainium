@@ -360,16 +360,16 @@
         "other": "{} URLs"
     },
     "minute": {
-        "one": "{} Minut",
-        "other": "{} Minuts"
+        "one": "{} minut",
+        "other": "{} minuts"
     },
     "hour": {
-        "one": "{} Hora",
-        "other": "{} Hores"
+        "one": "{} hora",
+        "other": "{} hores"
     },
     "day": {
-        "one": "{} Dia",
-        "other": "{} Dies"
+        "one": "{} dia",
+        "other": "{} dies"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Suprimit {n} registre (anterior a = {before}, posterior a = {after})",

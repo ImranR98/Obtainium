@@ -360,16 +360,16 @@
         "other": "{} URL'er"
     },
     "minute": {
-        "one": "{} Minut",
-        "other": "{} Minutter"
+        "one": "{} minut",
+        "other": "{} minutter"
     },
     "hour": {
-        "one": "{} Time",
-        "other": "{} Timer"
+        "one": "{} time",
+        "other": "{} timer"
     },
     "day": {
-        "one": "{} Dag",
-        "other": "{} Dage"
+        "one": "{} dag",
+        "other": "{} dage"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Ryddet {n} log (før = {before}, efter = {after})",

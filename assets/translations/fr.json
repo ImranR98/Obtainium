@@ -360,16 +360,16 @@
         "other": "{} URLs"
     },
     "minute": {
-        "one": "{} Minute",
-        "other": "{} Minutes"
+        "one": "{} minute",
+        "other": "{} minutes"
     },
     "hour": {
-        "one": "{} Heure",
-        "other": "{} Heures"
+        "one": "{} heure",
+        "other": "{} heures"
     },
     "day": {
-        "one": "{} Jour",
-        "other": "{} Jours"
+        "one": "{} jour",
+        "other": "{} jours"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Nettoyage du journal {n} (avant = {before}, après = {after})",

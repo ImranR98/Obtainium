@@ -360,15 +360,15 @@
         "other": "{} URL"
     },
     "minute": {
-        "one": "{} Phút",
-        "other": "{} Phút"
+        "one": "{} phút",
+        "other": "{} phút"
     },
     "hour": {
-        "one": "{} Giờ",
-        "other": "{} Giờ"
+        "one": "{} giờ",
+        "other": "{} giờ"
     },
     "day": {
-        "one": "{} Ngày",
+        "one": "{} ngày",
         "other": "{} ngày"
     },
     "clearedNLogsBeforeXAfterY": {

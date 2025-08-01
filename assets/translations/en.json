@@ -360,16 +360,16 @@
         "other": "{} URLs"
     },
     "minute": {
-        "one": "{} Minute",
-        "other": "{} Minutes"
+        "one": "{} minute",
+        "other": "{} minutes"
     },
     "hour": {
-        "one": "{} Hour",
-        "other": "{} Hours"
+        "one": "{} hour",
+        "other": "{} hours"
     },
     "day": {
-        "one": "{} Day",
-        "other": "{} Days"
+        "one": "{} day",
+        "other": "{} days"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "Cleared {n} log (before = {before}, after = {after})",
