@@ -396,9 +396,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                               Expanded(
                                 child: TextButton(
                                   style: outlineButtonStyle,
-                                  onPressed:
-                                      appsProvider.apps.isEmpty ||
-                                          importInProgress
+                                  onPressed: importInProgress
                                       ? null
                                       : () {
                                           runObtainiumExport(pickOnly: true);
@@ -710,6 +708,12 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
+  void selectAll({bool deselect = false}) {
+    for (var e in entrySelections.keys) {
+      entrySelections[e] = !deselect;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<MapEntry<String, List<String>>, bool> filteredEntrySelections = {};
@@ -731,6 +735,32 @@ class _SelectionModalState extends State<SelectionModal> {
         }
       });
     }
+    getSelectAllButton() {
+      if (widget.onlyOneSelectionAllowed) {
+        return SizedBox.shrink();
+      }
+      var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
+      return noneSelected
+          ? TextButton(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onPressed: () {
+                setState(() {
+                  selectAll();
+                });
+              },
+              child: Text(tr('selectAll')),
+            )
+          : TextButton(
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onPressed: () {
+                setState(() {
+                  selectAll(deselect: true);
+                });
+              },
+              child: Text(tr('deselectX', args: [''])),
+            );
+    }
+
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title ?? tr('pick')),
@@ -900,6 +930,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ],
       ),
       actions: [
+        getSelectAllButton(),
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
