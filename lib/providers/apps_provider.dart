@@ -1121,6 +1121,7 @@ class AppsProvider with ChangeNotifier {
       obtainiumId,
       strB: obtainiumTempId,
     );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
 
     Future<void> installFn(
       String id,
@@ -2511,7 +2512,10 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
     }
     if (toInstall.isNotEmpty) {
-      var tempObtArr = toInstall.where((element) => element.key == obtainiumId);
+      var tempObtArr = toInstall.where(
+        (element) =>
+            element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
+      );
       if (tempObtArr.isNotEmpty) {
         // Move obtainium to the end of the list as it must always install last
         var obt = tempObtArr.first;
