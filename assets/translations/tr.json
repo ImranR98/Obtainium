@@ -358,16 +358,16 @@
         "other": "{} URL"
     },
     "minute": {
-        "one": "{} Dakika",
-        "other": "{} Dakika"
+        "one": "{} dakika",
+        "other": "{} dakika"
     },
     "hour": {
-        "one": "{} Saat",
-        "other": "{} Saat"
+        "one": "{} saat",
+        "other": "{} saat"
     },
     "day": {
-        "one": "{} Gün",
-        "other": "{} Gün"
+        "one": "{} gün",
+        "other": "{} gün"
     },
     "clearedNLogsBeforeXAfterY": {
         "one": "{n} log temizlendi (önce = {before}, sonra = {after})",
