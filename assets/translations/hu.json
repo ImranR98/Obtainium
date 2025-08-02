@@ -167,7 +167,7 @@
     "versionCorrectionDisabled": "Verziókorrekció letiltva (úgy tűnik, hogy a bővítmény nem működik)",
     "unknown": "Ismeretlen",
     "none": "Semmi",
-    "all": "Minden",
+    "all": "Összes",
     "never": "Soha",
     "latestVersionX": "Legújabb verzió: {}",
     "installedVersionX": "Telepített verzió: {}",
@@ -334,7 +334,7 @@
     "foregroundService": "Obtainium előtér-szolgáltatás",
     "foregroundServiceExplanation": "Előtér-szolgáltatás használata a frissítések ellenőrzéséhez (megbízhatóbb, de több energiát fogyaszt)",
     "fgServiceNotice": "Ez az értesítés a háttérben történő frissítésellenőrzéshez szükséges (a rendszer beállításaiban elrejthető).",
-    "excludeSecrets": "Titkok kizárása",
+    "excludeSecrets": "Érzékeny adatok (például: személyes hozzáférési tokenek) kihagyása",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
