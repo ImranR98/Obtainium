@@ -66,7 +66,7 @@ class RuStore extends AppSource {
 
     String appName = appDetails['appName'] ?? tr('app');
     String author = appDetails['companyName'] ?? name;
-    String? dateStr = appDetails['updatedAt'];
+    String? dateStr = appDetails['appVerUpdatedAt'];
     String? version = appDetails['versionName'];
     String? changeLog = appDetails['whatsNew'];
     if (version == null) {
