@@ -11,7 +11,8 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-.vscode/
+.vscode/*
+!.vscode/launch.json
 
 # IntelliJ related
 *.iml
