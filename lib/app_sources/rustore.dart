@@ -36,13 +36,15 @@ class RuStore extends AppSource {
     return Uri.parse(standardUrl).pathSegments.last;
   }
 
-  Future<String> decodeString(String str) async {
+  Future<dynamic> decodeJsonBody(Uint8List bytes) async {
     try {
-      return (await CharsetDetector.autoDecode(
-        Uint8List.fromList(str.codeUnits),
-      )).string;
+      return jsonDecode((await CharsetDetector.autoDecode(bytes)).string);
     } catch (e) {
-      return str;
+      try {
+        return jsonDecode(utf8.decode(bytes));
+      } catch (_) {
+        rethrow;
+      }
     }
   }
 
@@ -59,7 +61,7 @@ class RuStore extends AppSource {
     if (res0.statusCode != 200) {
       throw getObtainiumHttpError(res0);
     }
-    var appDetails = jsonDecode(res0.body)['body'];
+    var appDetails = (await decodeJsonBody(res0.bodyBytes))['body'];
     if (appDetails['appId'] == null) {
       throw NoReleasesError();
     }
@@ -83,14 +85,10 @@ class RuStore extends AppSource {
       followRedirects: false,
       postBody: {"appId": appDetails['appId'], "firstInstall": true},
     );
-    var downloadDetails = jsonDecode(res1.body)['body'];
+    var downloadDetails = (await decodeJsonBody(res1.bodyBytes))['body'];
     if (res1.statusCode != 200 || downloadDetails['apkUrl'] == null) {
       throw NoAPKError();
     }
-
-    appName = await decodeString(appName);
-    author = await decodeString(author);
-    changeLog = changeLog != null ? await decodeString(changeLog) : null;
 
     return APKDetails(
       version,
