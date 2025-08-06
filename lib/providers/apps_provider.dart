@@ -1084,7 +1084,8 @@ class AppsProvider with ChangeNotifier {
       var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
       var refreshBeforeDownload =
           apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
-          apps[id]!.app.apkUrls.first.value == 'placeholder';
+          apps[id]!.app.apkUrls.isNotEmpty &&
+              apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
