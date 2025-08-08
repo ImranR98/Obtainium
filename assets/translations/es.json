@@ -313,7 +313,7 @@
     "selfHostedNote": "El desplegable «{}» puede usarse para acceder a instancias autoalojadas/personalizadas de cualquier fuente.",
     "badDownload": "No se ha podido analizar el APK (incompatible o descarga parcial)",
     "beforeNewInstallsShareToAppVerifier": "Compartir aplicaciones nuevas con AppVerifier (si está instalado)",
-    "appVerifierInstructionToast": "Compartir con AppVerifier y vuelver aquí cuando esté listo.",
+    "appVerifierInstructionToast": "Comparta con AppVerifier y vuelva aquí cuando esté listo.",
     "wiki": "Ayuda/Wiki",
     "crowdsourcedConfigsLabel": "Crowdsourced App Configurations (use bajo su responsabilidad)",
     "crowdsourcedConfigsShort": "Configuración de aplicaciones por crowdsourcing",
