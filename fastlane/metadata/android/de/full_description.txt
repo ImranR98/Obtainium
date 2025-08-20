@@ -4,45 +4,55 @@
 	<b>Derzeit unterstützte App-Quellen:</b>
 </p>
 <ul>
-	<li>
-		<p>Open Source – Allgemein:</p>
+	<li>Open Source – Allgemein:
 		<ul>
-			<li>GitHub</li>
-			<li>GitLab</li>
-			<li>Forgejo (Codeberg)</li>
 			<li>F-Droid</li>
 			<li>Third Party F-Droid Repos</li>
+			<li>Forgejo (Codeberg)</li>
+			<li>GitHub</li>
+			<li>GitLab</li>
 			<li>IzzyOnDroid</li>
 			<li>SourceHut</li>
 		</ul>
 	</li>
-	<li>
-		<p>Andere – Allgemein:</p>
+	<li>Andere – Allgemein:
 		<ul>
-			<li>APKPure</li>
-			<li>Aptoide</li>
-			<li>Uptodown</li>
-			<li>APKMirror (Track-Only)</li>
-			<li>Huawei AppGallery</li>
-			<li>Tencent App Store</li>
-			<li>CoolApk</li>
-			<li>vivo App Store (China)</li>
+			<li>alternative Stores</li>
+				<ul>
+				<li>CoolApk</li>
+				<li>Tencent App Store</li>
+				<li>RuStore</li>
+				</ul>
+			<li>OEM-Stores</li>
+				<ul>
+				<li>Huawei AppGallery</li>
+				<li>vivo App Store (China)</li>
+				</ul>
+			<li>Mods</li>
+				<ul>
+				<li>Farsroid</li>
+				</ul>
+			<li>Reupload-Stores</li>
+				<ul>
+				<li>APKMirror (nur Updatebenachrchtigungen; kein APK-Download möglich)</li>
+				<li>APKPure</li>
+				<li>Aptoide</li>
+				<li>Uptodown</li>
+				</ul>
 			<li>Jenkins Jobs</li>
-			<li>RuStore</li>
 		</ul>
 	</li>
-	<li>
-		<p>Andere - App-Spezifisch:</p>
+	<li>Andere - App-Spezifisch:
 		<ul>
 			<li>Telegram App</li>
 			<li>Neutron Code</li>
 		</ul>
 	</li>
-	<li><p>„HTML“ (Fallback): Jede andere URL, die eine HTML-Seite mit Links zu APK-Dateien zurückgibt.</p></li>
+	<li>„HTML“ (Fallback): Jede andere URL, die eine HTML-Seite mit Links zu APK-Dateien zurückgibt.</li>
 </ul>
 <p>
 	<b>Einschränkungen:</b>
 </p>
 <p>
-	Bei einigen Quellen werden die Daten mit Hilfe von Web Scraping gesammelt und können aufgrund von Änderungen am Design der Website leicht beschädigt werden. In solchen Fällen sind zuverlässigere Methoden nicht verfügbar.
+	Bei einigen Quellen werden die Daten mithilfe von Web Scraping gesammelt und können aufgrund von Änderungen am Design der Website leicht beschädigt werden. In solchen Fällen sind zuverlässigere Methoden nicht verfügbar.
 </p>
