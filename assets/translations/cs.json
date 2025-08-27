@@ -254,6 +254,7 @@
     "verifyLatestTag": "Ověřit značku „latest“",
     "intermediateLinkRegex": "Filtr pro návštěvu „prostředního“ odkazu",
     "filterByLinkText": "Filtrovat odkazy podle textu odkazu",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Připojený odkaz nenalezen",
     "intermediateLink": "Připojený odkaz",
     "exemptFromBackgroundUpdates": "Vyloučit z aktualizací na pozadí (je-li povoleno)",

@@ -254,6 +254,7 @@
     "verifyLatestTag": "Provjerite 'posljednu' ('latest') oznaku",
     "intermediateLinkRegex": "Filter za 'srednju' vezu za posjetu",
     "filterByLinkText": "Filtriraj linkove prema tekstu linka",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Intermediate veza nije nađena",
     "intermediateLink": "Intermediate veza",
     "exemptFromBackgroundUpdates": "Izuzmi iz ažuriranja u pozadini (ako su uključeni)",
