@@ -254,6 +254,7 @@
     "verifyLatestTag": "„Latest“-Tag überprüfen",
     "intermediateLinkRegex": "Filter für einen „Zwischen“-Link, der zuerst besucht werden soll",
     "filterByLinkText": "Links durch Linktext filtern",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "„Zwischen“-Link nicht gefunden",
     "intermediateLink": "„Zwischen“-Link",
     "exemptFromBackgroundUpdates": "Von Hintergrundaktualisierungen (falls aktiviert) ausschließen",

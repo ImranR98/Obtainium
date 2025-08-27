@@ -254,6 +254,7 @@
     "verifyLatestTag": "Проверять метку «latest»",
     "intermediateLinkRegex": "Фильтр для «промежуточной» ссылки для посещения",
     "filterByLinkText": "Фильтрация ссылок по тексту ссылки",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Промежуточная ссылка не найдена",
     "intermediateLink": "Промежуточная ссылка",
     "exemptFromBackgroundUpdates": "Исключить из фоновых обновлений (если включено)",

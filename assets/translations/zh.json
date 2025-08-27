@@ -254,6 +254,7 @@
     "verifyLatestTag": "验证“Latest”标签",
     "intermediateLinkRegex": "筛选中转链接的正则表达式",
     "filterByLinkText": "根据链接文本进行筛选",
+    "matchLinksOutsideATags": "匹配 <a> 标签外的链接",
     "intermediateLinkNotFound": "未找到中转链接",
     "intermediateLink": "中转链接",
     "exemptFromBackgroundUpdates": "禁用后台更新（仅此应用生效，即使已启用全局后台更新）",

@@ -129,6 +129,8 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
   Uri reqUrl,
   Map<String, dynamic> additionalSettings,
 ) async {
+  bool matchLinksOutsideATags =
+      additionalSettings['matchLinksOutsideATags'] == true;
   var html = parse(rawBody);
   List<MapEntry<String, String>> allLinks = html
       .querySelectorAll('a')
@@ -143,7 +145,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       .where((element) => element.key.isNotEmpty)
       .map((e) => MapEntry(ensureAbsoluteUrl(e.key, reqUrl), e.value))
       .toList();
-  if (allLinks.isEmpty) {
+  if (allLinks.isEmpty || matchLinksOutsideATags) {
     allLinks = getLinksInLines(rawBody);
   }
   if (allLinks.isEmpty) {
@@ -247,6 +249,12 @@ class HTML extends AppSource {
   ];
   var commonFormItems = [
     [GeneratedFormSwitch('filterByLinkText', label: tr('filterByLinkText'))],
+    [
+      GeneratedFormSwitch(
+        'matchLinksOutsideATags',
+        label: tr('matchLinksOutsideATags')
+      ),
+    ],
     [GeneratedFormSwitch('skipSort', label: tr('skipSort'))],
     [GeneratedFormSwitch('reverseSort', label: tr('takeFirstLink'))],
     [

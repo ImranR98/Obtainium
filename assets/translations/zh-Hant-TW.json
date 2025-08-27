@@ -254,6 +254,7 @@
     "verifyLatestTag": "驗證「最新」標籤",
     "intermediateLinkRegex": "過濾要存取的「中間」連結",
     "filterByLinkText": "按連結文字過濾連結",
+    "matchLinksOutsideATags": "匹配 <a> 標籤外的連結",
     "intermediateLinkNotFound": "沒有找到中間連結",
     "intermediateLink": "中間連結",
     "exemptFromBackgroundUpdates": "免除背景更新（若已啟用）",

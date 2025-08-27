@@ -254,6 +254,7 @@
     "verifyLatestTag": "Inspekti la etikedon 'latest'",
     "intermediateLinkRegex": "Filtri por 'pera' vizitota ligilo",
     "filterByLinkText": "Filtri ligilojn laŭ ligiloteksto",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Netrovebla pera ligilo",
     "intermediateLink": "Pera ligilo",
     "exemptFromBackgroundUpdates": "Escepti el la fonaj ĝisdatigoj (se aktiva)",

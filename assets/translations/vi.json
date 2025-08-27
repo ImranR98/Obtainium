@@ -254,6 +254,7 @@
     "verifyLatestTag": "Xác minh thẻ 'mới nhất'",
     "intermediateLinkRegex": "Lọc tìm liên kết 'Trung cấp' để truy cập",
     "filterByLinkText": "Lọc liên kết theo văn bản liên kết",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Không tìm thấy liên kết trung gian",
     "intermediateLink": "Liên kết trung gian",
     "exemptFromBackgroundUpdates": "Miễn cập nhật nền (nếu được bật)",

@@ -254,6 +254,7 @@
     "verifyLatestTag": "Comprova l'etiqueta 'Latest' (última versió)",
     "intermediateLinkRegex": "Filtra per un enllaç 'intermediari' per anar-hi",
     "filterByLinkText": "Filtra els enllaços pel text de l'enllaç",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "No s'ha trobat l'enllaç intermediari",
     "intermediateLink": "Enllaç intermediari",
     "exemptFromBackgroundUpdates": "Exempta d'actualitzacions en segon pla (si han estat habilitades)",

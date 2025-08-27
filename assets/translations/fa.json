@@ -254,6 +254,7 @@
     "verifyLatestTag": "برچسب \"آخرین\" را تأیید کنید",
     "intermediateLinkRegex": "برای بازدید از پیوند «میانگین» فیلتر کنید",
     "filterByLinkText": "لینک ها را بر اساس متن پیوند فیلتر کنید",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "لینک میانی پیدا نشد",
     "intermediateLink": "پیوند میانی",
     "exemptFromBackgroundUpdates": "معاف از به‌روزرسانی‌های پس‌زمینه (در صورت فعال بودن)",

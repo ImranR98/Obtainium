@@ -254,6 +254,7 @@
     "verifyLatestTag": "'ഏറ്റവും പുതിയ' ടാഗ് പരിശോധിക്കുക",
     "intermediateLinkRegex": "സന്ദർശിക്കാൻ ഒരു 'ഇന്റർമീഡിയറ്റ്' ലിങ്കിനായി ഫിൽട്ടർ ചെയ്യുക",
     "filterByLinkText": "ലിങ്ക് ടെക്സ്റ്റ് ഉപയോഗിച്ച് ലിങ്കുകൾ ഫിൽട്ടർ ചെയ്യുക",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "ഇന്റർമീഡിയറ്റ് ലിങ്ക് കണ്ടെത്തിയില്ല",
     "intermediateLink": "ഇന്റർമീഡിയറ്റ് ലിങ്ക്",
     "exemptFromBackgroundUpdates": "ബാക്ക്ഗ്രൗണ്ട് അപ്‌ഡേറ്റുകളിൽ നിന്ന് ഒഴിവാക്കുക (പ്രവർത്തനക്ഷമമാക്കിയിട്ടുണ്ടെങ്കിൽ)",
