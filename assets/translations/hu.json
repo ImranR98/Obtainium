@@ -254,6 +254,7 @@
     "verifyLatestTag": "Ellenőrizze a „legújabb” címkét",
     "intermediateLinkRegex": "Szűrő egy „köztes” hivatkozás felkereséséhez",
     "filterByLinkText": "Hivatkozások szűrése hivatkozásszöveg alapján",
+    "matchLinksOutsideATags": "<a> címkéken kívüli linkek megfeleltetése",
     "intermediateLinkNotFound": "Köztes hivatkozás nem található",
     "intermediateLink": "Köztes hivatkozás",
     "exemptFromBackgroundUpdates": "Mentes a háttérben történő frissítések alól (ha engedélyezett)",

@@ -254,6 +254,7 @@
     "verifyLatestTag": "'latest'タグを確認する",
     "intermediateLinkRegex": "訪問する「中間」リンクのフィルター",
     "filterByLinkText": "テキストでリンクをフィルタリングする",
+    "matchLinksOutsideATags": "<a>タグの外にあるリンクに一致させる",
     "intermediateLinkNotFound": "中間リンクが見つかりませんでした",
     "intermediateLink": "中間リンク",
     "exemptFromBackgroundUpdates": "バックグラウンドアップデートを行わない (有効な場合)",

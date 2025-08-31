@@ -254,6 +254,7 @@
     "verifyLatestTag": "Verifique a 'última' etiqueta",
     "intermediateLinkRegex": "Filtrar um link 'intermediário' para visitar",
     "filterByLinkText": "Filtrar links pelo texto do link",
+    "matchLinksOutsideATags": "Corresponder ligações fora das etiquetas <a>",
     "intermediateLinkNotFound": "Link intermediário não encontrado",
     "intermediateLink": "Link intermediário",
     "exemptFromBackgroundUpdates": "Isento de atualizações em segundo-plano (se ativadas)",

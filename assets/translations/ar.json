@@ -254,6 +254,7 @@
     "verifyLatestTag": "التحقق من علامة 'الأحدث'",
     "intermediateLinkRegex": "تصفية للوصول إلى رابط 'وسيط'",
     "filterByLinkText": "تصفية الروابط حسب نص الرابط",
+    "matchLinksOutsideATags": "تطابق الروابط خارج علامات <a>",
     "intermediateLinkNotFound": "لم يتم العثور على رابط وسيط",
     "intermediateLink": "رابط وسيط",
     "exemptFromBackgroundUpdates": "إعفاء من التحديثات في الخلفية (إذا تم تمكينها)",

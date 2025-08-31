@@ -254,6 +254,7 @@
     "verifyLatestTag": "'최신' 태그 확인",
     "intermediateLinkRegex": "'중간' 링크 방문 필터",
     "filterByLinkText": "링크 텍스트로 링크 필터링",
+    "matchLinksOutsideATags": "<> 태그 외부의 링크 일치",
     "intermediateLinkNotFound": "중간 링크를 찾을 수 없습니다",
     "intermediateLink": "중간 링크",
     "exemptFromBackgroundUpdates": "백그라운드 업데이트에서 제외 (활성화된 경우)",

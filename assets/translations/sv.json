@@ -254,6 +254,7 @@
     "verifyLatestTag": "Verifiera 'senaste'-taggen",
     "intermediateLinkRegex": "Filtrera för en \"mellanliggande\" länk att besöka",
     "filterByLinkText": "Filtrera länkar efter länktext",
+    "matchLinksOutsideATags": "Matcha länkar utanför <a>-taggar",
     "intermediateLinkNotFound": "Mellanlänk hittades inte",
     "intermediateLink": "Mellanlänk",
     "exemptFromBackgroundUpdates": "Undta från bakgrundsuppdateringar (om aktiverad)",

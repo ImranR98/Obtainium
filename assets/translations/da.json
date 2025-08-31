@@ -254,6 +254,7 @@
     "verifyLatestTag": "Verificer 'seneste'-tagget",
     "intermediateLinkRegex": "Filtrer efter et 'mellemliggende' link at besøge",
     "filterByLinkText": "Filtrer links efter linktekst",
+    "matchLinksOutsideATags": "Match links uden for <a>-tags",
     "intermediateLinkNotFound": "Mellemliggende link ikke fundet",
     "intermediateLink": "Mellemliggende link",
     "exemptFromBackgroundUpdates": "Undtag fra baggrundsopdateringer (hvis aktiveret)",

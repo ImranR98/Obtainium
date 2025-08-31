@@ -254,6 +254,7 @@
     "verifyLatestTag": "'latest' etiketini doğrula",
     "intermediateLinkRegex": "Ziyaret Edilecek 'Orta Düzey' Bağlantıyı Filtrele",
     "filterByLinkText": "Bağlantıları bağlantı metnine göre filtrele",
+    "matchLinksOutsideATags": "<a> etiketleri dışındaki bağlantıları eşleştirin",
     "intermediateLinkNotFound": "Ara bağlantı bulunamadı",
     "intermediateLink": "Ara bağlantı",
     "exemptFromBackgroundUpdates": "Arka plan güncellemelerinden muaf tut (etkinse)",

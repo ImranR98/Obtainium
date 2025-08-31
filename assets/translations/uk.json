@@ -254,6 +254,7 @@
     "verifyLatestTag": "Перевірити тег 'latest'",
     "intermediateLinkRegex": "Фільтр для 'Проміжного' Посилання для Відвідування",
     "filterByLinkText": "Фільтрувати посилання за текстом посилання",
+    "matchLinksOutsideATags": "Зіставлення посилань поза тегами <a>",
     "intermediateLinkNotFound": "Проміжне посилання не знайдено",
     "intermediateLink": "Проміжне посилання",
     "exemptFromBackgroundUpdates": "Виключено з фонових оновлень (якщо ввімкнено)",
