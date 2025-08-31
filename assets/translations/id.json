@@ -254,6 +254,7 @@
     "verifyLatestTag": "Verifikasi label 'terbaru'",
     "intermediateLinkRegex": "Filter tautan 'perantara' untuk dikunjungi",
     "filterByLinkText": "Filter tautan berdasarkan teks tautan",
+    "matchLinksOutsideATags": "Match links outside <a> tags",
     "intermediateLinkNotFound": "Tautan perantara tidak ditemukan",
     "intermediateLink": "Tautan perantara",
     "exemptFromBackgroundUpdates": "Dikecualikan dari pembaruan latar belakang (jika diaktifkan)",
