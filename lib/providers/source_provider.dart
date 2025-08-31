@@ -25,6 +25,7 @@ import 'package:obtainium/app_sources/huaweiappgallery.dart';
 import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
+import 'package:obtainium/app_sources/liteapks.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/rustore.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
@@ -1076,6 +1077,7 @@ class SourceProvider {
     HuaweiAppGallery(),
     Tencent(),
     CoolApk(),
+    LiteAPKs(),
     VivoAppStore(),
     Jenkins(),
     APKMirror(),
