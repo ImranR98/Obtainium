@@ -21,6 +21,7 @@ const neverAutoTranslate = {
     obtainiumImport: ['nl'],
     appLogs: ['nl'],
     apks: ['vi'],
+    minute: ['fr'],
     tencentAppStore: ['*']
 }
 

@@ -254,7 +254,7 @@
     "verifyLatestTag": "Het label 'Laatste' verifiëren",
     "intermediateLinkRegex": "Filteren op een 'Intermediaire' link om te bezoeken",
     "filterByLinkText": "Links filteren op linktekst",
-    "matchLinksOutsideATags": "Match links outside <a> tags",
+    "matchLinksOutsideATags": "Koppelingen buiten <a>-tags matchen",
     "intermediateLinkNotFound": "Intermediaire link niet gevonden",
     "intermediateLink": "Intermediaire link",
     "exemptFromBackgroundUpdates": "Vrijgesteld van achtergrond-updates (indien ingeschakeld)",
