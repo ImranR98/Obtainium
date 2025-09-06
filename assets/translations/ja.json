@@ -335,7 +335,7 @@
     "foregroundService": "Obtainium フォアグラウンドサービス",
     "foregroundServiceExplanation": "アップデート確認にフォアグラウンドサービスを使用する（より信頼性が高いが、より電力を消費する）",
     "fgServiceNotice": "この通知は、バックグラウンドでアップデートを確認するために必要です（OSの設定で非表示にできます）。",
-    "excludeSecrets": "秘密を除く",
+    "excludeSecrets": "シークレットを除く",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
