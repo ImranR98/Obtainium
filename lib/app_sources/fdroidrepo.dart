@@ -218,6 +218,7 @@ class FDroidRepo extends AppSource {
       if (releases.isEmpty) {
         throw NoReleasesError();
       }
+      String? changeLog = foundApps[0].querySelector('changelog')?.innerHtml;
       String? latestVersion = releases[0].querySelector('version')?.innerHtml;
       if (latestVersion == null) {
         throw NoVersionError();
@@ -261,6 +262,7 @@ class FDroidRepo extends AppSource {
         getApkUrlsFromUrls(apkUrls),
         AppNames(authorName, appName),
         releaseDate: releaseDate,
+        changeLog: changeLog,
       );
     } else {
       throw getObtainiumHttpError(res);
