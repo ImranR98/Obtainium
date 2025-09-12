@@ -232,6 +232,10 @@ class FDroidRepo extends AppSource {
           e.querySelector('apkname') != null
         ).toList();
       }
+      String? appAuthorName = foundApps[0].querySelector('author')?.innerHtml;
+      if (appAuthorName != null) {
+        authorName = appAuthorName;
+      }
       if (selectedReleases.isEmpty) {
         selectedReleases = releases.where((e) =>
           e.querySelector('version')?.innerHtml == latestVersion &&
