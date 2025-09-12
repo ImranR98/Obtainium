@@ -32,6 +32,7 @@ class FDroid extends AppSource {
         GeneratedFormSwitch(
           'trySelectingSuggestedVersionCode',
           label: tr('trySelectingSuggestedVersionCode'),
+          defaultValue: true,
         ),
       ],
       [
