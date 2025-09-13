@@ -337,24 +337,24 @@
     "fgServiceNotice": "Esta notificação é necessária para a verificação de actualizações em segundo plano (pode ser ocultada nas definições do SO)",
     "excludeSecrets": "Excluir segredos",
     "removeAppQuestion": {
-        "one": "Remover aplicativo?",
-        "other": "Remover aplicativos?"
+        "one": "Remover aplicação?",
+                "other": "Remover aplicações?"
     },
     "tooManyRequestsTryAgainInMinutes": {
-        "one": "Muitas solicitações (taxa de solicitações limitada) - tente novamente em {} minuto",
-        "other": "Muitas solicitações (taxa limitada) - tente novamente em {} minutos"
+        "one": "Muitos pedidos (taxa de pedidos limitada) - tente novamente em {} minuto",
+                "other": "Muitos pedidos (taxa limitada) - tente novamente em {} minutos"
     },
     "bgUpdateGotErrorRetryInMinutes": {
-        "one": "A verificação de atualizações em segundo-plano encontrou um {}, agendada uma nova verificação em {} minuto",
-        "other": "A verificação de atualizações em segundo-plano encontrou um {}, agendada uma nova verificação em {} minutos"
+        "one": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minuto",
+                "other": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minutos"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
-        "one": "A verificação de atualizações em segundo-plano encontrou {} atualização, o usuário sera notificado caso necessário",
-        "other": "A verificação de atualizações em segundo-plano encontrou {} atualizações, o usuário sera notificado caso necessário"
+        "one": "A verificação de atualizações em segundo plano encontrou {} atualização, o utilizador será notificado caso necessário",
+                "other": "A verificação de atualizações em segundo plano encontrou {} atualizações, o utilizador será notificado caso necessário"
     },
     "apps": {
-        "one": "{} Aplicativo",
-        "other": "{} Aplicativos"
+        "one": "{} Aplicação",
+                "other": "{} Aplicações"
     },
     "url": {
         "one": "{} URL",
@@ -377,20 +377,20 @@
         "other": "Foram limpos {n} logs (antes = {antes}, depois = {depois})"
     },
     "xAndNMoreUpdatesAvailable": {
-        "one": "{} e um outro aplicativo possui atualizações.",
-        "other": "{} e {} outros aplicativo possuem atualizações."
+        "one": "{} e uma outra aplicação possui atualizações.",
+                "other": "{} e {} outras aplicações possuem atualizações."
     },
     "xAndNMoreUpdatesInstalled": {
-        "one": "{} e um outro aplicativo foram atualizado.",
-        "other": "{} e {} outros aplicativos foram atualizados."
+        "one": "{} e uma outra aplicação foram atualizadas.",
+                "other": "{} e {} outras aplicações foram atualizadas."
     },
     "xAndNMoreUpdatesFailed": {
         "one": "Falha ao atualizar {} e mais 1 aplicação.",
-        "other": "Falha ao atualizar {} e {} mais aplicações."
+                "other": "Falha ao atualizar {} e {} outras aplicações."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
-        "one": "{} e um outro aplicativo podem ter sido atualizados.",
-        "other": "{} e {} outros aplicativos podem ter sido atualizados."
+        "one": "{} e uma outra aplicação podem ter sido atualizadas.",
+                "other": "{} e {} outras aplicações podem ter sido atualizadas."
     },
     "apk": {
         "one": "{} APK",
