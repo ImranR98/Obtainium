@@ -338,23 +338,23 @@
     "excludeSecrets": "Excluir segredos",
     "removeAppQuestion": {
         "one": "Remover aplicação?",
-                "other": "Remover aplicações?"
+        "other": "Remover aplicações?"
     },
     "tooManyRequestsTryAgainInMinutes": {
         "one": "Muitos pedidos (taxa de pedidos limitada) - tente novamente em {} minuto",
-                "other": "Muitos pedidos (taxa limitada) - tente novamente em {} minutos"
+        "other": "Muitos pedidos (taxa limitada) - tente novamente em {} minutos"
     },
     "bgUpdateGotErrorRetryInMinutes": {
         "one": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minuto",
-                "other": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minutos"
+        "other": "A verificação de atualizações em segundo plano encontrou um {}, agendada uma nova verificação em {} minutos"
     },
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "A verificação de atualizações em segundo plano encontrou {} atualização, o utilizador será notificado caso necessário",
-                "other": "A verificação de atualizações em segundo plano encontrou {} atualizações, o utilizador será notificado caso necessário"
+        "other": "A verificação de atualizações em segundo plano encontrou {} atualizações, o utilizador será notificado caso necessário"
     },
     "apps": {
         "one": "{} Aplicação",
-                "other": "{} Aplicações"
+        "other": "{} Aplicações"
     },
     "url": {
         "one": "{} URL",
@@ -378,19 +378,19 @@
     },
     "xAndNMoreUpdatesAvailable": {
         "one": "{} e uma outra aplicação possui atualizações.",
-                "other": "{} e {} outras aplicações possuem atualizações."
+        "other": "{} e {} outras aplicações possuem atualizações."
     },
     "xAndNMoreUpdatesInstalled": {
         "one": "{} e uma outra aplicação foram atualizadas.",
-                "other": "{} e {} outras aplicações foram atualizadas."
+        "other": "{} e {} outras aplicações foram atualizadas."
     },
     "xAndNMoreUpdatesFailed": {
         "one": "Falha ao atualizar {} e mais 1 aplicação.",
-                "other": "Falha ao atualizar {} e {} outras aplicações."
+        "other": "Falha ao atualizar {} e {} outras aplicações."
     },
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} e uma outra aplicação podem ter sido atualizadas.",
-                "other": "{} e {} outras aplicações podem ter sido atualizadas."
+        "other": "{} e {} outras aplicações podem ter sido atualizadas."
     },
     "apk": {
         "one": "{} APK",
