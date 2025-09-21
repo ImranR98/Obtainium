@@ -774,10 +774,13 @@ class AppsProvider with ChangeNotifier {
     int? targetSDK = (await getInstalledInfo(
       app.id,
     ))?.applicationInfo?.targetSdkVersion;
+    int requiredSDK = osInfo.version.sdkInt - 3;
     // The APK should target a new enough API
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-    if (!(targetSDK != null && targetSDK >= (osInfo.version.sdkInt - 3))) {
-      logs.add('Multiple APK URLs: ${app.id}');
+    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+      logs.add(
+        'App currently targets API ${targetSDK} which is too low for background updates (requires API ${requiredSDK}): ${app.id}',
+      );
       return false;
     }
 
