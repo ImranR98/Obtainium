@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Używanie usługi pierwszoplanowej do sprawdzania aktualizacji (bardziej niezawodne, zużywa więcej energii)",
     "fgServiceNotice": "To powiadomienie jest wymagane do sprawdzania aktualizacji w tle (można je ukryć w ustawieniach systemu operacyjnego).",
     "excludeSecrets": "Wyklucz sekrety",
+    "GHReqPrefix": "Instancja \"sky22333/hubproxy\" dla żądań GitHub",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "アップデート確認にフォアグラウンドサービスを使用する（より信頼性が高いが、より電力を消費する）",
     "fgServiceNotice": "この通知は、バックグラウンドでアップデートを確認するために必要です（OSの設定で非表示にできます）。",
     "excludeSecrets": "シークレットを除く",
+    "GHReqPrefix": "GitHub リクエスト用の 'sky22333/hubproxy' インスタンス",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

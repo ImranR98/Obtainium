@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Usa el servei d'Obtainium en primer pla per comprovar les actualitzacions (és més fiable però consumeix més bateria)",
     "fgServiceNotice": "Aquesta notificació és necessària per comprovar les actualitzacions en segon pla (la pots ocultar als paràmetres del Sistema Operatiu)",
     "excludeSecrets": "Exclude secrets",
+    "GHReqPrefix": "'sky22333/hubproxy' instance for GitHub requests",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"

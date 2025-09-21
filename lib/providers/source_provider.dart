@@ -686,14 +686,27 @@ abstract class AppSource {
     bool followRedirects = true,
     Object? postBody,
   }) async {
+    var sp = SettingsProvider();
+    await sp.initializeSettings();
+    getSourceConfigValues(additionalSettings, sp);
+    var additionalSettingsPlusSourceConfig = {
+      ...additionalSettings,
+      ...(await getSourceConfigValues(additionalSettings, sp)),
+    };
+    url = await generalReqPrefetchModifier(
+      url,
+      additionalSettingsPlusSourceConfig,
+    );
     var method = postBody == null ? 'GET' : 'POST';
-    var requestHeaders = await getRequestHeaders(additionalSettings);
+    var requestHeaders = await getRequestHeaders(
+      additionalSettingsPlusSourceConfig,
+    );
     var streamedResponseUrlWithResponseAndClient =
         await sourceRequestStreamResponse(
           method,
           url,
           requestHeaders,
-          additionalSettings,
+          additionalSettingsPlusSourceConfig,
           followRedirects: followRedirects,
           postBody: postBody,
         );
@@ -911,12 +924,19 @@ abstract class AppSource {
     return null;
   }
 
-  Future<String> apkUrlPrefetchModifier(
-    String apkUrl,
+  Future<String> assetUrlPrefetchModifier(
+    String assetUrl,
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return apkUrl;
+    return assetUrl;
+  }
+
+  Future<String> generalReqPrefetchModifier(
+    String reqUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    return reqUrl;
   }
 
   bool canSearch = false;

@@ -16,9 +16,14 @@ import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' as md;
 
 class AppPage extends StatefulWidget {
-  const AppPage({super.key, required this.appId});
+  const AppPage({
+    super.key,
+    required this.appId,
+    this.showOppositeOfPreferredView = false,
+  });
 
   final String appId;
+  final bool showOppositeOfPreferredView;
 
   @override
   State<AppPage> createState() => _AppPageState();
@@ -60,6 +65,11 @@ class _AppPageState extends State<AppPage> {
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
+    var showAppWebpageFinal =
+        (settingsProvider.showAppWebpage &&
+            !widget.showOppositeOfPreferredView) ||
+        (!settingsProvider.showAppWebpage &&
+            widget.showOppositeOfPreferredView);
     getUpdate(String id, {bool resetVersion = false}) async {
       try {
         setState(() {
@@ -565,7 +575,7 @@ class _AppPageState extends State<AppPage> {
                     icon: const Icon(Icons.settings),
                     tooltip: tr('settings'),
                   ),
-                if (app != null && settingsProvider.showAppWebpage)
+                if (app != null && showAppWebpageFinal)
                   IconButton(
                     onPressed: () {
                       showDialog(
@@ -661,10 +671,10 @@ class _AppPageState extends State<AppPage> {
     );
 
     return Scaffold(
-      appBar: settingsProvider.showAppWebpage ? AppBar() : appScreenAppBar(),
+      appBar: showAppWebpageFinal ? AppBar() : appScreenAppBar(),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
-        child: settingsProvider.showAppWebpage
+        child: showAppWebpageFinal
             ? getAppWebView()
             : CustomScrollView(
                 slivers: [

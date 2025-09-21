@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Güncelleme denetimi için bir ön plan hizmeti kullanın (daha güvenilir, daha fazla güç tüketir)",
     "fgServiceNotice": "Bu bildirim arka planda güncelleme kontrolü için gereklidir (işletim sistemi ayarlarından gizlenebilir)",
     "excludeSecrets": "Sırları hariç tut",
+    "GHReqPrefix": "GitHub istekleri için 'sky22333/hubproxy' örneği",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

@@ -319,13 +319,24 @@ class _SettingsPageState extends State<SettingsPage> {
       if (e.sourceConfigSettingFormItems.isNotEmpty) {
         return GeneratedForm(
           items: e.sourceConfigSettingFormItems.map((e) {
-            e.defaultValue = settingsProvider.getSettingString(e.key);
+            if (e is GeneratedFormSwitch) {
+              e.defaultValue = settingsProvider.getSettingBool(e.key);
+            } else {
+              e.defaultValue = settingsProvider.getSettingString(e.key);
+            }
             return [e];
           }).toList(),
           onValueChanges: (values, valid, isBuilding) {
             if (valid && !isBuilding) {
               values.forEach((key, value) {
-                settingsProvider.setSettingString(key, value);
+                var formItem = e.sourceConfigSettingFormItems
+                    .where((i) => i.key == key)
+                    .firstOrNull;
+                if (formItem is GeneratedFormSwitch) {
+                  settingsProvider.setSettingBool(key, value == true);
+                } else {
+                  settingsProvider.setSettingString(key, value ?? '');
+                }
               });
             }
           },

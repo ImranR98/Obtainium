@@ -249,6 +249,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool? getSettingBool(String settingId) {
+    return prefs?.getBool(settingId) ?? false;
+  }
+
+  void setSettingBool(String settingId, bool value) {
+    prefs?.setBool(settingId, value);
+    notifyListeners();
+  }
+
   Map<String, int> get categories =>
       Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
 

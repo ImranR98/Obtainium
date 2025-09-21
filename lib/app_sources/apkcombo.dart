@@ -82,13 +82,13 @@ class APKCombo extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-    String apkUrl,
+  Future<String> assetUrlPrefetchModifier(
+    String assetUrl,
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
     var freshURLs = await getApkUrls(standardUrl, additionalSettings);
-    var path2Match = Uri.parse(apkUrl).path;
+    var path2Match = Uri.parse(assetUrl).path;
     for (var url in freshURLs) {
       if (Uri.parse(url.value).path == path2Match) {
         return url.value;
