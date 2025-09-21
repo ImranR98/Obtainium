@@ -124,12 +124,12 @@ class Uptodown extends AppSource {
   }
 
   @override
-  Future<String> apkUrlPrefetchModifier(
-    String apkUrl,
+  Future<String> assetUrlPrefetchModifier(
+    String assetUrl,
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var res = await sourceRequest(apkUrl, additionalSettings);
+    var res = await sourceRequest(assetUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }

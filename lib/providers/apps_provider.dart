@@ -606,10 +606,20 @@ class AppsProvider with ChangeNotifier {
         app.url,
         overrideSource: app.overrideSource,
       );
-      String downloadUrl = await source.apkUrlPrefetchModifier(
-        app.apkUrls[app.preferredApkIndex].value,
+      var additionalSettingsPlusSourceConfig = {
+        ...app.additionalSettings,
+        ...(await source.getSourceConfigValues(
+          app.additionalSettings,
+          settingsProvider,
+        )),
+      };
+      String downloadUrl = await source.assetUrlPrefetchModifier(
+        await source.generalReqPrefetchModifier(
+          app.apkUrls[app.preferredApkIndex].value,
+          additionalSettingsPlusSourceConfig,
+        ),
         app.url,
-        app.additionalSettings,
+        additionalSettingsPlusSourceConfig,
       );
       var notif = DownloadNotification(app.finalName, 100);
       notificationsProvider?.cancel(notif.id);
@@ -1324,15 +1334,26 @@ class AppsProvider with ChangeNotifier {
           evenIfSingleChoice: true,
         );
         if (tempFileUrl != null) {
+          var s = SourceProvider().getSource(
+            apps[id]!.app.url,
+            overrideSource: apps[id]!.app.overrideSource,
+          );
+          var additionalSettingsPlusSourceConfig = {
+            ...apps[id]!.app.additionalSettings,
+            ...(await s.getSourceConfigValues(
+              apps[id]!.app.additionalSettings,
+              settingsProvider,
+            )),
+          };
           fileUrl = MapEntry(
             tempFileUrl.key,
-            await (SourceProvider().getSource(
+            await s.assetUrlPrefetchModifier(
+              await s.generalReqPrefetchModifier(
+                tempFileUrl.value,
+                additionalSettingsPlusSourceConfig,
+              ),
               apps[id]!.app.url,
-              overrideSource: apps[id]!.app.overrideSource,
-            )).apkUrlPrefetchModifier(
-              tempFileUrl.value,
-              apps[id]!.app.url,
-              apps[id]!.app.additionalSettings,
+              additionalSettingsPlusSourceConfig,
             ),
           );
         }

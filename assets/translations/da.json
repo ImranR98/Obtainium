@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Brug en forgrundstjeneste til opdateringskontrol (mere pålidelig, bruger mere strøm)",
     "fgServiceNotice": "Denne meddelelse er nødvendig for baggrundsopdateringskontrol (den kan skjules i OS-indstillingerne).",
     "excludeSecrets": "Udeluk hemmeligheder",
+    "GHReqPrefix": "'sky22333/hubproxy'-instans til GitHub-anmodninger",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

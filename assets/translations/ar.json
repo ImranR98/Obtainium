@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "استخدام خدمة مقدمة للتحقق من التحديثات (أكثر موثوقية وتستهلك طاقة أكبر)",
     "fgServiceNotice": "هذا الإشعار مطلوب للتحقق من التحديث في الخلفية (يمكن إخفاؤه في إعدادات نظام التشغيل)",
     "excludeSecrets": "استبعاد الأسرار",
+    "GHReqPrefix": "مثيل \"sky22333/hubproxy\" لطلبات GitHub",
     "removeAppQuestion": {
         "one": "إزالة التطبيق؟",
         "other": "إزالة التطبيقات؟"

@@ -45,6 +45,45 @@ class GitHub extends AppSource {
           const SizedBox(height: 4),
         ],
       ),
+      GeneratedFormTextField(
+        'GHReqPrefix',
+        label: tr('GHReqPrefix'),
+        hint: 'gh-proxy.com',
+        required: false,
+        additionalValidators: [
+          (value) {
+            try {
+              if (Uri.parse(
+                'https://${value}/api.github.com',
+              ).scheme.isNotEmpty) {
+                throw true;
+              }
+            } catch (e) {
+              return tr('invalidInput');
+            }
+            return null;
+          },
+        ],
+        belowWidgets: [
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () {
+              launchUrlString(
+                'https://github.com/sky22333/hubproxy',
+                mode: LaunchMode.externalApplication,
+              );
+            },
+            child: Text(
+              tr('about'),
+              style: const TextStyle(
+                decoration: TextDecoration.underline,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
     ];
 
     additionalSourceAppSpecificSettingFormItems = [
@@ -270,6 +309,18 @@ class GitHub extends AppSource {
     return null;
   }
 
+  @override
+  Future<String> generalReqPrefetchModifier(
+    String reqUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    if ((additionalSettings['GHReqPrefix'] as String? ?? '').isNotEmpty) {
+      var uri = Uri.parse(reqUrl);
+      return 'https://${additionalSettings['GHReqPrefix']}/${uri.toString().substring('https://'.length)}';
+    }
+    return reqUrl;
+  }
+
   Future<String> getAPIHost(Map<String, dynamic> additionalSettings) async =>
       'https://api.${hosts[0]}';
 
@@ -289,6 +340,12 @@ class GitHub extends AppSource {
     Map<String, dynamic> additionalSettings, {
     Function(Response)? onHttpErrorCode,
   }) async {
+    SettingsProvider settingsProvider = SettingsProvider();
+    await settingsProvider.initializeSettings();
+    var sourceConfigSettingValues = await getSourceConfigValues(
+      additionalSettings,
+      settingsProvider,
+    );
     bool includePrereleases = additionalSettings['includePrereleases'] == true;
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
@@ -344,6 +401,7 @@ class GitHub extends AppSource {
             var url = !e['name'].toString().toLowerCase().endsWith('.apk')
                 ? (e['browser_download_url'] ?? e['url'])
                 : (e['url'] ?? e['browser_download_url']);
+            url = undoGHProxyMod(url, sourceConfigSettingValues);
             e['final_url'] = (e['name'] != null) && (url != null)
                 ? MapEntry(e['name'] as String, url as String)
                 : const MapEntry('', '');
@@ -522,7 +580,10 @@ class GitHub extends AppSource {
           allAssetUrls.add(
             MapEntry(
               (targetRelease['version'] ?? 'source') + '.tar.gz',
-              targetRelease['tarball_url'],
+              undoGHProxyMod(
+                targetRelease['tarball_url'],
+                sourceConfigSettingValues,
+              ),
             ),
           );
         }
@@ -530,7 +591,10 @@ class GitHub extends AppSource {
           allAssetUrls.add(
             MapEntry(
               (targetRelease['version'] ?? 'source') + '.zip',
-              targetRelease['zipball_url'],
+              undoGHProxyMod(
+                targetRelease['zipball_url'],
+                sourceConfigSettingValues,
+              ),
             ),
           );
         }
@@ -652,12 +716,23 @@ class GitHub extends AppSource {
     }
   }
 
+  undoGHProxyMod(
+    String reqUrl,
+    Map<String, String> sourceConfigSettingValues,
+  ) => reqUrl.replaceFirst(
+    'https://${sourceConfigSettingValues['GHReqPrefix']}/',
+    '',
+  );
+
   @override
   Future<Map<String, List<String>>> search(
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    return searchCommon(
+    var sp = SettingsProvider();
+    await sp.initializeSettings();
+    var sourceConfigSettingValues = await getSourceConfigValues({}, sp);
+    var results = await searchCommon(
       query,
       '${await getAPIHost({})}/search/repositories?q=${Uri.encodeQueryComponent(query)}&per_page=100',
       'items',
@@ -666,6 +741,15 @@ class GitHub extends AppSource {
       },
       querySettings: querySettings,
     );
+    if ((sourceConfigSettingValues['GHReqPrefix'] ?? '').isNotEmpty) {
+      Map<String, List<String>> results2 = {};
+      results.forEach((k, v) {
+        results2[undoGHProxyMod(k, sourceConfigSettingValues)] = v;
+      });
+      return results2;
+    } else {
+      return results;
+    }
   }
 
   void rateLimitErrorCheck(Response res) {

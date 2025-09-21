@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Sử dụng dịch vụ nền trước để kiểm tra cập nhật (đáng tin cậy hơn, tiêu tốn nhiều pin hơn)",
     "fgServiceNotice": "Thông báo này là bắt buộc để kiểm tra cập nhật nền (có thể ẩn trong cài đặt hệ điều hành).",
     "excludeSecrets": "Loại trừ thông tin bí mật",
+    "GHReqPrefix": "Thực thể 'sky22333/hubproxy' cho các yêu cầu GitHub",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"
