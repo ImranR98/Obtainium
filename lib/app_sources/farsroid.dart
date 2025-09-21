@@ -9,6 +9,7 @@ class Farsroid extends AppSource {
   Farsroid() {
     hosts = ['farsroid.com'];
     name = 'Farsroid';
+    naiveStandardVersionDetection = true;
   }
 
   @override
@@ -57,15 +58,11 @@ class Farsroid extends AppSource {
     if (html2.isEmpty) {
       throw NoAPKError();
     }
-    var apkLinks =
-        (await grabLinksCommon(html2, res2.request!.url, additionalSettings))
-            .map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key))
-            .where(
-              (l) => l.key.toLowerCase().startsWith(
-                '$appName-$version'.toLowerCase(),
-              ),
-            )
-            .toList();
+    var apkLinks = (await grabLinksCommon(
+      html2,
+      res2.request!.url,
+      additionalSettings,
+    )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
 
     if (apkLinks.isEmpty) {
       throw NoAPKError();
