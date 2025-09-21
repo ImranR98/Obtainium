@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -10,6 +12,16 @@ class Farsroid extends AppSource {
     hosts = ['farsroid.com'];
     name = 'Farsroid';
     naiveStandardVersionDetection = true;
+
+    additionalSourceAppSpecificSettingFormItems = [
+      [
+        GeneratedFormSwitch(
+          'useFirstApkOfVersion',
+          label: tr('useFirstApkOfVersion'),
+          defaultValue: true,
+        ),
+      ],
+    ];
   }
 
   @override
@@ -63,6 +75,16 @@ class Farsroid extends AppSource {
       res2.request!.url,
       additionalSettings,
     )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
+
+    if (additionalSettings['useFirstApkOfVersion'] == true) {
+      apkLinks = apkLinks
+          .where(
+            (l) => l.key.toLowerCase().startsWith(
+              '$appName-$version'.toLowerCase(),
+            ),
+          )
+          .toList();
+    }
 
     if (apkLinks.isEmpty) {
       throw NoAPKError();
