@@ -146,10 +146,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       .map((e) => MapEntry(ensureAbsoluteUrl(e.key, reqUrl), e.value))
       .toList();
   if (allLinks.isEmpty || matchLinksOutsideATags) {
-    allLinks = getLinksInLines(rawBody);
-  }
-  if (allLinks.isEmpty) {
-    // Getting desperate
+    // Decode the body if the response is a JSON
     try {
       var jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
       allLinks = getLinksInLines(jsonStrings.join('\n'));
@@ -163,7 +160,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
         );
       }
     } catch (e) {
-      //
+      allLinks = getLinksInLines(rawBody);
     }
   }
   List<MapEntry<String, String>> links = [];
