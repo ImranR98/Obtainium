@@ -288,6 +288,9 @@ class GitHub extends AppSource {
       settingsProvider,
     );
     String? creds = sourceConfig['github-creds'];
+    if ((additionalSettings['GHReqPrefix'] as String? ?? '').isNotEmpty) {
+      creds = null;
+    }
     if (creds != null) {
       var userNameEndIndex = creds.indexOf(':');
       if (userNameEndIndex > 0) {
