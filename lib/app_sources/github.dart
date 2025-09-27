@@ -53,10 +53,11 @@ class GitHub extends AppSource {
         additionalValidators: [
           (value) {
             try {
-              if (Uri.parse(
-                'https://${value}/api.github.com',
-              ).scheme.isNotEmpty) {
+              if (value != null && Uri.parse(value).scheme.isNotEmpty) {
                 throw true;
+              }
+              if (value != null) {
+                Uri.parse('https://${value}/api.github.com');
               }
             } catch (e) {
               return tr('invalidInput');
@@ -288,6 +289,9 @@ class GitHub extends AppSource {
       settingsProvider,
     );
     String? creds = sourceConfig['github-creds'];
+    if ((additionalSettings['GHReqPrefix'] as String? ?? '').isNotEmpty) {
+      creds = null;
+    }
     if (creds != null) {
       var userNameEndIndex = creds.indexOf(':');
       if (userNameEndIndex > 0) {
