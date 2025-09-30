@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Aktualisierungsprüfung im Vordergrund durchführen (zuverlässiger, verbraucht mehr Strom)",
     "fgServiceNotice": "Diese Benachrichtigung ist für die Prüfung von Updates im Hintergrund erforderlich (sie kann in den Betriebssystemeinstellungen ausgeblendet werden)",
     "excludeSecrets": "Geheimnisse ausschließen",
+    "GHReqPrefix": "sky22333/hubproxy'-Instanz für GitHub-Anfragen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

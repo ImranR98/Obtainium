@@ -80,20 +80,20 @@ class RuStore extends AppSource {
     }
 
     Response res1 = await sourceRequest(
-      'https://backapi.rustore.ru/applicationData/download-link',
+      'https://backapi.rustore.ru/applicationData/v2/download-link',
       additionalSettings,
       followRedirects: false,
       postBody: {"appId": appDetails['appId'], "firstInstall": true},
     );
     var downloadDetails = (await decodeJsonBody(res1.bodyBytes))['body'];
-    if (res1.statusCode != 200 || downloadDetails['apkUrl'] == null) {
+    if (res1.statusCode != 200 || downloadDetails['downloadUrls'][0]['url'] == null) {
       throw NoAPKError();
     }
 
     return APKDetails(
       version,
       getApkUrlsFromUrls([
-        (downloadDetails['apkUrl'] as String).replaceAll(
+        (downloadDetails['downloadUrls'][0]['url'] as String).replaceAll(
           RegExp('\\.zip\$'),
           '.apk',
         ),

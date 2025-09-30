@@ -606,10 +606,20 @@ class AppsProvider with ChangeNotifier {
         app.url,
         overrideSource: app.overrideSource,
       );
-      String downloadUrl = await source.apkUrlPrefetchModifier(
-        app.apkUrls[app.preferredApkIndex].value,
+      var additionalSettingsPlusSourceConfig = {
+        ...app.additionalSettings,
+        ...(await source.getSourceConfigValues(
+          app.additionalSettings,
+          settingsProvider,
+        )),
+      };
+      String downloadUrl = await source.assetUrlPrefetchModifier(
+        await source.generalReqPrefetchModifier(
+          app.apkUrls[app.preferredApkIndex].value,
+          additionalSettingsPlusSourceConfig,
+        ),
         app.url,
-        app.additionalSettings,
+        additionalSettingsPlusSourceConfig,
       );
       var notif = DownloadNotification(app.finalName, 100);
       notificationsProvider?.cancel(notif.id);
@@ -764,10 +774,13 @@ class AppsProvider with ChangeNotifier {
     int? targetSDK = (await getInstalledInfo(
       app.id,
     ))?.applicationInfo?.targetSdkVersion;
+    int requiredSDK = osInfo.version.sdkInt - 3;
     // The APK should target a new enough API
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-    if (!(targetSDK != null && targetSDK >= (osInfo.version.sdkInt - 3))) {
-      logs.add('Multiple APK URLs: ${app.id}');
+    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+      logs.add(
+        'App currently targets API ${targetSDK} which is too low for background updates (requires API ${requiredSDK}): ${app.id}',
+      );
       return false;
     }
 
@@ -1324,15 +1337,26 @@ class AppsProvider with ChangeNotifier {
           evenIfSingleChoice: true,
         );
         if (tempFileUrl != null) {
+          var s = SourceProvider().getSource(
+            apps[id]!.app.url,
+            overrideSource: apps[id]!.app.overrideSource,
+          );
+          var additionalSettingsPlusSourceConfig = {
+            ...apps[id]!.app.additionalSettings,
+            ...(await s.getSourceConfigValues(
+              apps[id]!.app.additionalSettings,
+              settingsProvider,
+            )),
+          };
           fileUrl = MapEntry(
             tempFileUrl.key,
-            await (SourceProvider().getSource(
+            await s.assetUrlPrefetchModifier(
+              await s.generalReqPrefetchModifier(
+                tempFileUrl.value,
+                additionalSettingsPlusSourceConfig,
+              ),
               apps[id]!.app.url,
-              overrideSource: apps[id]!.app.overrideSource,
-            )).apkUrlPrefetchModifier(
-              tempFileUrl.value,
-              apps[id]!.app.url,
-              apps[id]!.app.additionalSettings,
+              additionalSettingsPlusSourceConfig,
             ),
           );
         }

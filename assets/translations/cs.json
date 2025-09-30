@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Použít službu v popředí pro kontrolu aktualizací (spolehlivější, spotřebovává více energie)",
     "fgServiceNotice": "Toto oznámení je nutné pro kontrolu aktualizací na pozadí (lze jej skrýt v nastavení systému)",
     "excludeSecrets": "Vyloučit tajemství",
+    "GHReqPrefix": "instance 'sky22333/hubproxy' pro požadavky GitHubu",
     "removeAppQuestion": {
         "one": "Odstranit aplikaci?",
         "other": "Odstranit aplikace?"

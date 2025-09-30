@@ -451,40 +451,57 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getAppIcon(int appIndex) {
-      return FutureBuilder(
-        future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
-        builder: (ctx, val) {
-          return listedApps[appIndex].icon != null
-              ? Image.memory(
-                  listedApps[appIndex].icon!,
-                  gaplessPlayback: true,
-                  opacity: AlwaysStoppedAnimation(
-                    listedApps[appIndex].installedInfo == null ? 0.6 : 1,
-                  ),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationZ(0.31),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Image(
-                          image: const AssetImage(
-                            'assets/graphics/icon_small.png',
+      return GestureDetector(
+        child: FutureBuilder(
+          future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
+          builder: (ctx, val) {
+            return listedApps[appIndex].icon != null
+                ? Image.memory(
+                    listedApps[appIndex].icon!,
+                    gaplessPlayback: true,
+                    opacity: AlwaysStoppedAnimation(
+                      listedApps[appIndex].installedInfo == null ? 0.6 : 1,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationZ(0.31),
+                        child: Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Image(
+                            image: const AssetImage(
+                              'assets/graphics/icon_small.png',
+                            ),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withOpacity(0.4)
+                                : Colors.white.withOpacity(0.3),
+                            colorBlendMode: BlendMode.modulate,
+                            gaplessPlayback: true,
                           ),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.4)
-                              : Colors.white.withOpacity(0.3),
-                          colorBlendMode: BlendMode.modulate,
-                          gaplessPlayback: true,
                         ),
                       ),
-                    ),
-                  ],
-                );
+                    ],
+                  );
+          },
+        ),
+        onDoubleTap: () {
+          pm.openApp(listedApps[appIndex].app.id);
+        },
+        onLongPress: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AppPage(
+                appId: listedApps[appIndex].app.id,
+                showOppositeOfPreferredView: true,
+              ),
+            ),
+          );
         },
       );
     }

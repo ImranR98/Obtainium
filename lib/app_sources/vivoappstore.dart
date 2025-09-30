@@ -70,12 +70,14 @@ class VivoAppStore extends AppSource {
       throw NoReleasesError();
     }
     Map<String, List<String>> results = {};
-    var resultsJson = json['data']['appSearchResponse']['value'];
-    for (var item in (resultsJson as List<dynamic>)) {
-      results['$appDetailUrl${item['id']}'] = [
-        item['title_zh'].toString(),
-        item['developer'].toString(),
-      ];
+    var resultsJson = json['data']['appSearchResponse']?['value'];
+    if (resultsJson != null) {
+      for (var item in (resultsJson as List<dynamic>)) {
+        results['$appDetailUrl${item['id']}'] = [
+          item['title_zh'].toString(),
+          item['developer'].toString(),
+        ];
+      }
     }
     return results;
   }

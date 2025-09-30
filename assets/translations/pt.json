@@ -336,6 +336,7 @@
     "foregroundServiceExplanation": "Utilizar um serviço em primeiro plano para verificação de actualizações (mais fiável, consome mais energia)",
     "fgServiceNotice": "Esta notificação é necessária para a verificação de actualizações em segundo plano (pode ser ocultada nas definições do SO)",
     "excludeSecrets": "Excluir segredos",
+    "GHReqPrefix": "Instância 'sky22333/hubproxy' para pedidos de GitHub",
     "removeAppQuestion": {
         "one": "Remover aplicação?",
         "other": "Remover aplicações?"
