@@ -1349,7 +1349,8 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? fileUrl;
       var refreshBeforeDownload =
           apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
-          apps[id]!.app.apkUrls.first.value == 'placeholder';
+          apps[id]!.app.apkUrls.isNotEmpty &&
+              apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }
