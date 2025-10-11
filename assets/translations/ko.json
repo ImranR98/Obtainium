@@ -337,6 +337,8 @@
     "fgServiceNotice": "이 알림은 백그라운드 업데이트 확인에 필요합니다(OS 설정에서 숨길 수 있음).",
     "excludeSecrets": "비밀 제외",
     "GHReqPrefix": "GitHub 요청을 위한 'sky22333/hubproxy' 인스턴스",
+    "includeZips": "ZIP 파일 포함",
+    "zippedApkFilterRegEx": "ZIP 내 APK 필터링",
     "removeAppQuestion": {
         "one": "앱을 제거하시겠습니까?",
         "other": "앱을 제거하시겠습니까?"

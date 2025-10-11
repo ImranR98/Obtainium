@@ -337,6 +337,8 @@
     "fgServiceNotice": "Detta meddelande krävs för bakgrundsuppdateringskontroll (det kan döljas i OS-inställningarna)",
     "excludeSecrets": "Utesluta hemligheter",
     "GHReqPrefix": "Instansen \"sky22333/hubproxy\" för GitHub-förfrågningar",
+    "includeZips": "Inkludera ZIP-filer",
+    "zippedApkFilterRegEx": "Filtrera APK:er inuti ZIP",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"

@@ -337,6 +337,8 @@
     "fgServiceNotice": "Это уведомление необходимо для фоновой проверки обновлений (оно может быть скрыто в настройках ОС)",
     "excludeSecrets": "Исключить секреты",
     "GHReqPrefix": "Экземпляр 'sky22333/hubproxy' для запросов на GitHub",
+    "includeZips": "Включить ZIP-файлы",
+    "zippedApkFilterRegEx": "Фильтр APK внутри ZIP",
     "removeAppQuestion": {
         "one": "Удалить приложение?",
         "other": "Удалить приложения?"

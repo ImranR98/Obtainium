@@ -337,6 +337,8 @@
     "fgServiceNotice": "Questa notifica è necessaria per il controllo degli aggiornamenti in background (può essere nascosta nelle impostazioni del sistema operativo).",
     "excludeSecrets": "Escludere i segreti",
     "GHReqPrefix": "istanza 'sky22333/hubproxy' per le richieste a GitHub",
+    "includeZips": "Includere file ZIP",
+    "zippedApkFilterRegEx": "Filtrare gli APK all'interno dello ZIP",
     "removeAppQuestion": {
         "one": "Rimuovere l'app?",
         "other": "Rimuovere le app?"

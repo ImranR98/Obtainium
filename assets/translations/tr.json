@@ -337,6 +337,8 @@
     "fgServiceNotice": "Bu bildirim arka planda güncelleme kontrolü için gereklidir (işletim sistemi ayarlarından gizlenebilir)",
     "excludeSecrets": "Sırları hariç tut",
     "GHReqPrefix": "GitHub istekleri için 'sky22333/hubproxy' örneği",
+    "includeZips": "ZIP dosyalarını dahil edin",
+    "zippedApkFilterRegEx": "ZIP içindeki APK'ları filtreleme",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

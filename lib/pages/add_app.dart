@@ -203,11 +203,11 @@ class AddAppPageState extends State<AddAppPage> {
               notificationsProvider: notificationsProvider,
             );
             DownloadedApk? downloadedFile;
-            DownloadedXApkDir? downloadedDir;
+            DownloadedDir? downloadedDir;
             if (downloadedArtifact is DownloadedApk) {
               downloadedFile = downloadedArtifact;
             } else {
-              downloadedDir = downloadedArtifact as DownloadedXApkDir;
+              downloadedDir = downloadedArtifact as DownloadedDir;
             }
             app.id = downloadedFile?.appId ?? downloadedDir!.appId;
           }

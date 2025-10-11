@@ -18,6 +18,7 @@ class GitHub extends AppSource {
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
     this.hostChanged = hostChanged;
+    allowIncludeZips = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField(
@@ -370,6 +371,7 @@ class GitHub extends AppSource {
         additionalSettings['useLatestAssetDateAsReleaseDate'] == true;
     String sortMethod =
         additionalSettings['sortMethodChoice'] ?? 'smartname-datefallback';
+    bool includeZips = additionalSettings['includeZips'] == true;
     dynamic latestRelease;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
@@ -402,7 +404,8 @@ class GitHub extends AppSource {
 
       findReleaseAssetUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)?.map((e) {
-            var url = !e['name'].toString().toLowerCase().endsWith('.apk')
+            var ext = e['name'].toString().toLowerCase().split('.').last;
+            var url = !(ext == 'apk' || (includeZips && ext == 'zip'))
                 ? (e['browser_download_url'] ?? e['url'])
                 : (e['url'] ?? e['browser_download_url']);
             url = undoGHProxyMod(url, sourceConfigSettingValues);
@@ -542,14 +545,13 @@ class GitHub extends AppSource {
         List<MapEntry<String, String>> allAssetUrls = allAssetsWithUrls
             .map((e) => e['final_url'] as MapEntry<String, String>)
             .toList();
-        var apkAssetsWithUrls = allAssetsWithUrls
-            .where(
-              (element) => (element['final_url'] as MapEntry<String, String>)
-                  .key
-                  .toLowerCase()
-                  .endsWith('.apk'),
-            )
-            .toList();
+        var apkAssetsWithUrls = allAssetsWithUrls.where((element) {
+          var ext = (element['final_url'] as MapEntry<String, String>).key
+              .toLowerCase()
+              .split('.')
+              .last;
+          return ext == 'apk' || (includeZips && ext == 'zip');
+        }).toList();
 
         var filteredApkUrls = filterApks(
           apkAssetsWithUrls
