@@ -1010,6 +1010,7 @@ class AppsPageState extends State<AppsPage> {
                       selectedApps.where((element) => element.pinned).isEmpty
                           ? tr('pinToTop')
                           : tr('unpinFromTop'),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const Divider(),
@@ -1026,7 +1027,10 @@ class AppsPageState extends State<AppsPage> {
                       );
                       Navigator.of(context).pop();
                     },
-                    child: Text(tr('shareSelectedAppURLs')),
+                    child: Text(
+                      tr('shareSelectedAppURLs'),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const Divider(),
                   TextButton(
@@ -1043,7 +1047,10 @@ class AppsPageState extends State<AppsPage> {
                               subject: 'Obtainium - ${tr('appsString')}',
                             );
                           },
-                    child: Text(tr('shareAppConfigLinks')),
+                    child: Text(
+                      tr('shareAppConfigLinks'),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const Divider(),
                   TextButton(
@@ -1069,7 +1076,10 @@ class AppsPageState extends State<AppsPage> {
                               fileNameOverrides: ['$fn.json'],
                             );
                           },
-                    child: Text('${tr('share')} - ${tr('obtainiumExport')}'),
+                    child: Text(
+                      '${tr('share')} - ${tr('obtainiumExport')}',
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const Divider(),
                   TextButton(
@@ -1093,6 +1103,7 @@ class AppsPageState extends State<AppsPage> {
                         'downloadX',
                         args: [lowerCaseIfEnglish(tr('releaseAsset'))],
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const Divider(),
@@ -1100,7 +1111,10 @@ class AppsPageState extends State<AppsPage> {
                     onPressed: appsProvider.areDownloadsRunning()
                         ? null
                         : showMassMarkDialog,
-                    child: Text(tr('markSelectedAppsUpdated')),
+                    child: Text(
+                      tr('markSelectedAppsUpdated'),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ],
               ),
