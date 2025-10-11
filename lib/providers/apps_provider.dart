@@ -62,11 +62,14 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
-class DownloadedXApkDir {
+enum DownloadedDirType { XAPK, ZIP }
+
+class DownloadedDir {
   String appId;
   File file;
   Directory extracted;
-  DownloadedXApkDir(this.appId, this.file, this.extracted);
+  DownloadedDirType type;
+  DownloadedDir(this.appId, this.file, this.extracted, this.type);
 }
 
 List<String> generateStandardVersionRegExStrings() {
@@ -664,17 +667,18 @@ class AppsProvider with ChangeNotifier {
       }
       PackageInfo? newInfo;
       var isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
-      Directory? xapkDir;
+      var isXAPK = downloadedFile.path.toLowerCase().endsWith('.xapk');
+      Directory? apkDir;
       if (isAPK) {
         newInfo = await pm.getPackageArchiveInfo(
           archiveFilePath: downloadedFile.path,
         );
       } else {
-        // Assume XAPK
-        String xapkDirPath = '${downloadedFile.path}-dir';
+        // Assume XAPK or ZIP
+        String apkDirPath = '${downloadedFile.path}-dir';
         await unzipFile(downloadedFile.path, '${downloadedFile.path}-dir');
-        xapkDir = Directory(xapkDirPath);
-        var apks = xapkDir
+        apkDir = Directory(apkDirPath);
+        var apks = apkDir
             .listSync()
             .where((e) => e.path.toLowerCase().endsWith('.apk'))
             .toList();
@@ -689,6 +693,22 @@ class AppsProvider with ChangeNotifier {
         });
         if (temp != null) {
           apks = [temp!, ...apks];
+        }
+
+        if (app.additionalSettings['zippedApkFilterRegEx']?.isNotEmpty ==
+            true) {
+          var reg = RegExp(app.additionalSettings['zippedApkFilterRegEx']);
+          apks.removeWhere((apk) {
+            var shouldDelete = !reg.hasMatch(apk.uri.pathSegments.last);
+            if (shouldDelete) {
+              apk.delete();
+            }
+            return shouldDelete;
+          });
+        }
+
+        if (apks.isEmpty) {
+          throw NoAPKError();
         }
 
         for (var i = 0; i < apks.length; i++) {
@@ -728,7 +748,12 @@ class AppsProvider with ChangeNotifier {
       if (isAPK) {
         return DownloadedApk(app.id, downloadedFile);
       } else {
-        return DownloadedXApkDir(app.id, downloadedFile, xapkDir!);
+        return DownloadedDir(
+          app.id,
+          downloadedFile,
+          apkDir!,
+          isXAPK ? DownloadedDirType.XAPK : DownloadedDirType.ZIP,
+        );
       }
     } finally {
       notificationsProvider?.cancel(notifId);
@@ -826,15 +851,16 @@ class AppsProvider with ChangeNotifier {
     );
   }
 
-  Future<bool> installXApkDir(
-    DownloadedXApkDir dir,
+  Future<bool> installApkDir(
+    DownloadedDir dir,
     BuildContext? firstTimeWithContext, {
     bool needsBGWorkaround = false,
     bool shizukuPretendToBeGooglePlay = false,
   }) async {
-    // We don't know which APKs in an XAPK are supported by the user's device
+    // We don't know which APKs in an XAPK or ZIP are supported by the user's device
     // So we try installing all of them and assume success if at least one installed
     // If 0 APKs installed, throw the first install error encountered
+    // Obviously this approach is naive and is undesirable in many cases, needs to be improved
     var somethingInstalled = false;
     try {
       MultiAppMultiError errors = MultiAppMultiError();
@@ -863,7 +889,7 @@ class AppsProvider with ChangeNotifier {
       }
 
       try {
-        await installApk(
+        var wasInstalled = await installApk(
           DownloadedApk(dir.appId, APKFiles[0]),
           firstTimeWithContext,
           needsBGWorkaround: needsBGWorkaround,
@@ -872,10 +898,10 @@ class AppsProvider with ChangeNotifier {
             1,
           ).map((a) => DownloadedApk(dir.appId, a)).toList(),
         );
-        somethingInstalled = true;
+        somethingInstalled = somethingInstalled || wasInstalled;
         dir.file.delete(recursive: true);
       } catch (e) {
-        logs.add('Could not install APKs from XAPK: ${e.toString()}');
+        logs.add('Could not install APKs from ${dir.type}: ${e.toString()}');
         errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
       }
       if (errors.idsByErrorString.isNotEmpty) {
@@ -1148,7 +1174,7 @@ class AppsProvider with ChangeNotifier {
       String id,
       bool willBeSilent,
       DownloadedApk? downloadedFile,
-      DownloadedXApkDir? downloadedDir,
+      DownloadedDir? downloadedDir,
     ) async {
       apps[id]?.downloadProgress = -1;
       notifyListeners();
@@ -1183,14 +1209,14 @@ class AppsProvider with ChangeNotifier {
         } else {
           if (needBGWorkaround) {
             // ignore: use_build_context_synchronously
-            installXApkDir(
+            installApkDir(
               downloadedDir!,
               contextIfNewInstall,
               needsBGWorkaround: true,
             );
           } else {
             // ignore: use_build_context_synchronously
-            sayInstalled = await installXApkDir(
+            sayInstalled = await installApkDir(
               downloadedDir!,
               contextIfNewInstall,
               shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
@@ -1227,7 +1253,7 @@ class AppsProvider with ChangeNotifier {
     }) async {
       bool willBeSilent = false;
       DownloadedApk? downloadedFile;
-      DownloadedXApkDir? downloadedDir;
+      DownloadedDir? downloadedDir;
       try {
         var downloadedArtifact =
             // ignore: use_build_context_synchronously
@@ -1240,7 +1266,7 @@ class AppsProvider with ChangeNotifier {
         if (downloadedArtifact is DownloadedApk) {
           downloadedFile = downloadedArtifact;
         } else {
-          downloadedDir = downloadedArtifact as DownloadedXApkDir;
+          downloadedDir = downloadedArtifact as DownloadedDir;
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
         willBeSilent = await canInstallSilently(apps[id]!.app);
@@ -1292,7 +1318,7 @@ class AppsProvider with ChangeNotifier {
             res['id'] as String,
             res['willBeSilent'] as bool,
             res['downloadedFile'] as DownloadedApk?,
-            res['downloadedDir'] as DownloadedXApkDir?,
+            res['downloadedDir'] as DownloadedDir?,
           );
         } catch (e) {
           var id = res['id'] as String;
@@ -1323,7 +1349,8 @@ class AppsProvider with ChangeNotifier {
       MapEntry<String, String>? fileUrl;
       var refreshBeforeDownload =
           apps[id]!.app.additionalSettings['refreshBeforeDownload'] == true ||
-          apps[id]!.app.apkUrls.first.value == 'placeholder';
+          apps[id]!.app.apkUrls.isNotEmpty &&
+              apps[id]!.app.apkUrls.first.value == 'placeholder';
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
       }

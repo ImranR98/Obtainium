@@ -337,6 +337,8 @@
     "fgServiceNotice": "Aquesta notificació és necessària per comprovar les actualitzacions en segon pla (la pots ocultar als paràmetres del Sistema Operatiu)",
     "excludeSecrets": "Exclude secrets",
     "GHReqPrefix": "'sky22333/hubproxy' instance for GitHub requests",
+    "includeZips": "Include ZIP files",
+    "zippedApkFilterRegEx": "Filter APKs inside ZIP",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"

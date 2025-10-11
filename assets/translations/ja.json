@@ -337,6 +337,8 @@
     "fgServiceNotice": "この通知は、バックグラウンドでアップデートを確認するために必要です（OSの設定で非表示にできます）。",
     "excludeSecrets": "シークレットを除く",
     "GHReqPrefix": "GitHub リクエスト用の 'sky22333/hubproxy' インスタンス",
+    "includeZips": "ZIPファイルを含む",
+    "zippedApkFilterRegEx": "ZIP内のAPKをフィルタリングする",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

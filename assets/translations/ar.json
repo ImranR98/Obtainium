@@ -337,6 +337,8 @@
     "fgServiceNotice": "هذا الإشعار مطلوب للتحقق من التحديث في الخلفية (يمكن إخفاؤه في إعدادات نظام التشغيل)",
     "excludeSecrets": "استبعاد الأسرار",
     "GHReqPrefix": "مثيل \"sky22333/hubproxy\" لطلبات GitHub",
+    "includeZips": "تضمين ملفات ZIP",
+    "zippedApkFilterRegEx": "تصفية ملفات APK داخل ZIP",
     "removeAppQuestion": {
         "one": "إزالة التطبيق؟",
         "other": "إزالة التطبيقات؟"

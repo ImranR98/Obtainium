@@ -337,6 +337,8 @@
     "fgServiceNotice": "This notification is required for background update checking (it can be hidden in the OS settings)",
     "excludeSecrets": "Exclude secrets",
     "GHReqPrefix": "'sky22333/hubproxy' instance for GitHub requests",
+    "includeZips": "Include ZIP files",
+    "zippedApkFilterRegEx": "Filter APKs inside ZIP",
     "removeAppQuestion": {
         "one": "Forigi la aplikaĵon?",
         "other": "Forigi la aplikaĵojn?"

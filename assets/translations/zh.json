@@ -337,6 +337,8 @@
     "fgServiceNotice": "后台检查更新时需要此通知（可在操作系统设置中隐藏）",
     "excludeSecrets": "排除机密",
     "GHReqPrefix": "用于 GitHub 请求的 \"sky22333/hubproxy \"实例",
+    "includeZips": "包含 ZIP 文件",
+    "zippedApkFilterRegEx": "过滤 ZIP 内的 APK",
     "removeAppQuestion": {
         "one": "是否删除应用？",
         "other": "是否删除应用？"

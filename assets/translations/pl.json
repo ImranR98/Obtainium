@@ -337,6 +337,8 @@
     "fgServiceNotice": "To powiadomienie jest wymagane do sprawdzania aktualizacji w tle (można je ukryć w ustawieniach systemu operacyjnego).",
     "excludeSecrets": "Wyklucz sekrety",
     "GHReqPrefix": "Instancja \"sky22333/hubproxy\" dla żądań GitHub",
+    "includeZips": "Dołączanie plików ZIP",
+    "zippedApkFilterRegEx": "Filtrowanie plików APK wewnątrz ZIP",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

@@ -337,6 +337,8 @@
     "fgServiceNotice": "Deze melding is nodig voor het controleren van updates op de achtergrond (kan worden verborgen in de OS-instellingen)",
     "excludeSecrets": "Geheimen uitsluiten",
     "GHReqPrefix": "'sky22333/hubproxy' instantie voor GitHub verzoeken",
+    "includeZips": "ZIP-bestanden opnemen",
+    "zippedApkFilterRegEx": "APK's filteren in ZIP",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"

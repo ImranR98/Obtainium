@@ -337,6 +337,8 @@
     "fgServiceNotice": "Thông báo này là bắt buộc để kiểm tra cập nhật nền (có thể ẩn trong cài đặt hệ điều hành).",
     "excludeSecrets": "Loại trừ thông tin bí mật",
     "GHReqPrefix": "Thực thể 'sky22333/hubproxy' cho các yêu cầu GitHub",
+    "includeZips": "Ba gồm các tệp ZIP",
+    "zippedApkFilterRegEx": "Lọc các tệp APK bên trong tệp ZIP",
     "removeAppQuestion": {
         "one": "Gỡ ứng dụng?",
         "other": "Gỡ ứng dụng?"

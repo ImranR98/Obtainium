@@ -337,6 +337,8 @@
     "fgServiceNotice": "Diese Benachrichtigung ist für die Prüfung von Updates im Hintergrund erforderlich (sie kann in den Betriebssystemeinstellungen ausgeblendet werden)",
     "excludeSecrets": "Geheimnisse ausschließen",
     "GHReqPrefix": "sky22333/hubproxy'-Instanz für GitHub-Anfragen",
+    "includeZips": "ZIP-Dateien einbeziehen",
+    "zippedApkFilterRegEx": "APKs in ZIP filtern",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"

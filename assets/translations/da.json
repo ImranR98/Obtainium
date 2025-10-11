@@ -337,6 +337,8 @@
     "fgServiceNotice": "Denne meddelelse er nødvendig for baggrundsopdateringskontrol (den kan skjules i OS-indstillingerne).",
     "excludeSecrets": "Udeluk hemmeligheder",
     "GHReqPrefix": "'sky22333/hubproxy'-instans til GitHub-anmodninger",
+    "includeZips": "Inkluder ZIP-filer",
+    "zippedApkFilterRegEx": "Filtrer APK'er inde i ZIP",
     "removeAppQuestion": {
         "one": "Fjern app?",
         "other": "Fjern apps?"

@@ -337,6 +337,8 @@
     "fgServiceNotice": "Pemberitahuan ini diperlukan untuk pemeriksaan pembaruan latar belakang (dapat disembunyikan dalam pengaturan OS)",
     "excludeSecrets": "Mengecualikan rahasia",
     "GHReqPrefix": "Instance 'sky22333/hubproxy' untuk permintaan GitHub",
+    "includeZips": "Menyertakan file ZIP",
+    "zippedApkFilterRegEx": "Saring APK di dalam ZIP",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"

@@ -337,6 +337,8 @@
     "fgServiceNotice": "Toto oznámení je nutné pro kontrolu aktualizací na pozadí (lze jej skrýt v nastavení systému)",
     "excludeSecrets": "Vyloučit tajemství",
     "GHReqPrefix": "instance 'sky22333/hubproxy' pro požadavky GitHubu",
+    "includeZips": "Zahrnout soubory ZIP",
+    "zippedApkFilterRegEx": "Filtrování souborů APK uvnitř ZIP",
     "removeAppQuestion": {
         "one": "Odstranit aplikaci?",
         "other": "Odstranit aplikace?"
