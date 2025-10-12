@@ -337,8 +337,8 @@
     "fgServiceNotice": "Ez az értesítés a háttérben történő frissítésellenőrzéshez szükséges (a rendszer beállításaiban elrejthető).",
     "excludeSecrets": "Érzékeny adatok (például: személyes hozzáférési tokenek) kihagyása",
     "GHReqPrefix": "„sky22333/hubproxy” példány a GitHub lekérdezéséhez",
-    "includeZips": "ZIP fájlok belefoglalása",
-    "zippedApkFilterRegEx": "APK-k szűrése a ZIP-en belül",
+    "includeZips": "ZIP-fájlok belefoglalása",
+    "zippedApkFilterRegEx": "APK-fájlok szűrése a ZIP-fájlon belül",
     "removeAppQuestion": {
         "one": "Eltávolítja az alkalmazást?",
         "other": "Eltávolítja az alkalmazásokat?"
