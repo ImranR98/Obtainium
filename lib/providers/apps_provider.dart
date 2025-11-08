@@ -498,6 +498,10 @@ Future<PackageInfo?> getInstalledInfo(
   return null;
 }
 
+Future<Directory> getAppStorageDir() async =>
+    await getExternalStorageDirectory() ??
+    await getApplicationDocumentsDirectory();
+
 class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -534,15 +538,11 @@ class AppsProvider with ChangeNotifier {
           iconsCacheDir.createSync();
         }
       } else {
-        APKDir = Directory(
-          '${(await getExternalStorageDirectory())!.path}/apks',
-        );
+        APKDir = Directory('${(await getAppStorageDir()).path}/apks');
         if (!APKDir.existsSync()) {
           APKDir.createSync();
         }
-        iconsCacheDir = Directory(
-          '${(await getExternalStorageDirectory())!.path}/icons',
-        );
+        iconsCacheDir = Directory('${(await getAppStorageDir()).path}/icons');
         if (!iconsCacheDir.existsSync()) {
           iconsCacheDir.createSync();
         }
@@ -1002,7 +1002,7 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<String> getStorageRootPath() async {
-    return '/${(await getExternalStorageDirectory())!.uri.pathSegments.sublist(0, 3).join('/')}';
+    return '/${(await getAppStorageDir()).uri.pathSegments.sublist(0, 3).join('/')}';
   }
 
   Future<void> moveObbFile(File file, String appId) async {
@@ -1449,7 +1449,7 @@ class AppsProvider with ChangeNotifier {
 
   Future<Directory> getAppsDir() async {
     Directory appsDir = Directory(
-      '${(await getExternalStorageDirectory())!.path}/app_data',
+      '${(await getAppStorageDir()).path}/app_data',
     );
     if (!appsDir.existsSync()) {
       appsDir.createSync();
