@@ -52,7 +52,7 @@ android {
         versionName = flutterVersionName
     }
 
-    flavorDimensions("flavor")
+    flavorDimensions += "flavor"
 
     productFlavors {
         create("normal") {
