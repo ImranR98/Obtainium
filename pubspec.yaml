@@ -72,7 +72,7 @@ dependencies:
   crypto: ^3.0.6
   bcrypt: ^1.1.3
   app_links: ^6.4.0
-  background_fetch: ^1.3.8
+  background_fetch: ^1.5.0
   equations: ^5.0.2
   flex_color_picker: ^3.7.1
   android_system_font:

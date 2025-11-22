@@ -96,10 +96,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_fetch
-      sha256: e767745c31f71660063985c982497995d0a71755d3f1b0c8e8c96988d64d3003
+      sha256: "6f0cec85480eac151f3971f883180d8c0acf6b40001153f1cf7c2c453df4f851"
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.0"
+    version: "1.5.0"
   battery_plus:
     dependency: "direct main"
     description:
