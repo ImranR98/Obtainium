@@ -38,18 +38,18 @@ dependencies:
   path_provider: ^2.1.5
   flutter_fgbg: ^0.7.1
   flutter_local_notifications: ^18.0.1
-  provider: ^6.1.5
-  http: ^1.4.0
+  provider: ^6.1.5+1
+  http: ^1.6.0
   webview_flutter: ^4.13.0
-  dynamic_color: ^1.7.0
+  dynamic_color: ^1.8.1
   html: ^0.15.6
   shared_preferences: ^2.5.3
-  url_launcher: ^6.3.1
-  permission_handler: ^12.0.0+1
+  url_launcher: ^6.3.2
+  permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
-  device_info_plus: ^12.1.0
-  file_picker: ^10.1.9
-  animations: ^2.0.11
+  device_info_plus: ^12.2.0
+  file_picker: ^10.3.7
+  animations: ^2.1.1
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
     git:
       url: https://github.com/ImranR98/android_package_installer
@@ -58,9 +58,9 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: master
-  share_plus: ^12.0.0
+  share_plus: ^12.0.1
   sqflite: ^2.4.2
-  easy_localization: ^3.0.7+1
+  easy_localization: ^3.0.8
   android_intent_plus: ^6.0.0
   flutter_markdown: ^0.7.7+1
   flutter_archive: ^6.0.3
@@ -70,12 +70,12 @@ dependencies:
     git:
       url: https://github.com/AlexBacich/shared-storage
       ref: master
-  crypto: ^3.0.6
+  crypto: ^3.0.7
   bcrypt: ^1.1.3
-  app_links: ^6.4.0
+  app_links: ^7.0.0
   background_fetch: ^1.5.0
   equations: ^5.0.2
-  flex_color_picker: ^3.7.1
+  flex_color_picker: ^3.7.2
   android_system_font:
     git:
       url: https://github.com/re7gog/android_system_font
