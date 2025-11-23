@@ -175,7 +175,7 @@
     "remove": "Eliminar",
     "yesMarkUpdated": "Sí, marcar como actualizada",
     "fdroid": "F-Droid oficial",
-    "appIdOrName": "ID o Nombre de la Aplicación",
+    "appIdOrName": "ID o Nombre de la aplicación",
     "appId": "ID de la app",
     "appWithIdOrNameNotFound": "No se han encontrado aplicaciones con ese ID o nombre",
     "reposHaveMultipleApps": "Los repositorios pueden contener varias aplicaciones",
@@ -356,8 +356,8 @@
         "other": "La comprobación de actualizaciones en segundo plano ha encontrado {} actualizaciones; se le notificará si es necesario"
     },
     "apps": {
-        "one": "{} La aplicación",
-        "other": "{} Las aplicaciones"
+        "one": "{} aplicación",
+        "other": "{} aplicaciones"
     },
     "url": {
         "one": "{} URL",
