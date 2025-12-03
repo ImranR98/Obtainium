@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:crypto/crypto.dart';
@@ -438,7 +439,7 @@ Future<File> downloadFile(
                 now.difference(lastProgressUpdate!) >=
                     downloadUIUpdateInterval)) {
           progress = fullContentLength != null
-              ? (received / fullContentLength) * 100
+              ? clampDouble((received / fullContentLength) * 100, 0, 100)
               : 30;
           onProgress(progress);
           lastProgressUpdate = now;
