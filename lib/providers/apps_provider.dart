@@ -438,7 +438,7 @@ Future<File> downloadFile(
                 now.difference(lastProgressUpdate!) >=
                     downloadUIUpdateInterval)) {
           progress = fullContentLength != null
-              ? (received / fullContentLength) * 100
+              ? ((received / fullContentLength) * 100).clamp(0, 100)
               : 30;
           onProgress(progress);
           lastProgressUpdate = now;
