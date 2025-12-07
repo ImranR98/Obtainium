@@ -49,7 +49,7 @@ class GitHub extends AppSource {
       GeneratedFormTextField(
         'GHReqPrefix',
         label: tr('GHReqPrefix'),
-        hint: 'gh-proxy.com',
+        hint: 'gh-proxy.org',
         required: false,
         additionalValidators: [
           (value) {
