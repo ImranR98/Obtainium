@@ -339,6 +339,9 @@
     "GHReqPrefix": "Instancja \"sky22333/hubproxy\" dla żądań GitHub",
     "includeZips": "Dołączanie plików ZIP",
     "zippedApkFilterRegEx": "Filtrowanie plików APK wewnątrz ZIP",
+    "googleVerificationWarningP1": "Google ogłosił, że począwszy od 2026 / 2027, wszystkie aplikacje na \"certyfikowanych\" urządzeń z systemem Android będą wymagać od dewelopera przekazania danych osobowych bezpośrednio do Google.\n\nPonieważ deweloperzy tej aplikacji nie zgadzają się na ten wymóg, po tym czasie nie będzie już działać na certyfikowanych urządzeniach z systemem Android.",
+    "googleVerificationWarningP2": "Więcej informacji można uzyskać na stronie https: / / keepandroidopen.org.",
+    "googleVerificationWarningP3": "Należy zauważyć, że w perspektywie krótkoterminowej może być nadal możliwe instalowanie \"niezweryfikowanych\" aplikacji (niezgodnych z wymaganiami) poprzez proces \"zaawansowanego przepływu\", który Google obiecał wdrożyć po szerokim odwrocie do ich ogłoszenia, ale nie mają one szczegółowych informacji, jak to działa, więc nie jest jasne, czy będzie rzeczywiście zachować wolność użytkownika w jakikolwiek praktyczny sposób.\n\nW każdym razie ruch Google jest znaczącym krokiem w kierunku zakończenia swobodnego, ogólnego celu dla osób fizycznych.\n\nNiecertyfikowane Oses, takie jak GrapheneOS, nie powinny mieć na to wpływu tak długo, jak długo będą mogły istnieć.",
     "removeAppQuestion": {
         "one": "Usunąć aplikację?",
         "few": "Usunąć aplikacje?",

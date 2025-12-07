@@ -114,7 +114,8 @@ class GitLab extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) async {
     // Change headers to pacify, e.g. cloudflare protection

@@ -339,6 +339,9 @@
     "GHReqPrefix": "GitHub istekleri için 'sky22333/hubproxy' örneği",
     "includeZips": "ZIP dosyalarını dahil edin",
     "zippedApkFilterRegEx": "ZIP içindeki APK'ları filtreleme",
+    "googleVerificationWarningP1": "Google, 2026/2027'de başlayan tüm uygulamalar, geliştiricinin kişisel kimlik bilgilerini doğrudan Google'a göndermesini gerektirecektir.\n\nBu uygulamanın geliştiricileri bu gereksinimi kabul etmediğinden, Eldeium o zamandan sonra sertifikalı Android cihazlarda artık çalışmayacaktır.",
+    "googleVerificationWarningP2": "Https://servandoidopen.org/ daha fazla bilgi için gidin.",
+    "googleVerificationWarningP3": "Kısa vadede Google'ın duyurularına kadar uygulamaya söz verdiği “önemli” uygulamaları kurmak mümkün olabilir, ancak bunun gerçekten pratik bir şekilde kullanıcı özgürlüklerini koruyacaktır.\n\nHer durumda, Google'ın hareketi, bireyler için ücretsiz, genel amaçlı hesaplamanın sonuna doğru önemli bir adımdır.\n\nGrapheneOS gibi sertifikalı OSes, var olmaya devam ettikleri sürece bunun tarafından etkilenmemelidir.",
     "removeAppQuestion": {
         "one": "Uygulamayı Kaldır?",
         "other": "Uygulamaları Kaldır?"

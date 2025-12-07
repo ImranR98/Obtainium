@@ -10,13 +10,11 @@ class DirectAPKLink extends AppSource {
   DirectAPKLink() {
     name = tr('directAPKLink');
     additionalSourceAppSpecificSettingFormItems = [
-      ...html.additionalSourceAppSpecificSettingFormItems
-          .where(
-            (element) => element
-                .where((element) => element.key == 'requestHeader')
-                .isNotEmpty,
-          )
-          ,
+      ...html.additionalSourceAppSpecificSettingFormItems.where(
+        (element) => element
+            .where((element) => element.key == 'requestHeader')
+            .isNotEmpty,
+      ),
       [
         GeneratedFormDropdown(
           'defaultPseudoVersioningMethod',
@@ -54,11 +52,13 @@ class DirectAPKLink extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) {
     return html.getRequestHeaders(
       additionalSettings,
+      url,
       forAPKDownload: forAPKDownload,
     );
   }

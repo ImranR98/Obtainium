@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:animations/animations.dart';
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -92,37 +91,57 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(tr('batteryOptimizationNote')),
-                      GestureDetector(
-                        onTap: () {
-                          final intent = AndroidIntent(
-                            action:
-                                'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS',
-                            package:
-                                obtainiumId, // Replace with your app's package name
-                          );
-
-                          intent.launch();
-                        },
-                        child: Text(
-                          tr('settings'),
-                          style: const TextStyle(
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () {
                     sp.welcomeShown = true;
+                    Navigator.of(context).pop(null);
+                  },
+                  child: Text(tr('ok')),
+                ),
+              ],
+            );
+          },
+        );
+      }
+      if (!sp.googleVerificationWarningShown &&
+          DateTime.now().year >=
+              2026 /* Gives some time to translators between now and Jan */ ) {
+        await showDialog(
+          context: context,
+          builder: (BuildContext ctx) {
+            return AlertDialog(
+              title: Text(tr('note')),
+              scrollable: true,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 20,
+                children: [
+                  Text(tr('googleVerificationWarningP1')),
+                  GestureDetector(
+                    onTap: () {
+                      launchUrlString(
+                        'https://keepandroidopen.org/',
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
+                    child: Text(
+                      tr('googleVerificationWarningP2'),
+                      style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Text(tr('googleVerificationWarningP3')),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    sp.googleVerificationWarningShown = true;
                     Navigator.of(context).pop(null);
                   },
                   child: Text(tr('ok')),

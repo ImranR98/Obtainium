@@ -24,6 +24,38 @@ class LiteAPKs extends AppSource {
   }
 
   @override
+  Future<Map<String, String>?> getRequestHeaders(
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) async {
+    return {'Referer': url.split('#').last};
+  }
+
+  @override
+  Future<String> assetUrlPrefetchModifier(
+    String assetUrl,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    var token = base64
+        .encode(
+          utf8.encode(
+            base64.encode(
+              utf8.encode(
+                (DateTime.now().millisecondsSinceEpoch ~/ 1000 + 10800)
+                    .toString(),
+              ),
+            ),
+          ),
+        )
+        .replaceAll('=', '%3D');
+    var tempArr = assetUrl.split('#');
+    tempArr[0] = '${tempArr[0]}?token=$token';
+    return tempArr.join('#');
+  }
+
+  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
@@ -71,7 +103,7 @@ class LiteAPKs extends AppSource {
             .map(
               (l) => MapEntry<String, String>(
                 Uri.decodeComponent(Uri.parse(l).pathSegments.last),
-                l,
+                '$l#$standardUrl',
               ),
             )
             .toList();
