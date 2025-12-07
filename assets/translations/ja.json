@@ -339,6 +339,9 @@
     "GHReqPrefix": "GitHub リクエスト用の 'sky22333/hubproxy' インスタンス",
     "includeZips": "ZIPファイルを含む",
     "zippedApkFilterRegEx": "ZIP内のAPKをフィルタリングする",
+    "googleVerificationWarningP1": "Google は、2026/2027 以降、\"certified\" の Android デバイス上のすべてのアプリが、開発者が Google に直接個人識別情報を送信するために必要なことを発表しました。\n\nこのアプリの開発者は、この要件に同意しないので、Getiumは、その後、認定されたAndroidデバイスで動作しません.",
+    "googleVerificationWarningP2": "詳細はhttps://keepandroidopen.org/ をご覧ください.",
+    "googleVerificationWarningP3": "短期的には、Googleが発表に広範なバックラッシュ後に実装することを約束した「高度フロー」プロセスを通じて「非準拠」アプリをインストールし続けることができるかもしれませんが、これはどのように動作するかは詳細ではありませんので、実際の方法でユーザーの自由を本当に保存するかどうかは不明です。\n\nいずれの場合も、Googleの移転は、個人のための自由で汎用的なコンピューティングの最後に重要なステップです。\n\nグラフェンOSのような非認証OSは、継続可能である限り、これによって影響を受けるべきではありません.",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"

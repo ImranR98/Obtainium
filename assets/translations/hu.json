@@ -339,6 +339,9 @@
     "GHReqPrefix": "„sky22333/hubproxy” példány a GitHub lekérdezéséhez",
     "includeZips": "ZIP-fájlok belefoglalása",
     "zippedApkFilterRegEx": "APK-fájlok szűrése a ZIP-fájlon belül",
+    "googleVerificationWarningP1": "A Google bejelentette, hogy 2026 / 2027-től kezdve a \"hitelesített\" Android eszközökön minden alkalmazás megköveteli a fejlesztőtől, hogy személyes személyazonossági adatokat közvetlenül a Google-nak nyújtson be.\n\nMivel a fejlesztők az alkalmazás nem ért egyet ezzel a követelménnyel, Obtainium többé nem dolgozik hitelesített Android eszközök után.",
+    "googleVerificationWarningP2": "Lásd https: / / keepandroidopen.org / további információkért.",
+    "googleVerificationWarningP3": "Megjegyzendő, hogy rövid távon továbbra is lehetséges lehet \"ellenőrizetlen\" (nem megfelelő) alkalmazásokat telepíteni egy \"fejlett áramlási\" folyamaton keresztül, amelyet a Google megígért, hogy a bejelentésük széles körű elmaradása után végre fog hajtani, de nem részletezték, hogyan fog ez működni, így nem világos, hogy valóban megőrzi-e a felhasználói szabadságokat bármilyen gyakorlati módon.\n\nMindenesetre a Google lépése jelentős lépés az egyének számára ingyenes, általános célú számítástechnika vége felé.\n\nA nem tanúsított OSE-ket, mint a GrafeneOS-t, ez nem érintheti mindaddig, amíg azok továbbra is létezhetnek.",
     "removeAppQuestion": {
         "one": "Biztosan eltávolítja az alkalmazást?",
         "other": "Biztosan eltávolítja az alkalmazásokat?"
