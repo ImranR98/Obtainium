@@ -264,7 +264,8 @@ class GitHub extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) async {
     var token = await getTokenIfAny(additionalSettings);
@@ -405,7 +406,10 @@ class GitHub extends AppSource {
       findReleaseAssetUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)?.map((e) {
             var ext = e['name'].toString().toLowerCase().split('.').last;
-            var url = !(ext == 'apk' || ext == 'xapk' || (includeZips && ext == 'zip'))
+            var url =
+                !(ext == 'apk' ||
+                    ext == 'xapk' ||
+                    (includeZips && ext == 'zip'))
                 ? (e['browser_download_url'] ?? e['url'])
                 : (e['url'] ?? e['browser_download_url']);
             url = undoGHProxyMod(url, sourceConfigSettingValues);

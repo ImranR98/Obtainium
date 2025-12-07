@@ -49,7 +49,7 @@ class CoolApk extends AppSource {
 
     // get latest
     var detailUrl = '$apiUrl/v6/apk/detail?id=$appId';
-    var headers = await getRequestHeaders(additionalSettings);
+    var headers = await getRequestHeaders(additionalSettings, detailUrl);
     var res = await sourceRequest(detailUrl, additionalSettings);
 
     if (res.statusCode != 200) {
@@ -116,7 +116,8 @@ class CoolApk extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) async {
     var tokenPair = _getToken();

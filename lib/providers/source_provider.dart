@@ -671,7 +671,8 @@ abstract class AppSource {
   }
 
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) async {
     return null;
@@ -701,6 +702,7 @@ abstract class AppSource {
     var method = postBody == null ? 'GET' : 'POST';
     var requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
+      url,
     );
     var streamedResponseUrlWithResponseAndClient =
         await sourceRequestStreamResponse(

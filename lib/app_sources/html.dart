@@ -341,7 +341,8 @@ class HTML extends AppSource {
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings, {
+    Map<String, dynamic> additionalSettings,
+    String url, {
     bool forAPKDownload = false,
   }) async {
     if (additionalSettings.isNotEmpty) {
@@ -435,6 +436,7 @@ class HTML extends AppSource {
     );
     var apkReqHeaders = await getRequestHeaders(
       additionalSettings,
+      rel,
       forAPKDownload: true,
     );
     if (version == null &&
