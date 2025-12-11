@@ -339,6 +339,9 @@
     "GHReqPrefix": "'sky22333/hubproxy' istanca za GitHub zahtjeve",
     "includeZips": "Uključi i ZIP datoteke",
     "zippedApkFilterRegEx": "Filtriraj APK-ove unutar ZIP datoteka",
+    "googleVerificationWarningP1": "Google has announced that, starting in 2026/2027, all apps on \"certified\" Android devices will require the developer to submit personal identity details directly to Google.\n\nSince the developers of this app do not agree to this requirement, Obtainium will no longer work on certified Android devices after that time.",
+    "googleVerificationWarningP2": "Go to https://keepandroidopen.org/ for more information.",
+    "googleVerificationWarningP3": "Note that in the short term, it may continue to be possible to install \"unverified\" (non-compliant) apps through an \"advanced flow\" process that Google has promised to implement after broad backlash to their announcement, but they have not detailed how this would work so it is unclear whether it will truly preserve user freedoms in any practical way.\n\nIn any case, Google's move is a significant step towards the end of free, general-purpose computing for individuals.\n\nNon-certified OSes, like GrapheneOS, should be unaffected by this for as long as they are allowed to continue to exist.",
     "removeAppQuestion": {
         "one": "Želite li ukloniti aplikaciju?",
         "other": "Želite li ukloniti aplikacije?"

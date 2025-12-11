@@ -22,7 +22,7 @@
     "requiredInBrackets": "(Requis)",
     "dropdownNoOptsError": "ERREUR: LA LISTE DÉROULANTE DOIT AVOIR AU MOINS UNE OPTION",
     "colour": "Couleur",
-    "standard": "Standard",
+    "standard": "Norme",
     "custom": "Personnalisé",
     "useMaterialYou": "Utiliser Material You",
     "githubStarredRepos": "dépôts étoilés GitHub",
@@ -310,7 +310,7 @@
     "installed": "Installée",
     "latest": "Dernière version",
     "invertRegEx": "Inverser l'expression régulière",
-    "note": "Note",
+    "note": "Remarque",
     "selfHostedNote": "La liste déroulante \"{}\" peut être utilisée pour accéder à des instances auto-hébergées/personnalisées de n'importe quelle source.",
     "badDownload": "L'APK n'a pas pu être analysé (téléchargement incompatible ou partiel)",
     "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
@@ -339,6 +339,9 @@
     "GHReqPrefix": "instance 'sky22333/hubproxy' pour les requêtes GitHub",
     "includeZips": "Inclure les fichiers ZIP",
     "zippedApkFilterRegEx": "Filtrer les APK à l'intérieur du ZIP",
+    "googleVerificationWarningP1": "Google a annoncé que, à partir de 2026/2027, toutes les applications sur des appareils Android \"certifiés\" exigeront du développeur de soumettre des données personnelles d'identité directement à Google.\n\nPuisque les développeurs de cette application n'acceptent pas cette exigence, Obtention ne fonctionnera plus sur les appareils Android certifiés après ce temps.",
+    "googleVerificationWarningP2": "Consultez https://keepandroidopen.org/ pour plus d'informations.",
+    "googleVerificationWarningP3": "Notez qu'à court terme, il peut continuer d'être possible d'installer des applications \"non vérifiées\" (non conformes) à travers un processus de \"flux avancé\" que Google a promis de mettre en œuvre après un grand retour à l'annonce, mais ils n'ont pas précisé comment cela fonctionnerait donc il n'est pas clair s'il préservera réellement les libertés des utilisateurs d'une manière pratique.\n\nEn tout cas, le mouvement de Google est un pas important vers la fin de l'informatique gratuite et à usage général pour les individus.\n\nLes OS non certifiés, comme GrapheneOS, ne devraient pas en être affectés tant qu'ils sont autorisés à continuer d'exister.",
     "removeAppQuestion": {
         "one": "Supprimer l'application ?",
         "other": "Supprimer les applications ?"

@@ -635,6 +635,7 @@ class AppsProvider with ChangeNotifier {
       }
       var headers = await source.getRequestHeaders(
         app.additionalSettings,
+        downloadUrl,
         forAPKDownload: true,
       );
       var downloadedFile = await downloadFileWithRetry(
@@ -1417,6 +1418,7 @@ class AppsProvider with ChangeNotifier {
               .getSource(app.url, overrideSource: app.overrideSource)
               .getRequestHeaders(
                 app.additionalSettings,
+                fileUrl.value,
                 forAPKDownload: fileUrl.key.endsWith('.apk') ? true : false,
               ),
           useExisting: false,

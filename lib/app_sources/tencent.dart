@@ -44,39 +44,43 @@ class Tencent extends AppSource {
     ).host.split('.').reversed.toList().sublist(0, 2).reversed.join('.');
 
     var res = await sourceRequest(
-      'https://upage.html5.$baseHost/wechat-apkinfo',
+      'https://a.app.$baseHost/o/simple.jsp?pkgname=$appId',
       additionalSettings,
       followRedirects: false,
-      postBody: {"packagename": appId},
     );
 
     if (res.statusCode == 200) {
-      var json = jsonDecode(res.body);
-      if (json['app_detail_records'][appId] == null) {
+      dynamic json;
+      try {
+        json = jsonDecode(
+          res.body
+              .split('\n')
+              .map((line) => line.trim())
+              .where((line) => line.startsWith('window.systemData='))
+              .first
+              .substring(18),
+        )['appDetail'];
+      } catch (e) {
         throw NoReleasesError();
       }
-      var version =
-          json['app_detail_records'][appId]['apk_all_data']['version_name'];
-      var apkUrl = json['app_detail_records'][appId]['apk_all_data']['url'];
+      if (json == null) {
+        throw NoReleasesError();
+      }
+      var version = json['versionName'];
+      var apkUrl = json['apkUrl64'];
+      apkUrl ??= json['apkUrl'];
       if (apkUrl == null) {
         throw NoAPKError();
       }
-      var appName = json['app_detail_records'][appId]['app_info']['name'];
-      var author = json['app_detail_records'][appId]['app_info']['author'];
-      var releaseDate =
-          json['app_detail_records'][appId]['app_info']['update_time'];
+      var appName = json['appName'];
+      var author = json['author'];
       var apkName =
           Uri.parse(apkUrl).queryParameters['fsname'] ??
           '${appId}_$version.apk';
 
-      return APKDetails(
-        version,
-        [MapEntry(apkName, apkUrl)],
-        AppNames(author, appName),
-        releaseDate: releaseDate != null
-            ? DateTime.fromMillisecondsSinceEpoch(releaseDate * 1000)
-            : null,
-      );
+      return APKDetails(version, [
+        MapEntry(apkName, apkUrl),
+      ], AppNames(author, appName));
     } else {
       throw getObtainiumHttpError(res);
     }

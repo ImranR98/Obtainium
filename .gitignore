@@ -53,3 +53,4 @@ app.*.map.json
 # Custom
 TODO.txt
 data
+node_modules/
