@@ -276,11 +276,23 @@ class AppsPageState extends State<AppsPage> {
         );
       } else if (settingsProvider.sortColumn ==
           SortColumnSettings.releaseDate) {
-        result =
-            (a.app.releaseDate)?.compareTo(
-              b.app.releaseDate ?? DateTime.fromMicrosecondsSinceEpoch(0),
-            ) ??
-            0;
+        // Handle null dates: apps with unknown release dates are grouped at the end
+        final aDate = a.app.releaseDate;
+        final bDate = b.app.releaseDate;
+        if (aDate == null && bDate == null) {
+          // Both null: sort by name for consistency
+          result = ((a.name + a.author).toLowerCase()).compareTo(
+            (b.name + b.author).toLowerCase(),
+          );
+        } else if (aDate == null) {
+          // a has no date, push to end (ascending) or beginning (will be reversed for descending)
+          result = 1;
+        } else if (bDate == null) {
+          // b has no date, push to end
+          result = -1;
+        } else {
+          result = aDate.compareTo(bDate);
+        }
       }
       return result;
     });
