@@ -5,24 +5,37 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Obtainium",
+            "name": "Obtainium (debug mode)",
             "request": "launch",
             "type": "dart",
-            "args":[ "--flavor", "normal" ]
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "normal"
+            ]
         },
         {
             "name": "Obtainium (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
-            "args":[ "--flavor", "normal" ]
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "normal"
+            ]
         },
         {
             "name": "Obtainium (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
-            "args":[ "--flavor", "normal" ]
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "normal"
+            ]
         }
     ]
 }
