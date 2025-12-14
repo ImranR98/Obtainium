@@ -43,7 +43,7 @@ dependencies:
   webview_flutter: ^4.13.0
   dynamic_color: ^1.8.1
   html: ^0.15.6
-  shared_preferences: ^2.5.3
+  shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
   permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
