@@ -78,7 +78,7 @@ android {
     buildTypes {
         getByName("release") {
             val releaseSigningConfig = signingConfigs.getByName("release")
-            signingConfig = if (keystorePropertiesExists) {
+            signingConfig = if (keystorePropertiesExists && releaseSigningConfig.storeFile != null) {
                 releaseSigningConfig
             } else {
                 logger.error(
