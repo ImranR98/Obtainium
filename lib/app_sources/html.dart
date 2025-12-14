@@ -106,8 +106,18 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
         )
         .allMatches(lines)
         .map(
-          (match) =>
-              MapEntry(match.group(0)!, match.group(0)?.split('/').last ?? ''),
+          (match) {
+            // Clean the URL of trailing code artifacts
+            String url = match.group(0)!;
+            final garbage = ["'", '"', ";", ")", "]", "<", ">", ","];
+
+            // Keep removing the last character if it is "garbage"
+            while (url.isNotEmpty && garbage.contains(url[url.length - 1])) {
+              url = url.substring(0, url.length - 1);
+            }
+
+            return MapEntry(url, url.split('/').last);
+          }
         )
         .toList();
 
