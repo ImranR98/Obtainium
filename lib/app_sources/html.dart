@@ -109,7 +109,7 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
           (match) {
             // Clean the URL of trailing code artifacts
             String url = match.group(0)!;
-            final garbage = ["'", '"', ";", ")", "]", "<", ">", ","];
+            final garbage = ["'", '"', ";", ")", "}", "]", "<", ">", ","];
 
             // Keep removing the last character if it is "garbage"
             while (url.isNotEmpty && garbage.contains(url[url.length - 1])) {
