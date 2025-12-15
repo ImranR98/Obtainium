@@ -1242,6 +1242,8 @@ class AppsProvider with ChangeNotifier {
         }
         if (sayInstalled) {
           installedIds.add(id);
+          // Dismiss the update notification since the app was successfully installed
+          notificationsProvider?.cancel(UpdateNotification([]).id);
         }
       } finally {
         apps[id]?.downloadProgress = null;
