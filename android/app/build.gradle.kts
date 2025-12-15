@@ -81,25 +81,27 @@ android {
             signingConfig = if (keystorePropertiesExists && releaseSigningConfig.storeFile != null) {
                 releaseSigningConfig
             } else {
-                logger.error(
-                    """
-                        You are trying to create a release build, but a key.properties file was not found.
-                        Falling back to the "debug" signing config.
-                        To sign a release build, a keystore properties file is required.
+                if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }) {
+                    logger.error(
+                        """
+                            You are trying to create a release build, but a key.properties file was not found.
+                            Falling back to the "debug" signing config.
+                            To sign a release build, a keystore properties file is required.
 
-                        The following is an example configuration.
-                        Create a file named [project]/android/key.properties that contains a reference to your keystore.
-                        Don't include the angle brackets (< >). They indicate that the text serves as a placeholder for your values.
+                            The following is an example configuration.
+                            Create a file named [project]/android/key.properties that contains a reference to your keystore.
+                            Don't include the angle brackets (< >). They indicate that the text serves as a placeholder for your values.
 
-                        storePassword=<keystore password>
-                        keyPassword=<key password>
-                        keyAlias=<key alias>
-                        storeFile=<keystore file location>
+                            storePassword=<keystore password>
+                            keyPassword=<key password>
+                            keyAlias=<key alias>
+                            storeFile=<keystore file location>
 
-                        For more info, see:
-                        * https://docs.flutter.dev/deployment/android#sign-the-app
-                    """.trimIndent()
-                )
+                            For more info, see:
+                            * https://docs.flutter.dev/deployment/android#sign-the-app
+                        """.trimIndent()
+                    )
+                }
                 signingConfigs.getByName("debug")
             }
         }
