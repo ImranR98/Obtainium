@@ -13,6 +13,7 @@ import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -168,13 +169,45 @@ class _HomePageState extends State<HomePage> {
           ?.linkFn(data);
     }
 
+    goToExistingApp(String standardizedUrl) async {
+      // Go to Apps page
+      switchToPage(0);
+      while ((pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState ==
+          null) {
+        await Future.delayed(const Duration(microseconds: 1));
+      }
+
+      // Navigate to the app
+      (pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState
+          ?.openAppByStandardizedUrl(standardizedUrl);
+    }
+
     interpretLink(Uri uri) async {
       isLinkActivity = true;
       var action = uri.host;
       var data = uri.path.length > 1 ? uri.path.substring(1) : "";
       try {
         if (action == 'add') {
-          await goToAddApp(data);
+          // Ensure apps are loaded
+          AppsProvider appsProvider = context.read<AppsProvider>();
+          while (appsProvider.loadingApps) {
+            await Future.delayed(const Duration(milliseconds: 10));
+          }
+
+          // See if we already have this app
+          String standardizedUrl = SourceProvider()
+              .getSource(data)
+              .standardizeUrl(data);
+
+          bool alreadyInstalled = appsProvider.apps.values.any(
+            (AppInMemory a) => a.app.url == standardizedUrl,
+          );
+
+          if (alreadyInstalled) {
+            await goToExistingApp(standardizedUrl);
+          } else {
+            await goToAddApp(data);
+          }
         } else if (action == 'app' || action == 'apps') {
           var dataStr = Uri.decodeComponent(data);
           if (await showDialog(

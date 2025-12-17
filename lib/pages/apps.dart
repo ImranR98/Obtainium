@@ -1332,6 +1332,29 @@ class AppsPageState extends State<AppsPage> {
           : [getFilterButtonsRow()],
     );
   }
+
+  void openAppByStandardizedUrl(String standardizedUrl) {
+    AppsProvider appsProvider = context.read<AppsProvider>();
+
+    AppInMemory? match;
+    for (AppInMemory a in appsProvider.apps.values) {
+      if (a.app.url == standardizedUrl) {
+        match = a;
+        break;
+      }
+    }
+
+    if (match == null) {
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => AppPage(appId: match!.app.id),
+      ),
+    );
+  }
 }
 
 class AppsFilter {
