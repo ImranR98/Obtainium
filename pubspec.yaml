@@ -48,7 +48,7 @@ dependencies:
   permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
   device_info_plus: ^12.3.0
-  file_picker: ^10.3.7
+  file_picker: ^10.3.8
   animations: ^2.1.1
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
     git:
@@ -94,8 +94,8 @@ dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_foreground_task: ^9.1.0
-  flutter_markdown_plus: ^1.0.5
+  flutter_foreground_task: ^9.2.0
+  flutter_markdown_plus: ^1.0.7
 
 flutter_launcher_icons:
   android: "ic_launcher"
