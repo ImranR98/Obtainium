@@ -1333,12 +1333,12 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  void openAppByStandardizedUrl(String standardizedUrl) {
+  void openAppById(String appId) {
     AppsProvider appsProvider = context.read<AppsProvider>();
 
     AppInMemory? match;
     for (AppInMemory a in appsProvider.apps.values) {
-      if (a.app.url == standardizedUrl) {
+      if (a.app.id == appId) {
         match = a;
         break;
       }

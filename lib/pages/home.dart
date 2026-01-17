@@ -169,7 +169,7 @@ class _HomePageState extends State<HomePage> {
           ?.linkFn(data);
     }
 
-    goToExistingApp(String standardizedUrl) async {
+    goToExistingApp(String appId) async {
       // Go to Apps page
       switchToPage(0);
       while ((pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState ==
@@ -179,7 +179,7 @@ class _HomePageState extends State<HomePage> {
 
       // Navigate to the app
       (pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState
-          ?.openAppByStandardizedUrl(standardizedUrl);
+          ?.openAppById(appId);
     }
 
     interpretLink(Uri uri) async {
@@ -199,12 +199,12 @@ class _HomePageState extends State<HomePage> {
               .getSource(data)
               .standardizeUrl(data);
 
-          bool alreadyInstalled = appsProvider.apps.values.any(
-            (AppInMemory a) => a.app.url == standardizedUrl,
-          );
+          AppInMemory? existingApp = appsProvider.apps.values
+              .where((AppInMemory a) => a.app.url == standardizedUrl)
+              .firstOrNull;
 
-          if (alreadyInstalled) {
-            await goToExistingApp(standardizedUrl);
+          if (existingApp != null) {
+            await goToExistingApp(existingApp.app.id);
           } else {
             await goToAddApp(data);
           }
