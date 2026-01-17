@@ -23,23 +23,24 @@ var flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
+val keystorePropertiesExists = keystorePropertiesFile.exists()
+if (keystorePropertiesExists) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
     namespace = "dev.imranr.obtainium"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973" // 'flutter.ndkVersion' produces warnings (TODO can/should we switch back?)
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -52,31 +53,57 @@ android {
         versionName = flutterVersionName
     }
 
-    flavorDimensions("flavor")
+    flavorDimensions += "default"
 
     productFlavors {
         create("normal") {
-            dimension = "flavor"
+            dimension = "default"
             applicationIdSuffix = ""
         }
         create("fdroid") {
-            dimension = "flavor"
+            dimension = "default"
             applicationIdSuffix = ".fdroid"
         }
     }
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"].toString()
-            keyPassword = keystoreProperties["keyPassword"].toString()
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
             storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"].toString()
+            storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigningConfig = signingConfigs.getByName("release")
+            signingConfig = if (keystorePropertiesExists && releaseSigningConfig.storeFile != null) {
+                releaseSigningConfig
+            } else {
+                if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }) {
+                    logger.error(
+                        """
+                            You are trying to create a release build, but a key.properties file was not found.
+                            Falling back to the "debug" signing config.
+                            To sign a release build, a keystore properties file is required.
+
+                            The following is an example configuration.
+                            Create a file named [project]/android/key.properties that contains a reference to your keystore.
+                            Don't include the angle brackets (< >). They indicate that the text serves as a placeholder for your values.
+
+                            storePassword=<keystore password>
+                            keyPassword=<key password>
+                            keyAlias=<key alias>
+                            storeFile=<keystore file location>
+
+                            For more info, see:
+                            * https://docs.flutter.dev/deployment/android#sign-the-app
+                        """.trimIndent()
+                    )
+                }
+                signingConfigs.getByName("debug")
+            }
         }
         getByName("debug") {
             applicationIdSuffix = ".debug"

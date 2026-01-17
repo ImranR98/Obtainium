@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';

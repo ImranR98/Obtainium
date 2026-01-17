@@ -19,7 +19,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.2.9+2325
 
 environment:
-  sdk: ^3.8.1
+  sdk: ^3.10.0
+  flutter: ">=3.38.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -36,19 +37,19 @@ dependencies:
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.5
   flutter_fgbg: ^0.7.1
-  flutter_local_notifications: ^18.0.1
-  provider: ^6.1.5
-  http: ^1.4.0
-  webview_flutter: ^4.13.0
-  dynamic_color: ^1.7.0
+  flutter_local_notifications: ^19.5.0
+  provider: ^6.1.5+1
+  http: ^1.6.0
+  webview_flutter: ^4.13.1
+  dynamic_color: ^1.8.1
   html: ^0.15.6
-  shared_preferences: ^2.5.3
-  url_launcher: ^6.3.1
-  permission_handler: ^12.0.0+1
+  shared_preferences: ^2.5.4
+  url_launcher: ^6.3.2
+  permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
-  device_info_plus: ^12.1.0
-  file_picker: ^10.1.9
-  animations: ^2.0.11
+  device_info_plus: ^12.3.0
+  file_picker: ^10.3.8
+  animations: ^2.1.1
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
     git:
       url: https://github.com/ImranR98/android_package_installer
@@ -57,24 +58,23 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: master
-  share_plus: ^12.0.0
+  share_plus: ^12.0.1
   sqflite: ^2.4.2
-  easy_localization: ^3.0.7+1
+  easy_localization: ^3.0.8
   android_intent_plus: ^6.0.0
-  flutter_markdown: ^0.7.7+1
-  flutter_archive: ^6.0.3
+  flutter_archive: ^6.0.4
   hsluv: ^1.1.3
   connectivity_plus: ^7.0.0
   shared_storage: # TODO: Is this maintained?
     git:
       url: https://github.com/AlexBacich/shared-storage
       ref: master
-  crypto: ^3.0.6
-  bcrypt: ^1.1.3
-  app_links: ^6.4.0
-  background_fetch: ^1.3.8
-  equations: ^5.0.2
-  flex_color_picker: ^3.7.1
+  crypto: ^3.0.7
+  bcrypt: ^1.2.0
+  app_links: ^7.0.0
+  background_fetch: ^1.5.0
+  equations: ^6.0.0
+  flex_color_picker: ^3.8.0
   android_system_font:
     git:
       url: https://github.com/re7gog/android_system_font
@@ -94,7 +94,8 @@ dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_foreground_task: ^9.1.0
+  flutter_foreground_task: ^9.2.0
+  flutter_markdown_plus: ^1.0.7
 
 flutter_launcher_icons:
   android: "ic_launcher"
