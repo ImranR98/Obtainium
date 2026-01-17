@@ -28,6 +28,7 @@ import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/liteapks.dart';
 import 'package:obtainium/app_sources/moddroid.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
+import 'package:obtainium/app_sources/rockmods.dart';
 import 'package:obtainium/app_sources/rustore.dart';
 import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
@@ -1127,14 +1128,15 @@ class SourceProvider {
     Uptodown(),
     HuaweiAppGallery(),
     Tencent(),
-    CoolApk(),
-    LiteAPKs(),
-    Moddroid(),
     VivoAppStore(),
-    Jenkins(),
-    APKMirror(),
     RuStore(),
     Farsroid(),
+    CoolApk(),
+    RockMods(),
+    LiteAPKs(),
+    Moddroid(),
+    Jenkins(),
+    APKMirror(),
     TelegramApp(),
     NeutronCode(),
     DirectAPKLink(),
