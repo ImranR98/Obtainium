@@ -1332,6 +1332,24 @@ class AppsPageState extends State<AppsPage> {
           : [getFilterButtonsRow()],
     );
   }
+
+  void openAppById(String appId) {
+    AppsProvider appsProvider = context.read<AppsProvider>();
+
+    AppInMemory? app = appsProvider.apps[appId];
+
+    // Should exist, since we just looked it up, but just in case...
+    if (app == null) {
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => AppPage(appId: app.app.id),
+      ),
+    );
+  }
 }
 
 class AppsFilter {
