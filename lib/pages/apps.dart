@@ -1336,22 +1336,17 @@ class AppsPageState extends State<AppsPage> {
   void openAppById(String appId) {
     AppsProvider appsProvider = context.read<AppsProvider>();
 
-    AppInMemory? match;
-    for (AppInMemory a in appsProvider.apps.values) {
-      if (a.app.id == appId) {
-        match = a;
-        break;
-      }
-    }
+    AppInMemory? app = appsProvider.apps[appId];
 
-    if (match == null) {
+    // Should exist, since we just looked it up, but just in case...
+    if (app == null) {
       return;
     }
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (BuildContext context) => AppPage(appId: match!.app.id),
+        builder: (BuildContext context) => AppPage(appId: app.app.id),
       ),
     );
   }
