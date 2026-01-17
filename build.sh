@@ -31,6 +31,8 @@ if [ -z "$(which flutter)" ]; then
     export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
 fi
 
+# flutter pub upgrade --tighten --major-versions
+
 rm ./build/app/outputs/flutter-apk/* 2>/dev/null                                       # Get rid of older builds if any
 flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal # Build (both split and combined APKs)
 for file in ./build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
