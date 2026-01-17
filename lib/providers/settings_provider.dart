@@ -336,7 +336,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get checkUpdateOnDetailPage {
-    return prefs?.getBool('checkUpdateOnDetailPage') ?? true;
+    return prefs?.getBool('checkUpdateOnDetailPage') ?? false;
   }
 
   set checkUpdateOnDetailPage(bool show) {
