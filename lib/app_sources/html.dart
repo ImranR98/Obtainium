@@ -10,6 +10,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
   try {
+    ambiguousUrl = ambiguousUrl.trim();
     if (Uri.parse(ambiguousUrl).isAbsolute) {
       return ambiguousUrl; // #2315
     }
@@ -187,7 +188,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
         // Some links may not have valid encoding
       }
       return Uri.parse(
-        filterLinkByText ? element.value : link,
+        (filterLinkByText ? element.value : link).trim(),
       ).path.toLowerCase().endsWith('.apk');
     }).toList();
   }
