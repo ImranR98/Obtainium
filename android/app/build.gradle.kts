@@ -84,9 +84,10 @@ android {
                 if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }) {
                     logger.error(
                         """
-                            You are trying to create a release build, but a key.properties file was not found.
-                            Falling back to the "debug" signing config.
-                            To sign a release build, a keystore properties file is required.
+                            WARNING: You are trying to create a release build, but a key.properties file was not found.
+                                     You will need to sign the APKs separately.
+
+                            To sign a release build automatically, a keystore properties file is required.
 
                             The following is an example configuration.
                             Create a file named [project]/android/key.properties that contains a reference to your keystore.
@@ -102,7 +103,7 @@ android {
                         """.trimIndent()
                     )
                 }
-                signingConfigs.getByName("debug")
+                null
             }
         }
         getByName("debug") {
