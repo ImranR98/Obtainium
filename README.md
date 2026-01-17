@@ -30,10 +30,13 @@ Currently supported App sources:
   - [Uptodown](https://uptodown.com/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
-  - [CoolApk](https://coolapk.com/)
   - [vivo App Store (CN)](https://h5.appstore.vivo.com.cn/)
   - [RuStore](https://rustore.ru/)
   - [Farsroid](https://www.farsroid.com)
+  - [CoolApk](https://coolapk.com/)
+  - [RockMods](https://rockmods.net/)
+  - [LiteAPKs](https://liteapks.com/)
+  - [Moddroid](https://moddroid.com/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
 - Other - App-Specific:
