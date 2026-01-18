@@ -193,15 +193,31 @@ class GitLab extends AppSource {
               (e['direct_asset_url'] ?? e['url'] ?? '') as String,
             );
           })
-          .where((s) => s.key.isNotEmpty)
+          .where(
+            (s) =>
+                s.key.isNotEmpty &&
+                (s.value.toLowerCase().endsWith('.apk') ||
+                    s.value.toLowerCase().endsWith(
+                      '.xapk',
+                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+          )
           .toList();
       var uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
           .split('](')
           .join('\n')
           .split('.apk)')
           .join('.apk\n')
+          .split('.xapk)')
+          .join('.xapk\n')
           .split('\n')
-          .where((s) => s.startsWith('/uploads/') && s.endsWith('apk'))
+          .where(
+            (s) =>
+                s.startsWith('/uploads/') &&
+                (s.endsWith('apk') ||
+                    s.endsWith(
+                      'xapk',
+                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+          )
           .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
           .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))
           .toList();
@@ -236,6 +252,9 @@ class GitLab extends AppSource {
       apkDetailsList = apkDetailsList
           .where((e) => e.apkUrls.isNotEmpty)
           .toList();
+      if (apkDetailsList.isEmpty) {
+        throw NoReleasesError();
+      }
       finalResult = apkDetailsList.first;
     }
 
