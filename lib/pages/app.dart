@@ -1,4 +1,3 @@
-import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +14,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:android_package_manager/android_package_manager.dart'
-    hide LaunchMode;
 
 class AppPage extends StatefulWidget {
   const AppPage({
@@ -37,39 +34,6 @@ class _AppPageState extends State<AppPage> {
   bool _wasWebViewOpened = false;
   AppInMemory? prevApp;
   bool updating = false;
-  bool hasMultipleSigners = false;
-  List<String> certificateHashes = [];
-
-  Future<void> _loadAppHashes() async {
-    final AndroidPackageManager pm = AndroidPackageManager();
-
-    final packageInfo = await pm.getPackageInfo(
-      packageName: prevApp?.app.id as String,
-      flags: PackageInfoFlags({PMFlag.getSigningCertificates}),
-    );
-
-    final multipleSigners =
-        packageInfo?.signingInfo?.hasMultipleSigners ?? false;
-
-    // https://developer.android.com/reference/android/content/pm/SigningInfo#getApkContentsSigners()
-    final signatures = hasMultipleSigners
-        ? packageInfo?.signingInfo?.apkContentSigners
-        : packageInfo?.signingInfo?.signingCertificateHistory;
-
-    final hashes =
-        signatures?.map((signature) {
-          final digest = sha256.convert(signature);
-          return digest.bytes
-              .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-              .join(':');
-        }).toList() ??
-        [];
-
-    setState(() {
-      hasMultipleSigners = multipleSigners;
-      certificateHashes = hashes;
-    });
-  }
 
   @override
   void initState() {
@@ -146,7 +110,6 @@ class _AppPageState extends State<AppPage> {
         app != null &&
         settingsProvider.checkUpdateOnDetailPage) {
       prevApp = app;
-      _loadAppHashes();
       getUpdate(app.app.id);
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
@@ -295,20 +258,20 @@ class _AppPageState extends State<AppPage> {
             ),
 
           /* Certificate Hashes */
-          if (installed && certificateHashes.isNotEmpty)
+          if (app != null && app.certificateHashes.isNotEmpty)
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 40),
                 Text(
-                  "${plural('certificateHash', certificateHashes.length)}"
-                  "${hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
+                  "${plural('certificateHash', app.certificateHashes.length)}"
+                  "${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 12),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: certificateHashes.map((hash) {
+                  children: app.certificateHashes.map((hash) {
                     return GestureDetector(
                       onLongPress: () {
                         Clipboard.setData(ClipboardData(text: hash));
