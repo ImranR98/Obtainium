@@ -70,7 +70,9 @@ const main = async () => {
                                     const subKeys = Object.keys(templateTranslation[k])
                                     for (let n in subKeys) {
                                         const kk = subKeys[n]
-                                        thisTranslation[k][kk] = await translateText(thisTranslation[k][kk], lang)
+                                        if (thisTranslation[k][kk].indexOf('{') == -1) {
+                                            thisTranslation[k][kk] = await translateText(thisTranslation[k][kk], lang)
+                                        }
                                     }
                                 }
                             } catch (e) {
