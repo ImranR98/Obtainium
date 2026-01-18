@@ -238,6 +238,20 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
           '\\d+.\\d+.\\d+';
       additionalSettings = replacementAdditionalSettings;
     }
+    // Signal from the website from before the apk filenames stopped including the version (#2715)
+    if (json['url'] == 'https://updates.signal.org/android/latest.json' &&
+        json['id'] == 'org.thoughtcrime.securesms' &&
+        json['overrideSource'] == null &&
+        additionalSettings['versionExtractWholePage'] == false &&
+        json['lastUpdateCheck'] != null) {
+      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
+        HTML().combinedAppSpecificSettingFormItems,
+      );
+      replacementAdditionalSettings['versionExtractWholePage'] = true;
+      replacementAdditionalSettings['versionExtractionRegEx'] = '"versionName"\\s*:\\s*"([^"]*)"';
+      replacementAdditionalSettings['matchGroupToUse'] = '\$1';
+      additionalSettings = replacementAdditionalSettings;
+    }
     // WhatsApp from before it was removed should be converted to HTML (#1943)
     if (json['url'] == 'https://whatsapp.com' &&
         json['id'] == 'com.whatsapp' &&
