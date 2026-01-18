@@ -55,6 +55,25 @@ class AppInMemory {
 
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
+
+  bool get hasMultipleSigners {
+    return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
+  }
+
+  List<String> get certificateHashes {
+    // https://developer.android.com/reference/android/content/pm/SigningInfo#getApkContentsSigners()
+    final signatures = this.hasMultipleSigners
+        ? installedInfo?.signingInfo?.apkContentSigners
+        : installedInfo?.signingInfo?.signingCertificateHistory;
+
+    return signatures?.map((signature) {
+      final digest = sha256.convert(signature);
+      return digest.bytes
+        .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
+        .join(':');
+      }).toList() ??
+      [];
+  }
 }
 
 class DownloadedApk {
@@ -480,7 +499,9 @@ Future<File> downloadFile(
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
-  return await pm.getInstalledPackages() ?? [];
+  return await pm.getInstalledPackages(
+      flags: PackageInfoFlags({PMFlag.getSigningCertificates})
+  ) ?? [];
 }
 
 Future<PackageInfo?> getInstalledInfo(

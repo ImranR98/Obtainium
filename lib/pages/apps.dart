@@ -279,17 +279,19 @@ class AppsPageState extends State<AppsPage> {
         // Handle null dates: apps with unknown release dates are grouped at the end
         final aDate = a.app.releaseDate;
         final bDate = b.app.releaseDate;
+        final isDescending =
+            settingsProvider.sortOrder == SortOrderSettings.descending;
         if (aDate == null && bDate == null) {
           // Both null: sort by name for consistency
           result = ((a.name + a.author).toLowerCase()).compareTo(
             (b.name + b.author).toLowerCase(),
           );
         } else if (aDate == null) {
-          // a has no date, push to end (ascending) or beginning (will be reversed for descending)
-          result = 1;
+          // a has no date, always push to end regardless of sort direction
+          result = isDescending ? -1 : 1;
         } else if (bDate == null) {
-          // b has no date, push to end
-          result = -1;
+          // b has no date, always push to end regardless of sort direction
+          result = isDescending ? 1 : -1;
         } else {
           result = aDate.compareTo(bDate);
         }
