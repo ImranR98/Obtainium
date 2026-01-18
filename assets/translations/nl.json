@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google heeft aangekondigd dat vanaf 2026/2027 alle apps op \"gecertificeerde\" Android-apparaten de ontwikkelaar nodig hebben om persoonlijke identiteitsgegevens rechtstreeks aan Google te verzenden.\n\nAangezien de ontwikkelaars van deze app niet akkoord gaan met deze eis, zal Progressionium niet meer werken op gecertificeerde Android-apparaten na die tijd.",
     "googleVerificationWarningP2": "Ga naar https://keepandroidopen.org/ voor meer informatie.",
     "googleVerificationWarningP3": "Merk op dat het op korte termijn mogelijk kan blijven om \"niet-geverifieerde\" (niet-conforme) apps te installeren via een \"geavanceerde flow\" proces dat Google heeft beloofd te implementeren na brede backlash naar hun aankondiging, maar ze hebben niet gedetailleerd hoe dit zou werken, dus het is onduidelijk of het echt zal behouden gebruikersvrijheden op enige praktische manier.\n\nIn ieder geval, Google's zet is een belangrijke stap naar het einde van vrije, algemene computer voor individuen.\n\nNiet-gecertificeerde besturingssystemen, zoals GrapheneOS, mogen hierdoor niet worden beïnvloed zolang ze mogen blijven bestaan.",
+    "multipleSigners": "Meerdere Ondertekenaars",
     "removeAppQuestion": {
         "one": "App verwijderen?",
         "other": "Apps verwijderen?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK's"
+    },
+    "certificateHash": {
+        "one": "Certificaat Hash",
+        "other": "Certificaat Hashes"
     }
 }

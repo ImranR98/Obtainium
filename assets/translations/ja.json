@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Googleは、2026年から2027年以降、「認定」Androidデバイス上のすべてのアプリにおいて、開発者が個人情報をGoogleに直接提出することを義務付けると発表しました。\n\nこのアプリの開発者はこの要件に同意しないため、それ以降Obtainiumは認定Androidデバイスでは動作しなくなります。",
     "googleVerificationWarningP2": "詳細については、https://keepandroidopen.org/ をご覧ください。",
     "googleVerificationWarningP3": "なお、短期的には、Googleが発表後に広範な反発を受けて実装を約束した「高度なフロー」プロセスを通じて、「未検証」（非準拠）のアプリをインストールし続けることが可能になるかもしれません。しかし、その具体的な仕組みは明らかにされておらず、ユーザーの自由が実質的に保たれるかどうかは不明です。\n\nいずれにせよ、Googleのこの動きは、個人向けの自由な汎用コンピューティングの終焉に向けた大きな一歩です。\n\nGrapheneOSのような非認定OSは、その存在が許される限り、この影響を受けないはずです。",
+    "multipleSigners": "複数の署名者",
     "removeAppQuestion": {
         "one": "アプリを削除しますか？",
         "other": "アプリを削除しますか？"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
+    },
+    "certificateHash": {
+        "one": "証明書ハッシュ",
+        "other": "証明書のhashes"
     }
 }

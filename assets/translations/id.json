@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google has announced that, starting in 2026 / 2027, all apps on \"certified\" Android devices will needs the developer to submit personal identity details directly to Google.\n\nKarena pengembang aplikasi ini tidak setuju dengan persyaratan ini, Obtainium tidak akan lagi bekerja pada perangkat Android bersertifikat setelah waktu itu.",
     "googleVerificationWarningP2": "Pergi ke https: / / keep androidpen.org / untuk informasi lebih lanjut.",
     "googleVerificationWarningP3": "Perlu dicatat bahwa dalam jangka pendek, mungkin terus mungkin untuk memasang aplikasi \"belum diverifikasi\" (bukan -compliant) melalui proses \"arus maju\" yang Google janjikan untuk mengimplementasikan setelah reaksi luas terhadap pengumuman mereka, tetapi mereka tidak rinci bagaimana hal ini akan bekerja sehingga tidak jelas apakah itu benar-benar akan menjaga kebebasan pengguna dengan cara praktis.\n\nDalam hal apapun, Google bergerak adalah langkah yang signifikan menuju akhir bebas, tujuan umum komputasi untuk individu.\n\nOS tidak bersertifikat, seperti GrapheneOS, seharusnya tidak terpengaruh oleh hal ini selama mereka diizinkan untuk terus ada.",
+    "multipleSigners": "Tanda Tangan Ganda",
     "removeAppQuestion": {
         "one": "Hapus aplikasi?",
         "other": "Hapus aplikasi?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
+    },
+    "certificateHash": {
+        "one": "Hash Sertifikat",
+        "other": "Hashes Sertifikat"
     }
 }

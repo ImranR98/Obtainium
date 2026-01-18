@@ -332,7 +332,7 @@
     "documentationLinksNote": "아래에 링크된 Obtainium 깃허브 페이지에는 앱 사용 방법을 이해하는 데 도움이 되는 동영상, 기사, 토론 및 기타 리소스에 대한 링크가 포함되어 있습니다.",
     "batteryOptimizationNote": "Obtainium의 OS 배터리 최적화를 비활성화하면 백그라운드 다운로드가 더 안정적으로 작동할 수 있습니다.",
     "fileDeletionError": "파일을 삭제하지 못했습니다(수동으로 삭제한 후 다시 시도하세요): \"{}\"",
-    "foregroundService": "오베티움 포그라운드 서비스",
+    "foregroundService": "옵테니움 포그라운드 서비스",
     "foregroundServiceExplanation": "업데이트 확인을 위해 포그라운드 서비스 사용(안정성 향상, 전력 소비량 증가)",
     "fgServiceNotice": "이 알림은 백그라운드 업데이트 확인에 필요합니다(OS 설정에서 숨길 수 있음).",
     "excludeSecrets": "비밀 제외",
@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google은 2026/2027에서 시작하여 \"certified\" Android 기기의 모든 앱은 Google에 직접 개인 식별 정보를 제출하기 위해 개발자가 필요합니다.\n\n이 응용 프로그램의 개발자가이 요구 사항에 동의하지 않기 때문에, 얻은 것은 그 시간이 지나면 인증 된 Android 장치에서 더 이상 작동하지 않습니다.",
     "googleVerificationWarningP2": "Https://keepandroidopen.org/로 이동하세요.",
     "googleVerificationWarningP3": "이 웹 사이트는 애플 리케이션에 전념. 우리는 정품 앱과 게임을 제공 할 목적으로이 사이트를 만들었습니다. 4AppsApk 최고의 안드로이드 애플 리케이션을위한 무료 APK 파일 다운로드 서비스, 계략.\n\n어떤 경우, Google의 이동은 개인을위한 무료, 범용 컴퓨팅의 끝으로 중요한 단계입니다.\n\nGrapheneOS와 같은 비 인증 된 OSes는 존재하지 않아야합니다.",
+    "multipleSigners": "다수 Signers",
     "removeAppQuestion": {
         "one": "앱을 제거하시겠습니까?",
         "other": "앱을 제거하시겠습니까?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
+    },
+    "certificateHash": {
+        "one": "인증서 해시",
+        "other": "인증서 해시"
     }
 }

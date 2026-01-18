@@ -17,14 +17,15 @@ const neverAutoTranslate = {
     theme: ['de'],
     appId: ['de'],
     app: ['de'],
+    apps: ['de', 'gl'],
     placeholder: ['pl'],
     importExport: ['fr'],
-    url: ['fr'],
+    url: ['fr', 'ca', 'de', 'gl', 'pt', 'pt-BR'],
     vivoAppStore: ['*'],
     coolApk: ['*'],
     obtainiumImport: ['nl'],
     appLogs: ['nl'],
-    apks: ['vi'],
+    apk: ['vi', 'ar', 'ca', 'de', 'es', 'gl'],
     minute: ['fr'],
     pseudoVersion: ['da'],
     tencentAppStore: ['*']
@@ -61,16 +62,18 @@ const main = async () => {
                     const lang = file.split('/').pop().split('.')[0]
                     if (!neverAutoTranslate[k] || (neverAutoTranslate[k].indexOf('*') < 0 && neverAutoTranslate[k].indexOf(lang) < 0)) {
                         const reportLine = `${file} :::: ${k} :::: ${JSON.stringify(thisTranslation[k])}`
-                        if (translate.key) {
+                        if (translate.key !== undefined) {
                             try {
                                 if (typeof templateTranslation[k] == 'string') {
                                     thisTranslation[k] = await translateText(thisTranslation[k], lang)
-                                // } else {
-                                //     const subKeys = Object.keys(templateTranslation[k])
-                                //     for (let n in subKeys) {
-                                //         const kk = subKeys[n]
-                                //         thisTranslation[k][kk] = await translateText(thisTranslation[k][kk], lang)
-                                //     }
+                                } else {
+                                    const subKeys = Object.keys(templateTranslation[k])
+                                    for (let n in subKeys) {
+                                        const kk = subKeys[n]
+                                        if (thisTranslation[k][kk].indexOf('{') == -1) {
+                                            thisTranslation[k][kk] = await translateText(thisTranslation[k][kk], lang)
+                                        }
+                                    }
                                 }
                             } catch (e) {
                                 console.log(`${reportLine} :::: ${e}`)

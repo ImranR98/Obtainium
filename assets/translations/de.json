@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google hat bekannt gegeben, dass, ab 2026/2027, alle Apps auf \"zertifizierten\" Android-Geräten den Entwickler benötigen, um persönliche Identitätsdetails direkt an Google einzureichen.\n\nDa die Entwickler dieser App dieser Anforderung nicht zustimmen, Obtainium wird nicht mehr auf zertifizierten Android-Geräten nach dieser Zeit arbeiten.",
     "googleVerificationWarningP2": "Weitere Informationen finden Sie unter https://keepandroidopen.org/.",
     "googleVerificationWarningP3": "Beachten Sie, dass es kurzfristig weiterhin möglich sein kann, \"unverifizierte\" (nicht-konforme) Apps durch einen \"fortgeschrittenen Flow\"-Prozess zu installieren, den Google versprochen hat, nach einem breiten Rückschluss auf ihre Ankündigung umzusetzen, aber sie haben nicht detailliert, wie dies funktioniert, so dass es unklar ist, ob es wirklich Benutzerfreiheiten in praktischer Weise erhalten wird.\n\nIn jedem Fall ist Googles Bewegung ein wesentlicher Schritt zum Ende des kostenlosen, universellen Computers für Einzelpersonen.\n\nNicht zertifizierte Betriebssysteme, wie GrapheneOS, sollten dadurch nicht beeinflusst werden, solange sie weiterhin existieren dürfen.",
+    "multipleSigners": "Mehrere Zeichen",
     "removeAppQuestion": {
         "one": "App entfernen?",
         "other": "Apps entfernen?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APKs"
+    },
+    "certificateHash": {
+        "one": "Zertifikat Hash",
+        "other": "Zertifikat Hashes"
     }
 }

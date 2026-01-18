@@ -65,15 +65,17 @@ class Uptodown extends AppSource {
     String? author = html.querySelector('#author-link')?.innerHtml.trim();
     var detailElements = html
         .querySelectorAll('#technical-information td')
-        .map((e) => e.innerHtml.trim())
-        .where((e) => !e.startsWith('<'))
+        .map((e) => e.text.trim())
+        .where((e) => e.isNotEmpty)
         .toList();
-    String? appId = detailElements.elementAtOrNull(12);
-    String? dateStr = detailElements.elementAtOrNull(8);
+    String? appId = detailElements.lastOrNull;
+    String? dateStr = detailElements.elementAtOrNull(detailElements.length - 5);
     String? fileId = html
         .querySelector('#detail-app-name')
         ?.attributes['data-file-id'];
-    String? extension = detailElements.elementAtOrNull(9)?.toLowerCase();
+    String? extension = detailElements
+        .elementAtOrNull(detailElements.length - 4)
+        ?.toLowerCase();
     return Map.fromEntries([
       MapEntry('version', version),
       MapEntry('appId', appId),

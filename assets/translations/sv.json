@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google har meddelat att alla appar på \"certifierade\" Android-enheter kommer att kräva att utvecklaren skickar personuppgifter direkt till Google.\n\nEftersom utvecklarna av denna app inte samtycker till detta krav kommer Obtainium inte längre att arbeta med certifierade Android-enheter efter den tiden.",
     "googleVerificationWarningP2": "Gå till https://keepandroidopen.org/ för mer information.",
     "googleVerificationWarningP3": "Observera att på kort sikt kan det fortsätta att vara möjligt att installera \"overifierade\" (icke-kompatibla) appar genom en \"avancerad flöde\" -process som Google har lovat att genomföra efter bred backlash till deras tillkännagivande, men de har inte detaljerat hur detta skulle fungera så det är oklart om det verkligen kommer att bevara användarfrihet på något praktiskt sätt.\n\nGoogles flytt är ett viktigt steg mot slutet av gratis, allmänt ändamål datorer för individer.\n\nIcke-certifierade operativsystem, som GrapheneOS, bör inte påverkas av detta så länge de får fortsätta att existera.",
+    "multipleSigners": "Flera signers",
     "removeAppQuestion": {
         "one": "Ta Bort App?",
         "other": "Ta Bort Appar?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK:er"
+    },
+    "certificateHash": {
+        "one": "Certificate Hash",
+        "other": "Certificate Hashes"
     }
 }

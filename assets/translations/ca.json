@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google ha anunciat que, començant en 2026/2027, totes les aplicacions en dispositius d'Android \"que requereixen que el desenvolupador enviï els detalls personals directament a Google.\n\nDes que els desenvolupadors d'aquesta aplicació no estan d'acord amb aquest requisit, l' obtenció ja no funcionarà en els dispositius certificats d'Android.",
     "googleVerificationWarningP2": "Aneu a https://buitandoideopen.org/ per a més informació.",
     "googleVerificationWarningP3": "Tingueu en compte que en el terme curt, pot continuar sent possible instal· lar aplicacions \"inverificats\" (no compatible) mitjançant un procés de flux \"advince\" que Google ha promès implementar després d'una gran reacció al seu anunci, però no han detallat com funcionaria, de manera que és clar si es preservarà realment les llibertats dels usuaris de cap manera pràctica.\n\nEn qualsevol cas, el moviment de Google és un pas significatiu cap al final de la informàtica lliure i general deficient per als individus.\n\nEls SO no validats, com el GraphenOS, no haurien de ser afectats per això sempre que se'ls permeti continuar existint.",
+    "multipleSigners": "Signadors múltiples",
     "removeAppQuestion": {
         "one": "¿Suprimeixo l'aplicació?",
         "other": "¿Suprimeixo les aplicacions?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APKs"
+    },
+    "certificateHash": {
+        "one": "Suma de certificat",
+        "other": "Resums del certificat"
     }
 }
