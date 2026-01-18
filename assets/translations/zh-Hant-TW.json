@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google宣佈,從2026/2027年開始,所有在\"認證\"Android設備上的應用程序都將要求開發者直接向Google提交個人身份細節.\n\n由於此應用程序的開發者不同意這一要求,Obtainium在此之後將不再在認證的Android設備上工作.",
     "googleVerificationWarningP2": "詳情請訪問https://keepandroidopen.org/.",
     "googleVerificationWarningP3": "請注意,在短期內,通過Google在對其公告進行廣泛的反彈後承諾執行的\"先進流程\"程序,可能繼續安裝\"未經驗證\"(不符合要求)的應用軟件,但他們沒有詳細説明這將如何運作,因此不清楚它是否會以任何實際方式真正維護用户自由.\n\n無論如何,Google的舉動是結束個人通用計算機自由的重要一步.\n\n未經認證的OS,如GrapheneOS,只要允許繼續存在,就不應受到影響.",
+    "multipleSigners": "多个签名人",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} 個 APK",
         "other": "{} 個 APK"
+    },
+    "certificateHash": {
+        "one": "证书散列",
+        "other": "Hashes 证书"
     }
 }

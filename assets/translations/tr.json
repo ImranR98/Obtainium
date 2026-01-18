@@ -102,8 +102,8 @@
     "searchX": "{}'yi ara",
     "noResults": "Sonuç bulunamadı",
     "importX": "{}'yi içe aktar",
-    "importedAppsIdDisclaimer": "Imported apps may incorrectly show as \"not installed\".\nTo fix this, re-install them through Obtainium.\nThis should not affect app data.\n\nOnly affects URL and third-party import methods.",
-    "importErrors": "Import errors",
+    "importedAppsIdDisclaimer": "İthalatlanmış uygulamalar, \"görünmez\" olarak yanlış gösterebilir.\nBunu düzeltmek için, onları satın alma yoluyla yeniden yükleyin.\nBu uygulama verilerini etkilemez.\n\nSadece URL ve üçüncü taraf ithalat yöntemlerini etkiler.",
+    "importErrors": "İthalat hataları",
     "importedXOfYApps": "{}/{} uygulama içe aktarıldı.",
     "followingURLsHadErrors": "Şu URL'lerde hata oluştu:",
     "selectURL": "URL seç",
@@ -404,7 +404,7 @@
         "other": "{} APK'lar"
     },
     "certificateHash": {
-      "one": "Sertifika Hash'i",
-      "other": "Sertifika Hash'leri"
+        "one": "Sertifika Hash'i",
+        "other": "Sertifika Hash'leri"
     }
 }

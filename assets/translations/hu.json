@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "A Google bejelentette, hogy 2026/2027-től kezdődően az összes alkalmazáshoz, amely „tanúsított” (certified) Android eszközökön fut, a fejlesztőknek a személyes azonosító adataikat közvetlenül a Google-nek kell majd benyújtaniuk.\n\nMivel az Obtainium alkalmazás fejlesztői nem fogadják el ezt a követelményt, ezért az Obtainium az említett időpont után már nem fog működni a tanúsított Android eszközökön.",
     "googleVerificationWarningP2": "További információkért látogasson el a https://keepandroidopen.org/ weboldalra.",
     "googleVerificationWarningP3": "Fontos megjegyezni, hogy rövid távon még lehetséges lehet az „ellenőrizetlen” (nem megfelelő) alkalmazások telepítése egy „speciális folyamaton” keresztül, amelyre a Google ígéretet tett, hogy megvalósít a bejelentésüket követő széles körű felháborodás miatt. Azonban azt nem részletezték, hogy hogyan is működne ez, ezért nem világos, hogy ez gyakorlatilag megőrzi-e a felhasználók szabadsághoz való jogait.\n\nMindenesetre a Google lépése jelentős előrelépés a felhasználók számára elérhető szabad, általános célú alkalmazások megszűnése felé.\n\nA nem tanúsított operációs rendszereket, mint például a GrapheneOS, ez nem érinti mindaddig, amíg működhetnek.",
+    "multipleSigners": "Több jel",
     "removeAppQuestion": {
         "one": "Biztosan eltávolítja az alkalmazást?",
         "other": "Biztosan eltávolítja az alkalmazásokat?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
+    },
+    "certificateHash": {
+        "one": "Tanúsítvány hash",
+        "other": "Tanúsítványhamisítások"
     }
 }

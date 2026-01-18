@@ -190,7 +190,7 @@
     "downloadingX": "Descargando {}",
     "downloadX": "Descargar {}",
     "downloadedX": "Descargado {}",
-    "releaseAsset": "Release asset",
+    "releaseAsset": "Liberar activos",
     "downloadNotifDescription": "Informa á usuaria do progreso da descarga da app",
     "noAPKFound": "Non se atopa o APK",
     "noVersionDetection": "Non se detecta a versión",
@@ -265,7 +265,7 @@
     "trimVersionString": "Recortar texto da versión con RegEx",
     "matchGroupToUseForX": "Buscar no grupo a usar para \"{}\"",
     "matchGroupToUse": "Buscar no grupo a usar para a extración por RegEX do texto da versión",
-    "highlightTouchTargets": "Highlight less obvious touch targets",
+    "highlightTouchTargets": "Obxectivos menos evidentes",
     "pickExportDir": "Elixir directorio de exportación",
     "autoExportOnChanges": "Exportar automaticamente ao haber cambios",
     "includeSettings": "Incluír axustes",
@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Google anunciou que, comezando en 2026/2027, todas as apps en dispositivos \"certificados\" Android van precisar que as desenvolvedoras envíen detalles da súa identidade persoal directamente a Google.\n\nComo non estamos de acordo con este proceder, Obtainium non vai funcionar en dispositivos certificados chegado o momento.",
     "googleVerificationWarningP2": "Vai a https://keepandroidopen.org/ para máis información.",
     "googleVerificationWarningP3": "A curto prazo pode seguir dispoñible a instalación de aplicacións \"non verificadas\" (non-compliant) cun procedemento \"avanzado\" que Google prometeu implementar despois das críticas recibidas, pero aínda non publicaron detalles sobre isto e non está claro se realmente será posible levalo adiante de xeito práctico.\n\nEn todo caso, os movementos de Google son indicativos sobre o desexo de acabar coa liberdade, o propósito de uso xeral das computadoras por parte das persoas.\n\nOs sistemas operativos non certificados, como GrapheneOS, non se deberían ver afectados por isto mentras lles permitan existir.",
+    "multipleSigners": "Múltiples Signadores",
     "removeAppQuestion": {
         "one": "Remove app?",
         "other": "Retirar apps?"
@@ -401,5 +402,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APKs"
+    },
+    "certificateHash": {
+        "one": "Certificado hash",
+        "other": "Certificado Hashes"
     }
 }

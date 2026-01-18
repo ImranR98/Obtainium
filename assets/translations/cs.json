@@ -342,6 +342,7 @@
     "googleVerificationWarningP1": "Společnost Google oznámila, že počínaje rokem 2026 / 2027 budou všechny aplikace na \"certifikovaných\" zařízeních pro Android vyžadovat, aby vývojář předložil osobní údaje o identitě přímo společnosti Google.\n\nVzhledem k tomu, vývojáři této aplikace nesouhlasí s tímto požadavkem, Obstainium již nebude pracovat na certifikovaných Android zařízení po této době.",
     "googleVerificationWarningP2": "Další informace získáte na adrese https: / / keepandroidopen.org.",
     "googleVerificationWarningP3": "Všimněte si, že v krátkodobém horizontu může být i nadále možné instalovat \"neověřené\" (nevyhovující) aplikace prostřednictvím procesu \"pokročilého toku\", který Google slíbil implementovat po širokém odporu k jejich oznámení, ale neupřesnili, jak by to mělo fungovat, takže není jasné, zda bude skutečně zachovávat uživatelskou svobodu jakýmkoli praktickým způsobem.\n\nV každém případě je krok společnosti Google významným krokem ke konci volného, všeobecného výpočetní techniky pro jednotlivce.\n\nNecertifikované Osy, jako je GrapheneOS, by tím neměly být ovlivněny, pokud budou nadále existovat.",
+    "multipleSigners": "Několik signers",
     "removeAppQuestion": {
         "one": "Odstranit aplikaci?",
         "other": "Odstranit aplikace?"
@@ -414,5 +415,9 @@
     "apk": {
         "one": "{} APK",
         "other": "{} APK"
+    },
+    "certificateHash": {
+        "one": "Haš osvědčení",
+        "other": "Uzávěry certifikátů"
     }
 }
