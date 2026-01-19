@@ -32,10 +32,10 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "355f897e92a58a803f91d9270d389d9ec40ba550"
+      resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       url: "https://github.com/re7gog/android_system_font"
     source: git
-    version: "1.0.0"
+    version: "1.1.0"
   animations:
     dependency: "direct main"
     description:
@@ -974,10 +974,10 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: c4349ceb03ae7293987cc0290ef06761e62c082e
-      url: "https://github.com/wilver06w/shizuku_apk_installer"
+      resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
+      url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git
-    version: "0.0.1"
+    version: "1.2.0"
   sky_engine:
     dependency: transitive
     description: flutter
