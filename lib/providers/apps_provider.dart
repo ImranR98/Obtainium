@@ -1000,7 +1000,7 @@ class AppsProvider with ChangeNotifier {
         apkFilePath: allAPKs.join(','),
       );
     } else {
-      code = await ShizukuApkInstaller.installAPK(
+      code = await ShizukuApkInstaller().installAPK(
         file.file.uri.toString(),
         shizukuPretendToBeGooglePlay ? "com.android.vending" : "",
       );
@@ -1300,8 +1300,8 @@ class AppsProvider with ChangeNotifier {
             throw ObtainiumError(tr('cancelled'));
           }
         } else {
-          switch ((await ShizukuApkInstaller.checkPermission())!) {
-            case 'binder_not_found':
+          switch ((await ShizukuApkInstaller().checkPermission())!) {
+            case 'services_not_found':
               throw ObtainiumError(tr('shizukuBinderNotFound'));
             case 'old_shizuku':
               throw ObtainiumError(tr('shizukuOld'));
