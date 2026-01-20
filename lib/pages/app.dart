@@ -45,44 +45,60 @@ class _AppPageState extends State<AppPage> {
     }
     var appValue = app!;
     var pendingUrl = appValue.app.pendingRepoRenameUrl!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final titleColor = colorScheme.onSurface;
+    final bodyColor = colorScheme.onSurfaceVariant;
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.amber),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.amber.withOpacity(0.1),
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(10),
+        color: colorScheme.surface,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.amber,
-              ),
+              Icon(Icons.info_outline, color: colorScheme.primary, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   tr('repoRenamed'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: titleColor,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(tr('repoRenamedExplanation')),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          Text(
+            tr('repoRenamedExplanation'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: bodyColor),
+          ),
+          const SizedBox(height: 4),
           Text(
             '${tr('newUrl')}: $pendingUrl',
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(
+              fontStyle: FontStyle.italic,
+              color: bodyColor,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: bodyColor,
+                ),
                 onPressed: () async {
                   await appsProvider.updatePendingRepoRename(
                     appValue.app.id,
@@ -92,7 +108,12 @@ class _AppPageState extends State<AppPage> {
                 child: Text(tr('dismiss')),
               ),
               const SizedBox(width: 8),
-              ElevatedButton(
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  backgroundColor: colorScheme.primary.withOpacity(0.08),
+                  side: BorderSide(color: colorScheme.primary),
+                ),
                 onPressed: () async {
                   await appsProvider.acceptRepoRename(
                     appValue.app.id,

@@ -551,26 +551,22 @@ class AppsPageState extends State<AppsPage> {
     }
 
     Widget buildRepoMovedRow() {
+      final colorScheme = Theme.of(context).colorScheme;
+      final infoColor = colorScheme.primary.withOpacity(0.7);
+      final textColor = colorScheme.onSurfaceVariant;
       return Padding(
         padding: const EdgeInsets.only(top: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.amber,
-              size: 14,
-            ),
+            Icon(Icons.info_outline, color: infoColor, size: 14),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
                 tr('repoRenamed'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.amber,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: textColor, fontSize: 12),
               ),
             ),
           ],
