@@ -35,6 +35,103 @@ class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
   bool updating = false;
 
+  Widget buildRepoRenameWarning({
+    required AppInMemory? app,
+    required AppsProvider appsProvider,
+    required Future<void> Function(String id) onUpdate,
+  }) {
+    if (app?.app.hasPendingRepoRename != true) {
+      return const SizedBox.shrink();
+    }
+    var appValue = app!;
+    var pendingUrl = appValue.app.pendingRepoRenameUrl!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final titleColor = colorScheme.onSurface;
+    final bodyColor = colorScheme.onSurfaceVariant;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(10),
+        color: colorScheme.surface,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: colorScheme.primary, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  tr('repoRenamed'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: titleColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            tr('repoRenamedExplanation'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: bodyColor),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${tr('newUrl')}: $pendingUrl',
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(
+              fontStyle: FontStyle.italic,
+              color: bodyColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: bodyColor,
+                ),
+                onPressed: () async {
+                  await appsProvider.updatePendingRepoRename(
+                    appValue.app.id,
+                    null,
+                  );
+                },
+                child: Text(tr('dismiss')),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  backgroundColor: colorScheme.primary.withOpacity(0.08),
+                  side: BorderSide(color: colorScheme.primary),
+                ),
+                onPressed: () async {
+                  await appsProvider.acceptRepoRename(
+                    appValue.app.id,
+                    pendingUrl,
+                  );
+                  if (mounted) {
+                    onUpdate(appValue.app.id);
+                  }
+                },
+                child: Text(tr('updateUrl')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,8 +183,11 @@ class _AppPageState extends State<AppPage> {
           appsProvider.saveApps([appsProvider.apps[id]!.app]);
         }
       } catch (err) {
-        // ignore: use_build_context_synchronously
-        showError(err, context);
+        if (err is RepositoryRenamedError && context.mounted) {
+          await appsProvider.updatePendingRepoRename(id, err.newUrl);
+        } else if (context.mounted) {
+          showError(err, context);
+        }
       } finally {
         setState(() {
           updating = false;
@@ -168,6 +268,11 @@ class _AppPageState extends State<AppPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
             child: Column(
               children: [
+                buildRepoRenameWarning(
+                  app: app,
+                  appsProvider: appsProvider,
+                  onUpdate: (id) => getUpdate(id),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   versionLines,

@@ -361,16 +361,19 @@ class AppsPageState extends State<AppsPage> {
       listedApps = [...listedApps, ...temp];
     }
 
+    var tempRenamed = [];
     var tempPinned = [];
     var tempNotPinned = [];
     for (var a in listedApps) {
-      if (a.app.pinned) {
+      if (a.app.hasPendingRepoRename) {
+        tempRenamed.add(a);
+      } else if (a.app.pinned) {
         tempPinned.add(a);
       } else {
         tempNotPinned.add(a);
       }
     }
-    listedApps = [...tempPinned, ...tempNotPinned];
+    listedApps = [...tempRenamed, ...tempPinned, ...tempNotPinned];
 
     List<String?> getListedCategories() {
       var temp = listedApps.map(
@@ -534,6 +537,43 @@ class AppsPageState extends State<AppsPage> {
             ).format(listedApps[appIndex].app.releaseDate!.toLocal());
     }
 
+    Widget buildAuthorText(int appIndex) {
+      return Text(
+        tr('byX', args: [listedApps[appIndex].author]),
+        maxLines: 1,
+        style: TextStyle(
+          overflow: TextOverflow.ellipsis,
+          fontWeight: listedApps[appIndex].app.pinned
+              ? FontWeight.bold
+              : FontWeight.normal,
+        ),
+      );
+    }
+
+    Widget buildRepoMovedRow() {
+      final colorScheme = Theme.of(context).colorScheme;
+      final infoColor = colorScheme.primary.withOpacity(0.7);
+      final textColor = colorScheme.onSurfaceVariant;
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.info_outline, color: infoColor, size: 14),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                tr('repoRenamed'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: textColor, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     getSingleAppHorizTile(int index) {
       var showChangesFn = getChangeLogFn(context, listedApps[index].app);
       var hasUpdate =
@@ -664,16 +704,16 @@ class AppsPageState extends State<AppsPage> {
                   : FontWeight.normal,
             ),
           ),
-          subtitle: Text(
-            tr('byX', args: [listedApps[index].author]),
-            maxLines: 1,
-            style: TextStyle(
-              overflow: TextOverflow.ellipsis,
-              fontWeight: listedApps[index].app.pinned
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-            ),
-          ),
+          subtitle: listedApps[index].app.hasPendingRepoRename
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildAuthorText(index),
+                    buildRepoMovedRow(),
+                  ],
+                )
+              : buildAuthorText(index),
           trailing: listedApps[index].downloadProgress != null
               ? SizedBox(
                   child: Text(
