@@ -69,6 +69,12 @@ class IDChangedError extends ObtainiumError {
   IDChangedError(String newId) : super('${tr('appIdMismatch')} - $newId');
 }
 
+class RepositoryRenamedError extends ObtainiumError {
+  final String oldUrl;
+  final String newUrl;
+  RepositoryRenamedError(this.oldUrl, this.newUrl) : super(tr('repoRenamed'));
+}
+
 class NotImplementedError extends ObtainiumError {
   NotImplementedError() : super(tr('functionNotImplemented'));
 }

@@ -35,6 +35,82 @@ class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
   bool updating = false;
 
+  Widget buildRepoRenameWarning({
+    required AppInMemory? app,
+    required AppsProvider appsProvider,
+    required Future<void> Function(String id) onUpdate,
+  }) {
+    if (app?.app.hasPendingRepoRename != true) {
+      return const SizedBox.shrink();
+    }
+    var appValue = app!;
+    var pendingUrl = appValue.app.pendingRepoRenameUrl!;
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.amber),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.amber.withOpacity(0.1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.amber,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  tr('repoRenamed'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(tr('repoRenamedExplanation')),
+          const SizedBox(height: 8),
+          Text(
+            '${tr('newUrl')}: $pendingUrl',
+            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () async {
+                  await appsProvider.updatePendingRepoRename(
+                    appValue.app.id,
+                    null,
+                  );
+                },
+                child: Text(tr('dismiss')),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  await appsProvider.acceptRepoRename(
+                    appValue.app.id,
+                    pendingUrl,
+                  );
+                  if (mounted) {
+                    onUpdate(appValue.app.id);
+                  }
+                },
+                child: Text(tr('updateUrl')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,8 +162,11 @@ class _AppPageState extends State<AppPage> {
           appsProvider.saveApps([appsProvider.apps[id]!.app]);
         }
       } catch (err) {
-        // ignore: use_build_context_synchronously
-        showError(err, context);
+        if (err is RepositoryRenamedError && context.mounted) {
+          await appsProvider.updatePendingRepoRename(id, err.newUrl);
+        } else if (context.mounted) {
+          showError(err, context);
+        }
       } finally {
         setState(() {
           updating = false;
@@ -168,6 +247,11 @@ class _AppPageState extends State<AppPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
             child: Column(
               children: [
+                buildRepoRenameWarning(
+                  app: app,
+                  appsProvider: appsProvider,
+                  onUpdate: (id) => getUpdate(id),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   versionLines,

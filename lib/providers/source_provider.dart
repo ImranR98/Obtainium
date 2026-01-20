@@ -328,6 +328,7 @@ class App {
   late String? changeLog;
   late String? overrideSource;
   bool allowIdChange = false;
+  String? pendingRepoRenameUrl;
   App(
     this.id,
     this.url,
@@ -346,12 +347,16 @@ class App {
     this.overrideSource,
     this.allowIdChange = false,
     this.otherAssetUrls = const [],
+    this.pendingRepoRenameUrl,
   });
 
   @override
   String toString() {
     return 'ID: $id URL: $url INSTALLED: $installedVersion LATEST: $latestVersion APK: $apkUrls PREFERREDAPK: $preferredApkIndex ADDITIONALSETTINGS: ${additionalSettings.toString()} LASTCHECK: ${lastUpdateCheck.toString()} PINNED $pinned';
   }
+
+  bool get hasPendingRepoRename =>
+      pendingRepoRenameUrl != null && pendingRepoRenameUrl!.isNotEmpty;
 
   String? get overrideName =>
       additionalSettings['appName']?.toString().trim().isNotEmpty == true
@@ -389,6 +394,7 @@ class App {
     overrideSource: overrideSource,
     allowIdChange: allowIdChange,
     otherAssetUrls: otherAssetUrls,
+    pendingRepoRenameUrl: pendingRepoRenameUrl,
   );
 
   factory App.fromJson(Map<String, dynamic> json) {
@@ -435,6 +441,7 @@ class App {
       otherAssetUrls: assumed2DlistToStringMapList(
         jsonDecode((json['otherAssetUrls'] ?? '[]')),
       ),
+      pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
     );
   }
 
@@ -456,6 +463,7 @@ class App {
     'changeLog': changeLog,
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
+    'pendingRepoRenameUrl': pendingRepoRenameUrl,
   };
 }
 
