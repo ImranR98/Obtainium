@@ -42,6 +42,7 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 final pm = AndroidPackageManager();
+final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
 class AppInMemory {
   late App app;
@@ -499,9 +500,7 @@ Future<File> downloadFile(
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
-  return await pm.getInstalledPackages(
-      flags: PackageInfoFlags({PMFlag.getSigningCertificates})
-  ) ?? [];
+  return await pm.getInstalledPackages(flags: packageInfoFlags) ?? [];
 }
 
 Future<PackageInfo?> getInstalledInfo(
@@ -510,7 +509,10 @@ Future<PackageInfo?> getInstalledInfo(
 }) async {
   if (packageName != null) {
     try {
-      return await pm.getPackageInfo(packageName: packageName);
+      return await pm.getPackageInfo(
+          packageName: packageName,
+          flags: packageInfoFlags
+      );
     } catch (e) {
       if (printErr) {
         print(e); // OK
