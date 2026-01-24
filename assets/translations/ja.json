@@ -405,6 +405,6 @@
     },
     "certificateHash": {
         "one": "証明書ハッシュ",
-        "other": "証明書のhashes"
+        "other": "証明書ハッシュ"
     }
 }
