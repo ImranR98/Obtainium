@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> {
   bool prevIsLoading = true;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+  static const platform = MethodChannel('dev.imranr.obtainium/intent');
   bool isLinkActivity = false;
 
   List<NavigationPageItem> pages = [
@@ -179,7 +180,50 @@ class _HomePageState extends State<HomePage> {
       (pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState
           ?.openAppById(appId);
     }
+    handleShowAppInfo(String packageName) async {
+      isLinkActivity = true;
+      try {
+        // Ensure apps are loaded
+        AppsProvider appsProvider = context.read<AppsProvider>();
+        while (appsProvider.loadingApps) {
+          await Future.delayed(const Duration(milliseconds: 10));
+        }
 
+        // Find app by package name
+        AppInMemory? app = appsProvider.apps.values
+            .where((AppInMemory a) => a.app.id == packageName)
+            .firstOrNull;
+
+        if (app != null) {
+          await goToExistingApp(app.app.id);
+        } else {
+          // Show error dialog
+          if (mounted) {
+            await showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return AlertDialog(
+                  title: Text(tr('appNotFound')),
+                  content: Text(tr('appNotManagedByObtainium')),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                      },
+                      child: Text(tr('ok')),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          showError(e, context);
+        }
+      }
+    }
     interpretLink(Uri uri) async {
       isLinkActivity = true;
       var action = uri.host;
@@ -274,6 +318,24 @@ class _HomePageState extends State<HomePage> {
         initLinked = false;
       }
     });
+
+    // Handle Android intents
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'showAppInfo') {
+        String packageName = call.arguments;
+        await handleShowAppInfo(packageName);
+      }
+    });
+
+    // Check for pending package name from initial intent
+    try {
+      String? pendingPackage = await platform.invokeMethod('getPendingPackageName');
+      if (pendingPackage != null) {
+        await handleShowAppInfo(pendingPackage);
+      }
+    } catch (e) {
+      // Ignore if method not implemented or error
+    }
   }
 
   void setIsReversing(int targetIndex) {

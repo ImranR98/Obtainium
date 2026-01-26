@@ -135,6 +135,7 @@
     "close": "关闭",
     "share": "分享",
     "appNotFound": "未找到应用",
+    "appNotManagedByObtainium": "此应用不由 Obtainium 管理",
     "obtainiumExportHyphenatedLowercase": "obtainium-export",
     "pickAnAPK": "选择一个 APK 文件",
     "appHasMoreThanOnePackage": "“{}”有多个架构可用：",

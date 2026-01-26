@@ -135,6 +135,7 @@
     "close": "Close",
     "share": "Share",
     "appNotFound": "App not found",
+    "appNotManagedByObtainium": "This app is not managed by Obtainium",
     "obtainiumExportHyphenatedLowercase": "obtainium-export",
     "pickAnAPK": "Pick an APK",
     "appHasMoreThanOnePackage": "{} has more than one package:",
