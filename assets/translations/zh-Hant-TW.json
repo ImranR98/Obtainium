@@ -320,17 +320,17 @@
     "crowdsourcedConfigsShort": "群眾外包的應用程式設定",
     "allowInsecure": "允許不安全的 HTTP 請求",
     "stayOneVersionBehind": "保持比最新版本落後一個版本",
-    "useFirstApkOfVersion": "自動選擇多個APK 的第一個",
+    "useFirstApkOfVersion": "自動選擇多個 APK 的第一個",
     "refreshBeforeDownload": "下載前刷新應用程式詳細資訊",
     "tencentAppStore": "騰訊應用寶",
     "coolApk": "CoolApk",
-    "vivoAppStore": "vivo App Store (CN)",
+    "vivoAppStore": "vivo 應用商店 (CN)",
     "name": "名稱",
     "smartname": "名稱（智慧）",
     "sortMethod": "排序方式",
     "welcome": "歡迎",
     "documentationLinksNote": "下方連結的 Obtainium GitHub 頁面包含影片、文章、討論及其他資源，能幫助你瞭解如何使用這款應用程式。",
-    "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
+    "batteryOptimizationNote": "請注意，若您在 Obtainium 的設定中切換至「前景服務」並／或在作業系統設定中為 Obtainium 停用電池最佳化功能，背景下載可能會運作得更穩定。",
     "fileDeletionError": "刪除文件失敗( 嘗試手動刪除, 然後再次嘗試 ) : “ _% ”",
     "foregroundService": "獲取前景服務",
     "foregroundServiceExplanation": "使用前景服務進行更新檢查( 更可靠, 消耗更多電源)",
@@ -338,11 +338,11 @@
     "excludeSecrets": "不包括機密內容",
     "GHReqPrefix": "GitHub 請求的 'sky22333/hubproxy' 實例",
     "includeZips": "包含 ZIP 文件",
-    "zippedApkFilterRegEx": "在 ZIP 內過濾APK",
-    "googleVerificationWarningP1": "Google宣佈,從2026/2027年開始,所有在\"認證\"Android設備上的應用程序都將要求開發者直接向Google提交個人身份細節.\n\n由於此應用程序的開發者不同意這一要求,Obtainium在此之後將不再在認證的Android設備上工作.",
-    "googleVerificationWarningP2": "詳情請訪問https://keepandroidopen.org/.",
-    "googleVerificationWarningP3": "請注意,在短期內,通過Google在對其公告進行廣泛的反彈後承諾執行的\"先進流程\"程序,可能繼續安裝\"未經驗證\"(不符合要求)的應用軟件,但他們沒有詳細説明這將如何運作,因此不清楚它是否會以任何實際方式真正維護用户自由.\n\n無論如何,Google的舉動是結束個人通用計算機自由的重要一步.\n\n未經認證的OS,如GrapheneOS,只要允許繼續存在,就不應受到影響.",
-    "multipleSigners": "多个签名人",
+    "zippedApkFilterRegEx": "在 ZIP 內過濾 APK",
+    "googleVerificationWarningP1": "Google 已宣布，自 2026／2027 年起，所有在「通過認證（certified）」的 Android 裝置上執行的應用程式，都必須由開發者直接向 Google 提交個人身分資訊。\n\n由於本應用程式的開發者不同意此一要求，Obtainium 在該時間點之後將無法再於通過認證的 Android 裝置上運作。",
+    "googleVerificationWarningP2": "如需更多資訊，請前往 https://keepandroidopen.org/.",
+    "googleVerificationWarningP3": "請注意，從短期來看，Google 表示在其公告引發廣泛反彈後，可能仍可透過其承諾實作的「進階流程（advanced flow）」來安裝「未經驗證」（不符合規範）的應用程式；然而，Google 尚未說明此流程的具體運作方式，因此無法確定它是否能在實務上真正維護使用者的自由。\n\n無論如何，Google 的這項作法，都是朝向終結個人自由、通用運算的一大步。\n\n只要仍被允許持續存在，像 GrapheneOS 這類未通過認證的作業系統，理論上不會受到此政策影響。",
+    "multipleSigners": "多重簽署者",
     "removeAppQuestion": {
         "one": "移除應用程式？",
         "other": "移除應用程式？"
@@ -404,7 +404,7 @@
         "other": "{} 個 APK"
     },
     "certificateHash": {
-        "one": "证书散列",
-        "other": "Hashes 证书"
+        "one": "憑證雜湊",
+        "other": "憑證雜湊"
     }
 }
