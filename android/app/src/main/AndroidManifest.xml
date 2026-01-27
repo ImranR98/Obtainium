@@ -40,6 +40,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="obtainium" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_APP_INFO" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
