@@ -157,17 +157,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
 
-    goToAddApp(String data) async {
-      switchToPage(1);
-      while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
-              ?.currentState ==
-          null) {
-        await Future.delayed(const Duration(microseconds: 1));
-      }
-      (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
-          ?.linkFn(data);
-    }
-
     goToExistingApp(String appId) async {
       // Go to Apps page
       switchToPage(0);
@@ -180,6 +169,7 @@ class _HomePageState extends State<HomePage> {
       (pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState
           ?.openAppById(appId);
     }
+
     handleShowAppInfo(String packageName) async {
       isLinkActivity = true;
       try {
@@ -197,26 +187,34 @@ class _HomePageState extends State<HomePage> {
         if (app != null) {
           await goToExistingApp(app.app.id);
         } else {
-          // Show error dialog
-          if (mounted) {
-            await showDialog(
-              context: context,
-              builder: (BuildContext ctx) {
-                return AlertDialog(
-                  title: Text(tr('appNotFound')),
-                  content: Text(tr('appNotManagedByObtainium')),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      child: Text(tr('ok')),
-                    ),
-                  ],
-                );
-              },
-            );
-          }
+          // Defer showing the dialog until after the current frame and use the root navigator
+          if (!mounted) return;
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            try {
+              await showDialog(
+                context: context,
+                useRootNavigator: true,
+                // ensure dialog is shown above any other navigator/dialog
+                builder: (BuildContext ctx) {
+                  return AlertDialog(
+                    title: Text(tr('appNotFound')),
+                    content: Text(tr('appNotManagedByObtainium')),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text(tr('ok')),
+                      ),
+                    ],
+                  );
+                },
+              );
+            } catch (e) {
+              // ignore showDialog errors in production; optionally log in debug builds
+            }
+          });
         }
       } catch (e) {
         if (mounted) {
@@ -224,6 +222,43 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
+    // Register handler to receive immediate pushes from native
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'showAppInfo') {
+        final String packageName = call.arguments as String;
+        await handleShowAppInfo(packageName);
+      }
+      // other native->dart calls can be handled here
+    });
+    // Tell native that Dart is ready to receive pushed intents and to drain any queued items.
+    try {
+      await platform.invokeMethod('readyForIntents');
+    } catch (e) {
+      // If method not implemented on older native code, ignore.
+    }
+    // Also poll for any pending package names (cold-start fallback).
+    try {
+      while (true) {
+        final pendingPackage =
+        await platform.invokeMethod<String>('getPendingPackageName');
+        if (pendingPackage == null) break;
+        await handleShowAppInfo(pendingPackage);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    goToAddApp(String data) async {
+      switchToPage(1);
+      while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
+              ?.currentState ==
+          null) {
+        await Future.delayed(const Duration(microseconds: 1));
+      }
+      (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
+          ?.linkFn(data);
+    }
+
     interpretLink(Uri uri) async {
       isLinkActivity = true;
       var action = uri.host;
