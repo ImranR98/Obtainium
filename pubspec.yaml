@@ -81,7 +81,7 @@ dependencies:
       ref: master
   shizuku_apk_installer:
     git:
-      url: https://github.com/wilver06w/shizuku_apk_installer
+      url: https://github.com/re7gog/shizuku_apk_installer
       ref: master
   markdown: ^7.3.0
   flutter_typeahead: ^5.2.0
