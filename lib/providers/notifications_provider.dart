@@ -208,7 +208,7 @@ class NotificationsProvider {
   Future<void> initialize() async {
     isInitialized =
         await notifications.initialize(
-          const InitializationSettings(
+          settings: const InitializationSettings(
             android: AndroidInitializationSettings('ic_notification'),
           ),
           onDidReceiveNotificationResponse: (NotificationResponse response) {
@@ -259,7 +259,7 @@ class NotificationsProvider {
     if (!isInitialized) {
       await initialize();
     }
-    await notifications.cancel(id);
+    await notifications.cancel(id: id);
   }
 
   Future<void> notifyRaw(
@@ -282,10 +282,10 @@ class NotificationsProvider {
       await initialize();
     }
     await notifications.show(
-      id,
-      title,
-      message,
-      NotificationDetails(
+      id: id,
+      title: title,
+      body: message,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channelCode,
           channelName,
