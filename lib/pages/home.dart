@@ -329,8 +329,11 @@ class _HomePageState extends State<HomePage> {
 
     // Check for pending package name from initial intent
     try {
-      String? pendingPackage = await platform.invokeMethod('getPendingPackageName');
-      if (pendingPackage != null) {
+      // Keep polling the native side until it returns null.
+      while (true) {
+        final pendingPackage =
+        await platform.invokeMethod<String>('getPendingPackageName');
+        if (pendingPackage == null) break;
         await handleShowAppInfo(pendingPackage);
       }
     } catch (e) {
