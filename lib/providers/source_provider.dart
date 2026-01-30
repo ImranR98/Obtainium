@@ -26,7 +26,6 @@ import 'package:obtainium/app_sources/izzyondroid.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/app_sources/jenkins.dart';
 import 'package:obtainium/app_sources/liteapks.dart';
-import 'package:obtainium/app_sources/moddroid.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/rockmods.dart';
 import 'package:obtainium/app_sources/rustore.dart';
@@ -1134,7 +1133,6 @@ class SourceProvider {
     CoolApk(),
     RockMods(),
     LiteAPKs(),
-    Moddroid(),
     Jenkins(),
     APKMirror(),
     TelegramApp(),
