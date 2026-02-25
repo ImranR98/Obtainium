@@ -49,44 +49,17 @@ jobs:
 
       - name: Set up signing
         run: |
-          KEYSTORE_OK=false
-
-          # Try using the stored keystore from secrets
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > android/app/obtainx.jks 2>/dev/null
-            if keytool -list -keystore android/app/obtainx.jks -storepass "$KS_PASS" -alias "$K_ALIAS" >/dev/null 2>&1; then
-              KEYSTORE_OK=true
-              echo "Using keystore from secrets"
-            else
-              echo "::warning::KEYSTORE_BASE64 secret is corrupt, regenerating"
-              rm -f android/app/obtainx.jks
-            fi
-          fi
-
-          # Generate a fresh keystore and auto-save it to secrets
-          if [ "$KEYSTORE_OK" = false ]; then
-            echo "Generating new keystore and saving to KEYSTORE_BASE64 secret"
-            keytool -genkeypair -v \
-              -keystore android/app/obtainx.jks \
-              -keyalg RSA -keysize 2048 -validity 36500 \
-              -alias "$K_ALIAS" \
-              -storepass "$KS_PASS" -keypass "$K_PASS" \
-              -dname "CN=ObtainX, O=ObtainX, L=Unknown, ST=Unknown, C=US"
-            base64 -w 0 android/app/obtainx.jks | gh secret set KEYSTORE_BASE64
-          fi
-
+          echo "$KEYSTORE_B64" | base64 -d > android/app/obtainx.jks
           cat > android/key.properties <<PROPS
           storePassword=$KS_PASS
-          keyPassword=$K_PASS
+          keyPassword=$KS_PASS
           keyAlias=$K_ALIAS
           storeFile=obtainx.jks
           PROPS
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
-          K_PASS: ${{ secrets.KEY_PASSWORD }}
           K_ALIAS: ${{ secrets.KEY_ALIAS }}
-          GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
       - name: Extract Version
         id: extract_version
