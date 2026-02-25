@@ -35,7 +35,16 @@ class SettingsProvider with ChangeNotifier {
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     defaultAppDir = (await getAppStorageDir()).path;
+    _migrateShizukuSetting();
     notifyListeners();
+  }
+
+  void _migrateShizukuSetting() {
+    if (prefs?.containsKey('installerMode') == true) return;
+    if (prefs?.getBool('useShizuku') == true) {
+      prefs?.setString('installerMode', 'shizuku');
+    }
+    prefs?.remove('useShizuku');
   }
 
   bool get useSystemFont {
