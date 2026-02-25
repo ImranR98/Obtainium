@@ -10,6 +10,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/installer_provider.dart' as installer;
 import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -625,19 +626,35 @@ class _SettingsPageState extends State<SettingsPage> {
                           ],
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('useShizuku'))),
-                            Switch(
-                              value: settingsProvider.useShizuku,
-                              onChanged: (useShizuku) {
-                                if (useShizuku) {
-                                  ShizukuApkInstaller.checkPermission().then((
-                                    resCode,
-                                  ) {
-                                    settingsProvider.useShizuku = resCode!
-                                        .startsWith('granted');
+                        Text(tr('installerMode')),
+                        height8,
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<String>(
+                            segments: [
+                              ButtonSegment(
+                                value: 'stock',
+                                label: Text(tr('installerModeStock')),
+                              ),
+                              ButtonSegment(
+                                value: 'shizuku',
+                                label: Text(tr('installerModeShizuku')),
+                              ),
+                              ButtonSegment(
+                                value: 'legacy',
+                                label: Text(tr('installerModeLegacy')),
+                              ),
+                            ],
+                            selected: {settingsProvider.installerMode},
+                            onSelectionChanged: (selected) {
+                              final mode = selected.first;
+                              if (mode == 'shizuku') {
+                                ShizukuApkInstaller.checkPermission().then((
+                                  resCode,
+                                ) {
+                                  if (resCode!.startsWith('granted')) {
+                                    settingsProvider.installerMode = 'shizuku';
+                                  } else {
                                     switch (resCode) {
                                       case 'binder_not_found':
                                         showError(
@@ -664,31 +681,44 @@ class _SettingsPageState extends State<SettingsPage> {
                                           context,
                                         );
                                     }
-                                  });
-                                } else {
-                                  settingsProvider.useShizuku = false;
-                                }
-                              },
-                            ),
-                          ],
+                                  }
+                                });
+                              } else {
+                                settingsProvider.installerMode = mode;
+                              }
+                            },
+                          ),
                         ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('shizukuPretendToBeGooglePlay')),
-                            ),
-                            Switch(
-                              value:
-                                  settingsProvider.shizukuPretendToBeGooglePlay,
-                              onChanged: (value) {
-                                settingsProvider.shizukuPretendToBeGooglePlay =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
+                        if (settingsProvider.installerMode == 'shizuku')
+                          Column(
+                            children: [
+                              height16,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      tr('shizukuPretendToBeGooglePlay'),
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: settingsProvider
+                                        .shizukuPretendToBeGooglePlay,
+                                    onChanged: (value) {
+                                      settingsProvider
+                                              .shizukuPretendToBeGooglePlay =
+                                          value;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        if (settingsProvider.installerMode == 'legacy')
+                          _LegacyInstallerSelector(
+                            settingsProvider: settingsProvider,
+                          ),
                         height32,
                         Text(
                           tr('sourceSpecific'),
@@ -1168,6 +1198,159 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
           }
         }
       }),
+    );
+  }
+}
+
+class _LegacyInstallerSelector extends StatefulWidget {
+  final SettingsProvider settingsProvider;
+  const _LegacyInstallerSelector({required this.settingsProvider});
+
+  @override
+  State<_LegacyInstallerSelector> createState() =>
+      _LegacyInstallerSelectorState();
+}
+
+class _LegacyInstallerSelectorState extends State<_LegacyInstallerSelector> {
+  List<installer.InstallerAppInfo>? _installerApps;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstallers();
+  }
+
+  Future<void> _loadInstallers() async {
+    final apps = await installer.getApkInstallerApps();
+    if (mounted) {
+      setState(() {
+        _installerApps = apps;
+        _loading = false;
+      });
+    }
+  }
+
+  void _showInstallerPicker() {
+    if (_installerApps == null || _installerApps!.isEmpty) return;
+
+    final currentPkg = widget.settingsProvider.legacyInstallerPackage;
+    final currentAct = widget.settingsProvider.legacyInstallerActivity;
+    final currentValue =
+        (currentPkg != null && currentAct != null) ? '$currentPkg|$currentAct' : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        String? selectedValue = currentValue;
+        return StatefulBuilder(
+          builder: (builderContext, setSheetState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.5,
+              maxChildSize: 0.85,
+              builder: (_, scrollController) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        tr('legacyInstallerSelect'),
+                        style: Theme.of(builderContext).textTheme.titleMedium,
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: _installerApps!.length,
+                        itemBuilder: (_, index) {
+                          final app = _installerApps![index];
+                          final radioValue = '${app.packageName}|${app.activityName}';
+                          return RadioListTile<String>(
+                            secondary: app.icon != null && app.icon!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.memory(
+                                      app.icon!,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Icon(Icons.android, size: 40),
+                                    ),
+                                  )
+                                : const Icon(Icons.android, size: 40),
+                            title: Text(app.label),
+                            subtitle: Text(
+                              app.packageName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            value: radioValue,
+                            groupValue: selectedValue,
+                            onChanged: (value) {
+                              setSheetState(() => selectedValue = value);
+                              if (value != null) {
+                                widget.settingsProvider.legacyInstallerPackage =
+                                    app.packageName;
+                                widget.settingsProvider.legacyInstallerActivity =
+                                    app.activityName;
+                              }
+                              Navigator.pop(sheetContext);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPkg = widget.settingsProvider.legacyInstallerPackage;
+    final selectedApp = (_installerApps ?? [])
+        .where((app) => app.packageName == selectedPkg)
+        .firstOrNull;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: selectedApp?.icon != null && selectedApp!.icon!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        selectedApp.icon!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.android, size: 36),
+                      ),
+                    )
+                  : null,
+              title: Text(tr('legacyInstallerSelect')),
+              subtitle: Text(
+                selectedApp?.label ?? selectedPkg ?? tr('legacyInstallerNoneSelected'),
+              ),
+              trailing: const Icon(Icons.arrow_drop_down),
+              onTap: _showInstallerPicker,
+            ),
+        ],
+      ),
     );
   }
 }
