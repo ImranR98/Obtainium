@@ -1001,13 +1001,19 @@ class AppsProvider with ChangeNotifier {
       if (targetPkg == null || targetAct == null) {
         throw ObtainiumError(tr('legacyInstallerNotSelected'));
       }
-      await installer.installApkViaLegacy(
+      bool legacyInstalled = await installer.installApkViaLegacy(
         file.file.path,
         targetPackage: targetPkg,
         targetActivity: targetAct,
+        expectedPackageName: apps[file.appId]!.app.id,
       );
+      if (legacyInstalled) {
+        apps[file.appId]!.app.installedVersion =
+            apps[file.appId]!.app.latestVersion;
+        file.file.delete(recursive: true);
+      }
       await saveApps([apps[file.appId]!.app]);
-      return false;
+      return legacyInstalled;
     }
     int? code;
     if (!settingsProvider.useShizuku) {

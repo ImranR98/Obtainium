@@ -1,7 +1,10 @@
 package dev.imranr.obtainium
 
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
@@ -9,6 +12,8 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.system.Os
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -19,6 +24,7 @@ import java.io.File
 private const val CHANNEL = "dev.imranr.obtainium/installer"
 private const val APK_MIME = "application/vnd.android.package-archive"
 private const val RELEASE_DIR = "releases"
+private const val INSTALL_TIMEOUT_MS = 120_000L
 
 class MainActivity : FlutterActivity() {
 
@@ -38,8 +44,8 @@ class MainActivity : FlutterActivity() {
                         val apkFilePath = call.argument<String>("path")!!
                         val targetPackage = call.argument<String>("package")
                         val targetActivity = call.argument<String>("activity")
-                        launchInstallIntent(apkFilePath, targetPackage, targetActivity)
-                        result.success(null)
+                        val expectedPkgName = call.argument<String>("expectedPackageName")
+                        launchInstallIntent(apkFilePath, targetPackage, targetActivity, expectedPkgName, result)
                     } catch (ex: Exception) {
                         result.error("INSTALL_ERROR", ex.message, null)
                     }
@@ -117,7 +123,9 @@ class MainActivity : FlutterActivity() {
     private fun launchInstallIntent(
         apkFilePath: String,
         targetPackage: String?,
-        targetActivity: String?
+        targetActivity: String?,
+        expectedPkgName: String?,
+        methodResult: MethodChannel.Result
     ) {
         val sourceFile = File(apkFilePath)
         val releaseFile = copyToReleaseCache(sourceFile)
@@ -143,6 +151,42 @@ class MainActivity : FlutterActivity() {
                 component = ComponentName(targetPackage, targetActivity)
             }
         }
+
+        if (expectedPkgName.isNullOrEmpty()) {
+            startActivity(intent)
+            methodResult.success(false)
+            return
+        }
+
+        val handler = Handler(Looper.getMainLooper())
+        var responded = false
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, broadcastIntent: Intent) {
+                val changedPkg = broadcastIntent.data?.schemeSpecificPart ?: return
+                if (changedPkg == expectedPkgName && !responded) {
+                    responded = true
+                    handler.removeCallbacksAndMessages(null)
+                    try { unregisterReceiver(this) } catch (_: Exception) { }
+                    methodResult.success(true)
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+        registerReceiver(receiver, filter)
+
+        handler.postDelayed({
+            if (!responded) {
+                responded = true
+                try { unregisterReceiver(receiver) } catch (_: Exception) { }
+                methodResult.success(false)
+            }
+        }, INSTALL_TIMEOUT_MS)
 
         startActivity(intent)
     }

@@ -38,15 +38,21 @@ Future<List<InstallerAppInfo>> getApkInstallerApps() async {
   }).toList();
 }
 
-Future<void> installApkViaLegacy(
+/// Returns true if the system broadcast confirms the package was installed.
+/// Times out after 2 minutes and returns false.
+Future<bool> installApkViaLegacy(
   String apkFilePath, {
   required String targetPackage,
   required String targetActivity,
+  required String expectedPackageName,
 }) async {
-  if (!Platform.isAndroid) return;
-  await _channel.invokeMethod<void>('launchInstallIntent', <String, dynamic>{
+  if (!Platform.isAndroid) return false;
+  final result =
+      await _channel.invokeMethod<bool>('launchInstallIntent', <String, dynamic>{
     'path': apkFilePath,
     'package': targetPackage,
     'activity': targetActivity,
+    'expectedPackageName': expectedPackageName,
   });
+  return result ?? false;
 }
