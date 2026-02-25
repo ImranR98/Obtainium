@@ -3,12 +3,17 @@ package dev.imranr.obtainium
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
 import android.system.Os
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 private const val CHANNEL = "dev.imranr.obtainium/installer"
@@ -44,19 +49,18 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun queryApkInstallerActivities(): List<Map<String, String>> {
-        val results = mutableMapOf<String, Map<String, String>>()
+    private fun queryApkInstallerActivities(): List<Map<String, Any>> {
+        val results = mutableMapOf<String, Map<String, Any>>()
 
         val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
             setDataAndType(Uri.parse("content://dummy/test.apk"), APK_MIME)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         for (resolveInfo in packageManager.queryIntentActivities(installIntent, 0)) {
-            val pkgName = resolveInfo.activityInfo.packageName
-            val activityName = resolveInfo.activityInfo.name
-            val label = resolveInfo.loadLabel(packageManager).toString()
-            val key = "$pkgName|$activityName"
-            results[key] = mapOf("packageName" to pkgName, "activityName" to activityName, "label" to label)
+            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
+            if (!results.containsKey(key)) {
+                results[key] = resolveInfoToMap(resolveInfo)
+            }
         }
 
         val viewIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -64,16 +68,49 @@ class MainActivity : FlutterActivity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         for (resolveInfo in packageManager.queryIntentActivities(viewIntent, 0)) {
-            val pkgName = resolveInfo.activityInfo.packageName
-            val activityName = resolveInfo.activityInfo.name
-            val label = resolveInfo.loadLabel(packageManager).toString()
-            val key = "$pkgName|$activityName"
+            val key = "${resolveInfo.activityInfo.packageName}|${resolveInfo.activityInfo.name}"
             if (!results.containsKey(key)) {
-                results[key] = mapOf("packageName" to pkgName, "activityName" to activityName, "label" to label)
+                results[key] = resolveInfoToMap(resolveInfo)
             }
         }
 
         return results.values.toList()
+    }
+
+    private fun resolveInfoToMap(resolveInfo: ResolveInfo): Map<String, Any> {
+        val pkgName = resolveInfo.activityInfo.packageName
+        val activityName = resolveInfo.activityInfo.name
+        val label = resolveInfo.loadLabel(packageManager).toString()
+        val iconBytes = try {
+            val drawable = resolveInfo.loadIcon(packageManager)
+            val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
+                drawable.bitmap
+            } else {
+                val bmp = Bitmap.createBitmap(
+                    drawable.intrinsicWidth.coerceAtLeast(1),
+                    drawable.intrinsicHeight.coerceAtLeast(1),
+                    Bitmap.Config.ARGB_8888
+                )
+                val canvas = Canvas(bmp)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bmp
+            }
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            stream.toByteArray()
+        } catch (_: Exception) {
+            ByteArray(0)
+        }
+        val result = mutableMapOf<String, Any>(
+            "packageName" to pkgName,
+            "activityName" to activityName,
+            "label" to label,
+        )
+        if (iconBytes.isNotEmpty()) {
+            result["icon"] = iconBytes
+        }
+        return result
     }
 
     @Suppress("DEPRECATION")

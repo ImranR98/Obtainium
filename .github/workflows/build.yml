@@ -24,12 +24,53 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Cache Flutter pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
 
       - name: Get Dependencies
         run: flutter pub get
+
+      - name: Set up signing
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/obtainx.jks
+            cat > android/key.properties <<PROPS
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=obtainx.jks
+          PROPS
+          else
+            keytool -genkeypair -v \
+              -keystore android/app/obtainx.jks \
+              -keyalg RSA -keysize 2048 -validity 36500 \
+              -alias obtainx \
+              -storepass obtainx-ci -keypass obtainx-ci \
+              -dname "CN=ObtainX CI, O=ObtainX, L=CI, ST=CI, C=US"
+            cat > android/key.properties <<PROPS
+          storePassword=obtainx-ci
+          keyPassword=obtainx-ci
+          keyAlias=obtainx
+          storeFile=obtainx.jks
+          PROPS
+          fi
 
       - name: Extract Version
         id: extract_version
@@ -39,7 +80,6 @@ jobs:
 
       - name: Build APKs
         run: |
-          sed -i 's/signingConfig = signingConfigs.getByName("release")//g' android/app/build.gradle.kts
           flutter build apk --flavor normal
           flutter build apk --split-per-abi --flavor normal
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done

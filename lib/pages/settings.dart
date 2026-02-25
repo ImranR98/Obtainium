@@ -1212,7 +1212,7 @@ class _LegacyInstallerSelector extends StatefulWidget {
 }
 
 class _LegacyInstallerSelectorState extends State<_LegacyInstallerSelector> {
-  List<Map<String, String>>? _installerApps;
+  List<installer.InstallerAppInfo>? _installerApps;
   bool _loading = true;
 
   @override
@@ -1266,21 +1266,35 @@ class _LegacyInstallerSelectorState extends State<_LegacyInstallerSelector> {
                         itemCount: _installerApps!.length,
                         itemBuilder: (_, index) {
                           final app = _installerApps![index];
-                          final pkg = app['packageName'] ?? '';
-                          final activity = app['activityName'] ?? '';
-                          final label = app['label'] ?? pkg;
-                          final radioValue = '$pkg|$activity';
+                          final radioValue = '${app.packageName}|${app.activityName}';
                           return RadioListTile<String>(
-                            title: Text(label),
-                            subtitle: Text(pkg, style: const TextStyle(fontSize: 12)),
+                            secondary: app.icon != null && app.icon!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.memory(
+                                      app.icon!,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Icon(Icons.android, size: 40),
+                                    ),
+                                  )
+                                : const Icon(Icons.android, size: 40),
+                            title: Text(app.label),
+                            subtitle: Text(
+                              app.packageName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
                             value: radioValue,
                             groupValue: selectedValue,
                             onChanged: (value) {
                               setSheetState(() => selectedValue = value);
                               if (value != null) {
-                                final parts = value.split('|');
-                                widget.settingsProvider.legacyInstallerPackage = parts[0];
-                                widget.settingsProvider.legacyInstallerActivity = parts[1];
+                                widget.settingsProvider.legacyInstallerPackage =
+                                    app.packageName;
+                                widget.settingsProvider.legacyInstallerActivity =
+                                    app.activityName;
                               }
                               Navigator.pop(sheetContext);
                             },
@@ -1301,9 +1315,8 @@ class _LegacyInstallerSelectorState extends State<_LegacyInstallerSelector> {
   @override
   Widget build(BuildContext context) {
     final selectedPkg = widget.settingsProvider.legacyInstallerPackage;
-    final selectedLabel = (_installerApps ?? [])
-        .where((app) => app['packageName'] == selectedPkg)
-        .map((app) => app['label'] ?? app['packageName'] ?? '')
+    final selectedApp = (_installerApps ?? [])
+        .where((app) => app.packageName == selectedPkg)
         .firstOrNull;
 
     return Padding(
@@ -1316,9 +1329,22 @@ class _LegacyInstallerSelectorState extends State<_LegacyInstallerSelector> {
           else
             ListTile(
               contentPadding: EdgeInsets.zero,
+              leading: selectedApp?.icon != null && selectedApp!.icon!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        selectedApp.icon!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.android, size: 36),
+                      ),
+                    )
+                  : null,
               title: Text(tr('legacyInstallerSelect')),
               subtitle: Text(
-                selectedLabel ?? selectedPkg ?? tr('legacyInstallerNoneSelected'),
+                selectedApp?.label ?? selectedPkg ?? tr('legacyInstallerNoneSelected'),
               ),
               trailing: const Icon(Icons.arrow_drop_down),
               onTap: _showInstallerPicker,
