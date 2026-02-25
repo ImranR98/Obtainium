@@ -55,6 +55,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <provider
+            android:name=".CacheContentProvider"
+            android:authorities="${applicationId}.provider.cache"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+        <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
             android:multiprocess="false"
@@ -91,6 +96,14 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:mimeType="application/vnd.android.package-archive"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.INSTALL_PACKAGE"/>
+            <data android:mimeType="application/vnd.android.package-archive"/>
         </intent>
     </queries>
 </manifest>

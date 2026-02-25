@@ -37,6 +37,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter_archive/flutter_archive.dart';
+import 'package:obtainium/providers/installer_provider.dart' as installer;
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
@@ -994,6 +995,20 @@ class AppsProvider with ChangeNotifier {
         apps[file.appId]!.app,
       ], attemptToCorrectInstallStatus: false);
     }
+    if (settingsProvider.installerMode == 'legacy') {
+      final targetPkg = settingsProvider.legacyInstallerPackage;
+      final targetAct = settingsProvider.legacyInstallerActivity;
+      if (targetPkg == null || targetAct == null) {
+        throw ObtainiumError(tr('legacyInstallerNotSelected'));
+      }
+      await installer.installApkViaLegacy(
+        file.file.path,
+        targetPackage: targetPkg,
+        targetActivity: targetAct,
+      );
+      await saveApps([apps[file.appId]!.app]);
+      return false;
+    }
     int? code;
     if (!settingsProvider.useShizuku) {
       var allAPKs = [file.file.path];
@@ -1297,7 +1312,9 @@ class AppsProvider with ChangeNotifier {
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
         willBeSilent = await canInstallSilently(apps[id]!.app);
-        if (!settingsProvider.useShizuku) {
+        if (settingsProvider.installerMode == 'legacy') {
+          // Legacy installer bypasses the standard permission check
+        } else if (!settingsProvider.useShizuku) {
           if (!(await settingsProvider.getInstallPermission(enforce: false))) {
             throw ObtainiumError(tr('cancelled'));
           }

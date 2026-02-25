@@ -1,0 +1,52 @@
+name: Build APKs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Extract Version
+        id: extract_version
+        run: |
+          VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build APKs
+        run: |
+          sed -i 's/signingConfig = signingConfigs.getByName("release")//g' android/app/build.gradle.kts
+          flutter build apk --flavor normal
+          flutter build apk --split-per-abi --flavor normal
+          for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
+          rm -f ./build/app/outputs/flutter-apk/*.sha1
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: obtainx-apks-v${{ steps.extract_version.outputs.version }}
+          path: build/app/outputs/flutter-apk/*.apk

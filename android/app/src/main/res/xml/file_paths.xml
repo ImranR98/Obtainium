@@ -3,4 +3,5 @@
     <external-path path="Android/data/dev.imranr.obtainium/" name="files_root" />
     <external-path path="." name="external_storage_root" />
     <external-path name="external_files" path="."/>
+    <cache-path name="releases" path="releases" />
 </paths>

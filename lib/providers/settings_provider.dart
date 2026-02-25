@@ -47,12 +47,49 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // 'stock' = default Android installer, 'shizuku' = Shizuku, 'legacy' = Droid-ify style legacy installer
+  String get installerMode {
+    return prefs?.getString('installerMode') ?? 'stock';
+  }
+
+  set installerMode(String mode) {
+    prefs?.setString('installerMode', mode);
+    notifyListeners();
+  }
+
   bool get useShizuku {
-    return prefs?.getBool('useShizuku') ?? false;
+    return installerMode == 'shizuku';
   }
 
   set useShizuku(bool useShizuku) {
-    prefs?.setBool('useShizuku', useShizuku);
+    installerMode = useShizuku ? 'shizuku' : 'stock';
+  }
+
+  String? get legacyInstallerPackage {
+    final value = prefs?.getString('legacyInstallerPackage');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set legacyInstallerPackage(String? pkg) {
+    if (pkg == null || pkg.isEmpty) {
+      prefs?.remove('legacyInstallerPackage');
+    } else {
+      prefs?.setString('legacyInstallerPackage', pkg);
+    }
+    notifyListeners();
+  }
+
+  String? get legacyInstallerActivity {
+    final value = prefs?.getString('legacyInstallerActivity');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set legacyInstallerActivity(String? activity) {
+    if (activity == null || activity.isEmpty) {
+      prefs?.remove('legacyInstallerActivity');
+    } else {
+      prefs?.setString('legacyInstallerActivity', activity);
+    }
     notifyListeners();
   }
 
