@@ -11,14 +11,13 @@ class Farsroid extends AppSource {
   Farsroid() {
     hosts = ['farsroid.com'];
     name = 'Farsroid';
-    naiveStandardVersionDetection = true;
 
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormSwitch(
-          'useFirstApkOfVersion',
-          label: tr('useFirstApkOfVersion'),
-          defaultValue: true,
+          'releaseTitleAsVersion',
+          label: tr('releaseTitleAsVersion'),
+          defaultValue: false,
         ),
       ],
     ];
@@ -73,21 +72,28 @@ class Farsroid extends AppSource {
     var apkLinks = (await grabLinksCommon(
       html2,
       res2.request!.url,
-      additionalSettings,
+      {
+        ...additionalSettings,
+        'skipSort': true,
+      },
     )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
 
-    if (additionalSettings['useFirstApkOfVersion'] == true) {
-      apkLinks = apkLinks
-          .where(
-            (l) => l.key.toLowerCase().startsWith(
-              '$appName-$version'.toLowerCase(),
-            ),
-          )
-          .toList();
-    }
+    apkLinks = filterApks(
+      apkLinks,
+      additionalSettings['apkFilterRegEx'],
+      additionalSettings['invertAPKFilter'],
+    );
 
     if (apkLinks.isEmpty) {
       throw NoAPKError();
+    }
+    if (additionalSettings['autoApkFilterByArch'] == true) {
+      apkLinks = await filterApksByArch(apkLinks);
+    }
+
+    apkLinks = [apkLinks.first];
+    if (additionalSettings['releaseTitleAsVersion'] == true) {
+      version = apkLinks.first.key;
     }
 
     return APKDetails(version, apkLinks, AppNames(name, appName));
