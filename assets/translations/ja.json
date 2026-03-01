@@ -135,7 +135,7 @@
     "close": "閉じる",
     "share": "共有",
     "appNotFound": "アプリが見つかりません",
-    "obtainiumExportHyphenatedLowercase": "obtainium-エクスポート",
+    "obtainiumExportHyphenatedLowercase": "obtainium-export",
     "pickAnAPK": "APKを選択",
     "appHasMoreThanOnePackage": "{} は複数のパッケージが存在します: ",
     "deviceSupportsXArch": "お使いのデバイスは {} CPUアーキテクチャに対応しています。",
