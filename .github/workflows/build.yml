@@ -97,8 +97,11 @@ jobs:
           path: build/app/outputs/flutter-apk/ObtainX-*.apk
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: ${{ github.ref == 'refs/heads/main' && format('v{0}', steps.extract_version.outputs.version) || github.ref_name }}
           files: build/app/outputs/flutter-apk/ObtainX-*.apk
           generate_release_notes: true
