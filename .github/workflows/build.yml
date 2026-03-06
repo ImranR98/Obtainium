@@ -82,7 +82,11 @@ jobs:
           APK_DIR=build/app/outputs/flutter-apk
           for apk in "$APK_DIR"/app-*.apk; do
             basename=$(basename "$apk")
-            arch=$(echo "$basename" | sed -E 's/app-(.+)-release\.apk/\1/' | sed 's/release/universal/')
+            if [ "$basename" = "app-release.apk" ]; then
+              arch=universal
+            else
+              arch=$(echo "$basename" | sed -E 's/^app-(.+)-release\.apk$/\1/')
+            fi
             mv "$apk" "$APK_DIR/ObtainX-v${VERSION}-${arch}.apk"
           done
 
