@@ -3,6 +3,7 @@ name: Build APKs
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -74,8 +75,26 @@ jobs:
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
           rm -f ./build/app/outputs/flutter-apk/*.sha1
 
+      - name: Rename APKs
+        id: rename_apks
+        run: |
+          VERSION=${{ steps.extract_version.outputs.version }}
+          APK_DIR=build/app/outputs/flutter-apk
+          for apk in "$APK_DIR"/app-*.apk; do
+            basename=$(basename "$apk")
+            arch=$(echo "$basename" | sed -E 's/app-(.+)-release\.apk/\1/' | sed 's/release/universal/')
+            mv "$apk" "$APK_DIR/ObtainX-v${VERSION}-${arch}.apk"
+          done
+
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
           name: obtainx-apks-v${{ steps.extract_version.outputs.version }}
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/ObtainX-*.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/ObtainX-*.apk
+          generate_release_notes: true
