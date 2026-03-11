@@ -15,6 +15,13 @@ class Farsroid extends AppSource {
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormSwitch(
+          'useFirstApkOfVersion',
+          label: tr('useFirstApkOfVersion'),
+          defaultValue: true,
+        ),
+      ],
+      [
+        GeneratedFormSwitch(
           'releaseTitleAsVersion',
           label: tr('releaseTitleAsVersion'),
           defaultValue: false,
@@ -83,17 +90,21 @@ class Farsroid extends AppSource {
       additionalSettings['apkFilterRegEx'],
       additionalSettings['invertAPKFilter'],
     );
-
     if (apkLinks.isEmpty) {
       throw NoAPKError();
     }
     if (additionalSettings['autoApkFilterByArch'] == true) {
       apkLinks = await filterApksByArch(apkLinks);
     }
+    if (additionalSettings['useFirstApkOfVersion'] == true) {
+      apkLinks = [apkLinks.first];
+    }
 
-    apkLinks = [apkLinks.first];
     if (additionalSettings['releaseTitleAsVersion'] == true) {
-      version = apkLinks.first.key;
+      if (apkLinks.length != 1) {
+        throw NoVersionError();
+      }
+      version = apkLinks.single.key;
     }
 
     return APKDetails(version, apkLinks, AppNames(name, appName));
