@@ -1,0 +1,107 @@
+name: Build APKs
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Cache Flutter pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Set up signing
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > android/app/obtainx.jks
+          cat > android/key.properties <<PROPS
+          storePassword=$KS_PASS
+          keyPassword=$KS_PASS
+          keyAlias=$K_ALIAS
+          storeFile=obtainx.jks
+          PROPS
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          K_ALIAS: ${{ secrets.KEY_ALIAS }}
+
+      - name: Extract Version
+        id: extract_version
+        run: |
+          VERSION=$(grep -oP "^version: [^\+]+" pubspec.yaml | tail -c +10)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build APKs
+        run: |
+          flutter build apk --flavor normal
+          flutter build apk --split-per-abi --flavor normal
+          for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
+          rm -f ./build/app/outputs/flutter-apk/*.sha1
+
+      - name: Rename APKs
+        id: rename_apks
+        run: |
+          VERSION=${{ steps.extract_version.outputs.version }}
+          APK_DIR=build/app/outputs/flutter-apk
+          for apk in "$APK_DIR"/app-*.apk; do
+            basename=$(basename "$apk")
+            if [ "$basename" = "app-release.apk" ]; then
+              arch=universal
+            else
+              arch=$(echo "$basename" | sed -E 's/^app-(.+)-release\.apk$/\1/')
+            fi
+            mv "$apk" "$APK_DIR/ObtainX-v${VERSION}-${arch}.apk"
+          done
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: obtainx-apks-v${{ steps.extract_version.outputs.version }}
+          path: build/app/outputs/flutter-apk/ObtainX-*.apk
+
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref == 'refs/heads/main' && format('v{0}', steps.extract_version.outputs.version) || github.ref_name }}
+          files: build/app/outputs/flutter-apk/ObtainX-*.apk
+          generate_release_notes: true
