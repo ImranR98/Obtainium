@@ -1623,18 +1623,23 @@ class AppsProvider with ChangeNotifier {
     }
     // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
     if (realInstalledVersion != null &&
-        realInstalledVersion != app.installedVersion &&
-        versionDetectionIsStandard) {
-      // App's reported version and real version don't match (and it uses standard version detection)
-      // If they share a standard format (and are still different under it), update the reported version accordingly
-      var correctedInstalledVersion = reconcileVersionDifferences(
-        realInstalledVersion,
-        app.installedVersion!,
-      );
-      if (correctedInstalledVersion?.key == false) {
-        app.installedVersion = correctedInstalledVersion!.value;
-        modded = true;
-      } else if (naiveStandardVersionDetection) {
+        realInstalledVersion != app.installedVersion) {
+      if (versionDetectionIsStandard) {
+        // App's reported version and real version don't match (and it uses standard version detection)
+        // If they share a standard format (and are still different under it), update the reported version accordingly
+        var correctedInstalledVersion = reconcileVersionDifferences(
+          realInstalledVersion,
+          app.installedVersion!,
+        );
+        if (correctedInstalledVersion?.key == false) {
+          app.installedVersion = correctedInstalledVersion!.value;
+          modded = true;
+        } else if (naiveStandardVersionDetection) {
+          app.installedVersion = realInstalledVersion;
+          modded = true;
+        }
+      } else {
+        // Device is source of truth for installed version; sync when format reconciliation is not used (e.g. user updated via Play Store)
         app.installedVersion = realInstalledVersion;
         modded = true;
       }
