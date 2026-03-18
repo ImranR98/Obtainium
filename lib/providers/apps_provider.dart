@@ -46,7 +46,8 @@ final pm = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
 /// True if both versions are equal or one is a prefix of the other with a
-/// non-digit next (e.g. 50.5.19 and 50.5.19-31 [0] [PR] 879778031).
+/// non-digit next (e.g. 50.5.19 and 50.5.19-31 [0] [PR] 879778031), or both
+/// contain the same commit-hash-like token (6+ hex chars), e.g. 1.5.3-DEV (75094D8) vs debug-75094d8.
 /// Avoids false match of 1.0 in 10.0 by requiring boundary after the shorter.
 bool versionsEffectivelyEqual(String installed, String latest) {
   if (installed == latest) return true;
@@ -63,6 +64,13 @@ bool versionsEffectivelyEqual(String installed, String latest) {
       (installedLen == latestLen ||
           (installedLen > latestLen &&
               !_isDigit(installed.codeUnitAt(latestLen))))) {
+    return true;
+  }
+  // Same build when both contain the same commit-hash-like token (e.g. OS version "1.5.3-DEV (75094D8)" vs release "debug-75094d8")
+  final hexPattern = RegExp(r'[0-9a-fA-F]{6,}');
+  final installedHashes = hexPattern.allMatches(installed).map((m) => m.group(0)!.toLowerCase()).toSet();
+  final latestHashes = hexPattern.allMatches(latest).map((m) => m.group(0)!.toLowerCase()).toSet();
+  if (installedHashes.intersection(latestHashes).isNotEmpty) {
     return true;
   }
   return false;
@@ -1664,9 +1672,11 @@ class AppsProvider with ChangeNotifier {
     }
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
     // Skip for track-only: do not set installedVersion = latestVersion, so "update available" can still show
+    // Do not disable when installed and latest are effectively equal (e.g. same commit hash); user may have enabled "reconcile" for that case
     if (!trackOnly &&
         installedInfo != null &&
         versionDetectionIsStandard &&
+        !versionsEffectivelyEqual(app.installedVersion!, app.latestVersion) &&
         !isVersionDetectionPossible(
           AppInMemory(app, null, installedInfo, null),
         )) {
