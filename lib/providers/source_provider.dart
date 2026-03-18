@@ -1265,8 +1265,7 @@ class SourceProvider {
           ((additionalSettings['appId'] != null)
               ? additionalSettings['appId']
               : null) ??
-          (!trackOnly &&
-                  (!source.appIdInferIsOptional ||
+          ((!source.appIdInferIsOptional ||
                       (source.appIdInferIsOptional && inferAppIdIfOptional))
               ? await source.tryInferringAppId(
                   standardUrl,

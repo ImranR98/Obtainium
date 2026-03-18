@@ -211,8 +211,11 @@ class AppsPageState extends State<AppsPage> {
     }
 
     listedApps = listedApps.where((app) {
-      if (app.app.installedVersion == app.app.latestVersion &&
-          !(filter.includeUptodate)) {
+      final upToDate = app.app.installedVersion == app.app.latestVersion ||
+          (app.app.installedVersion != null &&
+              versionsEffectivelyEqual(
+                  app.app.installedVersion!, app.app.latestVersion));
+      if (upToDate && !(filter.includeUptodate)) {
         return false;
       }
       if (app.app.installedVersion == null && !(filter.includeNonInstalled)) {
@@ -437,29 +440,33 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getUpdateButton(int appIndex) {
+      final app = listedApps[appIndex].app;
+      final trackOnly = app.additionalSettings['trackOnly'] == true;
       return IconButton(
         visualDensity: VisualDensity.compact,
         color: Theme.of(context).colorScheme.primary,
         tooltip:
-            listedApps[appIndex].app.additionalSettings['trackOnly'] == true
-            ? tr('markUpdated')
-            : tr('update'),
+            trackOnly ? tr('openDownloadPage') : tr('update'),
         onPressed: appsProvider.areDownloadsRunning()
             ? null
             : () {
-                appsProvider
-                    .downloadAndInstallLatestApps([
-                      listedApps[appIndex].app.id,
-                    ], globalNavigatorKey.currentContext)
-                    .catchError((e) {
-                      showError(e, context);
-                      return <String>[];
-                    });
+                if (trackOnly) {
+                  launchUrlString(
+                    trackOnlyDownloadPageUrl(app),
+                    mode: LaunchMode.externalApplication,
+                  );
+                } else {
+                  appsProvider
+                      .downloadAndInstallLatestApps(
+                          [app.id], globalNavigatorKey.currentContext)
+                      .catchError((e) {
+                    showError(e, context);
+                    return <String>[];
+                  });
+                }
               },
         icon: Icon(
-          listedApps[appIndex].app.additionalSettings['trackOnly'] == true
-              ? Icons.check_circle_outline
-              : Icons.install_mobile,
+          Icons.install_mobile,
         ),
       );
     }
@@ -536,10 +543,11 @@ class AppsPageState extends State<AppsPage> {
 
     getSingleAppHorizTile(int index) {
       var showChangesFn = getChangeLogFn(context, listedApps[index].app);
-      var hasUpdate =
-          listedApps[index].app.installedVersion != null &&
-          listedApps[index].app.installedVersion !=
-              listedApps[index].app.latestVersion;
+      final installed = listedApps[index].app.installedVersion;
+      final latest = listedApps[index].app.latestVersion;
+      var hasUpdate = installed != null &&
+          installed != latest &&
+          !versionsEffectivelyEqual(installed, latest);
       Widget trailingRow = Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

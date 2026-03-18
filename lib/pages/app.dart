@@ -128,9 +128,23 @@ class _AppPageState extends State<AppPage> {
 
     getInfoColumn() {
       String versionLines = '';
+      final undeterminedTrackOnlyInstalled =
+          trackOnly &&
+              app?.app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] ==
+                  true &&
+              app?.app.installedVersion == null;
       bool installed = app?.app.installedVersion != null;
-      bool upToDate = app?.app.installedVersion == app?.app.latestVersion;
-      if (installed) {
+      bool upToDate = app?.app.installedVersion == app?.app.latestVersion ||
+          (app?.app.installedVersion != null &&
+              versionsEffectivelyEqual(
+                  app!.app.installedVersion!, app.app.latestVersion));
+      if (undeterminedTrackOnlyInstalled) {
+        versionLines =
+            app!.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
+                ? tr('trackOnlyTempPackageIdInstalledVersion')
+                : tr('trackOnlyUndeterminedInstalledVersion');
+        upToDate = false;
+      } else if (installed) {
         versionLines = '${app?.app.installedVersion} ${tr('installed')}';
         if (upToDate) {
           versionLines += '/${tr('latest')}';
@@ -543,7 +557,10 @@ class _AppPageState extends State<AppPage> {
             originalSettings['releaseDateAsVersion'] == true;
         if (releaseDateVersionEnabled) {
           if (app.app.releaseDate != null) {
-            bool isUpdated = app.app.installedVersion == app.app.latestVersion;
+            bool isUpdated = app.app.installedVersion == app.app.latestVersion ||
+                (app.app.installedVersion != null &&
+                    versionsEffectivelyEqual(
+                        app.app.installedVersion!, app.app.latestVersion));
             app.app.latestVersion = app.app.releaseDate!.microsecondsSinceEpoch
                 .toString();
             if (isUpdated) {
@@ -564,45 +581,135 @@ class _AppPageState extends State<AppPage> {
       }
     }
 
-    getInstallOrUpdateButton() => TextButton(
-      onPressed:
-          !updating &&
-              (app?.app.installedVersion == null ||
-                  app?.app.installedVersion != app?.app.latestVersion) &&
-              !areDownloadsRunning
-          ? () async {
-              try {
-                var successMessage = app?.app.installedVersion == null
-                    ? tr('installed')
-                    : tr('appsUpdated');
-                HapticFeedback.heavyImpact();
-                var res = await appsProvider.downloadAndInstallLatestApps(
-                  app?.app.id != null ? [app!.app.id] : [],
-                  globalNavigatorKey.currentContext,
-                );
-                if (res.isNotEmpty && !trackOnly) {
-                  // ignore: use_build_context_synchronously
-                  showMessage(successMessage, context);
-                }
-                if (res.isNotEmpty && mounted) {
-                  Navigator.of(context).pop();
-                }
-              } catch (e) {
-                // ignore: use_build_context_synchronously
-                showError(e, context);
-              }
-            }
-          : null,
-      child: Text(
-        app?.app.installedVersion == null
-            ? !trackOnly
-                  ? tr('install')
-                  : tr('markInstalled')
-            : !trackOnly
-            ? tr('update')
-            : tr('markUpdated'),
-      ),
-    );
+    getBottomCenterActions() {
+      const double expressiveRadius = 26;
+      const EdgeInsets expressivePadding =
+          EdgeInsets.symmetric(horizontal: 16, vertical: 14);
+      const Size expressiveMinimumSize = Size(48, 52);
+      final RoundedRectangleBorder expressiveShape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(expressiveRadius),
+      );
+      const Size expressiveMaximumSize = Size(double.infinity, 52);
+      final ButtonStyle expressiveFilled = FilledButton.styleFrom(
+        minimumSize: expressiveMinimumSize,
+        maximumSize: expressiveMaximumSize,
+        padding: expressivePadding,
+        shape: expressiveShape,
+        elevation: 1,
+        shadowColor: Theme.of(context).colorScheme.shadow,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+      final ButtonStyle expressiveTonal = FilledButton.styleFrom(
+        minimumSize: expressiveMinimumSize,
+        maximumSize: expressiveMaximumSize,
+        padding: expressivePadding,
+        shape: expressiveShape,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+
+      final bool actionBlocked = updating || areDownloadsRunning;
+      final installedVersion = app?.app.installedVersion;
+      final bool installedVersionIsNull = installedVersion == null;
+      final bool versionBehind = installedVersion != null &&
+          installedVersion != app!.app.latestVersion &&
+          !versionsEffectivelyEqual(installedVersion, app.app.latestVersion);
+      final bool trackOnlyHasVersionUpdate = trackOnly && versionBehind;
+      final bool primaryActionEnabled =
+          !actionBlocked && (installedVersionIsNull || versionBehind);
+
+      Future<void> runInstallOrMarkUpdated() async {
+        try {
+          final successMessage = installedVersionIsNull
+              ? tr('installed')
+              : tr('appsUpdated');
+          HapticFeedback.heavyImpact();
+          final res = await appsProvider.downloadAndInstallLatestApps(
+            app?.app.id != null ? [app!.app.id] : [],
+            globalNavigatorKey.currentContext,
+          );
+          if (res.isNotEmpty && !trackOnly && mounted) {
+            showMessage(successMessage, context);
+          }
+          if (res.isNotEmpty && mounted) {
+            Navigator.of(context).pop();
+          }
+        } catch (e) {
+          if (mounted) {
+            showError(e, context);
+          }
+        }
+      }
+
+      void openTrackOnlyReleasePage() {
+        if (app == null) return;
+        launchUrlString(
+          trackOnlyDownloadPageUrl(app.app),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+
+      if (trackOnlyHasVersionUpdate) {
+        // Outer Row is in a Column with unbounded max height. A nested Row of
+        // two horizontal Expanded children + stretch can get infinite cross-axis
+        // extent and break layout (blank page). Fixed height bounds the inner Row.
+        const double dualButtonBarHeight = 52;
+        return SizedBox(
+          height: dualButtonBarHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: FilledButton(
+                  style: expressiveFilled,
+                  onPressed: actionBlocked ? null : openTrackOnlyReleasePage,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Text(
+                      tr('update'),
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.tonal(
+                  style: expressiveTonal,
+                  onPressed: actionBlocked ? null : runInstallOrMarkUpdated,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.center,
+                    child: Text(
+                      tr('markUpdated'),
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return FilledButton(
+        style: expressiveFilled,
+        onPressed: primaryActionEnabled ? runInstallOrMarkUpdated : null,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.center,
+          child: Text(
+            installedVersionIsNull
+                ? (!trackOnly ? tr('install') : tr('markInstalled'))
+                : (!trackOnly ? tr('update') : tr('markUpdated')),
+            maxLines: 1,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
     getBottomSheetMenu() => Padding(
       padding: EdgeInsets.fromLTRB(
@@ -666,6 +773,8 @@ class _AppPageState extends State<AppPage> {
                   ),
                 if (app?.app.installedVersion != null &&
                     app?.app.installedVersion != app?.app.latestVersion &&
+                    !versionsEffectivelyEqual(
+                        app!.app.installedVersion!, app.app.latestVersion) &&
                     !isVersionDetectionStandard &&
                     !trackOnly)
                   IconButton(
@@ -677,7 +786,9 @@ class _AppPageState extends State<AppPage> {
                   ),
                 if ((!isVersionDetectionStandard || trackOnly) &&
                     app?.app.installedVersion != null &&
-                    app?.app.installedVersion == app?.app.latestVersion)
+                    (app?.app.installedVersion == app?.app.latestVersion ||
+                        versionsEffectivelyEqual(
+                            app!.app.installedVersion!, app.app.latestVersion)))
                   IconButton(
                     onPressed: app?.app == null || updating
                         ? null
@@ -689,7 +800,7 @@ class _AppPageState extends State<AppPage> {
                     tooltip: tr('resetInstallStatus'),
                   ),
                 const SizedBox(width: 16.0),
-                Expanded(child: getInstallOrUpdateButton()),
+                Expanded(child: getBottomCenterActions()),
                 const SizedBox(width: 16.0),
                 IconButton(
                   onPressed: app?.downloadProgress != null || updating

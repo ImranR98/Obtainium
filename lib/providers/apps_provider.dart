@@ -45,6 +45,43 @@ import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 final pm = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
+/// True if both versions are equal or one is a prefix of the other with a
+/// non-digit next (e.g. 50.5.19 and 50.5.19-31 [0] [PR] 879778031).
+/// Avoids false match of 1.0 in 10.0 by requiring boundary after the shorter.
+bool versionsEffectivelyEqual(String installed, String latest) {
+  if (installed == latest) return true;
+  if (installed.isEmpty || latest.isEmpty) return false;
+  final installedLen = installed.length;
+  final latestLen = latest.length;
+  if (latest.startsWith(installed) &&
+      (installedLen == latestLen ||
+          (latestLen > installedLen &&
+              !_isDigit(latest.codeUnitAt(installedLen))))) {
+    return true;
+  }
+  if (installed.startsWith(latest) &&
+      (installedLen == latestLen ||
+          (installedLen > latestLen &&
+              !_isDigit(installed.codeUnitAt(latestLen))))) {
+    return true;
+  }
+  return false;
+}
+
+bool _isDigit(int codeUnit) =>
+    codeUnit >= 0x30 && codeUnit <= 0x39; // '0'..'9'
+
+/// Track-only open URL: RSS release page when [App.changeLog] is http(s), else [App.url].
+String trackOnlyDownloadPageUrl(App app) {
+  final changeLogValue = app.changeLog;
+  if (changeLogValue != null &&
+      (changeLogValue.startsWith('http://') ||
+          changeLogValue.startsWith('https://'))) {
+    return changeLogValue;
+  }
+  return app.url;
+}
+
 class AppInMemory {
   late App app;
   double? downloadProgress;
@@ -1200,6 +1237,8 @@ class AppsProvider with ChangeNotifier {
       trackOnlyAppsToUpdate.map((e) {
         var a = apps[e]!.app;
         a.installedVersion = a.latestVersion;
+        a.additionalSettings['trackOnlyUndeterminedInstalledVersion'] = false;
+        a.additionalSettings['trackOnlyTemporaryPackageId'] = false;
         return a;
       }).toList(),
     );
@@ -1551,6 +1590,12 @@ class AppsProvider with ChangeNotifier {
   ) {
     var modded = false;
     var trackOnly = app.additionalSettings['trackOnly'] == true;
+    if (trackOnly &&
+        !isTempId(app) &&
+        app.additionalSettings['trackOnlyTemporaryPackageId'] == true) {
+      app.additionalSettings['trackOnlyTemporaryPackageId'] = false;
+      modded = true;
+    }
     var versionDetectionIsStandard =
         app.additionalSettings['versionDetection'] == true;
     var naiveStandardVersionDetection =
@@ -1570,6 +1615,10 @@ class AppsProvider with ChangeNotifier {
     } else if (realInstalledVersion != null && app.installedVersion == null) {
       // App says it's not installed but really is - set to installed and use real package versionName (or versionCode if chosen)
       app.installedVersion = realInstalledVersion;
+      if (trackOnly) {
+        app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
+            false;
+      }
       modded = true;
     }
     // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
@@ -1606,7 +1655,9 @@ class AppsProvider with ChangeNotifier {
       }
     }
     // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
-    if (installedInfo != null &&
+    // Skip for track-only: do not set installedVersion = latestVersion, so "update available" can still show
+    if (!trackOnly &&
+        installedInfo != null &&
         versionDetectionIsStandard &&
         !isVersionDetectionPossible(
           AppInMemory(app, null, installedInfo, null),
@@ -2061,8 +2112,11 @@ class AppsProvider with ChangeNotifier {
     List<String> appIds = apps.keys.toList();
     for (int i = 0; i < appIds.length; i++) {
       App? app = apps[appIds[i]]!.app;
-      if (app.installedVersion != app.latestVersion &&
-          (!installedOnly || !nonInstalledOnly)) {
+      final installedVersion = app.installedVersion;
+      final hasUpdateOrNeedsInstall = installedVersion == null ||
+          (installedVersion != app.latestVersion &&
+              !versionsEffectivelyEqual(installedVersion, app.latestVersion));
+      if (hasUpdateOrNeedsInstall && (!installedOnly || !nonInstalledOnly)) {
         if ((app.installedVersion == null &&
                 (nonInstalledOnly || !installedOnly) ||
             (app.installedVersion != null &&

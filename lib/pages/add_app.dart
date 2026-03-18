@@ -214,8 +214,33 @@ class AddAppPageState extends State<AddAppPage> {
           if (appsProvider.apps.containsKey(app.id)) {
             throw ObtainiumError(tr('appAlreadyAdded'));
           }
-          if (app.additionalSettings['trackOnly'] == true ||
-              app.additionalSettings['versionDetection'] != true) {
+          if (app.additionalSettings['trackOnly'] == true) {
+            // Installed version only comes from PackageManager when [app.id] is
+            // a real package name. Temp IDs cannot query the device.
+            app.installedVersion = null;
+            if (isTempId(app)) {
+              app.additionalSettings['trackOnlyTemporaryPackageId'] = true;
+              app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
+                  true;
+            } else {
+              app.additionalSettings['trackOnlyTemporaryPackageId'] = false;
+              final installedInfo = await getInstalledInfo(
+                app.id,
+                printErr: false,
+              );
+              if (installedInfo != null) {
+                app.installedVersion =
+                    app.additionalSettings['useVersionCodeAsOSVersion'] == true
+                        ? installedInfo.versionCode.toString()
+                        : installedInfo.versionName;
+                app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
+                    false;
+              } else {
+                app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
+                    true;
+              }
+            }
+          } else if (app.additionalSettings['versionDetection'] != true) {
             app.installedVersion = app.latestVersion;
           }
           app.categories = pickedCategories;
