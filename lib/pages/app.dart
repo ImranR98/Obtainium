@@ -14,6 +14,63 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:flutter_svg/flutter_svg.dart';
+
+Color _labelColorOnCategoryFill(Color categoryFill) {
+  return categoryFill.computeLuminance() > 0.5
+      ? const Color(0xFF1A1A1A)
+      : const Color(0xFFF5F5F5);
+}
+
+bool _trackedUrlMatchesPlayStore(String? trackedUrl, String packageId) {
+  if (trackedUrl == null ||
+      trackedUrl.isEmpty ||
+      packageId.isEmpty) {
+    return false;
+  }
+  final uri = Uri.tryParse(trackedUrl);
+  if (uri == null || uri.host.isEmpty) return false;
+  final host = uri.host.toLowerCase();
+  if (!host.contains('play.google.com')) return false;
+  final idParam = uri.queryParameters['id'];
+  if (idParam == packageId) return true;
+  return uri.path.contains(packageId);
+}
+
+bool _trackedUrlMatchesFdroid(String? trackedUrl, String packageId) {
+  if (trackedUrl == null ||
+      trackedUrl.isEmpty ||
+      packageId.isEmpty) {
+    return false;
+  }
+  final uri = Uri.tryParse(trackedUrl);
+  if (uri == null || uri.host.isEmpty) return false;
+  if (!uri.host.toLowerCase().contains('f-droid.org')) return false;
+  final segments = uri.pathSegments;
+  final packageIndex = segments.indexOf('packages');
+  if (packageIndex >= 0 && packageIndex + 1 < segments.length) {
+    final slug = segments[packageIndex + 1];
+    if (slug == packageId || slug.startsWith('$packageId.')) return true;
+  }
+  return uri.path.contains('/packages/$packageId');
+}
+
+bool _trackedUrlMatchesApkmirror(String? trackedUrl, String packageId) {
+  if (trackedUrl == null ||
+      trackedUrl.isEmpty ||
+      packageId.isEmpty) {
+    return false;
+  }
+  final uri = Uri.tryParse(trackedUrl);
+  if (uri == null || uri.host.isEmpty) return false;
+  if (!uri.host.toLowerCase().contains('apkmirror.com')) return false;
+  final searchQuery = uri.queryParameters['s'];
+  if (searchQuery != null) {
+    if (searchQuery == packageId) return true;
+    if (Uri.decodeComponent(searchQuery) == packageId) return true;
+  }
+  return uri.path.toLowerCase().contains(packageId.toLowerCase());
+}
 
 class AppPage extends StatefulWidget {
   const AppPage({
@@ -61,6 +118,52 @@ class _AppPageState extends State<AppPage> {
               : NavigationDecision.navigate,
         ),
       );
+  }
+
+  static const String _playStoreIconAsset =
+      'assets/graphics/store_icons/play_store.svg';
+  static const String _apkmirrorIconAsset =
+      'assets/graphics/store_icons/apkmirror.svg';
+  static const String _fdroidIconAsset =
+      'assets/graphics/store_icons/fdroid.svg';
+
+  Widget _buildAlternateStoreIconButton({
+    required BuildContext buttonContext,
+    required String svgAssetPath,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    const double iconBoxSize = 40;
+    final outlineColor =
+        Theme.of(buttonContext).colorScheme.outlineVariant;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: iconBoxSize,
+            height: iconBoxSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: outlineColor),
+            ),
+            padding: const EdgeInsets.all(6),
+            child: SvgPicture.asset(
+              svgAssetPath,
+              fit: BoxFit.contain,
+              placeholderBuilder: (_) => Icon(
+                Icons.storefront_outlined,
+                size: 22,
+                color: Theme.of(buttonContext).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -194,7 +297,12 @@ class _AppPageState extends State<AppPage> {
       return '$year-$month-$day $hour:$minute';
     }
 
-    Widget _detailRow(BuildContext ctx, String label, String value) {
+    Widget _detailRow(
+      BuildContext ctx,
+      String label,
+      String value, {
+      TextStyle? valueStyle,
+    }) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(
@@ -213,7 +321,7 @@ class _AppPageState extends State<AppPage> {
             Expanded(
               child: SelectableText(
                 value,
-                style: Theme.of(ctx).textTheme.bodySmall,
+                style: valueStyle ?? Theme.of(ctx).textTheme.bodySmall,
               ),
             ),
           ],
@@ -225,14 +333,16 @@ class _AppPageState extends State<AppPage> {
       BuildContext ctx,
       String label,
       String value,
-      VoidCallback? onTap,
-    ) {
-      final linkStyle = Theme.of(ctx).textTheme.bodySmall?.copyWith(
-            color: onTap != null
-                ? Theme.of(ctx).colorScheme.primary
-                : null,
-            decoration: onTap != null ? TextDecoration.underline : null,
-          );
+      VoidCallback? onTap, {
+      TextStyle? linkStyle,
+    }) {
+      final effectiveLinkStyle = linkStyle ??
+          Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                color: onTap != null
+                    ? Theme.of(ctx).colorScheme.primary
+                    : null,
+                decoration: onTap != null ? TextDecoration.underline : null,
+              );
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(
@@ -253,7 +363,7 @@ class _AppPageState extends State<AppPage> {
                 onTap: onTap,
                 child: Text(
                   value,
-                  style: linkStyle,
+                  style: effectiveLinkStyle,
                 ),
               ),
             ),
@@ -668,9 +778,50 @@ class _AppPageState extends State<AppPage> {
         versionCardChildren,
       );
 
+      final detailsValueStyle =
+          Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              );
+      final detailsMonoValueStyle =
+          detailsValueStyle.copyWith(fontFamily: 'monospace');
+      final detailsLinkStyle = detailsValueStyle.copyWith(
+        color: Theme.of(context).colorScheme.primary,
+        decoration: TextDecoration.underline,
+      );
+
+      final String? alternateStoresPackageId = app?.app.id;
+      final String? alternateStoresTrackedUrl = app?.app.url;
+      final bool showPlayStoreIcon = alternateStoresPackageId != null &&
+          alternateStoresPackageId.isNotEmpty &&
+          !_trackedUrlMatchesPlayStore(
+            alternateStoresTrackedUrl,
+            alternateStoresPackageId,
+          );
+      final bool showApkmirrorIcon = alternateStoresPackageId != null &&
+          alternateStoresPackageId.isNotEmpty &&
+          !_trackedUrlMatchesApkmirror(
+            alternateStoresTrackedUrl,
+            alternateStoresPackageId,
+          );
+      final bool showFdroidIcon = alternateStoresPackageId != null &&
+          alternateStoresPackageId.isNotEmpty &&
+          !_trackedUrlMatchesFdroid(
+            alternateStoresTrackedUrl,
+            alternateStoresPackageId,
+          );
+      final bool showAlternateSourcesRow = showPlayStoreIcon ||
+          showApkmirrorIcon ||
+          showFdroidIcon;
+
       final detailsChildren = <Widget>[
         if (app?.app.id != null && app!.app.id!.isNotEmpty)
-          _detailRow(context, tr('package'), app!.app.id!),
+          _detailRow(
+            context,
+            tr('package'),
+            app!.app.id!,
+            valueStyle: detailsMonoValueStyle,
+          ),
         if (app?.app.url != null && app!.app.url!.isNotEmpty)
           _detailRowWithLink(
             context,
@@ -680,8 +831,9 @@ class _AppPageState extends State<AppPage> {
               app!.app.url!,
               mode: LaunchMode.externalApplication,
             ),
+            linkStyle: detailsLinkStyle,
           ),
-        if (app?.app.id != null && app!.app.id!.isNotEmpty)
+        if (showAlternateSourcesRow && alternateStoresPackageId != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
@@ -703,27 +855,36 @@ class _AppPageState extends State<AppPage> {
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      ActionChip(
-                        label: Text(tr('playStore')),
-                        onPressed: () => launchUrlString(
-                          'https://play.google.com/store/apps/details?id=${app!.app.id}',
-                          mode: LaunchMode.externalApplication,
+                      if (showPlayStoreIcon)
+                        _buildAlternateStoreIconButton(
+                          buttonContext: context,
+                          svgAssetPath: _playStoreIconAsset,
+                          tooltip: tr('playStore'),
+                          onPressed: () => launchUrlString(
+                            'https://play.google.com/store/apps/details?id=$alternateStoresPackageId',
+                            mode: LaunchMode.externalApplication,
+                          ),
                         ),
-                      ),
-                      ActionChip(
-                        label: Text(tr('apkmirror')),
-                        onPressed: () => launchUrlString(
-                          'https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${Uri.encodeComponent(app!.app.id!)}',
-                          mode: LaunchMode.externalApplication,
+                      if (showApkmirrorIcon)
+                        _buildAlternateStoreIconButton(
+                          buttonContext: context,
+                          svgAssetPath: _apkmirrorIconAsset,
+                          tooltip: tr('apkmirror'),
+                          onPressed: () => launchUrlString(
+                            'https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${Uri.encodeComponent(alternateStoresPackageId)}',
+                            mode: LaunchMode.externalApplication,
+                          ),
                         ),
-                      ),
-                      ActionChip(
-                        label: Text(tr('fdroidStore')),
-                        onPressed: () => launchUrlString(
-                          'https://f-droid.org/packages/${app!.app.id}/',
-                          mode: LaunchMode.externalApplication,
+                      if (showFdroidIcon)
+                        _buildAlternateStoreIconButton(
+                          buttonContext: context,
+                          svgAssetPath: _fdroidIconAsset,
+                          tooltip: tr('fdroidStore'),
+                          onPressed: () => launchUrlString(
+                            'https://f-droid.org/packages/$alternateStoresPackageId/',
+                            mode: LaunchMode.externalApplication,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -753,16 +914,45 @@ class _AppPageState extends State<AppPage> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     ...(app?.app.categories ?? []).map(
-                      (categoryName) => Chip(
-                        label: Text(
-                          categoryName,
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      ),
+                      (categoryName) {
+                        final colorArgb =
+                            settingsProvider.categories[categoryName];
+                        if (colorArgb != null) {
+                          final fill = Color(colorArgb);
+                          return Chip(
+                            label: Text(
+                              categoryName,
+                              style: TextStyle(
+                                color: _labelColorOnCategoryFill(fill),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            backgroundColor: fill,
+                            side: BorderSide.none,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 2,
+                            ),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          );
+                        }
+                        return Chip(
+                          label: Text(
+                            categoryName,
+                            style: detailsValueStyle,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -875,33 +1065,47 @@ class _AppPageState extends State<AppPage> {
       return Padding(
         padding: const EdgeInsets.only(right: 16, bottom: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             iconWidget,
             SizedBox(width: 12 * heroScale),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    app?.name ?? tr('app'),
-                    style: titleStyle?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: (titleStyle?.fontSize ?? 22) * heroScale,
+              child: SizedBox(
+                height: scaledIconSize,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          app?.name ?? tr('app'),
+                          style: titleStyle?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: (titleStyle?.fontSize ?? 22) *
+                                    heroScale *
+                                    1.12,
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 2 * heroScale),
-                  Text(
-                    tr('byX', args: [app?.author ?? tr('unknown')]),
-                    style: bylineStyle?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: (bylineStyle?.fontSize ?? 12) * heroScale,
-                        ),
-                  ),
-                ],
+                      ),
+                    ),
+                    Text(
+                      tr('byX', args: [app?.author ?? tr('unknown')]),
+                      style: bylineStyle?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                            fontSize: (bylineStyle?.fontSize ?? 12) *
+                                heroScale *
+                                1.2,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
