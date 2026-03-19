@@ -244,6 +244,10 @@ class _SettingsPageState extends State<SettingsPage> {
           value: SortColumnSettings.releaseDate,
           child: Text(tr('releaseDate')),
         ),
+        DropdownMenuItem(
+          value: SortColumnSettings.lastUpdateCheck,
+          child: Text(tr('sortByLastUpdateCheck')),
+        ),
       ],
       onChanged: (value) {
         if (value != null) {
@@ -269,6 +273,31 @@ class _SettingsPageState extends State<SettingsPage> {
       onChanged: (value) {
         if (value != null) {
           settingsProvider.sortOrder = value;
+        }
+      },
+    );
+
+    var appsListGroupDropdown = DropdownButtonFormField<AppsListGroupBy>(
+      isExpanded: true,
+      decoration: InputDecoration(labelText: tr('groupBy')),
+      value: settingsProvider.appsListGroupBy,
+      items: [
+        DropdownMenuItem(
+          value: AppsListGroupBy.none,
+          child: Text(tr('groupByNone')),
+        ),
+        DropdownMenuItem(
+          value: AppsListGroupBy.category,
+          child: Text(tr('groupByCategory')),
+        ),
+        DropdownMenuItem(
+          value: AppsListGroupBy.source,
+          child: Text(tr('groupByTrackedSource')),
+        ),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          settingsProvider.appsListGroupBy = value;
         }
       },
     );
@@ -788,6 +817,20 @@ class _SettingsPageState extends State<SettingsPage> {
                             Expanded(child: orderDropdown),
                           ],
                         ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            tr('appsTabViewOptionsHint'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        height16,
+                        appsListGroupDropdown,
                         height16,
                         localeDropdown,
                         FutureBuilder(
@@ -867,19 +910,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               value: settingsProvider.buryNonInstalled,
                               onChanged: (value) {
                                 settingsProvider.buryNonInstalled = value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('groupByCategory'))),
-                            Switch(
-                              value: settingsProvider.groupByCategory,
-                              onChanged: (value) {
-                                settingsProvider.groupByCategory = value;
                               },
                             ),
                           ],

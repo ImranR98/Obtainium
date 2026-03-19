@@ -20,9 +20,17 @@ Color obtainiumThemeColor = const Color(0xFF6438B5);
 
 enum ThemeSettings { system, light, dark }
 
-enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
+enum SortColumnSettings {
+  added,
+  nameAuthor,
+  authorName,
+  releaseDate,
+  lastUpdateCheck,
+}
 
 enum SortOrderSettings { ascending, descending }
+
+enum AppsListGroupBy { none, category, source }
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
@@ -168,12 +176,16 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings.values[prefs?.getInt('sortColumn') ??
-        SortColumnSettings.nameAuthor.index];
+    final stored = prefs?.getInt('sortColumn');
+    if (stored == null) return SortColumnSettings.nameAuthor;
+    if (stored < 0 || stored >= SortColumnSettings.values.length) {
+      return SortColumnSettings.nameAuthor;
+    }
+    return SortColumnSettings.values[stored];
   }
 
-  set sortColumn(SortColumnSettings s) {
-    prefs?.setInt('sortColumn', s.index);
+  set sortColumn(SortColumnSettings sortColumnSetting) {
+    prefs?.setInt('sortColumn', sortColumnSetting.index);
     notifyListeners();
   }
 
@@ -269,13 +281,32 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get groupByCategory {
-    return prefs?.getBool('groupByCategory') ?? false;
+  AppsListGroupBy get appsListGroupBy {
+    if (prefs?.containsKey('appsListGroupBy') == true) {
+      final stored = prefs!.getInt('appsListGroupBy');
+      if (stored != null &&
+          stored >= 0 &&
+          stored < AppsListGroupBy.values.length) {
+        return AppsListGroupBy.values[stored];
+      }
+    }
+    if (prefs?.getBool('groupByCategory') == true) {
+      return AppsListGroupBy.category;
+    }
+    return AppsListGroupBy.none;
   }
 
-  set groupByCategory(bool show) {
-    prefs?.setBool('groupByCategory', show);
+  set appsListGroupBy(AppsListGroupBy mode) {
+    prefs?.setInt('appsListGroupBy', mode.index);
+    prefs?.setBool('groupByCategory', mode == AppsListGroupBy.category);
     notifyListeners();
+  }
+
+  bool get groupByCategory => appsListGroupBy == AppsListGroupBy.category;
+
+  set groupByCategory(bool show) {
+    appsListGroupBy =
+        show ? AppsListGroupBy.category : AppsListGroupBy.none;
   }
 
   bool get hideTrackOnlyWarning {

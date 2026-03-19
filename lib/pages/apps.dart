@@ -128,6 +128,201 @@ Null Function()? getChangeLogFn(BuildContext context, App app) {
         };
 }
 
+void showAppsViewOptionsSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (sheetContext) {
+      final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
+      return StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final settingsProvider = ctx.watch<SettingsProvider>();
+          final colorScheme = Theme.of(ctx).colorScheme;
+          final textTheme = Theme.of(ctx).textTheme;
+
+          Widget sectionLabel(String text) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 4),
+              child: Text(
+                text,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            );
+          }
+
+          Widget sortChip({
+            required String label,
+            required bool selected,
+            required VoidCallback onTap,
+          }) {
+            return FilterChip(
+              label: Text(label),
+              selected: selected,
+              onSelected: (_) => onTap(),
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+            );
+          }
+
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottomInset),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.onSurfaceVariant.withAlpha(80),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      tr('appsViewOptions'),
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    sectionLabel(tr('sortBy')),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        sortChip(
+                          label: tr('sortByName'),
+                          selected: settingsProvider.sortColumn ==
+                              SortColumnSettings.nameAuthor,
+                          onTap: () {
+                            settingsProvider.sortColumn =
+                                SortColumnSettings.nameAuthor;
+                            setSheetState(() {});
+                          },
+                        ),
+                        sortChip(
+                          label: tr('sortByLastUpdateCheck'),
+                          selected: settingsProvider.sortColumn ==
+                              SortColumnSettings.lastUpdateCheck,
+                          onTap: () {
+                            settingsProvider.sortColumn =
+                                SortColumnSettings.lastUpdateCheck;
+                            setSheetState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        sortChip(
+                          label: tr('ascending'),
+                          selected: settingsProvider.sortOrder ==
+                              SortOrderSettings.ascending,
+                          onTap: () {
+                            settingsProvider.sortOrder =
+                                SortOrderSettings.ascending;
+                            setSheetState(() {});
+                          },
+                        ),
+                        sortChip(
+                          label: tr('descending'),
+                          selected: settingsProvider.sortOrder ==
+                              SortOrderSettings.descending,
+                          onTap: () {
+                            settingsProvider.sortOrder =
+                                SortOrderSettings.descending;
+                            setSheetState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Divider(color: colorScheme.outlineVariant),
+                    const SizedBox(height: 8),
+                    sectionLabel(tr('groupBy')),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        sortChip(
+                          label: tr('groupByNone'),
+                          selected: settingsProvider.appsListGroupBy ==
+                              AppsListGroupBy.none,
+                          onTap: () {
+                            settingsProvider.appsListGroupBy =
+                                AppsListGroupBy.none;
+                            setSheetState(() {});
+                          },
+                        ),
+                        sortChip(
+                          label: tr('groupByCategory'),
+                          selected: settingsProvider.appsListGroupBy ==
+                              AppsListGroupBy.category,
+                          onTap: () {
+                            settingsProvider.appsListGroupBy =
+                                AppsListGroupBy.category;
+                            setSheetState(() {});
+                          },
+                        ),
+                        sortChip(
+                          label: tr('groupByTrackedSource'),
+                          selected: settingsProvider.appsListGroupBy ==
+                              AppsListGroupBy.source,
+                          onTap: () {
+                            settingsProvider.appsListGroupBy =
+                                AppsListGroupBy.source;
+                            setSheetState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Divider(color: colorScheme.outlineVariant),
+                    const SizedBox(height: 4),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(tr('pinUpdates')),
+                      value: settingsProvider.pinUpdates,
+                      onChanged: (value) {
+                        settingsProvider.pinUpdates = value;
+                        setSheetState(() {});
+                      },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(tr('moveNonInstalledAppsToBottom')),
+                      value: settingsProvider.buryNonInstalled,
+                      onChanged: (value) {
+                        settingsProvider.buryNonInstalled = value;
+                        setSheetState(() {});
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 class AppsPageState extends State<AppsPage> {
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
@@ -300,6 +495,23 @@ class AppsPageState extends State<AppsPage> {
         } else {
           result = aDate.compareTo(bDate);
         }
+      } else if (settingsProvider.sortColumn ==
+          SortColumnSettings.lastUpdateCheck) {
+        final aDate = a.app.lastUpdateCheck;
+        final bDate = b.app.lastUpdateCheck;
+        final isDescending =
+            settingsProvider.sortOrder == SortOrderSettings.descending;
+        if (aDate == null && bDate == null) {
+          result = ((a.name + a.author).toLowerCase()).compareTo(
+            (b.name + b.author).toLowerCase(),
+          );
+        } else if (aDate == null) {
+          result = isDescending ? -1 : 1;
+        } else if (bDate == null) {
+          result = isDescending ? 1 : -1;
+        } else {
+          result = aDate.compareTo(bDate);
+        }
       }
       return result;
     });
@@ -396,6 +608,25 @@ class AppsPageState extends State<AppsPage> {
           ? 1
           : -1;
     });
+
+    List<String> getListedSourceKeys() {
+      if (listedApps.isEmpty) return [];
+      final keys = listedApps
+          .map(
+            (e) => sourceProvider
+                .getSource(e.app.url, overrideSource: e.app.overrideSource)
+                .runtimeType
+                .toString(),
+          )
+          .toSet()
+          .toList();
+      keys.sort(
+        (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+      );
+      return keys;
+    }
+
+    var listedSources = getListedSourceKeys();
 
     Set<App> selectedApps = listedApps
         .map((e) => e.app)
@@ -739,6 +970,55 @@ class AppsPageState extends State<AppsPage> {
         initiallyExpanded: true,
         title: Text(
           capFirstChar(listedCategories[index] ?? tr('noCategory')),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        controlAffinity: ListTileControlAffinity.leading,
+        trailing: Text(tiles.length.toString()),
+        children: tiles,
+      );
+    }
+
+    getSourceCollapsibleTile(int index) {
+      final sourceKey = listedSources[index];
+      final tiles = listedApps
+          .asMap()
+          .entries
+          .where(
+            (entry) =>
+                sourceProvider
+                    .getSource(
+                      entry.value.app.url,
+                      overrideSource: entry.value.app.overrideSource,
+                    )
+                    .runtimeType
+                    .toString() ==
+                sourceKey,
+          )
+          .map((entry) => getSingleAppHorizTile(entry.key))
+          .toList();
+
+      final firstForTitle = listedApps.firstWhere(
+        (appInMem) =>
+            sourceProvider
+                .getSource(
+                  appInMem.app.url,
+                  overrideSource: appInMem.app.overrideSource,
+                )
+                .runtimeType
+                .toString() ==
+            sourceKey,
+      );
+      final sourceTitle = sourceProvider
+          .getSource(
+            firstForTitle.app.url,
+            overrideSource: firstForTitle.app.overrideSource,
+          )
+          .name;
+
+      return ExpansionTile(
+        initiallyExpanded: true,
+        title: Text(
+          sourceTitle,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         controlAffinity: ListTileControlAffinity.leading,
@@ -1300,25 +1580,38 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getDisplayedList() {
-      return settingsProvider.groupByCategory &&
-              !(listedCategories.isEmpty ||
-                  (listedCategories.length == 1 && listedCategories[0] == null))
-          ? SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return getCategoryCollapsibleTile(index);
-              }, childCount: listedCategories.length),
-            )
-          : SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return getSingleAppHorizTile(index);
-              }, childCount: listedApps.length),
-            );
+      final groupBy = settingsProvider.appsListGroupBy;
+      final useCategoryGroups = groupBy == AppsListGroupBy.category &&
+          !(listedCategories.isEmpty ||
+              (listedCategories.length == 1 && listedCategories[0] == null));
+      if (useCategoryGroups) {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((
+            BuildContext context,
+            int index,
+          ) {
+            return getCategoryCollapsibleTile(index);
+          }, childCount: listedCategories.length),
+        );
+      }
+      if (groupBy == AppsListGroupBy.source && listedSources.isNotEmpty) {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((
+            BuildContext context,
+            int index,
+          ) {
+            return getSourceCollapsibleTile(index);
+          }, childCount: listedSources.length),
+        );
+      }
+      return SliverList(
+        delegate: SliverChildBuilderDelegate((
+          BuildContext context,
+          int index,
+        ) {
+          return getSingleAppHorizTile(index);
+        }, childCount: listedApps.length),
+      );
     }
 
     return Scaffold(
@@ -1333,7 +1626,16 @@ class AppsPageState extends State<AppsPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             controller: scrollController,
             slivers: <Widget>[
-              CustomAppBar(title: tr('appsString')),
+              CustomAppBar(
+                title: tr('appsString'),
+                actions: [
+                  IconButton(
+                    tooltip: tr('appsViewOptions'),
+                    onPressed: () => showAppsViewOptionsSheet(context),
+                    icon: const Icon(Icons.tune),
+                  ),
+                ],
+              ),
               ...getLoadingWidgets(),
               getDisplayedList(),
             ],

@@ -1164,56 +1164,6 @@ class _AppPageState extends State<AppPage> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
-            GestureDetector(
-              onTap: () {
-                if (app?.app.url != null) {
-                  launchUrlString(
-                    app?.app.url ?? '',
-                    mode: LaunchMode.externalApplication,
-                  );
-                }
-              },
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: settingsProvider.highlightTouchTargets
-                          ? (Theme.of(context).brightness == Brightness.light
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).primaryColorLight)
-                              .withAlpha(
-                                  Theme.of(context).brightness == Brightness.light
-                                      ? 20
-                                      : 40)
-                          : null,
-                    ),
-                    padding: settingsProvider.highlightTouchTargets
-                        ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                        : EdgeInsetsDirectional.zero,
-                    child: Text(
-                      app?.app.url ?? '',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                            decoration: TextDecoration.underline,
-                            fontStyle: FontStyle.italic,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              app?.app.id ?? '',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
             getInfoColumn(small: true),
             const SizedBox(height: 24),
           ],
