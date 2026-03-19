@@ -96,7 +96,6 @@ dependencies:
   flutter_lints: ^6.0.0
   flutter_foreground_task: ^9.2.0
   flutter_markdown_plus: ^1.0.7
-  flutter_svg: ^2.2.3
 
 flutter_launcher_icons:
   android: "ic_launcher"

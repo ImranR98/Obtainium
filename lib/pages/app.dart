@@ -14,7 +14,6 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:flutter_svg/flutter_svg.dart';
 
 Color _labelColorOnCategoryFill(Color categoryFill) {
   return categoryFill.computeLuminance() > 0.5
@@ -120,49 +119,31 @@ class _AppPageState extends State<AppPage> {
       );
   }
 
-  static const String _playStoreIconAsset =
-      'assets/graphics/store_icons/play_store.svg';
-  static const String _apkmirrorIconAsset =
-      'assets/graphics/store_icons/apkmirror.svg';
-  static const String _fdroidIconAsset =
-      'assets/graphics/store_icons/fdroid.svg';
+  static const Color _alternateStorePlayGreen = Color(0xFF3DDC84);
+  static const Color _alternateStoreFdroidLightBlue = Color(0xFF81D4FA);
+  static const Color _alternateStoreApkmirrorOrange = Color(0xFFFF9800);
 
-  Widget _buildAlternateStoreIconButton({
-    required BuildContext buttonContext,
-    required String svgAssetPath,
-    required String tooltip,
+  Widget _buildAlternateStoreChip({
+    required BuildContext chipContext,
+    required String label,
+    required Color backgroundColor,
     required VoidCallback onPressed,
   }) {
-    const double iconBoxSize = 40;
-    final outlineColor =
-        Theme.of(buttonContext).colorScheme.outlineVariant;
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            width: iconBoxSize,
-            height: iconBoxSize,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: outlineColor),
+    return ActionChip(
+      label: Text(
+        label,
+        style: Theme.of(chipContext).textTheme.bodySmall?.copyWith(
+              color: _labelColorOnCategoryFill(backgroundColor),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
-            padding: const EdgeInsets.all(6),
-            child: SvgPicture.asset(
-              svgAssetPath,
-              fit: BoxFit.contain,
-              placeholderBuilder: (_) => Icon(
-                Icons.storefront_outlined,
-                size: 22,
-                color: Theme.of(buttonContext).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
       ),
+      backgroundColor: backgroundColor,
+      side: BorderSide.none,
+      onPressed: onPressed,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
     );
   }
 
@@ -814,6 +795,38 @@ class _AppPageState extends State<AppPage> {
           showApkmirrorIcon ||
           showFdroidIcon;
 
+      void openAppCategoryEditor() {
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (sheetContext) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CategoryEditorSelector(
+                  alignment: WrapAlignment.center,
+                  preselected: app?.app.categories != null
+                      ? app!.app.categories.toSet()
+                      : {},
+                  showLabelWhenNotEmpty: false,
+                  onSelected: (categories) {
+                    if (app != null) {
+                      app!.app.categories = categories;
+                      appsProvider.saveApps([app!.app]);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: Text(tr('continue')),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
       final detailsChildren = <Widget>[
         if (app?.app.id != null && app!.app.id!.isNotEmpty)
           _detailRow(
@@ -856,30 +869,30 @@ class _AppPageState extends State<AppPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (showPlayStoreIcon)
-                        _buildAlternateStoreIconButton(
-                          buttonContext: context,
-                          svgAssetPath: _playStoreIconAsset,
-                          tooltip: tr('playStore'),
+                        _buildAlternateStoreChip(
+                          chipContext: context,
+                          label: tr('playStore'),
+                          backgroundColor: _alternateStorePlayGreen,
                           onPressed: () => launchUrlString(
                             'https://play.google.com/store/apps/details?id=$alternateStoresPackageId',
                             mode: LaunchMode.externalApplication,
                           ),
                         ),
                       if (showApkmirrorIcon)
-                        _buildAlternateStoreIconButton(
-                          buttonContext: context,
-                          svgAssetPath: _apkmirrorIconAsset,
-                          tooltip: tr('apkmirror'),
+                        _buildAlternateStoreChip(
+                          chipContext: context,
+                          label: tr('apkmirror'),
+                          backgroundColor: _alternateStoreApkmirrorOrange,
                           onPressed: () => launchUrlString(
                             'https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${Uri.encodeComponent(alternateStoresPackageId)}',
                             mode: LaunchMode.externalApplication,
                           ),
                         ),
                       if (showFdroidIcon)
-                        _buildAlternateStoreIconButton(
-                          buttonContext: context,
-                          svgAssetPath: _fdroidIconAsset,
-                          tooltip: tr('fdroidStore'),
+                        _buildAlternateStoreChip(
+                          chipContext: context,
+                          label: tr('fdroidStore'),
+                          backgroundColor: _alternateStoreFdroidLightBlue,
                           onPressed: () => launchUrlString(
                             'https://f-droid.org/packages/$alternateStoresPackageId/',
                             mode: LaunchMode.externalApplication,
@@ -893,107 +906,75 @@ class _AppPageState extends State<AppPage> {
           ),
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 100,
-                child: Text(
-                  tr('categories'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: openAppCategoryEditor,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: Text(
+                    tr('categories'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  alignment: WrapAlignment.start,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    ...(app?.app.categories ?? []).map(
-                      (categoryName) {
-                        final colorArgb =
-                            settingsProvider.categories[categoryName];
-                        if (colorArgb != null) {
-                          final fill = Color(colorArgb);
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.start,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      ...(app?.app.categories ?? []).map(
+                        (categoryName) {
+                          final colorArgb =
+                              settingsProvider.categories[categoryName];
+                          if (colorArgb != null) {
+                            final fill = Color(colorArgb);
+                            return Chip(
+                              label: Text(
+                                categoryName,
+                                style: TextStyle(
+                                  color: _labelColorOnCategoryFill(fill),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              backgroundColor: fill,
+                              side: BorderSide.none,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 2,
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            );
+                          }
                           return Chip(
                             label: Text(
                               categoryName,
-                              style: TextStyle(
-                                color: _labelColorOnCategoryFill(fill),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: detailsValueStyle,
                             ),
-                            backgroundColor: fill,
-                            side: BorderSide.none,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 2,
+                              horizontal: 12,
+                              vertical: 4,
                             ),
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
                           );
-                        }
-                        return Chip(
-                          label: Text(
-                            categoryName,
-                            style: detailsValueStyle,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    builder: (sheetContext) => Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CategoryEditorSelector(
-                            alignment: WrapAlignment.center,
-                            preselected: app?.app.categories != null
-                                ? app!.app.categories.toSet()
-                                : {},
-                            showLabelWhenNotEmpty: false,
-                            onSelected: (categories) {
-                              if (app != null) {
-                                app!.app.categories = categories;
-                                appsProvider.saveApps([app!.app]);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: () =>
-                                Navigator.pop(sheetContext),
-                            child: Text(tr('continue')),
-                          ),
-                        ],
+                        },
                       ),
-                    ),
-                  );
-                },
-                child: Text(tr('edit')),
-              ),
-            ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ];
@@ -1007,7 +988,7 @@ class _AppPageState extends State<AppPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           versionCard,
           detailsCard,
           if (app?.app.additionalSettings['about'] is String &&
@@ -1065,47 +1046,40 @@ class _AppPageState extends State<AppPage> {
       return Padding(
         padding: const EdgeInsets.only(right: 16, bottom: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             iconWidget,
             SizedBox(width: 12 * heroScale),
             Expanded(
-              child: SizedBox(
-                height: scaledIconSize,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(
-                          app?.name ?? tr('app'),
-                          style: titleStyle?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: (titleStyle?.fontSize ?? 22) *
-                                    heroScale *
-                                    1.12,
-                              ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    app?.name ?? tr('app'),
+                    style: titleStyle?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: (titleStyle?.fontSize ?? 22) *
+                              heroScale *
+                              1.06,
                         ),
-                      ),
-                    ),
-                    Text(
-                      tr('byX', args: [app?.author ?? tr('unknown')]),
-                      style: bylineStyle?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                            fontSize: (bylineStyle?.fontSize ?? 12) *
-                                heroScale *
-                                1.2,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 2 * heroScale),
+                  Text(
+                    tr('byX', args: [app?.author ?? tr('unknown')]),
+                    style: bylineStyle?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                          fontSize:
+                              (bylineStyle?.fontSize ?? 12) * heroScale * 1.08,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
@@ -1680,7 +1654,9 @@ class _AppPageState extends State<AppPage> {
                     child: SafeArea(
                       top: true,
                       bottom: false,
-                      child: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Row(
@@ -1706,6 +1682,7 @@ class _AppPageState extends State<AppPage> {
                           SizedBox(
                               height: MediaQuery.of(context).padding.bottom),
                         ],
+                      ),
                       ),
                     ),
                   ),
