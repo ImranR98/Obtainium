@@ -206,6 +206,7 @@ class _AppPageState extends State<AppPage> {
                 label,
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                       color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
                     ),
               ),
             ),
@@ -243,6 +244,7 @@ class _AppPageState extends State<AppPage> {
                 label,
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                       color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
                     ),
               ),
             ),
@@ -691,6 +693,7 @@ class _AppPageState extends State<AppPage> {
                     tr('otherSources'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
                         ),
                   ),
                 ),
@@ -715,7 +718,7 @@ class _AppPageState extends State<AppPage> {
                         ),
                       ),
                       ActionChip(
-                        label: Text(tr('fdroid')),
+                        label: Text(tr('fdroidStore')),
                         onPressed: () => launchUrlString(
                           'https://f-droid.org/packages/${app!.app.id}/',
                           mode: LaunchMode.externalApplication,
@@ -738,6 +741,7 @@ class _AppPageState extends State<AppPage> {
                   tr('categories'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
                       ),
                 ),
               ),
@@ -749,19 +753,15 @@ class _AppPageState extends State<AppPage> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     ...(app?.app.categories ?? []).map(
-                      (categoryName) => Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
+                      (categoryName) => Chip(
+                        label: Text(
                           categoryName,
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.labelMedium,
                         ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
                       ),
                     ),
                   ],
@@ -832,7 +832,11 @@ class _AppPageState extends State<AppPage> {
     }
 
     Widget _buildDetailHeroContent() {
+      const double heroScale = 1.2;
       const heroIconSize = 58.0;
+      final scaledIconSize = heroIconSize * heroScale;
+      final titleStyle = Theme.of(context).textTheme.titleLarge;
+      final bylineStyle = Theme.of(context).textTheme.bodySmall;
       final iconWidget = FutureBuilder(
         future: appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
         builder: (ctx, val) {
@@ -843,8 +847,8 @@ class _AppPageState extends State<AppPage> {
                 borderRadius: BorderRadius.circular(16),
                 child: Image.memory(
                   app!.icon!,
-                  height: heroIconSize,
-                  width: heroIconSize,
+                  height: scaledIconSize,
+                  width: scaledIconSize,
                   fit: BoxFit.cover,
                   gaplessPlayback: true,
                 ),
@@ -852,8 +856,8 @@ class _AppPageState extends State<AppPage> {
             );
           }
           return Container(
-            height: heroIconSize,
-            width: heroIconSize,
+            height: scaledIconSize,
+            width: scaledIconSize,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               gradient: LinearGradient(
@@ -874,7 +878,7 @@ class _AppPageState extends State<AppPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             iconWidget,
-            const SizedBox(width: 12),
+            SizedBox(width: 12 * heroScale),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -882,17 +886,19 @@ class _AppPageState extends State<AppPage> {
                 children: [
                   Text(
                     app?.name ?? tr('app'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: titleStyle?.copyWith(
                           fontWeight: FontWeight.w700,
+                          fontSize: (titleStyle?.fontSize ?? 22) * heroScale,
                         ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2 * heroScale),
                   Text(
                     tr('byX', args: [app?.author ?? tr('unknown')]),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: bylineStyle?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: (bylineStyle?.fontSize ?? 12) * heroScale,
                         ),
                   ),
                 ],
