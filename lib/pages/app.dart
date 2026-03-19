@@ -127,12 +127,19 @@ class _AppPageState extends State<AppPage> {
     }
 
     Widget _sectionCard(
-        BuildContext ctx, String sectionTitle, List<Widget> children) {
+      BuildContext ctx,
+      String sectionTitle,
+      List<Widget> children,
+    ) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(ctx).colorScheme.surfaceContainerLow,
+          color: Theme.of(ctx).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: Theme.of(ctx).colorScheme.outlineVariant,
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Theme.of(ctx).colorScheme.shadow.withAlpha(25),
@@ -182,6 +189,39 @@ class _AppPageState extends State<AppPage> {
               child: SelectableText(
                 value,
                 style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _versionRow(BuildContext ctx, String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            SizedBox(
+              width: 72,
+              child: Text(
+                label,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SelectableText(
+                value,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
               ),
             ),
           ],
@@ -424,38 +464,125 @@ class _AppPageState extends State<AppPage> {
         );
       }
 
+      final versionCardChildren = <Widget>[];
+      if (undeterminedTrackOnlyInstalled) {
+        final installedLabel = app?.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
+            ? tr('trackOnlyTempPackageIdInstalledVersion')
+            : tr('trackOnlyUndeterminedInstalledVersion');
+        versionCardChildren.add(
+          _versionRow(context, tr('installed'), installedLabel),
+        );
+        versionCardChildren.add(
+          _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
+        );
+      } else {
+        if (installed) {
+          versionCardChildren.add(
+            _versionRow(context, tr('installed'), app?.app.installedVersion ?? ''),
+          );
+        } else {
+          versionCardChildren.add(
+            _versionRow(context, tr('installed'), tr('notInstalled')),
+          );
+        }
+        versionCardChildren.add(
+          _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
+        );
+        if (effectivelyEqual) {
+          versionCardChildren.add(Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                tr('effectivelyEqual'),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ),
+          ));
+        } else if (upToDate) {
+          versionCardChildren.add(Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2E7D32).withAlpha(60)
+                    : const Color(0xFFC8E6C9),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                tr('sameVersion'),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFA5D6A7)
+                          : const Color(0xFF1B5E20),
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ),
+          ));
+        } else if (installed) {
+          versionCardChildren.add(Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                tr('updateAvailable'),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ),
+          ));
+        }
+      }
+      if (changeLogFn != null || app?.app.releaseDate != null) {
+        versionCardChildren.add(Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: GestureDetector(
+            onTap: changeLogFn,
+            child: Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                  text: 'Release: ',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                TextSpan(
+                  text: app?.app.releaseDate == null
+                      ? tr('changes')
+                      : app!.app.releaseDate!.toLocal().toString(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: changeLogFn != null
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                        decoration: changeLogFn != null
+                            ? TextDecoration.underline
+                            : null,
+                      ),
+                ),
+              ]),
+            ),
+          ),
+        ));
+      }
       final versionCard = _sectionCard(
         context,
         tr('version').toUpperCase(),
-        [
-          Text(
-            versionLines,
-            textAlign: TextAlign.start,
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge!
-                .copyWith(fontWeight: FontWeight.bold),
-          ),
-          if (changeLogFn != null || app?.app.releaseDate != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: GestureDetector(
-                onTap: changeLogFn,
-                child: Text(
-                  app?.app.releaseDate == null
-                      ? tr('changes')
-                      : app!.app.releaseDate!.toLocal().toString(),
-                  textAlign: TextAlign.start,
-                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                    decoration:
-                        changeLogFn != null ? TextDecoration.underline : null,
-                    fontStyle:
-                        changeLogFn != null ? FontStyle.italic : null,
-                  ),
-                ),
-              ),
-            ),
-        ],
+        versionCardChildren,
       );
 
       final detailsChildren = <Widget>[
@@ -539,108 +666,167 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
-    getFullInfoColumn({bool small = false}) => Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 0),
-        FutureBuilder(
-          future: appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
-          builder: (ctx, val) {
-            return app?.icon != null
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+    getFullInfoColumn({bool small = false}) {
+      const heroIconSize = 48.0;
+      final iconWidget = FutureBuilder(
+        future: appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
+        builder: (ctx, val) {
+          if (app?.icon != null) {
+            return GestureDetector(
+              onTap: app == null ? null : () => pm.openApp(app.app.id),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(small ? 12 : 16),
+                child: Image.memory(
+                  app!.icon!,
+                  height: small ? 70 : heroIconSize,
+                  width: small ? 70 : heroIconSize,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                ),
+              ),
+            );
+          }
+          if (small) {
+            return SizedBox(height: 70, width: 70);
+          }
+          return Container(
+            height: heroIconSize,
+            width: heroIconSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withAlpha(200),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      if (small) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [iconWidget],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              app?.name ?? tr('app'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
+            Text(
+              tr('byX', args: [app?.author ?? tr('unknown')]),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
+            GestureDetector(
+              onTap: () {
+                if (app?.app.url != null) {
+                  launchUrlString(
+                    app?.app.url ?? '',
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+              onLongPress: () {
+                Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: settingsProvider.highlightTouchTargets
+                          ? (Theme.of(context).brightness == Brightness.light
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).primaryColorLight)
+                              .withAlpha(
+                                  Theme.of(context).brightness == Brightness.light
+                                      ? 20
+                                      : 40)
+                          : null,
+                    ),
+                    padding: settingsProvider.highlightTouchTargets
+                        ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                        : EdgeInsetsDirectional.zero,
+                    child: Text(
+                      app?.app.url ?? '',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                            decoration: TextDecoration.underline,
+                            fontStyle: FontStyle.italic,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              app?.app.id ?? '',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+            getInfoColumn(small: true),
+            const SizedBox(height: 24),
+          ],
+        );
+      }
+
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                iconWidget,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTap: app == null
-                            ? null
-                            : () => pm.openApp(app.app.id),
-                        child: Image.memory(
-                          app!.icon!,
-                          height: small ? 70 : 150,
-                          gaplessPlayback: true,
-                        ),
+                      Text(
+                        app?.name ?? tr('app'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tr('byX', args: [app?.author ?? tr('unknown')]),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                     ],
-                  )
-                : Container();
-          },
-        ),
-        SizedBox(height: small ? 10 : 24),
-        Text(
-          app?.name ?? tr('app'),
-          textAlign: TextAlign.center,
-          style: small
-              ? Theme.of(context).textTheme.displaySmall
-              : Theme.of(context).textTheme.displayLarge,
-        ),
-        Text(
-          tr('byX', args: [app?.author ?? tr('unknown')]),
-          textAlign: TextAlign.center,
-          style: small
-              ? Theme.of(context).textTheme.headlineSmall
-              : Theme.of(context).textTheme.headlineMedium,
-        ),
-        if (small) ...[
-          SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
-          GestureDetector(
-            onTap: () {
-              if (app?.app.url != null) {
-                launchUrlString(
-                  app?.app.url ?? '',
-                  mode: LaunchMode.externalApplication,
-                );
-              }
-            },
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: settingsProvider.highlightTouchTargets
-                        ? (Theme.of(context).brightness == Brightness.light
-                                  ? Theme.of(context).primaryColor
-                                  : Theme.of(context).primaryColorLight)
-                            .withAlpha(
-                              Theme.of(context).brightness == Brightness.light
-                                  ? 20
-                                  : 40,
-                            )
-                        : null,
-                  ),
-                  padding: settingsProvider.highlightTouchTargets
-                      ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                      : const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                  margin: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                  child: Text(
-                    app?.app.url ?? '',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            app?.app.id ?? '',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          getInfoColumn(small: false),
+          const SizedBox(height: 24),
         ],
-        getInfoColumn(small: small),
-        const SizedBox(height: 24),
-      ],
-    );
+      );
+    }
 
     getAppWebView() => app != null
         ? WebViewWidget(
@@ -889,13 +1075,26 @@ class _AppPageState extends State<AppPage> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surfaceContainerHigh
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Theme.of(context).colorScheme.outlineVariant.withAlpha(140)
+                  : Theme.of(context).colorScheme.outlineVariant.withAlpha(70),
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.shadow.withAlpha(30),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
+              color: Theme.of(context).colorScheme.shadow.withAlpha(
+                    Theme.of(context).brightness == Brightness.dark ? 130 : 40,
+                  ),
+              blurRadius: Theme.of(context).brightness == Brightness.dark
+                  ? 18
+                  : 12,
+              offset: const Offset(0, -3),
             ),
           ],
         ),
