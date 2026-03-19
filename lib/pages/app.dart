@@ -131,10 +131,13 @@ class _AppPageState extends State<AppPage> {
       String sectionTitle,
       List<Widget> children,
     ) {
+      final isDark = Theme.of(ctx).brightness == Brightness.dark;
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(ctx).colorScheme.surfaceContainer,
+          color: isDark
+              ? Theme.of(ctx).colorScheme.surfaceContainerHigh
+              : Theme.of(ctx).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
             color: Theme.of(ctx).colorScheme.outlineVariant,
@@ -142,9 +145,9 @@ class _AppPageState extends State<AppPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(ctx).colorScheme.shadow.withAlpha(25),
-              blurRadius: 8,
-              offset: const Offset(0, 1),
+              color: Theme.of(ctx).colorScheme.shadow.withAlpha(isDark ? 80 : 25),
+              blurRadius: isDark ? 12 : 8,
+              offset: Offset(0, isDark ? 2 : 1),
             ),
           ],
         ),
@@ -605,30 +608,6 @@ class _AppPageState extends State<AppPage> {
                 ? app!.app.apkUrls[0].key
                 : plural('apk', app!.app.apkUrls.length),
           ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: _buildDownloadLink(),
-        ),
-      ];
-      final detailsCard = _sectionCard(
-        context,
-        tr('details').toUpperCase(),
-        detailsChildren,
-      );
-
-      final categoriesCertChildren = <Widget>[
-        CategoryEditorSelector(
-          alignment: WrapAlignment.center,
-          preselected: app?.app.categories != null
-              ? app!.app.categories.toSet()
-              : {},
-          onSelected: (categories) {
-            if (app != null) {
-              app!.app.categories = categories;
-              appsProvider.saveApps([app!.app]);
-            }
-          },
-        ),
         if (app != null && app!.certificateHashes.isNotEmpty) ...[
           const SizedBox(height: 16),
           Divider(color: Theme.of(context).colorScheme.outlineVariant),
@@ -640,18 +619,42 @@ class _AppPageState extends State<AppPage> {
           ),
           _buildCertBlock(),
         ],
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: _buildDownloadLink(),
+        ),
       ];
+      final detailsCard = _sectionCard(
+        context,
+        tr('details').toUpperCase(),
+        detailsChildren,
+      );
+
       final categoriesCard = _sectionCard(
         context,
         tr('categories').toUpperCase(),
-        categoriesCertChildren,
+        [
+          CategoryEditorSelector(
+            alignment: WrapAlignment.center,
+            preselected: app?.app.categories != null
+                ? app!.app.categories.toSet()
+                : {},
+            showLabelWhenNotEmpty: false,
+            onSelected: (categories) {
+              if (app != null) {
+                app!.app.categories = categories;
+                appsProvider.saveApps([app!.app]);
+              }
+            },
+          ),
+        ],
       );
 
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           versionCard,
           detailsCard,
           categoriesCard,
@@ -663,6 +666,78 @@ class _AppPageState extends State<AppPage> {
               [_buildAboutBlock()],
             ),
         ],
+      );
+    }
+
+    Widget _buildDetailHeroContent() {
+      const heroIconSize = 48.0;
+      final iconWidget = FutureBuilder(
+        future: appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
+        builder: (ctx, val) {
+          if (app?.icon != null) {
+            return GestureDetector(
+              onTap: app == null ? null : () => pm.openApp(app.app.id),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.memory(
+                  app!.icon!,
+                  height: heroIconSize,
+                  width: heroIconSize,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                ),
+              ),
+            );
+          }
+          return Container(
+            height: heroIconSize,
+            width: heroIconSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withAlpha(200),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return Padding(
+        padding: const EdgeInsets.only(right: 16, bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            iconWidget,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    app?.name ?? tr('app'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    tr('byX', args: [app?.author ?? tr('unknown')]),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -1221,17 +1296,8 @@ class _AppPageState extends State<AppPage> {
       ),
     );
 
-    appScreenAppBar() => AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-          Navigator.pop(context);
-        },
-      ),
-    );
-
     return Scaffold(
-      appBar: showAppWebpageFinal ? AppBar() : appScreenAppBar(),
+      appBar: showAppWebpageFinal ? AppBar() : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
         child: showAppWebpageFinal
@@ -1240,8 +1306,20 @@ class _AppPageState extends State<AppPage> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        getFullInfoColumn(),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: () => Navigator.pop(context),
+                              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                            ),
+                            Expanded(child: _buildDetailHeroContent()),
+                          ],
+                        ),
+                        getInfoColumn(small: false),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                           child: Row(
