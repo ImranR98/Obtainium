@@ -126,6 +126,179 @@ class _AppPageState extends State<AppPage> {
       _webViewController.loadRequest(Uri.parse(app.app.url));
     }
 
+    Widget _sectionCard(
+        BuildContext ctx, String sectionTitle, List<Widget> children) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(ctx).colorScheme.shadow.withAlpha(25),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                sectionTitle,
+                style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget _detailRow(BuildContext ctx, String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 100,
+              child: Text(
+                label,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            Expanded(
+              child: SelectableText(
+                value,
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildDownloadLink() {
+      if (app?.app.apkUrls.isEmpty != false &&
+          app?.app.otherAssetUrls.isEmpty != false) return const SizedBox.shrink();
+      return GestureDetector(
+        onTap: app?.app == null || updating
+            ? null
+            : () async {
+                try {
+                  await appsProvider.downloadAppAssets(
+                      [app!.app.id], context);
+                } catch (e) {
+                  showError(e, context);
+                }
+              },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: settingsProvider.highlightTouchTargets
+                    ? (Theme.of(context).brightness == Brightness.light
+                          ? Theme.of(context).primaryColor
+                          : Theme.of(context).primaryColorLight)
+                        .withAlpha(
+                            Theme.of(context).brightness == Brightness.light
+                                ? 20
+                                : 40)
+                    : null,
+              ),
+              padding: settingsProvider.highlightTouchTargets
+                  ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                  : const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 2),
+              margin: const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 0),
+              child: Text(
+                tr('downloadX',
+                    args: [lowerCaseIfEnglish(tr('releaseAsset'))]),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildCertBlock() {
+      if (app == null || app!.certificateHashes.isEmpty) return const SizedBox.shrink();
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: app!.certificateHashes.map((hash) {
+          return GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: hash));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(tr('copiedToClipboard'))));
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+              child: SelectableText(
+                hash,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    Widget _buildAboutBlock() {
+      if (app?.app.additionalSettings['about'] is! String ||
+          (app?.app.additionalSettings['about'] as String).isEmpty)
+        return const SizedBox.shrink();
+      return GestureDetector(
+        onLongPress: () {
+          Clipboard.setData(
+              ClipboardData(
+                  text: app?.app.additionalSettings['about'] ?? ''));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(tr('copiedToClipboard'))));
+        },
+        child: Markdown(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          styleSheet: MarkdownStyleSheet(
+            blockquoteDecoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+            ),
+            textAlign: WrapAlignment.center,
+          ),
+          data: app?.app.additionalSettings['about'] as String,
+          onTapLink: (text, href, title) {
+            if (href != null) {
+              launchUrlString(href, mode: LaunchMode.externalApplication);
+            }
+          },
+          extensionSet: md.ExtensionSet(
+            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+            [
+              md.EmojiSyntax(),
+              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+            ],
+          ),
+        ),
+      );
+    }
+
     getInfoColumn({bool small = false}) {
       String versionLines = '';
       final undeterminedTrackOnlyInstalled =
@@ -363,179 +536,6 @@ class _AppPageState extends State<AppPage> {
               [_buildAboutBlock()],
             ),
         ],
-      );
-    }
-
-    Widget _sectionCard(
-        BuildContext ctx, String sectionTitle, List<Widget> children) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(ctx).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(ctx).colorScheme.shadow.withAlpha(25),
-              blurRadius: 8,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                sectionTitle,
-                style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              ...children,
-            ],
-          ),
-        ),
-      );
-    }
-
-    Widget _detailRow(BuildContext ctx, String label, String value) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 100,
-              child: Text(
-                label,
-                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ),
-            Expanded(
-              child: SelectableText(
-                value,
-                style: Theme.of(ctx).textTheme.bodySmall,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Widget _buildDownloadLink() {
-      if (app?.app.apkUrls.isEmpty != false &&
-          app?.app.otherAssetUrls.isEmpty != false) return const SizedBox.shrink();
-      return GestureDetector(
-        onTap: app?.app == null || updating
-            ? null
-            : () async {
-                try {
-                  await appsProvider.downloadAppAssets(
-                      [app!.app.id], context);
-                } catch (e) {
-                  showError(e, context);
-                }
-              },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: settingsProvider.highlightTouchTargets
-                    ? (Theme.of(context).brightness == Brightness.light
-                          ? Theme.of(context).primaryColor
-                          : Theme.of(context).primaryColorLight)
-                        .withAlpha(
-                            Theme.of(context).brightness == Brightness.light
-                                ? 20
-                                : 40)
-                    : null,
-              ),
-              padding: settingsProvider.highlightTouchTargets
-                  ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                  : const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 2),
-              margin: const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 0),
-              child: Text(
-                tr('downloadX',
-                    args: [lowerCaseIfEnglish(tr('releaseAsset'))]),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    Widget _buildCertBlock() {
-      if (app == null || app!.certificateHashes.isEmpty) return const SizedBox.shrink();
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: app!.certificateHashes.map((hash) {
-          return GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: hash));
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-              child: SelectableText(
-                hash,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    }
-
-    Widget _buildAboutBlock() {
-      if (app?.app.additionalSettings['about'] is! String ||
-          (app?.app.additionalSettings['about'] as String).isEmpty)
-        return const SizedBox.shrink();
-      return GestureDetector(
-        onLongPress: () {
-          Clipboard.setData(
-              ClipboardData(
-                  text: app?.app.additionalSettings['about'] ?? ''));
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tr('copiedToClipboard'))));
-        },
-        child: Markdown(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          styleSheet: MarkdownStyleSheet(
-            blockquoteDecoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-            ),
-            textAlign: WrapAlignment.center,
-          ),
-          data: app?.app.additionalSettings['about'] as String,
-          onTapLink: (text, href, title) {
-            if (href != null) {
-              launchUrlString(href, mode: LaunchMode.externalApplication);
-            }
-          },
-          extensionSet: md.ExtensionSet(
-            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-            [
-              md.EmojiSyntax(),
-              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-            ],
-          ),
-        ),
       );
     }
 
