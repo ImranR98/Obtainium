@@ -147,13 +147,13 @@ class _AppPageState extends State<AppPage> {
               app.app.installedVersion!, app.app.latestVersion);
       if (undeterminedTrackOnlyInstalled) {
         versionLines =
-            app.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
+            app?.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
                 ? tr('trackOnlyTempPackageIdInstalledVersion')
                 : tr('trackOnlyUndeterminedInstalledVersion');
         upToDate = false;
       } else if (installed) {
-        versionLines = '${app.app.installedVersion} ${tr('installed')}';
-        versionLines += '\n${app.app.latestVersion} ${tr('latest')}';
+        versionLines = '${app?.app.installedVersion} ${tr('installed')}';
+        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
         if (effectivelyEqual) {
           versionLines += '\n(${tr('effectivelyEqual')})';
         } else if (upToDate) {
@@ -161,7 +161,7 @@ class _AppPageState extends State<AppPage> {
         }
       } else {
         versionLines = tr('notInstalled');
-        versionLines += '\n${app.app.latestVersion} ${tr('latest')}';
+        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
       }
       String infoLines = tr(
         'lastUpdateCheckX',
@@ -479,17 +479,6 @@ class _AppPageState extends State<AppPage> {
         ),
         getInfoColumn(),
         const SizedBox(height: 24),
-        if (!small)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                Expanded(child: getBottomCenterActions()),
-              ],
-            ),
-          ),
-        if (!small)
-          SizedBox(height: 72 + MediaQuery.of(context).padding.bottom),
       ],
     );
 
@@ -875,7 +864,22 @@ class _AppPageState extends State<AppPage> {
             : CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
-                    child: Column(children: [getFullInfoColumn()]),
+                    child: Column(
+                      children: [
+                        getFullInfoColumn(),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Row(
+                            children: [
+                              Expanded(child: getBottomCenterActions()),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                            height:
+                                72 + MediaQuery.of(context).padding.bottom),
+                      ],
+                    ),
                   ),
                 ],
               ),
