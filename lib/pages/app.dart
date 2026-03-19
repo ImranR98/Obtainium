@@ -30,6 +30,8 @@ class AppPage extends StatefulWidget {
 }
 
 class _AppPageState extends State<AppPage> {
+  static const double _versionRowLabelWidth = 120;
+
   late final WebViewController _webViewController;
   bool _wasWebViewOpened = false;
   AppInMemory? prevApp;
@@ -257,8 +259,6 @@ class _AppPageState extends State<AppPage> {
         ),
       );
     }
-
-    static const double _versionRowLabelWidth = 120;
 
     Widget _versionVerdictRow(BuildContext ctx, Widget chip) {
       return Padding(
