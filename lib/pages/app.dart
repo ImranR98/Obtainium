@@ -136,24 +136,32 @@ class _AppPageState extends State<AppPage> {
       bool installed = app?.app.installedVersion != null;
       bool upToDate = app?.app.installedVersion == app?.app.latestVersion ||
           (app?.app.installedVersion != null &&
-              versionsEffectivelyEqual(
-                  app!.app.installedVersion!, app.app.latestVersion));
+              (versionsEffectivelyEqual(
+                  app!.app.installedVersion!, app.app.latestVersion) ||
+                  installedVersionIsNewerOrEqual(
+                      app!.app.installedVersion!, app.app.latestVersion)));
+      final effectivelyEqual = installed &&
+          app!.app.installedVersion != null &&
+          app.app.installedVersion != app.app.latestVersion &&
+          versionsEffectivelyEqual(
+              app.app.installedVersion!, app.app.latestVersion);
       if (undeterminedTrackOnlyInstalled) {
         versionLines =
-            app!.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
+            app.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
                 ? tr('trackOnlyTempPackageIdInstalledVersion')
                 : tr('trackOnlyUndeterminedInstalledVersion');
         upToDate = false;
       } else if (installed) {
-        versionLines = '${app?.app.installedVersion} ${tr('installed')}';
-        if (upToDate) {
-          versionLines += '/${tr('latest')}';
+        versionLines = '${app.app.installedVersion} ${tr('installed')}';
+        versionLines += '\n${app.app.latestVersion} ${tr('latest')}';
+        if (effectivelyEqual) {
+          versionLines += '\n(${tr('effectivelyEqual')})';
+        } else if (upToDate) {
+          versionLines += '\n(${tr('sameVersion')})';
         }
       } else {
         versionLines = tr('notInstalled');
-      }
-      if (!upToDate) {
-        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
+        versionLines += '\n${app.app.latestVersion} ${tr('latest')}';
       }
       String infoLines = tr(
         'lastUpdateCheckX',
@@ -470,7 +478,18 @@ class _AppPageState extends State<AppPage> {
           style: Theme.of(context).textTheme.labelSmall,
         ),
         getInfoColumn(),
-        const SizedBox(height: 85),
+        const SizedBox(height: 24),
+        if (!small)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
+              children: [
+                Expanded(child: getBottomCenterActions()),
+              ],
+            ),
+          ),
+        if (!small)
+          SizedBox(height: 72 + MediaQuery.of(context).padding.bottom),
       ],
     );
 
@@ -612,7 +631,8 @@ class _AppPageState extends State<AppPage> {
       final bool installedVersionIsNull = installedVersion == null;
       final bool versionBehind = installedVersion != null &&
           installedVersion != app!.app.latestVersion &&
-          !versionsEffectivelyEqual(installedVersion, app.app.latestVersion);
+          !versionsEffectivelyEqual(installedVersion, app.app.latestVersion) &&
+          !installedVersionIsNewerOrEqual(installedVersion, app.app.latestVersion);
       final bool trackOnlyHasVersionUpdate = trackOnly && versionBehind;
       final bool primaryActionEnabled =
           !actionBlocked && (installedVersionIsNull || versionBehind);
@@ -775,6 +795,8 @@ class _AppPageState extends State<AppPage> {
                     app?.app.installedVersion != app?.app.latestVersion &&
                     !versionsEffectivelyEqual(
                         app!.app.installedVersion!, app.app.latestVersion) &&
+                    !installedVersionIsNewerOrEqual(
+                        app!.app.installedVersion!, app.app.latestVersion) &&
                     !isVersionDetectionStandard &&
                     !trackOnly)
                   IconButton(
@@ -788,6 +810,8 @@ class _AppPageState extends State<AppPage> {
                     app?.app.installedVersion != null &&
                     (app?.app.installedVersion == app?.app.latestVersion ||
                         versionsEffectivelyEqual(
+                            app!.app.installedVersion!, app.app.latestVersion) ||
+                        installedVersionIsNewerOrEqual(
                             app!.app.installedVersion!, app.app.latestVersion)))
                   IconButton(
                     onPressed: app?.app == null || updating
@@ -799,9 +823,6 @@ class _AppPageState extends State<AppPage> {
                     icon: const Icon(Icons.restore_rounded),
                     tooltip: tr('resetInstallStatus'),
                   ),
-                const SizedBox(width: 16.0),
-                Expanded(child: getBottomCenterActions()),
-                const SizedBox(width: 16.0),
                 IconButton(
                   onPressed: app?.downloadProgress != null || updating
                       ? null

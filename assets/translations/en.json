@@ -319,6 +319,8 @@
     "pseudoVersionInUse": "A pseudo-version is in use",
     "installed": "Installed",
     "latest": "Latest",
+    "effectivelyEqual": "Same build (different labels)",
+    "sameVersion": "Up to date",
     "invertRegEx": "Invert regular expression",
     "note": "Note",
     "selfHostedNote": "The \"{}\" dropdown can be used to reach self-hosted/custom instances of any source.",

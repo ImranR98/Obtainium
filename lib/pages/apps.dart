@@ -213,8 +213,10 @@ class AppsPageState extends State<AppsPage> {
     listedApps = listedApps.where((app) {
       final upToDate = app.app.installedVersion == app.app.latestVersion ||
           (app.app.installedVersion != null &&
-              versionsEffectivelyEqual(
-                  app.app.installedVersion!, app.app.latestVersion));
+              (versionsEffectivelyEqual(
+                  app.app.installedVersion!, app.app.latestVersion) ||
+                  installedVersionIsNewerOrEqual(
+                      app.app.installedVersion!, app.app.latestVersion)));
       if (upToDate && !(filter.includeUptodate)) {
         return false;
       }
@@ -547,7 +549,8 @@ class AppsPageState extends State<AppsPage> {
       final latest = listedApps[index].app.latestVersion;
       var hasUpdate = installed != null &&
           installed != latest &&
-          !versionsEffectivelyEqual(installed, latest);
+          !versionsEffectivelyEqual(installed, latest) &&
+          !installedVersionIsNewerOrEqual(installed, latest);
       Widget trailingRow = Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

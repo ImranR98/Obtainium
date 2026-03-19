@@ -79,6 +79,38 @@ bool versionsEffectivelyEqual(String installed, String latest) {
 bool _isDigit(int codeUnit) =>
     codeUnit >= 0x30 && codeUnit <= 0x39; // '0'..'9'
 
+/// Compare version strings by numeric segments (e.g. 2.0.0 vs 1.9.9).
+/// Returns -1 if [installed] < [latest], 0 if equal, 1 if [installed] > [latest], null if not comparable.
+int? compareVersionsByNumericSegments(String installed, String latest) {
+  final installedSegments = RegExp(r'\d+')
+      .allMatches(installed)
+      .map((m) => int.tryParse(m.group(0)!) ?? 0)
+      .toList();
+  final latestSegments = RegExp(r'\d+')
+      .allMatches(latest)
+      .map((m) => int.tryParse(m.group(0)!) ?? 0)
+      .toList();
+  if (installedSegments.isEmpty || latestSegments.isEmpty) return null;
+  final maxLen = installedSegments.length > latestSegments.length
+      ? installedSegments.length
+      : latestSegments.length;
+  for (int i = 0; i < maxLen; i++) {
+    final inst = i < installedSegments.length ? installedSegments[i] : 0;
+    final lat = i < latestSegments.length ? latestSegments[i] : 0;
+    if (inst < lat) return -1;
+    if (inst > lat) return 1;
+  }
+  return 0;
+}
+
+/// True if we should not show "update available" because installed is newer than or equal to latest by version math.
+bool installedVersionIsNewerOrEqual(String? installed, String latest) {
+  if (installed == null || installed.isEmpty || latest.isEmpty) return false;
+  if (installed == latest || versionsEffectivelyEqual(installed, latest)) return true;
+  final cmp = compareVersionsByNumericSegments(installed, latest);
+  return cmp == null ? false : cmp >= 0;
+}
+
 /// Track-only open URL: RSS release page when [App.changeLog] is http(s), else [App.url].
 String trackOnlyDownloadPageUrl(App app) {
   final changeLogValue = app.changeLog;
@@ -2133,7 +2165,8 @@ class AppsProvider with ChangeNotifier {
       final installedVersion = app.installedVersion;
       final hasUpdateOrNeedsInstall = installedVersion == null ||
           (installedVersion != app.latestVersion &&
-              !versionsEffectivelyEqual(installedVersion, app.latestVersion));
+              !versionsEffectivelyEqual(installedVersion, app.latestVersion) &&
+              !installedVersionIsNewerOrEqual(installedVersion, app.latestVersion));
       if (hasUpdateOrNeedsInstall && (!installedOnly || !nonInstalledOnly)) {
         if ((app.installedVersion == null &&
                 (nonInstalledOnly || !installedOnly) ||
