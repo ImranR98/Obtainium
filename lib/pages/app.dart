@@ -208,6 +208,46 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
+    Widget _detailRowWithLink(
+      BuildContext ctx,
+      String label,
+      String value,
+      VoidCallback? onTap,
+    ) {
+      final linkStyle = Theme.of(ctx).textTheme.bodySmall?.copyWith(
+            color: onTap != null
+                ? Theme.of(ctx).colorScheme.primary
+                : null,
+            decoration: onTap != null ? TextDecoration.underline : null,
+          );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 100,
+              child: Text(
+                label,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: onTap,
+                child: Text(
+                  value,
+                  style: linkStyle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     Widget _versionRow(BuildContext ctx, String label, String value) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -234,6 +274,49 @@ class _AppPageState extends State<AppPage> {
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
                     ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _versionRowWithLink(
+      BuildContext ctx,
+      String label,
+      String value,
+      VoidCallback? onTap,
+    ) {
+      final linkStyle = Theme.of(ctx).textTheme.bodySmall?.copyWith(
+            color: Theme.of(ctx).colorScheme.primary,
+            decoration: onTap != null ? TextDecoration.underline : null,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          );
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            SizedBox(
+              width: 72,
+              child: Text(
+                label,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: onTap,
+                child: Text(
+                  value,
+                  style: linkStyle,
+                ),
               ),
             ),
           ],
@@ -487,6 +570,18 @@ class _AppPageState extends State<AppPage> {
         versionCardChildren.add(
           _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
         );
+        if (changeLogFn != null || app?.app.releaseDate != null) {
+          versionCardChildren.add(
+            _versionRowWithLink(
+              context,
+              tr('changelog'),
+              app?.app.releaseDate == null
+                  ? tr('changes')
+                  : app!.app.releaseDate!.toLocal().toString(),
+              changeLogFn,
+            ),
+          );
+        }
       } else {
         if (installed) {
           versionCardChildren.add(
@@ -500,6 +595,18 @@ class _AppPageState extends State<AppPage> {
         versionCardChildren.add(
           _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
         );
+        if (changeLogFn != null || app?.app.releaseDate != null) {
+          versionCardChildren.add(
+            _versionRowWithLink(
+              context,
+              tr('changelog'),
+              app?.app.releaseDate == null
+                  ? tr('changes')
+                  : app!.app.releaseDate!.toLocal().toString(),
+              changeLogFn,
+            ),
+          );
+        }
         if (effectivelyEqual) {
           versionCardChildren.add(Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -560,37 +667,6 @@ class _AppPageState extends State<AppPage> {
           ));
         }
       }
-      if (changeLogFn != null || app?.app.releaseDate != null) {
-        versionCardChildren.add(Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: GestureDetector(
-            onTap: changeLogFn,
-            child: Text.rich(
-              TextSpan(children: [
-                TextSpan(
-                  text: 'Release: ',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                TextSpan(
-                  text: app?.app.releaseDate == null
-                      ? tr('changes')
-                      : app!.app.releaseDate!.toLocal().toString(),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: changeLogFn != null
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                        decoration: changeLogFn != null
-                            ? TextDecoration.underline
-                            : null,
-                      ),
-                ),
-              ]),
-            ),
-          ),
-        ));
-      }
       final versionCard = _sectionCard(
         context,
         tr('version').toUpperCase(),
@@ -601,7 +677,15 @@ class _AppPageState extends State<AppPage> {
         if (app?.app.id != null && app!.app.id!.isNotEmpty)
           _detailRow(context, tr('package'), app!.app.id!),
         if (app?.app.url != null && app!.app.url!.isNotEmpty)
-          _detailRow(context, tr('source'), app!.app.url!),
+          _detailRowWithLink(
+            context,
+            tr('source'),
+            app!.app.url!,
+            () => launchUrlString(
+              app!.app.url!,
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
         _detailRow(
           context,
           tr('lastUpdateCheckX', args: [tr('never')]).split(':').first.trim(),

@@ -222,6 +222,7 @@
     "releaseTitleAsVersion": "Use release title as version string",
     "releaseDateAsVersionExplanation": "This option should only be used for apps where version detection does not work correctly, but a release date is available.",
     "changes": "Changes",
+    "changelog": "Changelog",
     "releaseDate": "Release date",
     "importFromURLsInFile": "Import from URLs in file (like OPML)",
     "versionDetectionExplanation": "Reconcile version string with version detected from OS",
