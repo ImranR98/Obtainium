@@ -132,23 +132,32 @@ class _AppPageState extends State<AppPage> {
       List<Widget> children,
     ) {
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
+      final colorScheme = Theme.of(ctx).colorScheme;
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isDark
-              ? Theme.of(ctx).colorScheme.surfaceContainerHigh
-              : Theme.of(ctx).colorScheme.surfaceContainer,
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: Theme.of(ctx).colorScheme.outlineVariant,
+            color: colorScheme.outlineVariant,
             width: 1,
           ),
           boxShadow: [
-            BoxShadow(
-              color: Theme.of(ctx).colorScheme.shadow.withAlpha(isDark ? 80 : 25),
-              blurRadius: isDark ? 12 : 8,
-              offset: Offset(0, isDark ? 2 : 1),
-            ),
+            if (isDark)
+              BoxShadow(
+                color: colorScheme.shadow.withAlpha(180),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              )
+            else
+              BoxShadow(
+                color: colorScheme.shadow.withAlpha(40),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
           ],
         ),
         child: Padding(
@@ -609,9 +618,9 @@ class _AppPageState extends State<AppPage> {
                 : plural('apk', app!.app.apkUrls.length),
           ),
         if (app != null && app!.certificateHashes.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Divider(color: Theme.of(context).colorScheme.outlineVariant),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             "${plural('certificateHash', app!.certificateHashes.length)}"
             "${app!.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
@@ -1305,33 +1314,36 @@ class _AppPageState extends State<AppPage> {
             : CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back),
-                              onPressed: () => Navigator.pop(context),
-                              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                            ),
-                            Expanded(child: _buildDetailHeroContent()),
-                          ],
-                        ),
-                        getInfoColumn(small: false),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          child: Row(
+                    child: SafeArea(
+                      top: true,
+                      bottom: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Expanded(child: getBottomCenterActions()),
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back),
+                                onPressed: () => Navigator.pop(context),
+                                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                              ),
+                              Expanded(child: _buildDetailHeroContent()),
                             ],
                           ),
-                        ),
-                        SizedBox(
-                            height:
-                                72 + MediaQuery.of(context).padding.bottom),
-                      ],
+                          getInfoColumn(small: false),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Row(
+                              children: [
+                                Expanded(child: getBottomCenterActions()),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                              height: MediaQuery.of(context).padding.bottom),
+                        ],
+                      ),
                     ),
                   ),
                 ],
