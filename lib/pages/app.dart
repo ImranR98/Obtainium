@@ -134,7 +134,7 @@ class _AppPageState extends State<AppPage> {
         label,
         style: Theme.of(chipContext).textTheme.bodySmall?.copyWith(
               color: _labelColorOnCategoryFill(backgroundColor),
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
       ),
@@ -143,8 +143,8 @@ class _AppPageState extends State<AppPage> {
       onPressed: onPressed,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
-      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     );
   }
 
@@ -865,8 +865,8 @@ class _AppPageState extends State<AppPage> {
                 ),
                 Expanded(
                   child: Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
+                    spacing: 8,
+                    runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (showPlayStoreIcon)
