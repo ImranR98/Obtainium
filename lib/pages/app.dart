@@ -258,6 +258,33 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
+    static const double _versionRowLabelWidth = 120;
+
+    Widget _versionVerdictRow(BuildContext ctx, Widget chip) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: _versionRowLabelWidth,
+              child: Text(
+                tr('verdict'),
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                softWrap: false,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+            const SizedBox(width: 8),
+            chip,
+          ],
+        ),
+      );
+    }
+
     Widget _versionRow(BuildContext ctx, String label, String value) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -266,13 +293,15 @@ class _AppPageState extends State<AppPage> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             SizedBox(
-              width: 72,
+              width: _versionRowLabelWidth,
               child: Text(
                 label,
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                       color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
+                softWrap: false,
+                overflow: TextOverflow.visible,
               ),
             ),
             const SizedBox(width: 8),
@@ -310,13 +339,15 @@ class _AppPageState extends State<AppPage> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             SizedBox(
-              width: 72,
+              width: _versionRowLabelWidth,
               child: Text(
                 label,
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                       color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
+                softWrap: false,
+                overflow: TextOverflow.visible,
               ),
             ),
             const SizedBox(width: 8),
@@ -534,9 +565,9 @@ class _AppPageState extends State<AppPage> {
           _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
         );
         if (effectivelyEqual) {
-          versionCardChildren.add(Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
+          versionCardChildren.add(_versionVerdictRow(
+            context,
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.tertiaryContainer,
@@ -552,9 +583,9 @@ class _AppPageState extends State<AppPage> {
             ),
           ));
         } else if (upToDate) {
-          versionCardChildren.add(Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
+          versionCardChildren.add(_versionVerdictRow(
+            context,
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
@@ -574,9 +605,9 @@ class _AppPageState extends State<AppPage> {
             ),
           ));
         } else if (installed) {
-          versionCardChildren.add(Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
+          versionCardChildren.add(_versionVerdictRow(
+            context,
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.secondaryContainer,
@@ -667,27 +698,28 @@ class _AppPageState extends State<AppPage> {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      TextButton(
+                      ActionChip(
+                        label: Text(tr('playStore')),
                         onPressed: () => launchUrlString(
                           'https://play.google.com/store/apps/details?id=${app!.app.id}',
                           mode: LaunchMode.externalApplication,
                         ),
-                        child: Text(tr('playStore')),
                       ),
-                      TextButton(
+                      ActionChip(
+                        label: Text(tr('apkmirror')),
                         onPressed: () => launchUrlString(
                           'https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${Uri.encodeComponent(app!.app.id!)}',
                           mode: LaunchMode.externalApplication,
                         ),
-                        child: Text(tr('apkmirror')),
                       ),
-                      TextButton(
+                      ActionChip(
+                        label: Text(tr('fdroid')),
                         onPressed: () => launchUrlString(
                           'https://f-droid.org/packages/${app!.app.id}/',
                           mode: LaunchMode.externalApplication,
                         ),
-                        child: Text(tr('fdroid')),
                       ),
                     ],
                   ),
@@ -698,7 +730,7 @@ class _AppPageState extends State<AppPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                 width: 100,
@@ -711,9 +743,10 @@ class _AppPageState extends State<AppPage> {
               ),
               Expanded(
                 child: Wrap(
-                  alignment: WrapAlignment.end,
                   spacing: 6,
                   runSpacing: 4,
+                  alignment: WrapAlignment.start,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     ...(app?.app.categories ?? []).map(
                       (categoryName) => Container(
@@ -731,43 +764,44 @@ class _AppPageState extends State<AppPage> {
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          builder: (sheetContext) => Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CategoryEditorSelector(
-                                  alignment: WrapAlignment.center,
-                                  preselected: app?.app.categories != null
-                                      ? app!.app.categories.toSet()
-                                      : {},
-                                  showLabelWhenNotEmpty: false,
-                                  onSelected: (categories) {
-                                    if (app != null) {
-                                      app!.app.categories = categories;
-                                      appsProvider.saveApps([app!.app]);
-                                    }
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                FilledButton(
-                                  onPressed: () =>
-                                      Navigator.pop(sheetContext),
-                                  child: Text(tr('continue')),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text(tr('edit')),
-                    ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    builder: (sheetContext) => Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CategoryEditorSelector(
+                            alignment: WrapAlignment.center,
+                            preselected: app?.app.categories != null
+                                ? app!.app.categories.toSet()
+                                : {},
+                            showLabelWhenNotEmpty: false,
+                            onSelected: (categories) {
+                              if (app != null) {
+                                app!.app.categories = categories;
+                                appsProvider.saveApps([app!.app]);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: () =>
+                                Navigator.pop(sheetContext),
+                            child: Text(tr('continue')),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Text(tr('edit')),
               ),
             ],
           ),
