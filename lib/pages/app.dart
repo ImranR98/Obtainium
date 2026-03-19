@@ -182,6 +182,16 @@ class _AppPageState extends State<AppPage> {
       );
     }
 
+    String _formatDateTimeToMinute(DateTime dateTime) {
+      final local = dateTime.toLocal();
+      final year = local.year.toString();
+      final month = local.month.toString().padLeft(2, '0');
+      final day = local.day.toString().padLeft(2, '0');
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      return '$year-$month-$day $hour:$minute';
+    }
+
     Widget _detailRow(BuildContext ctx, String label, String value) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -471,13 +481,12 @@ class _AppPageState extends State<AppPage> {
         versionLines = tr('notInstalled');
         versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
       }
+      final lastUpdateCheckFormatted = app?.app.lastUpdateCheck == null
+          ? tr('never')
+          : _formatDateTimeToMinute(app!.app.lastUpdateCheck!);
       String infoLines = tr(
         'lastUpdateCheckX',
-        args: [
-          app?.app.lastUpdateCheck == null
-              ? tr('never')
-              : '${app?.app.lastUpdateCheck?.toLocal()}',
-        ],
+        args: [lastUpdateCheckFormatted],
       );
       if (trackOnly) {
         infoLines = '${tr('xIsTrackOnly', args: [tr('app')])}\n$infoLines';
@@ -515,7 +524,7 @@ class _AppPageState extends State<AppPage> {
                       child: Text(
                         app?.app.releaseDate == null
                             ? tr('changes')
-                            : app!.app.releaseDate!.toLocal().toString(),
+                            : _formatDateTimeToMinute(app!.app.releaseDate!),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.labelSmall!
                             .copyWith(
@@ -577,7 +586,7 @@ class _AppPageState extends State<AppPage> {
               tr('changelog'),
               app?.app.releaseDate == null
                   ? tr('changes')
-                  : app!.app.releaseDate!.toLocal().toString(),
+                  : _formatDateTimeToMinute(app!.app.releaseDate!),
               changeLogFn,
             ),
           );
@@ -602,7 +611,7 @@ class _AppPageState extends State<AppPage> {
               tr('changelog'),
               app?.app.releaseDate == null
                   ? tr('changes')
-                  : app!.app.releaseDate!.toLocal().toString(),
+                  : _formatDateTimeToMinute(app!.app.releaseDate!),
               changeLogFn,
             ),
           );
@@ -691,15 +700,25 @@ class _AppPageState extends State<AppPage> {
           tr('lastUpdateCheckX', args: [tr('never')]).split(':').first.trim(),
           app?.app.lastUpdateCheck == null
               ? tr('never')
-              : '${app?.app.lastUpdateCheck?.toLocal()}',
+              : _formatDateTimeToMinute(app!.app.lastUpdateCheck!),
         ),
         if ((app?.app.apkUrls.length ?? 0) > 0)
-          _detailRow(
+          _detailRowWithLink(
             context,
             tr('assets'),
             app!.app.apkUrls.length == 1
                 ? app!.app.apkUrls[0].key
                 : plural('apk', app!.app.apkUrls.length),
+            app?.app == null || updating
+                ? null
+                : () async {
+                    try {
+                      await appsProvider.downloadAppAssets(
+                          [app!.app.id], context);
+                    } catch (e) {
+                      showError(e, context);
+                    }
+                  },
           ),
         if (app != null && app!.certificateHashes.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -712,10 +731,6 @@ class _AppPageState extends State<AppPage> {
           ),
           _buildCertBlock(),
         ],
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: _buildDownloadLink(),
-        ),
       ];
       final detailsCard = _sectionCard(
         context,
@@ -763,7 +778,7 @@ class _AppPageState extends State<AppPage> {
     }
 
     Widget _buildDetailHeroContent() {
-      const heroIconSize = 48.0;
+      const heroIconSize = 58.0;
       final iconWidget = FutureBuilder(
         future: appsProvider.updateAppIcon(app?.app.id, ignoreCache: true),
         builder: (ctx, val) {

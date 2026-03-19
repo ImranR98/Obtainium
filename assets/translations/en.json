@@ -324,7 +324,7 @@
     "pseudoVersionInUse": "A pseudo-version is in use",
     "installed": "Installed",
     "latest": "Latest",
-    "effectivelyEqual": "Same build (different labels)",
+    "effectivelyEqual": "Same build (Different labels)",
     "sameVersion": "Up to date",
     "invertRegEx": "Invert regular expression",
     "note": "Note",
