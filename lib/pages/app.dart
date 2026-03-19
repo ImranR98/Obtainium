@@ -134,7 +134,7 @@ class _AppPageState extends State<AppPage> {
         label,
         style: Theme.of(chipContext).textTheme.bodySmall?.copyWith(
               color: _labelColorOnCategoryFill(backgroundColor),
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
       ),
@@ -143,7 +143,8 @@ class _AppPageState extends State<AppPage> {
       onPressed: onPressed,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
     );
   }
 
@@ -864,7 +865,7 @@ class _AppPageState extends State<AppPage> {
                 ),
                 Expanded(
                   child: Wrap(
-                    spacing: 8,
+                    spacing: 4,
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
@@ -906,75 +907,88 @@ class _AppPageState extends State<AppPage> {
           ),
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: openAppCategoryEditor,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    tr('categories'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                        ),
-                  ),
-                ),
-                Expanded(
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    alignment: WrapAlignment.start,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      ...(app?.app.categories ?? []).map(
-                        (categoryName) {
-                          final colorArgb =
-                              settingsProvider.categories[categoryName];
-                          if (colorArgb != null) {
-                            final fill = Color(colorArgb);
-                            return Chip(
-                              label: Text(
-                                categoryName,
-                                style: TextStyle(
-                                  color: _labelColorOnCategoryFill(fill),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              backgroundColor: fill,
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 2,
-                              ),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                            );
-                          }
-                          return Chip(
-                            label: Text(
-                              categoryName,
-                              style: detailsValueStyle,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          );
-                        },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 100,
+                child: Text(
+                  tr('categories'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
                       ),
-                    ],
-                  ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: (app?.app.categories ?? []).isEmpty
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: openAppCategoryEditor,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(tr('add')),
+                        ),
+                      )
+                    : GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: openAppCategoryEditor,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.start,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            ...(app?.app.categories ?? []).map(
+                              (categoryName) {
+                                final colorArgb =
+                                    settingsProvider.categories[categoryName];
+                                if (colorArgb != null) {
+                                  final fill = Color(colorArgb);
+                                  return Chip(
+                                    label: Text(
+                                      categoryName,
+                                      style: TextStyle(
+                                        color: _labelColorOnCategoryFill(fill),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    backgroundColor: fill,
+                                    side: BorderSide.none,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 2,
+                                    ),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                  );
+                                }
+                                return Chip(
+                                  label: Text(
+                                    categoryName,
+                                    style: detailsValueStyle,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
           ),
         ),
       ];
