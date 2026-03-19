@@ -126,7 +126,7 @@ class _AppPageState extends State<AppPage> {
       _webViewController.loadRequest(Uri.parse(app.app.url));
     }
 
-    getInfoColumn() {
+    getInfoColumn({bool small = false}) {
       String versionLines = '';
       final undeterminedTrackOnlyInstalled =
           trackOnly &&
@@ -182,202 +182,360 @@ class _AppPageState extends State<AppPage> {
             '$infoLines\n${app?.app.apkUrls.length == 1 ? app?.app.apkUrls[0].key : plural('apk', app?.app.apkUrls.length ?? 0)}';
       }
       var changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
+
+      if (small) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 32),
+                  Text(
+                    versionLines,
+                    textAlign: TextAlign.start,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge!
+                        .copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  if (changeLogFn != null || app?.app.releaseDate != null)
+                    GestureDetector(
+                      onTap: changeLogFn,
+                      child: Text(
+                        app?.app.releaseDate == null
+                            ? tr('changes')
+                            : app!.app.releaseDate!.toLocal().toString(),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall!
+                            .copyWith(
+                              decoration: changeLogFn != null
+                                  ? TextDecoration.underline
+                                  : null,
+                              fontStyle: changeLogFn != null
+                                  ? FontStyle.italic
+                                  : null,
+                            ),
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+            Text(
+              infoLines,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+            ),
+            _buildDownloadLink(),
+            if (app != null && app!.certificateHashes.isNotEmpty) _buildCertBlock(),
+            const SizedBox(height: 40),
+            CategoryEditorSelector(
+              alignment: WrapAlignment.center,
+              preselected: app?.app.categories != null
+                  ? app!.app.categories.toSet()
+                  : {},
+              onSelected: (categories) {
+                if (app != null) {
+                  app!.app.categories = categories;
+                  appsProvider.saveApps([app!.app]);
+                }
+              },
+            ),
+            if (app?.app.additionalSettings['about'] is String &&
+                app?.app.additionalSettings['about'].isNotEmpty)
+              _buildAboutBlock(),
+          ],
+        );
+      }
+
+      final versionCard = _sectionCard(
+        context,
+        tr('version').toUpperCase(),
+        [
+          Text(
+            versionLines,
+            textAlign: TextAlign.start,
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge!
+                .copyWith(fontWeight: FontWeight.bold),
+          ),
+          if (changeLogFn != null || app?.app.releaseDate != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: GestureDetector(
+                onTap: changeLogFn,
+                child: Text(
+                  app?.app.releaseDate == null
+                      ? tr('changes')
+                      : app!.app.releaseDate!.toLocal().toString(),
+                  textAlign: TextAlign.start,
+                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                    decoration:
+                        changeLogFn != null ? TextDecoration.underline : null,
+                    fontStyle:
+                        changeLogFn != null ? FontStyle.italic : null,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+
+      final detailsChildren = <Widget>[
+        if (app?.app.id != null && app!.app.id!.isNotEmpty)
+          _detailRow(context, tr('package'), app!.app.id!),
+        if (app?.app.url != null && app!.app.url!.isNotEmpty)
+          _detailRow(context, tr('source'), app!.app.url!),
+        _detailRow(
+          context,
+          tr('lastUpdateCheckX', args: [tr('never')]).split(':').first.trim(),
+          app?.app.lastUpdateCheck == null
+              ? tr('never')
+              : '${app?.app.lastUpdateCheck?.toLocal()}',
+        ),
+        if ((app?.app.apkUrls.length ?? 0) > 0)
+          _detailRow(
+            context,
+            tr('assets'),
+            app!.app.apkUrls.length == 1
+                ? app!.app.apkUrls[0].key
+                : plural('apk', app!.app.apkUrls.length),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: _buildDownloadLink(),
+        ),
+      ];
+      final detailsCard = _sectionCard(
+        context,
+        tr('details').toUpperCase(),
+        detailsChildren,
+      );
+
+      final categoriesCertChildren = <Widget>[
+        CategoryEditorSelector(
+          alignment: WrapAlignment.center,
+          preselected: app?.app.categories != null
+              ? app!.app.categories.toSet()
+              : {},
+          onSelected: (categories) {
+            if (app != null) {
+              app!.app.categories = categories;
+              appsProvider.saveApps([app!.app]);
+            }
+          },
+        ),
+        if (app != null && app!.certificateHashes.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Divider(color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(height: 12),
+          Text(
+            "${plural('certificateHash', app!.certificateHashes.length)}"
+            "${app!.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          _buildCertBlock(),
+        ],
+      ];
+      final categoriesCard = _sectionCard(
+        context,
+        tr('categories').toUpperCase(),
+        categoriesCertChildren,
+      );
+
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-            child: Column(
-              children: [
-                const SizedBox(height: 32),
-                Text(
-                  versionLines,
-                  textAlign: TextAlign.start,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-                ),
-                changeLogFn != null || app?.app.releaseDate != null
-                    ? GestureDetector(
-                        onTap: changeLogFn,
-                        child: Text(
-                          app?.app.releaseDate == null
-                              ? tr('changes')
-                              : app!.app.releaseDate!.toLocal().toString(),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall!
-                              .copyWith(
-                                decoration: changeLogFn != null
-                                    ? TextDecoration.underline
-                                    : null,
-                                fontStyle: changeLogFn != null
-                                    ? FontStyle.italic
-                                    : null,
-                              ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-          Text(
-            infoLines,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-          ),
-          if (app?.app.apkUrls.isNotEmpty == true ||
-              app?.app.otherAssetUrls.isNotEmpty == true)
-            GestureDetector(
-              onTap: app?.app == null || updating
-                  ? null
-                  : () async {
-                      try {
-                        await appsProvider.downloadAppAssets([
-                          app!.app.id,
-                        ], context);
-                      } catch (e) {
-                        showError(e, context);
-                      }
-                    },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: settingsProvider.highlightTouchTargets
-                          ? (Theme.of(context).brightness == Brightness.light
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).primaryColorLight)
-                                .withAlpha(
-                                  Theme.of(context).brightness ==
-                                          Brightness.light
-                                      ? 20
-                                      : 40,
-                                )
-                          : null,
-                    ),
-                    padding: settingsProvider.highlightTouchTargets
-                        ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                        : const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 2),
-                    margin: const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 0),
-                    child: Text(
-                      tr(
-                        'downloadX',
-                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                      ),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                        decoration: TextDecoration.underline,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          /* Certificate Hashes */
-          if (app != null && app.certificateHashes.isNotEmpty)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  "${plural('certificateHash', app.certificateHashes.length)}"
-                  "${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: app.certificateHashes.map((hash) {
-                    return GestureDetector(
-                      onLongPress: () {
-                        Clipboard.setData(ClipboardData(text: hash));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(tr('copiedToClipboard'))),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 25,
-                          vertical: 0,
-                        ),
-                        child: Text(
-                          hash,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-
-          const SizedBox(height: 40),
-          CategoryEditorSelector(
-            alignment: WrapAlignment.center,
-            preselected: app?.app.categories != null
-                ? app!.app.categories.toSet()
-                : {},
-            onSelected: (categories) {
-              if (app != null) {
-                app.app.categories = categories;
-                appsProvider.saveApps([app.app]);
-              }
-            },
-          ),
+          const SizedBox(height: 24),
+          versionCard,
+          detailsCard,
+          categoriesCard,
           if (app?.app.additionalSettings['about'] is String &&
               app?.app.additionalSettings['about'].isNotEmpty)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 32),
-                GestureDetector(
-                  onLongPress: () {
-                    Clipboard.setData(
-                      ClipboardData(
-                        text: app?.app.additionalSettings['about'] ?? '',
-                      ),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(tr('copiedToClipboard'))),
-                    );
-                  },
-                  child: Markdown(
-                    physics: NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    styleSheet: MarkdownStyleSheet(
-                      blockquoteDecoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                      ),
-                      textAlign: WrapAlignment.center,
-                    ),
-                    data: app?.app.additionalSettings['about'],
-                    onTapLink: (text, href, title) {
-                      if (href != null) {
-                        launchUrlString(
-                          href,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    extensionSet: md.ExtensionSet(
-                      md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                      [
-                        md.EmojiSyntax(),
-                        ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            _sectionCard(
+              context,
+              tr('about').toUpperCase(),
+              [_buildAboutBlock()],
             ),
         ],
+      );
+    }
+
+    Widget _sectionCard(
+        BuildContext ctx, String sectionTitle, List<Widget> children) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(ctx).colorScheme.shadow.withAlpha(25),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                sectionTitle,
+                style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget _detailRow(BuildContext ctx, String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 100,
+              child: Text(
+                label,
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            Expanded(
+              child: SelectableText(
+                value,
+                style: Theme.of(ctx).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildDownloadLink() {
+      if (app?.app.apkUrls.isEmpty != false &&
+          app?.app.otherAssetUrls.isEmpty != false) return const SizedBox.shrink();
+      return GestureDetector(
+        onTap: app?.app == null || updating
+            ? null
+            : () async {
+                try {
+                  await appsProvider.downloadAppAssets(
+                      [app!.app.id], context);
+                } catch (e) {
+                  showError(e, context);
+                }
+              },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: settingsProvider.highlightTouchTargets
+                    ? (Theme.of(context).brightness == Brightness.light
+                          ? Theme.of(context).primaryColor
+                          : Theme.of(context).primaryColorLight)
+                        .withAlpha(
+                            Theme.of(context).brightness == Brightness.light
+                                ? 20
+                                : 40)
+                    : null,
+              ),
+              padding: settingsProvider.highlightTouchTargets
+                  ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                  : const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 2),
+              margin: const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 0),
+              child: Text(
+                tr('downloadX',
+                    args: [lowerCaseIfEnglish(tr('releaseAsset'))]),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildCertBlock() {
+      if (app == null || app!.certificateHashes.isEmpty) return const SizedBox.shrink();
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: app!.certificateHashes.map((hash) {
+          return GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: hash));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(tr('copiedToClipboard'))));
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+              child: SelectableText(
+                hash,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    Widget _buildAboutBlock() {
+      if (app?.app.additionalSettings['about'] is! String ||
+          (app?.app.additionalSettings['about'] as String).isEmpty)
+        return const SizedBox.shrink();
+      return GestureDetector(
+        onLongPress: () {
+          Clipboard.setData(
+              ClipboardData(
+                  text: app?.app.additionalSettings['about'] ?? ''));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(tr('copiedToClipboard'))));
+        },
+        child: Markdown(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          styleSheet: MarkdownStyleSheet(
+            blockquoteDecoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+            ),
+            textAlign: WrapAlignment.center,
+          ),
+          data: app?.app.additionalSettings['about'] as String,
+          onTapLink: (text, href, title) {
+            if (href != null) {
+              launchUrlString(href, mode: LaunchMode.externalApplication);
+            }
+          },
+          extensionSet: md.ExtensionSet(
+            md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+            [
+              md.EmojiSyntax(),
+              ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+            ],
+          ),
+        ),
       );
     }
 
@@ -423,61 +581,63 @@ class _AppPageState extends State<AppPage> {
               ? Theme.of(context).textTheme.headlineSmall
               : Theme.of(context).textTheme.headlineMedium,
         ),
-        SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
-        GestureDetector(
-          onTap: () {
-            if (app?.app.url != null) {
-              launchUrlString(
-                app?.app.url ?? '',
-                mode: LaunchMode.externalApplication,
-              );
-            }
-          },
-          onLongPress: () {
-            Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: settingsProvider.highlightTouchTargets
-                      ? (Theme.of(context).brightness == Brightness.light
-                                ? Theme.of(context).primaryColor
-                                : Theme.of(context).primaryColorLight)
+        if (small) ...[
+          SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
+          GestureDetector(
+            onTap: () {
+              if (app?.app.url != null) {
+                launchUrlString(
+                  app?.app.url ?? '',
+                  mode: LaunchMode.externalApplication,
+                );
+              }
+            },
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: app?.app.url ?? ''));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: settingsProvider.highlightTouchTargets
+                        ? (Theme.of(context).brightness == Brightness.light
+                                  ? Theme.of(context).primaryColor
+                                  : Theme.of(context).primaryColorLight)
                             .withAlpha(
                               Theme.of(context).brightness == Brightness.light
                                   ? 20
                                   : 40,
                             )
-                      : null,
-                ),
-                padding: settingsProvider.highlightTouchTargets
-                    ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                    : const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                margin: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                child: Text(
-                  app?.app.url ?? '',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                    decoration: TextDecoration.underline,
-                    fontStyle: FontStyle.italic,
+                        : null,
+                  ),
+                  padding: settingsProvider.highlightTouchTargets
+                      ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
+                      : const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                  margin: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                  child: Text(
+                    app?.app.url ?? '',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      decoration: TextDecoration.underline,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Text(
-          app?.app.id ?? '',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
-        getInfoColumn(),
+          Text(
+            app?.app.id ?? '',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+        getInfoColumn(small: small),
         const SizedBox(height: 24),
       ],
     );
@@ -727,14 +887,28 @@ class _AppPageState extends State<AppPage> {
         0,
         MediaQuery.of(context).padding.bottom,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.shadow.withAlpha(30),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
                 if (source != null &&
                     source.combinedAppSpecificSettingFormItems.isNotEmpty)
                   IconButton(
@@ -830,10 +1004,9 @@ class _AppPageState extends State<AppPage> {
                   tooltip: tr('remove'),
                   icon: const Icon(Icons.delete_outline),
                 ),
-              ],
-            ),
-          ),
-          if (app?.downloadProgress != null)
+                  ],
+                ),
+                if (app?.downloadProgress != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
               child: LinearProgressIndicator(
@@ -842,7 +1015,10 @@ class _AppPageState extends State<AppPage> {
                     : null,
               ),
             ),
-        ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
 
