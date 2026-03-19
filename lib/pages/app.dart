@@ -445,7 +445,6 @@ class _AppPageState extends State<AppPage> {
     }
 
     getInfoColumn({bool small = false}) {
-      String versionLines = '';
       final undeterminedTrackOnlyInstalled =
           trackOnly &&
               app?.app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] ==
@@ -464,109 +463,15 @@ class _AppPageState extends State<AppPage> {
           versionsEffectivelyEqual(
               app.app.installedVersion!, app.app.latestVersion);
       if (undeterminedTrackOnlyInstalled) {
-        versionLines =
-            app?.app.additionalSettings['trackOnlyTemporaryPackageId'] == true
-                ? tr('trackOnlyTempPackageIdInstalledVersion')
-                : tr('trackOnlyUndeterminedInstalledVersion');
         upToDate = false;
-      } else if (installed) {
-        versionLines = '${app?.app.installedVersion} ${tr('installed')}';
-        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
-        if (effectivelyEqual) {
-          versionLines += '\n(${tr('effectivelyEqual')})';
-        } else if (upToDate) {
-          versionLines += '\n(${tr('sameVersion')})';
-        }
-      } else {
-        versionLines = tr('notInstalled');
-        versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
-      }
-      final lastUpdateCheckFormatted = app?.app.lastUpdateCheck == null
-          ? tr('never')
-          : _formatDateTimeToMinute(app!.app.lastUpdateCheck!);
-      String infoLines = tr(
-        'lastUpdateCheckX',
-        args: [lastUpdateCheckFormatted],
-      );
-      if (trackOnly) {
-        infoLines = '${tr('xIsTrackOnly', args: [tr('app')])}\n$infoLines';
-      }
-      if (installedVersionIsEstimate) {
-        infoLines = '${tr('pseudoVersionInUse')}\n$infoLines';
-      }
-      if ((app?.app.apkUrls.length ?? 0) > 0) {
-        infoLines =
-            '$infoLines\n${app?.app.apkUrls.length == 1 ? app?.app.apkUrls[0].key : plural('apk', app?.app.apkUrls.length ?? 0)}';
       }
       var changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
 
-      if (small) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 32),
-                  Text(
-                    versionLines,
-                    textAlign: TextAlign.start,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge!
-                        .copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  if (changeLogFn != null || app?.app.releaseDate != null)
-                    GestureDetector(
-                      onTap: changeLogFn,
-                      child: Text(
-                        app?.app.releaseDate == null
-                            ? tr('changes')
-                            : _formatDateTimeToMinute(app!.app.releaseDate!),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall!
-                            .copyWith(
-                              decoration: changeLogFn != null
-                                  ? TextDecoration.underline
-                                  : null,
-                              fontStyle: changeLogFn != null
-                                  ? FontStyle.italic
-                                  : null,
-                            ),
-                      ),
-                    ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-            Text(
-              infoLines,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-            ),
-            _buildDownloadLink(),
-            if (app != null && app!.certificateHashes.isNotEmpty) _buildCertBlock(),
-            const SizedBox(height: 40),
-            CategoryEditorSelector(
-              alignment: WrapAlignment.center,
-              preselected: app?.app.categories != null
-                  ? app!.app.categories.toSet()
-                  : {},
-              onSelected: (categories) {
-                if (app != null) {
-                  app!.app.categories = categories;
-                  appsProvider.saveApps([app!.app]);
-                }
-              },
-            ),
-            if (app?.app.additionalSettings['about'] is String &&
-                app?.app.additionalSettings['about'].isNotEmpty)
-              _buildAboutBlock(),
-          ],
-        );
-      }
+      final lastUpdateCheckLabel =
+          tr('lastUpdateCheckX', args: [tr('never')]).split(':').first.trim();
+      final lastUpdateCheckValue = app?.app.lastUpdateCheck == null
+          ? tr('never')
+          : _formatDateTimeToMinute(app!.app.lastUpdateCheck!);
 
       final versionCardChildren = <Widget>[];
       if (undeterminedTrackOnlyInstalled) {
@@ -579,6 +484,9 @@ class _AppPageState extends State<AppPage> {
         versionCardChildren.add(
           _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
         );
+        versionCardChildren.add(
+          _versionRow(context, lastUpdateCheckLabel, lastUpdateCheckValue),
+        );
         if (changeLogFn != null || app?.app.releaseDate != null) {
           versionCardChildren.add(
             _versionRowWithLink(
@@ -588,6 +496,27 @@ class _AppPageState extends State<AppPage> {
                   ? tr('changes')
                   : _formatDateTimeToMinute(app!.app.releaseDate!),
               changeLogFn,
+            ),
+          );
+        }
+        if ((app?.app.apkUrls.length ?? 0) > 0) {
+          versionCardChildren.add(
+            _versionRowWithLink(
+              context,
+              tr('assets'),
+              app!.app.apkUrls.length == 1
+                  ? app!.app.apkUrls[0].key
+                  : plural('apk', app!.app.apkUrls.length),
+              app?.app == null || updating
+                  ? null
+                  : () async {
+                      try {
+                        await appsProvider.downloadAppAssets(
+                            [app!.app.id], context);
+                      } catch (e) {
+                        showError(e, context);
+                      }
+                    },
             ),
           );
         }
@@ -604,18 +533,6 @@ class _AppPageState extends State<AppPage> {
         versionCardChildren.add(
           _versionRow(context, tr('latest'), app?.app.latestVersion ?? '-'),
         );
-        if (changeLogFn != null || app?.app.releaseDate != null) {
-          versionCardChildren.add(
-            _versionRowWithLink(
-              context,
-              tr('changelog'),
-              app?.app.releaseDate == null
-                  ? tr('changes')
-                  : _formatDateTimeToMinute(app!.app.releaseDate!),
-              changeLogFn,
-            ),
-          );
-        }
         if (effectivelyEqual) {
           versionCardChildren.add(Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -675,6 +592,42 @@ class _AppPageState extends State<AppPage> {
             ),
           ));
         }
+        versionCardChildren.add(
+          _versionRow(context, lastUpdateCheckLabel, lastUpdateCheckValue),
+        );
+        if (changeLogFn != null || app?.app.releaseDate != null) {
+          versionCardChildren.add(
+            _versionRowWithLink(
+              context,
+              tr('changelog'),
+              app?.app.releaseDate == null
+                  ? tr('changes')
+                  : _formatDateTimeToMinute(app!.app.releaseDate!),
+              changeLogFn,
+            ),
+          );
+        }
+        if ((app?.app.apkUrls.length ?? 0) > 0) {
+          versionCardChildren.add(
+            _versionRowWithLink(
+              context,
+              tr('assets'),
+              app!.app.apkUrls.length == 1
+                  ? app!.app.apkUrls[0].key
+                  : plural('apk', app!.app.apkUrls.length),
+              app?.app == null || updating
+                  ? null
+                  : () async {
+                      try {
+                        await appsProvider.downloadAppAssets(
+                            [app!.app.id], context);
+                      } catch (e) {
+                        showError(e, context);
+                      }
+                    },
+            ),
+          );
+        }
       }
       final versionCard = _sectionCard(
         context,
@@ -688,74 +641,142 @@ class _AppPageState extends State<AppPage> {
         if (app?.app.url != null && app!.app.url!.isNotEmpty)
           _detailRowWithLink(
             context,
-            tr('source'),
+            tr('trackedSource'),
             app!.app.url!,
             () => launchUrlString(
               app!.app.url!,
               mode: LaunchMode.externalApplication,
             ),
           ),
-        _detailRow(
-          context,
-          tr('lastUpdateCheckX', args: [tr('never')]).split(':').first.trim(),
-          app?.app.lastUpdateCheck == null
-              ? tr('never')
-              : _formatDateTimeToMinute(app!.app.lastUpdateCheck!),
+        if (app?.app.id != null && app!.app.id!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: Text(
+                    tr('otherSources'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      TextButton(
+                        onPressed: () => launchUrlString(
+                          'https://play.google.com/store/apps/details?id=${app!.app.id}',
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: Text(tr('playStore')),
+                      ),
+                      TextButton(
+                        onPressed: () => launchUrlString(
+                          'https://www.apkmirror.com/?post_type=app_release&searchtype=apk&s=${Uri.encodeComponent(app!.app.id!)}',
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: Text(tr('apkmirror')),
+                      ),
+                      TextButton(
+                        onPressed: () => launchUrlString(
+                          'https://f-droid.org/packages/${app!.app.id}/',
+                          mode: LaunchMode.externalApplication,
+                        ),
+                        child: Text(tr('fdroid')),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 100,
+                child: Text(
+                  tr('categories'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    ...(app?.app.categories ?? []).map(
+                      (categoryName) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          categoryName,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        showModalBottomSheet<void>(
+                          context: context,
+                          builder: (sheetContext) => Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CategoryEditorSelector(
+                                  alignment: WrapAlignment.center,
+                                  preselected: app?.app.categories != null
+                                      ? app!.app.categories.toSet()
+                                      : {},
+                                  showLabelWhenNotEmpty: false,
+                                  onSelected: (categories) {
+                                    if (app != null) {
+                                      app!.app.categories = categories;
+                                      appsProvider.saveApps([app!.app]);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.pop(sheetContext),
+                                  child: Text(tr('continue')),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(tr('edit')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        if ((app?.app.apkUrls.length ?? 0) > 0)
-          _detailRowWithLink(
-            context,
-            tr('assets'),
-            app!.app.apkUrls.length == 1
-                ? app!.app.apkUrls[0].key
-                : plural('apk', app!.app.apkUrls.length),
-            app?.app == null || updating
-                ? null
-                : () async {
-                    try {
-                      await appsProvider.downloadAppAssets(
-                          [app!.app.id], context);
-                    } catch (e) {
-                      showError(e, context);
-                    }
-                  },
-          ),
-        if (app != null && app!.certificateHashes.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Divider(color: Theme.of(context).colorScheme.outlineVariant),
-          const SizedBox(height: 8),
-          Text(
-            "${plural('certificateHash', app!.certificateHashes.length)}"
-            "${app!.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-          _buildCertBlock(),
-        ],
       ];
       final detailsCard = _sectionCard(
         context,
         tr('details').toUpperCase(),
         detailsChildren,
-      );
-
-      final categoriesCard = _sectionCard(
-        context,
-        tr('categories').toUpperCase(),
-        [
-          CategoryEditorSelector(
-            alignment: WrapAlignment.center,
-            preselected: app?.app.categories != null
-                ? app!.app.categories.toSet()
-                : {},
-            showLabelWhenNotEmpty: false,
-            onSelected: (categories) {
-              if (app != null) {
-                app!.app.categories = categories;
-                appsProvider.saveApps([app!.app]);
-              }
-            },
-          ),
-        ],
       );
 
       return Column(
@@ -765,7 +786,6 @@ class _AppPageState extends State<AppPage> {
           const SizedBox(height: 8),
           versionCard,
           detailsCard,
-          categoriesCard,
           if (app?.app.additionalSettings['about'] is String &&
               app?.app.additionalSettings['about'].isNotEmpty)
             _sectionCard(
