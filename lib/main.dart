@@ -384,6 +384,26 @@ class _ObtainiumState extends State<Obtainium> {
 
           if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
 
+          final ColorScheme themeColorScheme =
+              settingsProvider.theme == ThemeSettings.dark
+                  ? darkColorScheme
+                  : lightColorScheme;
+          final ColorScheme darkThemeColorScheme =
+              settingsProvider.theme == ThemeSettings.light
+                  ? lightColorScheme
+                  : darkColorScheme;
+
+          NavigationBarThemeData navigationBarThemeFor(ColorScheme scheme) {
+            return NavigationBarThemeData(
+              iconTheme: WidgetStateProperty.resolveWith((Set<WidgetState> states) {
+                if (states.contains(WidgetState.selected)) {
+                  return IconThemeData(color: scheme.onSecondaryContainer);
+                }
+                return IconThemeData(color: scheme.primary);
+              }),
+            );
+          }
+
           return MaterialApp(
             title: 'Obtainium',
             localizationsDelegates: context.localizationDelegates,
@@ -393,21 +413,19 @@ class _ObtainiumState extends State<Obtainium> {
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.dark
-                  ? darkColorScheme
-                  : lightColorScheme,
+              colorScheme: themeColorScheme,
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              navigationBarTheme: navigationBarThemeFor(themeColorScheme),
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.light
-                  ? lightColorScheme
-                  : darkColorScheme,
+              colorScheme: darkThemeColorScheme,
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
             ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{

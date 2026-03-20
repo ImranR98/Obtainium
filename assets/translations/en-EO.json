@@ -57,6 +57,7 @@
     "notInstalled": "Neinstalita",
     "pseudoVersion": "Pseŭdoversio",
     "selectAll": "Selekti ĉion",
+    "deselectAll": "Malelekti ĉion",
     "deselectX": "Malselekti {}",
     "xWillBeRemovedButRemainInstalled": "{} estas farigota de Obtainium sed restos instalata en la disponaĵo.",
     "removeSelectedAppsQuestion": "Farigi la selektitajn apojn?",

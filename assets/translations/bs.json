@@ -57,6 +57,7 @@
     "notInstalled": "Nije instalirano",
     "pseudoVersion": "pseudo-verzija",
     "selectAll": "Označi sve",
+    "deselectAll": "Odznači sve",
     "deselectX": "Poništi odabir {}",
     "xWillBeRemovedButRemainInstalled": "{} će biti uklonjen iz Obtainiuma, ali će ostati instaliran na uređaju.",
     "removeSelectedAppsQuestion": "Želite li ukloniti odabrane aplikacije?",

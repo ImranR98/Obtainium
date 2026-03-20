@@ -57,6 +57,7 @@
     "notInstalled": "Non installato",
     "pseudoVersion": "pseudo-versione",
     "selectAll": "Seleziona tutto",
+    "deselectAll": "Deseleziona tutto",
     "deselectX": "Deseleziona {}",
     "xWillBeRemovedButRemainInstalled": "Verà effettuata la rimozione di {}, ma non la disinstallazione.",
     "removeSelectedAppsQuestion": "Rimuovere le app selezionate?",

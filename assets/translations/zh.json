@@ -57,6 +57,7 @@
     "notInstalled": "未安装",
     "pseudoVersion": "虚拟版本号",
     "selectAll": "全选",
+    "deselectAll": "取消全选",
     "deselectX": "取消选择 {}",
     "xWillBeRemovedButRemainInstalled": "“{}”将从 Obtainium 中删除，但仍安装在您的设备中。",
     "removeSelectedAppsQuestion": "是否删除选中的应用？",

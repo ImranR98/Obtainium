@@ -69,6 +69,7 @@
     "notInstalled": "Not installed",
     "pseudoVersion": "pseudo-version",
     "selectAll": "Select all",
+    "deselectAll": "Deselect all",
     "deselectX": "Deselect {}",
     "xWillBeRemovedButRemainInstalled": "{} will be removed from Obtainium but remain installed on device.",
     "removeSelectedAppsQuestion": "Remove selected apps?",

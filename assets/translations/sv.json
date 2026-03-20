@@ -57,6 +57,7 @@
     "notInstalled": "Inte Installerad",
     "pseudoVersion": "pseudoversion",
     "selectAll": "Välj Alla",
+    "deselectAll": "Avmarkera alla",
     "deselectX": "Avmarkera {}",
     "xWillBeRemovedButRemainInstalled": "{} kommer tas bort från Obtainium men kommer vara fortsatt installerad på enheten.",
     "removeSelectedAppsQuestion": "Ta bort markerade Appar?",

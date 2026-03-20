@@ -57,6 +57,7 @@
     "notInstalled": "No instal·lat",
     "pseudoVersion": "pseudo-versió",
     "selectAll": "Selecciona-ho tot",
+    "deselectAll": "Desselecciona-ho tot",
     "deselectX": "Desselecciona {}",
     "xWillBeRemovedButRemainInstalled": "{} s'eliminarà d'Obtainium però romandrà instal·lada al dispositiu.",
     "removeSelectedAppsQuestion": "Elimino les aplicacions seleccionades?",

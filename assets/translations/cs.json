@@ -57,6 +57,7 @@
     "notInstalled": "Není nainstalováno",
     "pseudoVersion": "pseudoverze",
     "selectAll": "Vybrat vše",
+    "deselectAll": "Zrušit výběr všech",
     "deselectX": "Zrušit výběr {}",
     "xWillBeRemovedButRemainInstalled": "Aplikace {} bude odstraněna z aplikace Obtainium, ale zůstane nainstalována v zařízení.",
     "removeSelectedAppsQuestion": "Odstranit vybrané aplikace?",

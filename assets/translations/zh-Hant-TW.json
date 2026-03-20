@@ -57,6 +57,7 @@
     "notInstalled": "未安裝",
     "pseudoVersion": "偽版本",
     "selectAll": "全選",
+    "deselectAll": "取消全選",
     "deselectX": "取消選取 {}",
     "xWillBeRemovedButRemainInstalled": "{} 將從 Obtainium 中移除，但仍然安裝在裝置上。",
     "removeSelectedAppsQuestion": "移除選取的應用程式？",

@@ -492,16 +492,6 @@ class AppsPageState extends State<AppsPage> {
     return false;
   }
 
-  void selectThese(List<App> apps) {
-    if (selectedAppIds.isEmpty) {
-      setState(() {
-        for (var a in apps) {
-          selectedAppIds.add(a.id);
-        }
-      });
-    }
-  }
-
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -1680,7 +1670,12 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getFilterButtonsRow() {
+      final colorScheme = Theme.of(context).colorScheme;
       final isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
+      final selectAllFooterStyle = TextButton.styleFrom(
+        foregroundColor: colorScheme.primary,
+        visualDensity: VisualDensity.compact,
+      );
       if (selectedAppIds.isNotEmpty) {
         return Row(
           children: [
@@ -1689,8 +1684,7 @@ class AppsPageState extends State<AppsPage> {
                 child: Tooltip(
                   message: tr('selectAll'),
                   child: TextButton.icon(
-                    style:
-                        const ButtonStyle(visualDensity: VisualDensity.compact),
+                    style: selectAllFooterStyle,
                     onPressed: listedApps.isEmpty
                         ? null
                         : () {
@@ -1700,11 +1694,8 @@ class AppsPageState extends State<AppsPage> {
                               }
                             });
                           },
-                    icon: Icon(
-                      Icons.select_all_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    label: Text(listedApps.length.toString()),
+                    icon: const Icon(Icons.select_all_outlined),
+                    label: Text(selectedAppIds.length.toString()),
                   ),
                 ),
               ),
@@ -1713,6 +1704,22 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  color: colorScheme.primary,
+                  onPressed: () {
+                    setState(() {
+                      selectedAppIds.clear();
+                    });
+                  },
+                  tooltip: tr('deselectAll'),
+                  icon: const Icon(Icons.deselect),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  color: colorScheme.primary,
                   onPressed: () {
                     appsProvider.removeAppsWithModal(
                       context,
@@ -1728,6 +1735,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  color: colorScheme.primary,
                   onPressed: launchCategorizeDialog(),
                   tooltip: tr('categorize'),
                   icon: const Icon(Icons.category_outlined),
@@ -1738,6 +1746,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  color: colorScheme.primary,
                   onPressed: showMoreOptionsDialog,
                   tooltip: tr('more'),
                   icon: const Icon(Icons.more_horiz),
@@ -1751,18 +1760,29 @@ class AppsPageState extends State<AppsPage> {
         children: [
           Expanded(
             child: Center(
-              child: IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: tr('appsViewOptions'),
-                onPressed: () => showAppsViewOptionsSheet(context),
-                icon: const Icon(Icons.tune),
+              child: Tooltip(
+                message: tr('selectAll'),
+                child: TextButton.icon(
+                  style: selectAllFooterStyle,
+                  onPressed: listedApps.isEmpty
+                      ? null
+                      : () {
+                          setState(() {
+                            for (final appInMem in listedApps) {
+                              selectedAppIds.add(appInMem.app.id);
+                            }
+                          });
+                        },
+                  icon: const Icon(Icons.select_all_outlined),
+                  label: Text(selectedAppIds.length.toString()),
+                ),
               ),
             ),
           ),
           Expanded(
             child: Center(
               child: IconButton(
-                color: Theme.of(context).colorScheme.primary,
+                color: colorScheme.primary,
                 style: const ButtonStyle(visualDensity: VisualDensity.compact),
                 tooltip: isFilterOff
                     ? tr('filterApps')
@@ -1786,6 +1806,7 @@ class AppsPageState extends State<AppsPage> {
             child: Center(
               child: IconButton(
                 visualDensity: VisualDensity.compact,
+                color: colorScheme.primary,
                 onPressed: getMassObtainFunction(),
                 tooltip: tr('installUpdateApps'),
                 icon: const Icon(Icons.file_download_outlined),
@@ -1794,20 +1815,12 @@ class AppsPageState extends State<AppsPage> {
           ),
           Expanded(
             child: Center(
-              child: TextButton.icon(
-                style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                onPressed: listedApps.isEmpty
-                    ? null
-                    : () {
-                        selectThese(
-                          listedApps.map((e) => e.app).toList(),
-                        );
-                      },
-                icon: Icon(
-                  Icons.select_all_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                label: Text(listedApps.length.toString()),
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                color: colorScheme.primary,
+                tooltip: tr('appsViewOptions'),
+                onPressed: () => showAppsViewOptionsSheet(context),
+                icon: const Icon(Icons.tune),
               ),
             ),
           ),

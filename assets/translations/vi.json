@@ -57,6 +57,7 @@
     "notInstalled": "Chưa cài đặt",
     "pseudoVersion": "phiên bản giả",
     "selectAll": "Chọn tất cả",
+    "deselectAll": "Bỏ chọn tất cả",
     "deselectX": "Bỏ chọn {}",
     "xWillBeRemovedButRemainInstalled": "{} sẽ bị xóa khỏi Obtainium nhưng vẫn còn cài đặt trên thiết bị.",
     "removeSelectedAppsQuestion": "Xóa ứng dụng đã chọn?",

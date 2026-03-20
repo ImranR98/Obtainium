@@ -57,6 +57,7 @@
     "notInstalled": "غير مثبت",
     "pseudoVersion": "إصدار وهمي",
     "selectAll": "حدّد الكل",
+    "deselectAll": "إلغاء تحديد الكل",
     "deselectX": "ألغِ تحديد {}",
     "xWillBeRemovedButRemainInstalled": "سيتم إزالة {} من Obtainium لكنه سيظل مثبتًا على الجهاز.",
     "removeSelectedAppsQuestion": "إزالة التطبيقات المحددة؟",

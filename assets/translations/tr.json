@@ -57,6 +57,7 @@
     "notInstalled": "Yüklü değil",
     "pseudoVersion": "sözde sürüm",
     "selectAll": "Tümünü seç",
+    "deselectAll": "Tüm seçimi kaldır",
     "deselectX": "{} seçimini kaldır",
     "xWillBeRemovedButRemainInstalled": "{}, Obtainium'dan kaldırılacak ancak cihazda yüklü kalmaya devam edecektir.",
     "removeSelectedAppsQuestion": "Seçili uygulamalar kaldırılsın mı?",

@@ -807,6 +807,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     IconButton(
+                      color: Theme.of(context).colorScheme.primary,
                       onPressed: () {
                         launchUrlString(
                           settingsProvider.sourceUrl,
@@ -817,6 +818,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       tooltip: tr('appSource'),
                     ),
                     IconButton(
+                      color: Theme.of(context).colorScheme.primary,
                       onPressed: () {
                         launchUrlString(
                           'https://wiki.obtainium.imranr.dev/',
@@ -827,6 +829,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       tooltip: tr('wiki'),
                     ),
                     IconButton(
+                      color: Theme.of(context).colorScheme.primary,
                       onPressed: () {
                         launchUrlString(
                           'https://apps.obtainium.imranr.dev/',
@@ -837,6 +840,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       tooltip: tr('crowdsourcedConfigsLabel'),
                     ),
                     IconButton(
+                      color: Theme.of(context).colorScheme.primary,
                       onPressed: () {
                         context.read<LogsProvider>().get().then((logs) {
                           if (logs.isEmpty) {

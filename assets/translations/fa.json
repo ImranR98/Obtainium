@@ -57,6 +57,7 @@
     "notInstalled": "نصب نشده",
     "pseudoVersion": "نسخه شبه",
     "selectAll": "انتخاب همه",
+    "deselectAll": "لغو انتخاب همه",
     "deselectX": "لغو انتخاب {}",
     "xWillBeRemovedButRemainInstalled": "{} از Obtainium حذف می‌شود اما روی دستگاه نصب می‌ماند.",
     "removeSelectedAppsQuestion": "برنامه های انتخابی حذف شود؟",

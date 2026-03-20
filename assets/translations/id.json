@@ -57,6 +57,7 @@
     "notInstalled": "Tidak terpasang",
     "pseudoVersion": "versi semu",
     "selectAll": "Pilih semua",
+    "deselectAll": "Batalkan semua pilihan",
     "deselectX": "Batal pilih {}",
     "xWillBeRemovedButRemainInstalled": "{} akan dihapus dari Obtainium tetapi tetap terpasang di perangkat.",
     "removeSelectedAppsQuestion": "Hapus aplikasi terpilih?",

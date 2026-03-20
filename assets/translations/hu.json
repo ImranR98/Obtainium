@@ -57,6 +57,7 @@
     "notInstalled": "Nem telepített",
     "pseudoVersion": "pszeudoverzió",
     "selectAll": "Összes kiválasztása",
+    "deselectAll": "Összes kijelölés törlése",
     "deselectX": "A(z) {} kiválasztásának elvetése",
     "xWillBeRemovedButRemainInstalled": "A(z) {} el lesz távolítva az Obtainiumból, de továbbra is telepítve marad az eszközön.",
     "removeSelectedAppsQuestion": "Biztosan eltávolítja a kiválasztott alkalmazásokat?",

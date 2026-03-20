@@ -57,6 +57,7 @@
     "notInstalled": "Ikke installeret",
     "pseudoVersion": "pseudo-version",
     "selectAll": "Vælg alle",
+    "deselectAll": "Fravælg alle",
     "deselectX": "Fravælg {}",
     "xWillBeRemovedButRemainInstalled": "{} fjernes fra Obtainium, men forbliver installeret på enheden.",
     "removeSelectedAppsQuestion": "Fjern valgte apps?",

@@ -57,6 +57,7 @@
     "notInstalled": "설치되지 않음",
     "pseudoVersion": "의사 버전",
     "selectAll": "모두 선택",
+    "deselectAll": "모두 선택 해제",
     "deselectX": "{} 선택 해제",
     "xWillBeRemovedButRemainInstalled": "{}는 Obtainium에서 제거되지만 장치에 설치된 상태로 남아 있습니다.",
     "removeSelectedAppsQuestion": "선택한 앱을 제거하시겠습니까?",
