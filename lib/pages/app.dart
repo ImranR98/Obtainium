@@ -1496,6 +1496,8 @@ class _AppPageState extends State<AppPage> {
                 if (source != null &&
                     source.combinedAppSpecificSettingFormItems.isNotEmpty)
                   IconButton(
+                    color: Theme.of(context).colorScheme.primary,
+                    iconSize: 24,
                     onPressed: app?.downloadProgress != null || updating
                         ? null
                         : () async {
@@ -1507,6 +1509,8 @@ class _AppPageState extends State<AppPage> {
                   ),
                 if (app != null && app.installedInfo != null)
                   IconButton(
+                    color: Theme.of(context).colorScheme.primary,
+                    iconSize: 24,
                     onPressed: () {
                       appsProvider.openAppSettings(app.app.id);
                     },
@@ -1515,6 +1519,8 @@ class _AppPageState extends State<AppPage> {
                   ),
                 if (app != null && showAppWebpageFinal)
                   IconButton(
+                    color: Theme.of(context).colorScheme.primary,
+                    iconSize: 24,
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -1547,6 +1553,8 @@ class _AppPageState extends State<AppPage> {
                     !isVersionDetectionStandard &&
                     !trackOnly)
                   IconButton(
+                    color: Theme.of(context).colorScheme.primary,
+                    iconSize: 24,
                     onPressed: app?.downloadProgress != null || updating
                         ? null
                         : showMarkUpdatedDialog,
@@ -1561,6 +1569,8 @@ class _AppPageState extends State<AppPage> {
                         installedVersionIsNewerOrEqual(
                             app!.app.installedVersion!, app.app.latestVersion)))
                   IconButton(
+                    color: Theme.of(context).colorScheme.primary,
+                    iconSize: 24,
                     onPressed: app?.app == null || updating
                         ? null
                         : () {
@@ -1571,6 +1581,8 @@ class _AppPageState extends State<AppPage> {
                     tooltip: tr('resetInstallStatus'),
                   ),
                 IconButton(
+                  color: Theme.of(context).colorScheme.primary,
+                  iconSize: 24,
                   onPressed: app?.downloadProgress != null || updating
                       ? null
                       : () {

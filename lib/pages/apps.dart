@@ -486,6 +486,7 @@ class AppsPageState extends State<AppsPage> {
     if (selectedAppIds.isNotEmpty) {
       setState(() {
         selectedAppIds.clear();
+        appsFooterVisible = true;
       });
       return true;
     }
@@ -495,9 +496,65 @@ class AppsPageState extends State<AppsPage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
-  late final ScrollController scrollController = ScrollController();
+  late final ScrollController scrollController;
+  bool appsFooterVisible = true;
+  double appsScrollPreviousOffset = 0;
 
   var sourceProvider = SourceProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController = ScrollController();
+    scrollController.addListener(_onAppsScrollForFooterVisibility);
+  }
+
+  void _onAppsScrollForFooterVisibility() {
+    if (!scrollController.hasClients) {
+      return;
+    }
+    if (selectedAppIds.isNotEmpty) {
+      appsScrollPreviousOffset = scrollController.offset;
+      if (!appsFooterVisible) {
+        setState(() {
+          appsFooterVisible = true;
+        });
+      }
+      return;
+    }
+    final double currentOffset = scrollController.offset;
+    final double delta = currentOffset - appsScrollPreviousOffset;
+    appsScrollPreviousOffset = currentOffset;
+    if (currentOffset <= 24) {
+      if (!appsFooterVisible) {
+        setState(() {
+          appsFooterVisible = true;
+        });
+      }
+      return;
+    }
+    const double scrollSensitivity = 10;
+    if (delta > scrollSensitivity) {
+      if (appsFooterVisible) {
+        setState(() {
+          appsFooterVisible = false;
+        });
+      }
+    } else if (delta < -scrollSensitivity) {
+      if (!appsFooterVisible) {
+        setState(() {
+          appsFooterVisible = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    scrollController.removeListener(_onAppsScrollForFooterVisibility);
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1675,6 +1732,11 @@ class AppsPageState extends State<AppsPage> {
       final selectAllFooterStyle = TextButton.styleFrom(
         foregroundColor: colorScheme.primary,
         visualDensity: VisualDensity.compact,
+        iconSize: 24,
+        textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
       );
       if (selectedAppIds.isNotEmpty) {
         return Row(
@@ -1694,7 +1756,7 @@ class AppsPageState extends State<AppsPage> {
                               }
                             });
                           },
-                    icon: const Icon(Icons.select_all_outlined),
+                    icon: const Icon(Icons.select_all_outlined, size: 24),
                     label: Text(selectedAppIds.length.toString()),
                   ),
                 ),
@@ -1704,6 +1766,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  iconSize: 24,
                   color: colorScheme.primary,
                   onPressed: () {
                     setState(() {
@@ -1719,6 +1782,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  iconSize: 24,
                   color: colorScheme.primary,
                   onPressed: () {
                     appsProvider.removeAppsWithModal(
@@ -1735,6 +1799,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  iconSize: 24,
                   color: colorScheme.primary,
                   onPressed: launchCategorizeDialog(),
                   tooltip: tr('categorize'),
@@ -1746,6 +1811,7 @@ class AppsPageState extends State<AppsPage> {
               child: Center(
                 child: IconButton(
                   visualDensity: VisualDensity.compact,
+                  iconSize: 24,
                   color: colorScheme.primary,
                   onPressed: showMoreOptionsDialog,
                   tooltip: tr('more'),
@@ -1773,7 +1839,7 @@ class AppsPageState extends State<AppsPage> {
                             }
                           });
                         },
-                  icon: const Icon(Icons.select_all_outlined),
+                  icon: const Icon(Icons.select_all_outlined, size: 24),
                   label: Text(selectedAppIds.length.toString()),
                 ),
               ),
@@ -1783,6 +1849,7 @@ class AppsPageState extends State<AppsPage> {
             child: Center(
               child: IconButton(
                 color: colorScheme.primary,
+                iconSize: 24,
                 style: const ButtonStyle(visualDensity: VisualDensity.compact),
                 tooltip: isFilterOff
                     ? tr('filterApps')
@@ -1806,6 +1873,7 @@ class AppsPageState extends State<AppsPage> {
             child: Center(
               child: IconButton(
                 visualDensity: VisualDensity.compact,
+                iconSize: 24,
                 color: colorScheme.primary,
                 onPressed: getMassObtainFunction(),
                 tooltip: tr('installUpdateApps'),
@@ -1817,6 +1885,7 @@ class AppsPageState extends State<AppsPage> {
             child: Center(
               child: IconButton(
                 visualDensity: VisualDensity.compact,
+                iconSize: 24,
                 color: colorScheme.primary,
                 tooltip: tr('appsViewOptions'),
                 onPressed: () => showAppsViewOptionsSheet(context),
@@ -1872,26 +1941,54 @@ class AppsPageState extends State<AppsPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: RefreshIndicator(
-          key: _refreshIndicatorKey,
-          onRefresh: refresh,
-          child: Scrollbar(
-            interactive: true,
-            controller: scrollController,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              controller: scrollController,
-              slivers: <Widget>[
-                CustomAppBar(title: tr('appsString')),
-                ...getLoadingWidgets(),
-                getDisplayedList(),
-              ],
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: RefreshIndicator(
+                key: _refreshIndicatorKey,
+                onRefresh: refresh,
+                child: Scrollbar(
+                  interactive: true,
+                  controller: scrollController,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    controller: scrollController,
+                    slivers: <Widget>[
+                      CustomAppBar(title: tr('appsString')),
+                      ...getLoadingWidgets(),
+                      getDisplayedList(),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+            if (appsProvider.apps.isNotEmpty)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.fastOutSlowIn,
+                alignment: Alignment.topCenter,
+                clipBehavior: Clip.hardEdge,
+                child: (appsFooterVisible || selectedAppIds.isNotEmpty)
+                    ? Material(
+                        elevation: 3,
+                        surfaceTintColor:
+                            Theme.of(context).colorScheme.surfaceTint,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerLow,
+                        child: SafeArea(
+                          top: false,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: getFilterButtonsRow(),
+                          ),
+                        ),
+                      )
+                    : const SizedBox(width: double.infinity),
+              ),
+          ],
         ),
-        persistentFooterButtons: appsProvider.apps.isEmpty
-            ? null
-            : [getFilterButtonsRow()],
       ),
     );
   }
