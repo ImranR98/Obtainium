@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -40,14 +39,14 @@ class Apk4Free extends AppSource {
       if (fullTitle == null || fullTitle.isEmpty) {
         fullTitle = standardUrl.split('/').last;
       } else {
-        fullTitle = fullTitle!.replaceAll(RegExp(r'\[.*?\]|\{.*?\}'), '');
+        fullTitle = fullTitle.replaceAll(RegExp(r'\[.*?\]|\{.*?\}'), '');
 
-        fullTitle = fullTitle!.replaceAll(
+        fullTitle = fullTitle.replaceAll(
           RegExp(r'\b(APK|MOD|XAPK|HACK)\b', caseSensitive: false),
           '',
         );
 
-        fullTitle = fullTitle!.replaceAll(
+        fullTitle = fullTitle.replaceAll(
           RegExp(
             r'\((?:[^)]*?(?:Unlocked|Mod|Premium|Money|Menu|Full|Patched|Subscribed|AdFree|BG Play|Paid|Unlimited|God Mode)[^)]*?)\)',
             caseSensitive: false,
@@ -55,12 +54,12 @@ class Apk4Free extends AppSource {
           '',
         );
 
-        fullTitle = fullTitle!.replaceAll(
+        fullTitle = fullTitle.replaceAll(
           RegExp(r'\s+v?\d+(\.\d+)+.*$', caseSensitive: false),
           '',
         );
 
-        fullTitle = fullTitle!
+        fullTitle = fullTitle
             .replaceAll(RegExp(r'\s+[\+\-]\s+'), ' ')
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
@@ -149,11 +148,7 @@ class Apk4Free extends AppSource {
         throw NoVersionError();
       }
 
-      return APKDetails(
-        appVersion.trim(),
-        apkUrls,
-        AppNames(name, fullTitle!),
-      );
+      return APKDetails(appVersion.trim(), apkUrls, AppNames(name, fullTitle));
     } catch (e) {
       if (e is ObtainiumError) rethrow;
       throw ObtainiumError('$name Error: $e');
