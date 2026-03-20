@@ -974,10 +974,10 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: c4349ceb03ae7293987cc0290ef06761e62c082e
-      url: "https://github.com/wilver06w/shizuku_apk_installer"
+      resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
+      url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git
-    version: "0.0.1"
+    version: "1.2.0"
   sky_engine:
     dependency: transitive
     description: flutter

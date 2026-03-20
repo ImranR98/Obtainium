@@ -633,17 +633,14 @@ class _SettingsPageState extends State<SettingsPage> {
                               value: settingsProvider.useShizuku,
                               onChanged: (useShizuku) {
                                 if (useShizuku) {
-                                  ShizukuApkInstaller.checkPermission().then((
+                                  ShizukuApkInstaller().checkPermission().then((
                                     resCode,
                                   ) {
-                                    settingsProvider.useShizuku = resCode!
-                                        .startsWith('granted');
+                                    settingsProvider.useShizuku = resCode!.startsWith('granted');
                                     switch (resCode) {
-                                      case 'binder_not_found':
+                                      case 'services_not_found':
                                         showError(
-                                          ObtainiumError(
-                                            tr('shizukuBinderNotFound'),
-                                          ),
+                                          ObtainiumError(tr('shizukuBinderNotFound')),
                                           context,
                                         );
                                       case 'old_shizuku':
@@ -653,9 +650,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         );
                                       case 'old_android_with_adb':
                                         showError(
-                                          ObtainiumError(
-                                            tr('shizukuOldAndroidWithADB'),
-                                          ),
+                                          ObtainiumError(tr('shizukuOldAndroidWithADB')),
                                           context,
                                         );
                                       case 'denied':
@@ -762,33 +757,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         localeDropdown,
                         FutureBuilder(
                           builder: (ctx, val) {
-                            return (val.data?.version.sdkInt ?? 0) >= 34
+                            return (val.data?.version.sdkInt ?? 0) >= 29
                                 ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       height16,
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Flexible(
                                             child: Text(tr('useSystemFont')),
                                           ),
                                           Switch(
-                                            value:
-                                                settingsProvider.useSystemFont,
+                                            value: settingsProvider.useSystemFont,
                                             onChanged: (useSystemFont) {
                                               if (useSystemFont) {
                                                 NativeFeatures.loadSystemFont()
                                                     .then((val) {
-                                                      settingsProvider
-                                                              .useSystemFont =
-                                                          true;
+                                                      settingsProvider.useSystemFont = true;
                                                     });
                                               } else {
-                                                settingsProvider.useSystemFont =
-                                                    false;
+                                                settingsProvider.useSystemFont = false;
                                               }
                                             },
                                           ),
