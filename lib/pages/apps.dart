@@ -20,6 +20,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:markdown/markdown.dart' as md;
 
+const double _appsListGroupCardRadius = 20;
+
 class AppsPage extends StatefulWidget {
   const AppsPage({super.key});
 
@@ -228,10 +230,12 @@ void showAppsViewOptionsSheet(BuildContext context) {
                         builder: (context, snapshot) {
                           final sdkInt = snapshot.data?.version.sdkInt ?? 0;
                           final showMaterialYou = sdkInt >= 31;
+                          final themeModeBlack =
+                              settingsProvider.useBlackTheme;
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              if (showMaterialYou)
+                              if (showMaterialYou) ...[
                                 themeIconButton(
                                   icon: Icons.palette_outlined,
                                   tooltip: tr('useMaterialYou'),
@@ -242,46 +246,64 @@ void showAppsViewOptionsSheet(BuildContext context) {
                                     setSheetState(() {});
                                   },
                                 ),
+                                const SizedBox(width: 16),
+                              ],
                               themeIconButton(
                                 icon: Icons.brightness_auto,
                                 tooltip: tr('followSystem'),
                                 selected: settingsProvider.theme ==
-                                    ThemeSettings.system,
+                                        ThemeSettings.system &&
+                                    !themeModeBlack,
                                 onPressed: () {
+                                  settingsProvider.useBlackTheme = false;
                                   settingsProvider.theme =
                                       ThemeSettings.system;
                                   setSheetState(() {});
                                 },
                               ),
+                              const SizedBox(width: 10),
                               themeIconButton(
                                 icon: Icons.light_mode_outlined,
                                 tooltip: tr('light'),
                                 selected: settingsProvider.theme ==
-                                    ThemeSettings.light,
+                                        ThemeSettings.light &&
+                                    !themeModeBlack,
                                 onPressed: () {
+                                  settingsProvider.useBlackTheme = false;
                                   settingsProvider.theme =
                                       ThemeSettings.light;
                                   setSheetState(() {});
                                 },
                               ),
+                              const SizedBox(width: 10),
                               themeIconButton(
                                 icon: Icons.dark_mode_outlined,
                                 tooltip: tr('dark'),
                                 selected: settingsProvider.theme ==
-                                    ThemeSettings.dark,
+                                        ThemeSettings.dark &&
+                                    !themeModeBlack,
                                 onPressed: () {
+                                  settingsProvider.useBlackTheme = false;
                                   settingsProvider.theme =
                                       ThemeSettings.dark;
                                   setSheetState(() {});
                                 },
                               ),
+                              const SizedBox(width: 10),
                               themeIconButton(
                                 icon: Icons.square,
                                 tooltip: tr('useBlackTheme'),
-                                selected: settingsProvider.useBlackTheme,
+                                selected: themeModeBlack,
                                 onPressed: () {
-                                  settingsProvider.useBlackTheme =
-                                      !settingsProvider.useBlackTheme;
+                                  if (themeModeBlack) {
+                                    settingsProvider.useBlackTheme = false;
+                                    settingsProvider.theme =
+                                        ThemeSettings.dark;
+                                  } else {
+                                    settingsProvider.theme =
+                                        ThemeSettings.dark;
+                                    settingsProvider.useBlackTheme = true;
+                                  }
                                   setSheetState(() {});
                                 },
                               ),
@@ -1096,15 +1118,40 @@ class AppsPageState extends State<AppsPage> {
           .toList();
 
       capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
-      return ExpansionTile(
-        initiallyExpanded: true,
-        title: Text(
-          capFirstChar(listedCategories[index] ?? tr('noCategory')),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      final theme = Theme.of(context);
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        child: Material(
+          elevation: 3,
+          shadowColor: theme.colorScheme.shadow.withAlpha(100),
+          surfaceTintColor: theme.colorScheme.surfaceTint,
+          borderRadius: BorderRadius.circular(_appsListGroupCardRadius),
+          color: theme.colorScheme.surfaceContainerLow,
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_appsListGroupCardRadius),
+                ),
+              ),
+              collapsedShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_appsListGroupCardRadius),
+                ),
+              ),
+              initiallyExpanded: true,
+              title: Text(
+                capFirstChar(listedCategories[index] ?? tr('noCategory')),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+              trailing: Text(tiles.length.toString()),
+              children: tiles,
+            ),
+          ),
         ),
-        controlAffinity: ListTileControlAffinity.leading,
-        trailing: Text(tiles.length.toString()),
-        children: tiles,
       );
     }
 
@@ -1145,15 +1192,40 @@ class AppsPageState extends State<AppsPage> {
           )
           .name;
 
-      return ExpansionTile(
-        initiallyExpanded: true,
-        title: Text(
-          sourceTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      final theme = Theme.of(context);
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        child: Material(
+          elevation: 3,
+          shadowColor: theme.colorScheme.shadow.withAlpha(100),
+          surfaceTintColor: theme.colorScheme.surfaceTint,
+          borderRadius: BorderRadius.circular(_appsListGroupCardRadius),
+          color: theme.colorScheme.surfaceContainerLow,
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_appsListGroupCardRadius),
+                ),
+              ),
+              collapsedShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(_appsListGroupCardRadius),
+                ),
+              ),
+              initiallyExpanded: true,
+              title: Text(
+                sourceTitle,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+              trailing: Text(tiles.length.toString()),
+              children: tiles,
+            ),
+          ),
         ),
-        controlAffinity: ListTileControlAffinity.leading,
-        trailing: Text(tiles.length.toString()),
-        children: tiles,
       );
     }
 
@@ -1613,33 +1685,63 @@ class AppsPageState extends State<AppsPage> {
         return Row(
           children: [
             Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      appsProvider.removeAppsWithModal(
-                        context,
-                        selectedApps.toList(),
-                      );
-                    },
-                    tooltip: tr('removeSelectedApps'),
-                    icon: const Icon(Icons.delete_outline_outlined),
+              child: Center(
+                child: Tooltip(
+                  message: tr('selectAll'),
+                  child: TextButton.icon(
+                    style:
+                        const ButtonStyle(visualDensity: VisualDensity.compact),
+                    onPressed: listedApps.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              for (final appInMem in listedApps) {
+                                selectedAppIds.add(appInMem.app.id);
+                              }
+                            });
+                          },
+                    icon: Icon(
+                      Icons.select_all_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    label: Text(listedApps.length.toString()),
                   ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: launchCategorizeDialog(),
-                    tooltip: tr('categorize'),
-                    icon: const Icon(Icons.category_outlined),
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: showMoreOptionsDialog,
-                    tooltip: tr('more'),
-                    icon: const Icon(Icons.more_horiz),
-                  ),
-                ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    appsProvider.removeAppsWithModal(
+                      context,
+                      selectedApps.toList(),
+                    );
+                  },
+                  tooltip: tr('removeSelectedApps'),
+                  icon: const Icon(Icons.delete_outline_outlined),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: launchCategorizeDialog(),
+                  tooltip: tr('categorize'),
+                  icon: const Icon(Icons.category_outlined),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: showMoreOptionsDialog,
+                  tooltip: tr('more'),
+                  icon: const Icon(Icons.more_horiz),
+                ),
               ),
             ),
           ],
@@ -1647,57 +1749,66 @@ class AppsPageState extends State<AppsPage> {
       }
       return Row(
         children: [
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: tr('appsViewOptions'),
-            onPressed: () => showAppsViewOptionsSheet(context),
-            icon: const Icon(Icons.tune),
-          ),
-          IconButton(
-            color: Theme.of(context).colorScheme.primary,
-            style: const ButtonStyle(visualDensity: VisualDensity.compact),
-            tooltip: isFilterOff
-                ? tr('filterApps')
-                : '${tr('filter')} - ${tr('remove')}',
-            onPressed: isFilterOff
-                ? showFilterDialog
-                : () {
-                    setState(() {
-                      filter = AppsFilter();
-                    });
-                  },
-            icon: Icon(
-              isFilterOff ? Icons.search_rounded : Icons.search_off_rounded,
+          Expanded(
+            child: Center(
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: tr('appsViewOptions'),
+                onPressed: () => showAppsViewOptionsSheet(context),
+                icon: const Icon(Icons.tune),
+              ),
             ),
           ),
-          const SizedBox(width: 10),
-          const VerticalDivider(),
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: getMassObtainFunction(),
-                  tooltip: tr('installUpdateApps'),
-                  icon: const Icon(Icons.file_download_outlined),
+            child: Center(
+              child: IconButton(
+                color: Theme.of(context).colorScheme.primary,
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                tooltip: isFilterOff
+                    ? tr('filterApps')
+                    : '${tr('filter')} - ${tr('remove')}',
+                onPressed: isFilterOff
+                    ? showFilterDialog
+                    : () {
+                        setState(() {
+                          filter = AppsFilter();
+                        });
+                      },
+                icon: Icon(
+                  isFilterOff
+                      ? Icons.search_rounded
+                      : Icons.search_off_rounded,
                 ),
-                TextButton.icon(
-                  style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                  onPressed: listedApps.isEmpty
-                      ? null
-                      : () {
-                          selectThese(
-                            listedApps.map((e) => e.app).toList(),
-                          );
-                        },
-                  icon: Icon(
-                    Icons.select_all_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  label: Text(listedApps.length.toString()),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: getMassObtainFunction(),
+                tooltip: tr('installUpdateApps'),
+                icon: const Icon(Icons.file_download_outlined),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: TextButton.icon(
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                onPressed: listedApps.isEmpty
+                    ? null
+                    : () {
+                        selectThese(
+                          listedApps.map((e) => e.app).toList(),
+                        );
+                      },
+                icon: Icon(
+                  Icons.select_all_outlined,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              ],
+                label: Text(listedApps.length.toString()),
+              ),
             ),
           ),
         ],
