@@ -386,6 +386,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!settingsProvider.isTV)
                   FutureBuilder(
                     future: settingsProvider.getExportDir(),
                     builder: (context, snapshot) {
@@ -558,6 +559,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           child: Text(tr('importFromURLList')),
                         ),
                         const SizedBox(height: 8),
+                        if (!settingsProvider.isTV)
                         TextButton(
                           onPressed: importInProgress ? null : runUrlImport,
                           child: Text(tr('importFromURLsInFile')),
@@ -720,6 +722,7 @@ class _SelectionModalState extends State<SelectionModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isTV = context.read<SettingsProvider>().isTV;
     Map<MapEntry<String, List<String>>, bool> filteredEntrySelections = {};
     entrySelections.forEach((key, value) {
       var searchableText = key.value.isEmpty ? key.key : key.value[0];
@@ -807,7 +810,7 @@ class _SelectionModalState extends State<SelectionModal> {
               });
             }
 
-            var urlLink = GestureDetector(
+            var urlLink = InkWell(
               onTap: !widget.titlesAreLinks
                   ? null
                   : () {
@@ -858,7 +861,7 @@ class _SelectionModalState extends State<SelectionModal> {
                 .toList();
 
             var singleSelectTile = ListTile(
-              title: GestureDetector(
+              title: InkWell(
                 onTap: widget.titlesAreLinks
                     ? null
                     : () {
@@ -868,7 +871,7 @@ class _SelectionModalState extends State<SelectionModal> {
               ),
               subtitle: entry.value.length <= 1
                   ? null
-                  : GestureDetector(
+                  : InkWell(
                       onTap: () {
                         setState(() {
                           selectOnlyOne(entry.key);
@@ -882,9 +885,13 @@ class _SelectionModalState extends State<SelectionModal> {
                     ? null
                     : selectedEntries.first.key.key,
                 onChanged: (value) {
-                  setState(() {
-                    selectOnlyOne(entry.key);
-                  });
+                  if (isTV) {
+                    Navigator.of(context).pop([entry.key]);
+                  } else {
+                    setState(() {
+                      selectOnlyOne(entry.key);
+                    });
+                  }
                 },
               ),
             );
@@ -904,7 +911,7 @@ class _SelectionModalState extends State<SelectionModal> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 8),
-                      GestureDetector(
+                      InkWell(
                         onTap: widget.titlesAreLinks
                             ? null
                             : () {
@@ -914,7 +921,7 @@ class _SelectionModalState extends State<SelectionModal> {
                       ),
                       entry.value.length <= 1
                           ? const SizedBox.shrink()
-                          : GestureDetector(
+                          : InkWell(
                               onTap: () {
                                 selectThis(!(entrySelections[entry] ?? false));
                               },
@@ -931,11 +938,45 @@ class _SelectionModalState extends State<SelectionModal> {
                 ? singleSelectTile
                 : multiSelectTile;
           }),
+          if (isTV && !widget.onlyOneSelectionAllowed) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(tr('cancel')),
+                ),
+                TextButton(
+                  onPressed: entrySelections.values.where((b) => b).isEmpty
+                      ? null
+                      : () => Navigator.of(context).pop(
+                            entrySelections.entries
+                                .where((entry) => entry.value)
+                                .map((e) => e.key.key)
+                                .toList(),
+                          ),
+                  child: Text(
+                    tr(
+                      'selectX',
+                      args: [
+                        entrySelections.values
+                            .where((b) => b)
+                            .length
+                            .toString(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
       actions: [
         getSelectAllButton(),
         TextButton(
+          autofocus: isTV,
           onPressed: () {
             Navigator.of(context).pop();
           },

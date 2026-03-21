@@ -28,7 +28,7 @@ class GitHub extends AppSource {
         required: false,
         belowWidgets: [
           const SizedBox(height: 4),
-          GestureDetector(
+          InkWell(
             onTap: () {
               launchUrlString(
                 'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
@@ -68,7 +68,7 @@ class GitHub extends AppSource {
         ],
         belowWidgets: [
           const SizedBox(height: 4),
-          GestureDetector(
+          InkWell(
             onTap: () {
               launchUrlString(
                 'https://github.com/sky22333/hubproxy',

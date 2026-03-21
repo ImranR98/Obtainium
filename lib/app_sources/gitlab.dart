@@ -26,7 +26,7 @@ class GitLab extends AppSource {
         required: false,
         belowWidgets: [
           const SizedBox(height: 4),
-          GestureDetector(
+          InkWell(
             onTap: () {
               launchUrlString(
                 'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
