@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:html/dom.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:html/parser.dart';
 
 /// AppSource implementation for itch.io.
 ///
@@ -17,14 +20,14 @@ class ItchIO extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp(
-      r'^https?://([a-z0-9\-]+\.itch\.io/[a-z0-9\-]+)',
+      '^https?://[a-z0-9-]+.${getSourceRegex(hosts)}/[^/]+',
       caseSensitive: false,
     );
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
-    return 'https://${match.group(1)!}';
+    return match.group(0)!;
   }
 
   @override
@@ -34,9 +37,9 @@ class ItchIO extends AppSource {
     bool forAPKDownload = false,
   }) async {
     var headers = <String, String>{};
-    if (additionalSettings['tempHeaders'] != null) {
+    if (additionalSettings['extraHeaders'] != null) {
       headers.addAll(
-        Map<String, String>.from(additionalSettings['tempHeaders']),
+        Map<String, String>.from(additionalSettings['extraHeaders']),
       );
     }
     return headers.isNotEmpty ? headers : null;
@@ -53,221 +56,207 @@ class ItchIO extends AppSource {
     return match?.group(1);
   }
 
-  /// Extracts all download IDs (upload_id or /download/ link IDs) from the page.
-  List<String> _extractDownloadIds(String body) {
-    var ids = <String>{};
-    RegExp uploadIdRegEx = RegExp(r'data-upload_id="(\d+)"');
-    for (var m in uploadIdRegEx.allMatches(body)) {
-      ids.add(m.group(1)!);
-    }
-    RegExp downloadLinkRegEx = RegExp(r'/download/(\d+)');
-    for (var m in downloadLinkRegEx.allMatches(body)) {
-      ids.add(m.group(1)!);
-    }
-    return ids.toList();
-  }
-
-  /// Resolves the real filename of an asset by following the download flow.
+  /// Extracts all app titles and download IDs (upload_id or /download/ link IDs) from the page.
   ///
-  /// This retrieves the direct download URL (often Cloudflare R2) and
-  /// extracts the filename from the Content-Disposition header.
-  Future<String?> _resolveRealFileName(
-    String uploadId,
-    String standardUrl,
-    Map<String, dynamic> additionalSettings,
-    String? initialCookies,
-  ) async {
-    try {
-      final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
-      var res1 = await sourceRequest(
-        '$baseUrl/download/$uploadId',
-        {
-          ...additionalSettings,
-          if (initialCookies != null) 'tempHeaders': {'Cookie': initialCookies},
-        },
-      );
-      if (res1.statusCode != 200) return null;
-      var csrfToken = _findCsrf(res1.body);
-      var cookies = res1.headers['set-cookie'] ?? initialCookies;
-      if (csrfToken == null) return null;
+  /// The format of the element is the following:
+  /// 1. Release name
+  /// 2. Upload ID
+  /// 3. Whether it is an Android download
+  List<(String, String, bool)> _extractDownload(String body) {
+    var parser = parse(body);
 
-      var fileApiUrl = '$baseUrl/file/$uploadId?as_props=1&source=game_download';
-      var res2 = await sourceRequest(
-        fileApiUrl,
-        {
-          ...additionalSettings,
-          'tempHeaders': {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Referer': '$baseUrl/download/$uploadId',
-            if (cookies != null) 'Cookie': cookies,
-          },
-        },
-        postBody: {'csrf_token': csrfToken},
-      );
-      if (res2.statusCode != 200) return null;
-      var directUrl = jsonDecode(res2.body)['url'] as String?;
-      if (directUrl == null) return null;
+    // Results containers
+    List<(String, String, bool)> downloads = [];
 
-      var streamRes = await sourceRequestStreamResponse('GET', directUrl, {
-        'Referer': '$baseUrl?download',
-        if (cookies != null) 'Cookie': cookies,
-      }, additionalSettings);
+    // It seems that in every spot, the download buttons are in this container.
+    List<Element> uploadDivs = parser.querySelectorAll('div.upload');
 
-      var response = streamRes.value.value;
-      var cd = response.headers.value('content-disposition');
-      streamRes.value.key.close(force: true);
+    if (uploadDivs.isNotEmpty) {
+      for (var uploadDiv in uploadDivs) {
+        // Extract the file ID
+        Element? nameDiv = uploadDiv.querySelector(
+          'div.upload_name strong.name',
+        );
+        String uploadName = nameDiv?.attributes['title'] ?? 'App title';
 
-      if (cd != null) {
-        var match = RegExp(r'filename="?([^";]+)"?').firstMatch(cd);
-        return match?.group(1);
+        // OS Check
+        bool osInfo =
+            uploadDiv.querySelector(
+              'span.download_platforms span.icon-android',
+            ) !=
+            null;
+
+        // Try to extract the upload ID; fails if no download button
+        var downloadButton = uploadDiv.querySelector('a.download_btn');
+        String? uploadId = downloadButton?.attributes['data-upload_id'];
+
+        if (uploadId != null) {
+          downloads.add((uploadName, uploadId, osInfo));
+        }
       }
-    } catch (_) {}
-    return null;
+    }
+    return downloads;
   }
 
   /// Extracts the version string from the page body.
+  ///
   /// Prioritizes info table data, then upload names, then 'Updated' date.
-  String? _parseVersion(String body) {
-    // 1. Info table version row
-    var versionMatch = RegExp(
-      r'<tr>\s*<td>Version</td>\s*<td>(.*?)</td>\s*</tr>',
-      caseSensitive: false,
-      dotAll: true,
-    ).firstMatch(body);
-    if (versionMatch != null) {
-      String v = versionMatch.group(1)!.trim();
-      return v.replaceFirst(RegExp(r'^[vV]'), '');
+  ///
+  /// This method has room for improvement; however, there is no defined
+  /// standard on itch.io for declaring assets versions.
+  String? _parseVersion(Document document) {
+    // Limit our search to specific areas.
+    // In the main page, use the section for the game information.
+    String searchArea = document.querySelector("div.page_widget")!.innerHtml;
+
+    List<String> supportedVersionStrings = [
+      r'[vV](\d+\.\d+(?:\.\d+)*)',
+      r'Version (\d+\.\d+(?:\.\d+)*)',
+    ];
+    Set<String> matches = {};
+
+    for (var versionRegexString in supportedVersionStrings) {
+      RegExp versionRegex = RegExp(versionRegexString);
+      var regexMatches = versionRegex.allMatches(searchArea);
+      for (var regexMatch in regexMatches) {
+        matches.add(regexMatch.group(1)!);
+      }
     }
 
-    // 2. Upload names in body
-    var vMatch = RegExp(
-      r'class="upload_name"><strong[^>]*>.*?([vV]?\d+\.\d+(?:\.\d+)*).*?</strong>',
-      dotAll: true,
-    ).firstMatch(body);
-    if (vMatch != null) {
-      String v = vMatch.group(1)!.trim();
-      return v.replaceFirst(RegExp(r'^[vV]'), '');
+    if (matches.isEmpty) return null;
+
+    // Manual comparison, up to 3 digits
+    int compareVersions(String v1, String v2) {
+      List<int> c1 = v1.split('.').map(int.parse).toList();
+      List<int> c2 = v2.split('.').map(int.parse).toList();
+      for (int i = 0; i < 3; i++) {
+        int p1 = i < c1.length ? c1[i] : 0;
+        int p2 = i < c2.length ? c2[i] : 0;
+        if (p1 != p2) return p1.compareTo(p2);
+      }
+      return 0;
     }
 
-    return null;
+    String bestMatch = matches.reduce(
+      (a, b) => compareVersions(a, b) > 0 ? a : b,
+    );
+
+    return bestMatch;
   }
 
   /// Extracts the "Updated" date and formats it as YYYYMMDD for versioning.
-  String? _getDateVersion(String body) {
-    var dateMatch = RegExp(
-      r'<abbr title="(\d{4})-(\d{2})-(\d{2})[^"]*"[^>]*>.*?Updated',
-      caseSensitive: false,
-      dotAll: true,
-    ).firstMatch(body);
-    if (dateMatch != null) {
-      return '${dateMatch.group(1)}${dateMatch.group(2)}${dateMatch.group(3)}';
+  String? _getDateVersion(Document document) {
+    // Check if we have any "abbr" dates. If now exit early.
+    List<Element> abbrElements = document.querySelectorAll('abbr');
+    if (abbrElements.isEmpty) return null;
+
+    DateFormat abbrTimeFormat = DateFormat("dd MMMM yyyy '@' HH:mm 'UTC'");
+    List<DateTime> abbrDates = [];
+    for (var abbrElement in abbrElements) {
+      DateTime abbrDate = abbrTimeFormat.parseUtc(
+        abbrElement.attributes['title']!,
+      );
+      abbrDates.add(abbrDate);
     }
-    return null;
+
+    DateTime dateTimeFilter(DateTime a, b) {
+      return a.microsecondsSinceEpoch > b.microsecondsSinceEpoch ? a : b;
+    }
+
+    DateTime latest = abbrDates.reduce(dateTimeFilter);
+
+    return '${latest.year}${latest.month}${latest.day}';
   }
 
-  /// Extracts the app title from the page body.
-  String? _parseTitle(String body) {
-    var titleMatch = RegExp(
-      r'<h1[^>]*class="[^"]*game_title[^"]*"[^>]*>(.*?)</h1>',
-      dotAll: true,
-    ).firstMatch(body);
-    String? title = titleMatch?.group(1)?.trim();
-    if (title == null || title.isEmpty) {
-      title = RegExp(
-        r'<meta property="og:title" content="([^"]+)"',
-      ).firstMatch(body)?.group(1);
-    }
-    if (title == null || title.isEmpty) {
-      title = RegExp(r'<title>(.*?)</title>').firstMatch(body)?.group(1);
-    }
-    if (title != null) {
-      if (title.contains(' by ')) title = title.split(' by ').first.trim();
-      title = title.replaceAll('Download ', '').trim();
-    }
+  /// Extracts the app title from the page title.
+  String _parseTitle(Document document) {
+    String? title;
+    Element titleElement = document.getElementsByTagName('title')[0];
+    title = titleElement.text;
+    // The title is in format: GAMENAME by GAMEAUTHOR
+    // Then, get just the first part
+    title = title.split(' by ').first.trim();
     return title;
   }
 
   /// Resolves the app author from subdomain or author span.
-  String _parseAuthor(String body, String standardUrl) {
-    var authorMatch = RegExp(
-      r'<span itemprop="name">(.*?)</span>',
-    ).firstMatch(body);
+  String _parseAuthor(Document document, String standardUrl) {
+    Element? followSpan = document.querySelector(
+      'span.on_follow span.full_label',
+    );
+    var authorMatch = RegExp(r'Follow (.+)').firstMatch(followSpan!.text);
     String? author = authorMatch?.group(1)?.trim();
-    if (author == null || author.isEmpty) {
-      author = RegExp(
-        r'by <a href="[^"]+">([^<]+)</a>',
-      ).firstMatch(body)?.group(1)?.trim();
-    }
     return author ?? Uri.parse(standardUrl).host.split('.').first;
+  }
+
+  /// Internal method for retrieving CSRF token and cookies for multiple requests.
+  Future<(String?, String?)> _setupDownload(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
+
+    var warmUpRes = await sourceRequest(baseUrl, {...additionalSettings});
+    if (warmUpRes.statusCode != 200) return (null, null);
+
+    var csrfToken = _findCsrf(warmUpRes.body)!;
+    var cookies = warmUpRes.headers['set-cookie']!;
+    return (csrfToken, cookies);
   }
 
   /// Encapsulates the multi-step bypass flow to retrieve the download page body.
   Future<String> _getDownloadPageBody(
     String standardUrl,
-    String initialBody,
-    String? initialCookies,
-    String? csrfToken,
     Map<String, dynamic> additionalSettings,
+    String initialBody,
+    String? initialCsrfToken,
+    String? initialCookies,
   ) async {
+    // Start the setup
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
     var currentBody = initialBody;
-    var currentCookies = initialCookies;
-    var ids = _extractDownloadIds(currentBody);
 
-    if (ids.isEmpty && csrfToken != null) {
+    String? csrfToken, cookies;
+
+    if (initialCsrfToken != null && initialCookies != null) {
+      (csrfToken, cookies) = (initialCsrfToken, initialCookies);
+    } else {
+      (csrfToken, cookies) = await _setupDownload(
+        standardUrl,
+        additionalSettings,
+      );
+    }
+
+    // Easy case: download buttons are on the first page.
+    // All next if checks are skipped.
+    var ids = _extractDownload(currentBody);
+
+    // No buttons have been found, we need to "purchase"
+    if (ids.isEmpty) {
       // Step 1: POST to /download_url bypass (e.g. for "Name your price")
       var bypassRes = await sourceRequest(
         '$baseUrl/download_url',
         {
           ...additionalSettings,
-          'tempHeaders': {
+          'extraHeaders': {
             'X-Requested-With': 'XMLHttpRequest',
-            if (currentCookies != null) 'Cookie': currentCookies,
+            if (cookies != null) 'Cookie': cookies,
           },
         },
         postBody: {'csrf_token': csrfToken},
       );
       if (bypassRes.statusCode == 200) {
+        // The call returns a JSON like: {"url":"download_url"}
         var tokenizedUrl = jsonDecode(bypassRes.body)['url'] as String?;
         if (tokenizedUrl != null) {
-          var tRes = await sourceRequest(tokenizedUrl, {
+          // We are now in GAME_URL/download/HASH
+          var downloadPageRes = await sourceRequest(tokenizedUrl, {
             ...additionalSettings,
-            'tempHeaders': {if (currentCookies != null) 'Cookie': currentCookies},
+            'extraHeaders': {if (cookies != null) 'Cookie': cookies},
           });
-          if (tRes.statusCode == 200) {
-            currentBody = tRes.body;
-            currentCookies = tRes.headers['set-cookie'] ?? currentCookies;
-            ids = _extractDownloadIds(currentBody);
-          }
-        }
-      }
-    }
-
-    if (ids.isEmpty) {
-      // Step 2: AJAX /purchase fallback
-      var pRes = await sourceRequest('$baseUrl/purchase?lightbox=true', {
-        ...additionalSettings,
-        'tempHeaders': {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Referer': standardUrl,
-          if (currentCookies != null) 'Cookie': currentCookies,
-        },
-      });
-      if (pRes.statusCode == 200) {
-        var pBody = pRes.body;
-        try {
-          var data = jsonDecode(pBody);
-          if (data['layout'] != null) pBody = data['layout'];
-        } catch (_) {}
-        var tUrlMatch = RegExp(r'href="([^"]*/download/[^"]+)"').firstMatch(pBody);
-        if (tUrlMatch != null) {
-          var tUrl = Uri.parse(standardUrl).resolve(tUrlMatch.group(1)!).toString();
-          var tRes = await sourceRequest(tUrl, {
-            ...additionalSettings,
-            'tempHeaders': {if (currentCookies != null) 'Cookie': currentCookies},
-          });
-          if (tRes.statusCode == 200) {
-            currentBody = tRes.body;
+          if (downloadPageRes.statusCode == 200) {
+            // We are now at the download page, with shiny buttons
+            currentBody = downloadPageRes.body;
           }
         }
       }
@@ -282,138 +271,176 @@ class ItchIO extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
+
+    // Retrieve the body for parsing
     var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
     var body = res.body;
-    var cookies = res.headers['set-cookie'];
-    var csrfToken = _findCsrf(body);
 
-    // Metadata extraction
-    String? title = _parseTitle(body);
-    String author = _parseAuthor(body, standardUrl);
-    String? version = _parseVersion(body);
-    String? dateVersion = _getDateVersion(body);
-
-    // Resolve tokenized download page (if necessary)
-    String downloadPageBody = await _getDownloadPageBody(
+    // Retrieve CSRF token and cookies
+    var (csrfToken, cookies) = await _setupDownload(
       standardUrl,
-      body,
-      cookies,
-      csrfToken,
       additionalSettings,
     );
 
-    // Final version fallback check
-    version ??= _parseVersion(downloadPageBody);
-    dateVersion ??= _getDateVersion(downloadPageBody);
+    // Metadata extraction
+    Document storePage = parse(body);
+    String title = _parseTitle(storePage);
+    String author = _parseAuthor(storePage, standardUrl);
+    String? dateVersion = _getDateVersion(storePage);
+    String? version = _parseVersion(storePage);
 
-    var downloadIds = _extractDownloadIds(downloadPageBody);
-    var apkLinkFutures = <Future<MapEntry<String, String>?>>[];
-    String? foundVersionInNames;
+    // Resolve tokenized download page
+    String downloadPageBody = await _getDownloadPageBody(
+      standardUrl,
+      additionalSettings,
+      body,
+      csrfToken,
+      cookies,
+    );
 
-    for (var id in downloadIds) {
-      RegExp idPattern = RegExp('data-upload_id="$id"|/download/$id');
-      var idMatch = idPattern.firstMatch(downloadPageBody);
-      bool isLikelyAndroid = false;
-      String? presentedName;
+    // Fetch better version from the download page, if any
+    Document downloadPage = parse(downloadPageBody);
+    dateVersion ??= _getDateVersion(downloadPage);
+    version ??= _parseVersion(downloadPage);
 
-      if (idMatch != null) {
-        int contextStart = downloadPageBody.lastIndexOf(
-          'class="upload"',
-          idMatch.start,
+    // Rules for defaulting the version
+    // 1. Nice version, if found
+    // 2. Date of last update
+    // 3. Fallback to 'latest'
+    version = version ?? dateVersion ?? 'latest';
+
+    // Create all relevant APK links
+    List<MapEntry<String, String>> apkLinks = [];
+
+    var downloadIds = _extractDownload(downloadPageBody);
+
+    for (var downloadInfo in downloadIds) {
+      var (name, id, isAndroid) = downloadInfo;
+
+      if (isAndroid) {
+        // Try retrieving the correct file
+        var realName = await _resolveRealFileName(
+          id,
+          standardUrl,
+          additionalSettings,
+          csrfToken,
+          cookies,
         );
-        if (contextStart == -1 || (idMatch.start - contextStart) > 1000) {
-          contextStart = (idMatch.start - 500).clamp(0, downloadPageBody.length);
-        }
-        String blockContext = downloadPageBody.substring(
-          contextStart,
-          (idMatch.end + 200).clamp(0, downloadPageBody.length),
-        );
+        // Use the real name if possible, otherwise fallback to the one on the page.
+        var label = realName ?? name;
 
-        var nameMatch = RegExp(r'class="upload_name">([^<]+)<').firstMatch(blockContext);
-        presentedName = nameMatch?.group(1)?.trim();
-
-        if (blockContext.toLowerCase().contains('android') ||
-            blockContext.toLowerCase().contains('.apk') ||
-            (presentedName?.toLowerCase().contains('android') ?? false)) {
-          isLikelyAndroid = true;
-        }
-
-        if (presentedName != null) {
-          var vMatch = RegExp(r'[vV]?(\d+\.\d+(?:\.\d+)*)').firstMatch(presentedName);
-          if (vMatch != null) foundVersionInNames ??= vMatch.group(1);
-        }
-      }
-
-      if (isLikelyAndroid || downloadIds.length <= 3) {
-        apkLinkFutures.add(
-          _resolveRealFileName(id, standardUrl, additionalSettings, cookies).then((realName) {
-            return MapEntry(
-              realName ?? presentedName ?? id,
-              '$baseUrl/download/$id',
-            );
-          }),
-        );
+        apkLinks.add(MapEntry(label, '$baseUrl/download/$id'));
       }
     }
 
-    // Resolve filenames in parallel
-    var apkLinks = (await Future.wait(apkLinkFutures)).whereType<MapEntry<String, String>>().toList();
-
-    version = foundVersionInNames ?? version ?? dateVersion ?? 'latest';
-    String cleanAuthor = author.replaceAll(' ', '_');
-
-    // Clean and normalize labels
-    apkLinks = apkLinks.map((entry) {
-      String label = entry.key;
-      if (label == entry.value.split('/').last || label.length < 5 || !label.contains('.')) {
-        String cleanName = label.replaceAll(RegExp(r'[^\w\s\.\-\(\)]'), '').replaceAll(' ', '_');
-        label = '${cleanName}_${cleanAuthor}_$version.apk';
-      }
-      return MapEntry(label, entry.value);
-    }).toList();
-
     if (apkLinks.isEmpty) throw NoAPKError();
 
-    return APKDetails(version, apkLinks, AppNames(author, title ?? 'App'));
+    return APKDetails(version, apkLinks, AppNames(author, title));
   }
 
-  @override
-  Future<String> assetUrlPrefetchModifier(
-    String assetUrl,
+  /// Internal method for finding the correct Cloudflare R2 URL for any given
+  /// asset.
+  Future<String?> _retrieveCloudflareUrl(
+    String uploadId,
     String standardUrl,
     Map<String, dynamic> additionalSettings,
+    String? csrfToken,
+    String? cookies,
   ) async {
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
-    var uploadId = assetUrl.split('/').last;
-    var res = await sourceRequest(assetUrl, additionalSettings);
-    if (res.statusCode != 200) throw getObtainiumHttpError(res);
 
-    var body = res.body;
-    var cookies = res.headers['set-cookie'];
-    var csrfToken = _findCsrf(body);
-    if (csrfToken == null) return assetUrl;
+    if (csrfToken == null || cookies == null) {
+      (csrfToken, cookies) = await _setupDownload(
+        standardUrl,
+        additionalSettings,
+      );
+    }
 
     var fileApiUrl = '$baseUrl/file/$uploadId?as_props=1&source=game_download';
-    var apiRes = await sourceRequest(
+    var downloadRequestRes = await sourceRequest(
       fileApiUrl,
       {
         ...additionalSettings,
-        'tempHeaders': {
+        'extraHeaders': {
           'X-Requested-With': 'XMLHttpRequest',
-          'Referer': assetUrl,
+          'Referer': '$baseUrl/download/$uploadId',
           if (cookies != null) 'Cookie': cookies,
         },
       },
       postBody: {'csrf_token': csrfToken},
     );
 
-    if (apiRes.statusCode == 200) {
-      var finalUrl = jsonDecode(apiRes.body)['url'] as String?;
-      if (finalUrl != null) return finalUrl;
-    }
+    if (downloadRequestRes.statusCode != 200) return null;
+
+    // This is a JSON with the url within
+    var directUrl = jsonDecode(downloadRequestRes.body)['url'] as String?;
+    return directUrl;
+  }
+
+  /// Resolves the real filename of an asset by following the download flow.
+  ///
+  /// This retrieves the direct download URL (often Cloudflare R2) and
+  /// extracts the filename from the Content-Disposition header.
+  Future<String?> _resolveRealFileName(
+    String uploadId,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+    String? csrfToken,
+    String? cookies,
+  ) async {
+    var directUrl = await _retrieveCloudflareUrl(
+      uploadId,
+      standardUrl,
+      additionalSettings,
+      csrfToken,
+      cookies,
+    );
+
+    if (directUrl == null) return null;
+
+    final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
+    var streamRes = await sourceRequestStreamResponse('GET', directUrl, {
+      'Referer': '$baseUrl?download',
+    }, additionalSettings);
+
+    // Peek into the Content-Disposition header
+    var response = streamRes.value.value;
+    var cd = response.headers.value('content-disposition');
+    streamRes.value.key.close(force: true);
+
+    if (cd == null) return null;
+
+    var match = RegExp(r'filename="?([^";]+)"?').firstMatch(cd);
+    return match?.group(1);
+  }
+
+  /// Custom itch.io URL fetcher.
+  ///
+  /// Since the filehost is on Cloudflare R2, we need to resolve the asset URL
+  /// after we identified the download.
+  @override
+  Future<String> assetUrlPrefetchModifier(
+    String assetUrl,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    // We store the upload ID in the last chunk of the URL.
+    // We can then use it to retrive the Cloudflare R2 real URL.
+    var uploadId = assetUrl.split('/').last;
+
+    String? cloudFlareUrl = await _retrieveCloudflareUrl(
+      uploadId,
+      standardUrl,
+      additionalSettings,
+      // We are outside of regular fetching, so we need fresh cookies and token
+      null,
+      null,
+    );
+
+    if (cloudFlareUrl != null) return cloudFlareUrl;
 
     return assetUrl;
   }
