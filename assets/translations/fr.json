@@ -13,7 +13,7 @@
     "and": "et",
     "githubPATLabel": "Jeton d'accès personnel GitHub (augmente la limite de requêtes)",
     "includePrereleases": "Inclure les pre-releases",
-    "fallbackToOlderReleases": "Rétrograder sur une ancienne release",
+    "fallbackToOlderReleases": "Rétrograder vers une ancienne release",
     "filterReleaseTitlesByRegEx": "Filtrer les titres de version par expression régulière",
     "invalidRegEx": "Expression régulière invalide",
     "noDescription": "Aucune description",
@@ -75,7 +75,7 @@
     "unpinFromTop": "Désépingler",
     "resetInstallStatusForSelectedAppsQuestion": "Réinitialiser l'état d'installation pour les applications sélectionnées ?",
     "installStatusOfXWillBeResetExplanation": "L'état d'installation de toutes les applications sélectionnées sera réinitialisé.\n\nCela peut aider lorsque la version indiquée dans Obtainium est incorrecte suite à un échec de mise à jour ou d'autres problèmes.",
-    "customLinkMessage": "Ces liens fonctionnent sur les appareils dont Obtainium est installé",
+    "customLinkMessage": "Ces liens fonctionnent sur les appareils sur lesquels Obtainium est installé",
     "shareAppConfigLinks": "Partager la configuration sous forme de lien HTML",
     "shareSelectedAppURLs": "Partager les URL des applications sélectionnées",
     "resetInstallStatus": "Réinitialiser l'état d'installation des applications",
@@ -148,7 +148,7 @@
     "xHasAnUpdate": "{} a une mise à jour.",
     "appsUpdated": "Applications mises à jour",
     "appsNotUpdated": "Échec de la mise à jour des applications",
-    "appsUpdatedNotifDescription": "Vous avertit lorsque des mises à jour ont été installés en arrière-plan",
+    "appsUpdatedNotifDescription": "Vous avertit lorsque des mises à jour ont été installées en arrière-plan",
     "xWasUpdatedToY": "{} a été mise à jour vers {}.",
     "xWasNotUpdatedToY": "Échec de la mise à jour de {} vers {}.",
     "errorCheckingUpdates": "Erreur lors de la recherche de mises à jour",
@@ -316,7 +316,7 @@
     "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
     "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici une fois terminé.",
     "wiki": "Aide/Wiki",
-    "crowdsourcedConfigsLabel": "Configurations d'applications communautaire (à utiliser à vos risques et périls)",
+    "crowdsourcedConfigsLabel": "Configurations d'applications communautaires (à utiliser à vos risques et périls)",
     "crowdsourcedConfigsShort": "Applications communautaires",
     "allowInsecure": "Autoriser les requêtes HTTP non sécurisées",
     "stayOneVersionBehind": "Rester sur une version avant la plus récente",
@@ -404,7 +404,7 @@
         "other": "{} APK"
     },
     "certificateHash": {
-      "one": "Certificat hash",
-      "other": "Certificats hash"
+      "one": "Hash de certificat",
+      "other": "Hashs de certificats"
     }
 }
