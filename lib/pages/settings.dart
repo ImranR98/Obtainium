@@ -291,7 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    var intervalSlider = Slider(
+    final rawSlider = Slider(
       value: settingsProvider.updateIntervalSliderVal,
       max: updateIntervalNodes.length.toDouble(),
       divisions: updateIntervalNodes.length * 20,
@@ -314,6 +314,57 @@ class _SettingsPageState extends State<SettingsPage> {
         });
       },
     );
+
+    final Widget intervalSlider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: settingsProvider.updateIntervalSliderVal <= 0
+                    ? null
+                    : () {
+                        setState(() {
+                          final newVal =
+                              (settingsProvider.updateIntervalSliderVal - 1)
+                                  .clamp(
+                                    0.0,
+                                    updateIntervalNodes.length.toDouble(),
+                                  );
+                          settingsProvider.updateIntervalSliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                          settingsProvider.updateInterval = updateInterval;
+                        });
+                      },
+              ),
+              Expanded(
+                child: Text(
+                  updateIntervalLabel,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed:
+                    settingsProvider.updateIntervalSliderVal >=
+                            updateIntervalNodes.length.toDouble()
+                        ? null
+                        : () {
+                            setState(() {
+                              final newVal =
+                                  (settingsProvider.updateIntervalSliderVal + 1)
+                                      .clamp(
+                                        0.0,
+                                        updateIntervalNodes.length.toDouble(),
+                                      );
+                              settingsProvider.updateIntervalSliderVal = newVal;
+                              processIntervalSliderValue(newVal);
+                              settingsProvider.updateInterval = updateInterval;
+                            });
+                          },
+              ),
+            ],
+          )
+        : rawSlider;
 
     var sourceSpecificFields = sourceProvider.sources.map((e) {
       if (e.sourceConfigSettingFormItems.isNotEmpty) {
@@ -595,7 +646,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   Text(
                                     tr('beforeNewInstallsShareToAppVerifier'),
                                   ),
-                                  GestureDetector(
+                                  InkWell(
                                     onTap: () {
                                       launchUrlString(
                                         'https://github.com/soupslurpr/AppVerifier',

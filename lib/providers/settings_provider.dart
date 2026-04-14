@@ -10,6 +10,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
@@ -28,6 +29,7 @@ class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
   bool justStarted = true;
+  bool isTV = false;
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
@@ -35,6 +37,9 @@ class SettingsProvider with ChangeNotifier {
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     defaultAppDir = (await getAppStorageDir()).path;
+    final info = await DeviceInfoPlugin().androidInfo;
+    isTV = info.systemFeatures.contains('android.hardware.type.television') ||
+        info.systemFeatures.contains('android.software.leanback');
     notifyListeners();
   }
 

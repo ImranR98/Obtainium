@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
                 spacing: 20,
                 children: [
                   Text(tr('documentationLinksNote')),
-                  GestureDetector(
+                  InkWell(
                     onTap: () {
                       launchUrlString(
                         'https://github.com/ImranR98/Obtainium/blob/main/README.md',
@@ -96,6 +96,7 @@ class _HomePageState extends State<HomePage> {
               ),
               actions: [
                 TextButton(
+                  autofocus: sp.isTV,
                   onPressed: () {
                     sp.welcomeShown = true;
                     Navigator.of(context).pop(null);
@@ -119,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                 spacing: 20,
                 children: [
                   Text(tr('googleVerificationWarningP1')),
-                  GestureDetector(
+                  InkWell(
                     onTap: () {
                       launchUrlString(
                         'https://keepandroidopen.org/',
@@ -139,6 +140,7 @@ class _HomePageState extends State<HomePage> {
               ),
               actions: [
                 TextButton(
+                  autofocus: sp.isTV,
                   onPressed: () {
                     sp.googleVerificationWarningShown = true;
                     Navigator.of(context).pop(null);
@@ -325,50 +327,92 @@ class _HomePageState extends State<HomePage> {
     prevAppCount = appsProvider.apps.length;
     prevIsLoading = appsProvider.loadingApps;
 
+    final currentIndex =
+        selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last;
+
+    final pageBody = PageTransitionSwitcher(
+      duration: Duration(
+        milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
+      ),
+      reverse: settingsProvider.reversePageTransitions
+          ? !isReversing
+          : isReversing,
+      transitionBuilder: (
+        Widget child,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+      ) {
+        return SharedAxisTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          transitionType: SharedAxisTransitionType.horizontal,
+          child: child,
+        );
+      },
+      child: pages.elementAt(currentIndex).widget,
+    );
+
     return WillPopScope(
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: PageTransitionSwitcher(
-          duration: Duration(
-            milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
-          ),
-          reverse: settingsProvider.reversePageTransitions
-              ? !isReversing
-              : isReversing,
-          transitionBuilder:
-              (
-                Widget child,
-                Animation<double> animation,
-                Animation<double> secondaryAnimation,
-              ) {
-                return SharedAxisTransition(
-                  animation: animation,
-                  secondaryAnimation: secondaryAnimation,
-                  transitionType: SharedAxisTransitionType.horizontal,
-                  child: child,
-                );
-              },
-          child: pages
-              .elementAt(
-                selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last,
+        body: settingsProvider.isTV
+            ? Row(
+                children: [
+                  FocusTraversalGroup(
+                    child: NavigationRail(
+                      destinations: pages
+                          .map(
+                            (e) => NavigationRailDestination(
+                              icon: Icon(e.icon),
+                              label: Text(e.title),
+                            ),
+                          )
+                          .toList(),
+                      selectedIndex: currentIndex,
+                      onDestinationSelected: switchToPage,
+                      labelType: NavigationRailLabelType.all,
+                    ),
+                  ),
+                  const VerticalDivider(thickness: 1, width: 1),
+                  Expanded(child: pageBody),
+                ],
               )
-              .widget,
-        ),
-        bottomNavigationBar: NavigationBar(
-          destinations: pages
-              .map(
-                (e) =>
-                    NavigationDestination(icon: Icon(e.icon), label: e.title),
-              )
-              .toList(),
-          onDestinationSelected: (int index) async {
-            HapticFeedback.selectionClick();
-            switchToPage(index);
-          },
-          selectedIndex: selectedIndexHistory.isEmpty
-              ? 0
-              : selectedIndexHistory.last,
-        ),
+            : pageBody,
+        bottomNavigationBar: settingsProvider.isTV
+            ? null
+            : FocusTraversalGroup(
+                child: Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                      switchToPage((currentIndex + 1) % pages.length);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                      switchToPage(
+                        (currentIndex - 1 + pages.length) % pages.length,
+                      );
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: NavigationBar(
+                    destinations: pages
+                        .map(
+                          (e) => NavigationDestination(
+                            icon: Icon(e.icon),
+                            label: e.title,
+                          ),
+                        )
+                        .toList(),
+                    onDestinationSelected: (int index) async {
+                      HapticFeedback.selectionClick();
+                      switchToPage(index);
+                    },
+                    selectedIndex: currentIndex,
+                  ),
+                ),
+              ),
       ),
       onWillPop: () async {
         if (isLinkActivity &&

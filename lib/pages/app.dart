@@ -178,7 +178,7 @@ class _AppPageState extends State<AppPage> {
                   ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
                 ),
                 changeLogFn != null || app?.app.releaseDate != null
-                    ? GestureDetector(
+                    ? InkWell(
                         onTap: changeLogFn,
                         child: Text(
                           app?.app.releaseDate == null
@@ -208,7 +208,7 @@ class _AppPageState extends State<AppPage> {
           ),
           if (app?.app.apkUrls.isNotEmpty == true ||
               app?.app.otherAssetUrls.isNotEmpty == true)
-            GestureDetector(
+            InkWell(
               onTap: app?.app == null || updating
                   ? null
                   : () async {
@@ -372,7 +372,7 @@ class _AppPageState extends State<AppPage> {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      GestureDetector(
+                      InkWell(
                         onTap: app == null
                             ? null
                             : () => pm.openApp(app.app.id),
@@ -403,7 +403,7 @@ class _AppPageState extends State<AppPage> {
               : Theme.of(context).textTheme.headlineMedium,
         ),
         SizedBox(height: settingsProvider.highlightTouchTargets ? 2 : 8),
-        GestureDetector(
+        InkWell(
           onTap: () {
             if (app?.app.url != null) {
               launchUrlString(

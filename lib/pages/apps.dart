@@ -42,7 +42,7 @@ void showChangeLogDialog(
         message: app.latestVersion,
         additionalWidgets: [
           changesUrl != null
-              ? GestureDetector(
+              ? InkWell(
                   child: Text(
                     changesUrl,
                     style: const TextStyle(
@@ -465,7 +465,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getAppIcon(int appIndex) {
-      return GestureDetector(
+      return InkWell(
         child: FutureBuilder(
           future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
           builder: (ctx, val) {
@@ -546,7 +546,7 @@ class AppsPageState extends State<AppsPage> {
         children: [
           hasUpdate ? getUpdateButton(index) : const SizedBox.shrink(),
           hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
-          GestureDetector(
+          InkWell(
             onTap: showChangesFn,
             child: Container(
               decoration: BoxDecoration(
@@ -641,6 +641,7 @@ class AppsPageState extends State<AppsPage> {
           ),
         ),
         child: ListTile(
+          autofocus: index == 0 && settingsProvider.isTV,
           tileColor: listedApps[index].app.pinned
               ? Colors.grey.withOpacity(0.1)
               : Colors.transparent,
@@ -653,7 +654,14 @@ class AppsPageState extends State<AppsPage> {
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
           },
-          leading: getAppIcon(index),
+          leading: (settingsProvider.isTV || selectedAppIds.isNotEmpty)
+              ? Checkbox(
+                  value: selectedAppIds.contains(listedApps[index].app.id),
+                  onChanged: (_) {
+                    toggleAppSelected(listedApps[index].app);
+                  },
+                )
+              : getAppIcon(index),
           title: Text(
             maxLines: 1,
             listedApps[index].name,
