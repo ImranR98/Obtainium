@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.4.0+2332
+version: 1.4.1+2333
 
 environment:
   sdk: ^3.10.0
@@ -34,22 +34,22 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
   path_provider: ^2.1.5
-  flutter_fgbg: ^0.7.1
+  flutter_fgbg: ^0.8.0
   flutter_local_notifications: ^21.0.0
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.13.1
   dynamic_system_colors: ^1.9.0
   html: ^0.15.6
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
-  device_info_plus: ^12.3.0
-  file_picker: ^10.3.10
-  animations: ^2.1.1
+  device_info_plus: ^12.4.0
+  file_picker: ^11.0.2
+  animations: ^2.1.2
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
     git:
       url: https://github.com/ImranR98/android_package_installer
@@ -58,13 +58,13 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: master
-  share_plus: ^12.0.1
+  share_plus: ^12.0.2
   sqflite: ^2.4.2
   easy_localization: ^3.0.8
   android_intent_plus: ^6.0.0
   flutter_archive: ^6.0.4
   hsluv: ^1.1.3
-  connectivity_plus: ^7.0.0
+  connectivity_plus: ^7.1.1
   shared_storage: # TODO: Is this maintained?
     git:
       url: https://github.com/AlexBacich/shared-storage
@@ -72,7 +72,7 @@ dependencies:
   crypto: ^3.0.7
   bcrypt: ^1.2.0
   app_links: ^7.0.0
-  background_fetch: ^1.5.0
+  background_fetch: ^1.6.0
   equations: ^6.0.0
   flex_color_picker: ^3.8.0
   android_system_font:
@@ -84,7 +84,7 @@ dependencies:
       url: https://github.com/re7gog/shizuku_apk_installer
       ref: master
   markdown: ^7.3.1
-  flutter_typeahead: ^5.2.0
+  flutter_typeahead: ^6.0.0
   battery_plus: ^7.0.0
   flutter_charset_detector: ^5.0.0
 
@@ -94,7 +94,7 @@ dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_foreground_task: ^9.2.1
+  flutter_foreground_task: ^9.2.2
   flutter_markdown_plus: ^1.0.7
 
 flutter_launcher_icons:
