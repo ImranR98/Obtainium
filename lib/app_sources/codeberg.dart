@@ -40,7 +40,13 @@ class Codeberg extends AppSource {
     return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings, (
       bool useTagUrl,
     ) async {
-      return 'https://${hosts[0]}/api/v1/repos${standardUrl.substring('https://${hosts[0]}'.length)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+      final standardUri = Uri.parse(standardUrl);
+      final apiPath =
+          '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
+      return standardUri.replace(
+        path: apiPath,
+        queryParameters: {'per_page': '100'},
+      ).toString();
     }, null);
   }
 
