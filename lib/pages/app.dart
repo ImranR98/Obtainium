@@ -141,12 +141,13 @@ class _AppPageState extends State<AppPage> {
       if (!upToDate) {
         versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
       }
+      final lastUpdateCheck = app?.app.lastUpdateCheck?.toLocal();
       String infoLines = tr(
         'lastUpdateCheckX',
         args: [
-          app?.app.lastUpdateCheck == null
+          lastUpdateCheck == null
               ? tr('never')
-              : '${app?.app.lastUpdateCheck?.toLocal()}',
+              : lastUpdateCheck.toString().split('.').first,
         ],
       );
       if (trackOnly) {
