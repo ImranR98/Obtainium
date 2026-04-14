@@ -41,7 +41,7 @@ dependencies:
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.13.1
-  dynamic_color: ^1.8.1
+  dynamic_system_colors: ^1.9.0
   html: ^0.15.6
   shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
