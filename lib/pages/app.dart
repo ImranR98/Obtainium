@@ -35,6 +35,206 @@ class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
   bool updating = false;
 
+Widget buildRepoRenameWarning({
+    required AppInMemory? app,
+    required AppsProvider appsProvider,
+    required Future<void> Function(String id) onUpdate,
+  }) {
+    if (app?.app.hasPendingRepoRename != true) {
+      return const SizedBox.shrink();
+    }
+    var appValue = app!;
+    var pendingUrl = appValue.app.pendingRepoRenameUrl!;
+    final colorScheme = ColorScheme.of(context);
+    final textTheme = TextTheme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 2,
+      children: [
+        Material(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16),
+              bottom: Radius.circular(4),
+            ),
+          ),
+          color: colorScheme.surfaceContainer,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                spacing: 12,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 24,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          tr('repoRenamed'),
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          tr('repoRenamedExplanation'),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Material(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+          color: colorScheme.surfaceContainer,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                spacing: 12,
+                children: [
+                  Icon(
+                    Icons.link_rounded,
+                    size: 24,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          tr('newUrl'),
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          pendingUrl,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Material(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(4),
+              bottom: Radius.circular(16),
+            ),
+          ),
+          color: colorScheme.surfaceContainer,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                // Min tap target has a height of 48dp
+                vertical: 10 - 4,
+              ),
+              child: Row(
+                spacing: 12,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.fromMap({
+                          WidgetState.disabled: colorScheme.onSurface
+                              .withValues(alpha: 0.10),
+                          WidgetState.any: Colors.transparent,
+                        }),
+                        side: WidgetStatePropertyAll(
+                          BorderSide(
+                            width: 1,
+                            strokeAlign: BorderSide.strokeAlignInside,
+                            color: colorScheme.outlineVariant,
+                          ),
+                        ),
+                        elevation: WidgetStatePropertyAll(0),
+                        overlayColor: WidgetStateProperty.fromMap({
+                          WidgetState.disabled: colorScheme.onSurfaceVariant
+                              .withAlpha(0),
+                          WidgetState.pressed: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.10),
+                          WidgetState.focused: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.10),
+                          WidgetState.hovered: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.08),
+                          WidgetState.any: colorScheme.onSurfaceVariant
+                              .withAlpha(0),
+                        }),
+                        foregroundColor: WidgetStateProperty.fromMap({
+                          WidgetState.disabled: colorScheme.onSurface
+                              .withValues(alpha: 0.38),
+                          WidgetState.any: colorScheme.onSurfaceVariant,
+                        }),
+                        textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
+                      ),
+                      onPressed: () async {
+                        await appsProvider.updatePendingRepoRename(
+                          appValue.app.id,
+                          null,
+                        );
+                      },
+                      child: Text(tr('dismiss')),
+                    ),
+                  ),
+                  Expanded(
+                    child: FilledButton.tonal(
+                      style: ButtonStyle(
+                        elevation: WidgetStatePropertyAll(0),
+                        textStyle: WidgetStatePropertyAll(
+                          textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      onPressed: () async {
+                        await appsProvider.acceptRepoRename(
+                          appValue.app.id,
+                          pendingUrl,
+                        );
+                        if (mounted) {
+                          onUpdate(appValue.app.id);
+                        }
+                      },
+                      child: Text(tr('updateUrl')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,8 +286,11 @@ class _AppPageState extends State<AppPage> {
           appsProvider.saveApps([appsProvider.apps[id]!.app]);
         }
       } catch (err) {
-        // ignore: use_build_context_synchronously
-        showError(err, context);
+        if (err is RepositoryRenamedError && context.mounted) {
+          await appsProvider.updatePendingRepoRename(id, err.newUrl);
+        } else if (context.mounted) {
+          showError(err, context);
+        }
       } finally {
         setState(() {
           updating = false;
@@ -169,6 +372,17 @@ class _AppPageState extends State<AppPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
             child: Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                  child: buildRepoRenameWarning(
+                    app: app,
+                    appsProvider: appsProvider,
+                    onUpdate: (id) => getUpdate(id),
+                  ),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   versionLines,
