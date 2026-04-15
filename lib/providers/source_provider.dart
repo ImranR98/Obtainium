@@ -532,7 +532,10 @@ Future<List<MapEntry<String, String>>> filterApksByArch(
     var abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
     for (var abi in abis) {
       var urls2 = apkUrls
-          .where((element) => RegExp('.*$abi.*', caseSensitive: false).hasMatch(element.key))
+          .where(
+            (element) =>
+                RegExp('.*$abi.*', caseSensitive: false).hasMatch(element.key),
+          )
           .toList();
       if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
         apkUrls = urls2;
@@ -830,13 +833,17 @@ abstract class AppSource {
   // Previous 2 variables combined into one at runtime for convenient usage + additional processing
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
     var agnosticItems = cloneFormItems(
-        additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly);
+      additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly,
+    );
 
-    final versionDetectionIdx = agnosticItems
-        .indexWhere((row) => row.any((item) => item.key == 'versionDetection'));
+    final versionDetectionIdx = agnosticItems.indexWhere(
+      (row) => row.any((item) => item.key == 'versionDetection'),
+    );
     if (showReleaseDateAsVersionToggle &&
         versionDetectionIdx >= 0 &&
-        !agnosticItems.any((row) => row.any((item) => item.key == 'releaseDateAsVersion'))) {
+        !agnosticItems.any(
+          (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
+        )) {
       agnosticItems.insert(versionDetectionIdx + 1, [
         GeneratedFormSwitch(
           'releaseDateAsVersion',
@@ -882,7 +889,8 @@ abstract class AppSource {
 
     if (versionDetectionDisallowed) {
       for (var item in agnosticItems.expand((row) => row)) {
-        if (item.key == 'versionDetection' || item.key == 'useVersionCodeAsOSVersion') {
+        if (item.key == 'versionDetection' ||
+            item.key == 'useVersionCodeAsOSVersion') {
           (item as GeneratedFormSwitch).disabled = true;
           (item as GeneratedFormSwitch).defaultValue = false;
         }
@@ -908,7 +916,9 @@ abstract class AppSource {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : additionalSettings[e.key] ??
-                settingsProvider.getSettingString(e.key);
+                (e.runtimeType == GeneratedFormSwitch
+                    ? settingsProvider.getSettingBool(e.key).toString()
+                    : settingsProvider.getSettingString(e.key));
       if (val != null) {
         results[e.key] = val;
       }
@@ -1098,7 +1108,7 @@ class SourceProvider {
     Tencent(),
     VivoAppStore(),
     RuStore(),
-	Apk4Free(),
+    Apk4Free(),
     Farsroid(),
     CoolApk(),
     RockMods(),

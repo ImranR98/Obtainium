@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL se ne podudara s poznatim izvorom",
     "cantInstallOlderVersion": "Nije moguće instalirati stariju verziju aplikacije",
     "appIdMismatch": "ID preuzetog paketa se ne podudara s postojećim ID-om aplikacije",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

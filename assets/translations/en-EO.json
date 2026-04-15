@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "La URL ne konformas al konata fonto",
     "cantInstallOlderVersion": "Ne eblas instali malnovan version de la Apo",
     "appIdMismatch": "La identigilo de la elŝutita pakaĵo ne konformas al la identigilo de la ekzistanta apo",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

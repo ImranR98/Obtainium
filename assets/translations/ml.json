@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL അറിയപ്പെടുന്ന ഒരു ഉറവിടവുമായും യോജിക്കുന്നില്ല",
     "cantInstallOlderVersion": "ആപ്പിന്റെ പഴയ പതിപ്പ് ഇൻസ്റ്റാൾ ചെയ്യാൻ കഴിയില്ല.",
     "appIdMismatch": "ഡൗൺലോഡ് ചെയ്ത പാക്കേജ് ഐഡി നിലവിലുള്ള ആപ്പ് ഐഡിയുമായി ചേരുന്നില്ല",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

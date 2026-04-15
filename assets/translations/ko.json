@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL이 알려진 소스와 일치하지 않습니다",
     "cantInstallOlderVersion": "앱의 이전 버전을 설치할 수 없습니다",
     "appIdMismatch": "다운로드된 패키지 ID가 기존 앱 ID와 일치하지 않습니다",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

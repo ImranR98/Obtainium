@@ -86,6 +86,11 @@ class GitHub extends AppSource {
           const SizedBox(height: 4),
         ],
       ),
+      GeneratedFormSwitch(
+        'checkRepoRename',
+        label: tr('repoRenamedCheck'),
+        defaultValue: true,
+      ),
     ];
 
     additionalSourceAppSpecificSettingFormItems = [
@@ -337,32 +342,53 @@ class GitHub extends AppSource {
       '${await getAPIHost(additionalSettings)}/repos${standardUrl.substring('https://${hosts[0]}'.length)}';
 
   /// Checks if the repository has been renamed or transferred.
-  /// 
+  ///
   /// This method explicitly disables automatic redirect following to detect when
   /// GitHub returns a redirect (indicating the repository has moved). A redirect
   /// from the GitHub API for a repository endpoint definitively indicates that
   /// the repository has been renamed or transferred to a different owner.
-  /// 
+  ///
   /// Throws [RepositoryRenamedError] if a redirect is detected.
   Future<void> checkForRepositoryRename(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
+    Map<String, String> sourceConfigSettingValues,
   ) async {
+    if (sourceConfigSettingValues['checkRepoRename'] == "false") {
+      return;
+    }
     var uri = Uri.tryParse(standardUrl);
     var host = uri?.host.toLowerCase() ?? '';
     // Guard against non-GitHub URLs
     if (host != hosts[0] && host != 'www.${hosts[0]}') {
       return;
     }
-    var apiUrl = await convertStandardUrlToAPIUrl(standardUrl, additionalSettings);
-    Response res = await sourceRequest(apiUrl, additionalSettings, followRedirects: false);
+    var apiUrl = await convertStandardUrlToAPIUrl(
+      standardUrl,
+      additionalSettings,
+    );
+    Response res = await sourceRequest(
+      apiUrl,
+      additionalSettings,
+      followRedirects: false,
+    );
     if (res.statusCode >= 300 && res.statusCode < 400) {
       String? location = res.headers[HttpHeaders.locationHeader.toLowerCase()];
       if (location != null) {
-        location = ensureAbsoluteUrl(location, Uri.parse(apiUrl));
-        String newUrl = location
-            .replaceFirst('${await getAPIHost(additionalSettings)}/repos/', 'https://${hosts[0]}/');
-        throw RepositoryRenamedError(standardUrl, newUrl);
+        Response res2 = await sourceRequest(
+          location,
+          additionalSettings,
+          followRedirects: false,
+        );
+        String? newUrl;
+        try {
+          newUrl = jsonDecode(res2.body)['html_url'];
+        } catch (e) {
+          // Unexpected - ignore (keep old URL)
+        }
+        if (newUrl != null) {
+          throw RepositoryRenamedError(standardUrl, newUrl);
+        }
       }
     }
   }
@@ -377,13 +403,16 @@ class GitHub extends AppSource {
     Map<String, dynamic> additionalSettings, {
     Function(Response)? onHttpErrorCode,
   }) async {
-    await checkForRepositoryRename(standardUrl, additionalSettings);
-
     SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
     var sourceConfigSettingValues = await getSourceConfigValues(
       additionalSettings,
       settingsProvider,
+    );
+    await checkForRepositoryRename(
+      standardUrl,
+      additionalSettings,
+      sourceConfigSettingValues,
     );
     bool includePrereleases = additionalSettings['includePrereleases'] == true;
     bool fallbackToOlderReleases =

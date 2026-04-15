@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL tidak sesuai dengan sumber yang diketahui",
     "cantInstallOlderVersion": "Tidak dapat memasang versi aplikasi yang lebih lama",
     "appIdMismatch": "ID paket yang diunduh tidak sama dengan ID aplikasi yang ada",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",
