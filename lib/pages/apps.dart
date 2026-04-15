@@ -694,7 +694,7 @@ class AppsPageState extends State<AppsPage> {
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
           },
-          leading: (settingsProvider.isTV || selectedAppIds.isNotEmpty)
+          leading: (settingsProvider.isTV)
               ? Checkbox(
                   value: selectedAppIds.contains(listedApps[index].app.id),
                   onChanged: (_) {
@@ -716,10 +716,7 @@ class AppsPageState extends State<AppsPage> {
               ? Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    buildAuthorText(index),
-                    buildRepoMovedRow(),
-                  ],
+                  children: [buildAuthorText(index), buildRepoMovedRow()],
                 )
               : buildAuthorText(index),
           trailing: listedApps[index].downloadProgress != null
