@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "آدرس اینترنتی با منبع شناخته شده مطابقت ندارد",
     "cantInstallOlderVersion": "نمی توان نسخه قدیمی یک برنامه را نصب کرد",
     "appIdMismatch": "شناسه بسته دانلود شده با شناسه برنامه موجود مطابقت ندارد",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

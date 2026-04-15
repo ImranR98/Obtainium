@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL does not match a known source",
     "cantInstallOlderVersion": "Cannot install an older version of an app",
     "appIdMismatch": "Downloaded package ID does not match existing app ID",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

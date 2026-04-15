@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "A webcím nem egyezik egyetlen ismert forrással sem",
     "cantInstallOlderVersion": "Nem telepíthető egy alkalmazás régebbi verziója",
     "appIdMismatch": "A letöltött csomagazonosító nem egyezik a meglévő alkalmazás azonosítójával",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

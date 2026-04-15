@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL neodpovídá žádnému známému zdroji",
     "cantInstallOlderVersion": "Nelze nainstalovat starší verzi aplikace",
     "appIdMismatch": "ID staženého balíčku neodpovídá ID existující aplikace",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL'en matcher ikke en kendt kilde",
     "cantInstallOlderVersion": "Kan ikke installere en ældre version af en app",
     "appIdMismatch": "Hentet pakke-ID matcher ikke eksisterende app-ID",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

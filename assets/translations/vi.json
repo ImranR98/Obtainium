@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL không khớp với nguồn đã biết",
     "cantInstallOlderVersion": "Không thể cài đặt phiên bản cũ hơn của Ứng dụng",
     "appIdMismatch": "ID gói đã tải xuống không khớp với ID ứng dụng hiện tại",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

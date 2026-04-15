@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URLが既知のソースと一致しません",
     "cantInstallOlderVersion": "旧バージョンのアプリをインストールできません",
     "appIdMismatch": "ダウンロードしたパッケージのIDが既存のApp IDと一致しません",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",

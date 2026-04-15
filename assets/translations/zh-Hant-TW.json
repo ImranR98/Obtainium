@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL 不符合已知來源",
     "cantInstallOlderVersion": "無法安裝舊版本的應用程式",
     "appIdMismatch": "下載的套件 ID 與現有的應用程式 ID 不相符",
+    "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
     "repoRenamedExplanation": "This repository was moved. Updating the URL keeps future updates working.",
     "updateUrl": "Update URL",
