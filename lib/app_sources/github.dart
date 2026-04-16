@@ -89,7 +89,7 @@ class GitHub extends AppSource {
       GeneratedFormSwitch(
         'checkRepoRename',
         label: tr('repoRenamedCheck'),
-        defaultValue: true,
+        defaultValue: false,
       ),
     ];
 
