@@ -920,6 +920,9 @@ abstract class AppSource {
                     ? settingsProvider.getSettingBool(e.key).toString()
                     : settingsProvider.getSettingString(e.key));
       if (val != null) {
+        if (e.runtimeType == GeneratedFormSwitch) {
+          val = val.toString();
+        }
         results[e.key] = val;
       }
     }
