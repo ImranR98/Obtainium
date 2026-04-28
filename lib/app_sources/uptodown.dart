@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -12,8 +13,12 @@ DateTime? parseDateTimeMMMddCommayyyy(String? dateString) {
     releaseDate = dateString != null && releaseDate == null
         ? DateFormat('MMMM dd, yyyy').parse(dateString)
         : releaseDate;
-  } catch (err) {
-    // ignore
+  } catch (err, stackTrace) {
+    AppLogger.debug(
+      'Failed to parse Uptodown date string: $dateString',
+      error: err,
+      stackTrace: stackTrace,
+    );
   }
   return releaseDate;
 }

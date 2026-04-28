@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/native_provider.dart';
@@ -92,7 +93,7 @@ void backgroundFetchHeadlessTask(HeadlessTask task) async {
   String taskId = task.taskId;
   bool isTimeout = task.timeout;
   if (isTimeout) {
-    print('BG update task timed out.');
+    AppLogger.warn('BG update task timed out.');
     BackgroundFetch.finish(taskId);
     return;
   }
@@ -110,7 +111,7 @@ class MyTaskHandler extends TaskHandler {
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    print('onStart(starter: ${starter.name})');
+    AppLogger.info('onStart(starter: ${starter.name})');
     bgUpdateCheck('bg_check', null);
   }
 
@@ -121,7 +122,7 @@ class MyTaskHandler extends TaskHandler {
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
-    print('Foreground service onDestroy(isTimeout: $isTimeout)');
+    AppLogger.info('Foreground service onDestroy(isTimeout: $isTimeout)');
   }
 
   @override
@@ -137,8 +138,12 @@ void main() async {
     SecurityContext.defaultContext.setTrustedCertificatesBytes(
       data.buffer.asUint8List(),
     );
-  } catch (e) {
-    // Already added, do nothing (see #375)
+  } catch (e, stackTrace) {
+    AppLogger.debug(
+      'LE certificate may already be registered, skipping duplicate load.',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
@@ -339,7 +344,11 @@ class _ObtainiumState extends State<Obtainium> {
                 }
               })
               .catchError((err) {
-                print(err);
+                AppLogger.error(
+                  err,
+                  message:
+                      'Failed to preload Obtainium app metadata on first run',
+                );
               });
         }
       }

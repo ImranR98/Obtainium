@@ -6,6 +6,7 @@ import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -117,16 +118,24 @@ class FDroid extends AppSource {
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitHub = true;
-          } catch (e) {
-            //
+          } catch (e, stackTrace) {
+            AppLogger.debug(
+              'FDroid changelog is not a valid GitHub URL',
+              error: e,
+              stackTrace: stackTrace,
+            );
           }
           try {
             GitLab(
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitLab = true;
-          } catch (e) {
-            //
+          } catch (e, stackTrace) {
+            AppLogger.debug(
+              'FDroid changelog is not a valid GitLab URL',
+              error: e,
+              stackTrace: stackTrace,
+            );
           }
           if ((isGitHub || isGitLab) &&
               (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
@@ -136,8 +145,12 @@ class FDroid extends AppSource {
             )).body;
           }
         }
-      } catch (e) {
-        // Fail silently
+      } catch (e, stackTrace) {
+        AppLogger.warn(
+          'Failed to fetch/normalize FDroid changelog',
+          error: e,
+          stackTrace: stackTrace,
+        );
       }
       if ((details.changeLog?.length ?? 0) > 2048) {
         details.changeLog = '${details.changeLog!.substring(0, 2048)}...';

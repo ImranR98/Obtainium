@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -59,8 +60,12 @@ class Mullvad extends AppSource {
           'https://github.com/mullvad/mullvadvpn-app',
           {'fallbackToOlderReleases': true},
         )).changeLog;
-      } catch (e) {
-        // Ignore
+      } catch (e, stackTrace) {
+        AppLogger.warn(
+          'Failed to load Mullvad changelog from GitHub fallback source',
+          error: e,
+          stackTrace: stackTrace,
+        );
       }
       return APKDetails(
         versions[0],

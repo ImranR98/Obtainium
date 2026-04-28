@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/apps.dart';
@@ -256,7 +257,12 @@ class _HomePageState extends State<HomePage> {
         } else {
           throw ObtainiumError(tr('unknown'));
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        AppLogger.warn(
+          'Deep link processing failed in HomePage',
+          error: e,
+          stackTrace: stackTrace,
+        );
         showError(e, context);
       }
     }

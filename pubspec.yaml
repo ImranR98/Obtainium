@@ -87,6 +87,7 @@ dependencies:
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.0.0
   flutter_charset_detector: ^5.0.0
+  logger: ^2.6.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

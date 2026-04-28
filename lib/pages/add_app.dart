@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
@@ -46,7 +47,12 @@ class AddAppPageState extends State<AddAppPage> {
       }
       sourceProvider.getSource(input);
       changeUserInput(input, true, false, updateUrlInput: true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.warn(
+        'Failed to process app link input in AddAppPage.linkFn',
+        error: e,
+        stackTrace: stackTrace,
+      );
       showError(e, context);
     }
   }
@@ -227,7 +233,12 @@ class AddAppPageState extends State<AddAppPage> {
             MaterialPageRoute(builder: (context) => AppPage(appId: app!.id)),
           );
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          e,
+          stackTrace: stackTrace,
+          message: 'Failed while adding/updating app from AddAppPage',
+        );
         showError(e, context);
       } finally {
         setState(() {
@@ -387,10 +398,15 @@ class AddAppPageState extends State<AddAppPage> {
                       e.runtimeType.toString(),
                       await e.search(searchQuery, querySettings: querySettings),
                     );
-                  } catch (err) {
+                  } catch (err, stackTrace) {
                     if (err is! CredsNeededError) {
                       rethrow;
                     } else {
+                      AppLogger.warn(
+                        'Credentials are required while searching source ${e.runtimeType}',
+                        error: err,
+                        stackTrace: stackTrace,
+                      );
                       err.unexpected = true;
                       showError(err, context);
                       return null;
@@ -442,7 +458,12 @@ class AddAppPageState extends State<AddAppPage> {
             );
           }
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          e,
+          stackTrace: stackTrace,
+          message: 'Failed during source search flow in AddAppPage',
+        );
         showError(e, context);
       } finally {
         setState(() {

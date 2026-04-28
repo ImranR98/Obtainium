@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -108,8 +109,12 @@ class FDroidRepo extends AppSource {
                 if (appId != null && item is GeneratedFormTextField) {
                   item.required = false;
                 }
-              } catch (e) {
-                //
+              } catch (e, stackTrace) {
+                AppLogger.debug(
+                  'Failed to parse appId from FDroidRepo input: $userInput',
+                  error: e,
+                  stackTrace: stackTrace,
+                );
               }
             }
             return item;

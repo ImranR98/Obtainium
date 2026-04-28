@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 const String logTable = 'logs';
@@ -72,7 +73,7 @@ create table if not exists $logTable (
     Log l = Log(message, level);
     l.id = await (await getDB()).insert(logTable, l.toMap());
     if (kDebugMode) {
-      print(l);
+      AppLogger.debug(l.toString());
     }
     return l;
   }

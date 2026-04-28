@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
@@ -285,10 +286,15 @@ Widget buildRepoRenameWarning({
           }
           appsProvider.saveApps([appsProvider.apps[id]!.app]);
         }
-      } catch (err) {
+      } catch (err, stackTrace) {
         if (err is RepositoryRenamedError && context.mounted) {
           await appsProvider.updatePendingRepoRename(id, err.newUrl);
         } else if (context.mounted) {
+          AppLogger.error(
+            err,
+            stackTrace: stackTrace,
+            message: 'Failed to update/check app $id in AppPage',
+          );
           showError(err, context);
         }
       } finally {
@@ -430,7 +436,13 @@ Widget buildRepoRenameWarning({
                         await appsProvider.downloadAppAssets([
                           app!.app.id,
                         ], context);
-                      } catch (e) {
+                      } catch (e, stackTrace) {
+                        AppLogger.error(
+                          e,
+                          stackTrace: stackTrace,
+                          message:
+                              'Failed to download additional assets for app ${app?.app.id}',
+                        );
                         showError(e, context);
                       }
                     },
@@ -802,7 +814,12 @@ Widget buildRepoRenameWarning({
                 if (res.isNotEmpty && mounted) {
                   Navigator.of(context).pop();
                 }
-              } catch (e) {
+              } catch (e, stackTrace) {
+                AppLogger.error(
+                  e,
+                  stackTrace: stackTrace,
+                  message: 'Failed to confirm install/update from AppPage',
+                );
                 // ignore: use_build_context_synchronously
                 showError(e, context);
               }

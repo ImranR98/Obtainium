@@ -24,6 +24,7 @@ import 'package:obtainium/app_sources/directAPKLink.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -513,9 +514,13 @@ Future<PackageInfo?> getInstalledInfo(
           packageName: packageName,
           flags: packageInfoFlags
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (printErr) {
-        print(e); // OK
+        AppLogger.error(
+          e,
+          stackTrace: stackTrace,
+          message: 'Failed to get installed package info for $packageName',
+        );
       }
     }
   }
@@ -982,8 +987,12 @@ class AppsProvider with ChangeNotifier {
         for (var a in additionalAPKs) {
           deleteFile(a.file);
         }
-      } catch (e) {
-        //
+      } catch (e, stackTrace) {
+        AppLogger.warn(
+          'Failed to clean up APK files after invalid archive for ${file.appId}',
+          error: e,
+          stackTrace: stackTrace,
+        );
       } finally {
         throw ObtainiumError(tr('badDownload'));
       }
@@ -1026,8 +1035,12 @@ class AppsProvider with ChangeNotifier {
     if (code != null && code != 0 && code != 3) {
       try {
         deleteFile(file.file);
-      } catch (e) {
-        //
+      } catch (e, stackTrace) {
+        AppLogger.warn(
+          'Failed to clean up APK file after install error for ${file.appId}',
+          error: e,
+          stackTrace: stackTrace,
+        );
       } finally {
         throw InstallError(code);
       }
@@ -1718,8 +1731,12 @@ class AppsProvider with ChangeNotifier {
                   installedInfo = installedAppsData.firstWhere(
                     (i) => i.packageName == app!.id,
                   );
-                } catch (e) {
-                  // If the app isn't installed the above throws an error
+                } catch (e, stackTrace) {
+                  AppLogger.debug(
+                    'App ${app.id} is not currently installed while loading app list',
+                    error: e,
+                    stackTrace: stackTrace,
+                  );
                 }
                 // Reconcile differences between the installed and recorded install info
                 var moddedApp = getCorrectedInstallStatusAppIfPossible(
@@ -2386,8 +2403,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 /// If there is an error, the user is notified.
 ///
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
-  // ignore: avoid_print
-  print('BG task started $taskId: ${params.toString()}');
+  AppLogger.info('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
@@ -2484,8 +2500,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             )
             .isBefore(DateTime.now());
     if (!enoughTimePassed) {
-      // ignore: avoid_print
-      print(
+      AppLogger.debug(
         'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
       );
       return;

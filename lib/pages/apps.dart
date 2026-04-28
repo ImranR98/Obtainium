@@ -7,6 +7,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
@@ -983,7 +984,12 @@ class AppsPageState extends State<AppsPage> {
               },
             );
           }
-        } catch (err) {
+        } catch (err, stackTrace) {
+          AppLogger.error(
+            err,
+            stackTrace: stackTrace,
+            message: 'Mass action failed in AppsPage',
+          );
           showError(err, context);
         }
       };

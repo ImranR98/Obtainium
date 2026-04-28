@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -247,8 +248,12 @@ class GitHub extends AppSource {
             );
           }
         }
-      } catch (err) {
-        // Ignore - ID will be extracted from the APK
+      } catch (err, stackTrace) {
+        AppLogger.debug(
+          'Failed to derive appId from source contents',
+          error: err,
+          stackTrace: stackTrace,
+        );
       }
     }
     return null;
@@ -383,8 +388,12 @@ class GitHub extends AppSource {
         String? newUrl;
         try {
           newUrl = jsonDecode(res2.body)['html_url'];
-        } catch (e) {
-          // Unexpected - ignore (keep old URL)
+        } catch (e, stackTrace) {
+          AppLogger.debug(
+            'Could not parse redirect metadata for potential repo rename at $location',
+            error: e,
+            stackTrace: stackTrace,
+          );
         }
         if (newUrl != null) {
           throw RepositoryRenamedError(standardUrl, newUrl);
