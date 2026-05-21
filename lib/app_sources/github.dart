@@ -8,7 +8,6 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -243,8 +242,8 @@ class GitHub extends AppSource {
               return appIds.first;
             }
           } catch (err) {
-            LogsProvider().add(
-              'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}',
+            AppLogger.warn(
+              'Error parsing build.gradle from ${res.request!.url.toString()}: $err',
             );
           }
         }

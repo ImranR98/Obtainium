@@ -4,9 +4,8 @@ import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:provider/provider.dart';
 
 class ObtainiumError {
   late String message;
@@ -118,10 +117,11 @@ class MultiAppMultiError extends ObtainiumError {
 }
 
 void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  Provider.of<LogsProvider>(
-    context,
-    listen: false,
-  ).add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
+  if (isError) {
+    AppLogger.error(e, message: e.toString());
+  } else {
+    AppLogger.info(e.toString());
+  }
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(
       context,

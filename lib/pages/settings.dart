@@ -9,7 +9,7 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -1021,7 +1021,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     IconButton(
                       onPressed: () {
-                        context.read<LogsProvider>().get().then((logs) {
+                        AppLogger.getLogs().then((logs) {
                           if (logs.isEmpty) {
                             showMessage(ObtainiumError(tr('noLogs')), context);
                           } else {
@@ -1062,16 +1062,15 @@ class _LogsDialogState extends State<LogsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    var logsProvider = context.read<LogsProvider>();
     void filterLogs(int days) {
-      logsProvider
-          .get(after: DateTime.now().subtract(Duration(days: days)))
-          .then((value) {
-            setState(() {
-              String l = value.map((e) => e.toString()).join('\n\n');
-              logString = l.isNotEmpty ? l : tr('noLogs');
-            });
-          });
+      AppLogger.getLogs(
+        after: DateTime.now().subtract(Duration(days: days)),
+      ).then((value) {
+        setState(() {
+          String l = value.map((e) => e.toString()).join('\n\n');
+          logString = l.isNotEmpty ? l : tr('noLogs');
+        });
+      });
     }
 
     if (logString == null) {
@@ -1116,7 +1115,7 @@ class _LogsDialogState extends State<LogsDialog> {
                 )) !=
                 null;
             if (cont) {
-              logsProvider.clear();
+              await AppLogger.clearLogs();
               Navigator.of(context).pop();
             }
           },

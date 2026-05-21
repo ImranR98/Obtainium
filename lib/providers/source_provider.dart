@@ -39,7 +39,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
-import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
@@ -403,9 +403,7 @@ class App {
       json = appJSONCompatibilityModifiers(json);
     } catch (e) {
       json = originalJSON;
-      LogsProvider().add(
-        'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}',
-      );
+      AppLogger.warn('Error running JSON compat modifiers: $e: $originalJSON');
     }
     return App(
       json['id'] as String,

@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -90,6 +89,7 @@ Future<void> loadTranslations() async {
 
 @pragma('vm:entry-point')
 void backgroundFetchHeadlessTask(HeadlessTask task) async {
+  await AppLogger.init();
   String taskId = task.taskId;
   bool isTimeout = task.timeout;
   if (isTimeout) {
@@ -131,6 +131,7 @@ class MyTaskHandler extends TaskHandler {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLogger.init();
   try {
     ByteData data = await PlatformAssetBundle().load(
       'assets/ca/lets-encrypt-r3.pem',
@@ -161,7 +162,6 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AppsProvider()),
         ChangeNotifierProvider(create: (context) => SettingsProvider()),
         Provider(create: (context) => np),
-        Provider(create: (context) => LogsProvider()),
       ],
       child: EasyLocalization(
         supportedLocales: supportedLocales.map((e) => e.key).toList(),
@@ -286,7 +286,7 @@ class _ObtainiumState extends State<Obtainium> {
         BackgroundFetch.finish(taskId);
       },
       (String taskId) async {
-        context.read<LogsProvider>().add('BG update task timed out.');
+        AppLogger.warn('BG update task timed out.');
         BackgroundFetch.finish(taskId);
       },
     );
@@ -297,7 +297,6 @@ class _ObtainiumState extends State<Obtainium> {
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     AppsProvider appsProvider = context.read<AppsProvider>();
-    LogsProvider logs = context.read<LogsProvider>();
     NotificationsProvider notifs = context.read<NotificationsProvider>();
     if (settingsProvider.updateInterval == 0) {
       stopForegroundService();
@@ -316,7 +315,7 @@ class _ObtainiumState extends State<Obtainium> {
     } else {
       bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
-        logs.add('This is the first ever run of Obtainium.');
+        AppLogger.info('This is the first ever run of Obtainium.');
         // If this is the first run, add Obtainium to the Apps list
         if (!fdroid) {
           getInstalledInfo(obtainiumId)

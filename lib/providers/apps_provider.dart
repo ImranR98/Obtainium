@@ -27,7 +27,6 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/core/logging/app_logger.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -184,7 +183,6 @@ Future<File> downloadFileWithRetry(
   Map<String, String>? headers,
   int retries = 3,
   bool allowInsecure = false,
-  LogsProvider? logs,
 }) async {
   try {
     return await downloadFile(
@@ -196,7 +194,6 @@ Future<File> downloadFileWithRetry(
       useExisting: useExisting,
       headers: headers,
       allowInsecure: allowInsecure,
-      logs: logs,
     );
   } catch (e) {
     if (retries > 0 && e is ClientException) {
@@ -211,7 +208,6 @@ Future<File> downloadFileWithRetry(
         headers: headers,
         retries: (retries - 1),
         allowInsecure: allowInsecure,
-        logs: logs,
       );
     } else {
       rethrow;
@@ -313,7 +309,6 @@ Future<File> downloadFile(
   bool useExisting = true,
   Map<String, String>? headers,
   bool allowInsecure = false,
-  LogsProvider? logs,
 }) async {
   // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
@@ -377,7 +372,7 @@ Future<File> downloadFile(
   // If there is already a temp file, a download may already be in progress - account for this (see #2073)
   bool tempFileExists = tempDownloadedFile.existsSync();
   if (tempFileExists && useExisting) {
-    logs?.add(
+    AppLogger.info(
       'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
     );
     bool isDownloading = true;
@@ -389,11 +384,11 @@ Future<File> downloadFile(
         int newTempFileSize = await tempDownloadedFile.length();
         if (newTempFileSize > currentTempFileSize) {
           currentTempFileSize = newTempFileSize;
-          logs?.add(
+          AppLogger.info(
             'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
           );
         } else {
-          logs?.add(
+          AppLogger.info(
             'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
           );
           break;
@@ -403,12 +398,12 @@ Future<File> downloadFile(
       }
     }
     if (shouldReturn) {
-      logs?.add(
+      AppLogger.info(
         'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
       );
       return downloadedFile;
     } else {
-      logs?.add(
+      AppLogger.info(
         'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
       );
     }
@@ -536,8 +531,6 @@ class AppsProvider with ChangeNotifier {
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
   bool gettingUpdates = false;
-  LogsProvider logs = LogsProvider();
-
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
@@ -701,7 +694,6 @@ class AppsProvider with ChangeNotifier {
         APKDir.path,
         useExisting: useExisting,
         allowInsecure: app.additionalSettings['allowInsecure'] == true,
-        logs: logs,
       );
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
@@ -818,11 +810,11 @@ class AppsProvider with ChangeNotifier {
       return false;
     }
     if (app.additionalSettings['exemptFromBackgroundUpdates'] == true) {
-      logs.add('Exempted from BG updates: ${app.id}');
+      AppLogger.info('Exempted from BG updates: ${app.id}');
       return false;
     }
     if (app.apkUrls.length > 1) {
-      logs.add('Multiple APK URLs: ${app.id}');
+      AppLogger.info('Multiple APK URLs: ${app.id}');
       return false; // Manual API selection means silent install is not possible
     }
 
@@ -835,7 +827,7 @@ class AppsProvider with ChangeNotifier {
             ))?.installingPackageName
           : (await pm.getInstallerPackageName(packageName: app.id));
     } catch (e) {
-      logs.add(
+      AppLogger.info(
         'Failed to get installed package details: ${app.id} (${e.toString()})',
       );
       return false; // App probably not installed
@@ -848,7 +840,7 @@ class AppsProvider with ChangeNotifier {
     // The APK should target a new enough API
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
     if (!(targetSDK != null && targetSDK >= requiredSDK)) {
-      logs.add(
+      AppLogger.info(
         'App currently targets API ${targetSDK} which is too low for background updates (requires API ${requiredSDK}): ${app.id}',
       );
       return false;
@@ -867,7 +859,7 @@ class AppsProvider with ChangeNotifier {
     }
     if (osInfo.version.sdkInt < 31) {
       // The OS must also be new enough
-      logs.add('Android SDK too old: ${osInfo.version.sdkInt}');
+      AppLogger.info('Android SDK too old: ${osInfo.version.sdkInt}');
       return false;
     }
     return true;
@@ -946,7 +938,9 @@ class AppsProvider with ChangeNotifier {
         somethingInstalled = somethingInstalled || wasInstalled;
         dir.file.delete(recursive: true);
       } catch (e) {
-        logs.add('Could not install APKs from ${dir.type}: ${e.toString()}');
+        AppLogger.info(
+          'Could not install APKs from ${dir.type}: ${e.toString()}',
+        );
         errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
       }
       if (errors.idsByErrorString.isNotEmpty) {
@@ -998,7 +992,7 @@ class AppsProvider with ChangeNotifier {
       }
     }
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
-    logs.add(
+    AppLogger.info(
       'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
     );
     if (appInfo != null &&
@@ -1474,7 +1468,6 @@ class AppsProvider with ChangeNotifier {
               ),
           useExisting: false,
           allowInsecure: app.additionalSettings['allowInsecure'] == true,
-          logs: logs,
         );
         notificationsProvider.notify(
           DownloadedNotification(fileUrl.key, fileUrl.value),
@@ -1618,7 +1611,7 @@ class AppsProvider with ChangeNotifier {
         )) {
       app.additionalSettings['versionDetection'] = false;
       app.installedVersion = app.latestVersion;
-      logs.add('Could not reconcile version formats for: ${app.id}');
+      AppLogger.info('Could not reconcile version formats for: ${app.id}');
       modded = true;
     }
 
@@ -1700,7 +1693,7 @@ class AppsProvider with ChangeNotifier {
                 );
               } catch (err) {
                 if (err is FormatException) {
-                  logs.add(
+                  AppLogger.info(
                     'Corrupt JSON when loading App (will be ignored): $e',
                   );
                   item.renameSync('${item.path}.corrupt');
@@ -2407,8 +2400,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
+  await AppLogger.init();
 
-  LogsProvider logs = LogsProvider();
   NotificationsProvider notificationsProvider = NotificationsProvider();
   AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
@@ -2420,7 +2413,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   if (netResult.contains(ConnectivityResult.none) ||
       netResult.isEmpty ||
       (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
-    logs.add('BG update task: No network.');
+    AppLogger.info('BG update task: No network.');
     return;
   }
 
@@ -2476,11 +2469,11 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       (await Battery().batteryState) != BatteryState.charging;
 
   if (networkRestricted) {
-    logs.add('BG update task: Network restriction in effect.');
+    AppLogger.info('BG update task: Network restriction in effect.');
   }
 
   if (chargingRestricted) {
-    logs.add('BG update task: Charging restriction in effect.');
+    AppLogger.info('BG update task: Charging restriction in effect.');
   }
 
   if (toCheck.isNotEmpty) {
@@ -2506,7 +2499,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       return;
     }
 
-    logs.add('BG update task: Started (${toCheck.length}).');
+    AppLogger.info('BG update task: Started (${toCheck.length}).');
 
     // Init. vars.
     List<App> updates = []; // All updates found (silent and non-silent)
@@ -2535,7 +2528,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         updates = e['updates'];
         errors = e['errors'];
         errors!.rawErrors.forEach((key, err) {
-          logs.add(
+          AppLogger.info(
             'BG update task: Got error on checking for $key \'${err.toString()}\'.',
           );
 
@@ -2562,7 +2555,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
         });
       } else {
         // We don't expect to ever get here in any situation so no need to catch (but log it in case)
-        logs.add('Fatal error in BG update task: ${e.toString()}');
+        AppLogger.info('Fatal error in BG update task: ${e.toString()}');
         rethrow;
       }
     } finally {
@@ -2576,7 +2569,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       );
       if (networkRestricted || chargingRestricted || !canInstallSilently) {
         if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
-          logs.add(
+          AppLogger.info(
             'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
           );
           toNotify.add(updates[i]);
@@ -2601,9 +2594,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
     }
     // if there are update checks to retry, schedule a retry task
-    logs.add('BG update task: Done checking for updates.');
+    AppLogger.info('BG update task: Done checking for updates.');
     if (toRetry.isNotEmpty) {
-      logs.add(
+      AppLogger.info(
         'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
       );
       return await bgUpdateCheck(taskId, {
@@ -2616,7 +2609,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       });
     } else {
       // If there are no more update checks, call the function in install mode
-      logs.add(
+      AppLogger.info(
         'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
       );
       return await bgUpdateCheck(taskId, {
@@ -2629,7 +2622,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   } else {
     // In install mode...
     // If you haven't explicitly been given updates to install, grab all available silent updates
-    logs.add('BG install task: Started (${toInstall.length}).');
+    AppLogger.info('BG install task: Started (${toInstall.length}).');
     if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
       var temp = appsProvider.findExistingUpdates(installedOnly: true);
       for (var i = 0; i < temp.length; i++) {
@@ -2667,11 +2660,11 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
           });
         } else {
           // We don't expect to ever get here in any situation so no need to catch (but log it in case)
-          logs.add('Fatal error in BG install task: ${e.toString()}');
+          AppLogger.info('Fatal error in BG install task: ${e.toString()}');
           rethrow;
         }
       }
-      logs.add('BG install task: Done installing updates.');
+      AppLogger.info('BG install task: Done installing updates.');
     }
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
