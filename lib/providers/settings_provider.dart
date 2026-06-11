@@ -13,6 +13,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
 String obtainiumId = 'dev.imranr.obtainium';
@@ -40,7 +41,23 @@ class SettingsProvider with ChangeNotifier {
     final info = await DeviceInfoPlugin().androidInfo;
     isTV = info.systemFeatures.contains('android.hardware.type.television') ||
         info.systemFeatures.contains('android.software.leanback');
+    await _migratePrivilegedInstaller();
     notifyListeners();
+  }
+
+  Future<void> _migratePrivilegedInstaller() async {
+    if (prefs?.getBool('privilegedInstallerMigrated') ?? false) {
+      return;
+    }
+    if (useShizuku && !useDhizuku) {
+      await ShizukuApkInstaller().setInstallerMode(InstallerMode.dhizuku);
+      final res = await ShizukuApkInstaller().checkPermission();
+      if (res == 'granted_owner') {
+        prefs?.setBool('useDhizuku', true);
+        prefs?.setBool('useShizuku', false);
+      }
+    }
+    await prefs?.setBool('privilegedInstallerMigrated', true);
   }
 
   bool get useSystemFont {
@@ -52,14 +69,31 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get useDhizuku {
+    return prefs?.getBool('useDhizuku') ?? false;
+  }
+
+  set useDhizuku(bool useDhizuku) {
+    prefs?.setBool('useDhizuku', useDhizuku);
+    if (useDhizuku) {
+      prefs?.setBool('useShizuku', false);
+    }
+    notifyListeners();
+  }
+
   bool get useShizuku {
     return prefs?.getBool('useShizuku') ?? false;
   }
 
   set useShizuku(bool useShizuku) {
     prefs?.setBool('useShizuku', useShizuku);
+    if (useShizuku) {
+      prefs?.setBool('useDhizuku', false);
+    }
     notifyListeners();
   }
+
+  bool get usePrivilegedInstaller => useShizuku || useDhizuku;
 
   ThemeSettings get theme {
     return ThemeSettings.values[prefs?.getInt('theme') ??

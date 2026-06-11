@@ -438,7 +438,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           builder: (ctx, val) {
                             return (settingsProvider.updateInterval > 0) &&
                                     (((val.data?.version.sdkInt ?? 0) >= 30) ||
-                                        settingsProvider.useShizuku)
+                                        settingsProvider.usePrivilegedInstaller)
                                 ? Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -679,19 +679,66 @@ class _SettingsPageState extends State<SettingsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Flexible(child: Text(tr('useDhizuku'))),
+                            Switch(
+                              value: settingsProvider.useDhizuku,
+                              onChanged: (useDhizuku) {
+                                if (useDhizuku) {
+                                  ShizukuApkInstaller()
+                                      .setInstallerMode(InstallerMode.dhizuku)
+                                      .then((_) {
+                                    return ShizukuApkInstaller()
+                                        .checkPermission();
+                                  }).then((resCode) {
+                                    settingsProvider.useDhizuku =
+                                        resCode == 'granted_owner';
+                                    switch (resCode) {
+                                      case 'services_not_found':
+                                        showError(
+                                          ObtainiumError(
+                                            tr('dhizukuBinderNotFound'),
+                                          ),
+                                          context,
+                                        );
+                                      case 'denied':
+                                        showError(
+                                          ObtainiumError(
+                                            tr('dhizukuPermissionDenied'),
+                                          ),
+                                          context,
+                                        );
+                                    }
+                                  });
+                                } else {
+                                  settingsProvider.useDhizuku = false;
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        height16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(child: Text(tr('useShizuku'))),
                             Switch(
                               value: settingsProvider.useShizuku,
                               onChanged: (useShizuku) {
                                 if (useShizuku) {
-                                  ShizukuApkInstaller().checkPermission().then((
-                                    resCode,
-                                  ) {
-                                    settingsProvider.useShizuku = resCode!.startsWith('granted');
+                                  ShizukuApkInstaller()
+                                      .setInstallerMode(InstallerMode.shizuku)
+                                      .then((_) {
+                                    return ShizukuApkInstaller()
+                                        .checkPermission();
+                                  }).then((resCode) {
+                                    settingsProvider.useShizuku =
+                                        resCode!.startsWith('granted');
                                     switch (resCode) {
                                       case 'services_not_found':
                                         showError(
-                                          ObtainiumError(tr('shizukuBinderNotFound')),
+                                          ObtainiumError(
+                                            tr('shizukuBinderNotFound'),
+                                          ),
                                           context,
                                         );
                                       case 'old_shizuku':
@@ -701,7 +748,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                         );
                                       case 'old_android_with_adb':
                                         showError(
-                                          ObtainiumError(tr('shizukuOldAndroidWithADB')),
+                                          ObtainiumError(
+                                            tr('shizukuOldAndroidWithADB'),
+                                          ),
                                           context,
                                         );
                                       case 'denied':
@@ -728,10 +777,13 @@ class _SettingsPageState extends State<SettingsPage> {
                             Switch(
                               value:
                                   settingsProvider.shizukuPretendToBeGooglePlay,
-                              onChanged: (value) {
-                                settingsProvider.shizukuPretendToBeGooglePlay =
-                                    value;
-                              },
+                              onChanged: settingsProvider.useDhizuku
+                                  ? null
+                                  : (value) {
+                                      settingsProvider
+                                              .shizukuPretendToBeGooglePlay =
+                                          value;
+                                    },
                             ),
                           ],
                         ),
