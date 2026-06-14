@@ -63,6 +63,7 @@ dependencies:
   easy_localization: ^3.0.8
   android_intent_plus: ^6.0.0
   flutter_archive: ^6.0.4
+  archive: ^3.6.0
   hsluv: ^1.1.3
   connectivity_plus: ^7.1.1
   shared_storage: # TODO: Is this maintained?
