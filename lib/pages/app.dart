@@ -962,15 +962,16 @@ Widget buildRepoRenameWarning({
       appBar: showAppWebpageFinal ? AppBar() : appScreenAppBar(),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
-        child: showAppWebpageFinal
-            ? getAppWebView()
-            : CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(children: [getFullInfoColumn()]),
-                  ),
-                ],
-              ),
+          child: showAppWebpageFinal
+              ? getAppWebView()
+              : CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(children: [getFullInfoColumn()]),
+                    ),
+                    const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
+                  ],
+                ),
         onRefresh: () async {
           if (app != null) {
             getUpdate(app.app.id);
