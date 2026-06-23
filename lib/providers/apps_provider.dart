@@ -995,7 +995,9 @@ class AppsProvider with ChangeNotifier {
     if (appInfo != null &&
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
-      throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
+      if (settingsProvider.showOlderVersionWarning) {
+        throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
+      }
     }
     if (needsBGWorkaround) {
       // The below 'await' will never return if we are in a background process

@@ -331,6 +331,15 @@ class SettingsProvider with ChangeNotifier {
     }
   }
 
+  bool get showOlderVersionWarning {
+    return prefs?.getBool('showOlderVersionWarning') ?? true;
+  }
+
+  set showOlderVersionWarning(bool show) {
+    prefs?.setBool('showOlderVersionWarning', show);
+    notifyListeners();
+  }
+
   bool get removeOnExternalUninstall {
     return prefs?.getBool('removeOnExternalUninstall') ?? false;
   }

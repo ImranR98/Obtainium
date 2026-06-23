@@ -625,6 +625,20 @@ class _SettingsPageState extends State<SettingsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Flexible(child: Text(tr('showOlderVersionWarning'))),
+                            Switch(
+                              value: settingsProvider.showOlderVersionWarning,
+                              onChanged: (value) {
+                                settingsProvider.showOlderVersionWarning =
+                                    value;
+                              },
+                            ),
+                          ],
+                        ),
+                        height16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(child: Text(tr('parallelDownloads'))),
                             Switch(
                               value: settingsProvider.parallelDownloads,
