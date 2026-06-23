@@ -172,7 +172,9 @@ class AppsPageState extends State<AppsPage> {
     var listedApps = appsProvider.getAppValues().toList();
 
     refresh() {
-      HapticFeedback.lightImpact();
+      if (settingsProvider.tactileFeedbackEnabled) {
+        HapticFeedback.lightImpact();
+      }
       setState(() {
         refreshingSince = DateTime.now();
       });
@@ -664,12 +666,13 @@ class AppsPageState extends State<AppsPage> {
       var transparent = Theme.of(
         context,
       ).colorScheme.surface.withAlpha(0).value;
+      var categories = listedApps[index].app.categories;
       List<double> stops = [
-        ...listedApps[index].app.categories.asMap().entries.map(
-          (e) =>
-              ((e.key / (listedApps[index].app.categories.length - 1)) -
-              0.0001),
-        ),
+        if (categories.isNotEmpty)
+          ...categories.asMap().entries.map(
+            (e) =>
+                ((e.key / (categories.length - 1)) - 0.0001),
+          ),
         1,
       ];
       if (stops.length == 2) {
@@ -677,19 +680,21 @@ class AppsPageState extends State<AppsPage> {
       }
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            stops: stops,
-            begin: const Alignment(-1, 0),
-            end: const Alignment(-0.97, 0),
-            colors: [
-              ...listedApps[index].app.categories.map(
-                (e) => Color(
-                  settingsProvider.categories[e] ?? transparent,
-                ).withAlpha(255),
-              ),
-              Color(transparent),
-            ],
-          ),
+          gradient: categories.isEmpty
+              ? null
+              : LinearGradient(
+                  stops: stops,
+                  begin: const Alignment(-1, 0),
+                  end: const Alignment(-0.97, 0),
+                  colors: [
+                    ...categories.map(
+                      (e) => Color(
+                        settingsProvider.categories[e] ?? transparent,
+                      ).withAlpha(255),
+                    ),
+                    Color(transparent),
+                  ],
+                ),
         ),
         child: ListTile(
           autofocus: index == 0 && settingsProvider.isTV,
@@ -829,7 +834,9 @@ class AppsPageState extends State<AppsPage> {
                   trackOnlyUpdateIdsAllOrSelected.isEmpty)
           ? null
           : () {
-              HapticFeedback.heavyImpact();
+              if (settingsProvider.tactileFeedbackEnabled) {
+                HapticFeedback.heavyImpact();
+              }
               List<GeneratedFormItem> formItems = [];
               if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                 formItems.add(
@@ -1031,7 +1038,9 @@ class AppsPageState extends State<AppsPage> {
               ),
               TextButton(
                 onPressed: () {
-                  HapticFeedback.selectionClick();
+                  if (settingsProvider.tactileFeedbackEnabled) {
+                    HapticFeedback.selectionClick();
+                  }
                   appsProvider.saveApps(
                     selectedApps.map((a) {
                       if (a.installedVersion != null &&

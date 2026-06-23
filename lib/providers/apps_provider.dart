@@ -2322,7 +2322,9 @@ class _AppFilePickerState extends State<AppFilePicker> {
         ),
         TextButton(
           onPressed: () {
-            HapticFeedback.selectionClick();
+            if (context.read<SettingsProvider>().tactileFeedbackEnabled) {
+              HapticFeedback.selectionClick();
+            }
             Navigator.of(context).pop(fileUrl);
           },
           child: Text(tr('continue')),
@@ -2370,7 +2372,9 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
         ),
         TextButton(
           onPressed: () {
-            HapticFeedback.selectionClick();
+            if (context.read<SettingsProvider>().tactileFeedbackEnabled) {
+              HapticFeedback.selectionClick();
+            }
             Navigator.of(context).pop(true);
           },
           child: Text(tr('continue')),

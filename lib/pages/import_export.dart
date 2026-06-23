@@ -119,7 +119,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumExport({bool pickOnly = false}) async {
-      HapticFeedback.selectionClick();
+      if (settingsProvider.tactileFeedbackEnabled) {
+        HapticFeedback.selectionClick();
+      }
       appsProvider
           .export(
             pickOnly:
@@ -137,7 +139,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumImport() {
-      HapticFeedback.selectionClick();
+      if (settingsProvider.tactileFeedbackEnabled) {
+        HapticFeedback.selectionClick();
+      }
       FilePicker.pickFiles()
           .then((result) {
             setState(() {

@@ -296,7 +296,9 @@ class AddAppPageState extends State<AddAppPage> {
                             !additionalSettingsValid)
                     ? null
                     : () {
-                        HapticFeedback.selectionClick();
+                        if (settingsProvider.tactileFeedbackEnabled) {
+                          HapticFeedback.selectionClick();
+                        }
                         addApp();
                       },
                 child: Text(tr('add')),
