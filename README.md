@@ -74,6 +74,29 @@ Verification info:
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
+## Troubleshooting
+
+### App not updating even when a new version is available
+- **Check the source settings** — Some sources require additional configuration (e.g., GitHub releases need the correct repository URL format)
+- **Check if the source is supported** — Not all sources support version checking equally; some use HTML scraping which may be slower
+- **Check the update interval** — By default, apps update every 6 hours. You can change this in app settings
+- **Try force-refreshing** — Pull down on the apps list to force a refresh
+
+### Source additions failing with 403 Forbidden
+- Some sources block requests from unknown user agents or regions
+- GitHub-based sources may need a Personal Access Token if you're hitting rate limits
+- Some APK hosts (APKMirror, etc.) may require cookies or specific headers
+
+### Flutter-related issues
+- Obtainium is built with Flutter. If the app crashes on startup, try:
+  - Clearing app data and reinstalling
+  - Ensuring your Android version meets the minimum requirement
+  - Checking if you have the latest Google Play Services
+
+### APK verification failures
+- If you see "Signature verification failed", ensure you haven't modified the APK after download
+- The SHA-256 hash in the app settings should match the downloaded APK
+
 ## Screenshots
 
 | <img src="./assets/screenshots/1.apps.png" alt="Apps Page" /> | <img src="./assets/screenshots/2.dark_theme.png" alt="Dark Theme" />           | <img src="./assets/screenshots/3.material_you.png" alt="Material You" />    |

@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -17,7 +18,6 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:markdown/markdown.dart' as md;
 
 class AppsPage extends StatefulWidget {
   const AppsPage({super.key});
@@ -61,11 +61,14 @@ void showChangeLogDialog(
           changesUrl != null
               ? const SizedBox(height: 16)
               : const SizedBox.shrink(),
-          appSource.changeLogIfAnyIsMarkDown
-              ? SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height - 350,
-                  child: Markdown(
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width,
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: appSource.changeLogIfAnyIsMarkDown
+                ? Markdown(
+                    shrinkWrap: true,
                     styleSheet: MarkdownStyleSheet(
                       blockquoteDecoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
@@ -90,9 +93,9 @@ void showChangeLogDialog(
                         ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
                       ],
                     ),
-                  ),
-                )
-              : Text(changeLog),
+                  )
+                : SingleChildScrollView(child: Text(changeLog)),
+          ),
         ],
         singleNullReturnButton: tr('ok'),
       );
@@ -138,14 +141,10 @@ class AppsPageState extends State<AppsPage> {
   Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
 
-  bool clearSelected() {
-    if (selectedAppIds.isNotEmpty) {
-      setState(() {
-        selectedAppIds.clear();
-      });
-      return true;
-    }
-    return false;
+  void clearSelected() {
+    setState(() {
+      selectedAppIds.clear();
+    });
   }
 
   void selectThese(List<App> apps) {
@@ -1355,28 +1354,36 @@ class AppsPageState extends State<AppsPage> {
             );
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: refresh,
-        child: Scrollbar(
-          interactive: true,
-          controller: scrollController,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+    return PopScope(
+      canPop: selectedAppIds.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          clearSelected();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: RefreshIndicator(
+          key: _refreshIndicatorKey,
+          onRefresh: refresh,
+          child: Scrollbar(
+            interactive: true,
             controller: scrollController,
-            slivers: <Widget>[
-              CustomAppBar(title: tr('appsString')),
-              ...getLoadingWidgets(),
-              getDisplayedList(),
-            ],
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              controller: scrollController,
+              slivers: <Widget>[
+                CustomAppBar(title: tr('appsString')),
+                ...getLoadingWidgets(),
+                getDisplayedList(),
+              ],
+            ),
           ),
         ),
+        persistentFooterButtons: appsProvider.apps.isEmpty
+            ? null
+            : [getFilterButtonsRow()],
       ),
-      persistentFooterButtons: appsProvider.apps.isEmpty
-          ? null
-          : [getFilterButtonsRow()],
     );
   }
 
