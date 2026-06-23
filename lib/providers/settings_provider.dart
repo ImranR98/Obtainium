@@ -358,6 +358,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get includePrereleasesByDefault {
+    return prefs?.getBool('includePrereleasesByDefault') ?? false;
+  }
+
+  set includePrereleasesByDefault(bool val) {
+    prefs?.setBool('includePrereleasesByDefault', val);
+    notifyListeners();
+  }
+
   bool get removeOnExternalUninstall {
     return prefs?.getBool('removeOnExternalUninstall') ?? false;
   }

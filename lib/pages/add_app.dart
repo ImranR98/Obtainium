@@ -89,6 +89,9 @@ class AddAppPageState extends State<AddAppPage> {
                   source.combinedAppSpecificSettingFormItems,
                 )
               : {};
+          if (settingsProvider.includePrereleasesByDefault) {
+            additionalSettings['includePrereleases'] = true;
+          }
           additionalSettingsValid = source != null
               ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
               : true;

@@ -625,6 +625,20 @@ class _SettingsPageState extends State<SettingsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Flexible(child: Text(tr('includePrereleasesByDefault'))),
+                            Switch(
+                              value: settingsProvider.includePrereleasesByDefault,
+                              onChanged: (value) {
+                                settingsProvider.includePrereleasesByDefault =
+                                    value;
+                              },
+                            ),
+                          ],
+                        ),
+                        height16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(child: Text(tr('tactileFeedbackEnabled'))),
                             Switch(
                               value: settingsProvider.tactileFeedbackEnabled,

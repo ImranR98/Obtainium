@@ -7,6 +7,7 @@
     "showOlderVersionWarning": "Show older version warning",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
+    "includePrereleasesByDefault": "Include pre-releases by default",
     "appIdMismatch": "Downloaded package ID does not match existing app ID",
     "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
