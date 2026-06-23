@@ -428,7 +428,9 @@ class _HomePageState extends State<HomePage> {
                         )
                         .toList(),
                     onDestinationSelected: (int index) async {
-                      HapticFeedback.selectionClick();
+                      if (settingsProvider.tactileFeedbackEnabled) {
+                        HapticFeedback.selectionClick();
+                      }
                       switchToPage(index);
                     },
                     selectedIndex: currentIndex,

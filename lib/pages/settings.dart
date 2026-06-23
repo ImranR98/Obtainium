@@ -625,6 +625,19 @@ class _SettingsPageState extends State<SettingsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Flexible(child: Text(tr('tactileFeedbackEnabled'))),
+                            Switch(
+                              value: settingsProvider.tactileFeedbackEnabled,
+                              onChanged: (value) {
+                                settingsProvider.tactileFeedbackEnabled = value;
+                              },
+                            ),
+                          ],
+                        ),
+                        height16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(child: Text(tr('showBatteryOptimizationPrompt'))),
                             Switch(
                               value: settingsProvider.showBatteryOptimizationPrompt,

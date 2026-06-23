@@ -349,6 +349,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get tactileFeedbackEnabled {
+    return prefs?.getBool('tactileFeedbackEnabled') ?? true;
+  }
+
+  set tactileFeedbackEnabled(bool val) {
+    prefs?.setBool('tactileFeedbackEnabled', val);
+    notifyListeners();
+  }
+
   bool get removeOnExternalUninstall {
     return prefs?.getBool('removeOnExternalUninstall') ?? false;
   }

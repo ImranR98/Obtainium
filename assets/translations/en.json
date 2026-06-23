@@ -6,6 +6,7 @@
     "cantInstallOlderVersion": "Cannot install an older version of an app",
     "showOlderVersionWarning": "Show older version warning",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
+    "tactileFeedbackEnabled": "Enable tactile feedback",
     "appIdMismatch": "Downloaded package ID does not match existing app ID",
     "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",
