@@ -1082,19 +1082,25 @@ class AppsProvider with ChangeNotifier {
     if (pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
     }
-    if (app.additionalSettings['apkFilterRegEx'] is String &&
-        (app.additionalSettings['apkFilterRegEx'] as String).isNotEmpty) {
-      urlsToSelectFrom = filterApks(
-        urlsToSelectFrom,
-        app.additionalSettings['apkFilterRegEx'],
-        app.additionalSettings['invertAPKFilter'] == true,
-      );
-    }
     // If the App has more than one APK, the user should pick one (if context provided)
     MapEntry<String, String>? appFileUrl =
         urlsToSelectFrom[app.preferredApkIndex >= 0
             ? app.preferredApkIndex
             : 0];
+    // When picking any asset, use the APK filter regex to pre-select the best matching
+    // asset by default, without hiding other assets from the user.
+    if (pickAnyAsset &&
+        app.additionalSettings['apkFilterRegEx'] is String &&
+        (app.additionalSettings['apkFilterRegEx'] as String).isNotEmpty) {
+      var matching = filterApks(
+        urlsToSelectFrom,
+        app.additionalSettings['apkFilterRegEx'],
+        app.additionalSettings['invertAPKFilter'] == true,
+      );
+      if (matching.isNotEmpty) {
+        appFileUrl = matching.first;
+      }
+    }
     // get device supported architecture
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
