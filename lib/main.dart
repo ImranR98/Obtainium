@@ -143,7 +143,11 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        statusBarColor: Colors.transparent,
+        systemStatusBarContrastEnforced: false,
+      ),
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
@@ -402,6 +406,29 @@ class _ObtainiumState extends State<Obtainium> {
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              sliderTheme: SliderThemeData(
+                activeTrackColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary,
+                inactiveTrackColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .surfaceContainerHighest,
+                thumbColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary,
+                overlayColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary
+                    .withAlpha(30),
+              ),
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
@@ -411,6 +438,29 @@ class _ObtainiumState extends State<Obtainium> {
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              sliderTheme: SliderThemeData(
+                activeTrackColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary,
+                inactiveTrackColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .surfaceContainerHighest,
+                thumbColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary,
+                overlayColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary
+                    .withAlpha(30),
+              ),
             ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
