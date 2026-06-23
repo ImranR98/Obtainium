@@ -530,7 +530,12 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getVersionText(int appIndex) {
-      return listedApps[appIndex].app.installedVersion ?? tr('notInstalled');
+      var installed = listedApps[appIndex].app.installedVersion;
+      var latest = listedApps[appIndex].app.latestVersion;
+      if (installed != null && installed != latest) {
+        return '$installed → $latest';
+      }
+      return installed ?? tr('notInstalled');
     }
 
     getChangesButtonString(int appIndex, bool hasChangeLogFn) {
