@@ -1082,6 +1082,14 @@ class AppsProvider with ChangeNotifier {
     if (pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
     }
+    if (app.additionalSettings['apkFilterRegEx'] is String &&
+        (app.additionalSettings['apkFilterRegEx'] as String).isNotEmpty) {
+      urlsToSelectFrom = filterApks(
+        urlsToSelectFrom,
+        app.additionalSettings['apkFilterRegEx'],
+        app.additionalSettings['invertAPKFilter'] == true,
+      );
+    }
     // If the App has more than one APK, the user should pick one (if context provided)
     MapEntry<String, String>? appFileUrl =
         urlsToSelectFrom[app.preferredApkIndex >= 0
