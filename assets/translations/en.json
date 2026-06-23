@@ -5,6 +5,7 @@
     "urlMatchesNoSource": "URL does not match a known source",
     "cantInstallOlderVersion": "Cannot install an older version of an app",
     "showOlderVersionWarning": "Show older version warning",
+    "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "appIdMismatch": "Downloaded package ID does not match existing app ID",
     "repoRenamedCheck": "Check if repository was moved (increases API calls)",
     "repoRenamed": "Repository moved",

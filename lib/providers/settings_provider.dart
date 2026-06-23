@@ -340,6 +340,15 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get showBatteryOptimizationPrompt {
+    return prefs?.getBool('showBatteryOptimizationPrompt') ?? true;
+  }
+
+  set showBatteryOptimizationPrompt(bool show) {
+    prefs?.setBool('showBatteryOptimizationPrompt', show);
+    notifyListeners();
+  }
+
   bool get removeOnExternalUninstall {
     return prefs?.getBool('removeOnExternalUninstall') ?? false;
   }

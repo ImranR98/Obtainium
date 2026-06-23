@@ -625,6 +625,20 @@ class _SettingsPageState extends State<SettingsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Flexible(child: Text(tr('showBatteryOptimizationPrompt'))),
+                            Switch(
+                              value: settingsProvider.showBatteryOptimizationPrompt,
+                              onChanged: (value) {
+                                settingsProvider.showBatteryOptimizationPrompt =
+                                    value;
+                              },
+                            ),
+                          ],
+                        ),
+                        height16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Flexible(child: Text(tr('showOlderVersionWarning'))),
                             Switch(
                               value: settingsProvider.showOlderVersionWarning,
