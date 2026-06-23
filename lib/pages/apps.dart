@@ -451,7 +451,7 @@ class AppsPageState extends State<AppsPage> {
             : tr('update'),
         onPressed: appsProvider.areDownloadsRunning()
             ? null
-            :             () {
+            : () {
                 appsProvider
                     .downloadAndInstallLatestApps([
                       listedApps[appIndex].app.id,
@@ -467,6 +467,7 @@ class AppsPageState extends State<AppsPage> {
                       showError(e, context);
                       return <String>[];
                     });
+              },
         icon: Icon(
           listedApps[appIndex].app.additionalSettings['trackOnly'] == true
               ? Icons.check_circle_outline

@@ -89,10 +89,11 @@ class AddAppPageState extends State<AddAppPage> {
                   source.combinedAppSpecificSettingFormItems,
                 )
               : {};
-          if (settingsProvider.includePrereleasesByDefault) {
+          var sp = context.read<SettingsProvider>();
+          if (sp.includePrereleasesByDefault) {
             additionalSettings['includePrereleases'] = true;
           }
-          if (settingsProvider.shizukuPretendToBeGooglePlay) {
+          if (sp.shizukuPretendToBeGooglePlay) {
             additionalSettings['shizukuPretendToBeGooglePlay'] = true;
           }
           additionalSettingsValid = source != null
