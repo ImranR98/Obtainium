@@ -92,6 +92,9 @@ class AddAppPageState extends State<AddAppPage> {
           if (settingsProvider.includePrereleasesByDefault) {
             additionalSettings['includePrereleases'] = true;
           }
+          if (settingsProvider.shizukuPretendToBeGooglePlay) {
+            additionalSettings['shizukuPretendToBeGooglePlay'] = true;
+          }
           additionalSettingsValid = source != null
               ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
               : true;
