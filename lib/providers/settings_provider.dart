@@ -19,6 +19,21 @@ String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 Color obtainiumThemeColor = const Color(0xFF6438B5);
 
+Locale? tryParseLocale(String? localeString) {
+  if (localeString == null) return null;
+  var split = localeString.split('-');
+  if (split.length == 3) {
+    return Locale.fromSubtags(languageCode: split[0], countryCode: split[2]);
+  }
+  if (split.length == 2) {
+    return Locale(split[0], split[1]);
+  }
+  if (split.isNotEmpty) {
+    return Locale(split[0]);
+  }
+  return null;
+}
+
 enum ThemeSettings { system, light, dark }
 
 enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
@@ -298,10 +313,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Locale? get forcedLocale {
-    var flSegs = prefs?.getString('forcedLocale')?.split('-');
-    var fl = flSegs != null && flSegs.isNotEmpty
-        ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
-        : null;
+    var fl = tryParseLocale(prefs?.getString('forcedLocale'));
     var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
