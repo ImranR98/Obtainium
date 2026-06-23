@@ -61,11 +61,14 @@ void showChangeLogDialog(
           changesUrl != null
               ? const SizedBox(height: 16)
               : const SizedBox.shrink(),
-          appSource.changeLogIfAnyIsMarkDown
-              ? SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height - 350,
-                  child: Markdown(
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width,
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: appSource.changeLogIfAnyIsMarkDown
+                ? Markdown(
+                    shrinkWrap: true,
                     styleSheet: MarkdownStyleSheet(
                       blockquoteDecoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
@@ -90,9 +93,9 @@ void showChangeLogDialog(
                         ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
                       ],
                     ),
-                  ),
-                )
-              : Text(changeLog),
+                  )
+                : SingleChildScrollView(child: Text(changeLog)),
+          ),
         ],
         singleNullReturnButton: tr('ok'),
       );
