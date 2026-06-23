@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
@@ -368,6 +369,18 @@ class SettingsProvider with ChangeNotifier {
   set tactileFeedbackEnabled(bool val) {
     prefs?.setBool('tactileFeedbackEnabled', val);
     notifyListeners();
+  }
+
+  void lightImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.lightImpact();
+  }
+
+  void heavyImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.heavyImpact();
+  }
+
+  void selectionClick() {
+    if (tactileFeedbackEnabled) HapticFeedback.selectionClick();
   }
 
   bool get includePrereleasesByDefault {

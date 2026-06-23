@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -119,9 +118,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumExport({bool pickOnly = false}) async {
-      if (settingsProvider.tactileFeedbackEnabled) {
-        HapticFeedback.selectionClick();
-      }
+      settingsProvider.selectionClick();
       appsProvider
           .export(
             pickOnly:
@@ -139,9 +136,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumImport() {
-      if (settingsProvider.tactileFeedbackEnabled) {
-        HapticFeedback.selectionClick();
-      }
+      settingsProvider.selectionClick();
       FilePicker.pickFiles()
           .then((result) {
             setState(() {

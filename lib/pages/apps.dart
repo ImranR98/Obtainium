@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -172,9 +172,7 @@ class AppsPageState extends State<AppsPage> {
     var listedApps = appsProvider.getAppValues().toList();
 
     refresh() {
-      if (settingsProvider.tactileFeedbackEnabled) {
-        HapticFeedback.lightImpact();
-      }
+      settingsProvider.lightImpact();
       setState(() {
         refreshingSince = DateTime.now();
       });
@@ -835,9 +833,7 @@ class AppsPageState extends State<AppsPage> {
                   trackOnlyUpdateIdsAllOrSelected.isEmpty)
           ? null
           : () {
-              if (settingsProvider.tactileFeedbackEnabled) {
-                HapticFeedback.heavyImpact();
-              }
+              settingsProvider.heavyImpact();
               List<GeneratedFormItem> formItems = [];
               if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                 formItems.add(
@@ -1039,9 +1035,7 @@ class AppsPageState extends State<AppsPage> {
               ),
               TextButton(
                 onPressed: () {
-                  if (settingsProvider.tactileFeedbackEnabled) {
-                    HapticFeedback.selectionClick();
-                  }
+                  settingsProvider.selectionClick();
                   appsProvider.saveApps(
                     selectedApps.map((a) {
                       if (a.installedVersion != null &&

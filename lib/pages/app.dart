@@ -702,9 +702,7 @@ Widget buildRepoRenameWarning({
               ),
               TextButton(
                 onPressed: () {
-                  if (settingsProvider.tactileFeedbackEnabled) {
-                    HapticFeedback.selectionClick();
-                  }
+                  settingsProvider.selectionClick();
                   var updatedApp = app?.app;
                   if (updatedApp != null) {
                     updatedApp.installedVersion = updatedApp.latestVersion;
@@ -796,9 +794,7 @@ Widget buildRepoRenameWarning({
                 var successMessage = app?.app.installedVersion == null
                     ? tr('installed')
                     : tr('appsUpdated');
-                if (settingsProvider.tactileFeedbackEnabled) {
-                  HapticFeedback.heavyImpact();
-                }
+                settingsProvider.heavyImpact();
                 var res = await appsProvider.downloadAndInstallLatestApps(
                   app?.app.id != null ? [app!.app.id] : [],
                   globalNavigatorKey.currentContext,

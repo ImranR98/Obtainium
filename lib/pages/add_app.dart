@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -297,9 +296,7 @@ class AddAppPageState extends State<AddAppPage> {
                             !additionalSettingsValid)
                     ? null
                     : () {
-                        if (settingsProvider.tactileFeedbackEnabled) {
-                          HapticFeedback.selectionClick();
-                        }
+                        settingsProvider.selectionClick();
                         addApp();
                       },
                 child: Text(tr('add')),
