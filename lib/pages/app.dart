@@ -344,6 +344,9 @@ Widget buildRepoRenameWarning({
       }
       if (!upToDate) {
         versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
+        if (installed && installedVersionIsEstimate) {
+          versionLines += ' (${tr('pseudoVersionInUse').toLowerCase()})';
+        }
       }
       final lastUpdateCheck = app?.app.lastUpdateCheck?.toLocal();
       String infoLines = tr(
