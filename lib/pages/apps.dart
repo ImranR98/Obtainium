@@ -13,6 +13,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -448,16 +449,22 @@ class AppsPageState extends State<AppsPage> {
             : tr('update'),
         onPressed: appsProvider.areDownloadsRunning()
             ? null
-            : () {
+            :             () {
                 appsProvider
                     .downloadAndInstallLatestApps([
                       listedApps[appIndex].app.id,
                     ], globalNavigatorKey.currentContext)
+                    .then((res) {
+                  if (res.isNotEmpty) {
+                    var np = context.read<NotificationsProvider>();
+                    np.cancel(UpdateNotification([]).id);
+                    np.cancel(SilentUpdateAttemptNotification([], id: res[0].hashCode).id);
+                  }
+                })
                     .catchError((e) {
                       showError(e, context);
                       return <String>[];
                     });
-              },
         icon: Icon(
           listedApps[appIndex].app.additionalSettings['trackOnly'] == true
               ? Icons.check_circle_outline
@@ -913,8 +920,12 @@ class AppsPageState extends State<AppsPage> {
                         return <String>[];
                       })
                       .then((value) {
-                        if (value.isNotEmpty && shouldInstallUpdates) {
-                          showMessage(tr('appsUpdated'), context);
+                        if (value.isNotEmpty) {
+                          if (shouldInstallUpdates) {
+                            showMessage(tr('appsUpdated'), context);
+                          }
+                          var np = context.read<NotificationsProvider>();
+                          np.cancel(UpdateNotification([]).id);
                         }
                       });
                 }

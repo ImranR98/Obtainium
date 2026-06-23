@@ -8,6 +8,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -801,6 +802,11 @@ Widget buildRepoRenameWarning({
                 }
                 if (res.isNotEmpty && mounted) {
                   Navigator.of(context).pop();
+                }
+                if (res.isNotEmpty) {
+                  var np = context.read<NotificationsProvider>();
+                  np.cancel(UpdateNotification([]).id);
+                  np.cancel(SilentUpdateAttemptNotification([], id: res[0].hashCode).id);
                 }
               } catch (e) {
                 // ignore: use_build_context_synchronously
