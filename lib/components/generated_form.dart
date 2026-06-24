@@ -587,14 +587,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     (widget.items[r][e] as GeneratedFormTagInput).alignment,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  // (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
-                  //             ?.isEmpty ==
-                  //         true
-                  //     ? Text(
-                  //         (widget.items[r][e] as GeneratedFormTagInput)
-                  //             .emptyMessage,
-                  //       )
-                  //     : const SizedBox.shrink(),
                   ...(values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                           ?.entries
                           .map((e2) {
