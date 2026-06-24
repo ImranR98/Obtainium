@@ -34,6 +34,7 @@ fi
 # flutter pub upgrade --tighten --major-versions
 
 flutter pub get
+# TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
 sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE}/hosted/*/jni-*/src/CMakeLists.txt
 
 rm ./build/app/outputs/flutter-apk/* 2>/dev/null                                       # Get rid of older builds if any
