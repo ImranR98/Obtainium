@@ -349,6 +349,8 @@
     "GHReqPrefix": "Instancja \"sky22333/hubproxy\" dla żądań GitHuba",
     "includeZips": "Uwzględniaj pliki ZIP",
     "zippedApkFilterRegEx": "Filtruj pliki APK w .zip (RegEx)",
+    "includeTarballs": "Include tarball files (tar.gz, etc.)",
+    "tarballedApkFilterRegEx": "Filter APKs inside tarball",
     "googleVerificationWarningP1": "Google ogłosiło, że począwszy od 2026 / 2027, instalacja wszystkich aplikacji na \"certyfikowanych\" urządzeniach z Androidem będzie wymagać od dewelopera przekazania swoich danych osobowych bezpośrednio do Google.\n\nPonieważ deweloperzy tej aplikacji nie zgadzają się na ten wymóg, po tym czasie aplikacja przestanie działać na certyfikowanych urządzeniach z Androidem.",
     "googleVerificationWarningP2": "Więcej informacji znajdziesz na stronie https://keepandroidopen.org/.",
     "googleVerificationWarningP3": "W perspektywie krótkoterminowej nadal będzie możliwa instalacja  \"niezweryfikowanych\" (niezgodnych) aplikacji poprzez proces \"zaawansowanego przepływu\", który Google obiecało wdrożyć po masowej krytyce, nie podano jednak żadnych szczegółów jego działania, więc nie wiadomo, czy w praktyce w ogóle ochroni on wolność użytkowników.\n\nNiezależnie od tego, ruch Google to ogromny krok w stronę końca otwartego, uniwersalnego modelu korzystania z urządzeń przez osoby prywatne.\n\nNiecertyfikowane systemy, takie jak GrapheneOS, powinny pozostać odporne na te zmiany, dopóki pozwolą na to realia.",
