@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:obtainium/components/app_list_builder.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -210,98 +211,20 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    final nameTokens = filter.nameFilter.isNotEmpty
-        ? filter.nameFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList()
-        : const <String>[];
-    final authorTokens = filter.authorFilter.isNotEmpty
-        ? filter.authorFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList()
-        : const <String>[];
-
-    listedApps = listedApps.where((app) {
-      if (app.app.installedVersion == app.app.latestVersion &&
-          !(filter.includeUptodate)) {
-        return false;
-      }
-      if (app.app.installedVersion == null && !(filter.includeNonInstalled)) {
-        return false;
-      }
-      for (var t in nameTokens) {
-        if (!app.name.toLowerCase().contains(t.toLowerCase())) {
-          return false;
-        }
-      }
-      for (var t in authorTokens) {
-        if (!app.author.toLowerCase().contains(t.toLowerCase())) {
-          return false;
-        }
-      }
-      if (filter.idFilter.isNotEmpty) {
-        if (!app.app.id.contains(filter.idFilter)) {
-          return false;
-        }
-      }
-      if (filter.categoryFilter.isNotEmpty &&
-          filter.categoryFilter
-              .intersection(app.app.categories.toSet())
-              .isEmpty) {
-        return false;
-      }
-      if (filter.sourceFilter.isNotEmpty &&
-          sourceProvider
-                  .getSource(
-                    app.app.url,
-                    overrideSource: app.app.overrideSource,
-                  )
-                  .runtimeType
-                  .toString() !=
-              filter.sourceFilter) {
-        return false;
-      }
-      return true;
-    }).toList();
-
-    if (settingsProvider.sortColumn != SortColumnSettings.added) {
-      final isDesc =
-          settingsProvider.sortOrder == SortOrderSettings.descending;
-      if (settingsProvider.sortColumn == SortColumnSettings.releaseDate) {
-        var entries = listedApps
-            .map((a) => MapEntry(a.app.releaseDate, a))
-            .toList()
-          ..sort((a, b) {
-            final aDate = a.key;
-            final bDate = b.key;
-            if (aDate == null && bDate == null) return 0;
-            if (aDate == null) return isDesc ? -1 : 1;
-            if (bDate == null) return isDesc ? 1 : -1;
-            return aDate.compareTo(bDate);
-          });
-        listedApps = entries.map((e) => e.value).toList();
-      } else {
-        String keyFn(AppInMemory a) => switch (settingsProvider.sortColumn) {
-          SortColumnSettings.authorName =>
-            (a.author + a.name).toLowerCase(),
-          SortColumnSettings.nameAuthor =>
-            (a.name + a.author).toLowerCase(),
-          _ => '',
-        };
-        var entries = listedApps
-            .map((a) => MapEntry(keyFn(a), a))
-            .toList()
-          ..sort((a, b) => (a.key as String).compareTo(b.key as String));
-        listedApps = entries.map((e) => e.value).toList();
-      }
-      if (isDesc) {
-        listedApps = listedApps.reversed.toList();
-      }
-    }
-
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
+
+    listedApps = AppListBuilder.filter(listedApps, filter, sourceProvider);
+    listedApps = AppListBuilder.sort(
+      listedApps,
+      settingsProvider.sortColumn,
+      settingsProvider.sortOrder,
+    );
+    listedApps = AppListBuilder.reorder(
+      listedApps,
+      settingsProvider.pinUpdates,
+      settingsProvider.buryNonInstalled,
+      existingUpdates.map((e) => e).toSet(),
+    );
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
@@ -331,44 +254,6 @@ class AppsPageState extends State<AppsPage> {
         existingUpdateIdsAllOrSelected.where(isNotTrackOnly).toList();
     newInstallIdsAllOrSelected =
         newInstallIdsAllOrSelected.where(isNotTrackOnly).toList();
-
-    if (settingsProvider.pinUpdates) {
-      var temp = [];
-      listedApps = listedApps.where((sa) {
-        if (existingUpdates.contains(sa.app.id)) {
-          temp.add(sa);
-          return false;
-        }
-        return true;
-      }).toList();
-      listedApps = [...temp, ...listedApps];
-    }
-
-    if (settingsProvider.buryNonInstalled) {
-      var temp = [];
-      listedApps = listedApps.where((sa) {
-        if (sa.app.installedVersion == null) {
-          temp.add(sa);
-          return false;
-        }
-        return true;
-      }).toList();
-      listedApps = [...listedApps, ...temp];
-    }
-
-    var tempRenamed = [];
-    var tempPinned = [];
-    var tempNotPinned = [];
-    for (var a in listedApps) {
-      if (a.app.hasPendingRepoRename) {
-        tempRenamed.add(a);
-      } else if (a.app.pinned) {
-        tempPinned.add(a);
-      } else {
-        tempNotPinned.add(a);
-      }
-    }
-    listedApps = [...tempRenamed, ...tempPinned, ...tempNotPinned];
 
     List<String?> getListedCategories() {
       var temp = listedApps.map(
@@ -1365,55 +1250,6 @@ class AppsPageState extends State<AppsPage> {
       ),
     );
   }
-}
-
-class AppsFilter {
-  late String nameFilter;
-  late String authorFilter;
-  late String idFilter;
-  late bool includeUptodate;
-  late bool includeNonInstalled;
-  late Set<String> categoryFilter;
-  late String sourceFilter;
-
-  AppsFilter({
-    this.nameFilter = '',
-    this.authorFilter = '',
-    this.idFilter = '',
-    this.includeUptodate = true,
-    this.includeNonInstalled = true,
-    this.categoryFilter = const {},
-    this.sourceFilter = '',
-  });
-
-  Map<String, dynamic> toFormValuesMap() {
-    return {
-      'appName': nameFilter,
-      'author': authorFilter,
-      'appId': idFilter,
-      'upToDateApps': includeUptodate,
-      'nonInstalledApps': includeNonInstalled,
-      'sourceFilter': sourceFilter,
-    };
-  }
-
-  void setFormValuesFromMap(Map<String, dynamic> values) {
-    nameFilter = values['appName']!;
-    authorFilter = values['author']!;
-    idFilter = values['appId']!;
-    includeUptodate = values['upToDateApps'];
-    includeNonInstalled = values['nonInstalledApps'];
-    sourceFilter = values['sourceFilter'];
-  }
-
-  bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
-      authorFilter.trim() == other.authorFilter.trim() &&
-      nameFilter.trim() == other.nameFilter.trim() &&
-      idFilter.trim() == other.idFilter.trim() &&
-      includeUptodate == other.includeUptodate &&
-      includeNonInstalled == other.includeNonInstalled &&
-      settingsProvider.setEqual(categoryFilter, other.categoryFilter) &&
-      sourceFilter.trim() == other.sourceFilter.trim();
 }
 
 class AppIconWidget extends StatefulWidget {
