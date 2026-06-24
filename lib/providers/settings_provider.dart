@@ -499,7 +499,11 @@ class SettingsProvider with ChangeNotifier {
     var currentOneWayDataSyncDir = await getExportDir();
     Uri? newOneWayDataSyncDir;
     if (!remove) {
-      newOneWayDataSyncDir = (await saf.openDocumentTree());
+      try {
+        newOneWayDataSyncDir = (await saf.openDocumentTree());
+      } catch (_) {
+        // No file picker available (e.g. DocumentsUI disabled)
+      }
     }
     if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
       if (newOneWayDataSyncDir == null) {

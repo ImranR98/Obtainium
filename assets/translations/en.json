@@ -156,6 +156,7 @@
     "trackOnlyUpdatesAvailable": "Track-only updates available",
     "updatesAvailableNotifDescription": "Notifies the user that updates are available for one or more apps tracked by Obtainium",
     "noNewUpdates": "No new updates.",
+    "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "xHasAnUpdate": "{} has an update.",
     "appsUpdated": "Apps updated",
     "appsNotUpdated": "Failed to update applications",
