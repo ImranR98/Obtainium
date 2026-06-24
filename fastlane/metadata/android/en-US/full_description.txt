@@ -1,5 +1,5 @@
 <p>Obtainium allows you to install and update Apps directly from their releases pages, and receive notifications when new releases are made available.</p>
-<p>Read the <a href="https://wiki.obtainium.imranr.dev/">Wiki</a></p>
+<p>Read the <a href="https://wiki.obtainium.page/">Wiki</a></p>
 <p>
 	<b>Currently supported App sources:</b>
 </p>
@@ -22,13 +22,18 @@
 			<li>APKPure</li>
 			<li>Aptoide</li>
 			<li>Uptodown</li>
-			<li>APKMirror (Track-Only)</li>
+			<li>itch.io</li>
 			<li>Huawei AppGallery</li>
 			<li>Tencent App Store</li>
-			<li>CoolApk</li>
 			<li>vivo App Store (CN)</li>
-			<li>Jenkins Jobs</li>
 			<li>RuStore</li>
+			<li>APK4Free</li>
+			<li>Farsroid</li>
+			<li>CoolApk</li>
+			<li>LiteAPKs</li>
+			<li>Jenkins Jobs</li>
+			<li>APKMirror (Track-Only)</li>
+			<li>RockMods (Track-Only)</li>
 		</ul>
 	</li>
 	<li>
@@ -38,6 +43,7 @@
 			<li>Neutron Code</li>
 		</ul>
 	</li>
+	<li>Direct APK Link</li>
 	<li><p>"HTML" (Fallback): Any other URL that returns an HTML page with links to APK files</p></li>
 </ul>
 <p>

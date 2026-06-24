@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -79,7 +78,7 @@ class AddAppPageState extends State<AddAppPage> {
                 overrideSource: pickedSourceOverride,
               )
             : null;
-        if (pickedSource.runtimeType != source.runtimeType ||
+        if (pickedSource?.runtimeType != source.runtimeType ||
             overrideChanged ||
             (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;
@@ -290,7 +289,7 @@ class AddAppPageState extends State<AddAppPage> {
                             !additionalSettingsValid)
                     ? null
                     : () {
-                        HapticFeedback.selectionClick();
+                        settingsProvider.selectionClick();
                         addApp();
                       },
                 child: Text(tr('add')),
@@ -398,6 +397,8 @@ class AddAppPageState extends State<AddAppPage> {
                   }
                 }),
           )).where((a) => a != null).toList();
+
+          if (!mounted) return;
 
           // Interleave results instead of simple reduce
           Map<String, MapEntry<String, List<String>>> res = {};
@@ -559,12 +560,29 @@ class AddAppPageState extends State<AddAppPage> {
           ),
         ),
         const SizedBox(height: 16),
-        GeneratedForm(
+        () {
+          var formItems = pickedSource!.combinedAppSpecificSettingFormItems;
+          if (settingsProvider.includePrereleasesByDefault ||
+              settingsProvider.shizukuPretendToBeGooglePlay) {
+            for (var row in formItems) {
+              for (var item in row) {
+                if (item.key == 'includePrereleases' &&
+                    settingsProvider.includePrereleasesByDefault) {
+                  item.defaultValue = true;
+                }
+                if (item.key == 'shizukuPretendToBeGooglePlay' &&
+                    settingsProvider.shizukuPretendToBeGooglePlay) {
+                  item.defaultValue = true;
+                }
+              }
+            }
+          }
+          return GeneratedForm(
           key: Key(
             '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}',
           ),
           items: [
-            ...pickedSource!.combinedAppSpecificSettingFormItems,
+            ...formItems,
             ...(pickedSourceOverride != null
                 ? pickedSource!.sourceConfigSettingFormItems.map((e) => [e])
                 : []),
@@ -577,7 +595,8 @@ class AddAppPageState extends State<AddAppPage> {
               });
             }
           },
-        ),
+        );
+      }(),
         Column(
           children: [
             const SizedBox(height: 16),
@@ -712,7 +731,7 @@ class AddAppPageState extends State<AddAppPage> {
           InkWell(
             onTap: () {
               launchUrlString(
-                'https://apps.obtainium.imranr.dev/',
+                'https://apps.obtainium.page/',
                 mode: LaunchMode.externalApplication,
               );
             },

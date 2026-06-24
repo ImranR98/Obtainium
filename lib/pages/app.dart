@@ -8,6 +8,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -35,7 +36,7 @@ class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
   bool updating = false;
 
-Widget buildRepoRenameWarning({
+  Widget buildRepoRenameWarning({
     required AppInMemory? app,
     required AppsProvider appsProvider,
     required Future<void> Function(String id) onUpdate,
@@ -357,7 +358,10 @@ Widget buildRepoRenameWarning({
         infoLines = '${tr('xIsTrackOnly', args: [tr('app')])}\n$infoLines';
       }
       if (installedVersionIsEstimate) {
-        infoLines = '${tr('pseudoVersionInUse')}\n$infoLines';
+        var realVersion = app?.installedInfo?.versionName;
+        infoLines = realVersion != null
+            ? '${tr('pseudoVersionInUse')} (OS installed $realVersion)\n$infoLines'
+            : '${tr('pseudoVersionInUse')}\n$infoLines';
       }
       if ((app?.app.apkUrls.length ?? 0) > 0) {
         infoLines =
@@ -698,7 +702,7 @@ Widget buildRepoRenameWarning({
               ),
               TextButton(
                 onPressed: () {
-                  HapticFeedback.selectionClick();
+                  settingsProvider.selectionClick();
                   var updatedApp = app?.app;
                   if (updatedApp != null) {
                     updatedApp.installedVersion = updatedApp.latestVersion;
@@ -790,7 +794,7 @@ Widget buildRepoRenameWarning({
                 var successMessage = app?.app.installedVersion == null
                     ? tr('installed')
                     : tr('appsUpdated');
-                HapticFeedback.heavyImpact();
+                settingsProvider.heavyImpact();
                 var res = await appsProvider.downloadAndInstallLatestApps(
                   app?.app.id != null ? [app!.app.id] : [],
                   globalNavigatorKey.currentContext,
@@ -801,6 +805,13 @@ Widget buildRepoRenameWarning({
                 }
                 if (res.isNotEmpty && mounted) {
                   Navigator.of(context).pop();
+                }
+                if (res.isNotEmpty) {
+                  var np = context.read<NotificationsProvider>();
+                  np.cancel(UpdateNotification([]).id);
+                  np.cancel(
+                    SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+                  );
                 }
               } catch (e) {
                 // ignore: use_build_context_synchronously
@@ -960,6 +971,7 @@ Widget buildRepoRenameWarning({
                   SliverToBoxAdapter(
                     child: Column(children: [getFullInfoColumn()]),
                   ),
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
                 ],
               ),
         onRefresh: () async {
