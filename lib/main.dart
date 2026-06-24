@@ -261,14 +261,8 @@ class _ObtainiumState extends State<Obtainium> {
     }
   }
 
-  // void onReceiveForegroundServiceData(Object data) {
-  //   print('onReceiveTaskData: $data');
-  // }
-
   @override
   void dispose() {
-    // Remove a callback to receive data sent from the TaskHandler.
-    // FlutterForegroundTask.removeTaskDataCallback(onReceiveForegroundServiceData);
     super.dispose();
   }
 

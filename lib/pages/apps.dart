@@ -116,24 +116,15 @@ Null Function()? getChangeLogFn(BuildContext context, App app) {
   }
   if (changeLog == null && changesUrl == null) return null;
   return () {
+    var appSource = SourceProvider().getSource(
+      app.url,
+      overrideSource: app.overrideSource,
+    );
     if (changesUrl == null) {
-      var appSource = SourceProvider().getSource(
-        app.url,
-        overrideSource: app.overrideSource,
-      );
       changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
     }
     if (changeLog != null) {
-      showChangeLogDialog(
-        context,
-        app,
-        changesUrl,
-        SourceProvider().getSource(
-          app.url,
-          overrideSource: app.overrideSource,
-        ),
-        changeLog,
-      );
+      showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
     } else if (changesUrl != null) {
       launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
     }
@@ -204,8 +195,9 @@ class AppsPageState extends State<AppsPage> {
       _refreshIndicatorKey.currentState?.show();
     }
 
+    var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
     selectedAppIds = selectedAppIds
-        .where((element) => listedApps.map((e) => e.app.id).contains(element))
+        .where(listedAppIdSet.contains)
         .toSet();
 
     toggleAppSelected(App app) {
@@ -314,7 +306,7 @@ class AppsPageState extends State<AppsPage> {
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedApps.where((a) => a.app.id == element).isNotEmpty
+              ? listedAppIdSet.contains(element)
               : selectedAppIds.contains(element),
         )
         .toList();
@@ -322,26 +314,23 @@ class AppsPageState extends State<AppsPage> {
         .findExistingUpdates(nonInstalledOnly: true)
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedApps.where((a) => a.app.id == element).isNotEmpty
+              ? listedAppIdSet.contains(element)
               : selectedAppIds.contains(element),
         )
         .toList();
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
-    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
+    bool isNotTrackOnly(String id) {
       if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
       return true;
-    }).toList();
-    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
-        trackOnlyUpdateIdsAllOrSelected.add(id);
-        return false;
-      }
-      return true;
-    }).toList();
+    }
+    existingUpdateIdsAllOrSelected =
+        existingUpdateIdsAllOrSelected.where(isNotTrackOnly).toList();
+    newInstallIdsAllOrSelected =
+        newInstallIdsAllOrSelected.where(isNotTrackOnly).toList();
 
     if (settingsProvider.pinUpdates) {
       var temp = [];

@@ -298,10 +298,12 @@ class SettingsProvider with ChangeNotifier {
       List<App> changedApps = appsProvider
           .getAppValues()
           .map((a) {
+            if (!a.app.categories.any((c) => !cats.keys.contains(c))) {
+              return null;
+            }
             var app = a.app.deepCopy();
-            var n1 = app.categories.length;
             app.categories.removeWhere((c) => !cats.keys.contains(c));
-            return n1 > app.categories.length ? app : null;
+            return app;
           })
           .where((element) => element != null)
           .map((e) => e as App)
@@ -465,15 +467,6 @@ class SettingsProvider with ChangeNotifier {
 
   set lastCompletedBGCheckTime(DateTime val) {
     prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
-    notifyListeners();
-  }
-
-  bool get showDebugOpts {
-    return prefs?.getBool('showDebugOpts') ?? false;
-  }
-
-  set showDebugOpts(bool val) {
-    prefs?.setBool('showDebugOpts', val);
     notifyListeners();
   }
 

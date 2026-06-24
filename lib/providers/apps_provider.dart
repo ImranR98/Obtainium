@@ -18,7 +18,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/directAPKLink.dart';
 import 'package:obtainium/app_sources/html.dart';
@@ -1189,10 +1188,9 @@ class AppsProvider with ChangeNotifier {
         apkUrl = await confirmAppFileUrl(apps[id]!.app, context, false);
       }
       if (apkUrl != null) {
+        var url = apkUrl.value;
         int urlInd = apps[id]!.app.apkUrls
-            .map((e) => e.value)
-            .toList()
-            .indexOf(apkUrl.value);
+            .indexWhere((e) => e.value == url);
         if (urlInd >= 0 && urlInd != apps[id]!.app.preferredApkIndex) {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApps([apps[id]!.app]);
@@ -1820,7 +1818,6 @@ class AppsProvider with ChangeNotifier {
     bool attemptToCorrectInstallStatus = true,
     bool onlyIfExists = true,
   }) async {
-    attemptToCorrectInstallStatus = attemptToCorrectInstallStatus;
     await Future.wait(
       apps.map((a) async {
         var app = a.deepCopy();
