@@ -88,13 +88,6 @@ class AddAppPageState extends State<AddAppPage> {
                   source.combinedAppSpecificSettingFormItems,
                 )
               : {};
-          var sp = context.read<SettingsProvider>();
-          if (sp.includePrereleasesByDefault) {
-            additionalSettings['includePrereleases'] = true;
-          }
-          if (sp.shizukuPretendToBeGooglePlay) {
-            additionalSettings['shizukuPretendToBeGooglePlay'] = true;
-          }
           additionalSettingsValid = source != null
               ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
               : true;
@@ -567,12 +560,29 @@ class AddAppPageState extends State<AddAppPage> {
           ),
         ),
         const SizedBox(height: 16),
-        GeneratedForm(
+        () {
+          var formItems = pickedSource!.combinedAppSpecificSettingFormItems;
+          if (settingsProvider.includePrereleasesByDefault ||
+              settingsProvider.shizukuPretendToBeGooglePlay) {
+            for (var row in formItems) {
+              for (var item in row) {
+                if (item.key == 'includePrereleases' &&
+                    settingsProvider.includePrereleasesByDefault) {
+                  item.defaultValue = true;
+                }
+                if (item.key == 'shizukuPretendToBeGooglePlay' &&
+                    settingsProvider.shizukuPretendToBeGooglePlay) {
+                  item.defaultValue = true;
+                }
+              }
+            }
+          }
+          return GeneratedForm(
           key: Key(
             '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}',
           ),
           items: [
-            ...pickedSource!.combinedAppSpecificSettingFormItems,
+            ...formItems,
             ...(pickedSourceOverride != null
                 ? pickedSource!.sourceConfigSettingFormItems.map((e) => [e])
                 : []),
@@ -585,7 +595,8 @@ class AddAppPageState extends State<AddAppPage> {
               });
             }
           },
-        ),
+        );
+      }(),
         Column(
           children: [
             const SizedBox(height: 16),
