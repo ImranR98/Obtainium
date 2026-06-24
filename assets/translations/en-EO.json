@@ -4,7 +4,7 @@
     "noVersionFound": "Ne eblas determini la eldonversion",
     "urlMatchesNoSource": "La URL ne konformas al konata fonto",
     "cantInstallOlderVersion": "Ne eblas instali malnovan version de la Apo",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

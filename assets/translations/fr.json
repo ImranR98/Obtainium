@@ -4,7 +4,7 @@
     "noVersionFound": "Impossible de déterminer la version de la release",
     "urlMatchesNoSource": "L'URL ne correspond à aucune source connue",
     "cantInstallOlderVersion": "Impossible d'installer une version antérieure de l'application",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

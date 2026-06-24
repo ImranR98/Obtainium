@@ -4,7 +4,7 @@
     "noVersionFound": "Sürüm bulunamadı",
     "urlMatchesNoSource": "URL, bilinen bir kaynakla eşleşmiyor",
     "cantInstallOlderVersion": "Uygulamanın eski bir sürümü yüklenemez",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

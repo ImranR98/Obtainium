@@ -543,10 +543,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         height16,
                         SettingsToggleRow(
-                          label: tr('showOlderVersionWarning'),
-                          value: settingsProvider.showOlderVersionWarning,
+                          label: tr('showAppDowngradeError'),
+                          value: settingsProvider.showAppDowngradeError,
                           onChanged: (value) {
-                            settingsProvider.showOlderVersionWarning = value;
+                            settingsProvider.showAppDowngradeError = value;
                           },
                         ),
                         height16,

@@ -4,7 +4,7 @@
     "noVersionFound": "Nem sikerült meghatározni a kiadás verzióját",
     "urlMatchesNoSource": "A webcím nem egyezik egyetlen ismert forrással sem",
     "cantInstallOlderVersion": "Nem telepíthető egy alkalmazás régebbi verziója",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

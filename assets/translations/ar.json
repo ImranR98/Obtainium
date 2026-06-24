@@ -4,7 +4,7 @@
     "noVersionFound": "تعذر تحديد إصدار التطبيق",
     "urlMatchesNoSource": "الرابط لا يتطابق مع مصدر معروف",
     "cantInstallOlderVersion": "لا يمكن تثبيت إصدار أقدم من التطبيق",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

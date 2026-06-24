@@ -346,12 +346,12 @@ class SettingsProvider with ChangeNotifier {
     }
   }
 
-  bool get showOlderVersionWarning {
-    return prefs?.getBool('showOlderVersionWarning') ?? true;
+  bool get showAppDowngradeError {
+    return prefs?.getBool('showAppDowngradeError') ?? true;
   }
 
-  set showOlderVersionWarning(bool show) {
-    prefs?.setBool('showOlderVersionWarning', show);
+  set showAppDowngradeError(bool show) {
+    prefs?.setBool('showAppDowngradeError', show);
     notifyListeners();
   }
 

@@ -4,7 +4,7 @@
     "noVersionFound": "릴리스 버전을 결정할 수 없습니다",
     "urlMatchesNoSource": "URL이 알려진 소스와 일치하지 않습니다",
     "cantInstallOlderVersion": "앱의 이전 버전을 설치할 수 없습니다",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

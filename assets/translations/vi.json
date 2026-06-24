@@ -4,7 +4,7 @@
     "noVersionFound": "Không thể xác định phiên bản phát hành",
     "urlMatchesNoSource": "URL không khớp với nguồn đã biết",
     "cantInstallOlderVersion": "Không thể cài đặt phiên bản cũ hơn của Ứng dụng",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

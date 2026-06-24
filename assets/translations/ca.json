@@ -4,7 +4,7 @@
     "noVersionFound": "No s'ha pogut determinar la versió",
     "urlMatchesNoSource": "L'URL no coincideix amb cap font coneguda",
     "cantInstallOlderVersion": "No és possible instal·lar una versió més antiga de l'aplicació",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

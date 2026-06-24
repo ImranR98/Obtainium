@@ -4,7 +4,7 @@
     "noVersionFound": "Nie udało się określić wersji wydania",
     "urlMatchesNoSource": "Adres URL nie pasuje do znanego źródła",
     "cantInstallOlderVersion": "Nie można zainstalować starszej wersji aplikacji",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

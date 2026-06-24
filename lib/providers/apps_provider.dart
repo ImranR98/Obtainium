@@ -68,12 +68,12 @@ class AppInMemory {
         : installedInfo?.signingInfo?.signingCertificateHistory;
 
     return signatures?.map((signature) {
-      final digest = sha256.convert(signature);
-      return digest.bytes
-        .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
-        .join(':');
-      }).toList() ??
-      [];
+          final digest = sha256.convert(signature);
+          return digest.bytes
+              .map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase())
+              .join(':');
+        }).toList() ??
+        [];
   }
 }
 
@@ -510,8 +510,8 @@ Future<PackageInfo?> getInstalledInfo(
   if (packageName != null) {
     try {
       return await pm.getPackageInfo(
-          packageName: packageName,
-          flags: packageInfoFlags
+        packageName: packageName,
+        flags: packageInfoFlags,
       );
     } catch (e) {
       if (printErr) {
@@ -711,10 +711,12 @@ class AppsProvider with ChangeNotifier {
         notificationsProvider?.notify(notif);
       }
       PackageInfo? newInfo;
-      var originalAssetName = app.apkUrls[app.preferredApkIndex].key.toLowerCase();
+      var originalAssetName = app.apkUrls[app.preferredApkIndex].key
+          .toLowerCase();
       var isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
       var isXAPK = downloadedFile.path.toLowerCase().endsWith('.xapk');
-      var isTarball = originalAssetName.endsWith('.tar.gz') ||
+      var isTarball =
+          originalAssetName.endsWith('.tar.gz') ||
           originalAssetName.endsWith('.tgz') ||
           originalAssetName.endsWith('.tar.bz2') ||
           originalAssetName.endsWith('.tar.xz');
@@ -750,9 +752,13 @@ class AppsProvider with ChangeNotifier {
         }
 
         String? filterRegEx;
-        if (isTarball && app.additionalSettings['tarballedApkFilterRegEx']?.isNotEmpty == true) {
+        if (isTarball &&
+            app.additionalSettings['tarballedApkFilterRegEx']?.isNotEmpty ==
+                true) {
           filterRegEx = app.additionalSettings['tarballedApkFilterRegEx'];
-        } else if (!isTarball && app.additionalSettings['zippedApkFilterRegEx']?.isNotEmpty == true) {
+        } else if (!isTarball &&
+            app.additionalSettings['zippedApkFilterRegEx']?.isNotEmpty ==
+                true) {
           filterRegEx = app.additionalSettings['zippedApkFilterRegEx'];
         }
         if (filterRegEx != null) {
@@ -815,12 +821,7 @@ class AppsProvider with ChangeNotifier {
         } else {
           dirType = DownloadedDirType.ZIP;
         }
-        return DownloadedDir(
-          app.id,
-          downloadedFile,
-          apkDir!,
-          dirType,
-        );
+        return DownloadedDir(app.id, downloadedFile, apkDir!, dirType);
       }
     } finally {
       notificationsProvider?.cancel(notifId);
@@ -918,7 +919,10 @@ class AppsProvider with ChangeNotifier {
     );
   }
 
-  Future<void> extractTarballFile(String filePath, String destinationPath) async {
+  Future<void> extractTarballFile(
+    String filePath,
+    String destinationPath,
+  ) async {
     final bytes = await File(filePath).readAsBytes();
     List<int> decompressed;
 
@@ -926,10 +930,19 @@ class AppsProvider with ChangeNotifier {
     if (bytes.length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b) {
       // gzip
       decompressed = archive.GZipDecoder().decodeBytes(bytes);
-    } else if (bytes.length >= 3 && bytes[0] == 0x42 && bytes[1] == 0x5a && bytes[2] == 0x68) {
+    } else if (bytes.length >= 3 &&
+        bytes[0] == 0x42 &&
+        bytes[1] == 0x5a &&
+        bytes[2] == 0x68) {
       // bzip2 ('BZh')
       decompressed = archive.BZip2Decoder().decodeBytes(bytes);
-    } else if (bytes.length >= 6 && bytes[0] == 0xfd && bytes[1] == 0x37 && bytes[2] == 0x7a && bytes[3] == 0x58 && bytes[4] == 0x5a && bytes[5] == 0x00) {
+    } else if (bytes.length >= 6 &&
+        bytes[0] == 0xfd &&
+        bytes[1] == 0x37 &&
+        bytes[2] == 0x7a &&
+        bytes[3] == 0x58 &&
+        bytes[4] == 0x5a &&
+        bytes[5] == 0x00) {
       // xz
       decompressed = archive.XZDecoder().decodeBytes(bytes);
     } else {
@@ -1048,7 +1061,7 @@ class AppsProvider with ChangeNotifier {
     if (appInfo != null &&
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
-      if (settingsProvider.showOlderVersionWarning) {
+      if (settingsProvider.showAppDowngradeError) {
         throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
       }
     }
@@ -1249,8 +1262,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (apkUrl != null) {
         var url = apkUrl.value;
-        int urlInd = apps[id]!.app.apkUrls
-            .indexWhere((e) => e.value == url);
+        int urlInd = apps[id]!.app.apkUrls.indexWhere((e) => e.value == url);
         if (urlInd >= 0 && urlInd != apps[id]!.app.preferredApkIndex) {
           apps[id]!.app.preferredApkIndex = urlInd;
           await saveApps([apps[id]!.app]);
@@ -1281,8 +1293,10 @@ class AppsProvider with ChangeNotifier {
     notificationsProvider =
         notificationsProvider ?? context?.read<NotificationsProvider>();
 
-    var (appsToInstall, trackOnlyAppsToUpdate) =
-        await _resolveAppsToInstall(appIds, context);
+    var (appsToInstall, trackOnlyAppsToUpdate) = await _resolveAppsToInstall(
+      appIds,
+      context,
+    );
 
     // Mark all specified track-only apps as latest
     saveApps(

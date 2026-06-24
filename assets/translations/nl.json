@@ -4,7 +4,7 @@
     "noVersionFound": "Geen versie kunnen bepalen",
     "urlMatchesNoSource": "URL komt niet overeen met bekende bron",
     "cantInstallOlderVersion": "Kan geen oudere versie van de app installeren",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

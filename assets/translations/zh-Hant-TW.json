@@ -4,7 +4,7 @@
     "noVersionFound": "無法判定版本號",
     "urlMatchesNoSource": "網址不符合任何已知的來源",
     "cantInstallOlderVersion": "無法安裝舊版應用程式",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",
