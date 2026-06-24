@@ -17,28 +17,40 @@
 	</li>
 	<li>Andere – Allgemein:
 		<ul>
-			<li>alternative Stores</li>
+			<li>alternative Stores
 				<ul>
 				<li>CoolApk</li>
 				<li>Tencent App Store</li>
 				<li>RuStore</li>
 				</ul>
-			<li>OEM-Stores</li>
+			</li>
+			<li>OEM-Stores
 				<ul>
 				<li>Huawei AppGallery</li>
 				<li>vivo App Store (China)</li>
 				</ul>
-			<li>Mods</li>
+			</li>
+			<li>Indie
+				<ul>
+				<li>itch.io</li>
+				</ul>
+			</li>
+			<li>Mods
 				<ul>
 				<li>Farsroid</li>
+				<li>RockMods (nur Updatebenachrichtigungen)</li>
 				</ul>
-			<li>Reupload-Stores</li>
+			</li>
+			<li>Reupload-Stores
 				<ul>
-				<li>APKMirror (nur Updatebenachrchtigungen; kein APK-Download möglich)</li>
+				<li>APKMirror (nur Updatebenachrichtigungen; kein APK-Download möglich)</li>
 				<li>APKPure</li>
 				<li>Aptoide</li>
+				<li>LiteAPKs</li>
+				<li>APK4Free</li>
 				<li>Uptodown</li>
 				</ul>
+			</li>
 			<li>Jenkins Jobs</li>
 		</ul>
 	</li>
@@ -48,7 +60,8 @@
 			<li>Neutron Code</li>
 		</ul>
 	</li>
-	<li>„HTML“ (Fallback): Jede andere URL, die eine HTML-Seite mit Links zu APK-Dateien zurückgibt.</li>
+	<li>Direkter APK-Link</li>
+	<li>„HTML" (Fallback): Jede andere URL, die eine HTML-Seite mit Links zu APK-Dateien zurückgibt.</li>
 </ul>
 <p>
 	<b>Einschränkungen:</b>
