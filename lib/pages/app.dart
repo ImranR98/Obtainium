@@ -358,7 +358,10 @@ class _AppPageState extends State<AppPage> {
         infoLines = '${tr('xIsTrackOnly', args: [tr('app')])}\n$infoLines';
       }
       if (installedVersionIsEstimate) {
-        infoLines = '${tr('pseudoVersionInUse')}\n$infoLines';
+        var realVersion = app?.installedInfo?.versionName;
+        infoLines = realVersion != null
+            ? '${tr('pseudoVersionInUse')} (OS installed $realVersion)\n$infoLines'
+            : '${tr('pseudoVersionInUse')}\n$infoLines';
       }
       if ((app?.app.apkUrls.length ?? 0) > 0) {
         infoLines =
