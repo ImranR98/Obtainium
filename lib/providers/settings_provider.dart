@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -502,7 +503,7 @@ class SettingsProvider with ChangeNotifier {
       try {
         newOneWayDataSyncDir = (await saf.openDocumentTree());
       } catch (_) {
-        // No file picker available (e.g. DocumentsUI disabled)
+        throw ObtainiumError(tr('noFilePickerAvailable'));
       }
     }
     if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
