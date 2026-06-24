@@ -48,10 +48,10 @@ packages:
     dependency: "direct main"
     description:
       name: app_links
-      sha256: "4ec328cd9fd51fd0e7eb8870a9612c1fde0f091901932238c4f4e60b5f7f1315"
+      sha256: "9d3c82f634c7f5b5c752f7ee46b67724246043f5e1d5fc1b433dd5b38d780dbe"
       url: "https://pub.dev"
     source: hosted
-    version: "7.1.2"
+    version: "7.2.0"
   app_links_linux:
     dependency: transitive
     description:
@@ -80,10 +80,10 @@ packages:
     dependency: "direct main"
     description:
       name: archive
-      sha256: cb6a278ef2dbb298455e1a713bda08524a175630ec643a242c399c932a0a1f7d
+      sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
       url: "https://pub.dev"
     source: hosted
-    version: "3.6.1"
+    version: "4.0.9"
   args:
     dependency: transitive
     description:
@@ -349,10 +349,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_archive
-      sha256: "4797e47189148959f3163988b19e674c1d436e1f19d12b1f2351ad03561dd5ea"
+      sha256: d07dcd976954d997e547980cbdc01fe444e77cce062866735bc3b5a1da39f2c5
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.0"
+    version: "6.3.1"
   flutter_charset_detector:
     dependency: "direct main"
     description:
@@ -824,6 +824,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  posix:
+    dependency: transitive
+    description:
+      name: posix
+      sha256: "185ef7606574f789b40f289c233efa52e96dead518aed988e040a10737febb07"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.5.0"
   provider:
     dependency: "direct main"
     description:
