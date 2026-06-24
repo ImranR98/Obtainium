@@ -105,31 +105,39 @@ void showChangeLogDialog(
 }
 
 Null Function()? getChangeLogFn(BuildContext context, App app) {
-  AppSource appSource = SourceProvider().getSource(
-    app.url,
-    overrideSource: app.overrideSource,
-  );
-  String? changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
+  String? changesUrl;
   String? changeLog = app.changeLog;
-  if (changeLog?.split('\n').length == 1) {
-    if (RegExp(
-      '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
-    ).hasMatch(changeLog!)) {
-      if (changesUrl == null) {
-        changesUrl = changeLog;
-        changeLog = null;
-      }
-    }
+  if (changeLog?.split('\n').length == 1 &&
+      RegExp(
+        '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
+      ).hasMatch(changeLog!)) {
+    changesUrl = changeLog;
+    changeLog = null;
   }
-  return (changeLog == null && changesUrl == null)
-      ? null
-      : () {
-          if (changeLog != null) {
-            showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
-          } else {
-            launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
-          }
-        };
+  if (changeLog == null && changesUrl == null) return null;
+  return () {
+    if (changesUrl == null) {
+      var appSource = SourceProvider().getSource(
+        app.url,
+        overrideSource: app.overrideSource,
+      );
+      changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
+    }
+    if (changeLog != null) {
+      showChangeLogDialog(
+        context,
+        app,
+        changesUrl,
+        SourceProvider().getSource(
+          app.url,
+          overrideSource: app.overrideSource,
+        ),
+        changeLog,
+      );
+    } else if (changesUrl != null) {
+      launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
+    }
+  };
 }
 
 class AppsPageState extends State<AppsPage> {
@@ -202,13 +210,26 @@ class AppsPageState extends State<AppsPage> {
 
     toggleAppSelected(App app) {
       setState(() {
-        if (selectedAppIds.map((e) => e).contains(app.id)) {
+        if (selectedAppIds.contains(app.id)) {
           selectedAppIds.removeWhere((a) => a == app.id);
         } else {
           selectedAppIds.add(app.id);
         }
       });
     }
+
+    final nameTokens = filter.nameFilter.isNotEmpty
+        ? filter.nameFilter
+            .split(' ')
+            .where((element) => element.trim().isNotEmpty)
+            .toList()
+        : const <String>[];
+    final authorTokens = filter.authorFilter.isNotEmpty
+        ? filter.authorFilter
+            .split(' ')
+            .where((element) => element.trim().isNotEmpty)
+            .toList()
+        : const <String>[];
 
     listedApps = listedApps.where((app) {
       if (app.app.installedVersion == app.app.latestVersion &&
@@ -218,25 +239,14 @@ class AppsPageState extends State<AppsPage> {
       if (app.app.installedVersion == null && !(filter.includeNonInstalled)) {
         return false;
       }
-      if (filter.nameFilter.isNotEmpty || filter.authorFilter.isNotEmpty) {
-        List<String> nameTokens = filter.nameFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-        List<String> authorTokens = filter.authorFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-
-        for (var t in nameTokens) {
-          if (!app.name.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
+      for (var t in nameTokens) {
+        if (!app.name.toLowerCase().contains(t.toLowerCase())) {
+          return false;
         }
-        for (var t in authorTokens) {
-          if (!app.author.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
+      }
+      for (var t in authorTokens) {
+        if (!app.author.toLowerCase().contains(t.toLowerCase())) {
+          return false;
         }
       }
       if (filter.idFilter.isNotEmpty) {
@@ -264,43 +274,39 @@ class AppsPageState extends State<AppsPage> {
       return true;
     }).toList();
 
-    listedApps.sort((a, b) {
-      int result = 0;
-      if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result = ((a.author + a.name).toLowerCase()).compareTo(
-          (b.author + b.name).toLowerCase(),
-        );
-      } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result = ((a.name + a.author).toLowerCase()).compareTo(
-          (b.name + b.author).toLowerCase(),
-        );
-      } else if (settingsProvider.sortColumn ==
-          SortColumnSettings.releaseDate) {
-        // Handle null dates: apps with unknown release dates are grouped at the end
-        final aDate = a.app.releaseDate;
-        final bDate = b.app.releaseDate;
-        final isDescending =
-            settingsProvider.sortOrder == SortOrderSettings.descending;
-        if (aDate == null && bDate == null) {
-          // Both null: sort by name for consistency
-          result = ((a.name + a.author).toLowerCase()).compareTo(
-            (b.name + b.author).toLowerCase(),
-          );
-        } else if (aDate == null) {
-          // a has no date, always push to end regardless of sort direction
-          result = isDescending ? -1 : 1;
-        } else if (bDate == null) {
-          // b has no date, always push to end regardless of sort direction
-          result = isDescending ? 1 : -1;
-        } else {
-          result = aDate.compareTo(bDate);
-        }
+    if (settingsProvider.sortColumn != SortColumnSettings.added) {
+      final isDesc =
+          settingsProvider.sortOrder == SortOrderSettings.descending;
+      if (settingsProvider.sortColumn == SortColumnSettings.releaseDate) {
+        var entries = listedApps
+            .map((a) => MapEntry(a.app.releaseDate, a))
+            .toList()
+          ..sort((a, b) {
+            final aDate = a.key;
+            final bDate = b.key;
+            if (aDate == null && bDate == null) return 0;
+            if (aDate == null) return isDesc ? -1 : 1;
+            if (bDate == null) return isDesc ? 1 : -1;
+            return aDate.compareTo(bDate);
+          });
+        listedApps = entries.map((e) => e.value).toList();
+      } else {
+        String keyFn(AppInMemory a) => switch (settingsProvider.sortColumn) {
+          SortColumnSettings.authorName =>
+            (a.author + a.name).toLowerCase(),
+          SortColumnSettings.nameAuthor =>
+            (a.name + a.author).toLowerCase(),
+          _ => '',
+        };
+        var entries = listedApps
+            .map((a) => MapEntry(keyFn(a), a))
+            .toList()
+          ..sort((a, b) => (a.key as String).compareTo(b.key as String));
+        listedApps = entries.map((e) => e.value).toList();
       }
-      return result;
-    });
-
-    if (settingsProvider.sortOrder == SortOrderSettings.descending) {
-      listedApps = listedApps.reversed.toList();
+      if (isDesc) {
+        listedApps = listedApps.reversed.toList();
+      }
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
@@ -309,7 +315,7 @@ class AppsPageState extends State<AppsPage> {
         .where(
           (element) => selectedAppIds.isEmpty
               ? listedApps.where((a) => a.app.id == element).isNotEmpty
-              : selectedAppIds.map((e) => e).contains(element),
+              : selectedAppIds.contains(element),
         )
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
@@ -317,7 +323,7 @@ class AppsPageState extends State<AppsPage> {
         .where(
           (element) => selectedAppIds.isEmpty
               ? listedApps.where((a) => a.app.id == element).isNotEmpty
-              : selectedAppIds.map((e) => e).contains(element),
+              : selectedAppIds.contains(element),
         )
         .toList();
 
@@ -416,26 +422,25 @@ class AppsPageState extends State<AppsPage> {
               ),
             ),
           ),
-        if (refreshingSince != null || appsProvider.loadingApps)
-          SliverToBoxAdapter(
-            child: LinearProgressIndicator(
-              value: appsProvider.loadingApps
-                  ? null
-                  : appsProvider
-                            .getAppValues()
-                            .where(
-                              (element) =>
-                                  !(element.app.lastUpdateCheck?.isBefore(
-                                        refreshingSince!,
-                                      ) ??
-                                      true),
-                            )
-                            .length /
-                        (appsProvider.apps.isNotEmpty
-                            ? appsProvider.apps.length
-                            : 1),
+          if (refreshingSince != null || appsProvider.loadingApps)
+            SliverToBoxAdapter(
+              child: LinearProgressIndicator(
+                value: appsProvider.loadingApps
+                    ? null
+                    : appsProvider.apps.values
+                              .where(
+                                (element) =>
+                                    !(element.app.lastUpdateCheck?.isBefore(
+                                          refreshingSince!,
+                                        ) ??
+                                        true),
+                              )
+                              .length /
+                          (appsProvider.apps.isNotEmpty
+                              ? appsProvider.apps.length
+                              : 1),
+              ),
             ),
-          ),
       ];
     }
 
@@ -648,7 +653,6 @@ class AppsPageState extends State<AppsPage> {
             listedApps[index].app.pinned ? 0.2 : 0.1,
           ),
           selected: selectedAppIds
-              .map((e) => e)
               .contains(listedApps[index].app.id),
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
