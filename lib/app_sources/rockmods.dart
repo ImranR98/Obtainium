@@ -48,18 +48,24 @@ class RockMods extends AppSource {
       String? appVersion;
       String? appAuthor;
 
-      var jsonLdMatch = RegExp(
+      var jsonLdMatches = RegExp(
         '<script type="application/ld\\+json">(.*?)</script>',
         dotAll: true,
-      ).firstMatch(res.body);
+      ).allMatches(res.body);
 
-      if (jsonLdMatch != null) {
-        var json = jsonDecode(jsonLdMatch.group(1)!);
-        if (json is Map && json['@type'] == 'SoftwareApplication') {
-          appName = (json['name'] as String?)?.trim();
-          appVersion = (json['softwareVersion'] as String?)?.trim();
-          appAuthor = (json['author'] as Map?)?['name'] as String?;
+      Map<dynamic, dynamic>? appJson;
+      for (var m in jsonLdMatches) {
+        var j = jsonDecode(m.group(1)!);
+        if (j is Map && j['@type'] == 'SoftwareApplication') {
+          appJson = j;
+          break;
         }
+      }
+
+      if (appJson != null) {
+        appName = (appJson['name'] as String?)?.trim();
+        appVersion = (appJson['softwareVersion'] as String?)?.trim();
+        appAuthor = (appJson['author'] as Map?)?['name'] as String?;
       }
 
       if (appName == null || appName.isEmpty) {
