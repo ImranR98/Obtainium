@@ -6,7 +6,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -15,7 +14,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
+String obtainiumTempId = 'imranr98_obtainium_github.com';
 String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 Color obtainiumThemeColor = const Color(0xFF6438B5);

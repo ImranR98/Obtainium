@@ -160,21 +160,24 @@ class _HomePageState extends State<HomePage> {
 
     goToAddApp(String data) async {
       switchToPage(1);
+      var attempts = 0;
       while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
               ?.currentState ==
           null) {
-        await Future.delayed(const Duration(microseconds: 1));
+        if (++attempts > 50) return;
+        await Future.delayed(const Duration(milliseconds: 100));
       }
       (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
           ?.linkFn(data);
     }
 
     goToExistingApp(String appId) async {
-      // Go to Apps page
       switchToPage(0);
+      var attempts = 0;
       while ((pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState ==
           null) {
-        await Future.delayed(const Duration(microseconds: 1));
+        if (++attempts > 50) return;
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       // Navigate to the app
