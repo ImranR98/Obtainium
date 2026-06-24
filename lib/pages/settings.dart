@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -205,17 +206,12 @@ class _SettingsPageState extends State<SettingsPage> {
     var useMaterialThemeSwitch = FutureBuilder(
       builder: (ctx, val) {
         return ((val.data?.version.sdkInt ?? 0) >= 31)
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(child: Text(tr('useMaterialYou'))),
-                  Switch(
-                    value: settingsProvider.useMaterialYou,
-                    onChanged: (value) {
-                      settingsProvider.useMaterialYou = value;
-                    },
-                  ),
-                ],
+            ? SettingsToggleRow(
+                label: tr('useMaterialYou'),
+                value: settingsProvider.useMaterialYou,
+                onChanged: (value) {
+                  settingsProvider.useMaterialYou = value;
+                },
               )
             : const SizedBox.shrink();
       },
@@ -399,10 +395,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     const height8 = SizedBox(height: 8);
 
-    const height16 = SizedBox(height: 16);
-
-    const height32 = SizedBox(height: 32);
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
@@ -416,13 +408,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          tr('updates'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+                        SettingsSectionHeader(title: tr('updates')),
                         //intervalDropdown,
                         height16,
                         if (showIntervalLabel)
@@ -443,46 +429,19 @@ class _SettingsPageState extends State<SettingsPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              tr(
-                                                'foregroundServiceExplanation',
-                                              ),
-                                            ),
-                                          ),
-                                          Switch(
-                                            value:
-                                                settingsProvider.useFGService,
-                                            onChanged: (value) {
-                                              settingsProvider.useFGService =
-                                                  value;
-                                            },
-                                          ),
-                                        ],
+                                      SettingsToggleRow(
+                                        label: tr('foregroundServiceExplanation'),
+                                        value: settingsProvider.useFGService,
+                                        onChanged: (value) {
+                                          settingsProvider.useFGService = value;
+                                        },
                                       ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              tr('enableBackgroundUpdates'),
-                                            ),
-                                          ),
-                                          Switch(
-                                            value: settingsProvider
-                                                .enableBackgroundUpdates,
-                                            onChanged: (value) {
-                                              settingsProvider
-                                                      .enableBackgroundUpdates =
-                                                  value;
-                                            },
-                                          ),
-                                        ],
+                                      SettingsToggleRow(
+                                        label: tr('enableBackgroundUpdates'),
+                                        value: settingsProvider.enableBackgroundUpdates,
+                                        onChanged: (value) {
+                                          settingsProvider.enableBackgroundUpdates = value;
+                                        },
                                       ),
                                       height8,
                                       Text(
@@ -503,50 +462,20 @@ class _SettingsPageState extends State<SettingsPage> {
                                         Column(
                                           children: [
                                             height16,
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                    tr('bgUpdatesOnWiFiOnly'),
-                                                  ),
-                                                ),
-                                                Switch(
-                                                  value: settingsProvider
-                                                      .bgUpdatesOnWiFiOnly,
-                                                  onChanged: (value) {
-                                                    settingsProvider
-                                                            .bgUpdatesOnWiFiOnly =
-                                                        value;
-                                                  },
-                                                ),
-                                              ],
+                                            SettingsToggleRow(
+                                              label: tr('bgUpdatesOnWiFiOnly'),
+                                              value: settingsProvider.bgUpdatesOnWiFiOnly,
+                                              onChanged: (value) {
+                                                settingsProvider.bgUpdatesOnWiFiOnly = value;
+                                              },
                                             ),
                                             height16,
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Flexible(
-                                                  child: Text(
-                                                    tr(
-                                                      'bgUpdatesWhileChargingOnly',
-                                                    ),
-                                                  ),
-                                                ),
-                                                Switch(
-                                                  value: settingsProvider
-                                                      .bgUpdatesWhileChargingOnly,
-                                                  onChanged: (value) {
-                                                    settingsProvider
-                                                            .bgUpdatesWhileChargingOnly =
-                                                        value;
-                                                  },
-                                                ),
-                                              ],
+                                            SettingsToggleRow(
+                                              label: tr('bgUpdatesWhileChargingOnly'),
+                                              value: settingsProvider.bgUpdatesWhileChargingOnly,
+                                              onChanged: (value) {
+                                                settingsProvider.bgUpdatesWhileChargingOnly = value;
+                                              },
                                             ),
                                           ],
                                         ),
@@ -557,178 +486,99 @@ class _SettingsPageState extends State<SettingsPage> {
                           future: DeviceInfoPlugin().androidInfo,
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('checkOnStart'))),
-                            Switch(
-                              value: settingsProvider.checkOnStart,
-                              onChanged: (value) {
-                                settingsProvider.checkOnStart = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('checkOnStart'),
+                          value: settingsProvider.checkOnStart,
+                          onChanged: (value) {
+                            settingsProvider.checkOnStart = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('checkUpdateOnDetailPage')),
-                            ),
-                            Switch(
-                              value: settingsProvider.checkUpdateOnDetailPage,
-                              onChanged: (value) {
-                                settingsProvider.checkUpdateOnDetailPage =
-                                    value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('checkUpdateOnDetailPage'),
+                          value: settingsProvider.checkUpdateOnDetailPage,
+                          onChanged: (value) {
+                            settingsProvider.checkUpdateOnDetailPage = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                tr('onlyCheckInstalledOrTrackOnlyApps'),
+                        SettingsToggleRow(
+                          label: tr('onlyCheckInstalledOrTrackOnlyApps'),
+                          value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+                          onChanged: (value) {
+                            settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('removeOnExternalUninstall'),
+                          value: settingsProvider.removeOnExternalUninstall,
+                          onChanged: (value) {
+                            settingsProvider.removeOnExternalUninstall = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('includePrereleasesByDefault'),
+                          value: settingsProvider.includePrereleasesByDefault,
+                          onChanged: (value) {
+                            settingsProvider.includePrereleasesByDefault = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('tactileFeedbackEnabled'),
+                          value: settingsProvider.tactileFeedbackEnabled,
+                          onChanged: (value) {
+                            settingsProvider.tactileFeedbackEnabled = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('showBatteryOptimizationPrompt'),
+                          value: settingsProvider.showBatteryOptimizationPrompt,
+                          onChanged: (value) {
+                            settingsProvider.showBatteryOptimizationPrompt = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('showOlderVersionWarning'),
+                          value: settingsProvider.showOlderVersionWarning,
+                          onChanged: (value) {
+                            settingsProvider.showOlderVersionWarning = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('parallelDownloads'),
+                          value: settingsProvider.parallelDownloads,
+                          onChanged: (value) {
+                            settingsProvider.parallelDownloads = value;
+                          },
+                        ),
+                        height16,
+                        SettingsToggleRow(
+                          label: tr('beforeNewInstallsShareToAppVerifier'),
+                          value: settingsProvider.beforeNewInstallsShareToAppVerifier,
+                          onChanged: (value) {
+                            settingsProvider.beforeNewInstallsShareToAppVerifier = value;
+                          },
+                          subtitle: InkWell(
+                            onTap: () {
+                              launchUrlString(
+                                'https://github.com/soupslurpr/AppVerifier',
+                                mode: LaunchMode.externalApplication,
+                              );
+                            },
+                            child: Text(
+                              tr('about'),
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                                fontSize: 12,
                               ),
                             ),
-                            Switch(
-                              value: settingsProvider
-                                  .onlyCheckInstalledOrTrackOnlyApps,
-                              onChanged: (value) {
-                                settingsProvider
-                                        .onlyCheckInstalledOrTrackOnlyApps =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('removeOnExternalUninstall')),
-                            ),
-                            Switch(
-                              value: settingsProvider.removeOnExternalUninstall,
-                              onChanged: (value) {
-                                settingsProvider.removeOnExternalUninstall =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('includePrereleasesByDefault'))),
-                            Switch(
-                              value: settingsProvider.includePrereleasesByDefault,
-                              onChanged: (value) {
-                                settingsProvider.includePrereleasesByDefault =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('tactileFeedbackEnabled'))),
-                            Switch(
-                              value: settingsProvider.tactileFeedbackEnabled,
-                              onChanged: (value) {
-                                settingsProvider.tactileFeedbackEnabled = value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('showBatteryOptimizationPrompt'))),
-                            Switch(
-                              value: settingsProvider.showBatteryOptimizationPrompt,
-                              onChanged: (value) {
-                                settingsProvider.showBatteryOptimizationPrompt =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('showOlderVersionWarning'))),
-                            Switch(
-                              value: settingsProvider.showOlderVersionWarning,
-                              onChanged: (value) {
-                                settingsProvider.showOlderVersionWarning =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('parallelDownloads'))),
-                            Switch(
-                              value: settingsProvider.parallelDownloads,
-                              onChanged: (value) {
-                                settingsProvider.parallelDownloads = value;
-                              },
-                            ),
-                          ],
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    tr('beforeNewInstallsShareToAppVerifier'),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      launchUrlString(
-                                        'https://github.com/soupslurpr/AppVerifier',
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                    },
-                                    child: Text(
-                                      tr('about'),
-                                      style: const TextStyle(
-                                        decoration: TextDecoration.underline,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: settingsProvider
-                                  .beforeNewInstallsShareToAppVerifier,
-                              onChanged: (value) {
-                                settingsProvider
-                                        .beforeNewInstallsShareToAppVerifier =
-                                    value;
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                         height16,
                         Row(
@@ -774,39 +624,18 @@ class _SettingsPageState extends State<SettingsPage> {
                           ],
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('shizukuPretendToBeGooglePlay')),
-                            ),
-                            Switch(
-                              value:
-                                  settingsProvider.shizukuPretendToBeGooglePlay,
-                              onChanged: (value) {
-                                settingsProvider.shizukuPretendToBeGooglePlay =
-                                    value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('shizukuPretendToBeGooglePlay'),
+                          value: settingsProvider.shizukuPretendToBeGooglePlay,
+                          onChanged: (value) {
+                            settingsProvider.shizukuPretendToBeGooglePlay = value;
+                          },
                         ),
                         height32,
-                        Text(
-                          tr('sourceSpecific'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+                        SettingsSectionHeader(title: tr('sourceSpecific')),
                         ...sourceSpecificFields,
                         height32,
-                        Text(
-                          tr('appearance'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+                        SettingsSectionHeader(title: tr('appearance')),
                         DropdownButtonFormField(
                           decoration: InputDecoration(labelText: tr('theme')),
                           value: settingsProvider.theme,
@@ -835,17 +664,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           followSystemThemeExplanation,
                         height16,
                         if (settingsProvider.theme != ThemeSettings.light)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(child: Text(tr('useBlackTheme'))),
-                              Switch(
-                                value: settingsProvider.useBlackTheme,
-                                onChanged: (value) {
-                                  settingsProvider.useBlackTheme = value;
-                                },
-                              ),
-                            ],
+                          SettingsToggleRow(
+                            label: tr('useBlackTheme'),
+                            value: settingsProvider.useBlackTheme,
+                            onChanged: (value) {
+                              settingsProvider.useBlackTheme = value;
+                            },
                           ),
                         height8,
                         useMaterialThemeSwitch,
@@ -896,139 +720,81 @@ class _SettingsPageState extends State<SettingsPage> {
                           future: DeviceInfoPlugin().androidInfo,
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('showWebInAppView'))),
-                            Switch(
-                              value: settingsProvider.showAppWebpage,
-                              onChanged: (value) {
-                                settingsProvider.showAppWebpage = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('showWebInAppView'),
+                          value: settingsProvider.showAppWebpage,
+                          onChanged: (value) {
+                            settingsProvider.showAppWebpage = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('pinUpdates'))),
-                            Switch(
-                              value: settingsProvider.pinUpdates,
-                              onChanged: (value) {
-                                settingsProvider.pinUpdates = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('pinUpdates'),
+                          value: settingsProvider.pinUpdates,
+                          onChanged: (value) {
+                            settingsProvider.pinUpdates = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('moveNonInstalledAppsToBottom')),
-                            ),
-                            Switch(
-                              value: settingsProvider.buryNonInstalled,
-                              onChanged: (value) {
-                                settingsProvider.buryNonInstalled = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('moveNonInstalledAppsToBottom'),
+                          value: settingsProvider.buryNonInstalled,
+                          onChanged: (value) {
+                            settingsProvider.buryNonInstalled = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('groupByCategory'))),
-                            Switch(
-                              value: settingsProvider.groupByCategory,
-                              onChanged: (value) {
-                                settingsProvider.groupByCategory = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('groupByCategory'),
+                          value: settingsProvider.groupByCategory,
+                          onChanged: (value) {
+                            settingsProvider.groupByCategory = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('dontShowTrackOnlyWarnings')),
-                            ),
-                            Switch(
-                              value: settingsProvider.hideTrackOnlyWarning,
-                              onChanged: (value) {
-                                settingsProvider.hideTrackOnlyWarning = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('dontShowTrackOnlyWarnings'),
+                          value: settingsProvider.hideTrackOnlyWarning,
+                          onChanged: (value) {
+                            settingsProvider.hideTrackOnlyWarning = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Text(tr('dontShowAPKOriginWarnings')),
-                            ),
-                            Switch(
-                              value: settingsProvider.hideAPKOriginWarning,
-                              onChanged: (value) {
-                                settingsProvider.hideAPKOriginWarning = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('dontShowAPKOriginWarnings'),
+                          value: settingsProvider.hideAPKOriginWarning,
+                          onChanged: (value) {
+                            settingsProvider.hideAPKOriginWarning = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('disablePageTransitions'))),
-                            Switch(
-                              value: settingsProvider.disablePageTransitions,
-                              onChanged: (value) {
-                                settingsProvider.disablePageTransitions = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('disablePageTransitions'),
+                          value: settingsProvider.disablePageTransitions,
+                          onChanged: (value) {
+                            settingsProvider.disablePageTransitions = value;
+                          },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('reversePageTransitions'))),
-                            Switch(
-                              value: settingsProvider.reversePageTransitions,
-                              onChanged: settingsProvider.disablePageTransitions
-                                  ? null
-                                  : (value) {
-                                      settingsProvider.reversePageTransitions =
-                                          value;
-                                    },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('reversePageTransitions'),
+                          value: settingsProvider.reversePageTransitions,
+                          onChanged: settingsProvider.disablePageTransitions
+                              ? null
+                              : (value) {
+                                  settingsProvider.reversePageTransitions = value;
+                                },
                         ),
                         height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('highlightTouchTargets'))),
-                            Switch(
-                              value: settingsProvider.highlightTouchTargets,
-                              onChanged: (value) {
-                                settingsProvider.highlightTouchTargets = value;
-                              },
-                            ),
-                          ],
+                        SettingsToggleRow(
+                          label: tr('highlightTouchTargets'),
+                          value: settingsProvider.highlightTouchTargets,
+                          onChanged: (value) {
+                            settingsProvider.highlightTouchTargets = value;
+                          },
                         ),
                         height32,
-                        Text(
-                          tr('categories'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+                        SettingsSectionHeader(title: tr('categories')),
                         height16,
                         const CategoryEditorSelector(
                           showLabelWhenNotEmpty: false,
