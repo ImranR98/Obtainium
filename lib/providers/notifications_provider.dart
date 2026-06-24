@@ -68,7 +68,9 @@ class SilentUpdateNotification extends ObtainiumNotification {
         tr('appsUpdatedNotifDescription'),
         Importance.defaultImportance,
       ) {
-    message = updates.length == 1
+    message = updates.isEmpty
+        ? ''
+        : updates.length == 1
         ? tr(
             succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
             args: [updates[0].finalName, updates[0].latestVersion],
@@ -92,7 +94,9 @@ class SilentUpdateAttemptNotification extends ObtainiumNotification {
         tr('appsPossiblyUpdatedNotifDescription'),
         Importance.defaultImportance,
       ) {
-    message = updates.length == 1
+    message = updates.isEmpty
+        ? ''
+        : updates.length == 1
         ? tr(
             'xWasPossiblyUpdatedToY',
             args: [updates[0].finalName, updates[0].latestVersion],
