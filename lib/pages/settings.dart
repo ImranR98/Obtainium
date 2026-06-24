@@ -823,7 +823,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     IconButton(
                       onPressed: () {
                         launchUrlString(
-                          'https://wiki.obtainium.imranr.dev/',
+                          'https://wiki.obtainium.page/',
                           mode: LaunchMode.externalApplication,
                         );
                       },
