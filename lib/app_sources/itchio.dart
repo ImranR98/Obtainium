@@ -15,6 +15,7 @@ class ItchIO extends AppSource {
     hosts = ['itch.io'];
     name = 'itch.io';
     allowSubDomains = true;
+    appIdInferIsOptional = true;
   }
 
   @override
@@ -105,9 +106,11 @@ class ItchIO extends AppSource {
   /// This method has room for improvement; however, there is no defined
   /// standard on itch.io for declaring assets versions.
   String? _parseVersion(Document document) {
-    // Limit our search to specific areas.
-    // In the main page, use the section for the game information.
-    String searchArea = document.querySelector("div.page_widget")!.innerHtml;
+    // Limit our search to the main game info section.
+    var pageWidget = document.querySelector("div.page_widget");
+    if (pageWidget == null) return null;
+
+    String searchArea = pageWidget.innerHtml;
 
     List<String> supportedVersionStrings = [
       r'[vV](\d+\.\d+(?:\.\d+)*)',
@@ -125,11 +128,11 @@ class ItchIO extends AppSource {
 
     if (matches.isEmpty) return null;
 
-    // Manual comparison, up to 3 digits
     int compareVersions(String v1, String v2) {
       List<int> c1 = v1.split('.').map(int.parse).toList();
       List<int> c2 = v2.split('.').map(int.parse).toList();
-      for (int i = 0; i < 3; i++) {
+      int maxLen = c1.length > c2.length ? c1.length : c2.length;
+      for (int i = 0; i < maxLen; i++) {
         int p1 = i < c1.length ? c1[i] : 0;
         int p2 = i < c2.length ? c2[i] : 0;
         if (p1 != p2) return p1.compareTo(p2);
@@ -184,9 +187,12 @@ class ItchIO extends AppSource {
     Element? followSpan = document.querySelector(
       'span.on_follow span.full_label',
     );
-    var authorMatch = RegExp(r'Follow (.+)').firstMatch(followSpan!.text);
-    String? author = authorMatch?.group(1)?.trim();
-    return author ?? Uri.parse(standardUrl).host.split('.').first;
+    if (followSpan != null) {
+      var authorMatch = RegExp(r'Follow (.+)').firstMatch(followSpan.text);
+      String? author = authorMatch?.group(1)?.trim();
+      if (author != null) return author;
+    }
+    return Uri.parse(standardUrl).host.split('.').first;
   }
 
   /// Internal method for retrieving CSRF token and cookies for multiple requests.
@@ -196,11 +202,11 @@ class ItchIO extends AppSource {
   ) async {
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
 
-    var warmUpRes = await sourceRequest(baseUrl, {...additionalSettings});
+    var warmUpRes = await sourceRequest(baseUrl, additionalSettings);
     if (warmUpRes.statusCode != 200) return (null, null);
 
-    var csrfToken = _findCsrf(warmUpRes.body)!;
-    var cookies = warmUpRes.headers['set-cookie']!;
+    var csrfToken = _findCsrf(warmUpRes.body);
+    var cookies = warmUpRes.headers['set-cookie'];
     return (csrfToken, cookies);
   }
 
@@ -212,28 +218,25 @@ class ItchIO extends AppSource {
     String? initialCsrfToken,
     String? initialCookies,
   ) async {
-    // Start the setup
     final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
     var currentBody = initialBody;
 
-    String? csrfToken, cookies;
-
-    if (initialCsrfToken != null && initialCookies != null) {
-      (csrfToken, cookies) = (initialCsrfToken, initialCookies);
-    } else {
-      (csrfToken, cookies) = await _setupDownload(
-        standardUrl,
-        additionalSettings,
-      );
-    }
+    String? csrfToken = initialCsrfToken;
+    String? cookies = initialCookies;
 
     // Easy case: download buttons are on the first page.
-    // All next if checks are skipped.
     var ids = _extractDownload(currentBody);
 
-    // No buttons have been found, we need to "purchase"
+    // No buttons found, we need to bypass the "Name your price" lightbox
     if (ids.isEmpty) {
-      // Step 1: POST to /download_url bypass (e.g. for "Name your price")
+      if (csrfToken == null || cookies == null) {
+        (csrfToken, cookies) = await _setupDownload(
+          standardUrl,
+          additionalSettings,
+        );
+      }
+
+      // Step 1: POST to /download_url to generate a tokenized URL
       var bypassRes = await sourceRequest(
         '$baseUrl/download_url',
         {
@@ -246,16 +249,14 @@ class ItchIO extends AppSource {
         postBody: {'csrf_token': csrfToken},
       );
       if (bypassRes.statusCode == 200) {
-        // The call returns a JSON like: {"url":"download_url"}
+        // The call returns JSON: {"url": "download_url"}
         var tokenizedUrl = jsonDecode(bypassRes.body)['url'] as String?;
         if (tokenizedUrl != null) {
-          // We are now in GAME_URL/download/HASH
           var downloadPageRes = await sourceRequest(tokenizedUrl, {
             ...additionalSettings,
             'extraHeaders': {if (cookies != null) 'Cookie': cookies},
           });
           if (downloadPageRes.statusCode == 200) {
-            // We are now at the download page, with shiny buttons
             currentBody = downloadPageRes.body;
           }
         }
@@ -270,75 +271,80 @@ class ItchIO extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
+    try {
+      final String baseUrl = standardUrl.replaceAll(RegExp(r'/$'), '');
 
-    // Retrieve the body for parsing
-    var res = await sourceRequest(standardUrl, additionalSettings);
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
-    var body = res.body;
-
-    // Retrieve CSRF token and cookies
-    var (csrfToken, cookies) = await _setupDownload(
-      standardUrl,
-      additionalSettings,
-    );
-
-    // Metadata extraction
-    Document storePage = parse(body);
-    String title = _parseTitle(storePage);
-    String author = _parseAuthor(storePage, standardUrl);
-    String? dateVersion = _getDateVersion(storePage);
-    String? version = _parseVersion(storePage);
-
-    // Resolve tokenized download page
-    String downloadPageBody = await _getDownloadPageBody(
-      standardUrl,
-      additionalSettings,
-      body,
-      csrfToken,
-      cookies,
-    );
-
-    // Fetch better version from the download page, if any
-    Document downloadPage = parse(downloadPageBody);
-    dateVersion ??= _getDateVersion(downloadPage);
-    version ??= _parseVersion(downloadPage);
-
-    // Rules for defaulting the version
-    // 1. Nice version, if found
-    // 2. Date of last update
-    // 3. Fallback to 'latest'
-    version = version ?? dateVersion ?? 'latest';
-
-    // Create all relevant APK links
-    List<MapEntry<String, String>> apkLinks = [];
-
-    var downloadIds = _extractDownload(downloadPageBody);
-
-    for (var downloadInfo in downloadIds) {
-      var (name, id, isAndroid) = downloadInfo;
-
-      if (isAndroid) {
-        // Try retrieving the correct file
-        var realName = await _resolveRealFileName(
-          id,
-          standardUrl,
-          additionalSettings,
-          csrfToken,
-          cookies,
-        );
-        // Use the real name if possible, otherwise fallback to the one on the page.
-        var label = realName ?? name;
-
-        apkLinks.add(MapEntry(label, '$baseUrl/download/$id'));
+      // Retrieve the body for parsing
+      var res = await sourceRequest(standardUrl, additionalSettings);
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
       }
+      var body = res.body;
+
+      // Retrieve CSRF token and cookies
+      var (csrfToken, cookies) = await _setupDownload(
+        standardUrl,
+        additionalSettings,
+      );
+
+      // Metadata extraction
+      Document storePage = parse(body);
+      String title = _parseTitle(storePage);
+      String author = _parseAuthor(storePage, standardUrl);
+      String? dateVersion = _getDateVersion(storePage);
+      String? version = _parseVersion(storePage);
+
+      // Resolve tokenized download page
+      String downloadPageBody = await _getDownloadPageBody(
+        standardUrl,
+        additionalSettings,
+        body,
+        csrfToken,
+        cookies,
+      );
+
+      // Fetch better version from the download page, if any
+      Document downloadPage = parse(downloadPageBody);
+      dateVersion ??= _getDateVersion(downloadPage);
+      version ??= _parseVersion(downloadPage);
+
+      // Rules for defaulting the version
+      // 1. Nice version, if found
+      // 2. Date of last update
+      // 3. Fallback to 'latest'
+      version = version ?? dateVersion ?? 'latest';
+
+      // Create all relevant APK links
+      List<MapEntry<String, String>> apkLinks = [];
+
+      var downloadIds = _extractDownload(downloadPageBody);
+
+      for (var downloadInfo in downloadIds) {
+        var (name, id, isAndroid) = downloadInfo;
+
+        if (isAndroid) {
+          // Try retrieving the correct file
+          var realName = await _resolveRealFileName(
+            id,
+            standardUrl,
+            additionalSettings,
+            csrfToken,
+            cookies,
+          );
+          // Use the real name if possible, otherwise fallback to the one on the page.
+          var label = realName ?? name;
+
+          apkLinks.add(MapEntry(label, '$baseUrl/download/$id'));
+        }
+      }
+
+      if (apkLinks.isEmpty) throw NoAPKError();
+
+      return APKDetails(version, apkLinks, AppNames(author, title));
+    } catch (e) {
+      if (e is ObtainiumError) rethrow;
+      throw ObtainiumError('itch.io Error: $e');
     }
-
-    if (apkLinks.isEmpty) throw NoAPKError();
-
-    return APKDetails(version, apkLinks, AppNames(author, title));
   }
 
   /// Internal method for finding the correct Cloudflare R2 URL for any given
@@ -357,6 +363,7 @@ class ItchIO extends AppSource {
         standardUrl,
         additionalSettings,
       );
+      if (csrfToken == null || cookies == null) return null;
     }
 
     var fileApiUrl = '$baseUrl/file/$uploadId?as_props=1&source=game_download';
