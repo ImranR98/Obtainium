@@ -36,7 +36,7 @@ class _AppPageState extends State<AppPage> {
   AppInMemory? prevApp;
   bool updating = false;
 
-Widget buildRepoRenameWarning({
+  Widget buildRepoRenameWarning({
     required AppInMemory? app,
     required AppsProvider appsProvider,
     required Future<void> Function(String id) onUpdate,
@@ -344,9 +344,6 @@ Widget buildRepoRenameWarning({
       }
       if (!upToDate) {
         versionLines += '\n${app?.app.latestVersion} ${tr('latest')}';
-        if (installed && installedVersionIsEstimate) {
-          versionLines += ' (${tr('pseudoVersionInUse').toLowerCase()})';
-        }
       }
       final lastUpdateCheck = app?.app.lastUpdateCheck?.toLocal();
       String infoLines = tr(
@@ -809,7 +806,9 @@ Widget buildRepoRenameWarning({
                 if (res.isNotEmpty) {
                   var np = context.read<NotificationsProvider>();
                   np.cancel(UpdateNotification([]).id);
-                  np.cancel(SilentUpdateAttemptNotification([], id: res[0].hashCode).id);
+                  np.cancel(
+                    SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+                  );
                 }
               } catch (e) {
                 // ignore: use_build_context_synchronously
@@ -962,16 +961,16 @@ Widget buildRepoRenameWarning({
       appBar: showAppWebpageFinal ? AppBar() : appScreenAppBar(),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
-          child: showAppWebpageFinal
-              ? getAppWebView()
-              : CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(children: [getFullInfoColumn()]),
-                    ),
-                    const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
-                  ],
-                ),
+        child: showAppWebpageFinal
+            ? getAppWebView()
+            : CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(children: [getFullInfoColumn()]),
+                  ),
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 88)),
+                ],
+              ),
         onRefresh: () async {
           if (app != null) {
             getUpdate(app.app.id);
