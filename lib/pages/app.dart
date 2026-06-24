@@ -163,39 +163,6 @@ class _AppPageState extends State<AppPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.fromMap({
-                          WidgetState.disabled: colorScheme.onSurface
-                              .withValues(alpha: 0.10),
-                          WidgetState.any: Colors.transparent,
-                        }),
-                        side: WidgetStatePropertyAll(
-                          BorderSide(
-                            width: 1,
-                            strokeAlign: BorderSide.strokeAlignInside,
-                            color: colorScheme.outlineVariant,
-                          ),
-                        ),
-                        elevation: WidgetStatePropertyAll(0),
-                        overlayColor: WidgetStateProperty.fromMap({
-                          WidgetState.disabled: colorScheme.onSurfaceVariant
-                              .withAlpha(0),
-                          WidgetState.pressed: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.10),
-                          WidgetState.focused: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.10),
-                          WidgetState.hovered: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.08),
-                          WidgetState.any: colorScheme.onSurfaceVariant
-                              .withAlpha(0),
-                        }),
-                        foregroundColor: WidgetStateProperty.fromMap({
-                          WidgetState.disabled: colorScheme.onSurface
-                              .withValues(alpha: 0.38),
-                          WidgetState.any: colorScheme.onSurfaceVariant,
-                        }),
-                        textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
-                      ),
                       onPressed: () async {
                         await appsProvider.updatePendingRepoRename(
                           appValue.app.id,
@@ -207,14 +174,6 @@ class _AppPageState extends State<AppPage> {
                   ),
                   Expanded(
                     child: FilledButton.tonal(
-                      style: ButtonStyle(
-                        elevation: WidgetStatePropertyAll(0),
-                        textStyle: WidgetStatePropertyAll(
-                          textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
                       onPressed: () async {
                         await appsProvider.acceptRepoRename(
                           appValue.app.id,
@@ -783,7 +742,7 @@ class _AppPageState extends State<AppPage> {
       }
     }
 
-    getInstallOrUpdateButton() => TextButton(
+    getInstallOrUpdateButton() => FilledButton(
       onPressed:
           !updating &&
               (app?.app.installedVersion == null ||

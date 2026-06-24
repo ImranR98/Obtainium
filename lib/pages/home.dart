@@ -27,9 +27,10 @@ class HomePage extends StatefulWidget {
 class NavigationPageItem {
   late String title;
   late IconData icon;
+  late IconData? selectedIcon;
   late Widget widget;
 
-  NavigationPageItem(this.title, this.icon, this.widget);
+  NavigationPageItem(this.title, this.icon, this.widget, {this.selectedIcon});
 }
 
 class _HomePageState extends State<HomePage> {
@@ -44,20 +45,28 @@ class _HomePageState extends State<HomePage> {
   List<NavigationPageItem> pages = [
     NavigationPageItem(
       tr('appsString'),
-      Icons.apps,
+      Icons.apps_outlined,
       AppsPage(key: GlobalKey<AppsPageState>()),
+      selectedIcon: Icons.apps,
     ),
     NavigationPageItem(
       tr('addApp'),
-      Icons.add,
+      Icons.add_circle_outline,
       AddAppPage(key: GlobalKey<AddAppPageState>()),
+      selectedIcon: Icons.add_circle,
     ),
     NavigationPageItem(
       tr('importExport'),
-      Icons.import_export,
+      Icons.import_export_outlined,
       const ImportExportPage(),
+      selectedIcon: Icons.import_export,
     ),
-    NavigationPageItem(tr('settings'), Icons.settings, const SettingsPage()),
+    NavigationPageItem(
+      tr('settings'),
+      Icons.settings_outlined,
+      const SettingsPage(),
+      selectedIcon: Icons.settings,
+    ),
   ];
 
   @override
@@ -389,6 +398,9 @@ class _HomePageState extends State<HomePage> {
                           .map(
                             (e) => NavigationRailDestination(
                               icon: Icon(e.icon),
+                              selectedIcon: e.selectedIcon != null
+                                  ? Icon(e.selectedIcon)
+                                  : null,
                               label: Text(e.title),
                             ),
                           )
@@ -426,6 +438,9 @@ class _HomePageState extends State<HomePage> {
                         .map(
                           (e) => NavigationDestination(
                             icon: Icon(e.icon),
+                            selectedIcon: e.selectedIcon != null
+                                ? Icon(e.selectedIcon)
+                                : null,
                             label: e.title,
                           ),
                         )

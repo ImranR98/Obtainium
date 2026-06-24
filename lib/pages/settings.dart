@@ -167,11 +167,12 @@ class _SettingsPageState extends State<SettingsPage> {
               Animation<double> a2,
               Widget widget,
             ) {
-              final double curvedValue = Curves.easeInCubic.transform(a1.value);
+              final double curvedValue = Curves.easeInOutCubicEmphasized
+                  .transform(a1.value);
               return Transform(
                 alignment: Alignment.center,
                 transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
-                child: Opacity(opacity: curvedValue, child: widget),
+                child: Opacity(opacity: a1.value, child: widget),
               );
             },
         transitionDuration: const Duration(milliseconds: 250),
@@ -179,7 +180,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     var colorPicker = ListTile(
-      dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
       subtitle: Text(
@@ -218,66 +218,112 @@ class _SettingsPageState extends State<SettingsPage> {
       future: DeviceInfoPlugin().androidInfo,
     );
 
-    var sortDropdown = DropdownButtonFormField(
-      isExpanded: true,
-      decoration: InputDecoration(labelText: tr('appSortBy')),
-      value: settingsProvider.sortColumn,
-      items: [
-        DropdownMenuItem(
+    // Expressive segmented control for theme mode (icon-only with tooltips).
+    var themeModeControl = SettingsTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('theme'))),
+          const SizedBox(width: 12),
+          SegmentedButton<ThemeSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: ThemeSettings.system,
+                icon: const Icon(Icons.brightness_auto_outlined),
+                tooltip: tr('followSystem'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.light,
+                icon: const Icon(Icons.light_mode_outlined),
+                tooltip: tr('light'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.dark,
+                icon: const Icon(Icons.dark_mode_outlined),
+                tooltip: tr('dark'),
+              ),
+            ],
+            selected: {settingsProvider.theme},
+            onSelectionChanged: (selection) {
+              settingsProvider.theme = selection.first;
+            },
+          ),
+        ],
+      ),
+    );
+
+    var sortDropdown = DropdownMenu<SortColumnSettings>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('appSortBy')),
+      initialSelection: settingsProvider.sortColumn,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
           value: SortColumnSettings.authorName,
-          child: Text(tr('authorName')),
+          label: tr('authorName'),
         ),
-        DropdownMenuItem(
+        DropdownMenuEntry(
           value: SortColumnSettings.nameAuthor,
-          child: Text(tr('nameAuthor')),
+          label: tr('nameAuthor'),
         ),
-        DropdownMenuItem(
+        DropdownMenuEntry(
           value: SortColumnSettings.added,
-          child: Text(tr('asAdded')),
+          label: tr('asAdded'),
         ),
-        DropdownMenuItem(
+        DropdownMenuEntry(
           value: SortColumnSettings.releaseDate,
-          child: Text(tr('releaseDate')),
+          label: tr('releaseDate'),
         ),
       ],
-      onChanged: (value) {
+      onSelected: (value) {
         if (value != null) {
           settingsProvider.sortColumn = value;
         }
       },
     );
 
-    var orderDropdown = DropdownButtonFormField(
-      isExpanded: true,
-      decoration: InputDecoration(labelText: tr('appSortOrder')),
-      value: settingsProvider.sortOrder,
-      items: [
-        DropdownMenuItem(
-          value: SortOrderSettings.ascending,
-          child: Text(tr('ascending')),
-        ),
-        DropdownMenuItem(
-          value: SortOrderSettings.descending,
-          child: Text(tr('descending')),
-        ),
-      ],
-      onChanged: (value) {
-        if (value != null) {
-          settingsProvider.sortOrder = value;
-        }
-      },
+    var orderControl = SettingsTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('appSortOrder'))),
+          const SizedBox(width: 12),
+          SegmentedButton<SortOrderSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: SortOrderSettings.ascending,
+                icon: const Icon(Icons.arrow_upward_rounded),
+                tooltip: tr('ascending'),
+              ),
+              ButtonSegment(
+                value: SortOrderSettings.descending,
+                icon: const Icon(Icons.arrow_downward_rounded),
+                tooltip: tr('descending'),
+              ),
+            ],
+            selected: {settingsProvider.sortOrder},
+            onSelectionChanged: (selection) {
+              settingsProvider.sortOrder = selection.first;
+            },
+          ),
+        ],
+      ),
     );
 
-    var localeDropdown = DropdownButtonFormField(
-      decoration: InputDecoration(labelText: tr('language')),
-      value: settingsProvider.forcedLocale,
-      items: [
-        DropdownMenuItem(value: null, child: Text(tr('followSystem'))),
+    var localeDropdown = DropdownMenu<Locale?>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('language')),
+      initialSelection: settingsProvider.forcedLocale,
+      dropdownMenuEntries: [
+        DropdownMenuEntry<Locale?>(value: null, label: tr('followSystem')),
         ...supportedLocales.map(
-          (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+          (e) => DropdownMenuEntry<Locale?>(value: e.key, label: e.value),
         ),
       ],
-      onChanged: (value) {
+      onSelected: (value) {
         settingsProvider.forcedLocale = value;
         if (value != null) {
           context.setLocale(value);
@@ -362,38 +408,39 @@ class _SettingsPageState extends State<SettingsPage> {
           )
         : rawSlider;
 
-    var sourceSpecificFields = sourceProvider.sources.map((e) {
-      if (e.sourceConfigSettingFormItems.isNotEmpty) {
-        return GeneratedForm(
-          items: e.sourceConfigSettingFormItems.map((e) {
-            if (e is GeneratedFormSwitch) {
-              e.defaultValue = settingsProvider.getSettingBool(e.key);
-            } else {
-              e.defaultValue = settingsProvider.getSettingString(e.key);
-            }
-            return [e];
-          }).toList(),
-          onValueChanges: (values, valid, isBuilding) {
-            if (valid && !isBuilding) {
-              values.forEach((key, value) {
-                var formItem = e.sourceConfigSettingFormItems
-                    .where((i) => i.key == key)
-                    .firstOrNull;
-                if (formItem is GeneratedFormSwitch) {
-                  settingsProvider.setSettingBool(key, value == true);
+    var sourceSpecificFields = sourceProvider.sources
+        .map((e) {
+          if (e.sourceConfigSettingFormItems.isNotEmpty) {
+            return GeneratedForm(
+              items: e.sourceConfigSettingFormItems.map((e) {
+                if (e is GeneratedFormSwitch) {
+                  e.defaultValue = settingsProvider.getSettingBool(e.key);
                 } else {
-                  settingsProvider.setSettingString(key, value ?? '');
+                  e.defaultValue = settingsProvider.getSettingString(e.key);
                 }
-              });
-            }
-          },
-        );
-      } else {
-        return Container();
-      }
-    });
-
-    const height8 = SizedBox(height: 8);
+                return [e];
+              }).toList(),
+              onValueChanges: (values, valid, isBuilding) {
+                if (valid && !isBuilding) {
+                  values.forEach((key, value) {
+                    var formItem = e.sourceConfigSettingFormItems
+                        .where((i) => i.key == key)
+                        .firstOrNull;
+                    if (formItem is GeneratedFormSwitch) {
+                      settingsProvider.setSettingBool(key, value == true);
+                    } else {
+                      settingsProvider.setSettingString(key, value ?? '');
+                    }
+                  });
+                }
+              },
+            ) as Widget;
+          } else {
+            return null;
+          }
+        })
+        .whereType<Widget>()
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -406,197 +453,217 @@ class _SettingsPageState extends State<SettingsPage> {
               child: settingsProvider.prefs == null
                   ? const SizedBox()
                   : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SettingsSectionHeader(title: tr('updates')),
-                        //intervalDropdown,
-                        height16,
-                        if (showIntervalLabel)
-                          SizedBox(
-                            child: Text(
-                              "${tr('bgUpdateCheckInterval')}: $updateIntervalLabel",
+                        SettingsGroup(
+                          title: tr('updates'),
+                          children: [
+                            if (showIntervalLabel)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  "${tr('bgUpdateCheckInterval')}: $updateIntervalLabel",
+                                ),
+                              )
+                            else
+                              const SizedBox(height: 16),
+                            intervalSlider,
+                            FutureBuilder(
+                              builder: (ctx, val) {
+                                return (settingsProvider.updateInterval > 0) &&
+                                        (((val.data?.version.sdkInt ?? 0) >=
+                                                30) ||
+                                            settingsProvider.useShizuku)
+                                    ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        spacing: 4,
+                                        children: [
+                                          SettingsToggleRow(
+                                            label: tr(
+                                              'foregroundServiceExplanation',
+                                            ),
+                                            value: settingsProvider.useFGService,
+                                            onChanged: (value) {
+                                              settingsProvider.useFGService =
+                                                  value;
+                                            },
+                                          ),
+                                          SettingsToggleRow(
+                                            label: tr('enableBackgroundUpdates'),
+                                            value: settingsProvider
+                                                .enableBackgroundUpdates,
+                                            onChanged: (value) {
+                                              settingsProvider
+                                                      .enableBackgroundUpdates =
+                                                  value;
+                                            },
+                                          ),
+                                          Text(
+                                            tr(
+                                              'backgroundUpdateReqsExplanation',
+                                            ),
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
+                                          ),
+                                          Text(
+                                            tr(
+                                              'backgroundUpdateLimitsExplanation',
+                                            ),
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
+                                          ),
+                                          if (settingsProvider
+                                              .enableBackgroundUpdates)
+                                            Column(
+                                              spacing: 4,
+                                              children: [
+                                                SettingsToggleRow(
+                                                  label: tr(
+                                                    'bgUpdatesOnWiFiOnly',
+                                                  ),
+                                                  value: settingsProvider
+                                                      .bgUpdatesOnWiFiOnly,
+                                                  onChanged: (value) {
+                                                    settingsProvider
+                                                            .bgUpdatesOnWiFiOnly =
+                                                        value;
+                                                  },
+                                                ),
+                                                SettingsToggleRow(
+                                                  label: tr(
+                                                    'bgUpdatesWhileChargingOnly',
+                                                  ),
+                                                  value: settingsProvider
+                                                      .bgUpdatesWhileChargingOnly,
+                                                  onChanged: (value) {
+                                                    settingsProvider
+                                                            .bgUpdatesWhileChargingOnly =
+                                                        value;
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink();
+                              },
+                              future: DeviceInfoPlugin().androidInfo,
                             ),
-                          )
-                        else
-                          const SizedBox(height: 16),
-                        intervalSlider,
-                        FutureBuilder(
-                          builder: (ctx, val) {
-                            return (settingsProvider.updateInterval > 0) &&
-                                    (((val.data?.version.sdkInt ?? 0) >= 30) ||
-                                        settingsProvider.useShizuku)
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SettingsToggleRow(
-                                        label: tr('foregroundServiceExplanation'),
-                                        value: settingsProvider.useFGService,
-                                        onChanged: (value) {
-                                          settingsProvider.useFGService = value;
-                                        },
-                                      ),
-                                      SettingsToggleRow(
-                                        label: tr('enableBackgroundUpdates'),
-                                        value: settingsProvider.enableBackgroundUpdates,
-                                        onChanged: (value) {
-                                          settingsProvider.enableBackgroundUpdates = value;
-                                        },
-                                      ),
-                                      height8,
-                                      Text(
-                                        tr('backgroundUpdateReqsExplanation'),
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall,
-                                      ),
-                                      Text(
-                                        tr('backgroundUpdateLimitsExplanation'),
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall,
-                                      ),
-                                      height8,
-                                      if (settingsProvider
-                                          .enableBackgroundUpdates)
-                                        Column(
-                                          children: [
-                                            height16,
-                                            SettingsToggleRow(
-                                              label: tr('bgUpdatesOnWiFiOnly'),
-                                              value: settingsProvider.bgUpdatesOnWiFiOnly,
-                                              onChanged: (value) {
-                                                settingsProvider.bgUpdatesOnWiFiOnly = value;
-                                              },
-                                            ),
-                                            height16,
-                                            SettingsToggleRow(
-                                              label: tr('bgUpdatesWhileChargingOnly'),
-                                              value: settingsProvider.bgUpdatesWhileChargingOnly,
-                                              onChanged: (value) {
-                                                settingsProvider.bgUpdatesWhileChargingOnly = value;
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                    ],
-                                  )
-                                : const SizedBox.shrink();
-                          },
-                          future: DeviceInfoPlugin().androidInfo,
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('checkOnStart'),
-                          value: settingsProvider.checkOnStart,
-                          onChanged: (value) {
-                            settingsProvider.checkOnStart = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('checkUpdateOnDetailPage'),
-                          value: settingsProvider.checkUpdateOnDetailPage,
-                          onChanged: (value) {
-                            settingsProvider.checkUpdateOnDetailPage = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('onlyCheckInstalledOrTrackOnlyApps'),
-                          value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
-                          onChanged: (value) {
-                            settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('removeOnExternalUninstall'),
-                          value: settingsProvider.removeOnExternalUninstall,
-                          onChanged: (value) {
-                            settingsProvider.removeOnExternalUninstall = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('includePrereleasesByDefault'),
-                          value: settingsProvider.includePrereleasesByDefault,
-                          onChanged: (value) {
-                            settingsProvider.includePrereleasesByDefault = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('tactileFeedbackEnabled'),
-                          value: settingsProvider.tactileFeedbackEnabled,
-                          onChanged: (value) {
-                            settingsProvider.tactileFeedbackEnabled = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('showBatteryOptimizationPrompt'),
-                          value: settingsProvider.showBatteryOptimizationPrompt,
-                          onChanged: (value) {
-                            settingsProvider.showBatteryOptimizationPrompt = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('showAppDowngradeError'),
-                          value: settingsProvider.showAppDowngradeError,
-                          onChanged: (value) {
-                            settingsProvider.showAppDowngradeError = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('parallelDownloads'),
-                          value: settingsProvider.parallelDownloads,
-                          onChanged: (value) {
-                            settingsProvider.parallelDownloads = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('beforeNewInstallsShareToAppVerifier'),
-                          value: settingsProvider.beforeNewInstallsShareToAppVerifier,
-                          onChanged: (value) {
-                            settingsProvider.beforeNewInstallsShareToAppVerifier = value;
-                          },
-                          subtitle: InkWell(
-                            onTap: () {
-                              launchUrlString(
-                                'https://github.com/soupslurpr/AppVerifier',
-                                mode: LaunchMode.externalApplication,
-                              );
-                            },
-                            child: Text(
-                              tr('about'),
-                              style: const TextStyle(
-                                decoration: TextDecoration.underline,
-                                fontSize: 12,
+                            SettingsToggleRow(
+                              label: tr('checkOnStart'),
+                              value: settingsProvider.checkOnStart,
+                              onChanged: (value) {
+                                settingsProvider.checkOnStart = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('checkUpdateOnDetailPage'),
+                              value: settingsProvider.checkUpdateOnDetailPage,
+                              onChanged: (value) {
+                                settingsProvider.checkUpdateOnDetailPage = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('onlyCheckInstalledOrTrackOnlyApps'),
+                              value: settingsProvider
+                                  .onlyCheckInstalledOrTrackOnlyApps,
+                              onChanged: (value) {
+                                settingsProvider
+                                        .onlyCheckInstalledOrTrackOnlyApps =
+                                    value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('removeOnExternalUninstall'),
+                              value: settingsProvider.removeOnExternalUninstall,
+                              onChanged: (value) {
+                                settingsProvider.removeOnExternalUninstall =
+                                    value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('includePrereleasesByDefault'),
+                              value:
+                                  settingsProvider.includePrereleasesByDefault,
+                              onChanged: (value) {
+                                settingsProvider.includePrereleasesByDefault =
+                                    value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('tactileFeedbackEnabled'),
+                              value: settingsProvider.tactileFeedbackEnabled,
+                              onChanged: (value) {
+                                settingsProvider.tactileFeedbackEnabled = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('showBatteryOptimizationPrompt'),
+                              value: settingsProvider
+                                  .showBatteryOptimizationPrompt,
+                              onChanged: (value) {
+                                settingsProvider.showBatteryOptimizationPrompt =
+                                    value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('showAppDowngradeError'),
+                              value: settingsProvider.showAppDowngradeError,
+                              onChanged: (value) {
+                                settingsProvider.showAppDowngradeError = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('parallelDownloads'),
+                              value: settingsProvider.parallelDownloads,
+                              onChanged: (value) {
+                                settingsProvider.parallelDownloads = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('beforeNewInstallsShareToAppVerifier'),
+                              value: settingsProvider
+                                  .beforeNewInstallsShareToAppVerifier,
+                              onChanged: (value) {
+                                settingsProvider
+                                        .beforeNewInstallsShareToAppVerifier =
+                                    value;
+                              },
+                              subtitle: InkWell(
+                                onTap: () {
+                                  launchUrlString(
+                                    'https://github.com/soupslurpr/AppVerifier',
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Text(
+                                  tr('about'),
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.underline,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        height16,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: Text(tr('useShizuku'))),
-                            Switch(
+                            SettingsToggleRow(
+                              label: tr('useShizuku'),
                               value: settingsProvider.useShizuku,
                               onChanged: (useShizuku) {
                                 if (useShizuku) {
                                   ShizukuApkInstaller().checkPermission().then((
                                     resCode,
                                   ) {
-                                    settingsProvider.useShizuku = resCode!.startsWith('granted');
+                                    settingsProvider.useShizuku = resCode!
+                                        .startsWith('granted');
                                     switch (resCode) {
                                       case 'services_not_found':
                                         showError(
-                                          ObtainiumError(tr('shizukuBinderNotFound')),
+                                          ObtainiumError(
+                                            tr('shizukuBinderNotFound'),
+                                          ),
                                           context,
                                         );
                                       case 'old_shizuku':
@@ -606,7 +673,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                         );
                                       case 'old_android_with_adb':
                                         showError(
-                                          ObtainiumError(tr('shizukuOldAndroidWithADB')),
+                                          ObtainiumError(
+                                            tr('shizukuOldAndroidWithADB'),
+                                          ),
                                           context,
                                         );
                                       case 'denied':
@@ -621,183 +690,145 @@ class _SettingsPageState extends State<SettingsPage> {
                                 }
                               },
                             ),
-                          ],
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('shizukuPretendToBeGooglePlay'),
-                          value: settingsProvider.shizukuPretendToBeGooglePlay,
-                          onChanged: (value) {
-                            settingsProvider.shizukuPretendToBeGooglePlay = value;
-                          },
-                        ),
-                        height32,
-                        SettingsSectionHeader(title: tr('sourceSpecific')),
-                        ...sourceSpecificFields,
-                        height32,
-                        SettingsSectionHeader(title: tr('appearance')),
-                        DropdownButtonFormField(
-                          decoration: InputDecoration(labelText: tr('theme')),
-                          value: settingsProvider.theme,
-                          items: [
-                            DropdownMenuItem(
-                              value: ThemeSettings.system,
-                              child: Text(tr('followSystem')),
-                            ),
-                            DropdownMenuItem(
-                              value: ThemeSettings.light,
-                              child: Text(tr('light')),
-                            ),
-                            DropdownMenuItem(
-                              value: ThemeSettings.dark,
-                              child: Text(tr('dark')),
+                            SettingsToggleRow(
+                              label: tr('shizukuPretendToBeGooglePlay'),
+                              value:
+                                  settingsProvider.shizukuPretendToBeGooglePlay,
+                              onChanged: (value) {
+                                settingsProvider.shizukuPretendToBeGooglePlay =
+                                    value;
+                              },
                             ),
                           ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              settingsProvider.theme = value;
-                            }
-                          },
                         ),
-                        height8,
-                        if (settingsProvider.theme == ThemeSettings.system)
-                          followSystemThemeExplanation,
-                        height16,
-                        if (settingsProvider.theme != ThemeSettings.light)
-                          SettingsToggleRow(
-                            label: tr('useBlackTheme'),
-                            value: settingsProvider.useBlackTheme,
-                            onChanged: (value) {
-                              settingsProvider.useBlackTheme = value;
-                            },
+                        if (sourceSpecificFields.isNotEmpty) ...[
+                          height16,
+                          SettingsGroup(
+                            title: tr('sourceSpecific'),
+                            children: sourceSpecificFields,
                           ),
-                        height8,
-                        useMaterialThemeSwitch,
-                        if (!settingsProvider.useMaterialYou) colorPicker,
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        ],
+                        height16,
+                        SettingsGroup(
+                          title: tr('appearance'),
                           children: [
-                            Expanded(child: sortDropdown),
-                            const SizedBox(width: 16),
-                            Expanded(child: orderDropdown),
+                            themeModeControl,
+                            if (settingsProvider.theme == ThemeSettings.system)
+                              followSystemThemeExplanation,
+                            if (settingsProvider.theme != ThemeSettings.light)
+                              SettingsToggleRow(
+                                label: tr('useBlackTheme'),
+                                value: settingsProvider.useBlackTheme,
+                                onChanged: (value) {
+                                  settingsProvider.useBlackTheme = value;
+                                },
+                              ),
+                            useMaterialThemeSwitch,
+                            if (!settingsProvider.useMaterialYou)
+                              SettingsTile(child: colorPicker),
+                            height16,
+                            sortDropdown,
+                            orderControl,
+                            height16,
+                            localeDropdown,
+                            FutureBuilder(
+                              builder: (ctx, val) {
+                                return (val.data?.version.sdkInt ?? 0) >= 29
+                                    ? SettingsToggleRow(
+                                        label: tr('useSystemFont'),
+                                        value: settingsProvider.useSystemFont,
+                                        onChanged: (useSystemFont) {
+                                          if (useSystemFont) {
+                                            NativeFeatures.loadSystemFont().then(
+                                              (val) {
+                                                settingsProvider.useSystemFont =
+                                                    true;
+                                              },
+                                            );
+                                          } else {
+                                            settingsProvider.useSystemFont =
+                                                false;
+                                          }
+                                        },
+                                      )
+                                    : const SizedBox.shrink();
+                              },
+                              future: DeviceInfoPlugin().androidInfo,
+                            ),
+                            SettingsToggleRow(
+                              label: tr('showWebInAppView'),
+                              value: settingsProvider.showAppWebpage,
+                              onChanged: (value) {
+                                settingsProvider.showAppWebpage = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('pinUpdates'),
+                              value: settingsProvider.pinUpdates,
+                              onChanged: (value) {
+                                settingsProvider.pinUpdates = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('moveNonInstalledAppsToBottom'),
+                              value: settingsProvider.buryNonInstalled,
+                              onChanged: (value) {
+                                settingsProvider.buryNonInstalled = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('groupByCategory'),
+                              value: settingsProvider.groupByCategory,
+                              onChanged: (value) {
+                                settingsProvider.groupByCategory = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('dontShowTrackOnlyWarnings'),
+                              value: settingsProvider.hideTrackOnlyWarning,
+                              onChanged: (value) {
+                                settingsProvider.hideTrackOnlyWarning = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('dontShowAPKOriginWarnings'),
+                              value: settingsProvider.hideAPKOriginWarning,
+                              onChanged: (value) {
+                                settingsProvider.hideAPKOriginWarning = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('disablePageTransitions'),
+                              value: settingsProvider.disablePageTransitions,
+                              onChanged: (value) {
+                                settingsProvider.disablePageTransitions = value;
+                              },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('reversePageTransitions'),
+                              value: settingsProvider.reversePageTransitions,
+                              onChanged: settingsProvider.disablePageTransitions
+                                  ? null
+                                  : (value) {
+                                      settingsProvider.reversePageTransitions =
+                                          value;
+                                    },
+                            ),
+                            SettingsToggleRow(
+                              label: tr('highlightTouchTargets'),
+                              value: settingsProvider.highlightTouchTargets,
+                              onChanged: (value) {
+                                settingsProvider.highlightTouchTargets = value;
+                              },
+                            ),
                           ],
                         ),
                         height16,
-                        localeDropdown,
-                        FutureBuilder(
-                          builder: (ctx, val) {
-                            return (val.data?.version.sdkInt ?? 0) >= 29
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      height16,
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(tr('useSystemFont')),
-                                          ),
-                                          Switch(
-                                            value: settingsProvider.useSystemFont,
-                                            onChanged: (useSystemFont) {
-                                              if (useSystemFont) {
-                                                NativeFeatures.loadSystemFont()
-                                                    .then((val) {
-                                                      settingsProvider.useSystemFont = true;
-                                                    });
-                                              } else {
-                                                settingsProvider.useSystemFont = false;
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
-                                : const SizedBox.shrink();
-                          },
-                          future: DeviceInfoPlugin().androidInfo,
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('showWebInAppView'),
-                          value: settingsProvider.showAppWebpage,
-                          onChanged: (value) {
-                            settingsProvider.showAppWebpage = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('pinUpdates'),
-                          value: settingsProvider.pinUpdates,
-                          onChanged: (value) {
-                            settingsProvider.pinUpdates = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('moveNonInstalledAppsToBottom'),
-                          value: settingsProvider.buryNonInstalled,
-                          onChanged: (value) {
-                            settingsProvider.buryNonInstalled = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('groupByCategory'),
-                          value: settingsProvider.groupByCategory,
-                          onChanged: (value) {
-                            settingsProvider.groupByCategory = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('dontShowTrackOnlyWarnings'),
-                          value: settingsProvider.hideTrackOnlyWarning,
-                          onChanged: (value) {
-                            settingsProvider.hideTrackOnlyWarning = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('dontShowAPKOriginWarnings'),
-                          value: settingsProvider.hideAPKOriginWarning,
-                          onChanged: (value) {
-                            settingsProvider.hideAPKOriginWarning = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('disablePageTransitions'),
-                          value: settingsProvider.disablePageTransitions,
-                          onChanged: (value) {
-                            settingsProvider.disablePageTransitions = value;
-                          },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('reversePageTransitions'),
-                          value: settingsProvider.reversePageTransitions,
-                          onChanged: settingsProvider.disablePageTransitions
-                              ? null
-                              : (value) {
-                                  settingsProvider.reversePageTransitions = value;
-                                },
-                        ),
-                        height16,
-                        SettingsToggleRow(
-                          label: tr('highlightTouchTargets'),
-                          value: settingsProvider.highlightTouchTargets,
-                          onChanged: (value) {
-                            settingsProvider.highlightTouchTargets = value;
-                          },
-                        ),
-                        height32,
-                        SettingsSectionHeader(title: tr('categories')),
-                        height16,
-                        const CategoryEditorSelector(
-                          showLabelWhenNotEmpty: false,
+                        SettingsGroup(
+                          title: tr('categories'),
+                          children: const [
+                            CategoryEditorSelector(showLabelWhenNotEmpty: false),
+                          ],
                         ),
                       ],
                     ),
@@ -905,7 +936,7 @@ class _LogsDialogState extends State<LogsDialog> {
       content: Column(
         children: [
           DropdownButtonFormField(
-            value: days.first,
+            initialValue: days.first,
             items: days
                 .map(
                   (e) =>
@@ -951,7 +982,9 @@ class _LogsDialogState extends State<LogsDialog> {
         ),
         TextButton(
           onPressed: () {
-            Share.share(logString ?? '', subject: tr('appLogs'));
+            SharePlus.instance.share(
+              ShareParams(text: logString ?? '', subject: tr('appLogs')),
+            );
             Navigator.of(context).pop();
           },
           child: Text(tr('share')),

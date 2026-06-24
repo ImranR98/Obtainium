@@ -1124,7 +1124,7 @@ class AppsProvider with ChangeNotifier {
       msg: tr('appVerifierInstructionToast'),
       toastLength: Toast.LENGTH_LONG,
     );
-    await Share.shareXFiles([f]);
+    await SharePlus.instance.share(ShareParams(files: [f]));
   }
 
   Future<String> getStorageRootPath() async {
@@ -2375,8 +2375,15 @@ class _AppFilePickerState extends State<AppFilePicker> {
             ? tr('selectX', args: [lowerCaseIfEnglish(tr('releaseAsset'))])
             : tr('pickAnAPK'),
       ),
-      content: Column(
-        children: [
+      content: RadioGroup<String>(
+        groupValue: fileUrl!.value,
+        onChanged: (String? val) {
+          setState(() {
+            fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
+          });
+        },
+        child: Column(
+          children: [
           urlsToSelectFrom.length > 1
               ? Text(
                   tr('appHasMoreThanOnePackage', args: [widget.app.finalName]),
@@ -2387,12 +2394,6 @@ class _AppFilePickerState extends State<AppFilePicker> {
             (u) => RadioListTile<String>(
               title: Text(u.key),
               value: u.value,
-              groupValue: fileUrl!.value,
-              onChanged: (String? val) {
-                setState(() {
-                  fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
-                });
-              },
             ),
           ),
           if (widget.archs != null) const SizedBox(height: 16),
@@ -2406,7 +2407,8 @@ class _AppFilePickerState extends State<AppFilePicker> {
                         ),
               style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
             ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(

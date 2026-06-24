@@ -454,7 +454,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           }
           return DropdownButtonFormField(
             decoration: InputDecoration(labelText: formItem.label),
-            value: values[formItem.key],
+            initialValue: values[formItem.key],
             items: formItem.opts!.map((e2) {
               var enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
               return DropdownMenuItem(
@@ -884,8 +884,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
         rows.add([
           SizedBox(
             height: widget.items[rowInputs.key - 1][0] is GeneratedFormSwitch
-                ? 8
-                : 25,
+                ? 16
+                : 28,
           ),
         ]);
       }

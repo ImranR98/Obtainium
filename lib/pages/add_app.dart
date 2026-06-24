@@ -239,6 +239,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
 
     Widget getUrlInputRow() => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: GeneratedForm(
@@ -277,23 +278,26 @@ class AddAppPageState extends State<AddAppPage> {
           ),
         ),
         const SizedBox(width: 16),
-        gettingAppInfo
-            ? const CircularProgressIndicator()
-            : ElevatedButton(
-                onPressed:
-                    doingSomething ||
-                        pickedSource == null ||
-                        (pickedSource!
-                                .combinedAppSpecificSettingFormItems
-                                .isNotEmpty &&
-                            !additionalSettingsValid)
-                    ? null
-                    : () {
-                        settingsProvider.selectionClick();
-                        addApp();
-                      },
-                child: Text(tr('add')),
-              ),
+        SizedBox(
+          height: 56,
+          child: gettingAppInfo
+              ? const Center(child: CircularProgressIndicator())
+              : FilledButton(
+                  onPressed:
+                      doingSomething ||
+                          pickedSource == null ||
+                          (pickedSource!
+                                  .combinedAppSpecificSettingFormItems
+                                  .isNotEmpty &&
+                              !additionalSettingsValid)
+                      ? null
+                      : () {
+                          settingsProvider.selectionClick();
+                          addApp();
+                        },
+                  child: Text(tr('add')),
+                ),
+        ),
       ],
     );
 
@@ -513,6 +517,7 @@ class AddAppPageState extends State<AddAppPage> {
         userInput.isEmpty;
 
     Widget getSearchBarRow() => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: GeneratedForm(
@@ -535,16 +540,19 @@ class AddAppPageState extends State<AddAppPage> {
           ),
         ),
         const SizedBox(width: 16),
-        searching
-            ? const CircularProgressIndicator()
-            : ElevatedButton(
-                onPressed: searchQuery.isEmpty || doingSomething
-                    ? null
-                    : () {
-                        runSearch();
-                      },
-                child: Text(tr('search')),
-              ),
+        SizedBox(
+          height: 56,
+          child: searching
+              ? const Center(child: CircularProgressIndicator())
+              : FilledButton(
+                  onPressed: searchQuery.isEmpty || doingSomething
+                      ? null
+                      : () {
+                          runSearch();
+                        },
+                  child: Text(tr('search')),
+                ),
+        ),
       ],
     );
 
@@ -674,8 +682,8 @@ class AddAppPageState extends State<AddAppPage> {
         alignment: WrapAlignment.spaceBetween,
         spacing: 12,
         children: [
-          InkWell(
-            onTap: () {
+          ActionChip(
+            onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) {
@@ -684,11 +692,15 @@ class AddAppPageState extends State<AddAppPage> {
                     title: tr('supportedSources'),
                     items: const [],
                     additionalWidgets: [
-                      ...sourceProvider.sources.map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: InkWell(
-                            onTap: e.hosts.isNotEmpty
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: sourceProvider.sources.map((e) {
+                          return ActionChip(
+                            label: Text(
+                              '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                            ),
+                            onPressed: e.hosts.isNotEmpty
                                 ? () {
                                     launchUrlString(
                                       'https://${e.hosts[0]}',
@@ -696,16 +708,8 @@ class AddAppPageState extends State<AddAppPage> {
                                     );
                                   }
                                 : null,
-                            child: Text(
-                              '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                              style: TextStyle(
-                                decoration: e.hosts.isNotEmpty
-                                    ? TextDecoration.underline
-                                    : TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -719,30 +723,18 @@ class AddAppPageState extends State<AddAppPage> {
                 },
               );
             },
-            child: Text(
-              tr('supportedSources'),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+            avatar: const Icon(Icons.dynamic_feed_outlined, size: 18),
+            label: Text(tr('supportedSources')),
           ),
-          InkWell(
-            onTap: () {
+          ActionChip(
+            avatar: const Icon(Icons.public, size: 18),
+            label: Text(tr('crowdsourcedConfigsShort')),
+            onPressed: () {
               launchUrlString(
                 'https://apps.obtainium.page/',
                 mode: LaunchMode.externalApplication,
               );
             },
-            child: Text(
-              tr('crowdsourcedConfigsShort'),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
           ),
         ],
       ),

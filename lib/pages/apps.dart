@@ -162,8 +162,16 @@ class AppsPageState extends State<AppsPage> {
       GlobalKey<RefreshIndicatorState>();
 
   late final ScrollController scrollController = ScrollController();
+  final TextEditingController searchController = TextEditingController();
 
   var sourceProvider = SourceProvider();
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +401,7 @@ class AppsPageState extends State<AppsPage> {
 
     Widget buildRepoMovedRow() {
       final colorScheme = Theme.of(context).colorScheme;
-      final infoColor = colorScheme.primary.withOpacity(0.7);
+      final infoColor = colorScheme.primary.withValues(alpha: 0.7);
       final textColor = colorScheme.onSurfaceVariant;
       return Padding(
         padding: const EdgeInsets.only(top: 2),
@@ -491,9 +499,7 @@ class AppsPageState extends State<AppsPage> {
         ],
       );
 
-      var transparent = Theme.of(
-        context,
-      ).colorScheme.surface.withAlpha(0).value;
+      var transparent = Colors.transparent.toARGB32();
       var categories = listedApps[index].app.categories;
       List<double> stops = [
         if (categories.isNotEmpty)
@@ -526,10 +532,10 @@ class AppsPageState extends State<AppsPage> {
         child: ListTile(
           autofocus: index == 0 && settingsProvider.isTV,
           tileColor: listedApps[index].app.pinned
-              ? Colors.grey.withOpacity(0.1)
+              ? Colors.grey.withValues(alpha: 0.1)
               : Colors.transparent,
-          selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(
-            listedApps[index].app.pinned ? 0.2 : 0.1,
+          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
+            alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
           ),
           selected: selectedAppIds.contains(listedApps[index].app.id),
           onLongPress: () {
@@ -600,6 +606,16 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
+    appTileCard(int index) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: getSingleAppHorizTile(index),
+        ),
+      );
+    }
+
     getCategoryCollapsibleTile(int index) {
       var tiles = listedApps
           .asMap()
@@ -610,7 +626,7 @@ class AppsPageState extends State<AppsPage> {
                 e.value.app.categories.isEmpty &&
                     listedCategories[index] == null,
           )
-          .map((e) => getSingleAppHorizTile(e.key))
+          .map((e) => appTileCard(e.key))
           .toList();
 
       capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
@@ -927,9 +943,11 @@ class AppsPageState extends State<AppsPage> {
                         urls += '${a.url}\n';
                       }
                       urls = urls.substring(0, urls.length - 1);
-                      Share.share(
-                        urls,
-                        subject: 'Obtainium - ${tr('appsString')}',
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: urls,
+                          subject: 'Obtainium - ${tr('appsString')}',
+                        ),
                       );
                       Navigator.of(context).pop();
                     },
@@ -948,9 +966,11 @@ class AppsPageState extends State<AppsPage> {
                               urls +=
                                   'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
                             }
-                            Share.share(
-                              urls,
-                              subject: 'Obtainium - ${tr('appsString')}',
+                            SharePlus.instance.share(
+                              ShareParams(
+                                text: urls,
+                                subject: 'Obtainium - ${tr('appsString')}',
+                              ),
                             );
                           },
                     child: Text(
@@ -977,9 +997,11 @@ class AppsPageState extends State<AppsPage> {
                               mimeType: 'application/json',
                               name: fn,
                             );
-                            Share.shareXFiles(
-                              [f],
-                              fileNameOverrides: ['$fn.json'],
+                            SharePlus.instance.share(
+                              ShareParams(
+                                files: [f],
+                                fileNameOverrides: ['$fn.json'],
+                              ),
                             );
                           },
                     child: Text(
@@ -1032,14 +1054,6 @@ class AppsPageState extends State<AppsPage> {
 
     getMainBottomButtons() {
       return [
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: getMassObtainFunction(),
-          tooltip: selectedAppIds.isEmpty
-              ? tr('installUpdateApps')
-              : tr('installUpdateSelectedApps'),
-          icon: const Icon(Icons.file_download_outlined),
-        ),
         IconButton(
           visualDensity: VisualDensity.compact,
           onPressed: selectedAppIds.isEmpty
@@ -1146,40 +1160,6 @@ class AppsPageState extends State<AppsPage> {
       }
     }
 
-    getFilterButtonsRow() {
-      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
-      return Row(
-        children: [
-          getSelectAllButton(),
-          IconButton(
-            color: Theme.of(context).colorScheme.primary,
-            style: const ButtonStyle(visualDensity: VisualDensity.compact),
-            tooltip: isFilterOff
-                ? tr('filterApps')
-                : '${tr('filter')} - ${tr('remove')}',
-            onPressed: isFilterOff
-                ? showFilterDialog
-                : () {
-                    setState(() {
-                      filter = AppsFilter();
-                    });
-                  },
-            icon: Icon(
-              isFilterOff ? Icons.search_rounded : Icons.search_off_rounded,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const VerticalDivider(),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: getMainBottomButtons(),
-            ),
-          ),
-        ],
-      );
-    }
-
     getDisplayedList() {
       return settingsProvider.groupByCategory &&
               !(listedCategories.isEmpty ||
@@ -1197,9 +1177,68 @@ class AppsPageState extends State<AppsPage> {
                 BuildContext context,
                 int index,
               ) {
-                return getSingleAppHorizTile(index);
+                return appTileCard(index);
               }, childCount: listedApps.length),
             );
+    }
+
+    getSearchBarSliver() {
+      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: SearchBar(
+            controller: searchController,
+            hintText: tr('search'),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 16),
+            ),
+            leading: const Icon(Icons.search_rounded),
+            trailing: [
+              getSelectAllButton(),
+              if (selectedAppIds.isNotEmpty)
+                ...getMainBottomButtons()
+              else ...[
+                if (!isFilterOff)
+                  IconButton(
+                    tooltip: '${tr('filter')} - ${tr('remove')}',
+                    onPressed: () {
+                      setState(() {
+                        filter = AppsFilter();
+                        searchController.clear();
+                      });
+                    },
+                    icon: const Icon(Icons.filter_alt_off_outlined),
+                  ),
+                IconButton(
+                  tooltip: tr('filterApps'),
+                  onPressed: showFilterDialog,
+                  icon: const Icon(Icons.tune_rounded),
+                ),
+              ],
+            ],
+            onChanged: (value) {
+              setState(() {
+                filter.nameFilter = value;
+              });
+            },
+          ),
+        ),
+      );
+    }
+
+    getObtainFAB() {
+      var onObtain = getMassObtainFunction();
+      if (onObtain == null) return null;
+      return FloatingActionButton.extended(
+        onPressed: onObtain,
+        icon: const Icon(Icons.file_download_outlined),
+        label: Text(
+          selectedAppIds.isEmpty
+              ? tr('installUpdateApps')
+              : tr('installUpdateSelectedApps'),
+        ),
+      );
     }
 
     return PopScope(
@@ -1222,15 +1261,15 @@ class AppsPageState extends State<AppsPage> {
               controller: scrollController,
               slivers: <Widget>[
                 CustomAppBar(title: tr('appsString')),
+                if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
                 ...getLoadingWidgets(),
                 getDisplayedList(),
+                const SliverToBoxAdapter(child: SizedBox(height: 88)),
               ],
             ),
           ),
         ),
-        persistentFooterButtons: appsProvider.apps.isEmpty
-            ? null
-            : [getFilterButtonsRow()],
+        floatingActionButton: appsProvider.apps.isEmpty ? null : getObtainFAB(),
       ),
     );
   }
@@ -1306,8 +1345,8 @@ class _AppIconWidgetState extends State<AppIconWidget> {
                             'assets/graphics/icon_small.png',
                           ),
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.4)
-                              : Colors.white.withOpacity(0.3),
+                              ? Colors.white.withValues(alpha: 0.4)
+                              : Colors.white.withValues(alpha: 0.3),
                           colorBlendMode: BlendMode.modulate,
                           gaplessPlayback: true,
                         ),

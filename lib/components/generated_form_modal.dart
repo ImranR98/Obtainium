@@ -78,11 +78,12 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           ),
         ),
         widget.singleNullReturnButton == null
-            ? TextButton(
+            ? FilledButton(
                 style: widget.primaryActionColour == null
                     ? null
-                    : TextButton.styleFrom(
-                        foregroundColor: widget.primaryActionColour,
+                    : FilledButton.styleFrom(
+                        backgroundColor: widget.primaryActionColour,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                       ),
                 onPressed: !valid
                     ? null

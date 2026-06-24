@@ -176,6 +176,104 @@ void main() async {
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
+/// Builds the app-wide Material 3 Expressive [ThemeData] for a given
+/// [colorScheme]. Expressive character lives here (large rounded shapes,
+/// emphasized motion, updated M3 component looks) so it propagates to every
+/// screen without per-widget styling.
+ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
+  // Expressive shape tokens: large, generously rounded corners.
+  final cardShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(24),
+  );
+  const buttonShape = StadiumBorder();
+  final dialogShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(28),
+  );
+  final fieldShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  );
+
+  // Fully rounded, comfortably-tall buttons (very M3 Expressive).
+  final pillButtonStyle = ButtonStyle(
+    shape: const WidgetStatePropertyAll(buttonShape),
+    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    fontFamily: fontFamily,
+    // Emphasized, springy page transitions for forward navigation.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+      },
+    ),
+    cardTheme: CardThemeData(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: cardShape,
+      margin: EdgeInsets.zero,
+    ),
+    dialogTheme: DialogThemeData(shape: dialogShape),
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+    ),
+    appBarTheme: const AppBarThemeData(centerTitle: false),
+    expansionTileTheme: ExpansionTileThemeData(
+      shape: cardShape,
+      collapsedShape: cardShape,
+    ),
+    listTileTheme: ListTileThemeData(shape: fieldShape),
+    chipTheme: const ChipThemeData(shape: StadiumBorder()),
+    searchBarTheme: const SearchBarThemeData(
+      elevation: WidgetStatePropertyAll(0),
+    ),
+    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
+    textButtonTheme: TextButtonThemeData(
+      style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    inputDecorationTheme: InputDecorationThemeData(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      inputDecorationTheme: InputDecorationThemeData(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      menuStyle: MenuStyle(
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+    ),
+    sliderTheme: SliderThemeData(
+      // Opt into the updated (2024) Material 3 slider appearance.
+      // ignore: deprecated_member_use
+      year2023: false,
+      activeTrackColor: colorScheme.primary,
+      inactiveTrackColor: colorScheme.surfaceContainerHighest,
+      thumbColor: colorScheme.primary,
+      overlayColor: colorScheme.primary.withValues(alpha: 0.12),
+    ),
+    // Opt into the updated (2024) Material 3 Expressive progress indicators
+    // (wavy active track / gapped circular) across the whole app.
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      // ignore: deprecated_member_use
+      year2023: false,
+    ),
+  );
+}
+
 class Obtainium extends StatefulWidget {
   const Obtainium({super.key});
 
@@ -390,10 +488,12 @@ class _ObtainiumState extends State<Obtainium> {
           } else {
             lightColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
+              dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
             );
             darkColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
               brightness: Brightness.dark,
+              dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
             );
           }
 
@@ -413,69 +513,17 @@ class _ObtainiumState extends State<Obtainium> {
             locale: context.locale,
             navigatorKey: globalNavigatorKey,
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.dark
+            theme: buildObtainiumTheme(
+              settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
-              sliderTheme: SliderThemeData(
-                activeTrackColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary,
-                inactiveTrackColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .surfaceContainerHighest,
-                thumbColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary,
-                overlayColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary
-                    .withAlpha(30),
-              ),
+              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
-            darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.light
+            darkTheme: buildObtainiumTheme(
+              settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
-              sliderTheme: SliderThemeData(
-                activeTrackColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary,
-                inactiveTrackColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .surfaceContainerHighest,
-                thumbColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary,
-                overlayColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary
-                    .withAlpha(30),
-              ),
+              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{

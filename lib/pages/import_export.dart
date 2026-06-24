@@ -32,17 +32,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
 
-    var outlineButtonStyle = ButtonStyle(
-      shape: WidgetStateProperty.all(
-        StadiumBorder(
-          side: BorderSide(
-            width: 1,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ),
-    );
-
     urlListImport({String? initValue, bool overrideInitValid = false}) {
       showDialog<Map<String, dynamic>?>(
         context: context,
@@ -382,77 +371,72 @@ class _ImportExportPageState extends State<ImportExportPage> {
       sourceStrings[s.name] = [s.name];
     });
 
+    Widget actionTile({
+      required IconData icon,
+      required String label,
+      Widget? trailing,
+      required VoidCallback? onTap,
+    }) {
+      return ListTile(
+        leading: Icon(icon),
+        title: Text(label),
+        trailing: trailing,
+        onTap: onTap,
+        enabled: onTap != null,
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
         slivers: <Widget>[
           CustomAppBar(title: tr('importExport')),
-          SliverFillRemaining(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 12,
                 children: [
+                  if (importInProgress) const LinearProgressIndicator(),
                   FutureBuilder(
                     future: settingsProvider.getExportDir(),
                     builder: (context, snapshot) {
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : () {
-                                          runObtainiumExport(pickOnly: true);
-                                        },
-                                  child: Text(
-                                    tr('pickExportDir'),
-                                    textAlign: TextAlign.center,
-                                  ),
+                      return Card(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            actionTile(
+                              icon: Icons.folder_open_outlined,
+                              label: tr('pickExportDir'),
+                              trailing: snapshot.data != null
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    )
+                                  : null,
+                              onTap: importInProgress
+                                  ? null
+                                  : () => runObtainiumExport(pickOnly: true),
+                            ),
+                            actionTile(
+                              icon: Icons.upload_outlined,
+                              label: tr('obtainiumExport'),
+                              onTap: importInProgress || snapshot.data == null
+                                  ? null
+                                  : runObtainiumExport,
+                            ),
+                            if (snapshot.data != null)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  12,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed:
-                                      importInProgress ||
-                                          snapshot.data == null
-                                      ? null
-                                      : runObtainiumExport,
-                                  child: Text(
-                                    tr('obtainiumExport'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : runObtainiumImport,
-                                  child: Text(
-                                    tr('obtainiumImport'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (snapshot.data != null)
-                            Column(
-                              children: [
-                                const SizedBox(height: 16),
-                                GeneratedForm(
+                                child: GeneratedForm(
                                   items: [
                                     [
                                       GeneratedFormSwitch(
@@ -479,128 +463,104 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                   ],
                                   onValueChanges: (value, valid, isBuilding) {
                                     if (valid && !isBuilding) {
-                                      if (value['autoExportOnChanges'] !=
-                                          null) {
+                                      if (value['autoExportOnChanges'] != null) {
                                         settingsProvider.autoExportOnChanges =
-                                            value['autoExportOnChanges'] ==
-                                            true;
+                                            value['autoExportOnChanges'] == true;
                                       }
                                       if (value['exportSettings'] != null) {
                                         settingsProvider.exportSettings =
-                                            int.parse(
-                                              value['exportSettings'],
-                                            );
+                                            int.parse(value['exportSettings']);
                                       }
                                     }
                                   },
                                 ),
-                              ],
-                            ),
-                        ],
+                              ),
+                          ],
+                        ),
                       );
                     },
                   ),
-                  if (importInProgress)
-                    const Column(
-                      children: [
-                        SizedBox(height: 14),
-                        LinearProgressIndicator(),
-                        SizedBox(height: 14),
-                      ],
-                    )
-                  else
-                    Column(
-                      children: [
-                        SizedBox(height: 32),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton(
-                                onPressed: importInProgress
-                                    ? null
-                                    : () async {
-                                        var searchSourceName =
-                                            await showDialog<List<String>?>(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return SelectionModal(
-                                                  title: tr(
-                                                    'selectX',
-                                                    args: [
-                                                      tr(
-                                                        'source',
-                                                      ).toLowerCase(),
-                                                    ],
-                                                  ),
-                                                  entries: sourceStrings,
-                                                  selectedByDefault: false,
-                                                  onlyOneSelectionAllowed: true,
-                                                  titlesAreLinks: false,
-                                                );
-                                              },
-                                            ) ??
-                                            [];
-                                        var searchSource = sourceProvider
-                                            .sources
-                                            .where(
-                                              (e) => searchSourceName.contains(
-                                                e.name,
-                                              ),
-                                            )
-                                            .toList();
-                                        if (searchSource.isNotEmpty) {
-                                          runSourceSearch(searchSource[0]);
-                                        }
-                                      },
-                                child: Text(
-                                  tr(
-                                    'searchX',
-                                    args: [lowerCaseIfEnglish(tr('source'))],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress ? null : urlListImport,
-                          child: Text(tr('importFromURLList')),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress ? null : runUrlImport,
-                          child: Text(tr('importFromURLsInFile')),
-                        ),
-                      ],
-                    ),
-                  ...sourceProvider.massUrlSources.map(
-                    (source) => Column(
+                  Card(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress
+                        actionTile(
+                          icon: Icons.download_outlined,
+                          label: tr('obtainiumImport'),
+                          onTap: importInProgress ? null : runObtainiumImport,
+                        ),
+                        actionTile(
+                          icon: Icons.travel_explore_outlined,
+                          label: tr(
+                            'searchX',
+                            args: [lowerCaseIfEnglish(tr('source'))],
+                          ),
+                          onTap: importInProgress
                               ? null
-                              : () {
-                                  runMassSourceImport(source);
+                              : () async {
+                                  var searchSourceName =
+                                      await showDialog<List<String>?>(
+                                        context: context,
+                                        builder: (BuildContext ctx) {
+                                          return SelectionModal(
+                                            title: tr(
+                                              'selectX',
+                                              args: [
+                                                tr('source').toLowerCase(),
+                                              ],
+                                            ),
+                                            entries: sourceStrings,
+                                            selectedByDefault: false,
+                                            onlyOneSelectionAllowed: true,
+                                            titlesAreLinks: false,
+                                          );
+                                        },
+                                      ) ??
+                                      [];
+                                  var searchSource = sourceProvider.sources
+                                      .where(
+                                        (e) =>
+                                            searchSourceName.contains(e.name),
+                                      )
+                                      .toList();
+                                  if (searchSource.isNotEmpty) {
+                                    runSourceSearch(searchSource[0]);
+                                  }
                                 },
-                          child: Text(tr('importX', args: [source.name])),
+                        ),
+                        actionTile(
+                          icon: Icons.format_list_bulleted_outlined,
+                          label: tr('importFromURLList'),
+                          onTap: importInProgress ? null : urlListImport,
+                        ),
+                        actionTile(
+                          icon: Icons.upload_file_outlined,
+                          label: tr('importFromURLsInFile'),
+                          onTap: importInProgress ? null : runUrlImport,
+                        ),
+                        ...sourceProvider.massUrlSources.map(
+                          (source) => actionTile(
+                            icon: Icons.cloud_download_outlined,
+                            label: tr('importX', args: [source.name]),
+                            onTap: importInProgress
+                                ? null
+                                : () => runMassSourceImport(source),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Spacer(),
-                  const Divider(height: 32),
-                  Text(
-                    tr('importedAppsIdDisclaimer'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: Text(
+                      tr('importedAppsIdDisclaimer'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -776,11 +736,29 @@ class _SelectionModalState extends State<SelectionModal> {
             );
     }
 
+    final selectedRadioKey = entrySelections.entries
+        .where((e) => e.value)
+        .map((e) => e.key.key)
+        .firstOrNull;
+    void onRadioChanged(String? value) {
+      if (value == null) return;
+      if (isTV) {
+        Navigator.of(context).pop([value]);
+      } else {
+        setState(() {
+          selectOnlyOne(value);
+        });
+      }
+    }
+
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title ?? tr('pick')),
-      content: Column(
-        children: [
+      content: RadioGroup<String>(
+        groupValue: selectedRadioKey,
+        onChanged: onRadioChanged,
+        child: Column(
+          children: [
           GeneratedForm(
             items: [
               [
@@ -864,10 +842,6 @@ class _SelectionModalState extends State<SelectionModal> {
                     ),
                   );
 
-            var selectedEntries = entrySelections.entries
-                .where((e) => e.value)
-                .toList();
-
             var singleSelectTile = ListTile(
               title: InkWell(
                 onTap: widget.titlesAreLinks
@@ -887,21 +861,7 @@ class _SelectionModalState extends State<SelectionModal> {
                       },
                       child: descriptionText,
                     ),
-              leading: Radio<String>(
-                value: entry.key,
-                groupValue: selectedEntries.isEmpty
-                    ? null
-                    : selectedEntries.first.key.key,
-                onChanged: (value) {
-                  if (isTV) {
-                    Navigator.of(context).pop([entry.key]);
-                  } else {
-                    setState(() {
-                      selectOnlyOne(entry.key);
-                    });
-                  }
-                },
-              ),
+              leading: Radio<String>(value: entry.key),
             );
 
             var multiSelectTile = Row(
@@ -980,6 +940,7 @@ class _SelectionModalState extends State<SelectionModal> {
             ),
           ],
         ],
+        ),
       ),
       actions: [
         getSelectAllButton(),
