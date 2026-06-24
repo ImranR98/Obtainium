@@ -944,10 +944,12 @@ class AppsProvider with ChangeNotifier {
     }
     for (final file in tarArchive.files) {
       if (file.isFile) {
+        final content = file.content;
+        if (content == null) continue;
         final outPath = '${destDir.path}/${file.name}';
         final outFile = File(outPath);
         outFile.createSync(recursive: true);
-        outFile.writeAsBytesSync(file.content as List<int>);
+        outFile.writeAsBytesSync(content);
       }
     }
   }
