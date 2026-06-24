@@ -959,18 +959,8 @@ class AppsProvider with ChangeNotifier {
     bool shizukuPretendToBeGooglePlay = false,
     List<DownloadedApk> additionalAPKs = const [],
   }) async {
-    if (firstTimeWithContext != null &&
-        settingsProvider.beforeNewInstallsShareToAppVerifier &&
-        (await getInstalledInfo('dev.soupslurpr.appverifier')) != null) {
-      XFile f = XFile.fromData(
-        file.file.readAsBytesSync(),
-        mimeType: 'application/vnd.android.package-archive',
-      );
-      Fluttertoast.showToast(
-        msg: tr('appVerifierInstructionToast'),
-        toastLength: Toast.LENGTH_LONG,
-      );
-      await Share.shareXFiles([f]);
+    if (firstTimeWithContext != null) {
+      await _shareToAppVerifier(file, firstTimeWithContext);
     }
     var newInfo = await pm.getPackageArchiveInfo(
       archiveFilePath: file.file.path,
@@ -1040,6 +1030,23 @@ class AppsProvider with ChangeNotifier {
     }
     await saveApps([apps[file.appId]!.app]);
     return installed;
+  }
+
+  Future<void> _shareToAppVerifier(
+    DownloadedApk file,
+    BuildContext context,
+  ) async {
+    if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
+    if (await getInstalledInfo('dev.soupslurpr.appverifier') == null) return;
+    XFile f = XFile.fromData(
+      file.file.readAsBytesSync(),
+      mimeType: 'application/vnd.android.package-archive',
+    );
+    Fluttertoast.showToast(
+      msg: tr('appVerifierInstructionToast'),
+      toastLength: Toast.LENGTH_LONG,
+    );
+    await Share.shareXFiles([f]);
   }
 
   Future<String> getStorageRootPath() async {
@@ -1151,25 +1158,14 @@ class AppsProvider with ChangeNotifier {
     return appFileUrl;
   }
 
-  // Given a list of AppIds, uses stored info about the apps to download APKs and install them
-  // If the APKs can be installed silently, they are
-  // If no BuildContext is provided, apps that require user interaction are ignored
-  // If user input is needed and the App is in the background, a notification is sent to get the user's attention
-  // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
-  Future<List<String>> downloadAndInstallLatestApps(
+  // Filters app IDs into those that can be installed and those that are track-only,
+  // refreshing stale data and confirming file URLs before returning.
+  Future<(List<String>, List<String>)> _resolveAppsToInstall(
     List<String> appIds,
-    BuildContext? context, {
-    NotificationsProvider? notificationsProvider,
-    bool forceParallelDownloads = false,
-    bool useExisting = true,
-  }) async {
-    notificationsProvider =
-        notificationsProvider ?? context?.read<NotificationsProvider>();
+    BuildContext? context,
+  ) async {
     List<String> appsToInstall = [];
     List<String> trackOnlyAppsToUpdate = [];
-    // For all specified Apps, filter out those for which:
-    // 1. A URL cannot be picked
-    // 2. That cannot be installed silently (IF no buildContext was given for interactive install)
     for (var id in appIds) {
       if (apps[id] == null) {
         throw ObtainiumError(tr('appNotFound'));
@@ -1203,6 +1199,27 @@ class AppsProvider with ChangeNotifier {
         trackOnlyAppsToUpdate.add(id);
       }
     }
+    return (appsToInstall, trackOnlyAppsToUpdate);
+  }
+
+  // Given a list of AppIds, uses stored info about the apps to download APKs and install them
+  // If the APKs can be installed silently, they are
+  // If no BuildContext is provided, apps that require user interaction are ignored
+  // If user input is needed and the App is in the background, a notification is sent to get the user's attention
+  // Returns an array of Ids for Apps that were successfully downloaded, regardless of installation result
+  Future<List<String>> downloadAndInstallLatestApps(
+    List<String> appIds,
+    BuildContext? context, {
+    NotificationsProvider? notificationsProvider,
+    bool forceParallelDownloads = false,
+    bool useExisting = true,
+  }) async {
+    notificationsProvider =
+        notificationsProvider ?? context?.read<NotificationsProvider>();
+
+    var (appsToInstall, trackOnlyAppsToUpdate) =
+        await _resolveAppsToInstall(appIds, context);
+
     // Mark all specified track-only apps as latest
     saveApps(
       trackOnlyAppsToUpdate.map((e) {
