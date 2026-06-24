@@ -2661,6 +2661,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
 
     // Filter out updates that will be installed silently (the rest go into toNotify)
     List<App> trackOnlyToNotify = [];
+    List<App> exemptToNotify = [];
     for (var i = 0; i < updates.length; i++) {
       var canInstallSilently = await appsProvider.canInstallSilently(
         updates[i],
@@ -2672,6 +2673,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
           );
           if (updates[i].additionalSettings['trackOnly'] == true) {
             trackOnlyToNotify.add(updates[i]);
+          } else if (
+            updates[i].additionalSettings['exemptFromBackgroundUpdates'] == true) {
+            exemptToNotify.add(updates[i]);
           } else {
             toNotify.add(updates[i]);
           }
@@ -2679,14 +2683,19 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       }
     }
 
-    // Send separate notifications for track-only and installable updates
-    // to avoid one being cancelled when the other is processed
+    // Send separate notifications to avoid one being cancelled
+    // when the other is processed
     if (toNotify.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(toNotify));
     }
     if (trackOnlyToNotify.isNotEmpty) {
       notificationsProvider.notify(
         TrackOnlyUpdateNotification(trackOnlyToNotify),
+      );
+    }
+    if (exemptToNotify.isNotEmpty) {
+      notificationsProvider.notify(
+        TrackOnlyUpdateNotification(exemptToNotify),
       );
     }
 
