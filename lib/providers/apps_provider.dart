@@ -643,6 +643,11 @@ class AppsProvider with ChangeNotifier {
       notifyListeners();
     }
     try {
+      if (app.apkUrls.isEmpty) throw NoAPKError();
+      if (app.preferredApkIndex >= app.apkUrls.length) {
+        app.preferredApkIndex = app.apkUrls.length - 1;
+      }
+      if (app.preferredApkIndex < 0) app.preferredApkIndex = 0;
       AppSource source = SourceProvider().getSource(
         app.url,
         overrideSource: app.overrideSource,
@@ -1719,7 +1724,7 @@ class AppsProvider with ChangeNotifier {
               } catch (err) {
                 if (err is FormatException) {
                   logs.add(
-                    'Corrupt JSON when loading App (will be ignored): $e',
+                    'Corrupt JSON when loading App (will be ignored): $err',
                   );
                   item.renameSync('${item.path}.corrupt');
                 } else {
@@ -2123,7 +2128,7 @@ class AppsProvider with ChangeNotifier {
       shouldExportSettings = overrideExportSettings;
     }
     if (shouldExportSettings > 0) {
-      var settingsValueKeys = settingsProvider.prefs?.getKeys();
+      var settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
       if (shouldExportSettings < 2) {
         settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
       }
@@ -2559,7 +2564,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             // Next task interval is based on the error with the longest retry time
             int minRetryIntervalForThisApp = err is RateLimitError
                 ? (err.remainingMinutes * 60)
-                : e is ClientException
+                : err is ClientException
                 ? (15 * 60)
                 : (toCheckApp.value + 1);
             if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
