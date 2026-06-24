@@ -541,7 +541,7 @@ class AppsProvider with ChangeNotifier {
   late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
-  Iterable<AppInMemory> getAppValues() => apps.values.map((a) => a.deepCopy());
+  Iterable<AppInMemory> getAppValues() => apps.values;
 
   AppsProvider({isBg = false}) {
     // Subscribe to changes in the app foreground status
