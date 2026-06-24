@@ -349,6 +349,8 @@
     "GHReqPrefix": "Instance 'sky22333/hubproxy' pour les requêtes GitHub",
     "includeZips": "Inclure les fichiers ZIP",
     "zippedApkFilterRegEx": "Filtrer les APK dans un fichier ZIP",
+    "includeTarballs": "Include tarball files (tar.gz, etc.)",
+    "tarballedApkFilterRegEx": "Filter APKs inside tarball",
     "googleVerificationWarningP1": "Google a annoncé qu'à partir de 2026/2027, toutes les applications sur les appareils Android \"certifiés\" obligeront le développeur à soumettre ses données d'identité personnelles directement à Google.\n\nComme les développeurs de cette application ne sont pas d'accord avec cette exigence, Obtainium ne fonctionnera plus sur les appareils Android certifiés après cette date.",
     "googleVerificationWarningP2": "Rendez-vous sur https://keepandroidopen.org/ pour plus d'informations.",
     "googleVerificationWarningP3": "Notez qu'à court terme, il pourrait rester possible d'installer des applications \"non vérifiées\" (non conformes) via un processus \"avancé\" que Google a promis de mettre en place suite à la vive réaction suscitée par leur annonce. Cependant, ils n'ont pas détaillé son fonctionnement, il n'est donc pas certain que cela préserve réellement les libertés des utilisateurs en pratique.\n\nDans tous les cas, cette décision de Google est une étape majeure vers la fin de l'informatique libre et généraliste pour les individus.\n\nLes OS non certifiés, comme GrapheneOS, ne devraient pas être affectés par cela tant qu'ils seront autorisés à exister.",

@@ -156,11 +156,13 @@ class ItchIO extends AppSource {
     DateFormat abbrTimeFormat = DateFormat("dd MMMM yyyy '@' HH:mm 'UTC'");
     List<DateTime> abbrDates = [];
     for (var abbrElement in abbrElements) {
-      DateTime abbrDate = abbrTimeFormat.parseUtc(
-        abbrElement.attributes['title']!,
-      );
+      var title = abbrElement.attributes['title'];
+      if (title == null) continue;
+      DateTime abbrDate = abbrTimeFormat.parseUtc(title);
       abbrDates.add(abbrDate);
     }
+
+    if (abbrDates.isEmpty) return null;
 
     DateTime dateTimeFilter(DateTime a, b) {
       return a.microsecondsSinceEpoch > b.microsecondsSinceEpoch ? a : b;
