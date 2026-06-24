@@ -474,62 +474,6 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getAppIcon(int appIndex) {
-      return InkWell(
-        child: FutureBuilder(
-          future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
-          builder: (ctx, val) {
-            return listedApps[appIndex].icon != null
-                ? Image.memory(
-                    listedApps[appIndex].icon!,
-                    gaplessPlayback: true,
-                    opacity: AlwaysStoppedAnimation(
-                      listedApps[appIndex].installedInfo == null ? 0.6 : 1,
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.rotationZ(0.31),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Image(
-                            image: const AssetImage(
-                              'assets/graphics/icon_small.png',
-                            ),
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withOpacity(0.4)
-                                : Colors.white.withOpacity(0.3),
-                            colorBlendMode: BlendMode.modulate,
-                            gaplessPlayback: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-          },
-        ),
-        onDoubleTap: () {
-          pm.openApp(listedApps[appIndex].app.id);
-        },
-        onLongPress: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AppPage(
-                appId: listedApps[appIndex].app.id,
-                showOppositeOfPreferredView: true,
-              ),
-            ),
-          );
-        },
-      );
-    }
-
     getVersionText(int appIndex) {
       var installed = listedApps[appIndex].app.installedVersion;
       var latest = listedApps[appIndex].app.latestVersion;
@@ -716,7 +660,11 @@ class AppsPageState extends State<AppsPage> {
                     toggleAppSelected(listedApps[index].app);
                   },
                 )
-              : getAppIcon(index),
+              : AppIconWidget(
+                  appId: listedApps[index].app.id,
+                  installed: listedApps[index].installedInfo != null,
+                  appsProvider: appsProvider,
+                ),
           title: Text(
             maxLines: 1,
             listedApps[index].name,
@@ -1473,4 +1421,87 @@ class AppsFilter {
       includeNonInstalled == other.includeNonInstalled &&
       settingsProvider.setEqual(categoryFilter, other.categoryFilter) &&
       sourceFilter.trim() == other.sourceFilter.trim();
+}
+
+class AppIconWidget extends StatefulWidget {
+  final String appId;
+  final bool installed;
+  final AppsProvider appsProvider;
+
+  const AppIconWidget({
+    super.key,
+    required this.appId,
+    required this.installed,
+    required this.appsProvider,
+  });
+
+  @override
+  State<AppIconWidget> createState() => _AppIconWidgetState();
+}
+
+class _AppIconWidgetState extends State<AppIconWidget> {
+  late final Future<void> _iconFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      child: FutureBuilder(
+        future: _iconFuture,
+        builder: (ctx, val) {
+          var icon = widget.appsProvider.apps[widget.appId]?.icon;
+          return icon != null
+              ? Image.memory(
+                  icon,
+                  gaplessPlayback: true,
+                  opacity: AlwaysStoppedAnimation(
+                    widget.installed ? 1 : 0.6,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.rotationZ(0.31),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Image(
+                          image: const AssetImage(
+                            'assets/graphics/icon_small.png',
+                          ),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.4)
+                              : Colors.white.withOpacity(0.3),
+                          colorBlendMode: BlendMode.modulate,
+                          gaplessPlayback: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+        },
+      ),
+      onDoubleTap: () {
+        pm.openApp(widget.appId);
+      },
+      onLongPress: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AppPage(
+              appId: widget.appId,
+              showOppositeOfPreferredView: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

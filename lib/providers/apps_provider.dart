@@ -1811,7 +1811,6 @@ class AppsProvider with ChangeNotifier {
             icon,
           ),
         );
-        notifyListeners();
       }
     }
   }
