@@ -34,11 +34,11 @@ Currently supported App sources:
   - [RuStore](https://rustore.ru/)
   - [Farsroid](https://www.farsroid.com)
   - [CoolApk](https://coolapk.com/)
-  - [RockMods](https://rockmods.net/)
   - [LiteAPKs](https://liteapks.com/)
   - [APK4Free](https://apk4free.net/)
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) (Track-Only)
+  - [RockMods](https://rockmods.net/) (Track-Only)
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)
