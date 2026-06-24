@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -140,10 +141,15 @@ void main() async {
   } catch (e) {
     // Already added, do nothing (see #375)
   }
+  await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        statusBarColor: Colors.transparent,
+        systemStatusBarContrastEnforced: false,
+      ),
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
@@ -178,7 +184,79 @@ class Obtainium extends StatefulWidget {
 }
 
 class _ObtainiumState extends State<Obtainium> {
-  var existingUpdateInterval = -1;
+  var _lastUpdateInterval = -1;
+  var _lastUseFGService = false;
+  var _firstRunHandled = false;
+
+  void _manageServices(SettingsProvider settings) {
+    var interval = settings.updateInterval;
+    var useFG = settings.useFGService;
+    if (interval == _lastUpdateInterval && useFG == _lastUseFGService) return;
+    _lastUpdateInterval = interval;
+    _lastUseFGService = useFG;
+    if (interval == 0) {
+      stopForegroundService();
+      BackgroundFetch.stop();
+    } else if (useFG) {
+      BackgroundFetch.stop();
+      startForegroundService(false);
+    } else {
+      stopForegroundService();
+      BackgroundFetch.start();
+    }
+  }
+
+  void _handleFirstRun(
+    SettingsProvider settings,
+    AppsProvider apps,
+    LogsProvider logs,
+    BuildContext context,
+  ) {
+    if (settings.prefs == null) {
+      settings.initializeSettings();
+      return;
+    }
+    if (_firstRunHandled) return;
+    _firstRunHandled = true;
+    var isFirstRun = settings.checkAndFlipFirstRun();
+    if (isFirstRun) {
+      logs.add('This is the first ever run of Obtainium.');
+      if (!fdroid) {
+        getInstalledInfo(obtainiumId)
+            .then((value) {
+              if (value?.versionName != null) {
+                apps.saveApps([
+                  App(
+                    obtainiumId,
+                    obtainiumUrl,
+                    'ImranR98',
+                    'Obtainium',
+                    value!.versionName,
+                    value.versionName!,
+                    [],
+                    0,
+                    {
+                      'versionDetection': true,
+                      'apkFilterRegEx': 'fdroid',
+                      'invertAPKFilter': true,
+                    },
+                    null,
+                    false,
+                  ),
+                ], onlyIfExists: false);
+              }
+            })
+            .catchError((err) {
+              logs.add('Failed to add Obtainium on first run: $err');
+            });
+      }
+    }
+    if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
+        (settings.forcedLocale == null &&
+            context.deviceLocale != context.locale)) {
+      settings.resetLocaleSafe(context);
+    }
+  }
 
   @override
   void initState() {
@@ -196,7 +274,10 @@ class _ObtainiumState extends State<Obtainium> {
       await FlutterForegroundTask.requestNotificationPermission();
     }
     if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+      var settingsProvider = context.read<SettingsProvider>();
+      if (settingsProvider.showBatteryOptimizationPrompt) {
+        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+      }
     }
   }
 
@@ -252,14 +333,8 @@ class _ObtainiumState extends State<Obtainium> {
     }
   }
 
-  // void onReceiveForegroundServiceData(Object data) {
-  //   print('onReceiveTaskData: $data');
-  // }
-
   @override
   void dispose() {
-    // Remove a callback to receive data sent from the TaskHandler.
-    // FlutterForegroundTask.removeTaskDataCallback(onReceiveForegroundServiceData);
     super.dispose();
   }
 
@@ -294,61 +369,8 @@ class _ObtainiumState extends State<Obtainium> {
     AppsProvider appsProvider = context.read<AppsProvider>();
     LogsProvider logs = context.read<LogsProvider>();
     NotificationsProvider notifs = context.read<NotificationsProvider>();
-    if (settingsProvider.updateInterval == 0) {
-      stopForegroundService();
-      BackgroundFetch.stop();
-    } else {
-      if (settingsProvider.useFGService) {
-        BackgroundFetch.stop();
-        startForegroundService(false);
-      } else {
-        stopForegroundService();
-        BackgroundFetch.start();
-      }
-    }
-    if (settingsProvider.prefs == null) {
-      settingsProvider.initializeSettings();
-    } else {
-      bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
-      if (isFirstRun) {
-        logs.add('This is the first ever run of Obtainium.');
-        // If this is the first run, add Obtainium to the Apps list
-        if (!fdroid) {
-          getInstalledInfo(obtainiumId)
-              .then((value) {
-                if (value?.versionName != null) {
-                  appsProvider.saveApps([
-                    App(
-                      obtainiumId,
-                      obtainiumUrl,
-                      'ImranR98',
-                      'Obtainium',
-                      value!.versionName,
-                      value.versionName!,
-                      [],
-                      0,
-                      {
-                        'versionDetection': true,
-                        'apkFilterRegEx': 'fdroid',
-                        'invertAPKFilter': true,
-                      },
-                      null,
-                      false,
-                    ),
-                  ], onlyIfExists: false);
-                }
-              })
-              .catchError((err) {
-                print(err);
-              });
-        }
-      }
-      if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
-          (settingsProvider.forcedLocale == null &&
-              context.deviceLocale != context.locale)) {
-        settingsProvider.resetLocaleSafe(context);
-      }
-    }
+    _manageServices(settingsProvider);
+    _handleFirstRun(settingsProvider, appsProvider, logs, context);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifs.checkLaunchByNotif();
@@ -399,6 +421,29 @@ class _ObtainiumState extends State<Obtainium> {
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              sliderTheme: SliderThemeData(
+                activeTrackColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary,
+                inactiveTrackColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .surfaceContainerHighest,
+                thumbColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary,
+                overlayColor:
+                    (settingsProvider.theme == ThemeSettings.dark
+                        ? darkColorScheme
+                        : lightColorScheme)
+                    .primary
+                    .withAlpha(30),
+              ),
             ),
             darkTheme: ThemeData(
               useMaterial3: true,
@@ -408,6 +453,29 @@ class _ObtainiumState extends State<Obtainium> {
               fontFamily: settingsProvider.useSystemFont
                   ? 'SystemFont'
                   : 'Montserrat',
+              sliderTheme: SliderThemeData(
+                activeTrackColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary,
+                inactiveTrackColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .surfaceContainerHighest,
+                thumbColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary,
+                overlayColor:
+                    (settingsProvider.theme == ThemeSettings.light
+                        ? lightColorScheme
+                        : darkColorScheme)
+                    .primary
+                    .withAlpha(30),
+              ),
             ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{

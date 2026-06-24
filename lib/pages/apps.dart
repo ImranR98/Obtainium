@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:obtainium/components/app_list_builder.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -13,6 +14,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -104,31 +106,30 @@ void showChangeLogDialog(
 }
 
 Null Function()? getChangeLogFn(BuildContext context, App app) {
-  AppSource appSource = SourceProvider().getSource(
-    app.url,
-    overrideSource: app.overrideSource,
-  );
-  String? changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
+  String? changesUrl;
   String? changeLog = app.changeLog;
-  if (changeLog?.split('\n').length == 1) {
-    if (RegExp(
-      '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
-    ).hasMatch(changeLog!)) {
-      if (changesUrl == null) {
-        changesUrl = changeLog;
-        changeLog = null;
-      }
-    }
+  if (changeLog?.split('\n').length == 1 &&
+      RegExp(
+        '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
+      ).hasMatch(changeLog!)) {
+    changesUrl = changeLog;
+    changeLog = null;
   }
-  return (changeLog == null && changesUrl == null)
-      ? null
-      : () {
-          if (changeLog != null) {
-            showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
-          } else {
-            launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
-          }
-        };
+  if (changeLog == null && changesUrl == null) return null;
+  return () {
+    var appSource = SourceProvider().getSource(
+      app.url,
+      overrideSource: app.overrideSource,
+    );
+    if (changesUrl == null) {
+      changesUrl = appSource.changeLogPageFromStandardUrl(app.url);
+    }
+    if (changeLog != null) {
+      showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
+    } else if (changesUrl != null) {
+      launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
+    }
+  };
 }
 
 class AppsPageState extends State<AppsPage> {
@@ -171,7 +172,7 @@ class AppsPageState extends State<AppsPage> {
     var listedApps = appsProvider.getAppValues().toList();
 
     refresh() {
-      HapticFeedback.lightImpact();
+      settingsProvider.lightImpact();
       setState(() {
         refreshingSince = DateTime.now();
       });
@@ -195,184 +196,65 @@ class AppsPageState extends State<AppsPage> {
       _refreshIndicatorKey.currentState?.show();
     }
 
-    selectedAppIds = selectedAppIds
-        .where((element) => listedApps.map((e) => e.app.id).contains(element))
-        .toSet();
+    var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
+    selectedAppIds = selectedAppIds.where(listedAppIdSet.contains).toSet();
 
     toggleAppSelected(App app) {
       setState(() {
-        if (selectedAppIds.map((e) => e).contains(app.id)) {
-          selectedAppIds.removeWhere((a) => a == app.id);
+        if (selectedAppIds.contains(app.id)) {
+          selectedAppIds.remove(app.id);
         } else {
           selectedAppIds.add(app.id);
         }
       });
     }
 
-    listedApps = listedApps.where((app) {
-      if (app.app.installedVersion == app.app.latestVersion &&
-          !(filter.includeUptodate)) {
-        return false;
-      }
-      if (app.app.installedVersion == null && !(filter.includeNonInstalled)) {
-        return false;
-      }
-      if (filter.nameFilter.isNotEmpty || filter.authorFilter.isNotEmpty) {
-        List<String> nameTokens = filter.nameFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-        List<String> authorTokens = filter.authorFilter
-            .split(' ')
-            .where((element) => element.trim().isNotEmpty)
-            .toList();
-
-        for (var t in nameTokens) {
-          if (!app.name.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
-        }
-        for (var t in authorTokens) {
-          if (!app.author.toLowerCase().contains(t.toLowerCase())) {
-            return false;
-          }
-        }
-      }
-      if (filter.idFilter.isNotEmpty) {
-        if (!app.app.id.contains(filter.idFilter)) {
-          return false;
-        }
-      }
-      if (filter.categoryFilter.isNotEmpty &&
-          filter.categoryFilter
-              .intersection(app.app.categories.toSet())
-              .isEmpty) {
-        return false;
-      }
-      if (filter.sourceFilter.isNotEmpty &&
-          sourceProvider
-                  .getSource(
-                    app.app.url,
-                    overrideSource: app.app.overrideSource,
-                  )
-                  .runtimeType
-                  .toString() !=
-              filter.sourceFilter) {
-        return false;
-      }
-      return true;
-    }).toList();
-
-    listedApps.sort((a, b) {
-      int result = 0;
-      if (settingsProvider.sortColumn == SortColumnSettings.authorName) {
-        result = ((a.author + a.name).toLowerCase()).compareTo(
-          (b.author + b.name).toLowerCase(),
-        );
-      } else if (settingsProvider.sortColumn == SortColumnSettings.nameAuthor) {
-        result = ((a.name + a.author).toLowerCase()).compareTo(
-          (b.name + b.author).toLowerCase(),
-        );
-      } else if (settingsProvider.sortColumn ==
-          SortColumnSettings.releaseDate) {
-        // Handle null dates: apps with unknown release dates are grouped at the end
-        final aDate = a.app.releaseDate;
-        final bDate = b.app.releaseDate;
-        final isDescending =
-            settingsProvider.sortOrder == SortOrderSettings.descending;
-        if (aDate == null && bDate == null) {
-          // Both null: sort by name for consistency
-          result = ((a.name + a.author).toLowerCase()).compareTo(
-            (b.name + b.author).toLowerCase(),
-          );
-        } else if (aDate == null) {
-          // a has no date, always push to end regardless of sort direction
-          result = isDescending ? -1 : 1;
-        } else if (bDate == null) {
-          // b has no date, always push to end regardless of sort direction
-          result = isDescending ? 1 : -1;
-        } else {
-          result = aDate.compareTo(bDate);
-        }
-      }
-      return result;
-    });
-
-    if (settingsProvider.sortOrder == SortOrderSettings.descending) {
-      listedApps = listedApps.reversed.toList();
-    }
-
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
+
+    listedApps = AppListBuilder.filter(listedApps, filter, sourceProvider);
+    listedApps = AppListBuilder.sort(
+      listedApps,
+      settingsProvider.sortColumn,
+      settingsProvider.sortOrder,
+    );
+    listedApps = AppListBuilder.reorder(
+      listedApps,
+      settingsProvider.pinUpdates,
+      settingsProvider.buryNonInstalled,
+      existingUpdates.map((e) => e).toSet(),
+    );
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedApps.where((a) => a.app.id == element).isNotEmpty
-              : selectedAppIds.map((e) => e).contains(element),
+              ? listedAppIdSet.contains(element)
+              : selectedAppIds.contains(element),
         )
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
         .findExistingUpdates(nonInstalledOnly: true)
         .where(
           (element) => selectedAppIds.isEmpty
-              ? listedApps.where((a) => a.app.id == element).isNotEmpty
-              : selectedAppIds.map((e) => e).contains(element),
+              ? listedAppIdSet.contains(element)
+              : selectedAppIds.contains(element),
         )
         .toList();
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
-    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected.where((id) {
+    bool isNotTrackOnly(String id) {
       if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
         return false;
       }
       return true;
-    }).toList();
-    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected.where((id) {
-      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
-        trackOnlyUpdateIdsAllOrSelected.add(id);
-        return false;
-      }
-      return true;
-    }).toList();
-
-    if (settingsProvider.pinUpdates) {
-      var temp = [];
-      listedApps = listedApps.where((sa) {
-        if (existingUpdates.contains(sa.app.id)) {
-          temp.add(sa);
-          return false;
-        }
-        return true;
-      }).toList();
-      listedApps = [...temp, ...listedApps];
     }
 
-    if (settingsProvider.buryNonInstalled) {
-      var temp = [];
-      listedApps = listedApps.where((sa) {
-        if (sa.app.installedVersion == null) {
-          temp.add(sa);
-          return false;
-        }
-        return true;
-      }).toList();
-      listedApps = [...listedApps, ...temp];
-    }
-
-    var tempRenamed = [];
-    var tempPinned = [];
-    var tempNotPinned = [];
-    for (var a in listedApps) {
-      if (a.app.hasPendingRepoRename) {
-        tempRenamed.add(a);
-      } else if (a.app.pinned) {
-        tempPinned.add(a);
-      } else {
-        tempNotPinned.add(a);
-      }
-    }
-    listedApps = [...tempRenamed, ...tempPinned, ...tempNotPinned];
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
+        .where(isNotTrackOnly)
+        .toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
+        .where(isNotTrackOnly)
+        .toList();
 
     List<String?> getListedCategories() {
       var temp = listedApps.map(
@@ -420,8 +302,7 @@ class AppsPageState extends State<AppsPage> {
             child: LinearProgressIndicator(
               value: appsProvider.loadingApps
                   ? null
-                  : appsProvider
-                            .getAppValues()
+                  : appsProvider.apps.values
                             .where(
                               (element) =>
                                   !(element.app.lastUpdateCheck?.isBefore(
@@ -453,6 +334,18 @@ class AppsPageState extends State<AppsPage> {
                     .downloadAndInstallLatestApps([
                       listedApps[appIndex].app.id,
                     ], globalNavigatorKey.currentContext)
+                    .then((res) {
+                      if (res.isNotEmpty) {
+                        var np = context.read<NotificationsProvider>();
+                        np.cancel(UpdateNotification([]).id);
+                        np.cancel(
+                          SilentUpdateAttemptNotification(
+                            [],
+                            id: res[0].hashCode,
+                          ).id,
+                        );
+                      }
+                    })
                     .catchError((e) {
                       showError(e, context);
                       return <String>[];
@@ -466,64 +359,13 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getAppIcon(int appIndex) {
-      return InkWell(
-        child: FutureBuilder(
-          future: appsProvider.updateAppIcon(listedApps[appIndex].app.id),
-          builder: (ctx, val) {
-            return listedApps[appIndex].icon != null
-                ? Image.memory(
-                    listedApps[appIndex].icon!,
-                    gaplessPlayback: true,
-                    opacity: AlwaysStoppedAnimation(
-                      listedApps[appIndex].installedInfo == null ? 0.6 : 1,
-                    ),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.rotationZ(0.31),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Image(
-                            image: const AssetImage(
-                              'assets/graphics/icon_small.png',
-                            ),
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withOpacity(0.4)
-                                : Colors.white.withOpacity(0.3),
-                            colorBlendMode: BlendMode.modulate,
-                            gaplessPlayback: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-          },
-        ),
-        onDoubleTap: () {
-          pm.openApp(listedApps[appIndex].app.id);
-        },
-        onLongPress: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AppPage(
-                appId: listedApps[appIndex].app.id,
-                showOppositeOfPreferredView: true,
-              ),
-            ),
-          );
-        },
-      );
-    }
-
     getVersionText(int appIndex) {
-      return listedApps[appIndex].app.installedVersion ?? tr('notInstalled');
+      var installed = listedApps[appIndex].app.installedVersion;
+      var latest = listedApps[appIndex].app.latestVersion;
+      if (installed != null && installed != latest) {
+        return '$installed → $latest';
+      }
+      return installed ?? tr('notInstalled');
     }
 
     getChangesButtonString(int appIndex, bool hasChangeLogFn) {
@@ -652,12 +494,12 @@ class AppsPageState extends State<AppsPage> {
       var transparent = Theme.of(
         context,
       ).colorScheme.surface.withAlpha(0).value;
+      var categories = listedApps[index].app.categories;
       List<double> stops = [
-        ...listedApps[index].app.categories.asMap().entries.map(
-          (e) =>
-              ((e.key / (listedApps[index].app.categories.length - 1)) -
-              0.0001),
-        ),
+        if (categories.isNotEmpty)
+          ...categories.asMap().entries.map(
+            (e) => ((e.key / (categories.length - 1)) - 0.0001),
+          ),
         1,
       ];
       if (stops.length == 2) {
@@ -665,19 +507,21 @@ class AppsPageState extends State<AppsPage> {
       }
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            stops: stops,
-            begin: const Alignment(-1, 0),
-            end: const Alignment(-0.97, 0),
-            colors: [
-              ...listedApps[index].app.categories.map(
-                (e) => Color(
-                  settingsProvider.categories[e] ?? transparent,
-                ).withAlpha(255),
-              ),
-              Color(transparent),
-            ],
-          ),
+          gradient: categories.isEmpty
+              ? null
+              : LinearGradient(
+                  stops: stops,
+                  begin: const Alignment(-1, 0),
+                  end: const Alignment(-0.97, 0),
+                  colors: [
+                    ...categories.map(
+                      (e) => Color(
+                        settingsProvider.categories[e] ?? transparent,
+                      ).withAlpha(255),
+                    ),
+                    Color(transparent),
+                  ],
+                ),
         ),
         child: ListTile(
           autofocus: index == 0 && settingsProvider.isTV,
@@ -687,9 +531,7 @@ class AppsPageState extends State<AppsPage> {
           selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(
             listedApps[index].app.pinned ? 0.2 : 0.1,
           ),
-          selected: selectedAppIds
-              .map((e) => e)
-              .contains(listedApps[index].app.id),
+          selected: selectedAppIds.contains(listedApps[index].app.id),
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
           },
@@ -700,7 +542,11 @@ class AppsPageState extends State<AppsPage> {
                     toggleAppSelected(listedApps[index].app);
                   },
                 )
-              : getAppIcon(index),
+              : AppIconWidget(
+                  appId: listedApps[index].app.id,
+                  installed: listedApps[index].installedInfo != null,
+                  appsProvider: appsProvider,
+                ),
           title: Text(
             maxLines: 1,
             listedApps[index].name,
@@ -817,7 +663,7 @@ class AppsPageState extends State<AppsPage> {
                   trackOnlyUpdateIdsAllOrSelected.isEmpty)
           ? null
           : () {
-              HapticFeedback.heavyImpact();
+              settingsProvider.heavyImpact();
               List<GeneratedFormItem> formItems = [];
               if (existingUpdateIdsAllOrSelected.isNotEmpty) {
                 formItems.add(
@@ -913,8 +759,12 @@ class AppsPageState extends State<AppsPage> {
                         return <String>[];
                       })
                       .then((value) {
-                        if (value.isNotEmpty && shouldInstallUpdates) {
-                          showMessage(tr('appsUpdated'), context);
+                        if (value.isNotEmpty) {
+                          if (shouldInstallUpdates) {
+                            showMessage(tr('appsUpdated'), context);
+                          }
+                          var np = context.read<NotificationsProvider>();
+                          np.cancel(UpdateNotification([]).id);
                         }
                       });
                 }
@@ -1015,7 +865,7 @@ class AppsPageState extends State<AppsPage> {
               ),
               TextButton(
                 onPressed: () {
-                  HapticFeedback.selectionClick();
+                  settingsProvider.selectionClick();
                   appsProvider.saveApps(
                     selectedApps.map((a) {
                       if (a.installedVersion != null &&
@@ -1035,9 +885,7 @@ class AppsPageState extends State<AppsPage> {
             ],
           );
         },
-      ).whenComplete(() {
-        Navigator.of(context).pop();
-      });
+      );
     }
 
     pinSelectedApps() {
@@ -1098,7 +946,7 @@ class AppsPageState extends State<AppsPage> {
                             String urls = '';
                             for (var a in selectedApps) {
                               urls +=
-                                  'https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                                  'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
                             }
                             Share.share(
                               urls,
@@ -1406,51 +1254,81 @@ class AppsPageState extends State<AppsPage> {
   }
 }
 
-class AppsFilter {
-  late String nameFilter;
-  late String authorFilter;
-  late String idFilter;
-  late bool includeUptodate;
-  late bool includeNonInstalled;
-  late Set<String> categoryFilter;
-  late String sourceFilter;
+class AppIconWidget extends StatefulWidget {
+  final String appId;
+  final bool installed;
+  final AppsProvider appsProvider;
 
-  AppsFilter({
-    this.nameFilter = '',
-    this.authorFilter = '',
-    this.idFilter = '',
-    this.includeUptodate = true,
-    this.includeNonInstalled = true,
-    this.categoryFilter = const {},
-    this.sourceFilter = '',
+  const AppIconWidget({
+    super.key,
+    required this.appId,
+    required this.installed,
+    required this.appsProvider,
   });
 
-  Map<String, dynamic> toFormValuesMap() {
-    return {
-      'appName': nameFilter,
-      'author': authorFilter,
-      'appId': idFilter,
-      'upToDateApps': includeUptodate,
-      'nonInstalledApps': includeNonInstalled,
-      'sourceFilter': sourceFilter,
-    };
+  @override
+  State<AppIconWidget> createState() => _AppIconWidgetState();
+}
+
+class _AppIconWidgetState extends State<AppIconWidget> {
+  late final Future<void> _iconFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
   }
 
-  void setFormValuesFromMap(Map<String, dynamic> values) {
-    nameFilter = values['appName']!;
-    authorFilter = values['author']!;
-    idFilter = values['appId']!;
-    includeUptodate = values['upToDateApps'];
-    includeNonInstalled = values['nonInstalledApps'];
-    sourceFilter = values['sourceFilter'];
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      child: FutureBuilder(
+        future: _iconFuture,
+        builder: (ctx, val) {
+          var icon = widget.appsProvider.apps[widget.appId]?.icon;
+          return icon != null
+              ? Image.memory(
+                  icon,
+                  gaplessPlayback: true,
+                  opacity: AlwaysStoppedAnimation(widget.installed ? 1 : 0.6),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.rotationZ(0.31),
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Image(
+                          image: const AssetImage(
+                            'assets/graphics/icon_small.png',
+                          ),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.4)
+                              : Colors.white.withOpacity(0.3),
+                          colorBlendMode: BlendMode.modulate,
+                          gaplessPlayback: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+        },
+      ),
+      onDoubleTap: () {
+        pm.openApp(widget.appId);
+      },
+      onLongPress: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
+          ),
+        );
+      },
+    );
   }
-
-  bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>
-      authorFilter.trim() == other.authorFilter.trim() &&
-      nameFilter.trim() == other.nameFilter.trim() &&
-      idFilter.trim() == other.idFilter.trim() &&
-      includeUptodate == other.includeUptodate &&
-      includeNonInstalled == other.includeNonInstalled &&
-      settingsProvider.setEqual(categoryFilter, other.categoryFilter) &&
-      sourceFilter.trim() == other.sourceFilter.trim();
 }

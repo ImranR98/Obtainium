@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -119,7 +118,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumExport({bool pickOnly = false}) async {
-      HapticFeedback.selectionClick();
+      settingsProvider.selectionClick();
       appsProvider
           .export(
             pickOnly:
@@ -137,7 +136,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runObtainiumImport() {
-      HapticFeedback.selectionClick();
+      settingsProvider.selectionClick();
       FilePicker.pickFiles()
           .then((result) {
             setState(() {
@@ -151,14 +150,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 throw ObtainiumError(tr('invalidInput'));
               }
               appsProvider.import(data).then((value) {
-                var cats = settingsProvider.categories;
-                appsProvider.apps.forEach((key, value) {
-                  for (var c in value.app.categories) {
-                    if (!cats.containsKey(c)) {
-                      cats[c] = generateRandomLightColor().value;
-                    }
-                  }
-                });
                 appsProvider.addMissingCategories(settingsProvider);
                 showMessage(
                   '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
