@@ -19,6 +19,7 @@ class GitHub extends AppSource {
     showReleaseDateAsVersionToggle = true;
     this.hostChanged = hostChanged;
     allowIncludeZips = true;
+    allowIncludeTarballs = true;
 
     sourceConfigSettingFormItems = [
       GeneratedFormTextField(
@@ -184,6 +185,22 @@ class GitHub extends AppSource {
         ],
       ),
     ];
+  }
+
+  bool isApkContainer(
+    String name, {
+    bool includeZips = false,
+    bool includeTarballs = false,
+  }) {
+    var lower = name.toLowerCase();
+    return lower.endsWith('.apk') ||
+        lower.endsWith('.xapk') ||
+        (includeZips && lower.endsWith('.zip')) ||
+        (includeTarballs &&
+            (lower.endsWith('.tar.gz') ||
+                lower.endsWith('.tgz') ||
+                lower.endsWith('.tar.bz2') ||
+                lower.endsWith('.tar.xz')));
   }
 
   @override
@@ -435,6 +452,7 @@ class GitHub extends AppSource {
     String sortMethod =
         additionalSettings['sortMethodChoice'] ?? 'smartname-datefallback';
     bool includeZips = additionalSettings['includeZips'] == true;
+    bool includeTarballs = additionalSettings['includeTarballs'] == true;
     dynamic latestRelease;
     if (verifyLatestTag) {
       var temp = requestUrl.split('?');
@@ -467,11 +485,13 @@ class GitHub extends AppSource {
 
       findReleaseAssetUrls(dynamic release) =>
           (release['assets'] as List<dynamic>?)?.map((e) {
-            var ext = e['name'].toString().toLowerCase().split('.').last;
+            var name = e['name'].toString();
             var url =
-                !(ext == 'apk' ||
-                    ext == 'xapk' ||
-                    (includeZips && ext == 'zip'))
+                !isApkContainer(
+                  name,
+                  includeZips: includeZips,
+                  includeTarballs: includeTarballs,
+                )
                 ? (e['browser_download_url'] ?? e['url'])
                 : (e['url'] ?? e['browser_download_url']);
             url = undoGHProxyMod(url, sourceConfigSettingValues);
@@ -612,11 +632,12 @@ class GitHub extends AppSource {
             .map((e) => e['final_url'] as MapEntry<String, String>)
             .toList();
         var apkAssetsWithUrls = allAssetsWithUrls.where((element) {
-          var ext = (element['final_url'] as MapEntry<String, String>).key
-              .toLowerCase()
-              .split('.')
-              .last;
-          return ext == 'apk' || ext == 'xapk' || (includeZips && ext == 'zip');
+          var name = (element['final_url'] as MapEntry<String, String>).key;
+          return isApkContainer(
+            name,
+            includeZips: includeZips,
+            includeTarballs: includeTarballs,
+          );
         }).toList();
 
         var filteredApkUrls = filterApks(
