@@ -1794,12 +1794,9 @@ class AppsProvider with ChangeNotifier {
       );
     }
     // Delete externally uninstalled Apps if needed
-    if (removedAppIds.isNotEmpty) {
-      if (removedAppIds.isNotEmpty) {
-        if (settingsProvider.removeOnExternalUninstall) {
-          await removeApps(removedAppIds);
-        }
-      }
+    if (removedAppIds.isNotEmpty &&
+        settingsProvider.removeOnExternalUninstall) {
+      await removeApps(removedAppIds);
     }
     loadingApps = false;
     notifyListeners();

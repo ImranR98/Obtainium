@@ -150,14 +150,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 throw ObtainiumError(tr('invalidInput'));
               }
               appsProvider.import(data).then((value) {
-                var cats = settingsProvider.categories;
-                appsProvider.apps.forEach((key, value) {
-                  for (var c in value.app.categories) {
-                    if (!cats.containsKey(c)) {
-                      cats[c] = generateRandomLightColor().value;
-                    }
-                  }
-                });
                 appsProvider.addMissingCategories(settingsProvider);
                 showMessage(
                   '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',

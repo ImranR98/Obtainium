@@ -405,6 +405,8 @@ class AddAppPageState extends State<AddAppPage> {
                 }),
           )).where((a) => a != null).toList();
 
+          if (!mounted) return;
+
           // Interleave results instead of simple reduce
           Map<String, MapEntry<String, List<String>>> res = {};
           var si = 0;

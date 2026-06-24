@@ -204,7 +204,7 @@ class AppsPageState extends State<AppsPage> {
     toggleAppSelected(App app) {
       setState(() {
         if (selectedAppIds.contains(app.id)) {
-          selectedAppIds.removeWhere((a) => a == app.id);
+          selectedAppIds.remove(app.id);
         } else {
           selectedAppIds.add(app.id);
         }
@@ -881,9 +881,7 @@ class AppsPageState extends State<AppsPage> {
             ],
           );
         },
-      ).whenComplete(() {
-        Navigator.of(context).pop();
-      });
+      );
     }
 
     pinSelectedApps() {
