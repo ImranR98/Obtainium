@@ -195,6 +195,8 @@ class GitHub extends AppSource {
     var lower = name.toLowerCase();
     return lower.endsWith('.apk') ||
         lower.endsWith('.xapk') ||
+        lower.endsWith('.apkm') ||
+        lower.endsWith('.apks') ||
         (includeZips && lower.endsWith('.zip')) ||
         (includeTarballs &&
             (lower.endsWith('.tar.gz') ||
