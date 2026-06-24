@@ -764,7 +764,8 @@ class AppsProvider with ChangeNotifier {
         if (filterRegEx != null) {
           var reg = RegExp(filterRegEx);
           apks.removeWhere((apk) {
-            var shouldDelete = !reg.hasMatch(apk.uri.pathSegments.last);
+            var relativePath = apk.path.substring(apkDir!.path.length + 1);
+            var shouldDelete = !reg.hasMatch(relativePath);
             if (shouldDelete) {
               apk.delete();
             }
