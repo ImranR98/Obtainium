@@ -197,9 +197,7 @@ class AppsPageState extends State<AppsPage> {
     }
 
     var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    selectedAppIds = selectedAppIds
-        .where(listedAppIdSet.contains)
-        .toSet();
+    selectedAppIds = selectedAppIds.where(listedAppIdSet.contains).toSet();
 
     toggleAppSelected(App app) {
       setState(() {
@@ -250,10 +248,13 @@ class AppsPageState extends State<AppsPage> {
       }
       return true;
     }
-    existingUpdateIdsAllOrSelected =
-        existingUpdateIdsAllOrSelected.where(isNotTrackOnly).toList();
-    newInstallIdsAllOrSelected =
-        newInstallIdsAllOrSelected.where(isNotTrackOnly).toList();
+
+    existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
+        .where(isNotTrackOnly)
+        .toList();
+    newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
+        .where(isNotTrackOnly)
+        .toList();
 
     List<String?> getListedCategories() {
       var temp = listedApps.map(
@@ -296,25 +297,25 @@ class AppsPageState extends State<AppsPage> {
               ),
             ),
           ),
-          if (refreshingSince != null || appsProvider.loadingApps)
-            SliverToBoxAdapter(
-              child: LinearProgressIndicator(
-                value: appsProvider.loadingApps
-                    ? null
-                    : appsProvider.apps.values
-                              .where(
-                                (element) =>
-                                    !(element.app.lastUpdateCheck?.isBefore(
-                                          refreshingSince!,
-                                        ) ??
-                                        true),
-                              )
-                              .length /
-                          (appsProvider.apps.isNotEmpty
-                              ? appsProvider.apps.length
-                              : 1),
-              ),
+        if (refreshingSince != null || appsProvider.loadingApps)
+          SliverToBoxAdapter(
+            child: LinearProgressIndicator(
+              value: appsProvider.loadingApps
+                  ? null
+                  : appsProvider.apps.values
+                            .where(
+                              (element) =>
+                                  !(element.app.lastUpdateCheck?.isBefore(
+                                        refreshingSince!,
+                                      ) ??
+                                      true),
+                            )
+                            .length /
+                        (appsProvider.apps.isNotEmpty
+                            ? appsProvider.apps.length
+                            : 1),
             ),
+          ),
       ];
     }
 
@@ -334,12 +335,17 @@ class AppsPageState extends State<AppsPage> {
                       listedApps[appIndex].app.id,
                     ], globalNavigatorKey.currentContext)
                     .then((res) {
-                  if (res.isNotEmpty) {
-                    var np = context.read<NotificationsProvider>();
-                    np.cancel(UpdateNotification([]).id);
-                    np.cancel(SilentUpdateAttemptNotification([], id: res[0].hashCode).id);
-                  }
-                })
+                      if (res.isNotEmpty) {
+                        var np = context.read<NotificationsProvider>();
+                        np.cancel(UpdateNotification([]).id);
+                        np.cancel(
+                          SilentUpdateAttemptNotification(
+                            [],
+                            id: res[0].hashCode,
+                          ).id,
+                        );
+                      }
+                    })
                     .catchError((e) {
                       showError(e, context);
                       return <String>[];
@@ -492,8 +498,7 @@ class AppsPageState extends State<AppsPage> {
       List<double> stops = [
         if (categories.isNotEmpty)
           ...categories.asMap().entries.map(
-            (e) =>
-                ((e.key / (categories.length - 1)) - 0.0001),
+            (e) => ((e.key / (categories.length - 1)) - 0.0001),
           ),
         1,
       ];
@@ -526,8 +531,7 @@ class AppsPageState extends State<AppsPage> {
           selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(
             listedApps[index].app.pinned ? 0.2 : 0.1,
           ),
-          selected: selectedAppIds
-              .contains(listedApps[index].app.id),
+          selected: selectedAppIds.contains(listedApps[index].app.id),
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
           },
@@ -942,7 +946,7 @@ class AppsPageState extends State<AppsPage> {
                             String urls = '';
                             for (var a in selectedApps) {
                               urls +=
-                                  'https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                                  'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
                             }
                             Share.share(
                               urls,
@@ -1286,9 +1290,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
               ? Image.memory(
                   icon,
                   gaplessPlayback: true,
-                  opacity: AlwaysStoppedAnimation(
-                    widget.installed ? 1 : 0.6,
-                  ),
+                  opacity: AlwaysStoppedAnimation(widget.installed ? 1 : 0.6),
                 )
               : Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1322,10 +1324,8 @@ class _AppIconWidgetState extends State<AppIconWidget> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AppPage(
-              appId: widget.appId,
-              showOppositeOfPreferredView: true,
-            ),
+            builder: (context) =>
+                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
           ),
         );
       },

@@ -720,7 +720,7 @@ class AddAppPageState extends State<AddAppPage> {
           InkWell(
             onTap: () {
               launchUrlString(
-                'https://apps.obtainium.imranr.dev/',
+                'https://apps.obtainium.page/',
                 mode: LaunchMode.externalApplication,
               );
             },
