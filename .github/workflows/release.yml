@@ -44,6 +44,9 @@ jobs:
 
       - name: Build APKs
         run: |
+          flutter pub get
+          # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
+          sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
           sed -i 's/signingConfig = signingConfigs.getByName("release")//g' android/app/build.gradle.kts
           flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done

@@ -764,7 +764,8 @@ class AppsProvider with ChangeNotifier {
         if (filterRegEx != null) {
           var reg = RegExp(filterRegEx);
           apks.removeWhere((apk) {
-            var shouldDelete = !reg.hasMatch(apk.uri.pathSegments.last);
+            var relativePath = apk.path.substring(apkDir!.path.length + 1);
+            var shouldDelete = !reg.hasMatch(relativePath);
             if (shouldDelete) {
               apk.delete();
             }
@@ -2659,6 +2660,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     }
 
     // Filter out updates that will be installed silently (the rest go into toNotify)
+    List<App> trackOnlyToNotify = [];
+    List<App> exemptToNotify = [];
     for (var i = 0; i < updates.length; i++) {
       var canInstallSilently = await appsProvider.canInstallSilently(
         updates[i],
@@ -2668,14 +2671,32 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
           logs.add(
             'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
           );
-          toNotify.add(updates[i]);
+          if (updates[i].additionalSettings['trackOnly'] == true) {
+            trackOnlyToNotify.add(updates[i]);
+          } else if (
+            updates[i].additionalSettings['exemptFromBackgroundUpdates'] == true) {
+            exemptToNotify.add(updates[i]);
+          } else {
+            toNotify.add(updates[i]);
+          }
         }
       }
     }
 
-    // Send the update notification
+    // Send separate notifications to avoid one being cancelled
+    // when the other is processed
     if (toNotify.isNotEmpty) {
       notificationsProvider.notify(UpdateNotification(toNotify));
+    }
+    if (trackOnlyToNotify.isNotEmpty) {
+      notificationsProvider.notify(
+        TrackOnlyUpdateNotification(trackOnlyToNotify),
+      );
+    }
+    if (exemptToNotify.isNotEmpty) {
+      notificationsProvider.notify(
+        TrackOnlyUpdateNotification(exemptToNotify),
+      );
     }
 
     // Send the error notifications (grouped by error string)

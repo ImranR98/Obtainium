@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -143,7 +144,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
               importInProgress = true;
             });
             if (result != null) {
-              String data = File(result.files.single.path!).readAsStringSync();
+              var path = result.files.single.path;
+              if (path == null) {
+                throw ObtainiumError(tr('noFilePickerAvailable'));
+              }
+              String data = File(path).readAsStringSync();
               try {
                 jsonDecode(data);
               } catch (e) {
@@ -161,7 +166,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
             }
           })
           .catchError((e) {
-            showError(e, context);
+            if (e is PlatformException || e is MissingPluginException) {
+              showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+            } else {
+              showError(e, context);
+            }
           })
           .whenComplete(() {
             setState(() {
@@ -173,10 +182,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
     runUrlImport() {
       FilePicker.pickFiles().then((result) {
         if (result != null) {
+          var path = result.files.single.path;
+          if (path == null) return;
           urlListImport(
             overrideInitValid: true,
             initValue: RegExp('https?://[^"]+')
-                .allMatches(File(result.files.single.path!).readAsStringSync())
+                .allMatches(File(path).readAsStringSync())
                 .map((e) => e.input.substring(e.start, e.end))
                 .toSet()
                 .toList()
@@ -190,6 +201,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 })
                 .join('\n'),
           );
+        }
+      }).catchError((e) {
+        if (e is PlatformException || e is MissingPluginException) {
+          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+        } else {
+          showError(e, context);
         }
       });
     }
@@ -376,114 +393,113 @@ class _ImportExportPageState extends State<ImportExportPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!settingsProvider.isTV)
-                    FutureBuilder(
-                      future: settingsProvider.getExportDir(),
-                      builder: (context, snapshot) {
-                        return Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextButton(
-                                    style: outlineButtonStyle,
-                                    onPressed: importInProgress
-                                        ? null
-                                        : () {
-                                            runObtainiumExport(pickOnly: true);
-                                          },
-                                    child: Text(
-                                      tr('pickExportDir'),
-                                      textAlign: TextAlign.center,
-                                    ),
+                  FutureBuilder(
+                    future: settingsProvider.getExportDir(),
+                    builder: (context, snapshot) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  style: outlineButtonStyle,
+                                  onPressed: importInProgress
+                                      ? null
+                                      : () {
+                                          runObtainiumExport(pickOnly: true);
+                                        },
+                                  child: Text(
+                                    tr('pickExportDir'),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: TextButton(
-                                    style: outlineButtonStyle,
-                                    onPressed:
-                                        importInProgress ||
-                                            snapshot.data == null
-                                        ? null
-                                        : runObtainiumExport,
-                                    child: Text(
-                                      tr('obtainiumExport'),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextButton(
-                                    style: outlineButtonStyle,
-                                    onPressed: importInProgress
-                                        ? null
-                                        : runObtainiumImport,
-                                    child: Text(
-                                      tr('obtainiumImport'),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (snapshot.data != null)
-                              Column(
-                                children: [
-                                  const SizedBox(height: 16),
-                                  GeneratedForm(
-                                    items: [
-                                      [
-                                        GeneratedFormSwitch(
-                                          'autoExportOnChanges',
-                                          label: tr('autoExportOnChanges'),
-                                          defaultValue: settingsProvider
-                                              .autoExportOnChanges,
-                                        ),
-                                      ],
-                                      [
-                                        GeneratedFormDropdown(
-                                          'exportSettings',
-                                          [
-                                            MapEntry('0', tr('none')),
-                                            MapEntry('1', tr('excludeSecrets')),
-                                            MapEntry('2', tr('all')),
-                                          ],
-                                          label: tr('includeSettings'),
-                                          defaultValue: settingsProvider
-                                              .exportSettings
-                                              .toString(),
-                                        ),
-                                      ],
-                                    ],
-                                    onValueChanges: (value, valid, isBuilding) {
-                                      if (valid && !isBuilding) {
-                                        if (value['autoExportOnChanges'] !=
-                                            null) {
-                                          settingsProvider.autoExportOnChanges =
-                                              value['autoExportOnChanges'] ==
-                                              true;
-                                        }
-                                        if (value['exportSettings'] != null) {
-                                          settingsProvider.exportSettings =
-                                              int.parse(
-                                                value['exportSettings'],
-                                              );
-                                        }
-                                      }
-                                    },
-                                  ),
-                                ],
                               ),
-                          ],
-                        );
-                      },
-                    ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: TextButton(
+                                  style: outlineButtonStyle,
+                                  onPressed:
+                                      importInProgress ||
+                                          snapshot.data == null
+                                      ? null
+                                      : runObtainiumExport,
+                                  child: Text(
+                                    tr('obtainiumExport'),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  style: outlineButtonStyle,
+                                  onPressed: importInProgress
+                                      ? null
+                                      : runObtainiumImport,
+                                  child: Text(
+                                    tr('obtainiumImport'),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (snapshot.data != null)
+                            Column(
+                              children: [
+                                const SizedBox(height: 16),
+                                GeneratedForm(
+                                  items: [
+                                    [
+                                      GeneratedFormSwitch(
+                                        'autoExportOnChanges',
+                                        label: tr('autoExportOnChanges'),
+                                        defaultValue: settingsProvider
+                                            .autoExportOnChanges,
+                                      ),
+                                    ],
+                                    [
+                                      GeneratedFormDropdown(
+                                        'exportSettings',
+                                        [
+                                          MapEntry('0', tr('none')),
+                                          MapEntry('1', tr('excludeSecrets')),
+                                          MapEntry('2', tr('all')),
+                                        ],
+                                        label: tr('includeSettings'),
+                                        defaultValue: settingsProvider
+                                            .exportSettings
+                                            .toString(),
+                                      ),
+                                    ],
+                                  ],
+                                  onValueChanges: (value, valid, isBuilding) {
+                                    if (valid && !isBuilding) {
+                                      if (value['autoExportOnChanges'] !=
+                                          null) {
+                                        settingsProvider.autoExportOnChanges =
+                                            value['autoExportOnChanges'] ==
+                                            true;
+                                      }
+                                      if (value['exportSettings'] != null) {
+                                        settingsProvider.exportSettings =
+                                            int.parse(
+                                              value['exportSettings'],
+                                            );
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                   if (importInProgress)
                     const Column(
                       children: [
@@ -552,11 +568,10 @@ class _ImportExportPageState extends State<ImportExportPage> {
                           child: Text(tr('importFromURLList')),
                         ),
                         const SizedBox(height: 8),
-                        if (!settingsProvider.isTV)
-                          TextButton(
-                            onPressed: importInProgress ? null : runUrlImport,
-                            child: Text(tr('importFromURLsInFile')),
-                          ),
+                        TextButton(
+                          onPressed: importInProgress ? null : runUrlImport,
+                          child: Text(tr('importFromURLsInFile')),
+                        ),
                       ],
                     ),
                   ...sourceProvider.massUrlSources.map(
