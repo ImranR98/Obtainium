@@ -4,7 +4,7 @@
     "noVersionFound": "Tidak dapat memastikan versi rilis yang sesuai",
     "urlMatchesNoSource": "URL tidak sesuai dengan sumber yang diketahui",
     "cantInstallOlderVersion": "Tidak dapat memasang versi aplikasi yang lebih lama",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

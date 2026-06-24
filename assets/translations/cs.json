@@ -4,7 +4,7 @@
     "noVersionFound": "Nelze určit verzi vydání",
     "urlMatchesNoSource": "URL neodpovídá žádnému známému zdroji",
     "cantInstallOlderVersion": "Nelze nainstalovat starší verzi aplikace",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

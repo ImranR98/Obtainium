@@ -4,7 +4,7 @@
     "noVersionFound": "リリースバージョンを特定できませんでした",
     "urlMatchesNoSource": "URLが既知のソースと一致しません",
     "cantInstallOlderVersion": "旧バージョンのアプリをインストールできません",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

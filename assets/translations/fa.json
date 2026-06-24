@@ -4,7 +4,7 @@
     "noVersionFound": "نمی توان نسخه منتشر شده را تعیین کرد",
     "urlMatchesNoSource": "آدرس اینترنتی با منبع شناخته شده مطابقت ندارد",
     "cantInstallOlderVersion": "نمی توان نسخه قدیمی یک برنامه را نصب کرد",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

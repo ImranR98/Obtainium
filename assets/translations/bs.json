@@ -4,7 +4,7 @@
     "noVersionFound": "Nije moguće odrediti verziju izdanja",
     "urlMatchesNoSource": "URL se ne podudara s poznatim izvorom",
     "cantInstallOlderVersion": "Nije moguće instalirati stariju verziju aplikacije",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",

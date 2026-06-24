@@ -4,7 +4,7 @@
     "noVersionFound": "Не вдалося визначити версію видання",
     "urlMatchesNoSource": "URL не відповідає відомому джерелу",
     "cantInstallOlderVersion": "Не можна встановити старішу версію застосунку",
-    "showOlderVersionWarning": "Show older version warning",
+    "showAppDowngradeError": "Show app downgrade errors",
     "showBatteryOptimizationPrompt": "Show battery optimization prompt",
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "includePrereleasesByDefault": "Include pre-releases by default",
