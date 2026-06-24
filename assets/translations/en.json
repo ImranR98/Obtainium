@@ -153,6 +153,7 @@
     "warning": "Warning",
     "sourceIsXButPackageFromYPrompt": "The app source is '{}' but the release package comes from '{}'. Continue?",
     "updatesAvailable": "Updates available",
+    "trackOnlyUpdatesAvailable": "Track-only updates available",
     "updatesAvailableNotifDescription": "Notifies the user that updates are available for one or more apps tracked by Obtainium",
     "noNewUpdates": "No new updates.",
     "xHasAnUpdate": "{} has an update.",
