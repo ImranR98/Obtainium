@@ -614,92 +614,8 @@ class _AppPageState extends State<AppPage> {
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (BuildContext ctx) {
-                  return AlertDialog(
-                    scrollable: true,
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FutureBuilder(
-                          future: appsProvider.updateAppIcon(
-                            app.app.id,
-                            ignoreCache: true,
-                          ),
-                          builder: (ctx, val) => app.icon != null
-                              ? Center(
-                                  child: AppIcon(
-                                    bytes: app.icon,
-                                    size: 56,
-                                    radius: 14,
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          app.name,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          tr('byX', args: [app.author]),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                        ),
-                        Text(
-                          app.app.url,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall!
-                              .copyWith(
-                                decoration: TextDecoration.underline,
-                              ),
-                        ),
-                        Text(
-                          app.app.id,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          appInstalledVersionText(app.app),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        Text(
-                          tr(
-                            'lastUpdateCheckX',
-                            args: [
-                              app.app.lastUpdateCheck
-                                      ?.toLocal()
-                                      .toString()
-                                      .split('.')
-                                      .first ??
-                                  tr('never'),
-                            ],
-                          ),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                    title: Text(app.name),
-                    actions: [
-                      FilledButton.tonal(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text(tr('continue')),
-                      ),
-                    ],
-                  );
-                },
+                builder: (BuildContext ctx) =>
+                    AppInfoDialog(app: app, appsProvider: appsProvider),
               );
             },
             icon: const Icon(Icons.more_horiz),
@@ -1040,6 +956,82 @@ class _AppPageState extends State<AppPage> {
                 ],
               ),
       ),
+    );
+  }
+}
+
+/// A read-only summary of an app (icon, name, author, URL/ID, version status,
+/// last update check), shown from the in-app webpage view's "more" button.
+class AppInfoDialog extends StatelessWidget {
+  final AppInMemory app;
+  final AppsProvider appsProvider;
+
+  const AppInfoDialog({
+    super.key,
+    required this.app,
+    required this.appsProvider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return AlertDialog(
+      scrollable: true,
+      title: Text(app.name),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FutureBuilder(
+            future: appsProvider.updateAppIcon(app.app.id, ignoreCache: true),
+            builder: (ctx, val) => app.icon != null
+                ? Center(
+                    child: AppIcon(bytes: app.icon, size: 56, radius: 14),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            app.name,
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            tr('byX', args: [app.author]),
+            style: textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            app.app.url,
+            style: textTheme.labelSmall!.copyWith(
+              decoration: TextDecoration.underline,
+            ),
+          ),
+          Text(app.app.id, style: textTheme.labelSmall),
+          const SizedBox(height: 8),
+          Text(appInstalledVersionText(app.app), style: textTheme.bodyMedium),
+          Text(
+            tr(
+              'lastUpdateCheckX',
+              args: [
+                app.app.lastUpdateCheck
+                        ?.toLocal()
+                        .toString()
+                        .split('.')
+                        .first ??
+                    tr('never'),
+              ],
+            ),
+            style: textTheme.bodySmall,
+          ),
+        ],
+      ),
+      actions: [
+        FilledButton.tonal(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tr('continue')),
+        ),
+      ],
     );
   }
 }
