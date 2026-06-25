@@ -146,10 +146,6 @@ Null Function()? getChangeLogFn(BuildContext context, App app) {
 class AppsPageState extends State<AppsPage> {
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
-  var updatesOnlyFilter = AppsFilter(
-    includeUptodate: false,
-    includeNonInstalled: false,
-  );
   Set<String> selectedAppIds = {};
   Set<String?> collapsedCategories = {};
   DateTime? refreshingSince;
