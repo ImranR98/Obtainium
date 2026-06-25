@@ -156,6 +156,32 @@ Future<bool> showConfirmDialog(
   return confirmed ?? false;
 }
 
+/// Shows an informational "about/help" dialog with a title, scrollable content
+/// widgets, and a single dismiss button.
+Future<void> showHelpDialog(
+  BuildContext context, {
+  required String title,
+  required List<Widget> content,
+}) {
+  return showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: content,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(tr('ok')),
+        ),
+      ],
+    ),
+  );
+}
+
 /// A centered placeholder for empty / loading / no-results states: a large
 /// tonal icon with an optional caption.
 class EmptyState extends StatelessWidget {

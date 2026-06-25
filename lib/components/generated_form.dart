@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_shapes.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -430,25 +431,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
                       ? IconButton(
                           icon: const Icon(Icons.help_outline),
                           tooltip: tr('about'),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: Text(formItem.label),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: formItem.belowWidgets,
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(ctx).pop(),
-                                    child: Text(tr('ok')),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                          onPressed: () => showHelpDialog(
+                            context,
+                            title: formItem.label,
+                            content: formItem.belowWidgets,
+                          ),
                         )
                       : null,
                 ),

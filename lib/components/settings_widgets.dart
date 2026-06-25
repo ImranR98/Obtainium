@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/ui_shapes.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 
 bool _isSettingsTile(Widget w) => w is SettingsTile || w is SettingsToggleRow;
 
@@ -122,25 +123,11 @@ class SettingsToggleRow extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.help_outline),
                   tooltip: tr('about'),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: Text(label),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: helpWidgets,
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            child: Text(tr('ok')),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  onPressed: () => showHelpDialog(
+                    context,
+                    title: label,
+                    content: helpWidgets,
+                  ),
                 ),
                 Switch(value: value, onChanged: onChanged),
               ],
