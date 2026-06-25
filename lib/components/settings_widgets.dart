@@ -1,18 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-
-const double _tileBigRadius = 24;
-const double _tileSmallRadius = 6;
-
-BorderRadius _positionalTileRadius({
-  required bool isFirst,
-  required bool isLast,
-}) {
-  return BorderRadius.vertical(
-    top: Radius.circular(isFirst ? _tileBigRadius : _tileSmallRadius),
-    bottom: Radius.circular(isLast ? _tileBigRadius : _tileSmallRadius),
-  );
-}
+import 'package:obtainium/components/ui_shapes.dart';
 
 bool _isSettingsTile(Widget w) => w is SettingsTile || w is SettingsToggleRow;
 
@@ -58,7 +46,7 @@ List<Widget> shapeSettingsTiles(List<Widget> children) {
     result.add(
       _withTileRadius(
         w,
-        _positionalTileRadius(isFirst: !prevIsTile, isLast: !nextIsTile),
+        positionalTileRadius(isFirst: !prevIsTile, isLast: !nextIsTile),
       ),
     );
   }
@@ -85,7 +73,7 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: borderRadius ?? BorderRadius.circular(_tileBigRadius),
+      borderRadius: borderRadius ?? BorderRadius.circular(connectedTileBigRadius),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );

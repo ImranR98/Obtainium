@@ -41,6 +41,8 @@ enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
 enum SortOrderSettings { ascending, descending }
 
+enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
@@ -103,6 +105,25 @@ class SettingsProvider with ChangeNotifier {
 
   set useMaterialYou(bool useMaterialYou) {
     prefs?.setBool('useMaterialYou', useMaterialYou);
+    notifyListeners();
+  }
+
+  ColourSchemeMode get colourSchemeMode {
+    final stored = prefs?.getInt('colourSchemeMode');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < ColourSchemeMode.values.length) {
+      return ColourSchemeMode.values[stored];
+    }
+    // Migrate from the legacy useMaterialYou boolean.
+    return (prefs?.getBool('useMaterialYou') ?? false)
+        ? ColourSchemeMode.materialYou
+        : ColourSchemeMode.standard;
+  }
+
+  set colourSchemeMode(ColourSchemeMode mode) {
+    prefs?.setInt('colourSchemeMode', mode.index);
+    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
     notifyListeners();
   }
 

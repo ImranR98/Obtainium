@@ -169,6 +169,7 @@ void main() async {
         path: localeDir,
         fallbackLocale: fallbackLocale,
         useOnlyLangCode: false,
+        useFallbackTranslations: true,
         child: const Obtainium(),
       ),
     ),
@@ -219,6 +220,10 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       margin: EdgeInsets.zero,
     ),
     dialogTheme: DialogThemeData(shape: dialogShape),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
     bottomSheetTheme: const BottomSheetThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -485,20 +490,26 @@ class _ObtainiumState extends State<Obtainium> {
           // Decide on a colour/brightness scheme based on OS and user settings
           ColorScheme lightColorScheme;
           ColorScheme darkColorScheme;
+          final schemeMode = settingsProvider.colourSchemeMode;
           if (lightDynamic != null &&
               darkDynamic != null &&
-              settingsProvider.useMaterialYou) {
+              schemeMode == ColourSchemeMode.materialYou) {
             lightColorScheme = lightDynamic.harmonized();
             darkColorScheme = darkDynamic.harmonized();
           } else {
+            final variant = switch (schemeMode) {
+              ColourSchemeMode.vibrant => DynamicSchemeVariant.vibrant,
+              ColourSchemeMode.expressive => DynamicSchemeVariant.expressive,
+              _ => DynamicSchemeVariant.tonalSpot,
+            };
             lightColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
-              dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
+              dynamicSchemeVariant: variant,
             );
             darkColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
               brightness: Brightness.dark,
-              dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
+              dynamicSchemeVariant: variant,
             );
           }
 

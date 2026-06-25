@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -945,9 +946,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ? colorScheme.surfaceContainerHighest
                 : colorScheme.surfaceContainerLow,
             clipBehavior: Clip.antiAlias,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(r == 0 ? 24 : 6),
-              bottom: Radius.circular(r == n - 1 ? 24 : 6),
+            borderRadius: positionalTileRadius(
+              isFirst: r == 0,
+              isLast: r == n - 1,
             ),
             child: Padding(padding: padding, child: inputRowWidgets[r]),
           ),

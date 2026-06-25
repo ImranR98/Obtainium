@@ -348,6 +348,33 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
+    var colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('colourScheme')),
+      initialSelection: settingsProvider.colourSchemeMode,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
+          value: ColourSchemeMode.standard,
+          label: tr('standard'),
+        ),
+        DropdownMenuEntry(value: ColourSchemeMode.vibrant, label: tr('vibrant')),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.expressive,
+          label: tr('expressive'),
+        ),
+        if (sdk >= 31)
+          DropdownMenuEntry(
+            value: ColourSchemeMode.materialYou,
+            label: tr('useMaterialYou'),
+          ),
+      ],
+      onSelected: (value) {
+        if (value != null) {
+          settingsProvider.colourSchemeMode = value;
+        }
+      },
+    );
+
     final rawSlider = Slider(
       value: settingsProvider.updateIntervalSliderVal,
       max: updateIntervalNodes.length.toDouble(),
@@ -697,15 +724,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                   settingsProvider.useBlackTheme = value;
                                 },
                               ),
-                            if (sdk >= 31)
-                              SettingsToggleRow(
-                                label: tr('useMaterialYou'),
-                                value: settingsProvider.useMaterialYou,
-                                onChanged: (value) {
-                                  settingsProvider.useMaterialYou = value;
-                                },
-                              ),
-                            if (!settingsProvider.useMaterialYou) colorPicker,
+                            fieldTile(colourSchemeDropdown),
+                            if (settingsProvider.colourSchemeMode !=
+                                ColourSchemeMode.materialYou)
+                              colorPicker,
                             fieldTile(sortDropdown),
                             orderControl,
                             fieldTile(localeDropdown),

@@ -9,6 +9,7 @@ import 'package:obtainium/components/app_list_builder.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
@@ -295,14 +296,37 @@ class AppsPageState extends State<AppsPage> {
         if (listedApps.isEmpty)
           SliverFillRemaining(
             child: Center(
-              child: Text(
-                appsProvider.apps.isEmpty
-                    ? appsProvider.loadingApps
-                          ? tr('pleaseWait')
-                          : tr('noApps')
-                    : tr('noAppsForFilter'),
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      appsProvider.apps.isEmpty
+                          ? (appsProvider.loadingApps
+                                ? Icons.hourglass_empty_rounded
+                                : Icons.apps_outlined)
+                          : Icons.search_off_rounded,
+                      size: 56,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      appsProvider.apps.isEmpty
+                          ? appsProvider.loadingApps
+                                ? tr('pleaseWait')
+                                : tr('noApps')
+                          : tr('noAppsForFilter'),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -632,72 +656,73 @@ class AppsPageState extends State<AppsPage> {
       capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
       final colorScheme = Theme.of(context).colorScheme;
       final expanded = !collapsedCategories.contains(category);
+      final showItems = expanded && appEntries.isNotEmpty;
+      // The header and (when expanded) its app items form one connected,
+      // positionally-rounded block.
+      final segmentCount = 1 + (showItems ? appEntries.length : 0);
 
-      // Group title: a distinct-tone tile that connects to its items below.
-      final header = Material(
-        color: colorScheme.surfaceContainerHigh,
+      segment(int i, Color color, Widget child) => Material(
+        color: color,
         clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.vertical(
-          top: const Radius.circular(20),
-          bottom: Radius.circular(expanded && appEntries.isNotEmpty ? 6 : 20),
+        borderRadius: positionalTileRadius(
+          isFirst: i == 0,
+          isLast: i == segmentCount - 1,
         ),
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              if (expanded) {
-                collapsedCategories.add(category);
-              } else {
-                collapsedCategories.remove(category);
-              }
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                AnimatedRotation(
-                  turns: expanded ? 0.25 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.chevron_right_rounded),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    capFirstChar(category ?? tr('noCategory')),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Text(appEntries.length.toString()),
-              ],
-            ),
-          ),
-        ),
+        child: child,
       );
-
-      final items = <Widget>[];
-      if (expanded) {
-        for (var i = 0; i < appEntries.length; i++) {
-          final isLast = i == appEntries.length - 1;
-          items.add(
-            Material(
-              color: colorScheme.surfaceContainerLow,
-              clipBehavior: Clip.antiAlias,
-              borderRadius: BorderRadius.vertical(
-                top: const Radius.circular(6),
-                bottom: Radius.circular(isLast ? 20 : 6),
-              ),
-              child: getSingleAppHorizTile(appEntries[i].key),
-            ),
-          );
-        }
-      }
 
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 3,
-          children: [header, ...items],
+          children: [
+            segment(
+              0,
+              colorScheme.surfaceContainerHigh,
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    if (expanded) {
+                      collapsedCategories.add(category);
+                    } else {
+                      collapsedCategories.remove(category);
+                    }
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: expanded ? 0.25 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(Icons.chevron_right_rounded),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          capFirstChar(category ?? tr('noCategory')),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Text(appEntries.length.toString()),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (showItems)
+              for (var i = 0; i < appEntries.length; i++)
+                segment(
+                  i + 1,
+                  colorScheme.surfaceContainerLow,
+                  getSingleAppHorizTile(appEntries[i].key),
+                ),
+          ],
         ),
       );
     }
