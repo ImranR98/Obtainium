@@ -194,31 +194,3 @@ class SettingsGroup extends StatelessWidget {
     );
   }
 }
-
-class SettingsDropdown<T> extends StatelessWidget {
-  final String label;
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-
-  const SettingsDropdown({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      items: items,
-      onChanged: onChanged,
-      decoration: InputDecoration(labelText: label),
-    );
-  }
-}
-
-const SizedBox height16 = SizedBox(height: 16);
-const SizedBox height32 = SizedBox(height: 32);

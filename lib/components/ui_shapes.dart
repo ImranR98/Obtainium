@@ -24,10 +24,6 @@ BorderRadius positionalTileRadius({
   );
 }
 
-/// A Material 3 Expressive squircle (rounded superellipse) border.
-RoundedSuperellipseBorder squircleBorder(BorderRadiusGeometry radius) =>
-    RoundedSuperellipseBorder(borderRadius: radius);
-
 /// The connected-tile positional radius expressed as a squircle border, for use
 /// as a [Material.shape] / [Card.shape].
 RoundedSuperellipseBorder positionalTileShape({

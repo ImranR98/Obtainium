@@ -1665,7 +1665,7 @@ class AppListCategorySection extends StatelessWidget {
                   children: [
                     AnimatedRotation(
                       turns: expanded ? 0.25 : 0,
-                      duration: const Duration(milliseconds: 200),
+                      duration: ExpressiveMotion.short,
                       child: const Icon(Icons.chevron_right_rounded),
                     ),
                     const SizedBox(width: 12),
