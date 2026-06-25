@@ -766,173 +766,183 @@ class _AppPageState extends State<AppPage> {
       }
     }
 
-    getInstallOrUpdateButton() => FilledButton(
-      onPressed:
-          !updating &&
-              (app?.app.installedVersion == null ||
-                  app?.app.installedVersion != app?.app.latestVersion) &&
-              !areDownloadsRunning
-          ? () async {
-              try {
-                var successMessage = app?.app.installedVersion == null
-                    ? tr('installed')
-                    : tr('appsUpdated');
-                settingsProvider.heavyImpact();
-                var res = await appsProvider.downloadAndInstallLatestApps(
-                  app?.app.id != null ? [app!.app.id] : [],
-                  globalNavigatorKey.currentContext,
-                );
-                if (res.isNotEmpty && !trackOnly) {
-                  // ignore: use_build_context_synchronously
-                  showMessage(successMessage, context);
-                }
-                if (res.isNotEmpty && mounted) {
-                  _closePage();
-                }
-                if (res.isNotEmpty) {
-                  var np = context.read<NotificationsProvider>();
-                  np.cancel(UpdateNotification([]).id);
-                  np.cancel(
-                    SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+    // Primary action as a docked FAB (Install / Update / Mark).
+    getFab() {
+      final installed = app?.app.installedVersion;
+      final latest = app?.app.latestVersion;
+      final hasAction = !updating &&
+          (installed == null || installed != latest) &&
+          !areDownloadsRunning;
+      final trackOnly =
+          app?.app.additionalSettings['trackOnly'] == true;
+      return FloatingActionButton.extended(
+        onPressed: hasAction
+            ? () async {
+                try {
+                  var successMessage = installed == null
+                      ? tr('installed')
+                      : tr('appsUpdated');
+                  settingsProvider.heavyImpact();
+                  var res = await appsProvider.downloadAndInstallLatestApps(
+                    app?.app.id != null ? [app!.app.id] : [],
+                    globalNavigatorKey.currentContext,
                   );
+                  if (res.isNotEmpty && !trackOnly) {
+                    showMessage(successMessage, context);
+                  }
+                  if (res.isNotEmpty && mounted) {
+                    _closePage();
+                  }
+                  if (res.isNotEmpty) {
+                    var np = context.read<NotificationsProvider>();
+                    np.cancel(UpdateNotification([]).id);
+                    np.cancel(
+                      SilentUpdateAttemptNotification([], id: res[0].hashCode)
+                          .id,
+                    );
+                  }
+                } catch (e) {
+                  showError(e, context);
                 }
-              } catch (e) {
-                // ignore: use_build_context_synchronously
-                showError(e, context);
               }
-            }
-          : null,
-      child: Text(
-        app?.app.installedVersion == null
-            ? !trackOnly
-                  ? tr('install')
-                  : tr('markInstalled')
-            : !trackOnly
-            ? tr('update')
-            : tr('markUpdated'),
-      ),
-    );
+            : null,
+        icon: Icon(
+          installed == null
+              ? Icons.download_outlined
+              : Icons.system_update_alt_rounded,
+        ),
+        label: Text(
+          installed == null
+              ? (!trackOnly ? tr('install') : tr('markInstalled'))
+              : !trackOnly
+              ? tr('update')
+              : tr('markUpdated'),
+        ),
+      );
+    }
 
-    getBottomSheetMenu() => Padding(
-      padding: EdgeInsets.fromLTRB(
-        0,
-        0,
-        0,
-        MediaQuery.of(context).padding.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (source != null &&
-                    source.combinedAppSpecificSettingFormItems.isNotEmpty)
-                  IconButton(
-                    onPressed: app?.downloadProgress != null || updating
-                        ? null
-                        : () async {
-                            var values = await showAdditionalOptionsDialog();
-                            handleAdditionalOptionChanges(values);
+    // Secondary actions in a BottomAppBar with room for the docked FAB.
+    getBottomBar() {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          0,
+          0,
+          0,
+          MediaQuery.of(context).padding.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (app?.downloadProgress != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+                child: LinearProgressIndicator(
+                  value: app!.downloadProgress! >= 0
+                      ? app.downloadProgress! / 100
+                      : null,
+                ),
+              ),
+            BottomAppBar(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  if (source != null &&
+                      source.combinedAppSpecificSettingFormItems.isNotEmpty)
+                    IconButton(
+                      onPressed: app?.downloadProgress != null || updating
+                          ? null
+                          : () async {
+                              var values =
+                                  await showAdditionalOptionsDialog();
+                              handleAdditionalOptionChanges(values);
+                            },
+                      tooltip: tr('additionalOptions'),
+                      icon: const Icon(Icons.edit),
+                    ),
+                  if (app != null && app.installedInfo != null)
+                    IconButton(
+                      onPressed: () {
+                        appsProvider.openAppSettings(app.app.id);
+                      },
+                      icon: const Icon(Icons.settings),
+                      tooltip: tr('settings'),
+                    ),
+                  if (app != null && showAppWebpageFinal)
+                    IconButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext ctx) {
+                            return AlertDialog(
+                              scrollable: true,
+                              content: getFullInfoColumn(small: true),
+                              title: Text(app.name),
+                              actions: [
+                                FilledButton.tonal(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text(tr('continue')),
+                                ),
+                              ],
+                            );
                           },
-                    tooltip: tr('additionalOptions'),
-                    icon: const Icon(Icons.edit),
-                  ),
-                if (app != null && app.installedInfo != null)
-                  IconButton(
-                    onPressed: () {
-                      appsProvider.openAppSettings(app.app.id);
-                    },
-                    icon: const Icon(Icons.settings),
-                    tooltip: tr('settings'),
-                  ),
-                if (app != null && showAppWebpageFinal)
-                  IconButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext ctx) {
-                          return AlertDialog(
-                            scrollable: true,
-                            content: getFullInfoColumn(small: true),
-                            title: Text(app.name),
-                            actions: [
-                              FilledButton.tonal(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text(tr('continue')),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.more_horiz),
-                    tooltip: tr('more'),
-                  ),
-                if (app?.app.installedVersion != null &&
-                    app?.app.installedVersion != app?.app.latestVersion &&
-                    !isVersionDetectionStandard &&
-                    !trackOnly)
+                        );
+                      },
+                      icon: const Icon(Icons.more_horiz),
+                      tooltip: tr('more'),
+                    ),
+                  if (app?.app.installedVersion != null &&
+                      app?.app.installedVersion != app?.app.latestVersion &&
+                      !isVersionDetectionStandard &&
+                      !trackOnly)
+                    IconButton(
+                      onPressed: app?.downloadProgress != null || updating
+                          ? null
+                          : showMarkUpdatedDialog,
+                      tooltip: tr('markUpdated'),
+                      icon: const Icon(Icons.done),
+                    ),
+                  if ((!isVersionDetectionStandard || trackOnly) &&
+                      app?.app.installedVersion != null &&
+                      app?.app.installedVersion == app?.app.latestVersion)
+                    IconButton(
+                      onPressed: app?.app == null || updating
+                          ? null
+                          : () {
+                              app!.app.installedVersion = null;
+                              appsProvider.saveApps([app.app]);
+                            },
+                      icon: const Icon(Icons.restore_rounded),
+                      tooltip: tr('resetInstallStatus'),
+                    ),
+                  const Spacer(),
+                  const SizedBox(width: 48),
                   IconButton(
                     onPressed: app?.downloadProgress != null || updating
-                        ? null
-                        : showMarkUpdatedDialog,
-                    tooltip: tr('markUpdated'),
-                    icon: const Icon(Icons.done),
-                  ),
-                if ((!isVersionDetectionStandard || trackOnly) &&
-                    app?.app.installedVersion != null &&
-                    app?.app.installedVersion == app?.app.latestVersion)
-                  IconButton(
-                    onPressed: app?.app == null || updating
                         ? null
                         : () {
-                            app!.app.installedVersion = null;
-                            appsProvider.saveApps([app.app]);
+                            appsProvider
+                                .removeAppsWithModal(
+                                  context,
+                                  app != null ? [app.app] : [],
+                                )
+                                .then((value) {
+                                  if (value == true) {
+                                    _closePage();
+                                  }
+                                });
                           },
-                    icon: const Icon(Icons.restore_rounded),
-                    tooltip: tr('resetInstallStatus'),
+                    tooltip: tr('remove'),
+                    icon: const Icon(Icons.delete_outline),
                   ),
-                const SizedBox(width: 16.0),
-                Expanded(child: getInstallOrUpdateButton()),
-                const SizedBox(width: 16.0),
-                IconButton(
-                  onPressed: app?.downloadProgress != null || updating
-                      ? null
-                      : () {
-                          appsProvider
-                              .removeAppsWithModal(
-                                context,
-                                app != null ? [app.app] : [],
-                              )
-                              .then((value) {
-                                if (value == true) {
-                                  _closePage();
-                                }
-                              });
-                        },
-                  tooltip: tr('remove'),
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
-            ),
-          ),
-          if (app?.downloadProgress != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-              child: LinearProgressIndicator(
-                value: app!.downloadProgress! >= 0
-                    ? app.downloadProgress! / 100
-                    : null,
+                ],
               ),
             ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
 
     appScreenAppBar() => AppBar(
       leading: IconButton(
@@ -963,7 +973,9 @@ class _AppPageState extends State<AppPage> {
           }
         },
       ),
-      bottomSheet: getBottomSheetMenu(),
+      floatingActionButton: getFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: getBottomBar(),
     );
   }
 }
