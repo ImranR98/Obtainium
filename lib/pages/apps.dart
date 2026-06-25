@@ -640,6 +640,260 @@ class AppsPageState extends State<AppsPage> {
             };
     }
 
+
+    getDisplayedList() {
+      return settingsProvider.groupByCategory &&
+              !(listedCategories.isEmpty ||
+                  (listedCategories.length == 1 && listedCategories[0] == null))
+          ? SliverList(
+              delegate: SliverChildBuilderDelegate((
+                BuildContext context,
+                int index,
+              ) {
+                return getCategoryCollapsibleTile(index);
+              }, childCount: listedCategories.length),
+            )
+          : SliverList(
+              delegate: SliverChildBuilderDelegate((
+                BuildContext context,
+                int index,
+              ) {
+                return appTileCard(index);
+              }, childCount: listedApps.length),
+            );
+    }
+
+    getSearchBarSliver() {
+      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: SearchBar(
+            controller: searchController,
+            hintText: tr('search'),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: 16),
+            ),
+            leading: const Icon(Icons.search_rounded),
+            trailing: [
+              getSelectAllButton(),
+              if (!isFilterOff)
+                IconButton(
+                  tooltip: '${tr('filter')} - ${tr('remove')}',
+                  onPressed: () {
+                    _searchDebounce?.cancel();
+                    setState(() {
+                      filter = AppsFilter();
+                      searchController.clear();
+                    });
+                  },
+                  icon: const Icon(Icons.filter_alt_off_outlined),
+                ),
+              IconButton(
+                tooltip: tr('filterApps'),
+                onPressed: () => _showFilterDialog(context),
+                icon: const Icon(Icons.filter_list_rounded),
+              ),
+            ],
+            onChanged: (value) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                if (mounted) {
+                  setState(() {
+                    filter.nameFilter = value;
+                  });
+                }
+              });
+            },
+          ),
+        ),
+      );
+    }
+
+    getUpdateBannerSliver() {
+      var onObtain = getMassObtainFunction();
+      final cs = Theme.of(context).colorScheme;
+      return SliverToBoxAdapter(
+        child: AnimatedSize(
+          duration: ExpressiveMotion.medium,
+          curve: ExpressiveMotion.emphasized,
+          alignment: Alignment.topCenter,
+          child: onObtain == null
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: ConnectedCard(
+                  color: cs.primaryContainer,
+                  padding: null,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.system_update_alt_rounded,
+                          color: cs.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            selectedAppIds.isEmpty
+                                ? tr('installUpdateApps')
+                                : tr('installUpdateSelectedApps'),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: onObtain,
+                          child: Text(tr('update')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+      );
+    }
+
+    return PopScope(
+      canPop: selectedAppIds.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          clearSelected();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: RefreshIndicator(
+          key: _refreshIndicatorKey,
+          onRefresh: refresh,
+          child: Scrollbar(
+            interactive: true,
+            controller: scrollController,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              controller: scrollController,
+              slivers: <Widget>[
+                CustomAppBar(title: tr('appsString')),
+                if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
+                if (appsProvider.apps.isNotEmpty) getUpdateBannerSliver(),
+                ...getLoadingWidgets(),
+                getDisplayedList(),
+                const SliverToBoxAdapter(child: SizedBox(height: 88)),
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: selectedAppIds.isNotEmpty
+            ? FloatingActionButton(
+                onPressed: () => _showMoreOptions(context, appsProvider, settingsProvider, selectedApps),
+                tooltip: tr('more'),
+                child: const Icon(Icons.more_vert),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Future<void> _showFilterDialog(BuildContext context) async {
+    var values = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      builder: (BuildContext ctx) {
+        var vals = filter.toFormValuesMap();
+        return GeneratedFormModal(
+          tileMode: true,
+          initValid: true,
+          title: tr('filterApps'),
+          items: [
+            [
+              GeneratedFormTextField(
+                'appName',
+                label: tr('appName'),
+                required: false,
+                defaultValue: vals['appName'],
+              ),
+            ],
+            [
+              GeneratedFormTextField(
+                'author',
+                label: tr('author'),
+                required: false,
+                defaultValue: vals['author'],
+              ),
+            ],
+            [
+              GeneratedFormTextField(
+                'appId',
+                label: tr('appId'),
+                required: false,
+                defaultValue: vals['appId'],
+              ),
+            ],
+            [
+              GeneratedFormSwitch(
+                'upToDateApps',
+                label: tr('upToDateApps'),
+                defaultValue: vals['upToDateApps'],
+              ),
+            ],
+            [
+              GeneratedFormSwitch(
+                'nonInstalledApps',
+                label: tr('nonInstalledApps'),
+                defaultValue: vals['nonInstalledApps'],
+              ),
+            ],
+            [
+              GeneratedFormDropdown(
+                'sourceFilter',
+                label: tr('appSource'),
+                defaultValue: filter.sourceFilter,
+                [
+                  MapEntry('', tr('none')),
+                  ...sourceProvider.sources.map(
+                    (e) => MapEntry(e.runtimeType.toString(), e.name),
+                  ),
+                ],
+              ),
+            ],
+          ],
+          additionalWidgets: [
+            const SizedBox(height: 16),
+            ConnectedCard(
+              padding: null,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: CategoryEditorSelector(
+                  preselected: filter.categoryFilter,
+                  onSelected: (categories) {
+                    filter.categoryFilter = categories.toSet();
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (values != null) {
+      _searchDebounce?.cancel();
+      setState(() {
+        filter.setFormValuesFromMap(values);
+      });
+    }
+  }
+
+  void _showMoreOptions(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    Set<App> selectedApps,
+  ) {
     launchCategorizeDialog() {
       return () async {
         try {
@@ -896,252 +1150,7 @@ class AppsPageState extends State<AppsPage> {
         },
       );
     }
-
-    getDisplayedList() {
-      return settingsProvider.groupByCategory &&
-              !(listedCategories.isEmpty ||
-                  (listedCategories.length == 1 && listedCategories[0] == null))
-          ? SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return getCategoryCollapsibleTile(index);
-              }, childCount: listedCategories.length),
-            )
-          : SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return appTileCard(index);
-              }, childCount: listedApps.length),
-            );
-    }
-
-    getSearchBarSliver() {
-      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: SearchBar(
-            controller: searchController,
-            hintText: tr('search'),
-            padding: const WidgetStatePropertyAll(
-              EdgeInsets.symmetric(horizontal: 16),
-            ),
-            leading: const Icon(Icons.search_rounded),
-            trailing: [
-              getSelectAllButton(),
-              if (!isFilterOff)
-                IconButton(
-                  tooltip: '${tr('filter')} - ${tr('remove')}',
-                  onPressed: () {
-                    _searchDebounce?.cancel();
-                    setState(() {
-                      filter = AppsFilter();
-                      searchController.clear();
-                    });
-                  },
-                  icon: const Icon(Icons.filter_alt_off_outlined),
-                ),
-              IconButton(
-                tooltip: tr('filterApps'),
-                onPressed: () => _showFilterDialog(context),
-                icon: const Icon(Icons.filter_list_rounded),
-              ),
-            ],
-            onChanged: (value) {
-              _searchDebounce?.cancel();
-              _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-                if (mounted) {
-                  setState(() {
-                    filter.nameFilter = value;
-                  });
-                }
-              });
-            },
-          ),
-        ),
-      );
-    }
-
-    getUpdateBannerSliver() {
-      var onObtain = getMassObtainFunction();
-      final cs = Theme.of(context).colorScheme;
-      return SliverToBoxAdapter(
-        child: AnimatedSize(
-          duration: ExpressiveMotion.medium,
-          curve: ExpressiveMotion.emphasized,
-          alignment: Alignment.topCenter,
-          child: onObtain == null
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: ConnectedCard(
-                  color: cs.primaryContainer,
-                  padding: null,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.system_update_alt_rounded,
-                          color: cs.onPrimaryContainer,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            selectedAppIds.isEmpty
-                                ? tr('installUpdateApps')
-                                : tr('installUpdateSelectedApps'),
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: cs.onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton(
-                          onPressed: onObtain,
-                          child: Text(tr('update')),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-      );
-    }
-
-    return PopScope(
-      canPop: selectedAppIds.isEmpty,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          clearSelected();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: RefreshIndicator(
-          key: _refreshIndicatorKey,
-          onRefresh: refresh,
-          child: Scrollbar(
-            interactive: true,
-            controller: scrollController,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              controller: scrollController,
-              slivers: <Widget>[
-                CustomAppBar(title: tr('appsString')),
-                if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
-                if (appsProvider.apps.isNotEmpty) getUpdateBannerSliver(),
-                ...getLoadingWidgets(),
-                getDisplayedList(),
-                const SliverToBoxAdapter(child: SizedBox(height: 88)),
-              ],
-            ),
-          ),
-        ),
-        floatingActionButton: selectedAppIds.isNotEmpty
-            ? FloatingActionButton(
-                onPressed: showMoreOptionsDialog,
-                tooltip: tr('more'),
-                child: const Icon(Icons.more_vert),
-              )
-            : null,
-      ),
-    );
-  }
-
-  Future<void> _showFilterDialog(BuildContext context) async {
-    var values = await showDialog<Map<String, dynamic>?>(
-      context: context,
-      builder: (BuildContext ctx) {
-        var vals = filter.toFormValuesMap();
-        return GeneratedFormModal(
-          tileMode: true,
-          initValid: true,
-          title: tr('filterApps'),
-          items: [
-            [
-              GeneratedFormTextField(
-                'appName',
-                label: tr('appName'),
-                required: false,
-                defaultValue: vals['appName'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'author',
-                label: tr('author'),
-                required: false,
-                defaultValue: vals['author'],
-              ),
-            ],
-            [
-              GeneratedFormTextField(
-                'appId',
-                label: tr('appId'),
-                required: false,
-                defaultValue: vals['appId'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'upToDateApps',
-                label: tr('upToDateApps'),
-                defaultValue: vals['upToDateApps'],
-              ),
-            ],
-            [
-              GeneratedFormSwitch(
-                'nonInstalledApps',
-                label: tr('nonInstalledApps'),
-                defaultValue: vals['nonInstalledApps'],
-              ),
-            ],
-            [
-              GeneratedFormDropdown(
-                'sourceFilter',
-                label: tr('appSource'),
-                defaultValue: filter.sourceFilter,
-                [
-                  MapEntry('', tr('none')),
-                  ...sourceProvider.sources.map(
-                    (e) => MapEntry(e.runtimeType.toString(), e.name),
-                  ),
-                ],
-              ),
-            ],
-          ],
-          additionalWidgets: [
-            const SizedBox(height: 16),
-            ConnectedCard(
-              padding: null,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: CategoryEditorSelector(
-                  preselected: filter.categoryFilter,
-                  onSelected: (categories) {
-                    filter.categoryFilter = categories.toSet();
-                  },
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    if (values != null) {
-      _searchDebounce?.cancel();
-      setState(() {
-        filter.setFormValuesFromMap(values);
-      });
-    }
+    showMoreOptionsDialog();
   }
 
   void openAppById(String appId) {
