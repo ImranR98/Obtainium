@@ -788,54 +788,55 @@ class AddAppPageState extends State<AddAppPage> {
                   if (pickedSource != null) getHTMLSourceOverrideDropdown(),
                   if (shouldShowSearchBar()) getSearchBarRow(),
                   if (pickedSource != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-                      child: Material(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
-                        shape: RoundedSuperellipseBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                pickedSource!.name,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
-                                      fontWeight: FontWeight.bold,
+                    FutureBuilder(
+                      future: pickedSource?.getSourceNote(),
+                      builder: (ctx, val) {
+                        if (val.data != null && val.data!.isNotEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+                            child: Material(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLow,
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      pickedSource!.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        val.data!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              FutureBuilder(
-                                builder: (ctx, val) {
-                                  return val.data != null &&
-                                          val.data!.isNotEmpty
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 4,
-                                          ),
-                                          child: Text(
-                                            val.data!,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                          ),
-                                        )
-                                      : const SizedBox();
-                                },
-                                future: pickedSource?.getSourceNote(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
                     ),
                   if (pickedSource != null) getAdditionalOptsCol(),
                 ],

@@ -614,34 +614,16 @@ class AppsPageState extends State<AppsPage> {
             }
             return false;
           } else {
-            // Swipe left — remove, with confirmation.
-            final name = listedApps[index].name;
-            return (await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text(tr('remove')),
-                    content: Text(name),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(tr('no')),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text(tr('remove')),
-                      ),
-                    ],
-                  ),
-                )) ??
-                false;
+            // Swipe left — remove (delegates to the standard confirm dialog).
+            return appsProvider.removeAppsWithModal(
+              context,
+              [listedApps[index].app],
+            );
           }
         },
         onDismissed: (direction) {
-          if (direction != DismissDirection.startToEnd) {
-            appsProvider
-                .removeApps([appId])
-                .catchError((e) => showError(e, context));
-          }
+          // Removal is already handled inside confirmDismiss via
+          // removeAppsWithModal; nothing to do here.
         },
         child: Container(
           decoration: BoxDecoration(

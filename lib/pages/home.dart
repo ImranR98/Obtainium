@@ -10,10 +10,12 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
+import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/components/expressive_fab_menu.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -66,6 +68,12 @@ class _HomePageState extends State<HomePage> {
   void pushAddApp({String? initialUrl}) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => AddAppPage(initialUrl: initialUrl)),
+    );
+  }
+
+  void pushImportExport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ImportExportPage()),
     );
   }
 
@@ -394,10 +402,22 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    final createFab = FloatingActionButton(
-      onPressed: () => pushAddApp(),
+    // Expressive FAB menu — expands to reveal Add / Import actions.
+    final createFab = ExpressiveFabMenu(
+      icon: Icons.add,
       tooltip: tr('addApp'),
-      child: const Icon(Icons.add),
+      actions: [
+        ExpressiveFabMenuAction(
+          icon: Icons.add_circle_outline,
+          tooltip: tr('addApp'),
+          onPressed: () => pushAddApp(),
+        ),
+        ExpressiveFabMenuAction(
+          icon: Icons.import_export_outlined,
+          tooltip: tr('importExport'),
+          onPressed: pushImportExport,
+        ),
+      ],
     );
 
     return PopScope(
