@@ -544,23 +544,59 @@ class AppsPageState extends State<AppsPage> {
       // Capture the app id before wrapping in Dismissible so the swipe
       // callbacks don't see a stale list index during the animation.
       final appId = listedApps[index].app.id;
+      final installed = listedApps[index].app.installedVersion;
+      final latest = listedApps[index].app.latestVersion;
+      final trackOnly =
+          listedApps[index].app.additionalSettings['trackOnly'] == true;
+      final canInstall = installed == null && !trackOnly;
+      final canUpdate =
+          installed != null && installed != latest && !trackOnly;
       final cs = Theme.of(context).colorScheme;
+
+      // Swipe-right background: Install or Update, depending on state.
+      final swipeBackground = canInstall
+          ? Container(
+              color: cs.primaryContainer,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: 24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.install_mobile, color: cs.onPrimaryContainer),
+                  const SizedBox(width: 8),
+                  Text(
+                    tr('install'),
+                    style: TextStyle(color: cs.onPrimaryContainer),
+                  ),
+                ],
+              ),
+            )
+          : canUpdate
+          ? Container(
+              color: cs.primaryContainer,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: 24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.system_update_alt_rounded,
+                    color: cs.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    tr('update'),
+                    style: TextStyle(color: cs.onPrimaryContainer),
+                  ),
+                ],
+              ),
+            )
+          : null;
+
       return Dismissible(
         key: ValueKey(appId),
         direction: DismissDirection.horizontal,
-        background: Container(
-          color: cs.primaryContainer,
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.only(left: 24),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.system_update_alt_rounded, color: cs.onPrimaryContainer),
-              const SizedBox(width: 8),
-              Text(tr('update'), style: TextStyle(color: cs.onPrimaryContainer)),
-            ],
-          ),
-        ),
+        background: swipeBackground ?? const SizedBox.shrink(),
         secondaryBackground: Container(
           color: cs.errorContainer,
           alignment: Alignment.centerRight,
@@ -569,10 +605,8 @@ class AppsPageState extends State<AppsPage> {
         ),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
-            // Swipe right — update (snap back, action runs async).
-            final app = appsProvider.apps[appId];
-            if (app?.app.installedVersion != null &&
-                app?.app.installedVersion != app?.app.latestVersion) {
+            // Swipe right — install or update (snap back, action is async).
+            if (canInstall || canUpdate) {
               appsProvider.downloadAndInstallLatestApps(
                 [appId],
                 globalNavigatorKey.currentContext,
@@ -580,8 +614,26 @@ class AppsPageState extends State<AppsPage> {
             }
             return false;
           } else {
-            // Swipe left — remove (dismiss the tile after animation).
-            return true;
+            // Swipe left — remove, with confirmation.
+            final name = listedApps[index].name;
+            return (await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(tr('remove')),
+                    content: Text(name),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(tr('no')),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: Text(tr('remove')),
+                      ),
+                    ],
+                  ),
+                )) ??
+                false;
           }
         },
         onDismissed: (direction) {

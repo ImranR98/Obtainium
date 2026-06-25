@@ -362,34 +362,53 @@ class _AppPageState extends State<AppPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text(
-                  versionLines,
-                  textAlign: TextAlign.start,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-                ),
-                changeLogFn != null || app?.app.releaseDate != null
-                    ? InkWell(
-                        onTap: changeLogFn,
-                        child: Text(
-                          app?.app.releaseDate == null
-                              ? tr('changes')
-                              : app!.app.releaseDate!.toLocal().toString(),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall!
-                              .copyWith(
-                                decoration: changeLogFn != null
-                                    ? TextDecoration.underline
-                                    : null,
-                                fontStyle: changeLogFn != null
-                                    ? FontStyle.italic
-                                    : null,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            versionLines,
+                            textAlign: TextAlign.start,
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          if (changeLogFn != null ||
+                              app?.app.releaseDate != null)
+                            InkWell(
+                              onTap: changeLogFn,
+                              child: Text(
+                                app?.app.releaseDate == null
+                                    ? tr('changes')
+                                    : app!.app.releaseDate!
+                                        .toLocal()
+                                        .toString(),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.labelSmall!
+                                    .copyWith(
+                                      decoration: changeLogFn != null
+                                          ? TextDecoration.underline
+                                          : null,
+                                      fontStyle: changeLogFn != null
+                                          ? FontStyle.italic
+                                          : null,
+                                    ),
                               ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-                const SizedBox(height: 40),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -492,49 +511,56 @@ class _AppPageState extends State<AppPage> {
           ),
           if (app?.app.additionalSettings['about'] is String &&
               app?.app.additionalSettings['about'].isNotEmpty)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 32),
-                GestureDetector(
-                  onLongPress: () {
-                    Clipboard.setData(
-                      ClipboardData(
-                        text: app?.app.additionalSettings['about'] ?? '',
-                      ),
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(tr('copiedToClipboard'))),
-                    );
-                  },
-                  child: Markdown(
-                    physics: NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    styleSheet: MarkdownStyleSheet(
-                      blockquoteDecoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                      ),
-                      textAlign: WrapAlignment.center,
-                    ),
-                    data: app?.app.additionalSettings['about'],
-                    onTapLink: (text, href, title) {
-                      if (href != null) {
-                        launchUrlString(
-                          href,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
+              child: Material(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: GestureDetector(
+                    onLongPress: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: app?.app.additionalSettings['about'] ?? '',
+                        ),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(tr('copiedToClipboard'))),
+                      );
                     },
-                    extensionSet: md.ExtensionSet(
-                      md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                      [
-                        md.EmojiSyntax(),
-                        ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-                      ],
+                    child: Markdown(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      styleSheet: MarkdownStyleSheet(
+                        blockquoteDecoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                        ),
+                        textAlign: WrapAlignment.center,
+                      ),
+                      data: app?.app.additionalSettings['about'],
+                      onTapLink: (text, href, title) {
+                        if (href != null) {
+                          launchUrlString(
+                            href,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                      extensionSet: md.ExtensionSet(
+                        md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+                        [
+                          md.EmojiSyntax(),
+                          ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
         ],
       );
