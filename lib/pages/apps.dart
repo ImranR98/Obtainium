@@ -541,102 +541,153 @@ class AppsPageState extends State<AppsPage> {
       if (stops.length == 2) {
         stops[0] = 0.9999;
       }
-      return Container(
-        decoration: BoxDecoration(
-          gradient: categories.isEmpty
-              ? null
-              : LinearGradient(
-                  stops: stops,
-                  begin: const Alignment(-1, 0),
-                  end: const Alignment(-0.97, 0),
-                  colors: [
-                    ...categories.map(
-                      (e) => Color(
-                        settingsProvider.categories[e] ?? transparent,
-                      ).withAlpha(255),
-                    ),
-                    Color(transparent),
-                  ],
-                ),
+      // Capture the app id before wrapping in Dismissible so the swipe
+      // callbacks don't see a stale list index during the animation.
+      final appId = listedApps[index].app.id;
+      final cs = Theme.of(context).colorScheme;
+      return Dismissible(
+        key: ValueKey(appId),
+        direction: DismissDirection.horizontal,
+        background: Container(
+          color: cs.primaryContainer,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 24),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.system_update_alt_rounded, color: cs.onPrimaryContainer),
+              const SizedBox(width: 8),
+              Text(tr('update'), style: TextStyle(color: cs.onPrimaryContainer)),
+            ],
+          ),
         ),
-        child: ListTile(
-          autofocus: index == 0 && settingsProvider.isTV,
-          tileColor: listedApps[index].app.pinned
-              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
-              : Colors.transparent,
-          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
-            alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
-          ),
-          selected: selectedAppIds.contains(
-            listedApps[index].app.id,
-          ) ||
-              widget.selectedAppId == listedApps[index].app.id,
-          onLongPress: () {
-            toggleAppSelected(listedApps[index].app);
-          },
-          leading: (settingsProvider.isTV)
-              ? Checkbox(
-                  value: selectedAppIds.contains(listedApps[index].app.id),
-                  onChanged: (_) {
-                    toggleAppSelected(listedApps[index].app);
-                  },
-                )
-              : AppIconWidget(
-                  appId: listedApps[index].app.id,
-                  installed: listedApps[index].installedInfo != null,
-                  appsProvider: appsProvider,
-                ),
-          title: Text(
-            maxLines: 1,
-            listedApps[index].name,
-            style: TextStyle(
-              overflow: TextOverflow.ellipsis,
-              fontWeight: listedApps[index].app.pinned
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-            ),
-          ),
-          subtitle: listedApps[index].app.hasPendingRepoRename
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [buildAuthorText(index), buildRepoMovedRow()],
-                )
-              : buildAuthorText(index),
-          trailing: listedApps[index].downloadProgress != null
-              ? SizedBox(
-                  child: Text(
-                    listedApps[index].downloadProgress! >= 0
-                        ? tr(
-                            'percentProgress',
-                            args: [
-                              listedApps[index].downloadProgress!
-                                  .toInt()
-                                  .toString(),
-                            ],
-                          )
-                        : tr('installing'),
-                    textAlign: (listedApps[index].downloadProgress! >= 0)
-                        ? TextAlign.start
-                        : TextAlign.end,
+        secondaryBackground: Container(
+          color: cs.errorContainer,
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            // Swipe right — update (snap back, action runs async).
+            final app = appsProvider.apps[appId];
+            if (app?.app.installedVersion != null &&
+                app?.app.installedVersion != app?.app.latestVersion) {
+              appsProvider.downloadAndInstallLatestApps(
+                [appId],
+                globalNavigatorKey.currentContext,
+              );
+            }
+            return false;
+          } else {
+            // Swipe left — remove (dismiss the tile after animation).
+            return true;
+          }
+        },
+        onDismissed: (direction) {
+          if (direction != DismissDirection.startToEnd) {
+            appsProvider
+                .removeApps([appId])
+                .catchError((e) => showError(e, context));
+          }
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: categories.isEmpty
+                ? null
+                : LinearGradient(
+                    stops: stops,
+                    begin: const Alignment(-1, 0),
+                    end: const Alignment(-0.97, 0),
+                    colors: [
+                      ...categories.map(
+                        (e) => Color(
+                          settingsProvider.categories[e] ?? transparent,
+                        ).withAlpha(255),
+                      ),
+                      Color(transparent),
+                    ],
                   ),
-                )
-              : trailingRow,
-           onTap: () {
-             if (selectedAppIds.isNotEmpty) {
-               toggleAppSelected(listedApps[index].app);
-             } else if (widget.onAppSelected != null) {
-               widget.onAppSelected!(listedApps[index].app.id);
-             } else {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(
-                   builder: (context) =>
-                       AppPage(appId: listedApps[index].app.id),
-                 ),
-               );
-             }
-           },
+          ),
+          child: ListTile(
+            autofocus: index == 0 && settingsProvider.isTV,
+            tileColor: listedApps[index].app.pinned
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
+                : Colors.transparent,
+            selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
+              alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
+            ),
+            selected: selectedAppIds.contains(
+              listedApps[index].app.id,
+            ) ||
+                widget.selectedAppId == listedApps[index].app.id,
+            onLongPress: () {
+              toggleAppSelected(listedApps[index].app);
+            },
+            leading: (settingsProvider.isTV)
+                ? Checkbox(
+                    value: selectedAppIds.contains(listedApps[index].app.id),
+                    onChanged: (_) {
+                      toggleAppSelected(listedApps[index].app);
+                    },
+                  )
+                : AppIconWidget(
+                    appId: listedApps[index].app.id,
+                    installed: listedApps[index].installedInfo != null,
+                    appsProvider: appsProvider,
+                  ),
+            title: Text(
+              maxLines: 1,
+              listedApps[index].name,
+              style: TextStyle(
+                overflow: TextOverflow.ellipsis,
+                fontWeight: listedApps[index].app.pinned
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+            subtitle: listedApps[index].app.hasPendingRepoRename
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [buildAuthorText(index), buildRepoMovedRow()],
+                  )
+                : buildAuthorText(index),
+            trailing: listedApps[index].downloadProgress != null
+                ? SizedBox(
+                    child: Text(
+                      listedApps[index].downloadProgress! >= 0
+                          ? tr(
+                              'percentProgress',
+                              args: [
+                                listedApps[index].downloadProgress!
+                                    .toInt()
+                                    .toString(),
+                              ],
+                            )
+                          : tr('installing'),
+                      textAlign: (listedApps[index].downloadProgress! >= 0)
+                          ? TextAlign.start
+                          : TextAlign.end,
+                    ),
+                  )
+                : trailingRow,
+             onTap: () {
+               if (selectedAppIds.isNotEmpty) {
+                 toggleAppSelected(listedApps[index].app);
+               } else if (widget.onAppSelected != null) {
+                 widget.onAppSelected!(listedApps[index].app.id);
+               } else {
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(
+                     builder: (context) =>
+                         AppPage(appId: listedApps[index].app.id),
+                   ),
+                 );
+               }
+             },
+          ),
         ),
       );
     }

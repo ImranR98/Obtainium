@@ -429,43 +429,54 @@ class _AppPageState extends State<AppPage> {
 
           /* Certificate Hashes */
           if (app != null && app.certificateHashes.isNotEmpty)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  "${plural('certificateHash', app.certificateHashes.length)}"
-                  "${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
+              child: Material(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: app.certificateHashes.map((hash) {
-                    return GestureDetector(
-                      onLongPress: () {
-                        Clipboard.setData(ClipboardData(text: hash));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(tr('copiedToClipboard'))),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 25,
-                          vertical: 0,
-                        ),
-                        child: Text(
-                          hash,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "${plural('certificateHash', app.certificateHashes.length)}"
+                        "${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
                       ),
-                    );
-                  }).toList(),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: app.certificateHashes.map((hash) {
+                          return GestureDetector(
+                            onLongPress: () {
+                              Clipboard.setData(ClipboardData(text: hash));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(tr('copiedToClipboard'))),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 0,
+                              ),
+                              child: Text(
+                                hash,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-
           const SizedBox(height: 40),
           CategoryEditorSelector(
             alignment: WrapAlignment.center,
