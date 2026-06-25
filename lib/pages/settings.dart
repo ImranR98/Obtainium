@@ -947,6 +947,9 @@ class _LogsDialogState extends State<LogsDialog> {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.error,
+          ),
           onPressed: () async {
             var cont =
                 (await showDialog<Map<String, dynamic>?>(
@@ -974,7 +977,7 @@ class _LogsDialogState extends State<LogsDialog> {
           },
           child: Text(tr('close')),
         ),
-        TextButton(
+        FilledButton.tonal(
           onPressed: () {
             SharePlus.instance.share(
               ShareParams(text: logString ?? '', subject: tr('appLogs')),

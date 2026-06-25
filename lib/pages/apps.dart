@@ -468,14 +468,9 @@ class AppsPageState extends State<AppsPage> {
                 color:
                     settingsProvider.highlightTouchTargets &&
                         showChangesFn != null
-                    ? (Theme.of(context).brightness == Brightness.light
-                              ? Theme.of(context).primaryColor
-                              : Theme.of(context).primaryColorLight)
-                          .withAlpha(
-                            Theme.of(context).brightness == Brightness.light
-                                ? 20
-                                : 40,
-                          )
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1)
                     : null,
               ),
               padding: settingsProvider.highlightTouchTargets
@@ -557,7 +552,7 @@ class AppsPageState extends State<AppsPage> {
         child: ListTile(
           autofocus: index == 0 && settingsProvider.isTV,
           tileColor: listedApps[index].app.pinned
-              ? Colors.grey.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
               : Colors.transparent,
           selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
             alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
@@ -675,7 +670,6 @@ class AppsPageState extends State<AppsPage> {
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 3,
           children: [
             segment(
               0,
@@ -715,13 +709,26 @@ class AppsPageState extends State<AppsPage> {
                 ),
               ),
             ),
-            if (showItems)
-              for (var i = 0; i < appEntries.length; i++)
-                segment(
-                  i + 1,
-                  colorScheme.surfaceContainerLow,
-                  getSingleAppHorizTile(appEntries[i].key),
-                ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubicEmphasized,
+              alignment: Alignment.topCenter,
+              child: !showItems
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < appEntries.length; i++) ...[
+                          const SizedBox(height: 3),
+                          segment(
+                            i + 1,
+                            colorScheme.surfaceContainerLow,
+                            getSingleAppHorizTile(appEntries[i].key),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
           ],
         ),
       );
@@ -964,7 +971,7 @@ class AppsPageState extends State<AppsPage> {
                 },
                 child: Text(tr('no')),
               ),
-              TextButton(
+              FilledButton(
                 onPressed: () {
                   settingsProvider.selectionClick();
                   appsProvider.saveApps(
@@ -997,140 +1004,135 @@ class AppsPageState extends State<AppsPage> {
           return e;
         }).toList(),
       );
-      Navigator.of(context).pop();
     }
 
     showMoreOptionsDialog() {
-      return showDialog(
+      final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
+      final hasSelection = selectedAppIds.isNotEmpty;
+      return showModalBottomSheet(
         context: context,
+        showDragHandle: true,
         builder: (BuildContext ctx) {
-          return AlertDialog(
-            scrollable: true,
-            content: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  TextButton(
-                    onPressed: pinSelectedApps,
-                    child: Text(
-                      selectedApps.where((element) => element.pinned).isEmpty
-                          ? tr('pinToTop')
-                          : tr('unpinFromTop'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: () {
-                      String urls = '';
-                      for (var a in selectedApps) {
-                        urls += '${a.url}\n';
-                      }
-                      urls = urls.substring(0, urls.length - 1);
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: urls,
-                          subject: 'Obtainium - ${tr('appsString')}',
-                        ),
-                      );
-                      Navigator.of(context).pop();
+          Widget optionTile({
+            required IconData icon,
+            required String label,
+            required VoidCallback? onTap,
+          }) {
+            return ListTile(
+              leading: Icon(icon),
+              title: Text(label),
+              enabled: onTap != null,
+              onTap: onTap == null
+                  ? null
+                  : () {
+                      Navigator.of(ctx).pop();
+                      onTap();
                     },
-                    child: Text(
-                      tr('shareSelectedAppURLs'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: selectedAppIds.isEmpty
-                        ? null
-                        : () {
-                            String urls = '';
-                            for (var a in selectedApps) {
-                              urls +=
-                                  'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
-                            }
-                            SharePlus.instance.share(
-                              ShareParams(
-                                text: urls,
-                                subject: 'Obtainium - ${tr('appsString')}',
-                              ),
-                            );
-                          },
-                    child: Text(
-                      tr('shareAppConfigLinks'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: selectedAppIds.isEmpty
-                        ? null
-                        : () {
-                            var encoder = const JsonEncoder.withIndent("    ");
-                            var exportJSON = encoder.convert(
-                              appsProvider.generateExportJSON(
-                                appIds: selectedApps.map((e) => e.id).toList(),
-                                overrideExportSettings: 0,
-                              ),
-                            );
-                            String fn =
-                                '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-                            XFile f = XFile.fromData(
-                              Uint8List.fromList(utf8.encode(exportJSON)),
-                              mimeType: 'application/json',
-                              name: fn,
-                            );
-                            SharePlus.instance.share(
-                              ShareParams(
-                                files: [f],
-                                fileNameOverrides: ['$fn.json'],
-                              ),
-                            );
-                          },
-                    child: Text(
-                      '${tr('share')} - ${tr('obtainiumExport')}',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: () {
-                      appsProvider
-                          .downloadAppAssets(
-                            selectedApps.map((e) => e.id).toList(),
-                            globalNavigatorKey.currentContext ?? context,
-                          )
-                          .catchError(
-                            // ignore: invalid_return_type_for_catch_error
-                            (e) => showError(
-                              e,
-                              globalNavigatorKey.currentContext ?? context,
+            );
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                optionTile(
+                  icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
+                  onTap: pinSelectedApps,
+                ),
+                optionTile(
+                  icon: Icons.share_outlined,
+                  label: tr('shareSelectedAppURLs'),
+                  onTap: () {
+                    String urls = '';
+                    for (var a in selectedApps) {
+                      urls += '${a.url}\n';
+                    }
+                    urls = urls.substring(0, urls.length - 1);
+                    SharePlus.instance.share(
+                      ShareParams(
+                        text: urls,
+                        subject: 'Obtainium - ${tr('appsString')}',
+                      ),
+                    );
+                  },
+                ),
+                optionTile(
+                  icon: Icons.link_outlined,
+                  label: tr('shareAppConfigLinks'),
+                  onTap: !hasSelection
+                      ? null
+                      : () {
+                          String urls = '';
+                          for (var a in selectedApps) {
+                            urls +=
+                                'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                          }
+                          SharePlus.instance.share(
+                            ShareParams(
+                              text: urls,
+                              subject: 'Obtainium - ${tr('appsString')}',
                             ),
                           );
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      tr(
-                        'downloadX',
-                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                        },
+                ),
+                optionTile(
+                  icon: Icons.file_download_outlined,
+                  label: '${tr('share')} - ${tr('obtainiumExport')}',
+                  onTap: !hasSelection
+                      ? null
+                      : () {
+                          var encoder = const JsonEncoder.withIndent("    ");
+                          var exportJSON = encoder.convert(
+                            appsProvider.generateExportJSON(
+                              appIds: selectedApps.map((e) => e.id).toList(),
+                              overrideExportSettings: 0,
+                            ),
+                          );
+                          String fn =
+                              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
+                          XFile f = XFile.fromData(
+                            Uint8List.fromList(utf8.encode(exportJSON)),
+                            mimeType: 'application/json',
+                            name: fn,
+                          );
+                          SharePlus.instance.share(
+                            ShareParams(
+                              files: [f],
+                              fileNameOverrides: ['$fn.json'],
+                            ),
+                          );
+                        },
+                ),
+                optionTile(
+                  icon: Icons.download_outlined,
+                  label: tr(
+                    'downloadX',
+                    args: [lowerCaseIfEnglish(tr('releaseAsset'))],
                   ),
-                  const Divider(),
-                  TextButton(
-                    onPressed: appsProvider.areDownloadsRunning()
-                        ? null
-                        : showMassMarkDialog,
-                    child: Text(
-                      tr('markSelectedAppsUpdated'),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
+                  onTap: () {
+                    appsProvider
+                        .downloadAppAssets(
+                          selectedApps.map((e) => e.id).toList(),
+                          globalNavigatorKey.currentContext ?? context,
+                        )
+                        .catchError(
+                          // ignore: invalid_return_type_for_catch_error
+                          (e) => showError(
+                            e,
+                            globalNavigatorKey.currentContext ?? context,
+                          ),
+                        );
+                  },
+                ),
+                optionTile(
+                  icon: Icons.done_all,
+                  label: tr('markSelectedAppsUpdated'),
+                  onTap: appsProvider.areDownloadsRunning()
+                      ? null
+                      : showMassMarkDialog,
+                ),
+              ],
             ),
           );
         },

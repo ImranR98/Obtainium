@@ -880,7 +880,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
               child: Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: FilledButton.tonalIcon(
                       onPressed: () {
                         values[fieldKey].add(
                           getDefaultValuesFromFormItems(item.items),

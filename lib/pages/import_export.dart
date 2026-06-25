@@ -622,7 +622,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        FilledButton.tonal(
           onPressed: () {
             Navigator.of(context).pop(null);
           },
@@ -951,7 +951,7 @@ class _SelectionModalState extends State<SelectionModal> {
           },
           child: Text(tr('cancel')),
         ),
-        TextButton(
+        FilledButton(
           onPressed: entrySelections.values.where((b) => b).isEmpty
               ? null
               : () {

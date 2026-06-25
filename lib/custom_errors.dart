@@ -147,7 +147,7 @@ void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
             child: Text(e.toString()),
           ),
           actions: [
-            TextButton(
+            FilledButton.tonal(
               onPressed: () {
                 Navigator.of(context).pop(null);
               },

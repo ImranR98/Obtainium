@@ -2417,7 +2417,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
           },
           child: Text(tr('cancel')),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () {
             context.read<SettingsProvider>().selectionClick();
             Navigator.of(context).pop(fileUrl);
@@ -2465,7 +2465,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
           },
           child: Text(tr('cancel')),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () {
             context.read<SettingsProvider>().selectionClick();
             Navigator.of(context).pop(true);

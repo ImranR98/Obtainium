@@ -104,7 +104,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               actions: [
-                TextButton(
+                FilledButton.tonal(
                   autofocus: sp.isTV,
                   onPressed: () {
                     sp.welcomeShown = true;
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               actions: [
-                TextButton(
+                FilledButton.tonal(
                   autofocus: sp.isTV,
                   onPressed: () {
                     sp.googleVerificationWarningShown = true;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/apps.dart';
@@ -385,54 +386,31 @@ class _AppPageState extends State<AppPage> {
           ),
           if (app?.app.apkUrls.isNotEmpty == true ||
               app?.app.otherAssetUrls.isNotEmpty == true)
-            InkWell(
-              onTap: app?.app == null || updating
-                  ? null
-                  : () async {
-                      try {
-                        await appsProvider.downloadAppAssets([
-                          app!.app.id,
-                        ], context);
-                      } catch (e) {
-                        showError(e, context);
-                      }
-                    },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: settingsProvider.highlightTouchTargets
-                          ? (Theme.of(context).brightness == Brightness.light
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).primaryColorLight)
-                                .withAlpha(
-                                  Theme.of(context).brightness ==
-                                          Brightness.light
-                                      ? 20
-                                      : 40,
-                                )
-                          : null,
-                    ),
-                    padding: settingsProvider.highlightTouchTargets
-                        ? const EdgeInsetsDirectional.fromSTEB(12, 6, 12, 6)
-                        : const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 2),
-                    margin: const EdgeInsetsDirectional.fromSTEB(0, 2, 0, 0),
-                    child: Text(
-                      tr(
-                        'downloadX',
-                        args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                      ),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                        decoration: TextDecoration.underline,
-                        fontStyle: FontStyle.italic,
-                      ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                HighlightableButton(
+                  highlight: settingsProvider.highlightTouchTargets,
+                  onPressed: app?.app == null || updating
+                      ? null
+                      : () async {
+                          try {
+                            await appsProvider.downloadAppAssets([
+                              app!.app.id,
+                            ], context);
+                          } catch (e) {
+                            showError(e, context);
+                          }
+                        },
+                  icon: const Icon(Icons.download_outlined, size: 18),
+                  label: Text(
+                    tr(
+                      'downloadX',
+                      args: [lowerCaseIfEnglish(tr('releaseAsset'))],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
           /* Certificate Hashes */
@@ -602,14 +580,9 @@ class _AppPageState extends State<AppPage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: settingsProvider.highlightTouchTargets
-                      ? (Theme.of(context).brightness == Brightness.light
-                                ? Theme.of(context).primaryColor
-                                : Theme.of(context).primaryColorLight)
-                            .withAlpha(
-                              Theme.of(context).brightness == Brightness.light
-                                  ? 20
-                                  : 40,
-                            )
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.1)
                       : null,
                 ),
                 padding: settingsProvider.highlightTouchTargets
@@ -659,7 +632,7 @@ class _AppPageState extends State<AppPage> {
                 },
                 child: Text(tr('no')),
               ),
-              TextButton(
+              FilledButton(
                 onPressed: () {
                   settingsProvider.selectionClick();
                   var updatedApp = app?.app;
@@ -835,7 +808,7 @@ class _AppPageState extends State<AppPage> {
                             content: getFullInfoColumn(small: true),
                             title: Text(app.name),
                             actions: [
-                              TextButton(
+                              FilledButton.tonal(
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
