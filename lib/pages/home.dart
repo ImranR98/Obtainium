@@ -147,11 +147,11 @@ class _HomePageState extends State<HomePage> {
 
     goToExistingApp(String appId) async {
       await switchToPage(0);
-      var attempts = 0;
-      while (appsPageKey.currentState == null) {
-        if (++attempts > 50) return;
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
+      await _waitUntil(
+        () => appsPageKey.currentState != null,
+        interval: const Duration(milliseconds: 100),
+        maxAttempts: 50,
+      );
       appsPageKey.currentState?.openAppById(appId);
     }
 
@@ -162,9 +162,11 @@ class _HomePageState extends State<HomePage> {
         if (action == 'add') {
           // Ensure apps are loaded
           AppsProvider appsProvider = context.read<AppsProvider>();
-          while (appsProvider.loadingApps) {
-            await Future.delayed(const Duration(milliseconds: 10));
-          }
+          await _waitUntil(
+            () => !appsProvider.loadingApps,
+            interval: const Duration(milliseconds: 10),
+            maxAttempts: 500,
+          );
 
           // See if we already have this app
           String standardizedUrl = SourceProvider()
@@ -260,13 +262,31 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  /// Polls [condition] until it returns true, yielding to the event loop
+  /// between checks, up to [maxAttempts] times. Returns whether it became true.
+  /// Used to coordinate GlobalKey reparenting / app loading without hanging.
+  Future<bool> _waitUntil(
+    bool Function() condition, {
+    Duration interval = const Duration(milliseconds: 50),
+    int maxAttempts = 100,
+  }) async {
+    var attempts = 0;
+    while (!condition()) {
+      if (++attempts > maxAttempts) return false;
+      await Future.delayed(interval);
+    }
+    return true;
+  }
+
   Future<void> switchToPage(int index) async {
     setIsReversing(index);
     if (index == 0) {
-      while (appsPageKey.currentState != null) {
-        // Avoid duplicate GlobalKey error
-        await Future.delayed(const Duration(microseconds: 1));
-      }
+      // Wait for any existing AppsPage to detach before reusing its GlobalKey.
+      await _waitUntil(
+        () => appsPageKey.currentState == null,
+        interval: Duration.zero,
+        maxAttempts: 1000,
+      );
       setState(() {
         selectedIndexHistory.clear();
       });
