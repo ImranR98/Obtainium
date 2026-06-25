@@ -45,10 +45,23 @@ class _SettingsPageState extends State<SettingsPage> {
   late SplineInterpolation updateIntervalInterpolator; // 🤓
   String updateIntervalLabel = tr('neverManualOnly');
   bool showIntervalLabel = true;
+  int? androidSdkInt;
   final Map<ColorSwatch<Object>, String> colorsNameMap =
       <ColorSwatch<Object>, String>{
         ColorTools.createPrimarySwatch(obtainiumThemeColor): 'Obtainium',
       };
+
+  @override
+  void initState() {
+    super.initState();
+    DeviceInfoPlugin().androidInfo.then((info) {
+      if (mounted) {
+        setState(() {
+          androidSdkInt = info.version.sdkInt;
+        });
+      }
+    });
+  }
 
   void initUpdateIntervalInterpolator() {
     List<InterpolationNode> nodes = [];
@@ -103,17 +116,35 @@ class _SettingsPageState extends State<SettingsPage> {
     if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
     initUpdateIntervalInterpolator();
     processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
+    final sdk = androidSdkInt ?? 0;
 
-    var followSystemThemeExplanation = FutureBuilder(
-      builder: (ctx, val) {
-        return ((val.data?.version.sdkInt ?? 30) < 29)
-            ? Text(
-                tr('followSystemThemeExplanation'),
-                style: Theme.of(context).textTheme.labelSmall,
-              )
-            : const SizedBox.shrink();
-      },
-      future: DeviceInfoPlugin().androidInfo,
+    Widget caption(String text) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+    );
+
+    // Wraps a dropdown/field in a distinct-tone tile so it stands out from the
+    // surrounding control tiles while still joining the positional-radii run.
+    Widget fieldTile(Widget field) => SettingsTile(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      padding: EdgeInsets.zero,
+      child: DropdownMenuTheme(
+        data: DropdownMenuThemeData(
+          inputDecorationTheme: const InputDecorationThemeData(
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          menuStyle: MenuStyle(
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+        child: field,
+      ),
     );
 
     Future<bool> colorPickerDialog() async {
@@ -179,43 +210,30 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     }
 
-    var colorPicker = ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
-      subtitle: Text(
-        "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
-        "(${ColorTools.materialNameAndCode(settingsProvider.themeColor, colorSwatchNameMap: colorsNameMap)})",
+    var colorPicker = SettingsTile(
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
+        subtitle: Text(
+          "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
+          "(${ColorTools.materialNameAndCode(settingsProvider.themeColor, colorSwatchNameMap: colorsNameMap)})",
+        ),
+        trailing: ColorIndicator(
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          color: settingsProvider.themeColor,
+          onSelectFocus: false,
+          onSelect: () async {
+            final Color colorBeforeDialog = settingsProvider.themeColor;
+            if (!(await colorPickerDialog())) {
+              setState(() {
+                settingsProvider.themeColor = colorBeforeDialog;
+              });
+            }
+          },
+        ),
       ),
-      trailing: ColorIndicator(
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        color: settingsProvider.themeColor,
-        onSelectFocus: false,
-        onSelect: () async {
-          final Color colorBeforeDialog = settingsProvider.themeColor;
-          if (!(await colorPickerDialog())) {
-            setState(() {
-              settingsProvider.themeColor = colorBeforeDialog;
-            });
-          }
-        },
-      ),
-    );
-
-    var useMaterialThemeSwitch = FutureBuilder(
-      builder: (ctx, val) {
-        return ((val.data?.version.sdkInt ?? 0) >= 31)
-            ? SettingsToggleRow(
-                label: tr('useMaterialYou'),
-                value: settingsProvider.useMaterialYou,
-                onChanged: (value) {
-                  settingsProvider.useMaterialYou = value;
-                },
-              )
-            : const SizedBox.shrink();
-      },
-      future: DeviceInfoPlugin().androidInfo,
     );
 
     // Expressive segmented control for theme mode (icon-only with tooltips).
@@ -267,10 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
           value: SortColumnSettings.nameAuthor,
           label: tr('nameAuthor'),
         ),
-        DropdownMenuEntry(
-          value: SortColumnSettings.added,
-          label: tr('asAdded'),
-        ),
+        DropdownMenuEntry(value: SortColumnSettings.added, label: tr('asAdded')),
         DropdownMenuEntry(
           value: SortColumnSettings.releaseDate,
           label: tr('releaseDate'),
@@ -379,68 +394,81 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
               ),
               Expanded(
-                child: Text(
-                  updateIntervalLabel,
-                  textAlign: TextAlign.center,
-                ),
+                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
               ),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed:
                     settingsProvider.updateIntervalSliderVal >=
-                            updateIntervalNodes.length.toDouble()
-                        ? null
-                        : () {
-                            setState(() {
-                              final newVal =
-                                  (settingsProvider.updateIntervalSliderVal + 1)
-                                      .clamp(
-                                        0.0,
-                                        updateIntervalNodes.length.toDouble(),
-                                      );
-                              settingsProvider.updateIntervalSliderVal = newVal;
-                              processIntervalSliderValue(newVal);
-                              settingsProvider.updateInterval = updateInterval;
-                            });
-                          },
+                        updateIntervalNodes.length.toDouble()
+                    ? null
+                    : () {
+                        setState(() {
+                          final newVal =
+                              (settingsProvider.updateIntervalSliderVal + 1)
+                                  .clamp(
+                                    0.0,
+                                    updateIntervalNodes.length.toDouble(),
+                                  );
+                          settingsProvider.updateIntervalSliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                          settingsProvider.updateInterval = updateInterval;
+                        });
+                      },
               ),
             ],
           )
         : rawSlider;
 
-    var sourceSpecificFields = sourceProvider.sources
-        .map((e) {
-          if (e.sourceConfigSettingFormItems.isNotEmpty) {
-            return GeneratedForm(
-              items: e.sourceConfigSettingFormItems.map((e) {
-                if (e is GeneratedFormSwitch) {
-                  e.defaultValue = settingsProvider.getSettingBool(e.key);
-                } else {
-                  e.defaultValue = settingsProvider.getSettingString(e.key);
-                }
-                return [e];
-              }).toList(),
-              onValueChanges: (values, valid, isBuilding) {
-                if (valid && !isBuilding) {
-                  values.forEach((key, value) {
-                    var formItem = e.sourceConfigSettingFormItems
-                        .where((i) => i.key == key)
-                        .firstOrNull;
-                    if (formItem is GeneratedFormSwitch) {
-                      settingsProvider.setSettingBool(key, value == true);
-                    } else {
-                      settingsProvider.setSettingString(key, value ?? '');
-                    }
-                  });
-                }
-              },
-            ) as Widget;
-          } else {
-            return null;
-          }
-        })
-        .whereType<Widget>()
+    var intervalSliderTile = SettingsTile(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          showIntervalLabel
+              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+              : const SizedBox(height: 20),
+          intervalSlider,
+        ],
+      ),
+    );
+
+    // Merge every source's config items into a single form so they read as one
+    // connected block (rather than one disjointed block per source).
+    var allSourceConfigItems = sourceProvider.sources
+        .expand((e) => e.sourceConfigSettingFormItems)
         .toList();
+    for (var item in allSourceConfigItems) {
+      if (item is GeneratedFormSwitch) {
+        item.defaultValue = settingsProvider.getSettingBool(item.key);
+      } else {
+        item.defaultValue = settingsProvider.getSettingString(item.key);
+      }
+    }
+    Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
+        ? null
+        : GeneratedForm(
+            tileMode: true,
+            items: allSourceConfigItems.map((e) => [e]).toList(),
+            onValueChanges: (values, valid, isBuilding) {
+              if (valid && !isBuilding) {
+                values.forEach((key, value) {
+                  var formItem = allSourceConfigItems
+                      .where((i) => i.key == key)
+                      .firstOrNull;
+                  if (formItem is GeneratedFormSwitch) {
+                    settingsProvider.setSettingBool(key, value == true);
+                  } else {
+                    settingsProvider.setSettingString(key, value ?? '');
+                  }
+                });
+              }
+            },
+          );
+
+    bool showBgSection =
+        settingsProvider.updateInterval > 0 &&
+        (sdk >= 30 || settingsProvider.useShizuku);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -454,104 +482,52 @@ class _SettingsPageState extends State<SettingsPage> {
                   ? const SizedBox()
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 20,
                       children: [
                         SettingsGroup(
                           title: tr('updates'),
                           children: [
-                            if (showIntervalLabel)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  "${tr('bgUpdateCheckInterval')}: $updateIntervalLabel",
+                            intervalSliderTile,
+                            if (showBgSection) ...[
+                              SettingsToggleRow(
+                                label: tr('foregroundServiceExplanation'),
+                                value: settingsProvider.useFGService,
+                                onChanged: (value) {
+                                  settingsProvider.useFGService = value;
+                                },
+                              ),
+                              SettingsToggleRow(
+                                label: tr('enableBackgroundUpdates'),
+                                value: settingsProvider.enableBackgroundUpdates,
+                                onChanged: (value) {
+                                  settingsProvider.enableBackgroundUpdates =
+                                      value;
+                                },
+                                helpWidgets: [
+                                  Text(tr('backgroundUpdateReqsExplanation')),
+                                  const SizedBox(height: 8),
+                                  Text(tr('backgroundUpdateLimitsExplanation')),
+                                ],
+                              ),
+                              if (settingsProvider.enableBackgroundUpdates)
+                                SettingsToggleRow(
+                                  label: tr('bgUpdatesOnWiFiOnly'),
+                                  value: settingsProvider.bgUpdatesOnWiFiOnly,
+                                  onChanged: (value) {
+                                    settingsProvider.bgUpdatesOnWiFiOnly = value;
+                                  },
                                 ),
-                              )
-                            else
-                              const SizedBox(height: 16),
-                            intervalSlider,
-                            FutureBuilder(
-                              builder: (ctx, val) {
-                                return (settingsProvider.updateInterval > 0) &&
-                                        (((val.data?.version.sdkInt ?? 0) >=
-                                                30) ||
-                                            settingsProvider.useShizuku)
-                                    ? Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        spacing: 4,
-                                        children: [
-                                          SettingsToggleRow(
-                                            label: tr(
-                                              'foregroundServiceExplanation',
-                                            ),
-                                            value: settingsProvider.useFGService,
-                                            onChanged: (value) {
-                                              settingsProvider.useFGService =
-                                                  value;
-                                            },
-                                          ),
-                                          SettingsToggleRow(
-                                            label: tr('enableBackgroundUpdates'),
-                                            value: settingsProvider
-                                                .enableBackgroundUpdates,
-                                            onChanged: (value) {
-                                              settingsProvider
-                                                      .enableBackgroundUpdates =
-                                                  value;
-                                            },
-                                          ),
-                                          Text(
-                                            tr(
-                                              'backgroundUpdateReqsExplanation',
-                                            ),
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.labelSmall,
-                                          ),
-                                          Text(
-                                            tr(
-                                              'backgroundUpdateLimitsExplanation',
-                                            ),
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.labelSmall,
-                                          ),
-                                          if (settingsProvider
-                                              .enableBackgroundUpdates)
-                                            Column(
-                                              spacing: 4,
-                                              children: [
-                                                SettingsToggleRow(
-                                                  label: tr(
-                                                    'bgUpdatesOnWiFiOnly',
-                                                  ),
-                                                  value: settingsProvider
-                                                      .bgUpdatesOnWiFiOnly,
-                                                  onChanged: (value) {
-                                                    settingsProvider
-                                                            .bgUpdatesOnWiFiOnly =
-                                                        value;
-                                                  },
-                                                ),
-                                                SettingsToggleRow(
-                                                  label: tr(
-                                                    'bgUpdatesWhileChargingOnly',
-                                                  ),
-                                                  value: settingsProvider
-                                                      .bgUpdatesWhileChargingOnly,
-                                                  onChanged: (value) {
-                                                    settingsProvider
-                                                            .bgUpdatesWhileChargingOnly =
-                                                        value;
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                        ],
-                                      )
-                                    : const SizedBox.shrink();
-                              },
-                              future: DeviceInfoPlugin().androidInfo,
-                            ),
+                              if (settingsProvider.enableBackgroundUpdates)
+                                SettingsToggleRow(
+                                  label: tr('bgUpdatesWhileChargingOnly'),
+                                  value: settingsProvider
+                                      .bgUpdatesWhileChargingOnly,
+                                  onChanged: (value) {
+                                    settingsProvider.bgUpdatesWhileChargingOnly =
+                                        value;
+                                  },
+                                ),
+                            ],
                             SettingsToggleRow(
                               label: tr('checkOnStart'),
                               value: settingsProvider.checkOnStart,
@@ -602,8 +578,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             SettingsToggleRow(
                               label: tr('showBatteryOptimizationPrompt'),
-                              value: settingsProvider
-                                  .showBatteryOptimizationPrompt,
+                              value:
+                                  settingsProvider.showBatteryOptimizationPrompt,
                               onChanged: (value) {
                                 settingsProvider.showBatteryOptimizationPrompt =
                                     value;
@@ -701,20 +677,18 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ],
                         ),
-                        if (sourceSpecificFields.isNotEmpty) ...[
-                          height16,
+                        if (sourceSpecificForm != null)
                           SettingsGroup(
                             title: tr('sourceSpecific'),
-                            children: sourceSpecificFields,
+                            children: [sourceSpecificForm],
                           ),
-                        ],
-                        height16,
                         SettingsGroup(
                           title: tr('appearance'),
                           children: [
                             themeModeControl,
-                            if (settingsProvider.theme == ThemeSettings.system)
-                              followSystemThemeExplanation,
+                            if (settingsProvider.theme == ThemeSettings.system &&
+                                (androidSdkInt ?? 30) < 29)
+                              caption(tr('followSystemThemeExplanation')),
                             if (settingsProvider.theme != ThemeSettings.light)
                               SettingsToggleRow(
                                 label: tr('useBlackTheme'),
@@ -723,38 +697,32 @@ class _SettingsPageState extends State<SettingsPage> {
                                   settingsProvider.useBlackTheme = value;
                                 },
                               ),
-                            useMaterialThemeSwitch,
-                            if (!settingsProvider.useMaterialYou)
-                              SettingsTile(child: colorPicker),
-                            height16,
-                            sortDropdown,
+                            if (sdk >= 31)
+                              SettingsToggleRow(
+                                label: tr('useMaterialYou'),
+                                value: settingsProvider.useMaterialYou,
+                                onChanged: (value) {
+                                  settingsProvider.useMaterialYou = value;
+                                },
+                              ),
+                            if (!settingsProvider.useMaterialYou) colorPicker,
+                            fieldTile(sortDropdown),
                             orderControl,
-                            height16,
-                            localeDropdown,
-                            FutureBuilder(
-                              builder: (ctx, val) {
-                                return (val.data?.version.sdkInt ?? 0) >= 29
-                                    ? SettingsToggleRow(
-                                        label: tr('useSystemFont'),
-                                        value: settingsProvider.useSystemFont,
-                                        onChanged: (useSystemFont) {
-                                          if (useSystemFont) {
-                                            NativeFeatures.loadSystemFont().then(
-                                              (val) {
-                                                settingsProvider.useSystemFont =
-                                                    true;
-                                              },
-                                            );
-                                          } else {
-                                            settingsProvider.useSystemFont =
-                                                false;
-                                          }
-                                        },
-                                      )
-                                    : const SizedBox.shrink();
-                              },
-                              future: DeviceInfoPlugin().androidInfo,
-                            ),
+                            fieldTile(localeDropdown),
+                            if (sdk >= 29)
+                              SettingsToggleRow(
+                                label: tr('useSystemFont'),
+                                value: settingsProvider.useSystemFont,
+                                onChanged: (useSystemFont) {
+                                  if (useSystemFont) {
+                                    NativeFeatures.loadSystemFont().then((val) {
+                                      settingsProvider.useSystemFont = true;
+                                    });
+                                  } else {
+                                    settingsProvider.useSystemFont = false;
+                                  }
+                                },
+                              ),
                             SettingsToggleRow(
                               label: tr('showWebInAppView'),
                               value: settingsProvider.showAppWebpage,
@@ -823,11 +791,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           ],
                         ),
-                        height16,
                         SettingsGroup(
                           title: tr('categories'),
                           children: const [
-                            CategoryEditorSelector(showLabelWhenNotEmpty: false),
+                            SettingsTile(
+                              padding: EdgeInsets.all(12),
+                              child: CategoryEditorSelector(
+                                showLabelWhenNotEmpty: false,
+                              ),
+                            ),
                           ],
                         ),
                       ],

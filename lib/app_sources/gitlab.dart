@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -9,7 +8,6 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class GitLab extends AppSource {
   GitLab({bool hostChanged = false}) {
@@ -24,25 +22,8 @@ class GitLab extends AppSource {
         label: tr('gitlabPATLabel'),
         password: true,
         required: false,
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl:
+            'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
       ),
     ];
 

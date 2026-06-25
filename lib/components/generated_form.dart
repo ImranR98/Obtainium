@@ -9,6 +9,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 abstract class GeneratedFormItem {
   late String key;
@@ -35,6 +36,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   late bool password;
   late TextInputType? textInputType;
   late List<String>? autoCompleteOptions;
+  late String? helpUrl;
 
   GeneratedFormTextField(
     super.key, {
@@ -48,6 +50,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
     this.password = false,
     this.textInputType,
     this.autoCompleteOptions,
+    this.helpUrl,
   });
 
   @override
@@ -68,6 +71,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
       hint: hint,
       password: password,
       textInputType: textInputType,
+      helpUrl: helpUrl,
     );
   }
 }
@@ -188,10 +192,16 @@ class GeneratedForm extends StatefulWidget {
     super.key,
     required this.items,
     required this.onValueChanges,
+    this.tileMode = false,
   });
 
   final List<List<GeneratedFormItem>> items;
   final OnValueChanges onValueChanges;
+
+  /// When true, switch rows are rendered as connected, rounded "setting tiles"
+  /// (matching the settings page); other inputs render as their normal filled
+  /// fields.
+  final bool tileMode;
 
   @override
   State<GeneratedForm> createState() => _GeneratedFormState();
@@ -275,10 +285,7 @@ class _TVTextFieldFocus extends StatefulWidget {
   final Widget child;
   final FocusNode textFocusNode;
 
-  const _TVTextFieldFocus({
-    required this.child,
-    required this.textFocusNode,
-  });
+  const _TVTextFieldFocus({required this.child, required this.textFocusNode});
 
   @override
   State<_TVTextFieldFocus> createState() => _TVTextFieldFocusState();
@@ -347,7 +354,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
-  List<List<Widget>> rows = [];
   String? initKey;
   int forceUpdateKeyCount = 0;
 
@@ -404,8 +410,46 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   });
                 },
                 decoration: InputDecoration(
-                  helperText: formItem.label + (formItem.required ? ' *' : ''),
+                  labelText: formItem.label + (formItem.required ? ' *' : ''),
                   hintText: formItem.hint,
+                  filled: widget.tileMode ? false : null,
+                  border: widget.tileMode ? InputBorder.none : null,
+                  enabledBorder: widget.tileMode ? InputBorder.none : null,
+                  focusedBorder: widget.tileMode ? InputBorder.none : null,
+                  suffixIcon: formItem.helpUrl != null
+                      ? IconButton(
+                          icon: const Icon(Icons.open_in_new),
+                          tooltip: tr('about'),
+                          onPressed: () => launchUrlString(
+                            formItem.helpUrl!,
+                            mode: LaunchMode.externalApplication,
+                          ),
+                        )
+                      : formItem.belowWidgets.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.help_outline),
+                          tooltip: tr('about'),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(formItem.label),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: formItem.belowWidgets,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(),
+                                    child: Text(tr('ok')),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        )
+                      : null,
                 ),
                 minLines: formItem.max <= 1 ? null : formItem.max,
                 maxLines: formItem.max <= 1 ? 1 : formItem.max,
@@ -453,7 +497,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
             return Text(tr('dropdownNoOptsError'));
           }
           return DropdownButtonFormField(
-            decoration: InputDecoration(labelText: formItem.label),
+            decoration: InputDecoration(
+              labelText: formItem.label,
+              filled: widget.tileMode ? false : null,
+              border: widget.tileMode ? InputBorder.none : null,
+              enabledBorder: widget.tileMode ? InputBorder.none : null,
+              focusedBorder: widget.tileMode ? InputBorder.none : null,
+            ),
             initialValue: values[formItem.key],
             items: formItem.opts!.map((e2) {
               var enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
@@ -546,9 +596,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                       values[fieldKey] as Map<String, MapEntry<int, bool>>?;
                   temp ??= {};
                   if (temp[label] == null) {
-                    var singleSelect =
-                        item
-                            .singleSelect;
+                    var singleSelect = item.singleSelect;
                     var someSelected = temp.entries
                         .where((element) => element.value.value)
                         .isNotEmpty;
@@ -570,92 +618,83 @@ class _GeneratedFormState extends State<GeneratedForm> {
               if ((values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                           ?.isNotEmpty ==
                       true &&
-                  item
-                      .showLabelWhenNotEmpty)
+                  item.showLabelWhenNotEmpty)
                 Column(
-                  crossAxisAlignment:
-                      item.alignment ==
-                          WrapAlignment.center
+                  crossAxisAlignment: item.alignment == WrapAlignment.center
                       ? CrossAxisAlignment.center
                       : CrossAxisAlignment.stretch,
-                  children: [
-                    Text(item.label),
-                    const SizedBox(height: 8),
-                  ],
+                  children: [Text(item.label), const SizedBox(height: 8)],
                 ),
               Wrap(
-                alignment:
-                    item.alignment,
+                alignment: item.alignment,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   ...() sync* {
-                    var tagEntries =
-                        values[fieldKey] as Map<String, MapEntry<int, bool>>?;
-                    if (tagEntries != null) {
-                      var sorted = tagEntries.entries.toList()
-                        ..sort((a, b) => a.key
-                            .toLowerCase()
-                            .compareTo(b.key.toLowerCase()));
-                      yield* sorted;
-                    }
-                  }().map((e2) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: ChoiceChip(
-                                label: Text(e2.key),
-                                backgroundColor: Color(
-                                  e2.value.key,
-                                ).withAlpha(50),
-                                selectedColor: Color(e2.value.key),
-                                visualDensity: VisualDensity.compact,
-                                selected: e2.value.value,
-                                onSelected: (value) {
-                                  setState(() {
-                                    (values[fieldKey]
-                                        as Map<String, MapEntry<int, bool>>)[e2
-                                        .key] = MapEntry(
-                                      (values[fieldKey]
-                                              as Map<
-                                                String,
-                                                MapEntry<int, bool>
-                                              >)[e2.key]!
-                                          .key,
-                                      value,
-                                    );
-                                    if (item.singleSelect &&
-                                        value == true) {
-                                      for (var key
-                                          in (values[fieldKey]
-                                                  as Map<
-                                                    String,
-                                                    MapEntry<int, bool>
-                                                  >)
-                                              .keys) {
-                                        if (key != e2.key) {
-                                          (values[fieldKey]
-                                              as Map<
-                                                String,
-                                                MapEntry<int, bool>
-                                              >)[key] = MapEntry(
-                                            (values[fieldKey]
-                                                    as Map<
-                                                      String,
-                                                      MapEntry<int, bool>
-                                                    >)[key]!
-                                                .key,
-                                            false,
-                                          );
-                                        }
-                                      }
-                                    }
-                                    someValueChanged();
-                                  });
-                                },
+                        var tagEntries =
+                            values[fieldKey]
+                                as Map<String, MapEntry<int, bool>>?;
+                        if (tagEntries != null) {
+                          var sorted = tagEntries.entries.toList()
+                            ..sort(
+                              (a, b) => a.key.toLowerCase().compareTo(
+                                b.key.toLowerCase(),
                               ),
                             );
-                          }) ??
+                          yield* sorted;
+                        }
+                      }().map((e2) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: ChoiceChip(
+                            label: Text(e2.key),
+                            backgroundColor: Color(e2.value.key).withAlpha(50),
+                            selectedColor: Color(e2.value.key),
+                            visualDensity: VisualDensity.compact,
+                            selected: e2.value.value,
+                            onSelected: (value) {
+                              setState(() {
+                                (values[fieldKey]
+                                    as Map<String, MapEntry<int, bool>>)[e2
+                                    .key] = MapEntry(
+                                  (values[fieldKey]
+                                          as Map<
+                                            String,
+                                            MapEntry<int, bool>
+                                          >)[e2.key]!
+                                      .key,
+                                  value,
+                                );
+                                if (item.singleSelect && value == true) {
+                                  for (var key
+                                      in (values[fieldKey]
+                                              as Map<
+                                                String,
+                                                MapEntry<int, bool>
+                                              >)
+                                          .keys) {
+                                    if (key != e2.key) {
+                                      (values[fieldKey]
+                                          as Map<
+                                            String,
+                                            MapEntry<int, bool>
+                                          >)[key] = MapEntry(
+                                        (values[fieldKey]
+                                                as Map<
+                                                  String,
+                                                  MapEntry<int, bool>
+                                                >)[key]!
+                                            .key,
+                                        false,
+                                      );
+                                    }
+                                  }
+                                }
+                                someValueChanged();
+                              });
+                            },
+                          ),
+                        );
+                      }) ??
                       [const SizedBox.shrink()],
                   (values[fieldKey] as Map<String, MapEntry<int, bool>>?)
                               ?.values
@@ -714,11 +753,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 });
                               }
 
-                              if (item
-                                      .deleteConfirmationMessage !=
-                                  null) {
-                                var message =
-                                    item.deleteConfirmationMessage!;
+                              if (item.deleteConfirmationMessage != null) {
+                                var message = item.deleteConfirmationMessage!;
                                 showDialog<Map<String, dynamic>?>(
                                   context: context,
                                   builder: (BuildContext ctx) {
@@ -751,10 +787,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           child: TextButton.icon(
                             onPressed: onAddPressed,
                             icon: const Icon(Icons.add),
-                            label: Text(
-                              item
-                                  .label,
-                            ),
+                            label: Text(item.label),
                           ),
                         )
                       : Padding(
@@ -772,9 +805,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           );
         } else if (item is GeneratedFormSubForm) {
           List<Widget> subformColumn = [];
-          var compact =
-              item.items.length == 1 &&
-              item.items[0].length == 1;
+          var compact = item.items.length == 1 && item.items[0].length == 1;
           for (int i = 0; i < values[fieldKey].length; i++) {
             var internalFormKey = ValueKey(
               generateRandomNumber(
@@ -795,18 +826,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     ),
                   GeneratedForm(
                     key: internalFormKey,
-                    items:
-                        cloneFormItems(
-                              item.items,
-                            )
-                            .map(
-                              (x) => x.map((y) {
-                                y.defaultValue = values[fieldKey]?[i]?[y.key];
-                                y.key = '${y.key.toString()},$internalFormKey';
-                                return y;
-                              }).toList(),
-                            )
-                            .toList(),
+                    items: cloneFormItems(item.items)
+                        .map(
+                          (x) => x.map((y) {
+                            y.defaultValue = values[fieldKey]?[i]?[y.key];
+                            y.key = '${y.key.toString()},$internalFormKey';
+                            return y;
+                          }).toList(),
+                        )
+                        .toList(),
                     onValueChanges: (values, valid, isBuilding) {
                       values = values.map(
                         (key, value) => MapEntry(key.split(',')[0], value),
@@ -836,9 +864,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                                 someValueChanged();
                               }
                             : null,
-                        label: Text(
-                          '${item.label} (${i + 1})',
-                        ),
+                        label: Text('${item.label} (${i + 1})'),
                         icon: const Icon(Icons.delete_outline_rounded),
                       ),
                     ],
@@ -856,17 +882,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         values[fieldKey].add(
-                          getDefaultValuesFromFormItems(
-                            item.items,
-                          ),
+                          getDefaultValuesFromFormItems(item.items),
                         );
                         forceUpdateKeyCount++;
                         someValueChanged();
                       },
                       icon: const Icon(Icons.add),
-                      label: Text(
-                        item.label,
-                      ),
+                      label: Text(item.label),
                     ),
                   ),
                 ],
@@ -878,51 +900,84 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
     }
 
-    rows.clear();
+    // Build one Row widget per input row.
+    final List<Widget> inputRowWidgets = [];
     formInputs.asMap().entries.forEach((rowInputs) {
-      if (rowInputs.key > 0) {
-        rows.add([
-          SizedBox(
-            height: widget.items[rowInputs.key - 1][0] is GeneratedFormSwitch
-                ? 16
-                : 28,
-          ),
-        ]);
-      }
       List<Widget> rowItems = [];
       rowInputs.value.asMap().entries.forEach((rowInput) {
         if (rowInput.key > 0) {
           rowItems.add(const SizedBox(width: 20));
         }
-        rowItems.add(
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                rowInput.value,
-                ...widget.items[rowInputs.key][rowInput.key].belowWidgets,
-              ],
+        rowItems.add(Expanded(child: rowInput.value));
+      });
+      inputRowWidgets.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rowItems,
+        ),
+      );
+    });
+
+    if (widget.tileMode) {
+      bool isFieldRow(int r) =>
+          widget.items[r].isNotEmpty &&
+          (widget.items[r][0] is GeneratedFormTextField ||
+              widget.items[r][0] is GeneratedFormDropdown);
+      bool isSwitchRow(int r) =>
+          widget.items[r].isNotEmpty &&
+          widget.items[r][0] is GeneratedFormSwitch;
+      final colorScheme = Theme.of(context).colorScheme;
+      final n = inputRowWidgets.length;
+      final List<Widget> children = [];
+      for (var r = 0; r < n; r++) {
+        final EdgeInsets padding = isFieldRow(r)
+            ? EdgeInsets.zero
+            : isSwitchRow(r)
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+        children.add(
+          Material(
+            // Fields use a distinct, slightly more prominent tone so they
+            // stand out from the surrounding control tiles while still
+            // sharing the connected positional-radii system.
+            color: isFieldRow(r)
+                ? colorScheme.surfaceContainerHighest
+                : colorScheme.surfaceContainerLow,
+            clipBehavior: Clip.antiAlias,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(r == 0 ? 24 : 6),
+              bottom: Radius.circular(r == n - 1 ? 24 : 6),
             ),
+            child: Padding(padding: padding, child: inputRowWidgets[r]),
           ),
         );
-      });
-      rows.add(rowItems);
-    });
+      }
+      return Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 3,
+          children: children,
+        ),
+      );
+    }
+
+    final List<Widget> children = [];
+    for (var r = 0; r < inputRowWidgets.length; r++) {
+      if (r > 0) {
+        children.add(
+          SizedBox(
+            height: widget.items[r - 1][0] is GeneratedFormSwitch ? 16 : 28,
+          ),
+        );
+      }
+      children.add(inputRowWidgets[r]);
+    }
 
     return Form(
       key: _formKey,
-      child: Column(
-        children: [
-          ...rows.map(
-            (row) => Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [...row.map((e) => e)],
-            ),
-          ),
-        ],
-      ),
+      child: Column(children: children),
     );
   }
 }

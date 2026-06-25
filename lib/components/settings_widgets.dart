@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 const double _tileBigRadius = 24;
@@ -21,6 +22,7 @@ Widget _withTileRadius(Widget w, BorderRadius radius) {
       key: w.key,
       padding: w.padding,
       borderRadius: radius,
+      color: w.color,
       child: w.child,
     );
   }
@@ -32,6 +34,7 @@ Widget _withTileRadius(Widget w, BorderRadius radius) {
       onChanged: w.onChanged,
       subtitle: w.subtitle,
       borderRadius: radius,
+      helpWidgets: w.helpWidgets,
     );
   }
   return w;
@@ -68,18 +71,20 @@ class SettingsTile extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final BorderRadius? borderRadius;
+  final Color? color;
 
   const SettingsTile({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
     this.borderRadius,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: borderRadius ?? BorderRadius.circular(_tileBigRadius),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
@@ -93,6 +98,7 @@ class SettingsToggleRow extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
   final Widget? subtitle;
   final BorderRadius? borderRadius;
+  final List<Widget> helpWidgets;
 
   const SettingsToggleRow({
     super.key,
@@ -101,20 +107,58 @@ class SettingsToggleRow extends StatelessWidget {
     required this.onChanged,
     this.subtitle,
     this.borderRadius,
+    this.helpWidgets = const [],
   });
 
   @override
   Widget build(BuildContext context) {
+    final Widget tileChild = helpWidgets.isEmpty
+        ? SwitchListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            title: Text(label),
+            subtitle: subtitle,
+            value: value,
+            onChanged: onChanged,
+          )
+        : ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            title: Text(label),
+            subtitle: subtitle,
+            onTap: onChanged == null ? null : () => onChanged!(!value),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.help_outline),
+                  tooltip: tr('about'),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(label),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: helpWidgets,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: Text(tr('ok')),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                Switch(value: value, onChanged: onChanged),
+              ],
+            ),
+          );
     return SettingsTile(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
       borderRadius: borderRadius,
-      child: SwitchListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-        title: Text(label),
-        subtitle: subtitle,
-        value: value,
-        onChanged: onChanged,
-      ),
+      child: tileChild,
     );
   }
 }

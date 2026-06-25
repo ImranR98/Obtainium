@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -10,7 +9,6 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub extends AppSource {
   GitHub({hostChanged = false}) {
@@ -27,25 +25,8 @@ class GitHub extends AppSource {
         label: tr('githubPATLabel'),
         password: true,
         required: false,
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl:
+            'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
       ),
       GeneratedFormTextField(
         'GHReqPrefix',
@@ -67,25 +48,7 @@ class GitHub extends AppSource {
             return null;
           },
         ],
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://github.com/sky22333/hubproxy',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl: 'https://github.com/sky22333/hubproxy',
       ),
       GeneratedFormSwitch(
         'checkRepoRename',

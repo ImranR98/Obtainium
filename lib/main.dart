@@ -244,11 +244,26 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     inputDecorationTheme: InputDecorationThemeData(
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(28),
+        borderSide: BorderSide.none,
+      ),
     ),
     dropdownMenuTheme: DropdownMenuThemeData(
       inputDecorationTheme: InputDecorationThemeData(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide.none,
+        ),
       ),
       menuStyle: MenuStyle(
         shape: WidgetStatePropertyAll(
@@ -488,12 +503,12 @@ class _ObtainiumState extends State<Obtainium> {
           } else {
             lightColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
-              dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
+              dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
             );
             darkColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
               brightness: Brightness.dark,
-              dynamicSchemeVariant: DynamicSchemeVariant.vibrant,
+              dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
             );
           }
 

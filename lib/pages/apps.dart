@@ -140,6 +140,7 @@ class AppsPageState extends State<AppsPage> {
     includeNonInstalled: false,
   );
   Set<String> selectedAppIds = {};
+  Set<String?> collapsedCategories = {};
   DateTime? refreshingSince;
 
   void clearSelected() {
@@ -617,28 +618,87 @@ class AppsPageState extends State<AppsPage> {
     }
 
     getCategoryCollapsibleTile(int index) {
-      var tiles = listedApps
+      final category = listedCategories[index];
+      final appEntries = listedApps
           .asMap()
           .entries
           .where(
             (e) =>
-                e.value.app.categories.contains(listedCategories[index]) ||
-                e.value.app.categories.isEmpty &&
-                    listedCategories[index] == null,
+                e.value.app.categories.contains(category) ||
+                e.value.app.categories.isEmpty && category == null,
           )
-          .map((e) => appTileCard(e.key))
           .toList();
 
       capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
-      return ExpansionTile(
-        initiallyExpanded: true,
-        title: Text(
-          capFirstChar(listedCategories[index] ?? tr('noCategory')),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      final colorScheme = Theme.of(context).colorScheme;
+      final expanded = !collapsedCategories.contains(category);
+
+      // Group title: a distinct-tone tile that connects to its items below.
+      final header = Material(
+        color: colorScheme.surfaceContainerHigh,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.vertical(
+          top: const Radius.circular(20),
+          bottom: Radius.circular(expanded && appEntries.isNotEmpty ? 6 : 20),
         ),
-        controlAffinity: ListTileControlAffinity.leading,
-        trailing: Text(tiles.length.toString()),
-        children: tiles,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              if (expanded) {
+                collapsedCategories.add(category);
+              } else {
+                collapsedCategories.remove(category);
+              }
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: expanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.chevron_right_rounded),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    capFirstChar(category ?? tr('noCategory')),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(appEntries.length.toString()),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final items = <Widget>[];
+      if (expanded) {
+        for (var i = 0; i < appEntries.length; i++) {
+          final isLast = i == appEntries.length - 1;
+          items.add(
+            Material(
+              color: colorScheme.surfaceContainerLow,
+              clipBehavior: Clip.antiAlias,
+              borderRadius: BorderRadius.vertical(
+                top: const Radius.circular(6),
+                bottom: Radius.circular(isLast ? 20 : 6),
+              ),
+              child: getSingleAppHorizTile(appEntries[i].key),
+            ),
+          );
+        }
+      }
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 3,
+          children: [header, ...items],
+        ),
       );
     }
 

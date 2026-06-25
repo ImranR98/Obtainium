@@ -586,6 +586,7 @@ class AddAppPageState extends State<AddAppPage> {
             }
           }
           return GeneratedForm(
+          tileMode: true,
           key: Key(
             '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}',
           ),
