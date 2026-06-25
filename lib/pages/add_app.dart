@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
@@ -606,19 +607,20 @@ class AddAppPageState extends State<AddAppPage> {
           },
         );
       }(),
-        Column(
-          children: [
-            const SizedBox(height: 16),
-            CategoryEditorSelector(
-              alignment: WrapAlignment.start,
-              onSelected: (categories) {
-                pickedCategories = categories;
-              },
-            ),
-          ],
+        const SizedBox(height: 12),
+        SettingsTile(
+          padding: const EdgeInsets.all(12),
+          child: CategoryEditorSelector(
+            alignment: WrapAlignment.start,
+            onSelected: (categories) {
+              pickedCategories = categories;
+            },
+          ),
         ),
-        if (pickedSource != null && pickedSource!.appIdInferIsOptional)
+        if (pickedSource != null && pickedSource!.appIdInferIsOptional) ...[
+          const SizedBox(height: 12),
           GeneratedForm(
+            tileMode: true,
             key: const Key('inferAppIdIfOptional'),
             items: [
               [
@@ -637,8 +639,11 @@ class AddAppPageState extends State<AddAppPage> {
               }
             },
           ),
-        if (pickedSource != null && pickedSource!.enforceTrackOnly)
+        ],
+        if (pickedSource != null && pickedSource!.enforceTrackOnly) ...[
+          const SizedBox(height: 12),
           GeneratedForm(
+            tileMode: true,
             key: Key(
               '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}-appId',
             ),
@@ -673,6 +678,7 @@ class AddAppPageState extends State<AddAppPage> {
               }
             },
           ),
+        ],
       ],
     );
 
