@@ -342,21 +342,24 @@ class AppsPageState extends State<AppsPage> {
           ),
         if (refreshingSince != null || appsProvider.loadingApps)
           SliverToBoxAdapter(
-            child: LinearProgressIndicator(
-              value: appsProvider.loadingApps
-                  ? null
-                  : appsProvider.apps.values
-                            .where(
-                              (element) =>
-                                  !(element.app.lastUpdateCheck?.isBefore(
-                                        refreshingSince!,
-                                      ) ??
-                                      true),
-                            )
-                            .length /
-                        (appsProvider.apps.isNotEmpty
-                            ? appsProvider.apps.length
-                            : 1),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+              child: LinearProgressIndicator(
+                value: appsProvider.loadingApps
+                    ? null
+                    : appsProvider.apps.values
+                              .where(
+                                (element) =>
+                                    !(element.app.lastUpdateCheck?.isBefore(
+                                          refreshingSince!,
+                                        ) ??
+                                        true),
+                              )
+                              .length /
+                          (appsProvider.apps.isNotEmpty
+                              ? appsProvider.apps.length
+                              : 1),
+              ),
             ),
           ),
       ];
@@ -549,8 +552,7 @@ class AppsPageState extends State<AppsPage> {
       final trackOnly =
           listedApps[index].app.additionalSettings['trackOnly'] == true;
       final canInstall = installed == null && !trackOnly;
-      final canUpdate =
-          installed != null && installed != latest && !trackOnly;
+      final canUpdate = installed != null && installed != latest && !trackOnly;
       final cs = Theme.of(context).colorScheme;
 
       // Swipe-right background: Install or Update, depending on state.
@@ -607,18 +609,16 @@ class AppsPageState extends State<AppsPage> {
           if (direction == DismissDirection.startToEnd) {
             // Swipe right — install or update (snap back, action is async).
             if (canInstall || canUpdate) {
-              appsProvider.downloadAndInstallLatestApps(
-                [appId],
-                globalNavigatorKey.currentContext,
-              );
+              appsProvider.downloadAndInstallLatestApps([
+                appId,
+              ], globalNavigatorKey.currentContext);
             }
             return false;
           } else {
             // Swipe left — remove (delegates to the standard confirm dialog).
-            return appsProvider.removeAppsWithModal(
-              context,
-              [listedApps[index].app],
-            );
+            return appsProvider.removeAppsWithModal(context, [
+              listedApps[index].app,
+            ]);
           }
         },
         onDismissed: (direction) {
@@ -646,14 +646,15 @@ class AppsPageState extends State<AppsPage> {
           child: ListTile(
             autofocus: index == 0 && settingsProvider.isTV,
             tileColor: listedApps[index].app.pinned
-                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
+                ? Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.06)
                 : Colors.transparent,
             selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
               alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
             ),
-            selected: selectedAppIds.contains(
-              listedApps[index].app.id,
-            ) ||
+            selected:
+                selectedAppIds.contains(listedApps[index].app.id) ||
                 widget.selectedAppId == listedApps[index].app.id,
             onLongPress: () {
               toggleAppSelected(listedApps[index].app);
@@ -706,21 +707,21 @@ class AppsPageState extends State<AppsPage> {
                     ),
                   )
                 : trailingRow,
-             onTap: () {
-               if (selectedAppIds.isNotEmpty) {
-                 toggleAppSelected(listedApps[index].app);
-               } else if (widget.onAppSelected != null) {
-                 widget.onAppSelected!(listedApps[index].app.id);
-               } else {
-                 Navigator.push(
-                   context,
-                   MaterialPageRoute(
-                     builder: (context) =>
-                         AppPage(appId: listedApps[index].app.id),
-                   ),
-                 );
-               }
-             },
+            onTap: () {
+              if (selectedAppIds.isNotEmpty) {
+                toggleAppSelected(listedApps[index].app);
+              } else if (widget.onAppSelected != null) {
+                widget.onAppSelected!(listedApps[index].app.id);
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AppPage(appId: listedApps[index].app.id),
+                  ),
+                );
+              }
+            },
           ),
         ),
       );
@@ -1132,124 +1133,126 @@ class AppsPageState extends State<AppsPage> {
           }
 
           return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                optionTile(
-                  icon: Icons.delete_outline,
-                  label: tr('removeSelectedApps'),
-                  onTap: hasSelection
-                      ? () {
-                          appsProvider.removeAppsWithModal(
-                            context,
-                            selectedApps.toList(),
-                          );
-                        }
-                      : null,
-                ),
-                optionTile(
-                  icon: Icons.category_outlined,
-                  label: tr('categorize'),
-                  onTap: hasSelection ? launchCategorizeDialog() : null,
-                ),
-                optionTile(
-                  icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
-                  onTap: pinSelectedApps,
-                ),
-                optionTile(
-                  icon: Icons.share_outlined,
-                  label: tr('shareSelectedAppURLs'),
-                  onTap: () {
-                    String urls = '';
-                    for (var a in selectedApps) {
-                      urls += '${a.url}\n';
-                    }
-                    urls = urls.substring(0, urls.length - 1);
-                    SharePlus.instance.share(
-                      ShareParams(
-                        text: urls,
-                        subject: 'Obtainium - ${tr('appsString')}',
-                      ),
-                    );
-                  },
-                ),
-                optionTile(
-                  icon: Icons.link_outlined,
-                  label: tr('shareAppConfigLinks'),
-                  onTap: !hasSelection
-                      ? null
-                      : () {
-                          String urls = '';
-                          for (var a in selectedApps) {
-                            urls +=
-                                'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  optionTile(
+                    icon: Icons.delete_outline,
+                    label: tr('removeSelectedApps'),
+                    onTap: hasSelection
+                        ? () {
+                            appsProvider.removeAppsWithModal(
+                              context,
+                              selectedApps.toList(),
+                            );
                           }
-                          SharePlus.instance.share(
-                            ShareParams(
-                              text: urls,
-                              subject: 'Obtainium - ${tr('appsString')}',
-                            ),
-                          );
-                        },
-                ),
-                optionTile(
-                  icon: Icons.file_download_outlined,
-                  label: '${tr('share')} - ${tr('obtainiumExport')}',
-                  onTap: !hasSelection
-                      ? null
-                      : () {
-                          var encoder = const JsonEncoder.withIndent("    ");
-                          var exportJSON = encoder.convert(
-                            appsProvider.generateExportJSON(
-                              appIds: selectedApps.map((e) => e.id).toList(),
-                              overrideExportSettings: 0,
-                            ),
-                          );
-                          String fn =
-                              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-                          XFile f = XFile.fromData(
-                            Uint8List.fromList(utf8.encode(exportJSON)),
-                            mimeType: 'application/json',
-                            name: fn,
-                          );
-                          SharePlus.instance.share(
-                            ShareParams(
-                              files: [f],
-                              fileNameOverrides: ['$fn.json'],
-                            ),
-                          );
-                        },
-                ),
-                optionTile(
-                  icon: Icons.download_outlined,
-                  label: tr(
-                    'downloadX',
-                    args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                        : null,
                   ),
-                  onTap: () {
-                    appsProvider
-                        .downloadAppAssets(
-                          selectedApps.map((e) => e.id).toList(),
-                          globalNavigatorKey.currentContext ?? context,
-                        )
-                        .catchError(
-                          // ignore: invalid_return_type_for_catch_error
-                          (e) => showError(
-                            e,
+                  optionTile(
+                    icon: Icons.category_outlined,
+                    label: tr('categorize'),
+                    onTap: hasSelection ? launchCategorizeDialog() : null,
+                  ),
+                  optionTile(
+                    icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
+                    onTap: pinSelectedApps,
+                  ),
+                  optionTile(
+                    icon: Icons.share_outlined,
+                    label: tr('shareSelectedAppURLs'),
+                    onTap: () {
+                      String urls = '';
+                      for (var a in selectedApps) {
+                        urls += '${a.url}\n';
+                      }
+                      urls = urls.substring(0, urls.length - 1);
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: urls,
+                          subject: 'Obtainium - ${tr('appsString')}',
+                        ),
+                      );
+                    },
+                  ),
+                  optionTile(
+                    icon: Icons.link_outlined,
+                    label: tr('shareAppConfigLinks'),
+                    onTap: !hasSelection
+                        ? null
+                        : () {
+                            String urls = '';
+                            for (var a in selectedApps) {
+                              urls +=
+                                  'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                            }
+                            SharePlus.instance.share(
+                              ShareParams(
+                                text: urls,
+                                subject: 'Obtainium - ${tr('appsString')}',
+                              ),
+                            );
+                          },
+                  ),
+                  optionTile(
+                    icon: Icons.file_download_outlined,
+                    label: '${tr('share')} - ${tr('obtainiumExport')}',
+                    onTap: !hasSelection
+                        ? null
+                        : () {
+                            var encoder = const JsonEncoder.withIndent("    ");
+                            var exportJSON = encoder.convert(
+                              appsProvider.generateExportJSON(
+                                appIds: selectedApps.map((e) => e.id).toList(),
+                                overrideExportSettings: 0,
+                              ),
+                            );
+                            String fn =
+                                '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
+                            XFile f = XFile.fromData(
+                              Uint8List.fromList(utf8.encode(exportJSON)),
+                              mimeType: 'application/json',
+                              name: fn,
+                            );
+                            SharePlus.instance.share(
+                              ShareParams(
+                                files: [f],
+                                fileNameOverrides: ['$fn.json'],
+                              ),
+                            );
+                          },
+                  ),
+                  optionTile(
+                    icon: Icons.download_outlined,
+                    label: tr(
+                      'downloadX',
+                      args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                    ),
+                    onTap: () {
+                      appsProvider
+                          .downloadAppAssets(
+                            selectedApps.map((e) => e.id).toList(),
                             globalNavigatorKey.currentContext ?? context,
-                          ),
-                        );
-                  },
-                ),
-                optionTile(
-                  icon: Icons.done_all,
-                  label: tr('markSelectedAppsUpdated'),
-                  onTap: appsProvider.areDownloadsRunning()
-                      ? null
-                      : showMassMarkDialog,
-                ),
-              ],
+                          )
+                          .catchError(
+                            // ignore: invalid_return_type_for_catch_error
+                            (e) => showError(
+                              e,
+                              globalNavigatorKey.currentContext ?? context,
+                            ),
+                          );
+                    },
+                  ),
+                  optionTile(
+                    icon: Icons.done_all,
+                    label: tr('markSelectedAppsUpdated'),
+                    onTap: appsProvider.areDownloadsRunning()
+                        ? null
+                        : showMassMarkDialog,
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -1331,22 +1334,19 @@ class AppsPageState extends State<AppsPage> {
             ],
             additionalWidgets: [
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Material(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: CategoryEditorSelector(
-                      preselected: filter.categoryFilter,
-                      onSelected: (categories) {
-                        filter.categoryFilter = categories.toSet();
-                      },
-                    ),
+              Material(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: CategoryEditorSelector(
+                    preselected: filter.categoryFilter,
+                    onSelected: (categories) {
+                      filter.categoryFilter = categories.toSet();
+                    },
                   ),
                 ),
               ),
@@ -1397,8 +1397,7 @@ class AppsPageState extends State<AppsPage> {
             leading: const Icon(Icons.search_rounded),
             trailing: [
               getSelectAllButton(),
-              if (selectedAppIds.isNotEmpty)
-                ...getMainBottomButtons(),
+              if (selectedAppIds.isNotEmpty) ...getMainBottomButtons(),
               if (!isFilterOff)
                 IconButton(
                   tooltip: '${tr('filter')} - ${tr('remove')}',
@@ -1583,8 +1582,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
                           image: const AssetImage(
                             'assets/graphics/icon_small.png',
                           ),
-                          color: Theme.of(context).brightness ==
-                                  Brightness.dark
+                          color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white.withValues(alpha: 0.5)
                               : Colors.white.withValues(alpha: 0.4),
                           colorBlendMode: BlendMode.modulate,

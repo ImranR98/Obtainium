@@ -858,7 +858,7 @@ class _AppPageState extends State<AppPage> {
                   ]),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 3 — URL, certificate (opt), download asset
-                  section(true, certs || hasAssets, children: [
+                  section(true, certs || hasAssets ? false : true, children: [
                     InkWell(
                       onTap: () {
                         if (app?.app.url != null) launchUrlString(
@@ -914,7 +914,7 @@ class _AppPageState extends State<AppPage> {
                   ]),
                   if (certs) ...[
                     const SliverToBoxAdapter(child: SizedBox(height: 2)),
-                    section(false, certs && !hasAssets, children: [
+                    section(false, !hasAssets, children: [
                       Text(
                         '${plural('certificateHash', app.certificateHashes.length)}'
                         '${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
@@ -948,9 +948,8 @@ class _AppPageState extends State<AppPage> {
                     ]),
                   ],
                   if (hasAssets) ...[
-                    if (certs)
-                      const SliverToBoxAdapter(child: SizedBox(height: 2)),
-                    section(!certs, true, children: [
+                    const SliverToBoxAdapter(child: SizedBox(height: 2)),
+                    section(false, true, children: [
                       Center(
                         child: HighlightableButton(
                           highlight:
@@ -976,9 +975,7 @@ class _AppPageState extends State<AppPage> {
                       ),
                     ]),
                   ],
-                  if (certs || hasAssets)
-                    const SliverToBoxAdapter(
-                        child: SizedBox(height: 20)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 4 — Categories
                   section(true, true, children: [
                     CategoryEditorSelector(
