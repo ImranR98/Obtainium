@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -372,26 +373,62 @@ class _AppPageState extends State<AppPage> {
     }
 
     showAdditionalOptionsDialog() async {
-      return await showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (BuildContext ctx) {
-          var items = (source?.combinedAppSpecificSettingFormItems ?? []).map((
-            row,
-          ) {
-            row = row.map((e) {
-              if (app?.app.additionalSettings[e.key] != null) {
-                e.defaultValue = app?.app.additionalSettings[e.key];
-              }
-              return e;
-            }).toList();
-            return row;
-          }).toList();
+      var items = (source?.combinedAppSpecificSettingFormItems ?? []).map((
+        row,
+      ) {
+        row = row.map((e) {
+          if (app?.app.additionalSettings[e.key] != null) {
+            e.defaultValue = app?.app.additionalSettings[e.key];
+          }
+          return e;
+        }).toList();
+        return row;
+      }).toList();
 
-          return GeneratedFormModal(
-            title: tr('additionalOptions'),
-            items: items,
-          );
-        },
+      Map<String, dynamic> values = {};
+      return Navigator.of(context).push<Map<String, dynamic>>(
+        MaterialPageRoute(
+          builder: (ctx) => Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar.large(
+                  pinned: true,
+                  title: Text(tr(
+                    'additionalOptsFor',
+                    args: [app?.name ?? tr('app')],
+                  )),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: GeneratedForm(
+                      tileMode: true,
+                      items: items,
+                      onValueChanges: (v, valid, isBuilding) {
+                        values = v;
+                      },
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      20,
+                      20,
+                      MediaQuery.of(context).padding.bottom + 24,
+                    ),
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(ctx).pop(values),
+                      child: Text(tr('continue')),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -683,7 +720,7 @@ class _AppPageState extends State<AppPage> {
     return Scaffold(
       appBar: showAppWebpageFinal ? appScreenAppBar() : null,
       floatingActionButton: showAppWebpageFinal
-          ? FloatingActionButton.small(
+          ? FloatingActionButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -697,7 +734,7 @@ class _AppPageState extends State<AppPage> {
                 );
               },
               tooltip: tr('more'),
-              child: const Icon(Icons.info_outline),
+              child: const Icon(Icons.settings),
             )
           : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
