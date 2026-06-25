@@ -423,10 +423,12 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   FocusTraversalGroup(
                     child: NavigationRail(
-                      leading: Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: createFab,
-                      ),
+                      leading: currentIndex == 0
+                          ? Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: createFab,
+                            )
+                          : null,
                       destinations: pages
                           .map(
                             (e) => NavigationRailDestination(
@@ -446,7 +448,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : content,
-        floatingActionButton: useRail ? null : createFab,
+        floatingActionButton: useRail || currentIndex != 0 ? null : createFab,
         bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(

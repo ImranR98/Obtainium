@@ -1491,40 +1491,47 @@ class _AppIconWidgetState extends State<AppIconWidget> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      child: FutureBuilder(
-        future: _iconFuture,
-        builder: (ctx, val) {
-          var icon = widget.appsProvider.apps[widget.appId]?.icon;
-          return icon != null
-              ? Image.memory(
-                  icon,
-                  gaplessPlayback: true,
-                  opacity: AlwaysStoppedAnimation(widget.installed ? 1 : 0.6),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationZ(0.31),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: ClipRSuperellipse(
+          borderRadius: BorderRadius.circular(12),
+          child: FutureBuilder(
+            future: _iconFuture,
+            builder: (ctx, val) {
+              var icon = widget.appsProvider.apps[widget.appId]?.icon;
+              return icon != null
+                  ? Image.memory(
+                      icon,
+                      gaplessPlayback: true,
+                      fit: BoxFit.cover,
+                      opacity: AlwaysStoppedAnimation(
+                        widget.installed ? 1 : 0.6,
+                      ),
+                    )
+                  : ColoredBox(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      child: Center(
                         child: Image(
                           image: const AssetImage(
                             'assets/graphics/icon_small.png',
                           ),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.4)
-                              : Colors.white.withValues(alpha: 0.3),
+                          color: Theme.of(context).brightness ==
+                                  Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.4),
                           colorBlendMode: BlendMode.modulate,
                           gaplessPlayback: true,
+                          width: 24,
+                          height: 24,
                         ),
                       ),
-                    ),
-                  ],
-                );
-        },
+                    );
+            },
+          ),
+        ),
       ),
       onDoubleTap: () {
         pm.openApp(widget.appId);
