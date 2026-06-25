@@ -220,6 +220,8 @@
     "label": "Címke",
     "language": "Nyelv",
     "copiedToClipboard": "Másolva a vágólapra",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Tárhely engedély megtagadva",
     "selectedCategorizeWarning": "Ez felváltja a kiválasztott alkalmazások meglévő kategória-beállításait.",
     "filterAPKsByRegEx": "APK-k szűrése reguláris kifejezéssel",

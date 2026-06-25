@@ -116,8 +116,8 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
+    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
     return '$assetUrl${(Uri.parse(assetUrl).query.isEmpty ? '?' : '&')}$optionalAuth';
   }
 
@@ -130,8 +130,8 @@ class GitLab extends AppSource {
     var names = GitHub(hostChanged: true).getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
-    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
+    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
 
     bool trackOnly = additionalSettings['trackOnly'] == true;
 

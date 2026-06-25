@@ -98,13 +98,13 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  void runOnAddAppInputChange(String userInput) {
+  void runOnAddAppInputChange(String inputUrl) {
     additionalSourceAppSpecificSettingFormItems =
         additionalSourceAppSpecificSettingFormItems.map((row) {
           row = row.map((item) {
             if (item.key == 'appIdOrName') {
               try {
-                var appId = Uri.parse(userInput).queryParameters['appId'];
+                var appId = Uri.parse(inputUrl).queryParameters['appId'];
                 if (appId != null && item is GeneratedFormTextField) {
                   item.required = false;
                 }

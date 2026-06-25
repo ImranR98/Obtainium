@@ -220,6 +220,8 @@
     "label": "Oznaka",
     "language": "Jezik",
     "copiedToClipboard": "Podaci kopirani u međuspremnik",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Dozvola za pohranu je odbijena",
     "selectedCategorizeWarning": "Ovo će zamijeniti sve postojeće postavke kategorije za odabrane aplikacije.",
     "filterAPKsByRegEx": "Filtrirajte APK-ove prema regularnom izrazu",

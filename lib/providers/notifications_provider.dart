@@ -262,7 +262,7 @@ class NotificationsProvider {
       var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
       globalNavigatorKey.currentState?.push(
         PageRouteBuilder(
-          pageBuilder: (context, _, __) => AlertDialog(
+          pageBuilder: (context, _, _) => AlertDialog(
             title: Text(title),
             content: Text(content),
             actions: [

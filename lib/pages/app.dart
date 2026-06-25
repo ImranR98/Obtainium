@@ -1,14 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -17,7 +14,15 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:markdown/markdown.dart' as md;
+
+/// The installed/latest version status line shown for an app (e.g.
+/// "1.2.3 installed / latest" or "Not installed").
+String appInstalledVersionText(App? app) {
+  final installed = app?.installedVersion;
+  if (installed == null) return tr('notInstalled');
+  final upToDate = installed == app?.latestVersion;
+  return '$installed ${tr('installed')}${upToDate ? ' / ${tr('latest')}' : ''}';
+}
 
 class AppPage extends StatefulWidget {
   const AppPage({
@@ -40,10 +45,98 @@ class AppPage extends StatefulWidget {
 }
 
 class _AppPageState extends State<AppPage> {
-  late final WebViewController _webViewController;
-  bool _wasWebViewOpened = false;
+  WebViewController? _webViewController;
+  bool _webViewLoaded = false;
   AppInMemory? prevApp;
   bool updating = false;
+
+  // Memoizes the per-build deepCopy of the app so it is only re-copied when the
+  // underlying app actually changes (instead of on every rebuild, e.g. each
+  // download-progress tick).
+  String? _appCacheSig;
+  AppInMemory? _appCache;
+
+  /// Lazily builds (and loads, once) the WebView controller. The controller and
+  /// its network load are deferred until the webpage view is actually shown, so
+  /// opening the detail view alone never spins up a WebView engine.
+  WebViewController _ensureWebViewController(String url) {
+    var controller = _webViewController;
+    if (controller == null) {
+      controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onWebResourceError: (WebResourceError error) {
+              if (error.isForMainFrame == true && mounted) {
+                showError(
+                  ObtainiumError(error.description, unexpected: true),
+                  context,
+                );
+              }
+            },
+            onNavigationRequest: (NavigationRequest request) =>
+                !(request.url.startsWith("http://") ||
+                    request.url.startsWith("https://") ||
+                    request.url.startsWith("ftp://") ||
+                    request.url.startsWith("ftps://"))
+                ? NavigationDecision.prevent
+                : NavigationDecision.navigate,
+          ),
+        );
+      _webViewController = controller;
+    }
+    if (!_webViewLoaded) {
+      _webViewLoaded = true;
+      controller.loadRequest(Uri.parse(url));
+    }
+    return controller;
+  }
+
+  /// A fingerprint of everything this page reads from an [AppInMemory]
+  /// (including download progress, icon and installed info), used to decide when
+  /// the cached [deepCopy] needs to be refreshed.
+  String _appSignature(AppInMemory a) {
+    final app = a.app;
+    return [
+      a.downloadProgress,
+      identityHashCode(a.icon),
+      identityHashCode(a.installedInfo),
+      app.id,
+      a.name,
+      a.author,
+      app.installedVersion,
+      app.latestVersion,
+      app.url,
+      app.overrideSource,
+      app.releaseDate?.microsecondsSinceEpoch,
+      app.lastUpdateCheck?.microsecondsSinceEpoch,
+      app.categories.join(','),
+      app.pinned,
+      app.hasPendingRepoRename,
+      app.pendingRepoRenameUrl,
+      app.apkUrls.length,
+      app.otherAssetUrls.length,
+      app.preferredApkIndex,
+      app.additionalSettings.toString(),
+    ].join('\u0001');
+  }
+
+  AppInMemory? _cachedApp(AppsProvider appsProvider) {
+    final source = appsProvider.apps[widget.appId];
+    if (source == null) {
+      _appCache = null;
+      _appCacheSig = null;
+      return null;
+    }
+    final sig = _appSignature(source);
+    if (sig == _appCacheSig && _appCache != null) {
+      return _appCache;
+    }
+    final copy = source.deepCopy();
+    _appCache = copy;
+    _appCacheSig = sig;
+    return copy;
+  }
 
   void _closePage() {
     if (widget.onClose != null) {
@@ -71,12 +164,7 @@ class _AppPageState extends State<AppPage> {
       spacing: 2,
       children: [
         Material(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
-              bottom: Radius.circular(4),
-            ),
-          ),
+          shape: positionalTileShape(isFirst: true, isLast: false),
           color: colorScheme.surfaceContainer,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
@@ -117,9 +205,7 @@ class _AppPageState extends State<AppPage> {
           ),
         ),
         Material(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-          ),
+          shape: positionalTileShape(isFirst: false, isLast: false),
           color: colorScheme.surfaceContainer,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
@@ -160,12 +246,7 @@ class _AppPageState extends State<AppPage> {
           ),
         ),
         Material(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(4),
-              bottom: Radius.circular(16),
-            ),
-          ),
+          shape: positionalTileShape(isFirst: false, isLast: true),
           color: colorScheme.surfaceContainer,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
@@ -210,32 +291,6 @@ class _AppPageState extends State<AppPage> {
         ),
       ],
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onWebResourceError: (WebResourceError error) {
-            if (error.isForMainFrame == true) {
-              showError(
-                ObtainiumError(error.description, unexpected: true),
-                context,
-              );
-            }
-          },
-          onNavigationRequest: (NavigationRequest request) =>
-              !(request.url.startsWith("http://") ||
-                  request.url.startsWith("https://") ||
-                  request.url.startsWith("ftp://") ||
-                  request.url.startsWith("ftps://"))
-              ? NavigationDecision.prevent
-              : NavigationDecision.navigate,
-        ),
-      );
   }
 
   @override
@@ -300,7 +355,7 @@ class _AppPageState extends State<AppPage> {
     }
 
     var sourceProvider = SourceProvider();
-    AppInMemory? app = appsProvider.apps[widget.appId]?.deepCopy();
+    AppInMemory? app = _cachedApp(appsProvider);
     var source = app != null
         ? sourceProvider.getSource(
             app.app.url,
@@ -312,34 +367,27 @@ class _AppPageState extends State<AppPage> {
         app != null &&
         settingsProvider.checkUpdateOnDetailPage) {
       prevApp = app;
-      getUpdate(app.app.id);
+      final idToCheck = app.app.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) getUpdate(idToCheck);
+      });
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
 
     bool isVersionDetectionStandard =
         app?.app.additionalSettings['versionDetection'] == true;
 
-    bool installedVersionIsEstimate = app?.app != null
-        ? isVersionPseudo(app!.app)
-        : false;
-
     final certs =
         app != null && app.certificateHashes.isNotEmpty;
     final hasAssets = app?.app.apkUrls.isNotEmpty == true ||
         app?.app.otherAssetUrls.isNotEmpty == true;
 
-    if (app != null && !_wasWebViewOpened) {
-      _wasWebViewOpened = true;
-      _webViewController.loadRequest(Uri.parse(app.app.url));
+    getAppWebView() {
+      if (app == null) return Container();
+      final controller = _ensureWebViewController(app.app.url)
+        ..setBackgroundColor(Theme.of(context).colorScheme.surface);
+      return WebViewWidget(key: ObjectKey(controller), controller: controller);
     }
-
-    getAppWebView() => app != null
-        ? WebViewWidget(
-            key: ObjectKey(_webViewController),
-            controller: _webViewController
-              ..setBackgroundColor(Theme.of(context).colorScheme.surface),
-          )
-        : Container();
 
     showMarkUpdatedDialog() {
       return showDialog(
@@ -500,19 +548,19 @@ class _AppPageState extends State<AppPage> {
                   var successMessage = installed == null
                       ? tr('installed')
                       : tr('appsUpdated');
+                  var np = context.read<NotificationsProvider>();
                   settingsProvider.heavyImpact();
                   var res = await appsProvider.downloadAndInstallLatestApps(
                     app?.app.id != null ? [app!.app.id] : [],
                     globalNavigatorKey.currentContext,
                   );
-                  if (res.isNotEmpty && !trackOnly) {
+                  if (res.isNotEmpty && !trackOnly && context.mounted) {
                     showMessage(successMessage, context);
                   }
                   if (res.isNotEmpty && mounted) {
                     _closePage();
                   }
                   if (res.isNotEmpty) {
-                    var np = context.read<NotificationsProvider>();
                     np.cancel(UpdateNotification([]).id);
                     np.cancel(
                       SilentUpdateAttemptNotification([], id: res[0].hashCode)
@@ -520,7 +568,7 @@ class _AppPageState extends State<AppPage> {
                     );
                   }
                 } catch (e) {
-                  showError(e, context);
+                  if (context.mounted) showError(e, context);
                 }
               }
             : null,
@@ -575,36 +623,29 @@ class _AppPageState extends State<AppPage> {
                       children: [
                         FutureBuilder(
                           future: appsProvider.updateAppIcon(
-                            app?.app.id,
+                            app.app.id,
                             ignoreCache: true,
                           ),
-                          builder: (ctx, val) {
-                            if (app?.icon != null) {
-                              return Center(
-                                child: ClipRSuperellipse(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: Image.memory(
-                                    app!.icon!,
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
+                          builder: (ctx, val) => app.icon != null
+                              ? Center(
+                                  child: AppIcon(
+                                    bytes: app.icon,
+                                    size: 56,
+                                    radius: 14,
                                   ),
-                                ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
+                                )
+                              : const SizedBox.shrink(),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          app?.name ?? tr('app'),
+                          app.name,
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          tr('byX', args: [app?.author ?? tr('unknown')]),
+                          tr('byX', args: [app.author]),
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
@@ -614,37 +655,29 @@ class _AppPageState extends State<AppPage> {
                                     .onSurfaceVariant,
                               ),
                         ),
-                        if (app?.app.url != null)
-                          Text(
-                            app!.app.url!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall!
-                                .copyWith(
-                                  decoration: TextDecoration.underline,
-                                ),
-                          ),
                         Text(
-                          app?.app.id ?? '',
+                          app.app.url,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall!
+                              .copyWith(
+                                decoration: TextDecoration.underline,
+                              ),
+                        ),
+                        Text(
+                          app.app.id,
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          () {
-                            bool i = app?.app.installedVersion != null;
-                            bool u = app?.app.installedVersion ==
-                                app?.app.latestVersion;
-                            return i
-                                ? '${app?.app.installedVersion} ${tr('installed')}${u ? ' / ${tr('latest')}' : ''}'
-                                : tr('notInstalled');
-                          }(),
+                          appInstalledVersionText(app.app),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         Text(
                           tr(
                             'lastUpdateCheckX',
                             args: [
-                              app?.app.lastUpdateCheck
+                              app.app.lastUpdateCheck
                                       ?.toLocal()
                                       .toString()
                                       .split('.')
@@ -774,42 +807,7 @@ class _AppPageState extends State<AppPage> {
                   // ===== Section 1 — Icon + name + author =====
                   section(true, true, children: [
                     Row(children: [
-                      ClipRSuperellipse(
-                        borderRadius: BorderRadius.circular(14),
-                        child: SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: app?.icon != null
-                              ? Image.memory(
-                                  app!.icon!,
-                                  width: 56,
-                                  height: 56,
-                                  fit: BoxFit.cover,
-                                  gaplessPlayback: true,
-                                )
-                              : ColoredBox(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
-                                  child: Center(
-                                    child: Image(
-                                      image: const AssetImage(
-                                        'assets/graphics/icon_small.png',
-                                      ),
-                                      color: Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.white
-                                              .withValues(alpha: 0.5)
-                                          : Colors.white
-                                              .withValues(alpha: 0.4),
-                                      colorBlendMode: BlendMode.modulate,
-                                      width: 24,
-                                      height: 24,
-                                    ),
-                                  ),
-                                ),
-                        ),
-                      ),
+                      AppIcon(bytes: app?.icon, size: 56, radius: 14),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -846,13 +844,10 @@ class _AppPageState extends State<AppPage> {
                   // Section 2 — Version, last-check
                   section(true, false, children: [
                     () {
-                      bool i = app?.app.installedVersion != null;
-                      bool u = app?.app.installedVersion ==
+                      String l = appInstalledVersionText(app?.app);
+                      final upToDate = app?.app.installedVersion ==
                           app?.app.latestVersion;
-                      String l = i
-                          ? '${app?.app.installedVersion} ${tr('installed')}${u ? ' / ${tr('latest')}' : ''}'
-                          : tr('notInstalled');
-                      if (!u) {
+                      if (!upToDate) {
                         l += '\n${app?.app.latestVersion} ${tr('latest')}';
                       }
                       return Text(l,
@@ -890,10 +885,13 @@ class _AppPageState extends State<AppPage> {
                   section(true, certs || hasAssets ? false : true, children: [
                     InkWell(
                       onTap: () {
-                        if (app?.app.url != null) launchUrlString(
-                            app!.app.url!,
+                        final url = app?.app.url;
+                        if (url != null) {
+                          launchUrlString(
+                            url,
                             mode: LaunchMode.externalApplication,
                           );
+                        }
                       },
                       onLongPress: () {
                         Clipboard.setData(
@@ -956,22 +954,25 @@ class _AppPageState extends State<AppPage> {
                                   .onSurfaceVariant,
                             ),
                       ),
-                      ...app!.certificateHashes.map((h) => GestureDetector(
-                            onLongPress: () {
-                              Clipboard.setData(
-                                  ClipboardData(text: h));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text(
-                                          tr('copiedToClipboard'))));
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 2),
-                              child: Text(h,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall),
+                      ...app.certificateHashes.map((h) => Tooltip(
+                            message: tr('copyToClipboard'),
+                            child: GestureDetector(
+                              onLongPress: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: h));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            tr('copiedToClipboard'))));
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 2),
+                                child: Text(h,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall),
+                              ),
                             ),
                           )),
                     ]),
@@ -990,7 +991,7 @@ class _AppPageState extends State<AppPage> {
                                     await appsProvider.downloadAppAssets(
                                         [app!.app.id], context);
                                   } catch (e) {
-                                    showError(e, context);
+                                    if (context.mounted) showError(e, context);
                                   }
                                 },
                           icon: const Icon(Icons.download_outlined,

@@ -220,6 +220,8 @@
     "label": "Etichetta",
     "language": "Lingua",
     "copiedToClipboard": "Copiato negli appunti",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Accesso ai file non autorizzato",
     "selectedCategorizeWarning": "Ciò sostituirà le impostazioni di categoria esistenti per le app selezionate.",
     "filterAPKsByRegEx": "Filtra file APK con espressioni regolari",

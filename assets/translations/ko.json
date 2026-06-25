@@ -220,6 +220,8 @@
     "label": "레이블",
     "language": "언어",
     "copiedToClipboard": "클립보드에 복사됨",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "저장소 권한 거부됨",
     "selectedCategorizeWarning": "이 작업은 선택한 앱의 기존 카테고리 설정을 대체합니다.",
     "filterAPKsByRegEx": "정규 표현식으로 APK 필터링",

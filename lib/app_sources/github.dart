@@ -11,7 +11,7 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub extends AppSource {
-  GitHub({hostChanged = false}) {
+  GitHub({bool hostChanged = false}) {
     hosts = ['github.com'];
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
@@ -40,7 +40,7 @@ class GitHub extends AppSource {
                 throw true;
               }
               if (value != null) {
-                Uri.parse('https://${value}/api.github.com');
+                Uri.parse('https://$value/api.github.com');
               }
             } catch (e) {
               return tr('invalidInput');
@@ -774,7 +774,7 @@ class GitHub extends AppSource {
     }
   }
 
-  undoGHProxyMod(
+  String undoGHProxyMod(
     String reqUrl,
     Map<String, String> sourceConfigSettingValues,
   ) => reqUrl.replaceFirst(

@@ -19,7 +19,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
-import 'package:obtainium/app_sources/directAPKLink.dart';
+import 'package:obtainium/app_sources/direct_apk_link.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -63,7 +63,7 @@ class AppInMemory {
 
   List<String> get certificateHashes {
     // https://developer.android.com/reference/android/content/pm/SigningInfo#getApkContentsSigners()
-    final signatures = this.hasMultipleSigners
+    final signatures = hasMultipleSigners
         ? installedInfo?.signingInfo?.apkContentSigners
         : installedInfo?.signingInfo?.signingCertificateHistory;
 
@@ -83,7 +83,7 @@ class DownloadedApk {
   DownloadedApk(this.appId, this.file);
 }
 
-enum DownloadedDirType { XAPK, ZIP, TARBALL }
+enum DownloadedDirType { xapk, zip, tarball }
 
 class DownloadedDir {
   String appId;
@@ -515,7 +515,7 @@ Future<PackageInfo?> getInstalledInfo(
       );
     } catch (e) {
       if (printErr) {
-        print(e); // OK
+        debugPrint(e.toString()); // OK
       }
     }
   }
@@ -537,13 +537,13 @@ class AppsProvider with ChangeNotifier {
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
-  late Directory APKDir;
+  late Directory apkDir;
   late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
   Iterable<AppInMemory> getAppValues() => apps.values;
 
-  AppsProvider({isBg = false}) {
+  AppsProvider({bool isBg = false}) {
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -556,15 +556,15 @@ class AppsProvider with ChangeNotifier {
       await settingsProvider.initializeSettings();
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
-        APKDir = cacheDirs!.first;
+        apkDir = cacheDirs!.first;
         iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
         if (!iconsCacheDir.existsSync()) {
           iconsCacheDir.createSync();
         }
       } else {
-        APKDir = Directory('${(await getAppStorageDir()).path}/apks');
-        if (!APKDir.existsSync()) {
-          APKDir.createSync();
+        apkDir = Directory('${(await getAppStorageDir()).path}/apks');
+        if (!apkDir.existsSync()) {
+          apkDir.createSync();
         }
         iconsCacheDir = Directory('${(await getAppStorageDir()).path}/icons');
         if (!iconsCacheDir.existsSync()) {
@@ -576,7 +576,7 @@ class AppsProvider with ChangeNotifier {
         await loadApps();
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
-        APKDir.listSync()
+        apkDir.listSync()
             .where((element) => element.statSync().modified.isBefore(cutoff))
             .forEach((partialApk) {
               if (!areDownloadsRunning()) {
@@ -698,7 +698,7 @@ class AppsProvider with ChangeNotifier {
           }
           prevProg = prog;
         },
-        APKDir.path,
+        this.apkDir.path,
         useExisting: useExisting,
         allowInsecure: app.additionalSettings['allowInsecure'] == true,
         logs: logs,
@@ -816,11 +816,11 @@ class AppsProvider with ChangeNotifier {
       } else {
         DownloadedDirType dirType;
         if (isXAPK) {
-          dirType = DownloadedDirType.XAPK;
+          dirType = DownloadedDirType.xapk;
         } else if (isTarball) {
-          dirType = DownloadedDirType.TARBALL;
+          dirType = DownloadedDirType.tarball;
         } else {
-          dirType = DownloadedDirType.ZIP;
+          dirType = DownloadedDirType.zip;
         }
         return DownloadedDir(app.id, downloadedFile, apkDir!, dirType);
       }
@@ -873,7 +873,7 @@ class AppsProvider with ChangeNotifier {
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
     if (!(targetSDK != null && targetSDK >= requiredSDK)) {
       logs.add(
-        'App currently targets API ${targetSDK} which is too low for background updates (requires API ${requiredSDK}): ${app.id}',
+        'App currently targets API $targetSDK which is too low for background updates (requires API $requiredSDK): ${app.id}',
       );
       return false;
     }
@@ -959,7 +959,6 @@ class AppsProvider with ChangeNotifier {
     for (final file in tarArchive.files) {
       if (file.isFile) {
         final content = file.content;
-        if (content == null) continue;
         final outPath = '${destDir.path}/${file.name}';
         final outFile = File(outPath);
         outFile.createSync(recursive: true);
@@ -981,20 +980,20 @@ class AppsProvider with ChangeNotifier {
     var somethingInstalled = false;
     try {
       MultiAppMultiError errors = MultiAppMultiError();
-      List<File> APKFiles = [];
+      List<File> apkFiles = [];
       for (var file
           in dir.extracted
               .listSync(recursive: true, followLinks: false)
               .whereType<File>()) {
         if (file.path.toLowerCase().endsWith('.apk')) {
-          APKFiles.add(file);
+          apkFiles.add(file);
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
         }
       }
 
       File? temp;
-      APKFiles.removeWhere((element) {
+      apkFiles.removeWhere((element) {
         bool res = element.uri.pathSegments.last.startsWith(dir.appId);
         if (res) {
           temp = element;
@@ -1002,16 +1001,17 @@ class AppsProvider with ChangeNotifier {
         return res;
       });
       if (temp != null) {
-        APKFiles = [temp!, ...APKFiles];
+        apkFiles = [temp!, ...apkFiles];
       }
 
       try {
         var wasInstalled = await installApk(
-          DownloadedApk(dir.appId, APKFiles[0]),
+          DownloadedApk(dir.appId, apkFiles[0]),
+          // ignore: use_build_context_synchronously
           firstTimeWithContext,
           needsBGWorkaround: needsBGWorkaround,
           shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
-          additionalAPKs: APKFiles.sublist(
+          additionalAPKs: apkFiles.sublist(
             1,
           ).map((a) => DownloadedApk(dir.appId, a)).toList(),
         );
@@ -1511,6 +1511,7 @@ class AppsProvider with ChangeNotifier {
         // ignore: use_build_context_synchronously
         MapEntry<String, String>? tempFileUrl = await confirmAppFileUrl(
           apps[id]!.app,
+          // ignore: use_build_context_synchronously
           context,
           true,
           evenIfSingleChoice: true,
@@ -1947,7 +1948,7 @@ class AppsProvider with ChangeNotifier {
   }
 
   Future<void> removeApps(List<String> appIds) async {
-    var apkFiles = APKDir.listSync();
+    var apkFiles = apkDir.listSync();
     await Future.wait(
       appIds.map((appId) async {
         File file = File('${(await getAppsDir()).path}/$appId.json');
@@ -2040,7 +2041,7 @@ class AppsProvider with ChangeNotifier {
     apps.forEach((key, value) {
       for (var c in value.app.categories) {
         if (!cats.containsKey(c)) {
-          cats[c] = generateRandomLightColor().value;
+          cats[c] = generateRandomLightColor().toARGB32();
         }
       }
     });
@@ -2479,9 +2480,9 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 
 /// Background updater function
 ///
-/// @param List<MapEntry<String, int>>? toCheck: The appIds to check for updates (with the number of previous attempts made per appid) (defaults to all apps)
+/// @param `List<MapEntry<String, int>>?` toCheck: The appIds to check for updates (with the number of previous attempts made per appid) (defaults to all apps)
 ///
-/// @param List<String>? toInstall: The appIds to attempt to update (if empty - which is the default - all pending updates are taken)
+/// @param `List<String>?` toInstall: The appIds to attempt to update (if empty - which is the default - all pending updates are taken)
 ///
 /// When toCheck is empty, the function is in "install mode" (else it is in "update mode").
 /// In update mode, all apps in toCheck are checked for updates (in parallel).

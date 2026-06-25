@@ -71,7 +71,7 @@ class RockMods extends AppSource {
       if (appName == null || appName.isEmpty) {
         var html = parse(res.body);
         var h1 = html.querySelector('h1');
-        appName = h1?.text?.trim() ?? standardUrl.split('/').last;
+        appName = h1?.text.trim() ?? standardUrl.split('/').last;
       }
 
       if (appVersion == null || appVersion.isEmpty) {

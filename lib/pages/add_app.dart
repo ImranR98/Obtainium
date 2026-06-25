@@ -197,9 +197,9 @@ class AddAppPageState extends State<AddAppPage> {
           );
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
-            // ignore: use_build_context_synchronously
             var apkUrl = await appsProvider.confirmAppFileUrl(
               app,
+              // ignore: use_build_context_synchronously
               context,
               false,
             );
@@ -250,7 +250,7 @@ class AddAppPageState extends State<AddAppPage> {
           }
         }
       } catch (e) {
-        showError(e, context);
+        if (context.mounted) showError(e, context);
       } finally {
         setState(() {
           gettingAppInfo = false;
@@ -418,7 +418,7 @@ class AddAppPageState extends State<AddAppPage> {
                       rethrow;
                     } else {
                       err.unexpected = true;
-                      showError(err, context);
+                      if (context.mounted) showError(err, context);
                       return null;
                     }
                   }
@@ -448,8 +448,8 @@ class AddAppPageState extends State<AddAppPage> {
           }
           List<String>? selectedUrls = res.isEmpty
               ? []
-              // ignore: use_build_context_synchronously
               : await showDialog<List<String>?>(
+                  // ignore: use_build_context_synchronously
                   context: context,
                   builder: (BuildContext ctx) {
                     return SelectionModal(
@@ -471,7 +471,7 @@ class AddAppPageState extends State<AddAppPage> {
           }
         }
       } catch (e) {
-        showError(e, context);
+        if (context.mounted) showError(e, context);
       } finally {
         setState(() {
           searching = false;

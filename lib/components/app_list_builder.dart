@@ -148,7 +148,7 @@ class AppListBuilder {
       var entries = apps
           .map((a) => MapEntry(keyFn(a), a))
           .toList()
-        ..sort((a, b) => (a.key as String).compareTo(b.key as String));
+        ..sort((a, b) => a.key.compareTo(b.key));
       apps = entries.map((e) => e.value).toList();
       if (isDesc) {
         apps = apps.reversed.toList();

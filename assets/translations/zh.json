@@ -220,6 +220,8 @@
     "label": "标签",
     "language": "语言",
     "copiedToClipboard": "已复制至剪贴板",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "已拒绝授予存储权限",
     "selectedCategorizeWarning": "这将覆盖选中应用当前的类别设置。",
     "filterAPKsByRegEx": "筛选 APK 文件的正则表达式",

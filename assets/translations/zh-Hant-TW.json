@@ -220,6 +220,8 @@
     "label": "標籤",
     "language": "語言",
     "copiedToClipboard": "已複製到剪貼簿",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "儲存空間權限被拒",
     "selectedCategorizeWarning": "這將取代選取應用程式的所有現有類別設定。",
     "filterAPKsByRegEx": "以正規表示式過濾 APK",

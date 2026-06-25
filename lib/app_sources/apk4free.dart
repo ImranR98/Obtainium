@@ -136,7 +136,7 @@ class Apk4Free extends AppSource {
         var versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
         for (var entry in apkUrls) {
           var match = versionRegex.firstMatch(entry.key);
-          if (match == null) match = versionRegex.firstMatch(entry.value);
+          match ??= versionRegex.firstMatch(entry.value);
           if (match != null) {
             appVersion = match.group(1);
             break;

@@ -42,26 +42,16 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<AppsPageState> appsPageKey = GlobalKey<AppsPageState>();
   String? selectedAppId;
 
+  /// Whether the apps page currently has a multi-selection active. Reported by
+  /// [AppsPage] via its onSelectionChanged callback so the shell can morph the
+  /// FAB without reaching into the apps page's State during build.
+  bool _appsSelecting = false;
+
   void _selectApp(String appId) {
     setState(() {
       selectedAppId = appId;
     });
   }
-
-  List<NavigationPageItem> pages = [
-    NavigationPageItem(
-      tr('appsString'),
-      Icons.apps_outlined,
-      const SizedBox.shrink(), // Built in build() using appsPageKey.
-      selectedIcon: Icons.apps,
-    ),
-    NavigationPageItem(
-      tr('settings'),
-      Icons.settings_outlined,
-      const SettingsPage(),
-      selectedIcon: Icons.settings,
-    ),
-  ];
 
   void pushAddApp({String? initialUrl}) {
     Navigator.of(context).push(
@@ -117,6 +107,7 @@ class _HomePageState extends State<HomePage> {
           },
         );
       }
+      if (!mounted) return;
       if (!sp.googleVerificationWarningShown && DateTime.now().year == 2026) {
         await showDialog(
           context: context,
@@ -243,20 +234,21 @@ class _HomePageState extends State<HomePage> {
                   ? '{ "apps": [$dataStr] }'
                   : '{ "apps": $dataStr }',
             );
-            // ignore: use_build_context_synchronously
-            showMessage(
-              tr(
-                'importedX',
-                args: [plural('apps', result.key.length).toLowerCase()],
-              ),
-              context,
-            );
+            if (mounted) {
+              showMessage(
+                tr(
+                  'importedX',
+                  args: [plural('apps', result.key.length).toLowerCase()],
+                ),
+                context,
+              );
+            }
           }
         } else {
           throw ObtainiumError(tr('unknown'));
         }
       } catch (e) {
-        showError(e, context);
+        if (mounted) showError(e, context);
       }
     }
 
@@ -314,6 +306,21 @@ class _HomePageState extends State<HomePage> {
     AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
+    final pages = <NavigationPageItem>[
+      NavigationPageItem(
+        tr('appsString'),
+        Icons.apps_outlined,
+        const SizedBox.shrink(), // Built below using appsPageKey.
+        selectedIcon: Icons.apps,
+      ),
+      NavigationPageItem(
+        tr('settings'),
+        Icons.settings_outlined,
+        const SettingsPage(),
+        selectedIcon: Icons.settings,
+      ),
+    ];
+
     // Adaptive navigation: a rail on wide/landscape/TV layouts, a bottom bar on
     // compact ones. A live badge shows the number of available updates.
     final layoutWidth = MediaQuery.sizeOf(context).width;
@@ -325,7 +332,10 @@ class _HomePageState extends State<HomePage> {
     Widget destIcon(NavigationPageItem e, {bool selected = false}) {
       final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
       if (identical(e, pages[0]) && updateCount > 0) {
-        return Badge(label: Text('$updateCount'), child: icon);
+        return Semantics(
+          label: '$updateCount ${tr('updates')}',
+          child: Badge(label: Text('$updateCount'), child: icon),
+        );
       }
       return icon;
     }
@@ -348,10 +358,13 @@ class _HomePageState extends State<HomePage> {
         : Center(
             child: Padding(
               padding: const EdgeInsets.all(32),
-              child: Icon(
-                Icons.touch_app_outlined,
-                size: 56,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              child: Semantics(
+                label: tr('selectAppForDetails'),
+                child: Icon(
+                  Icons.touch_app_outlined,
+                  size: 56,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           );
@@ -366,7 +379,7 @@ class _HomePageState extends State<HomePage> {
               key: appsPageKey,
               onAppSelected: _selectApp,
               selectedAppId: selectedAppId,
-              onSelectionChanged: () => setState(() {}),
+              onSelectionChanged: (has) => setState(() => _appsSelecting = has),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -390,16 +403,14 @@ class _HomePageState extends State<HomePage> {
           );
         },
         child: currentIndex == 0
-            ? AppsPage(key: appsPageKey, onSelectionChanged: () => setState(() {}))
+            ? AppsPage(key: appsPageKey, onSelectionChanged: (has) => setState(() => _appsSelecting = has))
             : pages.elementAt(currentIndex).widget,
       );
     }
 
     // Shows the "Add" FAB, or hides it entirely while the user is
     // mass‑selecting apps (the apps page will show its own action FAB).
-    final isSelecting = appsPageKey.currentState?.selectedAppIds
-            .isNotEmpty ??
-        false;
+    final isSelecting = _appsSelecting;
     final createFab = FloatingActionButton(
       onPressed: () => pushAddApp(),
       tooltip: tr('addApp'),
@@ -497,7 +508,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    super.dispose();
     _linkSubscription?.cancel();
+    super.dispose();
   }
 }

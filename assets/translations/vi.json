@@ -220,6 +220,8 @@
     "label": "Nhãn",
     "language": "Ngôn ngữ",
     "copiedToClipboard": "Sao chép vào clipboard",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Quyền lưu trữ bị từ chối",
     "selectedCategorizeWarning": "Điều này sẽ thay thế mọi thiết đặt danh mục hiện có cho Ứng dụng đã chọn.",
     "filterAPKsByRegEx": "Lọc APK theo biểu thức chính quy",

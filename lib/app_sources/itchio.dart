@@ -245,7 +245,7 @@ class ItchIO extends AppSource {
           ...additionalSettings,
           'extraHeaders': {
             'X-Requested-With': 'XMLHttpRequest',
-            if (cookies != null) 'Cookie': cookies,
+            'Cookie': ?cookies,
           },
         },
         postBody: {'csrf_token': csrfToken},
@@ -256,7 +256,7 @@ class ItchIO extends AppSource {
         if (tokenizedUrl != null) {
           var downloadPageRes = await sourceRequest(tokenizedUrl, {
             ...additionalSettings,
-            'extraHeaders': {if (cookies != null) 'Cookie': cookies},
+            'extraHeaders': {'Cookie': ?cookies},
           });
           if (downloadPageRes.statusCode == 200) {
             currentBody = downloadPageRes.body;
@@ -376,7 +376,7 @@ class ItchIO extends AppSource {
         'extraHeaders': {
           'X-Requested-With': 'XMLHttpRequest',
           'Referer': '$baseUrl/download/$uploadId',
-          if (cookies != null) 'Cookie': cookies,
+          'Cookie': cookies,
         },
       },
       postBody: {'csrf_token': csrfToken},

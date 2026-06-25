@@ -61,6 +61,7 @@ dependencies:
   share_plus: ^13.1.0
   sqflite: ^2.4.3
   easy_localization: ^3.0.8
+  intl: ^0.20.2
   android_intent_plus: ^6.0.0
   flutter_archive: ^6.3.1
   archive: ^4.0.9

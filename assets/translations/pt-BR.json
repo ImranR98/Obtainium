@@ -220,6 +220,8 @@
     "label": "Rótulo",
     "language": "Idioma",
     "copiedToClipboard": "Copiado para a área de transferência",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Permissão de armazenamento negada",
     "selectedCategorizeWarning": "Isso substituirá a configuração de categoria existente dos apps selecionados.",
     "filterAPKsByRegEx": "Filtrar APKs por expressão regular",

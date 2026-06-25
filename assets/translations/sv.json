@@ -220,6 +220,8 @@
     "label": "Märka",
     "language": "Språk",
     "copiedToClipboard": "Kopierat till Urklipp",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Lagringsbehörighet nekad",
     "selectedCategorizeWarning": "Detta kommer att ersätta alla befintliga kategoriinställningar för de valda apparna.",
     "filterAPKsByRegEx": "Filtrera APK-filer efter reguljärt uttryck",

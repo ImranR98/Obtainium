@@ -220,6 +220,8 @@
     "label": "ലേബൽ",
     "language": "ഭാഷ",
     "copiedToClipboard": "ക്ലിപ്ബോർഡിലേക്ക് പകർത്തി",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "സ്റ്റോറേജ് അനുമതി നിഷേധിച്ചു",
     "selectedCategorizeWarning": "ഇത് തിരഞ്ഞെടുത്ത ആപ്പുകൾക്കായി നിലവിലുള്ള ഏതൊരു വിഭാഗ ക്രമീകരണങ്ങളെയും മാറ്റിസ്ഥാപിക്കും.",
     "filterAPKsByRegEx": "റെഗുലർ എക്സ്പ്രഷൻ ഉപയോഗിച്ച് APK-കൾ ഫിൽട്ടർ ചെയ്യുക",

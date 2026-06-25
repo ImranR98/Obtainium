@@ -220,6 +220,8 @@
     "label": "Label",
     "language": "Bahasa",
     "copiedToClipboard": "Disalin ke papan klip",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Izin penyimpanan ditolak",
     "selectedCategorizeWarning": "Ini akan mengganti pengaturan kategori yang ada untuk aplikasi terpilih.",
     "filterAPKsByRegEx": "Filter APK dengan ekspresi reguler",

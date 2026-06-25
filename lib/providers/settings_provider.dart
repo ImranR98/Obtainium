@@ -95,7 +95,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   set themeColor(Color themeColor) {
-    prefs?.setInt('themeColor', themeColor.value);
+    prefs?.setInt('themeColor', themeColor.toARGB32());
     notifyListeners();
   }
 

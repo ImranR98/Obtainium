@@ -220,6 +220,8 @@
     "label": "Метка",
     "language": "Язык",
     "copiedToClipboard": "Скопировано в буфер обмена",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "Отказано в доступе к хранилищу",
     "selectedCategorizeWarning": "Это заменит все текущие настройки категорий для выбранных приложений",
     "filterAPKsByRegEx": "Фильтровать APK-файлы\n(регулярное выражение)",

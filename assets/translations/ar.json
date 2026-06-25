@@ -220,6 +220,8 @@
     "label": "تسمية",
     "language": "اللغة",
     "copiedToClipboard": "نُسخ إلى الحافظة",
+    "copyToClipboard": "Copy to clipboard",
+    "selectAppForDetails": "Select an app to see details",
     "storagePermissionDenied": "رُفض إذن التخزين",
     "selectedCategorizeWarning": "سيؤدي هذا إلى استبدال أي إعدادات تصنيف موجودة للتطبيقات المحددة.",
     "filterAPKsByRegEx": "تصفية ملفات APK باستخدام تعبير نمطي",
