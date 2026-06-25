@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -162,9 +161,11 @@ class _AppPageState extends State<AppPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 2,
       children: [
-        Material(
-          shape: positionalTileShape(isFirst: true, isLast: false),
+        ConnectedCard(
+          isFirst: true,
+          isLast: false,
           color: colorScheme.surfaceContainer,
+          padding: null,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
@@ -203,9 +204,11 @@ class _AppPageState extends State<AppPage> {
             ),
           ),
         ),
-        Material(
-          shape: positionalTileShape(isFirst: false, isLast: false),
+        ConnectedCard(
+          isFirst: false,
+          isLast: false,
           color: colorScheme.surfaceContainer,
+          padding: null,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
@@ -244,9 +247,11 @@ class _AppPageState extends State<AppPage> {
             ),
           ),
         ),
-        Material(
-          shape: positionalTileShape(isFirst: false, isLast: true),
+        ConnectedCard(
+          isFirst: false,
+          isLast: true,
           color: colorScheme.surfaceContainer,
+          padding: null,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
@@ -336,17 +341,13 @@ class _AppPageState extends State<AppPage> {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: Material(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            shape: positionalTileShape(isFirst: isFirst, isLast: isLast),
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: children,
-              ),
+          child: ConnectedCard(
+            isFirst: isFirst,
+            isLast: isLast,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: children,
             ),
           ),
         ),

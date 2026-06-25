@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/components/ui_shapes.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 /// Renders an app's icon as a Material 3 Expressive squircle, falling back to
@@ -151,6 +152,37 @@ class EmptyState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A single rounded, tonal surface used for "connected" card runs (detail
+/// sections, category groups, banners). [isFirst]/[isLast] set the squircle
+/// corner radii so consecutive cards read as one block. Pass `padding: null`
+/// when the child already provides its own insets.
+class ConnectedCard extends StatelessWidget {
+  final Widget child;
+  final bool isFirst;
+  final bool isLast;
+  final Color? color;
+  final EdgeInsetsGeometry? padding;
+
+  const ConnectedCard({
+    super.key,
+    required this.child,
+    this.isFirst = true,
+    this.isLast = true,
+    this.color,
+    this.padding = const EdgeInsets.all(16),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: positionalTileShape(isFirst: isFirst, isLast: isLast),
+      clipBehavior: Clip.antiAlias,
+      child: padding == null ? child : Padding(padding: padding!, child: child),
     );
   }
 }

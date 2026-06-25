@@ -12,7 +12,6 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/motion.dart';
-import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -986,12 +985,8 @@ class AppsPageState extends State<AppsPage> {
             ],
             additionalWidgets: [
               const SizedBox(height: 16),
-              Material(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                clipBehavior: Clip.antiAlias,
+              ConnectedCard(
+                padding: null,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: CategoryEditorSelector(
@@ -1095,10 +1090,9 @@ class AppsPageState extends State<AppsPage> {
               ? const SizedBox(width: double.infinity)
               : Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Material(
+                child: ConnectedCard(
                   color: cs.primaryContainer,
-                  clipBehavior: Clip.antiAlias,
-                  shape: squircleBorder(BorderRadius.circular(24)),
+                  padding: null,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -1644,10 +1638,11 @@ class AppListCategorySection extends StatelessWidget {
     final tiles = showItems ? buildTiles() : const <Widget>[];
     final segmentCount = 1 + tiles.length;
 
-    Widget segment(int i, Color color, Widget child) => Material(
+    Widget segment(int i, Color color, Widget child) => ConnectedCard(
+      isFirst: i == 0,
+      isLast: i == segmentCount - 1,
       color: color,
-      clipBehavior: Clip.antiAlias,
-      shape: positionalTileShape(isFirst: i == 0, isLast: i == segmentCount - 1),
+      padding: null,
       child: child,
     );
 
