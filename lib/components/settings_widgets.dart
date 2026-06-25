@@ -73,7 +73,10 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: borderRadius ?? BorderRadius.circular(connectedTileBigRadius),
+      shape: RoundedSuperellipseBorder(
+        borderRadius:
+            borderRadius ?? BorderRadius.circular(connectedTileBigRadius),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );

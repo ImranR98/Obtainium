@@ -339,6 +339,22 @@ class _HomePageState extends State<HomePage> {
     prevAppCount = appsProvider.apps.length;
     prevIsLoading = appsProvider.loadingApps;
 
+    // Adaptive navigation: a rail on wide/landscape/TV layouts, a bottom bar on
+    // compact ones. A live badge shows the number of available updates.
+    final layoutWidth = MediaQuery.sizeOf(context).width;
+    final useRail = settingsProvider.isTV || layoutWidth >= 600;
+    final updateCount = appsProvider
+        .findExistingUpdates(installedOnly: true)
+        .length;
+
+    Widget destIcon(NavigationPageItem e, {bool selected = false}) {
+      final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
+      if (identical(e, pages[0]) && updateCount > 0) {
+        return Badge(label: Text('$updateCount'), child: icon);
+      }
+      return icon;
+    }
+
     final currentIndex = selectedIndexHistory.isEmpty
         ? 0
         : selectedIndexHistory.last;
@@ -389,7 +405,7 @@ class _HomePageState extends State<HomePage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: settingsProvider.isTV
+        body: useRail
             ? Row(
                 children: [
                   FocusTraversalGroup(
@@ -397,10 +413,8 @@ class _HomePageState extends State<HomePage> {
                       destinations: pages
                           .map(
                             (e) => NavigationRailDestination(
-                              icon: Icon(e.icon),
-                              selectedIcon: e.selectedIcon != null
-                                  ? Icon(e.selectedIcon)
-                                  : null,
+                              icon: destIcon(e),
+                              selectedIcon: destIcon(e, selected: true),
                               label: Text(e.title),
                             ),
                           )
@@ -415,7 +429,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : pageBody,
-        bottomNavigationBar: settingsProvider.isTV
+        bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(
                 child: Focus(
@@ -437,10 +451,8 @@ class _HomePageState extends State<HomePage> {
                     destinations: pages
                         .map(
                           (e) => NavigationDestination(
-                            icon: Icon(e.icon),
-                            selectedIcon: e.selectedIcon != null
-                                ? Icon(e.selectedIcon)
-                                : null,
+                            icon: destIcon(e),
+                            selectedIcon: destIcon(e, selected: true),
                             label: e.title,
                           ),
                         )

@@ -182,15 +182,15 @@ void main() async {
 /// emphasized motion, updated M3 component looks) so it propagates to every
 /// screen without per-widget styling.
 ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
-  // Expressive shape tokens: large, generously rounded corners.
-  final cardShape = RoundedRectangleBorder(
+  // Expressive shape tokens: large squircle (rounded-superellipse) corners.
+  final cardShape = RoundedSuperellipseBorder(
     borderRadius: BorderRadius.circular(24),
   );
   const buttonShape = StadiumBorder();
-  final dialogShape = RoundedRectangleBorder(
+  final dialogShape = RoundedSuperellipseBorder(
     borderRadius: BorderRadius.circular(28),
   );
-  final fieldShape = RoundedRectangleBorder(
+  final fieldShape = RoundedSuperellipseBorder(
     borderRadius: BorderRadius.circular(16),
   );
 
@@ -222,10 +222,12 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     dialogTheme: DialogThemeData(shape: dialogShape),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
-      shape: RoundedRectangleBorder(
+      shape: RoundedSuperellipseBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
     ),
@@ -246,7 +248,9 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
     ),
     inputDecorationTheme: InputDecorationThemeData(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -262,7 +266,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       ),
       menuStyle: MenuStyle(
         shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
     ),

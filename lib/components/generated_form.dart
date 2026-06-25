@@ -946,10 +946,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ? colorScheme.surfaceContainerHighest
                 : colorScheme.surfaceContainerLow,
             clipBehavior: Clip.antiAlias,
-            borderRadius: positionalTileRadius(
-              isFirst: r == 0,
-              isLast: r == n - 1,
-            ),
+            shape: positionalTileShape(isFirst: r == 0, isLast: r == n - 1),
             child: Padding(padding: padding, child: inputRowWidgets[r]),
           ),
         );

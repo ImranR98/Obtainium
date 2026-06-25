@@ -9,6 +9,7 @@ import 'package:obtainium/components/app_list_builder.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/motion.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -659,7 +660,7 @@ class AppsPageState extends State<AppsPage> {
       segment(int i, Color color, Widget child) => Material(
         color: color,
         clipBehavior: Clip.antiAlias,
-        borderRadius: positionalTileRadius(
+        shape: positionalTileShape(
           isFirst: i == 0,
           isLast: i == segmentCount - 1,
         ),
@@ -710,8 +711,8 @@ class AppsPageState extends State<AppsPage> {
               ),
             ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOutCubicEmphasized,
+              duration: ExpressiveMotion.medium,
+              curve: ExpressiveMotion.emphasized,
               alignment: Alignment.topCenter,
               child: !showItems
                   ? const SizedBox(width: double.infinity)
@@ -1314,17 +1315,80 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getObtainFAB() {
-      var onObtain = getMassObtainFunction();
-      if (onObtain == null) return null;
-      return FloatingActionButton.extended(
-        onPressed: onObtain,
-        icon: const Icon(Icons.file_download_outlined),
-        label: Text(
-          selectedAppIds.isEmpty
-              ? tr('installUpdateApps')
-              : tr('installUpdateSelectedApps'),
+    getQuickFiltersSliver() {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              FilterChip(
+                label: Text(tr('updates')),
+                selected: !filter.includeUptodate,
+                onSelected: (v) {
+                  setState(() {
+                    filter.includeUptodate = !v;
+                  });
+                },
+              ),
+              FilterChip(
+                label: Text(tr('installed')),
+                selected: !filter.includeNonInstalled,
+                onSelected: (v) {
+                  setState(() {
+                    filter.includeNonInstalled = !v;
+                  });
+                },
+              ),
+            ],
+          ),
         ),
+      );
+    }
+
+    getUpdateBannerSliver() {
+      var onObtain = getMassObtainFunction();
+      final cs = Theme.of(context).colorScheme;
+      return SliverToBoxAdapter(
+        child: onObtain == null
+            ? const SizedBox.shrink()
+            : Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Material(
+                  color: cs.primaryContainer,
+                  clipBehavior: Clip.antiAlias,
+                  shape: squircleBorder(BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.system_update_alt_rounded,
+                          color: cs.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            selectedAppIds.isEmpty
+                                ? tr('installUpdateApps')
+                                : tr('installUpdateSelectedApps'),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: onObtain,
+                          child: Text(tr('update')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
       );
     }
 
@@ -1349,6 +1413,8 @@ class AppsPageState extends State<AppsPage> {
               slivers: <Widget>[
                 CustomAppBar(title: tr('appsString')),
                 if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
+                if (appsProvider.apps.isNotEmpty) getQuickFiltersSliver(),
+                if (appsProvider.apps.isNotEmpty) getUpdateBannerSliver(),
                 ...getLoadingWidgets(),
                 getDisplayedList(),
                 const SliverToBoxAdapter(child: SizedBox(height: 88)),
@@ -1356,7 +1422,6 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
-        floatingActionButton: appsProvider.apps.isEmpty ? null : getObtainFAB(),
       ),
     );
   }
