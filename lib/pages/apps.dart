@@ -1136,6 +1136,23 @@ class AppsPageState extends State<AppsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 optionTile(
+                  icon: Icons.delete_outline,
+                  label: tr('removeSelectedApps'),
+                  onTap: hasSelection
+                      ? () {
+                          appsProvider.removeAppsWithModal(
+                            context,
+                            selectedApps.toList(),
+                          );
+                        }
+                      : null,
+                ),
+                optionTile(
+                  icon: Icons.category_outlined,
+                  label: tr('categorize'),
+                  onTap: hasSelection ? launchCategorizeDialog() : null,
+                ),
+                optionTile(
                   icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                   label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
                   onTap: pinSelectedApps,
@@ -1243,28 +1260,9 @@ class AppsPageState extends State<AppsPage> {
       return [
         IconButton(
           visualDensity: VisualDensity.compact,
-          onPressed: selectedAppIds.isEmpty
-              ? null
-              : () {
-                  appsProvider.removeAppsWithModal(
-                    context,
-                    selectedApps.toList(),
-                  );
-                },
-          tooltip: tr('removeSelectedApps'),
-          icon: const Icon(Icons.delete_outline_outlined),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: selectedAppIds.isEmpty ? null : launchCategorizeDialog(),
-          tooltip: tr('categorize'),
-          icon: const Icon(Icons.category_outlined),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
           onPressed: selectedAppIds.isEmpty ? null : showMoreOptionsDialog,
           tooltip: tr('more'),
-          icon: const Icon(Icons.more_horiz),
+          icon: const Icon(Icons.more_vert),
         ),
       ];
     }
@@ -1275,6 +1273,7 @@ class AppsPageState extends State<AppsPage> {
         builder: (BuildContext ctx) {
           var vals = filter.toFormValuesMap();
           return GeneratedFormModal(
+            tileMode: true,
             initValid: true,
             title: tr('filterApps'),
             items: [
@@ -1285,6 +1284,8 @@ class AppsPageState extends State<AppsPage> {
                   required: false,
                   defaultValue: vals['appName'],
                 ),
+              ],
+              [
                 GeneratedFormTextField(
                   'author',
                   label: tr('author'),
@@ -1330,11 +1331,24 @@ class AppsPageState extends State<AppsPage> {
             ],
             additionalWidgets: [
               const SizedBox(height: 16),
-              CategoryEditorSelector(
-                preselected: filter.categoryFilter,
-                onSelected: (categories) {
-                  filter.categoryFilter = categories.toSet();
-                },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                child: Material(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CategoryEditorSelector(
+                      preselected: filter.categoryFilter,
+                      onSelected: (categories) {
+                        filter.categoryFilter = categories.toSet();
+                      },
+                    ),
+                  ),
+                ),
               ),
             ],
           );
@@ -1384,62 +1398,29 @@ class AppsPageState extends State<AppsPage> {
             trailing: [
               getSelectAllButton(),
               if (selectedAppIds.isNotEmpty)
-                ...getMainBottomButtons()
-              else ...[
-                if (!isFilterOff)
-                  IconButton(
-                    tooltip: '${tr('filter')} - ${tr('remove')}',
-                    onPressed: () {
-                      setState(() {
-                        filter = AppsFilter();
-                        searchController.clear();
-                      });
-                    },
-                    icon: const Icon(Icons.filter_alt_off_outlined),
-                  ),
+                ...getMainBottomButtons(),
+              if (!isFilterOff)
                 IconButton(
-                  tooltip: tr('filterApps'),
-                  onPressed: showFilterDialog,
-                  icon: const Icon(Icons.tune_rounded),
+                  tooltip: '${tr('filter')} - ${tr('remove')}',
+                  onPressed: () {
+                    setState(() {
+                      filter = AppsFilter();
+                      searchController.clear();
+                    });
+                  },
+                  icon: const Icon(Icons.filter_alt_off_outlined),
                 ),
-              ],
+              IconButton(
+                tooltip: tr('filterApps'),
+                onPressed: showFilterDialog,
+                icon: const Icon(Icons.filter_list_rounded),
+              ),
             ],
             onChanged: (value) {
               setState(() {
                 filter.nameFilter = value;
               });
             },
-          ),
-        ),
-      );
-    }
-
-    getQuickFiltersSliver() {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Wrap(
-            spacing: 8,
-            children: [
-              FilterChip(
-                label: Text(tr('updates')),
-                selected: !filter.includeUptodate,
-                onSelected: (v) {
-                  setState(() {
-                    filter.includeUptodate = !v;
-                  });
-                },
-              ),
-              FilterChip(
-                label: Text(tr('installed')),
-                selected: !filter.includeNonInstalled,
-                onSelected: (v) {
-                  setState(() {
-                    filter.includeNonInstalled = !v;
-                  });
-                },
-              ),
-            ],
           ),
         ),
       );
@@ -1512,7 +1493,6 @@ class AppsPageState extends State<AppsPage> {
               slivers: <Widget>[
                 CustomAppBar(title: tr('appsString')),
                 if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
-                if (appsProvider.apps.isNotEmpty) getQuickFiltersSliver(),
                 if (appsProvider.apps.isNotEmpty) getUpdateBannerSliver(),
                 ...getLoadingWidgets(),
                 getDisplayedList(),

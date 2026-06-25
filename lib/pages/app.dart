@@ -324,6 +324,11 @@ class _AppPageState extends State<AppPage> {
         ? isVersionPseudo(app!.app)
         : false;
 
+    final certs =
+        app != null && app.certificateHashes.isNotEmpty;
+    final hasAssets = app?.app.apkUrls.isNotEmpty == true ||
+        app?.app.otherAssetUrls.isNotEmpty == true;
+
     if (app != null && !_wasWebViewOpened) {
       _wasWebViewOpened = true;
       _webViewController.loadRequest(Uri.parse(app.app.url));
@@ -443,31 +448,6 @@ class _AppPageState extends State<AppPage> {
     );
 
     // Local card builder — scoped to build(context) so InheritedElement
-    // dependencies are accurately tracked (avoids the debugDeactivated
-    // assertion that fires when a State method reads this.context).
-    Widget card({
-      required List<Widget> children,
-      required bool isFirst,
-      required bool isLast,
-    }) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-        child: Material(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          shape: positionalTileShape(isFirst: isFirst, isLast: isLast),
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: children,
-            ),
-          ),
-        ),
-      );
-    }
-
     // Primary action (Install / Update / Mark) remains its own compact helper
     // so the install / update flow stays DRY with the old onPressed closure.
     getPrimaryButton() {
@@ -710,6 +690,24 @@ class _AppPageState extends State<AppPage> {
 
     return Scaffold(
       appBar: showAppWebpageFinal ? appScreenAppBar() : null,
+      floatingActionButton: showAppWebpageFinal
+          ? FloatingActionButton.small(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AppPage(
+                      appId: widget.appId,
+                      showOppositeOfPreferredView: true,
+                      onClose: widget.onClose,
+                    ),
+                  ),
+                );
+              },
+              tooltip: tr('more'),
+              child: const Icon(Icons.info_outline),
+            )
+          : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
         onRefresh: () async {
@@ -721,21 +719,24 @@ class _AppPageState extends State<AppPage> {
             ? getAppWebView()
             : CustomScrollView(
                 slivers: [
-                  // Close button
+                  // Back button — top-left
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        0,
-                        MediaQuery.of(context).padding.top + 8,
                         8,
+                        MediaQuery.of(context).padding.top + 8,
+                        0,
                         0,
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           IconButton(
                             onPressed: _closePage,
-                            icon: const Icon(Icons.close_rounded),
+                            icon: Icon(
+                              widget.onClose != null
+                                  ? Icons.close_rounded
+                                  : Icons.arrow_back,
+                            ),
                           ),
                         ],
                       ),
@@ -744,98 +745,253 @@ class _AppPageState extends State<AppPage> {
                   // ===== Section 1 — Icon + name + author =====
                   section(true, true, children: [
                     Row(children: [
-                      SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: app?.icon != null
-                            ? ClipRSuperellipse(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.memory(
+                      ClipRSuperellipse(
+                        borderRadius: BorderRadius.circular(14),
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: app?.icon != null
+                              ? Image.memory(
                                   app!.icon!,
                                   width: 56,
                                   height: 56,
                                   fit: BoxFit.cover,
                                   gaplessPlayback: true,
+                                )
+                              : ColoredBox(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  child: Center(
+                                    child: Image(
+                                      image: const AssetImage(
+                                        'assets/graphics/icon_small.png',
+                                      ),
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                              .withValues(alpha: 0.5)
+                                          : Colors.white
+                                              .withValues(alpha: 0.4),
+                                      colorBlendMode: BlendMode.modulate,
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ),
                                 ),
-                              )
-                            : const SizedBox(width: 56, height: 56),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(app?.name ?? tr('app'),
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            Text(
+                              app?.name ?? tr('app'),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
                             const SizedBox(height: 2),
-                            Text(tr('byX', args: [app?.author ?? tr('unknown')]),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              )),
+                            Text(
+                              tr('byX',
+                                  args: [
+                                    app?.author ?? tr('unknown'),
+                                  ]),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
                           ],
                         ),
                       ),
                     ]),
                   ]),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  // Section 2 — URL + version + last-check
+                  // Section 2 — Version, last-check
                   section(true, false, children: [
+                    () {
+                      bool i = app?.app.installedVersion != null;
+                      bool u = app?.app.installedVersion ==
+                          app?.app.latestVersion;
+                      String l = i
+                          ? '${app?.app.installedVersion} ${tr('installed')}${u ? ' / ${tr('latest')}' : ''}'
+                          : tr('notInstalled');
+                      if (!u) {
+                        l += '\n${app?.app.latestVersion} ${tr('latest')}';
+                      }
+                      return Text(l,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold));
+                    }(),
+                    if (app?.app.releaseDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          app!.app.releaseDate!.toLocal().toString().split('.')
+                              .first,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                  ]),
+                  const SliverToBoxAdapter(child: SizedBox(height: 2)),
+                  section(false, true, children: [
+                    Text(
+                      tr('lastUpdateCheckX', args: [
+                        app?.app.lastUpdateCheck
+                                ?.toLocal()
+                                .toString()
+                                .split('.')
+                                .first ??
+                            tr('never'),
+                      ]),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ]),
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  // Section 3 — URL, certificate (opt), download asset
+                  section(true, certs || hasAssets, children: [
                     InkWell(
-                      onTap: () { if (app?.app.url != null) launchUrlString(app!.app.url!, mode: LaunchMode.externalApplication); },
-                      onLongPress: () { Clipboard.setData(ClipboardData(text: app?.app.url ?? '')); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard')))); },
+                      onTap: () {
+                        if (app?.app.url != null) launchUrlString(
+                            app!.app.url!,
+                            mode: LaunchMode.externalApplication,
+                          );
+                      },
+                      onLongPress: () {
+                        Clipboard.setData(
+                            ClipboardData(text: app?.app.url ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(tr('copiedToClipboard'))));
+                      },
                       child: Container(
                         width: double.infinity,
-                        padding: settingsProvider.highlightTouchTargets ? const EdgeInsets.fromLTRB(12, 6, 12, 6) : const EdgeInsets.symmetric(vertical: 2),
-                        decoration: settingsProvider.highlightTouchTargets ? BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)) : null,
-                        child: Text(app?.app.url ?? '', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline, fontStyle: FontStyle.italic)),
+                        padding: settingsProvider.highlightTouchTargets
+                            ? const EdgeInsets.fromLTRB(12, 6, 12, 6)
+                            : const EdgeInsets.symmetric(vertical: 2),
+                        decoration: settingsProvider.highlightTouchTargets
+                            ? BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.1),
+                              )
+                            : null,
+                        child: Text(
+                          app?.app.url ?? '',
+                          textAlign: TextAlign.start,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                decoration: TextDecoration.underline,
+                                fontStyle: FontStyle.italic,
+                              ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(app?.app.id ?? '', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    Text(
+                      app?.app.id ?? '',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                    ),
                   ]),
-                  section(false, false, children: [
-                    () {
-                      bool i = app?.app.installedVersion != null;
-                      bool u = app?.app.installedVersion == app?.app.latestVersion;
-                      String l = i ? '${app?.app.installedVersion} ${tr('installed')}${u ? ' / ${tr('latest')}' : ''}' : tr('notInstalled');
-                      if (!u) l += '\n${app?.app.latestVersion} ${tr('latest')}';
-                      return Text(l, style: Theme.of(context).textTheme.bodyMedium);
-                    }(),
-                    if (app?.app.releaseDate != null)
-                      Padding(padding: const EdgeInsets.only(top: 4), child: Text(app!.app.releaseDate!.toLocal().toString().split('.').first, style: Theme.of(context).textTheme.bodySmall)),
-                  ]),
-                  section(false, true, children: [
-                    Text(tr('lastUpdateCheckX', args: [app?.app.lastUpdateCheck?.toLocal().toString().split('.').first ?? tr('never')]), style: Theme.of(context).textTheme.bodySmall),
-                  ]),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  // Section 3 — Certificate + download
-                  if (app != null && app.certificateHashes.isNotEmpty) ...[
-                    section(true, false, children: [
-                      Text('${plural('certificateHash', app.certificateHashes.length)}${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                      ...app.certificateHashes.map((h) => GestureDetector(
-                        onLongPress: () { Clipboard.setData(ClipboardData(text: h)); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard')))); },
-                        child: Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Text(h, style: const TextStyle(fontSize: 12))),
-                      )),
+                  if (certs) ...[
+                    const SliverToBoxAdapter(child: SizedBox(height: 2)),
+                    section(false, certs && !hasAssets, children: [
+                      Text(
+                        '${plural('certificateHash', app.certificateHashes.length)}'
+                        '${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                      ...app!.certificateHashes.map((h) => GestureDetector(
+                            onLongPress: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: h));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          tr('copiedToClipboard'))));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 2),
+                              child: Text(h,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall),
+                            ),
+                          )),
                     ]),
-                    section(false, true, children: [
-                      HighlightableButton(
-                        highlight: settingsProvider.highlightTouchTargets,
-                        onPressed: app?.app == null || updating ? null : () async {
-                          try { await appsProvider.downloadAppAssets([app!.app.id], context); } catch (e) { showError(e, context); }
-                        },
-                        icon: const Icon(Icons.download_outlined, size: 18),
-                        label: Text(tr('downloadX', args: [lowerCaseIfEnglish(tr('releaseAsset'))])),
+                  ],
+                  if (hasAssets) ...[
+                    if (certs)
+                      const SliverToBoxAdapter(child: SizedBox(height: 2)),
+                    section(!certs, true, children: [
+                      Center(
+                        child: HighlightableButton(
+                          highlight:
+                              settingsProvider.highlightTouchTargets,
+                          onPressed: app?.app == null || updating
+                              ? null
+                              : () async {
+                                  try {
+                                    await appsProvider.downloadAppAssets(
+                                        [app!.app.id], context);
+                                  } catch (e) {
+                                    showError(e, context);
+                                  }
+                                },
+                          icon: const Icon(Icons.download_outlined,
+                              size: 18),
+                          label: Text(
+                            tr('downloadX', args: [
+                              lowerCaseIfEnglish(tr('releaseAsset'))
+                            ]),
+                          ),
+                        ),
                       ),
                     ]),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   ],
+                  if (certs || hasAssets)
+                    const SliverToBoxAdapter(
+                        child: SizedBox(height: 20)),
                   // Section 4 — Categories
                   section(true, true, children: [
                     CategoryEditorSelector(
                       alignment: WrapAlignment.start,
-                      preselected: app?.app.categories != null ? app!.app.categories.toSet() : {},
-                      onSelected: (categories) { if (app != null) { app.app.categories = categories; appsProvider.saveApps([app.app]); } },
+                      preselected: app?.app.categories != null
+                          ? app!.app.categories.toSet()
+                          : {},
+                      onSelected: (categories) {
+                        if (app != null) {
+                          app.app.categories = categories;
+                          appsProvider.saveApps([app.app]);
+                        }
+                      },
                     ),
                   ]),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -846,16 +1002,32 @@ class _AppPageState extends State<AppPage> {
                       const Spacer(),
                       Stack(alignment: Alignment.center, children: [
                         getPrimaryButton(),
-                        if (_showSuccess) AnimatedSuccessCheck(onDone: () => setState(() => _showSuccess = false)),
+                        if (_showSuccess)
+                          AnimatedSuccessCheck(
+                            onDone: () =>
+                                setState(() => _showSuccess = false),
+                          ),
                       ]),
                     ]),
                     if (app?.downloadProgress != null)
-                      Padding(padding: const EdgeInsets.only(top: 12), child: LinearProgressIndicator(value: app!.downloadProgress! >= 0 ? app.downloadProgress! / 100 : null)),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: LinearProgressIndicator(
+                          value: app!.downloadProgress! >= 0
+                              ? app.downloadProgress! / 100
+                              : null,
+                        ),
+                      ),
                   ]),
-                  SliverPadding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 24)),
+                  SliverPadding(
+                    padding: EdgeInsets.only(
+                      bottom:
+                          MediaQuery.of(context).padding.bottom + 24,
+                    ),
+                  ),
                 ],
               ),
-            ),
+      ),
     );
   }
 }

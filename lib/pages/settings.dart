@@ -743,40 +743,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                 },
                               ),
                             fieldTile(colourSchemeDropdown),
-                            // Live preview of the current colour scheme.
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                              child: Material(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerLow,
-                                shape: RoundedSuperellipseBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      FilledButton(
-                                        onPressed: () {},
-                                        child: const Text('Aa'),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SwitchListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        dense: true,
-                                        title: const Text('Aa'),
-                                        value: true,
-                                        onChanged: (_) {},
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
                             if (settingsProvider.colourSchemeMode !=
                                 ColourSchemeMode.materialYou)
                               colorPicker,
