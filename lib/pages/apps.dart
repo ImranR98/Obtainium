@@ -897,94 +897,6 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    showFilterDialog() async {
-      var values = await showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (BuildContext ctx) {
-          var vals = filter.toFormValuesMap();
-          return GeneratedFormModal(
-            tileMode: true,
-            initValid: true,
-            title: tr('filterApps'),
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appName',
-                  label: tr('appName'),
-                  required: false,
-                  defaultValue: vals['appName'],
-                ),
-              ],
-              [
-                GeneratedFormTextField(
-                  'author',
-                  label: tr('author'),
-                  required: false,
-                  defaultValue: vals['author'],
-                ),
-              ],
-              [
-                GeneratedFormTextField(
-                  'appId',
-                  label: tr('appId'),
-                  required: false,
-                  defaultValue: vals['appId'],
-                ),
-              ],
-              [
-                GeneratedFormSwitch(
-                  'upToDateApps',
-                  label: tr('upToDateApps'),
-                  defaultValue: vals['upToDateApps'],
-                ),
-              ],
-              [
-                GeneratedFormSwitch(
-                  'nonInstalledApps',
-                  label: tr('nonInstalledApps'),
-                  defaultValue: vals['nonInstalledApps'],
-                ),
-              ],
-              [
-                GeneratedFormDropdown(
-                  'sourceFilter',
-                  label: tr('appSource'),
-                  defaultValue: filter.sourceFilter,
-                  [
-                    MapEntry('', tr('none')),
-                    ...sourceProvider.sources.map(
-                      (e) => MapEntry(e.runtimeType.toString(), e.name),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-            additionalWidgets: [
-              const SizedBox(height: 16),
-              ConnectedCard(
-                padding: null,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: CategoryEditorSelector(
-                    preselected: filter.categoryFilter,
-                    onSelected: (categories) {
-                      filter.categoryFilter = categories.toSet();
-                    },
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-      if (values != null) {
-        _searchDebounce?.cancel();
-        setState(() {
-          filter.setFormValuesFromMap(values);
-        });
-      }
-    }
-
     getDisplayedList() {
       return settingsProvider.groupByCategory &&
               !(listedCategories.isEmpty ||
@@ -1035,7 +947,7 @@ class AppsPageState extends State<AppsPage> {
                 ),
               IconButton(
                 tooltip: tr('filterApps'),
-                onPressed: showFilterDialog,
+                onPressed: () => _showFilterDialog(context),
                 icon: const Icon(Icons.filter_list_rounded),
               ),
             ],
@@ -1142,6 +1054,94 @@ class AppsPageState extends State<AppsPage> {
             : null,
       ),
     );
+  }
+
+  Future<void> _showFilterDialog(BuildContext context) async {
+    var values = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      builder: (BuildContext ctx) {
+        var vals = filter.toFormValuesMap();
+        return GeneratedFormModal(
+          tileMode: true,
+          initValid: true,
+          title: tr('filterApps'),
+          items: [
+            [
+              GeneratedFormTextField(
+                'appName',
+                label: tr('appName'),
+                required: false,
+                defaultValue: vals['appName'],
+              ),
+            ],
+            [
+              GeneratedFormTextField(
+                'author',
+                label: tr('author'),
+                required: false,
+                defaultValue: vals['author'],
+              ),
+            ],
+            [
+              GeneratedFormTextField(
+                'appId',
+                label: tr('appId'),
+                required: false,
+                defaultValue: vals['appId'],
+              ),
+            ],
+            [
+              GeneratedFormSwitch(
+                'upToDateApps',
+                label: tr('upToDateApps'),
+                defaultValue: vals['upToDateApps'],
+              ),
+            ],
+            [
+              GeneratedFormSwitch(
+                'nonInstalledApps',
+                label: tr('nonInstalledApps'),
+                defaultValue: vals['nonInstalledApps'],
+              ),
+            ],
+            [
+              GeneratedFormDropdown(
+                'sourceFilter',
+                label: tr('appSource'),
+                defaultValue: filter.sourceFilter,
+                [
+                  MapEntry('', tr('none')),
+                  ...sourceProvider.sources.map(
+                    (e) => MapEntry(e.runtimeType.toString(), e.name),
+                  ),
+                ],
+              ),
+            ],
+          ],
+          additionalWidgets: [
+            const SizedBox(height: 16),
+            ConnectedCard(
+              padding: null,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: CategoryEditorSelector(
+                  preselected: filter.categoryFilter,
+                  onSelected: (categories) {
+                    filter.categoryFilter = categories.toSet();
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (values != null) {
+      _searchDebounce?.cancel();
+      setState(() {
+        filter.setFormValuesFromMap(values);
+      });
+    }
   }
 
   void openAppById(String appId) {
