@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
 import 'package:obtainium/pages/app.dart';
@@ -15,7 +16,6 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -76,20 +76,12 @@ class _HomePageState extends State<HomePage> {
                 spacing: 20,
                 children: [
                   Text(tr('documentationLinksNote')),
-                  InkWell(
-                    onTap: () {
-                      launchUrlString(
+                  const LinkText(
+                    text:
                         'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                    child: Text(
-                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    url:
+                        'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -120,20 +112,10 @@ class _HomePageState extends State<HomePage> {
                 spacing: 20,
                 children: [
                   Text(tr('googleVerificationWarningP1')),
-                  InkWell(
-                    onTap: () {
-                      launchUrlString(
-                        'https://keepandroidopen.org/',
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                    child: Text(
-                      tr('googleVerificationWarningP2'),
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  LinkText(
+                    text: tr('googleVerificationWarningP2'),
+                    url: 'https://keepandroidopen.org/',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(tr('googleVerificationWarningP3')),
                 ],
@@ -355,18 +337,9 @@ class _HomePageState extends State<HomePage> {
             appId: selectedAppId!,
             onClose: () => setState(() => selectedAppId = null),
           )
-        : Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Semantics(
-                label: tr('selectAppForDetails'),
-                child: Icon(
-                  Icons.touch_app_outlined,
-                  size: 56,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+        : EmptyState(
+            icon: Icons.touch_app_outlined,
+            message: tr('selectAppForDetails'),
           );
 
     final Widget content;

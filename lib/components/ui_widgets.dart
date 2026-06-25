@@ -1,6 +1,7 @@
-import 'dart:typed_data';
-
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 /// Renders an app's icon as a Material 3 Expressive squircle, falling back to
 /// the Obtainium glyph on a tonal surface when no icon is available. Centralizes
@@ -108,5 +109,71 @@ class HighlightableButton extends StatelessWidget {
             onLongPress: onLongPress,
             child: label,
           );
+  }
+}
+
+/// Copies [text] to the clipboard and shows a brief confirmation snackbar.
+void copyToClipboard(BuildContext context, String text) {
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+}
+
+/// A centered placeholder for empty / loading / no-results states: a large
+/// tonal icon with an optional caption.
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String? message;
+
+  const EmptyState({super.key, required this.icon, this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: colorScheme.onSurfaceVariant),
+            if (message != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                message!,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tappable, underlined text that opens [url] in the external browser. Any
+/// extra [style] (e.g. bold/italic) is merged with the underline decoration.
+class LinkText extends StatelessWidget {
+  final String text;
+  final String url;
+  final TextStyle? style;
+
+  const LinkText({super.key, required this.text, required this.url, this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => launchUrlString(url, mode: LaunchMode.externalApplication),
+      child: Text(
+        text,
+        style: (style ?? const TextStyle()).copyWith(
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
   }
 }

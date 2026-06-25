@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -894,10 +893,7 @@ class _AppPageState extends State<AppPage> {
                         }
                       },
                       onLongPress: () {
-                        Clipboard.setData(
-                            ClipboardData(text: app?.app.url ?? ''));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(tr('copiedToClipboard'))));
+                        copyToClipboard(context, app?.app.url ?? '');
                       },
                       child: Container(
                         width: double.infinity,
@@ -958,12 +954,7 @@ class _AppPageState extends State<AppPage> {
                             message: tr('copyToClipboard'),
                             child: GestureDetector(
                               onLongPress: () {
-                                Clipboard.setData(
-                                    ClipboardData(text: h));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            tr('copiedToClipboard'))));
+                                copyToClipboard(context, h);
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(

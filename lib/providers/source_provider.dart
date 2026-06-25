@@ -1156,8 +1156,10 @@ class SourceProvider {
 
   AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
+    // [sources] rebuilds all source objects on each access, so evaluate it once.
+    final allSources = sources;
     if (overrideSource != null) {
-      var srcs = sources.where(
+      var srcs = allSources.where(
         (e) => e.runtimeType.toString() == overrideSource,
       );
       if (srcs.isEmpty) {
@@ -1174,7 +1176,7 @@ class SourceProvider {
       return res;
     }
     AppSource? source;
-    for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
+    for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
       try {
         if (RegExp(
           '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
@@ -1187,7 +1189,7 @@ class SourceProvider {
       }
     }
     if (source == null) {
-      for (var s in sources.where(
+      for (var s in allSources.where(
         (element) => element.hosts.isEmpty && !element.neverAutoSelect,
       )) {
         try {

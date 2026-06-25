@@ -70,20 +70,10 @@ void showChangeLogDialog(
         message: app.latestVersion,
         additionalWidgets: [
           changesUrl != null
-              ? InkWell(
-                  child: Text(
-                    changesUrl,
-                    style: const TextStyle(
-                      decoration: TextDecoration.underline,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  onTap: () {
-                    launchUrlString(
-                      changesUrl,
-                      mode: LaunchMode.externalApplication,
-                    );
-                  },
+              ? LinkText(
+                  text: changesUrl,
+                  url: changesUrl,
+                  style: const TextStyle(fontStyle: FontStyle.italic),
                 )
               : const SizedBox.shrink(),
           changesUrl != null
@@ -402,39 +392,17 @@ class AppsPageState extends State<AppsPage> {
       return [
         if (listedApps.isEmpty)
           SliverFillRemaining(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      appsProvider.apps.isEmpty
-                          ? (appsProvider.loadingApps
-                                ? Icons.hourglass_empty_rounded
-                                : Icons.apps_outlined)
-                          : Icons.search_off_rounded,
-                      size: 56,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      appsProvider.apps.isEmpty
-                          ? appsProvider.loadingApps
-                                ? tr('pleaseWait')
-                                : tr('noApps')
-                          : tr('noAppsForFilter'),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
+            child: EmptyState(
+              icon: appsProvider.apps.isEmpty
+                  ? (appsProvider.loadingApps
+                        ? Icons.hourglass_empty_rounded
+                        : Icons.apps_outlined)
+                  : Icons.search_off_rounded,
+              message: appsProvider.apps.isEmpty
+                  ? appsProvider.loadingApps
+                        ? tr('pleaseWait')
+                        : tr('noApps')
+                  : tr('noAppsForFilter'),
             ),
           ),
         if (refreshingSince != null || appsProvider.loadingApps)
