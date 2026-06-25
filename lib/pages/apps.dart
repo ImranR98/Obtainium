@@ -1271,6 +1271,7 @@ class AppIconWidget extends StatefulWidget {
 }
 
 class _AppIconWidgetState extends State<AppIconWidget> {
+  static const double _appIconSize = 56;
   late final Future<void> _iconFuture;
 
   @override
@@ -1281,54 +1282,60 @@ class _AppIconWidgetState extends State<AppIconWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      child: FutureBuilder(
-        future: _iconFuture,
-        builder: (ctx, val) {
-          var icon = widget.appsProvider.apps[widget.appId]?.icon;
-          return icon != null
-              ? Image.memory(
-                  icon,
-                  gaplessPlayback: true,
-                  opacity: AlwaysStoppedAnimation(widget.installed ? 1 : 0.6),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.rotationZ(0.31),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Image(
-                          image: const AssetImage(
-                            'assets/graphics/icon_small.png',
+    return SizedBox.square(
+      dimension: _appIconSize,
+      child: InkWell(
+        child: FutureBuilder(
+          future: _iconFuture,
+          builder: (ctx, val) {
+            var icon = widget.appsProvider.apps[widget.appId]?.icon;
+            return icon != null
+                ? Image.memory(
+                    icon,
+                    gaplessPlayback: true,
+                    opacity: AlwaysStoppedAnimation(widget.installed ? 1 : 0.6),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.rotationZ(0.31),
+                        child: Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Image(
+                            image: const AssetImage(
+                              'assets/graphics/icon_small.png',
+                            ),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withOpacity(0.4)
+                                : Colors.white.withOpacity(0.3),
+                            colorBlendMode: BlendMode.modulate,
+                            gaplessPlayback: true,
                           ),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.4)
-                              : Colors.white.withOpacity(0.3),
-                          colorBlendMode: BlendMode.modulate,
-                          gaplessPlayback: true,
                         ),
                       ),
-                    ),
-                  ],
-                );
+                    ],
+                  );
+          },
+        ),
+        onDoubleTap: () {
+          pm.openApp(widget.appId);
+        },
+        onLongPress: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AppPage(
+                appId: widget.appId,
+                showOppositeOfPreferredView: true,
+              ),
+            ),
+          );
         },
       ),
-      onDoubleTap: () {
-        pm.openApp(widget.appId);
-      },
-      onLongPress: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
-          ),
-        );
-      },
     );
   }
 }
