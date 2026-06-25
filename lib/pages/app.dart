@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
-import 'package:obtainium/components/success_check.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -44,7 +43,6 @@ class _AppPageState extends State<AppPage> {
   bool _wasWebViewOpened = false;
   AppInMemory? prevApp;
   bool updating = false;
-  bool _showSuccess = false;
 
   void _closePage() {
     if (widget.onClose != null) {
@@ -474,13 +472,7 @@ class _AppPageState extends State<AppPage> {
                     showMessage(successMessage, context);
                   }
                   if (res.isNotEmpty && mounted) {
-                    setState(() => _showSuccess = true);
-                    Future.delayed(
-                      const Duration(seconds: 1, milliseconds: 200),
-                      () {
-                        if (mounted) _closePage();
-                      },
-                    );
+                    _closePage();
                   }
                   if (res.isNotEmpty) {
                     var np = context.read<NotificationsProvider>();
@@ -997,14 +989,7 @@ class _AppPageState extends State<AppPage> {
                     Row(children: [
                       ...getSecondaryActions(),
                       const Spacer(),
-                      Stack(alignment: Alignment.center, children: [
-                        getPrimaryButton(),
-                        if (_showSuccess)
-                          AnimatedSuccessCheck(
-                            onDone: () =>
-                                setState(() => _showSuccess = false),
-                          ),
-                      ]),
+                      getPrimaryButton(),
                     ]),
                     if (app?.downloadProgress != null)
                       Padding(
