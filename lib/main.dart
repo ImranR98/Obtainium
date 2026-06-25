@@ -244,26 +244,16 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     inputDecorationTheme: InputDecorationThemeData(
-      filled: true,
-      fillColor: colorScheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-        borderSide: BorderSide.none,
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
     ),
     dropdownMenuTheme: DropdownMenuThemeData(
       inputDecorationTheme: InputDecorationThemeData(
-        filled: true,
-        fillColor: colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 16,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide.none,
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
       ),
       menuStyle: MenuStyle(
         shape: WidgetStatePropertyAll(
