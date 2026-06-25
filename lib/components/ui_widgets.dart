@@ -121,6 +121,41 @@ void copyToClipboard(BuildContext context, String text) {
   ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
 }
 
+/// Shows a simple confirm/cancel dialog, resolving to true only if the user
+/// confirmed. [content] may be a [Widget] or any other value (shown as Text).
+Future<bool> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  Object? content,
+  String? confirmText,
+  String? cancelText,
+  bool autofocusConfirm = false,
+}) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: content == null
+          ? null
+          : content is Widget
+          ? content
+          : Text(content.toString()),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(cancelText ?? tr('no')),
+        ),
+        FilledButton(
+          autofocus: autofocusConfirm,
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(confirmText ?? tr('yes')),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
 /// A centered placeholder for empty / loading / no-results states: a large
 /// tonal icon with an optional caption.
 class EmptyState extends StatelessWidget {

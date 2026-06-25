@@ -389,35 +389,19 @@ class _AppPageState extends State<AppPage> {
       return WebViewWidget(key: ObjectKey(controller), controller: controller);
     }
 
-    showMarkUpdatedDialog() {
-      return showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(tr('alreadyUpToDateQuestion')),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(tr('no')),
-              ),
-              FilledButton(
-                onPressed: () {
-                  settingsProvider.selectionClick();
-                  var updatedApp = app?.app;
-                  if (updatedApp != null) {
-                    updatedApp.installedVersion = updatedApp.latestVersion;
-                    appsProvider.saveApps([updatedApp]);
-                  }
-                  Navigator.of(context).pop();
-                },
-                child: Text(tr('yesMarkUpdated')),
-              ),
-            ],
-          );
-        },
+    showMarkUpdatedDialog() async {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: tr('alreadyUpToDateQuestion'),
+        confirmText: tr('yesMarkUpdated'),
       );
+      if (!confirmed) return;
+      settingsProvider.selectionClick();
+      var updatedApp = app?.app;
+      if (updatedApp != null) {
+        updatedApp.installedVersion = updatedApp.latestVersion;
+        appsProvider.saveApps([updatedApp]);
+      }
     }
 
     showAdditionalOptionsDialog() async {

@@ -705,53 +705,33 @@ class AppsPageState extends State<AppsPage> {
       };
     }
 
-    showMassMarkDialog() {
-      return showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: Text(
-              tr(
-                'markXSelectedAppsAsUpdated',
-                args: [selectedAppIds.length.toString()],
-              ),
-            ),
-            content: Text(
-              tr('onlyWorksWithNonVersionDetectApps'),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(tr('no')),
-              ),
-              FilledButton(
-                onPressed: () {
-                  settingsProvider.selectionClick();
-                  appsProvider.saveApps(
-                    selectedApps.map((a) {
-                      if (a.installedVersion != null &&
-                          !appsProvider.isVersionDetectionPossible(
-                            appsProvider.apps[a.id],
-                          )) {
-                        a.installedVersion = a.latestVersion;
-                      }
-                      return a;
-                    }).toList(),
-                  );
-
-                  Navigator.of(context).pop();
-                },
-                child: Text(tr('yes')),
-              ),
-            ],
-          );
-        },
+    showMassMarkDialog() async {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: tr(
+          'markXSelectedAppsAsUpdated',
+          args: [selectedAppIds.length.toString()],
+        ),
+        content: Text(
+          tr('onlyWorksWithNonVersionDetectApps'),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+      if (!confirmed) return;
+      settingsProvider.selectionClick();
+      appsProvider.saveApps(
+        selectedApps.map((a) {
+          if (a.installedVersion != null &&
+              !appsProvider.isVersionDetectionPossible(
+                appsProvider.apps[a.id],
+              )) {
+            a.installedVersion = a.latestVersion;
+          }
+          return a;
+        }).toList(),
       );
     }
 
