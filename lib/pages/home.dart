@@ -366,6 +366,7 @@ class _HomePageState extends State<HomePage> {
               key: appsPageKey,
               onAppSelected: _selectApp,
               selectedAppId: selectedAppId,
+              onSelectionChanged: () => setState(() {}),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -389,12 +390,16 @@ class _HomePageState extends State<HomePage> {
           );
         },
         child: currentIndex == 0
-            ? AppsPage(key: appsPageKey)
+            ? AppsPage(key: appsPageKey, onSelectionChanged: () => setState(() {}))
             : pages.elementAt(currentIndex).widget,
       );
     }
 
-    // Straight-to-Add FAB (no menu).
+    // Shows the "Add" FAB, or hides it entirely while the user is
+    // mass‑selecting apps (the apps page will show its own action FAB).
+    final isSelecting = appsPageKey.currentState?.selectedAppIds
+            .isNotEmpty ??
+        false;
     final createFab = FloatingActionButton(
       onPressed: () => pushAddApp(),
       tooltip: tr('addApp'),
@@ -424,7 +429,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   FocusTraversalGroup(
                     child: NavigationRail(
-                      leading: currentIndex == 0
+                      leading: currentIndex == 0 && !isSelecting
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: createFab,
@@ -449,7 +454,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : content,
-        floatingActionButton: useRail || currentIndex != 0 ? null : createFab,
+        floatingActionButton: useRail || currentIndex != 0 || isSelecting ? null : createFab,
         bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(

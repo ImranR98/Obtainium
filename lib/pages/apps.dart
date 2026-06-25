@@ -24,7 +24,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class AppsPage extends StatefulWidget {
-  const AppsPage({super.key, this.onAppSelected, this.selectedAppId});
+  const AppsPage({super.key, this.onAppSelected, this.selectedAppId, this.onSelectionChanged});
 
   /// In a two-pane layout, called when the user taps an app (instead of pushing
   /// an [AppPage] route). In single-pane mode this is null and taps push a
@@ -34,6 +34,11 @@ class AppsPage extends StatefulWidget {
   /// The app currently shown in the detail pane (two-pane), used to highlight
   /// the tile.
   final String? selectedAppId;
+
+  /// Called whenever the set of selected app ids changes (e.g. when the user
+  /// toggles a row or clears the selection).  The parent shell uses this to
+  /// morph the FAB between "Add" and "Actions".
+  final VoidCallback? onSelectionChanged;
 
   @override
   State<AppsPage> createState() => AppsPageState();
@@ -158,6 +163,7 @@ class AppsPageState extends State<AppsPage> {
     setState(() {
       selectedAppIds.clear();
     });
+    widget.onSelectionChanged?.call();
   }
 
   void selectThese(List<App> apps) {
@@ -167,6 +173,7 @@ class AppsPageState extends State<AppsPage> {
           selectedAppIds.add(a.id);
         }
       });
+      widget.onSelectionChanged?.call();
     }
   }
 
@@ -227,6 +234,7 @@ class AppsPageState extends State<AppsPage> {
           selectedAppIds.add(app.id);
         }
       });
+      widget.onSelectionChanged?.call();
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
@@ -1259,17 +1267,6 @@ class AppsPageState extends State<AppsPage> {
       );
     }
 
-    getMainBottomButtons() {
-      return [
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: selectedAppIds.isEmpty ? null : showMoreOptionsDialog,
-          tooltip: tr('more'),
-          icon: const Icon(Icons.more_vert),
-        ),
-      ];
-    }
-
     showFilterDialog() async {
       var values = await showDialog<Map<String, dynamic>?>(
         context: context,
@@ -1397,7 +1394,6 @@ class AppsPageState extends State<AppsPage> {
             leading: const Icon(Icons.search_rounded),
             trailing: [
               getSelectAllButton(),
-              if (selectedAppIds.isNotEmpty) ...getMainBottomButtons(),
               if (!isFilterOff)
                 IconButton(
                   tooltip: '${tr('filter')} - ${tr('remove')}',
@@ -1429,9 +1425,13 @@ class AppsPageState extends State<AppsPage> {
       var onObtain = getMassObtainFunction();
       final cs = Theme.of(context).colorScheme;
       return SliverToBoxAdapter(
-        child: onObtain == null
-            ? const SizedBox.shrink()
-            : Padding(
+        child: AnimatedSize(
+          duration: ExpressiveMotion.medium,
+          curve: ExpressiveMotion.emphasized,
+          alignment: Alignment.topCenter,
+          child: onObtain == null
+              ? const SizedBox(width: double.infinity)
+              : Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Material(
                   color: cs.primaryContainer,
@@ -1468,6 +1468,7 @@ class AppsPageState extends State<AppsPage> {
                   ),
                 ),
               ),
+            ),
       );
     }
 
@@ -1500,6 +1501,13 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
+        floatingActionButton: selectedAppIds.isNotEmpty
+            ? FloatingActionButton(
+                onPressed: showMoreOptionsDialog,
+                tooltip: tr('more'),
+                child: const Icon(Icons.more_vert),
+              )
+            : null,
       ),
     );
   }
