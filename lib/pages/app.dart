@@ -22,10 +22,16 @@ class AppPage extends StatefulWidget {
     super.key,
     required this.appId,
     this.showOppositeOfPreferredView = false,
+    this.onClose,
   });
 
   final String appId;
   final bool showOppositeOfPreferredView;
+
+  /// When provided, the page is being shown embedded in a detail pane (two-pane
+  /// layout); "back" and post-action dismissals clear the pane via this instead
+  /// of popping a route.
+  final VoidCallback? onClose;
 
   @override
   State<AppPage> createState() => _AppPageState();
@@ -36,6 +42,14 @@ class _AppPageState extends State<AppPage> {
   bool _wasWebViewOpened = false;
   AppInMemory? prevApp;
   bool updating = false;
+
+  void _closePage() {
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
 
   Widget buildRepoRenameWarning({
     required AppInMemory? app,
@@ -736,7 +750,7 @@ class _AppPageState extends State<AppPage> {
                   showMessage(successMessage, context);
                 }
                 if (res.isNotEmpty && mounted) {
-                  Navigator.of(context).pop();
+                  _closePage();
                 }
                 if (res.isNotEmpty) {
                   var np = context.read<NotificationsProvider>();
@@ -860,7 +874,7 @@ class _AppPageState extends State<AppPage> {
                               )
                               .then((value) {
                                 if (value == true) {
-                                  Navigator.of(context).pop();
+                                  _closePage();
                                 }
                               });
                         },
@@ -885,15 +899,15 @@ class _AppPageState extends State<AppPage> {
 
     appScreenAppBar() => AppBar(
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+        icon: Icon(
+          widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
+        ),
+        onPressed: _closePage,
       ),
     );
 
     return Scaffold(
-      appBar: showAppWebpageFinal ? AppBar() : appScreenAppBar(),
+      appBar: appScreenAppBar(),
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
         child: showAppWebpageFinal

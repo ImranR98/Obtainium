@@ -24,7 +24,16 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class AppsPage extends StatefulWidget {
-  const AppsPage({super.key});
+  const AppsPage({super.key, this.onAppSelected, this.selectedAppId});
+
+  /// In a two-pane layout, called when the user taps an app (instead of pushing
+  /// an [AppPage] route). In single-pane mode this is null and taps push a
+  /// route as usual.
+  final void Function(String appId)? onAppSelected;
+
+  /// The app currently shown in the detail pane (two-pane), used to highlight
+  /// the tile.
+  final String? selectedAppId;
 
   @override
   State<AppsPage> createState() => AppsPageState();
@@ -558,7 +567,10 @@ class AppsPageState extends State<AppsPage> {
           selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
             alpha: listedApps[index].app.pinned ? 0.2 : 0.1,
           ),
-          selected: selectedAppIds.contains(listedApps[index].app.id),
+          selected: selectedAppIds.contains(
+            listedApps[index].app.id,
+          ) ||
+              widget.selectedAppId == listedApps[index].app.id,
           onLongPress: () {
             toggleAppSelected(listedApps[index].app);
           },
@@ -610,19 +622,21 @@ class AppsPageState extends State<AppsPage> {
                   ),
                 )
               : trailingRow,
-          onTap: () {
-            if (selectedAppIds.isNotEmpty) {
-              toggleAppSelected(listedApps[index].app);
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AppPage(appId: listedApps[index].app.id),
-                ),
-              );
-            }
-          },
+           onTap: () {
+             if (selectedAppIds.isNotEmpty) {
+               toggleAppSelected(listedApps[index].app);
+             } else if (widget.onAppSelected != null) {
+               widget.onAppSelected!(listedApps[index].app.id);
+             } else {
+               Navigator.push(
+                 context,
+                 MaterialPageRoute(
+                   builder: (context) =>
+                       AppPage(appId: listedApps[index].app.id),
+                 ),
+               );
+             }
+           },
         ),
       );
     }
@@ -1436,12 +1450,16 @@ class AppsPageState extends State<AppsPage> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => AppPage(appId: app.app.id),
-      ),
-    );
+    if (widget.onAppSelected != null) {
+      widget.onAppSelected!(app.app.id);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => AppPage(appId: app.app.id),
+        ),
+      );
+    }
   }
 }
 

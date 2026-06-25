@@ -9,6 +9,7 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/native_provider.dart';
@@ -511,6 +512,23 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 20,
                       children: [
+                        SettingsTile(
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            leading: const Icon(Icons.import_export_outlined),
+                            title: Text(tr('importExport')),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ImportExportPage(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                         SettingsGroup(
                           title: tr('updates'),
                           children: [

@@ -17,7 +17,11 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class AddAppPage extends StatefulWidget {
-  const AddAppPage({super.key});
+  const AddAppPage({super.key, this.initialUrl});
+
+  /// When provided (e.g. from a deep link), the URL is applied automatically
+  /// after the first frame.
+  final String? initialUrl;
 
   @override
   State<AddAppPage> createState() => AddAppPageState();
@@ -38,6 +42,16 @@ class AddAppPageState extends State<AddAppPage> {
   List<String> pickedCategories = [];
   int urlInputKey = 0;
   SourceProvider sourceProvider = SourceProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialUrl != null && widget.initialUrl!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) linkFn(widget.initialUrl!);
+      });
+    }
+  }
 
   void linkFn(String input) {
     try {
@@ -222,10 +236,18 @@ class AddAppPageState extends State<AddAppPage> {
           await appsProvider.saveApps([app], onlyIfExists: false);
         }
         if (app != null) {
-          Navigator.push(
-            globalNavigatorKey.currentContext ?? context,
-            MaterialPageRoute(builder: (context) => AppPage(appId: app!.id)),
+          var route = MaterialPageRoute<void>(
+            builder: (context) => AppPage(appId: app!.id),
           );
+          var nav = Navigator.of(globalNavigatorKey.currentContext ?? context);
+          // Replace this (pushed) add screen with the new app's detail so that
+          // backing out returns to the apps list — unless we're staying to add
+          // more.
+          if (resetUserInputAfter) {
+            nav.push(route);
+          } else {
+            nav.pushReplacement(route);
+          }
         }
       } catch (e) {
         showError(e, context);

@@ -8,8 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
+import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
-import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -36,30 +36,24 @@ class NavigationPageItem {
 class _HomePageState extends State<HomePage> {
   List<int> selectedIndexHistory = [];
   bool isReversing = false;
-  int prevAppCount = -1;
-  bool prevIsLoading = true;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
-  bool isLinkActivity = false;
+
+  final GlobalKey<AppsPageState> appsPageKey = GlobalKey<AppsPageState>();
+  String? selectedAppId;
+
+  void _selectApp(String appId) {
+    setState(() {
+      selectedAppId = appId;
+    });
+  }
 
   List<NavigationPageItem> pages = [
     NavigationPageItem(
       tr('appsString'),
       Icons.apps_outlined,
-      AppsPage(key: GlobalKey<AppsPageState>()),
+      const SizedBox.shrink(), // Built in build() using appsPageKey.
       selectedIcon: Icons.apps,
-    ),
-    NavigationPageItem(
-      tr('addApp'),
-      Icons.add_circle_outline,
-      AddAppPage(key: GlobalKey<AddAppPageState>()),
-      selectedIcon: Icons.add_circle,
-    ),
-    NavigationPageItem(
-      tr('importExport'),
-      Icons.import_export_outlined,
-      const ImportExportPage(),
-      selectedIcon: Icons.import_export,
     ),
     NavigationPageItem(
       tr('settings'),
@@ -68,6 +62,12 @@ class _HomePageState extends State<HomePage> {
       selectedIcon: Icons.settings,
     ),
   ];
+
+  void pushAddApp({String? initialUrl}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AddAppPage(initialUrl: initialUrl)),
+    );
+  }
 
   @override
   void initState() {
@@ -168,34 +168,21 @@ class _HomePageState extends State<HomePage> {
     _appLinks = AppLinks();
 
     goToAddApp(String data) async {
-      switchToPage(1);
-      var attempts = 0;
-      while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
-              ?.currentState ==
-          null) {
-        if (++attempts > 50) return;
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-      (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
-          ?.linkFn(data);
+      await switchToPage(0);
+      if (mounted) pushAddApp(initialUrl: data);
     }
 
     goToExistingApp(String appId) async {
-      switchToPage(0);
+      await switchToPage(0);
       var attempts = 0;
-      while ((pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState ==
-          null) {
+      while (appsPageKey.currentState == null) {
         if (++attempts > 50) return;
         await Future.delayed(const Duration(milliseconds: 100));
       }
-
-      // Navigate to the app
-      (pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState
-          ?.openAppById(appId);
+      appsPageKey.currentState?.openAppById(appId);
     }
 
     interpretLink(Uri uri) async {
-      isLinkActivity = true;
       var action = uri.host;
       var data = uri.path.length > 1 ? uri.path.substring(1) : "";
       try {
@@ -302,8 +289,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> switchToPage(int index) async {
     setIsReversing(index);
     if (index == 0) {
-      while ((pages[0].widget.key as GlobalKey<AppsPageState>).currentState !=
-          null) {
+      while (appsPageKey.currentState != null) {
         // Avoid duplicate GlobalKey error
         await Future.delayed(const Duration(microseconds: 1));
       }
@@ -328,17 +314,6 @@ class _HomePageState extends State<HomePage> {
     AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    if (!prevIsLoading &&
-        prevAppCount >= 0 &&
-        appsProvider.apps.length > prevAppCount &&
-        selectedIndexHistory.isNotEmpty &&
-        selectedIndexHistory.last == 1 &&
-        !isLinkActivity) {
-      switchToPage(0);
-    }
-    prevAppCount = appsProvider.apps.length;
-    prevIsLoading = appsProvider.loadingApps;
-
     // Adaptive navigation: a rail on wide/landscape/TV layouts, a bottom bar on
     // compact ones. A live badge shows the number of available updates.
     final layoutWidth = MediaQuery.sizeOf(context).width;
@@ -359,46 +334,84 @@ class _HomePageState extends State<HomePage> {
         ? 0
         : selectedIndexHistory.last;
 
-    final pageBody = PageTransitionSwitcher(
-      duration: Duration(
-        milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
-      ),
-      reverse: settingsProvider.reversePageTransitions
-          ? !isReversing
-          : isReversing,
-      transitionBuilder:
-          (
-            Widget child,
-            Animation<double> animation,
-            Animation<double> secondaryAnimation,
-          ) {
-            return SharedAxisTransition(
-              animation: animation,
-              secondaryAnimation: secondaryAnimation,
-              transitionType: SharedAxisTransitionType.horizontal,
-              child: child,
-            );
-          },
-      child: pages.elementAt(currentIndex).widget,
+    // When on Apps and wide enough, split into a two-pane list + detail view.
+    final twoPane = settingsProvider.isTV || layoutWidth >= 900;
+    final useTwoPane = twoPane && currentIndex == 0;
+
+    final detailPane = selectedAppId != null &&
+            appsProvider.apps.containsKey(selectedAppId)
+        ? AppPage(
+            key: ValueKey(selectedAppId),
+            appId: selectedAppId!,
+            onClose: () => setState(() => selectedAppId = null),
+          )
+        : Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Icon(
+                Icons.touch_app_outlined,
+                size: 56,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+
+    final Widget content;
+    if (useTwoPane) {
+      content = Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: AppsPage(
+              key: appsPageKey,
+              onAppSelected: _selectApp,
+              selectedAppId: selectedAppId,
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(flex: 3, child: detailPane),
+        ],
+      );
+    } else {
+      content = PageTransitionSwitcher(
+        duration: Duration(
+          milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
+        ),
+        reverse: settingsProvider.reversePageTransitions
+            ? !isReversing
+            : isReversing,
+        transitionBuilder: (child, animation, secondaryAnimation) {
+          return SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
+            child: child,
+          );
+        },
+        child: currentIndex == 0
+            ? AppsPage(key: appsPageKey)
+            : pages.elementAt(currentIndex).widget,
+      );
+    }
+
+    final createFab = FloatingActionButton(
+      onPressed: () => pushAddApp(),
+      tooltip: tr('addApp'),
+      child: const Icon(Icons.add),
     );
 
     return PopScope(
-      canPop:
-          selectedIndexHistory.isEmpty ||
-          (isLinkActivity &&
-              selectedIndexHistory.length == 1 &&
-              selectedIndexHistory.last == 1),
+      canPop: currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          setIsReversing(
-            selectedIndexHistory.length >= 2
-                ? selectedIndexHistory.reversed.toList()[1]
-                : 0,
-          );
-
-          if (selectedIndexHistory.isNotEmpty) {
+          if (useTwoPane && selectedAppId != null) {
+            setState(() => selectedAppId = null);
+          } else {
+            setIsReversing(0);
             setState(() {
-              selectedIndexHistory.removeLast();
+              if (selectedIndexHistory.isNotEmpty) {
+                selectedIndexHistory.removeLast();
+              }
             });
           }
         }
@@ -410,6 +423,10 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   FocusTraversalGroup(
                     child: NavigationRail(
+                      leading: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: createFab,
+                      ),
                       destinations: pages
                           .map(
                             (e) => NavigationRailDestination(
@@ -425,10 +442,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
-                  Expanded(child: pageBody),
+                  Expanded(child: content),
                 ],
               )
-            : pageBody,
+            : content,
+        floatingActionButton: useRail ? null : createFab,
         bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(
