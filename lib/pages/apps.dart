@@ -1501,7 +1501,9 @@ class AppListTile extends StatelessWidget {
 
     return Dismissible(
       key: ValueKey(appId),
-      direction: DismissDirection.horizontal,
+      direction: appInMemory.downloadProgress == null
+          ? DismissDirection.horizontal
+          : DismissDirection.none,
       background: swipeBackground ?? const SizedBox.shrink(),
       secondaryBackground: Container(
         color: cs.errorContainer,
