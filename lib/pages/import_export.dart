@@ -13,13 +13,13 @@ import 'package:obtainium/app_sources/fdroidrepo.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class ImportExportPage extends StatefulWidget {
   const ImportExportPage({super.key});
@@ -174,35 +174,37 @@ class _ImportExportPageState extends State<ImportExportPage> {
     }
 
     runUrlImport() {
-      FilePicker.pickFiles().then((result) {
-        if (result != null) {
-          var path = result.files.single.path;
-          if (path == null) return;
-          urlListImport(
-            overrideInitValid: true,
-            initValue: RegExp('https?://[^"]+')
-                .allMatches(File(path).readAsStringSync())
-                .map((e) => e.input.substring(e.start, e.end))
-                .toSet()
-                .toList()
-                .where((url) {
-                  try {
-                    sourceProvider.getSource(url);
-                    return true;
-                  } catch (e) {
-                    return false;
-                  }
-                })
-                .join('\n'),
-          );
-        }
-      }).catchError((e) {
-        if (e is PlatformException || e is MissingPluginException) {
-          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-        } else {
-          showError(e, context);
-        }
-      });
+      FilePicker.pickFiles()
+          .then((result) {
+            if (result != null) {
+              var path = result.files.single.path;
+              if (path == null) return;
+              urlListImport(
+                overrideInitValid: true,
+                initValue: RegExp('https?://[^"]+')
+                    .allMatches(File(path).readAsStringSync())
+                    .map((e) => e.input.substring(e.start, e.end))
+                    .toSet()
+                    .toList()
+                    .where((url) {
+                      try {
+                        sourceProvider.getSource(url);
+                        return true;
+                      } catch (e) {
+                        return false;
+                      }
+                    })
+                    .join('\n'),
+              );
+            }
+          })
+          .catchError((e) {
+            if (e is PlatformException || e is MissingPluginException) {
+              showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+            } else {
+              showError(e, context);
+            }
+          });
     }
 
     runSourceSearch(AppSource source) {
@@ -252,16 +254,15 @@ class _ImportExportPageState extends State<ImportExportPage> {
                 querySettings: values,
               );
               if (urlsWithDescriptions.isNotEmpty) {
-                var selectedUrls =
-                    await showDialog<List<String>?>(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return SelectionModal(
-                          entries: urlsWithDescriptions,
-                          selectedByDefault: false,
-                        );
-                      },
+                var selectedUrls = await showDialog<List<String>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return SelectionModal(
+                      entries: urlsWithDescriptions,
+                      selectedByDefault: false,
                     );
+                  },
+                );
                 if (selectedUrls != null && selectedUrls.isNotEmpty) {
                   var errors = await appsProvider.addAppsByURL(
                     selectedUrls,
@@ -324,13 +325,12 @@ class _ImportExportPageState extends State<ImportExportPage> {
               var urlsWithDescriptions = await source.getUrlsWithDescriptions(
                 values.values.map((e) => e.toString()).toList(),
               );
-              var selectedUrls =
-                  await showDialog<List<String>?>(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return SelectionModal(entries: urlsWithDescriptions);
-                    },
-                  );
+              var selectedUrls = await showDialog<List<String>?>(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return SelectionModal(entries: urlsWithDescriptions);
+                },
+              );
               if (selectedUrls != null) {
                 var errors = await appsProvider.addAppsByURL(selectedUrls);
                 if (errors.isEmpty) {
@@ -462,9 +462,11 @@ class _ImportExportPageState extends State<ImportExportPage> {
                                   ],
                                   onValueChanges: (value, valid, isBuilding) {
                                     if (valid && !isBuilding) {
-                                      if (value['autoExportOnChanges'] != null) {
+                                      if (value['autoExportOnChanges'] !=
+                                          null) {
                                         settingsProvider.autoExportOnChanges =
-                                            value['autoExportOnChanges'] == true;
+                                            value['autoExportOnChanges'] ==
+                                            true;
                                       }
                                       if (value['exportSettings'] != null) {
                                         settingsProvider.exportSettings =
@@ -758,65 +760,58 @@ class _SelectionModalState extends State<SelectionModal> {
         onChanged: onRadioChanged,
         child: Column(
           children: [
-          GeneratedForm(
-            items: [
-              [
-                GeneratedFormTextField(
-                  'filter',
-                  label: tr('filter'),
-                  required: false,
-                  additionalValidators: [
-                    (value) {
-                      return regExValidator(value);
-                    },
-                  ],
-                ),
+            GeneratedForm(
+              items: [
+                [
+                  GeneratedFormTextField(
+                    'filter',
+                    label: tr('filter'),
+                    required: false,
+                    additionalValidators: [
+                      (value) {
+                        return regExValidator(value);
+                      },
+                    ],
+                  ),
+                ],
               ],
-            ],
-            onValueChanges: (value, valid, isBuilding) {
-              if (valid && !isBuilding) {
-                if (value['filter'] != null) {
-                  setState(() {
-                    filterRegex = value['filter'];
-                  });
+              onValueChanges: (value, valid, isBuilding) {
+                if (valid && !isBuilding) {
+                  if (value['filter'] != null) {
+                    setState(() {
+                      filterRegex = value['filter'];
+                    });
+                  }
                 }
+              },
+            ),
+            ...filteredEntrySelections.keys.map((entry) {
+              selectThis(bool? value) {
+                setState(() {
+                  value ??= false;
+                  if (value! && widget.onlyOneSelectionAllowed) {
+                    selectOnlyOne(entry.key);
+                  } else {
+                    entrySelections[entry] = value!;
+                  }
+                });
               }
-            },
-          ),
-          ...filteredEntrySelections.keys.map((entry) {
-            selectThis(bool? value) {
-              setState(() {
-                value ??= false;
-                if (value! && widget.onlyOneSelectionAllowed) {
-                  selectOnlyOne(entry.key);
-                } else {
-                  entrySelections[entry] = value!;
-                }
-              });
-            }
 
-            var urlLink = InkWell(
-              onTap: !widget.titlesAreLinks
-                  ? null
-                  : () {
-                      launchUrlString(
-                        entry.key,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-              child: Column(
+              var urlLink = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    entry.value.isEmpty ? entry.key : entry.value[0],
-                    style: TextStyle(
-                      decoration: widget.titlesAreLinks
-                          ? TextDecoration.underline
-                          : null,
-                      fontWeight: FontWeight.bold,
+                  if (widget.titlesAreLinks)
+                    LinkText(
+                      text: entry.value.isEmpty ? entry.key : entry.value[0],
+                      url: entry.key,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                  else
+                    Text(
+                      entry.value.isEmpty ? entry.key : entry.value[0],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.start,
                     ),
-                    textAlign: TextAlign.start,
-                  ),
                   if (widget.titlesAreLinks)
                     Text(
                       Uri.parse(entry.key).host,
@@ -826,119 +821,122 @@ class _SelectionModalState extends State<SelectionModal> {
                       ),
                     ),
                 ],
-              ),
-            );
+              );
 
-            var descriptionText = entry.value.length <= 1
-                ? const SizedBox.shrink()
-                : Text(
-                    entry.value[1].length > 128
-                        ? '${entry.value[1].substring(0, 128)}...'
-                        : entry.value[1],
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12,
-                    ),
-                  );
-
-            var singleSelectTile = ListTile(
-              title: InkWell(
-                onTap: widget.titlesAreLinks
-                    ? null
-                    : () {
-                        selectThis(!(entrySelections[entry] ?? false));
-                      },
-                child: urlLink,
-              ),
-              subtitle: entry.value.length <= 1
-                  ? null
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectOnlyOne(entry.key);
-                        });
-                      },
-                      child: descriptionText,
-                    ),
-              leading: Radio<String>(value: entry.key),
-            );
-
-            var multiSelectTile = Row(
-              children: [
-                Checkbox(
-                  value: entrySelections[entry],
-                  onChanged: (value) {
-                    selectThis(value);
-                  },
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: widget.titlesAreLinks
-                            ? null
-                            : () {
-                                selectThis(!(entrySelections[entry] ?? false));
-                              },
-                        child: urlLink,
+              var descriptionText = entry.value.length <= 1
+                  ? const SizedBox.shrink()
+                  : Text(
+                      entry.value[1].length > 128
+                          ? '${entry.value[1].substring(0, 128)}...'
+                          : entry.value[1],
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12,
                       ),
-                      entry.value.length <= 1
-                          ? const SizedBox.shrink()
-                          : InkWell(
-                              onTap: () {
-                                selectThis(!(entrySelections[entry] ?? false));
-                              },
-                              child: descriptionText,
-                            ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ],
-            );
+                    );
 
-            return widget.onlyOneSelectionAllowed
-                ? singleSelectTile
-                : multiSelectTile;
-          }),
-          if (isTV && !widget.onlyOneSelectionAllowed) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(tr('cancel')),
-                ),
-                TextButton(
-                  onPressed: entrySelections.values.where((b) => b).isEmpty
+              var singleSelectTile = ListTile(
+                title: InkWell(
+                  onTap: widget.titlesAreLinks
                       ? null
-                      : () => Navigator.of(context).pop(
-                          entrySelections.entries
-                              .where((entry) => entry.value)
-                              .map((e) => e.key.key)
-                              .toList(),
+                      : () {
+                          selectThis(!(entrySelections[entry] ?? false));
+                        },
+                  child: urlLink,
+                ),
+                subtitle: entry.value.length <= 1
+                    ? null
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectOnlyOne(entry.key);
+                          });
+                        },
+                        child: descriptionText,
+                      ),
+                leading: Radio<String>(value: entry.key),
+              );
+
+              var multiSelectTile = Row(
+                children: [
+                  Checkbox(
+                    value: entrySelections[entry],
+                    onChanged: (value) {
+                      selectThis(value);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: widget.titlesAreLinks
+                              ? null
+                              : () {
+                                  selectThis(
+                                    !(entrySelections[entry] ?? false),
+                                  );
+                                },
+                          child: urlLink,
                         ),
-                  child: Text(
-                    tr(
-                      'selectX',
-                      args: [
-                        entrySelections.values
-                            .where((b) => b)
-                            .length
-                            .toString(),
+                        entry.value.length <= 1
+                            ? const SizedBox.shrink()
+                            : InkWell(
+                                onTap: () {
+                                  selectThis(
+                                    !(entrySelections[entry] ?? false),
+                                  );
+                                },
+                                child: descriptionText,
+                              ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              );
+
+              return widget.onlyOneSelectionAllowed
+                  ? singleSelectTile
+                  : multiSelectTile;
+            }),
+            if (isTV && !widget.onlyOneSelectionAllowed) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(tr('cancel')),
+                  ),
+                  TextButton(
+                    onPressed: entrySelections.values.where((b) => b).isEmpty
+                        ? null
+                        : () => Navigator.of(context).pop(
+                            entrySelections.entries
+                                .where((entry) => entry.value)
+                                .map((e) => e.key.key)
+                                .toList(),
+                          ),
+                    child: Text(
+                      tr(
+                        'selectX',
+                        args: [
+                          entrySelections.values
+                              .where((b) => b)
+                              .length
+                              .toString(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
         ),
       ),
       actions: [

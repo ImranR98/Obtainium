@@ -32,7 +32,12 @@ final RegExp _changeLogUrlRegExp = RegExp(
 );
 
 class AppsPage extends StatefulWidget {
-  const AppsPage({super.key, this.onAppSelected, this.selectedAppId, this.onSelectionChanged});
+  const AppsPage({
+    super.key,
+    this.onAppSelected,
+    this.selectedAppId,
+    this.onSelectionChanged,
+  });
 
   /// In a two-pane layout, called when the user taps an app (instead of pushing
   /// an [AppPage] route). In single-pane mode this is null and taps push a
@@ -198,10 +203,7 @@ class AppsPageState extends State<AppsPage> {
   /// A cheap fingerprint of everything the filter/sort/reorder pipeline depends
   /// on. Excludes per-app download progress and icon bytes (which mutate in
   /// place and don't affect ordering), so progress ticks reuse the cached list.
-  String _pipelineSignature(
-    List<AppInMemory> apps,
-    SettingsProvider sp,
-  ) {
+  String _pipelineSignature(List<AppInMemory> apps, SettingsProvider sp) {
     final b = StringBuffer();
     b
       ..write(filter.nameFilter)
@@ -444,9 +446,7 @@ class AppsPageState extends State<AppsPage> {
           } else {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => AppPage(appId: app.id),
-              ),
+              MaterialPageRoute(builder: (context) => AppPage(appId: app.id)),
             );
           }
         },
@@ -456,10 +456,7 @@ class AppsPageState extends State<AppsPage> {
     appTileCard(int index) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-        child: Card(
-          clipBehavior: Clip.antiAlias,
-          child: buildTile(index),
-        ),
+        child: Card(clipBehavior: Clip.antiAlias, child: buildTile(index)),
       );
     }
 
@@ -640,7 +637,6 @@ class AppsPageState extends State<AppsPage> {
             };
     }
 
-
     getDisplayedList() {
       return settingsProvider.groupByCategory &&
               !(listedCategories.isEmpty ||
@@ -721,42 +717,42 @@ class AppsPageState extends State<AppsPage> {
           child: onObtain == null
               ? const SizedBox(width: double.infinity)
               : Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: ConnectedCard(
-                  color: cs.primaryContainer,
-                  padding: null,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.system_update_alt_rounded,
-                          color: cs.onPrimaryContainer,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            selectedAppIds.isEmpty
-                                ? tr('installUpdateApps')
-                                : tr('installUpdateSelectedApps'),
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: cs.onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: ConnectedCard(
+                    color: cs.primaryContainer,
+                    padding: null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.system_update_alt_rounded,
+                            color: cs.onPrimaryContainer,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton(
-                          onPressed: onObtain,
-                          child: Text(tr('update')),
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              selectedAppIds.isEmpty
+                                  ? tr('installUpdateApps')
+                                  : tr('installUpdateSelectedApps'),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: cs.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton(
+                            onPressed: onObtain,
+                            child: Text(tr('update')),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+        ),
       );
     }
 
@@ -791,7 +787,12 @@ class AppsPageState extends State<AppsPage> {
         ),
         floatingActionButton: selectedAppIds.isNotEmpty
             ? FloatingActionButton(
-                onPressed: () => _showMoreOptions(context, appsProvider, settingsProvider, selectedApps),
+                onPressed: () => _showMoreOptions(
+                  context,
+                  appsProvider,
+                  settingsProvider,
+                  selectedApps,
+                ),
                 tooltip: tr('more'),
                 child: const Icon(Icons.more_vert),
               )
@@ -1160,6 +1161,7 @@ class AppsPageState extends State<AppsPage> {
         },
       );
     }
+
     showMoreOptionsDialog();
   }
 
@@ -1379,61 +1381,49 @@ class AppListTile extends StatelessWidget {
       children: [
         hasUpdate ? _updateButton(context) : const SizedBox.shrink(),
         hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
-        InkWell(
-          onTap: showChangesFn,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color:
-                  settingsProvider.highlightTouchTargets &&
-                      showChangesFn != null
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-                  : null,
-            ),
-            padding: settingsProvider.highlightTouchTargets
-                ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
-                : const EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      constraints: BoxConstraints(
-                        maxWidth: math.min(
-                          MediaQuery.of(context).size.width / 4,
-                          160,
-                        ),
-                      ),
-                      child: Text(
-                        _versionText(),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.end,
-                        style: isVersionPseudo(_app)
-                            ? TextStyle(fontStyle: FontStyle.italic)
-                            : null,
+        HighlightableButton(
+          highlight: settingsProvider.highlightTouchTargets,
+          onPressed: showChangesFn,
+          label: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    constraints: BoxConstraints(
+                      maxWidth: math.min(
+                        MediaQuery.of(context).size.width / 4,
+                        160,
                       ),
                     ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _changesButtonString(showChangesFn != null),
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        decoration: showChangesFn != null
-                            ? TextDecoration.underline
-                            : TextDecoration.none,
-                      ),
+                    child: Text(
+                      _versionText(),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: isVersionPseudo(_app)
+                          ? const TextStyle(fontStyle: FontStyle.italic)
+                          : null,
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _changesButtonString(showChangesFn != null),
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      decoration: showChangesFn != null
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -1552,9 +1542,9 @@ class AppListTile extends StatelessWidget {
           tileColor: _app.pinned
               ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
               : Colors.transparent,
-          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(
-            alpha: _app.pinned ? 0.2 : 0.1,
-          ),
+          selectedTileColor: Theme.of(
+            context,
+          ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
           selected: multiSelected || detailSelected,
           onLongPress: onToggleSelected,
           leading: (settingsProvider.isTV)
@@ -1689,7 +1679,11 @@ class AppListCategorySection extends StatelessWidget {
                     children: [
                       for (var i = 0; i < tiles.length; i++) ...[
                         const SizedBox(height: 3),
-                        segment(i + 1, colorScheme.surfaceContainerLow, tiles[i]),
+                        segment(
+                          i + 1,
+                          colorScheme.surfaceContainerLow,
+                          tiles[i],
+                        ),
                       ],
                     ],
                   ),

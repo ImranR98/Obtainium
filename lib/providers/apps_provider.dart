@@ -586,7 +586,8 @@ class AppsProvider with ChangeNotifier {
         await loadApps();
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
-        apkDir.listSync()
+        apkDir
+            .listSync()
             .where((element) => element.statSync().modified.isBefore(cutoff))
             .forEach((partialApk) {
               if (!areDownloadsRunning()) {
@@ -596,10 +597,6 @@ class AppsProvider with ChangeNotifier {
       }
     }();
   }
-
-
-
-
 
   @override
   void dispose() {
@@ -648,8 +645,7 @@ class AppsProvider with ChangeNotifier {
 /// If there is an error, the user is notified.
 ///
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
-  // ignore: avoid_print
-  print('BG task started $taskId: ${params.toString()}');
+  debugPrint('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
@@ -746,8 +742,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             )
             .isBefore(DateTime.now());
     if (!enoughTimePassed) {
-      // ignore: avoid_print
-      print(
+      debugPrint(
         'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
       );
       return;
@@ -830,8 +825,9 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
           );
           if (updates[i].additionalSettings['trackOnly'] == true) {
             trackOnlyToNotify.add(updates[i]);
-          } else if (
-            updates[i].additionalSettings['exemptFromBackgroundUpdates'] == true) {
+          } else if (updates[i]
+                  .additionalSettings['exemptFromBackgroundUpdates'] ==
+              true) {
             exemptToNotify.add(updates[i]);
           } else {
             toNotify.add(updates[i]);
@@ -851,9 +847,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       );
     }
     if (exemptToNotify.isNotEmpty) {
-      notificationsProvider.notify(
-        TrackOnlyUpdateNotification(exemptToNotify),
-      );
+      notificationsProvider.notify(TrackOnlyUpdateNotification(exemptToNotify));
     }
 
     // Send the error notifications (grouped by error string)

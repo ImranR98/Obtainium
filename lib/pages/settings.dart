@@ -8,6 +8,7 @@ import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/settings_widgets.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
@@ -286,7 +287,10 @@ class _SettingsPageState extends State<SettingsPage> {
           value: SortColumnSettings.nameAuthor,
           label: tr('nameAuthor'),
         ),
-        DropdownMenuEntry(value: SortColumnSettings.added, label: tr('asAdded')),
+        DropdownMenuEntry(
+          value: SortColumnSettings.added,
+          label: tr('asAdded'),
+        ),
         DropdownMenuEntry(
           value: SortColumnSettings.releaseDate,
           label: tr('releaseDate'),
@@ -358,7 +362,10 @@ class _SettingsPageState extends State<SettingsPage> {
           value: ColourSchemeMode.standard,
           label: tr('standard'),
         ),
-        DropdownMenuEntry(value: ColourSchemeMode.vibrant, label: tr('vibrant')),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.vibrant,
+          label: tr('vibrant'),
+        ),
         DropdownMenuEntry(
           value: ColourSchemeMode.expressive,
           label: tr('expressive'),
@@ -559,7 +566,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   label: tr('bgUpdatesOnWiFiOnly'),
                                   value: settingsProvider.bgUpdatesOnWiFiOnly,
                                   onChanged: (value) {
-                                    settingsProvider.bgUpdatesOnWiFiOnly = value;
+                                    settingsProvider.bgUpdatesOnWiFiOnly =
+                                        value;
                                   },
                                 ),
                               if (settingsProvider.enableBackgroundUpdates)
@@ -568,7 +576,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   value: settingsProvider
                                       .bgUpdatesWhileChargingOnly,
                                   onChanged: (value) {
-                                    settingsProvider.bgUpdatesWhileChargingOnly =
+                                    settingsProvider
+                                            .bgUpdatesWhileChargingOnly =
                                         value;
                                   },
                                 ),
@@ -584,7 +593,8 @@ class _SettingsPageState extends State<SettingsPage> {
                               label: tr('checkUpdateOnDetailPage'),
                               value: settingsProvider.checkUpdateOnDetailPage,
                               onChanged: (value) {
-                                settingsProvider.checkUpdateOnDetailPage = value;
+                                settingsProvider.checkUpdateOnDetailPage =
+                                    value;
                               },
                             ),
                             SettingsToggleRow(
@@ -623,8 +633,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                             SettingsToggleRow(
                               label: tr('showBatteryOptimizationPrompt'),
-                              value:
-                                  settingsProvider.showBatteryOptimizationPrompt,
+                              value: settingsProvider
+                                  .showBatteryOptimizationPrompt,
                               onChanged: (value) {
                                 settingsProvider.showBatteryOptimizationPrompt =
                                     value;
@@ -653,20 +663,11 @@ class _SettingsPageState extends State<SettingsPage> {
                                         .beforeNewInstallsShareToAppVerifier =
                                     value;
                               },
-                              subtitle: InkWell(
-                                onTap: () {
-                                  launchUrlString(
+                              subtitle: LinkText(
+                                text: tr('about'),
+                                url:
                                     'https://github.com/soupslurpr/AppVerifier',
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                },
-                                child: Text(
-                                  tr('about'),
-                                  style: const TextStyle(
-                                    decoration: TextDecoration.underline,
-                                    fontSize: 12,
-                                  ),
-                                ),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                             SettingsToggleRow(
@@ -732,7 +733,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: tr('appearance'),
                           children: [
                             themeModeControl,
-                            if (settingsProvider.theme == ThemeSettings.system &&
+                            if (settingsProvider.theme ==
+                                    ThemeSettings.system &&
                                 (androidSdkInt ?? 30) < 29)
                               caption(tr('followSystemThemeExplanation')),
                             if (settingsProvider.theme != ThemeSettings.light)
@@ -947,15 +949,15 @@ class _LogsDialogState extends State<LogsDialog> {
       title: Text(tr('appLogs')),
       content: Column(
         children: [
-          DropdownButtonFormField(
-            initialValue: days.first,
-            items: days
+          DropdownMenu(
+            initialSelection: days.first,
+            expandedInsets: EdgeInsets.zero,
+            dropdownMenuEntries: days
                 .map(
-                  (e) =>
-                      DropdownMenuItem(value: e, child: Text(plural('day', e))),
+                  (e) => DropdownMenuEntry(value: e, label: plural('day', e)),
                 )
                 .toList(),
-            onChanged: (d) {
+            onSelected: (d) {
               filterLogs(d ?? 7);
             },
           ),
