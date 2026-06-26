@@ -316,11 +316,16 @@ extension AppsProviderLifecycle on AppsProvider {
     await Future.wait(
       apps.map((a) async {
         var app = a.deepCopy();
-        PackageInfo? info = await getInstalledInfo(app.id);
-        var icon = await info?.applicationInfo?.getAppIcon();
-        app.name = await (info?.applicationInfo?.getAppLabel()) ?? app.name;
+        PackageInfo? info;
+        Uint8List? icon;
         if (attemptToCorrectInstallStatus) {
+          info = await getInstalledInfo(app.id);
+          icon = await info?.applicationInfo?.getAppIcon();
+          app.name = await (info?.applicationInfo?.getAppLabel()) ?? app.name;
           app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
+        } else {
+          info = null;
+          icon = null;
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
           String filePath = '${(await getAppsDir()).path}/${app.id}.json';
@@ -341,6 +346,10 @@ extension AppsProviderLifecycle on AppsProvider {
           if (e is! ArgumentError || e.name != 'key') {
             rethrow;
           }
+        }
+        if (info == null) {
+          final cachedIcon = File('${iconsCacheDir.path}/${app.id}.png');
+          if (cachedIcon.existsSync()) cachedIcon.deleteSync();
         }
       }),
     );
@@ -424,7 +433,7 @@ extension AppsProviderLifecycle on AppsProvider {
       if (remove) {
         await removeApps(apps.map((e) => e.id).toList());
       }
-      return uninstall || remove;
+      return remove;
     }
     return false;
   }
