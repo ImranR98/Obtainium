@@ -260,6 +260,15 @@ class _TVTextFieldFocusState extends State<_TVTextFieldFocus> {
     widget.textFocusNode.addListener(_onTextFocusChange);
   }
 
+  @override
+  void didUpdateWidget(covariant _TVTextFieldFocus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.textFocusNode != oldWidget.textFocusNode) {
+      oldWidget.textFocusNode.removeListener(_onTextFocusChange);
+      widget.textFocusNode.addListener(_onTextFocusChange);
+    }
+  }
+
   void _onTextFocusChange() {
     if (!widget.textFocusNode.hasFocus && _activated) {
       setState(() => _activated = false);

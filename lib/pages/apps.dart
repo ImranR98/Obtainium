@@ -162,6 +162,11 @@ class AppsPageState extends State<AppsPage> {
   String? _pipelineSig;
   List<AppInMemory>? _pipelineResult;
 
+  // Detects when downloads begin or end so the pipeline cache is invalidated
+  // on state transitions (showing/hiding progress UI) without flushing on
+  // every per-tick progress update.
+  bool _downloadsWereActive = false;
+
   // Debounces search-field input so rapid typing doesn't re-run the pipeline on
   // every keystroke.
   Timer? _searchDebounce;
@@ -306,6 +311,14 @@ class AppsPageState extends State<AppsPage> {
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
+
+    // Invalidate the pipeline cache when downloads start or stop so the
+    // UI reflects progress changes without recomputing on every tick.
+    final downloadsActive = appsProvider.areDownloadsRunning();
+    if (downloadsActive != _downloadsWereActive) {
+      _pipelineResult = null;
+      _downloadsWereActive = downloadsActive;
+    }
 
     final pipelineSig = _pipelineSignature(listedApps, settingsProvider);
     if (pipelineSig == _pipelineSig && _pipelineResult != null) {
@@ -1383,7 +1396,7 @@ class AppListTile extends StatelessWidget {
         hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
         HighlightableButton(
           highlight: settingsProvider.highlightTouchTargets,
-          onPressed: showChangesFn,
+          onPressed: appInMemory.downloadProgress == -1 ? null : showChangesFn,
           label: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1413,7 +1426,9 @@ class AppListTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _changesButtonString(showChangesFn != null),
+                    appInMemory.downloadProgress == -1
+                        ? tr('installing')
+                        : _changesButtonString(showChangesFn != null),
                     style: TextStyle(
                       fontStyle: FontStyle.italic,
                       decoration: showChangesFn != null
@@ -1503,8 +1518,9 @@ class AppListTile extends StatelessWidget {
       ),
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
-          // Swipe right — install or update (snap back, action is async).
-          if (canInstall || canUpdate) {
+          // Swipe right — install or update (disabled if any download is running).
+          if ((canInstall || canUpdate) &&
+              !appsProvider.areDownloadsRunning()) {
             appsProvider.downloadAndInstallLatestApps([
               appId,
             ], globalNavigatorKey.currentContext);
@@ -1574,20 +1590,17 @@ class AppListTile extends StatelessWidget {
                   children: [_authorText(), _repoMovedRow(context)],
                 )
               : _authorText(),
-          trailing: appInMemory.downloadProgress != null
+          trailing: appInMemory.downloadProgress != null &&
+                  appInMemory.downloadProgress! >= 0
               ? SizedBox(
                   child: Text(
-                    appInMemory.downloadProgress! >= 0
-                        ? tr(
-                            'percentProgress',
-                            args: [
-                              appInMemory.downloadProgress!.toInt().toString(),
-                            ],
-                          )
-                        : tr('installing'),
-                    textAlign: (appInMemory.downloadProgress! >= 0)
-                        ? TextAlign.start
-                        : TextAlign.end,
+                    tr(
+                      'percentProgress',
+                      args: [
+                        appInMemory.downloadProgress!.toInt().toString(),
+                      ],
+                    ),
+                    textAlign: TextAlign.start,
                   ),
                 )
               : trailingRow,
