@@ -454,7 +454,20 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
-                  Expanded(child: content),
+                  // In single-pane (rail) mode on wide screens, cap the content
+                  // width so list rows don't stretch edge-to-edge. (Two-pane
+                  // already constrains each pane via its flex.)
+                  Expanded(
+                    child: useTwoPane
+                        ? content
+                        : Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 720),
+                              child: content,
+                            ),
+                          ),
+                  ),
                 ],
               )
             : content,
