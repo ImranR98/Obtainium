@@ -836,6 +836,10 @@ extension AppsProviderInstall on AppsProvider {
           downloadedDir = downloadedArtifact as DownloadedDir;
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
+        // Bridge the gap between download completion and install start so the
+        // Dismissible stays disabled (see AppListTile).
+        apps[id]?.downloadProgress = -1;
+        notify();
         willBeSilent = await canInstallSilently(apps[id]!.app);
         if (!settingsProvider.useShizuku) {
           if (!(await settingsProvider.getInstallPermission(enforce: false))) {
@@ -859,6 +863,7 @@ extension AppsProviderInstall on AppsProvider {
         }
       } catch (e) {
         errors.add(id, e, appName: apps[id]?.name);
+        if (apps[id] != null) { apps[id]!.downloadProgress = null; notify(); }
       }
       return {
         'id': id,
