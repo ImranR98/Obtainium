@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/app_list_builder.dart';
+import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -16,7 +17,6 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
-import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -801,6 +801,7 @@ class AppsPageState extends State<AppsPage> {
   }
 
   Future<void> _showFilterDialog(BuildContext context) async {
+    var pendingCategories = {...filter.categoryFilter};
     var values = await showDialog<Map<String, dynamic>?>(
       context: context,
       builder: (BuildContext ctx) {
@@ -868,10 +869,11 @@ class AppsPageState extends State<AppsPage> {
               padding: null,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: CategoryEditorSelector(
-                  preselected: filter.categoryFilter,
-                  onSelected: (categories) {
-                    filter.categoryFilter = categories.toSet();
+                child: CategorySelector(
+                  selected: filter.categoryFilter,
+                  allowCreate: false,
+                  onChanged: (categories) {
+                    pendingCategories = categories;
                   },
                 ),
               ),
@@ -884,6 +886,7 @@ class AppsPageState extends State<AppsPage> {
       _searchDebounce?.cancel();
       setState(() {
         filter.setFormValuesFromMap(values);
+        filter.categoryFilter = pendingCategories;
       });
     }
   }
@@ -927,6 +930,10 @@ class AppsPageState extends State<AppsPage> {
                 null;
           }
           if (cont && context.mounted) {
+            var pendingCategories = !showPrompt
+                ? (preselected ?? <String>{})
+                : <String>{};
+            var categoriesChanged = false;
             await showDialog<Map<String, dynamic>?>(
               context: context,
               builder: (BuildContext ctx) {
@@ -936,22 +943,25 @@ class AppsPageState extends State<AppsPage> {
                   initValid: true,
                   singleNullReturnButton: tr('continue'),
                   additionalWidgets: [
-                    CategoryEditorSelector(
-                      preselected: !showPrompt ? preselected ?? {} : {},
-                      showLabelWhenNotEmpty: false,
-                      onSelected: (categories) {
-                        appsProvider.saveApps(
-                          selectedApps.map((e) {
-                            e.categories = categories;
-                            return e;
-                          }).toList(),
-                        );
+                    CategorySelector(
+                      selected: !showPrompt ? (preselected ?? {}) : {},
+                      onChanged: (categories) {
+                        pendingCategories = categories;
+                        categoriesChanged = true;
                       },
                     ),
                   ],
                 );
               },
             );
+            if (categoriesChanged) {
+              appsProvider.saveApps(
+                selectedApps.map((e) {
+                  e.categories = pendingCategories.toList();
+                  return e;
+                }).toList(),
+              );
+            }
           }
         } catch (err) {
           if (context.mounted) showError(err, context);

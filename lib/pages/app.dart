@@ -1,10 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
-import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -900,14 +900,12 @@ class _AppPageState extends State<AppPage> {
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 4 — Categories
                   section(true, true, children: [
-                    CategoryEditorSelector(
+                    CategorySelector(
                       alignment: WrapAlignment.start,
-                      preselected: app?.app.categories != null
-                          ? app!.app.categories.toSet()
-                          : {},
-                      onSelected: (categories) {
+                      selected: app?.app.categories.toSet() ?? {},
+                      onChanged: (categories) {
                         if (app != null) {
-                          app.app.categories = categories;
+                          app.app.categories = categories.toList();
                           appsProvider.saveApps([app.app]);
                         }
                       },
