@@ -6,7 +6,7 @@
     "cantInstallOlderVersion": "Kan geen oudere versie van de app installeren",
     "showAppDowngradeError": "Foutmeldingen weergeven bij afwaarderen",
     "showBatteryOptimizationPrompt": "Melding voor batterijoptimalisatie weergeven",
-    "tactileFeedbackEnabled": "Trilling inschakelen",
+    "tactileFeedbackEnabled": "Trillen inschakelen",
     "includePrereleasesByDefault": "Voorpublicaties standaard opnemen",
     "appIdMismatch": "Gedownload pakket-ID komt niet overeen met de bestaande app-ID",
     "repoRenamedCheck": "Controleren of opslag is verplaatst (Verhoogt aantal API-verzoeken)",
