@@ -1388,6 +1388,10 @@ class AppListTile extends StatelessWidget {
     var hasUpdate =
         _app.installedVersion != null &&
         _app.installedVersion != _app.latestVersion;
+    var isInstalling = appInMemory.downloadProgress == -1;
+    final updateColor = hasUpdate
+        ? Theme.of(context).colorScheme.primary
+        : null;
     Widget trailingRow = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1396,7 +1400,7 @@ class AppListTile extends StatelessWidget {
         hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
         HighlightableButton(
           highlight: settingsProvider.highlightTouchTargets,
-          onPressed: appInMemory.downloadProgress == -1 ? null : showChangesFn,
+          onPressed: isInstalling ? null : showChangesFn,
           label: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1416,8 +1420,11 @@ class AppListTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.end,
                       style: isVersionPseudo(_app)
-                          ? const TextStyle(fontStyle: FontStyle.italic)
-                          : null,
+                          ? TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: updateColor,
+                            )
+                          : TextStyle(color: updateColor),
                     ),
                   ),
                 ],
@@ -1426,14 +1433,15 @@ class AppListTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    appInMemory.downloadProgress == -1
+                    isInstalling
                         ? tr('installing')
                         : _changesButtonString(showChangesFn != null),
                     style: TextStyle(
                       fontStyle: FontStyle.italic,
-                      decoration: showChangesFn != null
-                          ? TextDecoration.underline
-                          : TextDecoration.none,
+                      color: updateColor,
+                      decoration: isInstalling || showChangesFn == null
+                          ? TextDecoration.none
+                          : TextDecoration.underline,
                     ),
                   ),
                 ],
@@ -1590,15 +1598,14 @@ class AppListTile extends StatelessWidget {
                   children: [_authorText(), _repoMovedRow(context)],
                 )
               : _authorText(),
-          trailing: appInMemory.downloadProgress != null &&
+          trailing:
+              appInMemory.downloadProgress != null &&
                   appInMemory.downloadProgress! >= 0
               ? SizedBox(
                   child: Text(
                     tr(
                       'percentProgress',
-                      args: [
-                        appInMemory.downloadProgress!.toInt().toString(),
-                      ],
+                      args: [appInMemory.downloadProgress!.toInt().toString()],
                     ),
                     textAlign: TextAlign.start,
                   ),

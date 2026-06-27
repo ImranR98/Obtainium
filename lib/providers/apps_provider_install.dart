@@ -426,9 +426,10 @@ extension AppsProviderInstall on AppsProvider {
           firstTimeWithContext,
           needsBGWorkaround: needsBGWorkaround,
           shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
-          additionalAPKs: apkFiles.sublist(
-            1,
-          ).map((a) => DownloadedApk(dir.appId, a)).toList(),
+          additionalAPKs: apkFiles
+              .sublist(1)
+              .map((a) => DownloadedApk(dir.appId, a))
+              .toList(),
         );
         somethingInstalled = somethingInstalled || wasInstalled;
         dir.file.delete(recursive: true);
@@ -836,9 +837,10 @@ extension AppsProviderInstall on AppsProvider {
           downloadedDir = downloadedArtifact as DownloadedDir;
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
-        // Bridge the gap between download completion and install start so the
-        // Dismissible stays disabled (see AppListTile).
-        apps[id]?.downloadProgress = -1;
+        // Bridge download-to-install gap so the Dismissible stays disabled.
+        // Use 100 (download complete) rather than -1 (installing) so the UI
+        // doesn't report "Installing" before installation actually begins.
+        apps[id]?.downloadProgress = 100;
         notify();
         willBeSilent = await canInstallSilently(apps[id]!.app);
         if (!settingsProvider.useShizuku) {
@@ -863,7 +865,10 @@ extension AppsProviderInstall on AppsProvider {
         }
       } catch (e) {
         errors.add(id, e, appName: apps[id]?.name);
-        if (apps[id] != null) { apps[id]!.downloadProgress = null; notify(); }
+        if (apps[id] != null) {
+          apps[id]!.downloadProgress = null;
+          notify();
+        }
       }
       return {
         'id': id,
@@ -874,29 +879,38 @@ extension AppsProviderInstall on AppsProvider {
     }
 
     List<Map<Object?, Object?>> downloadResults = [];
-    if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
-      for (var id in appsToInstall) {
-        downloadResults.add(await downloadFn(id));
+    try {
+      if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+        for (var id in appsToInstall) {
+          downloadResults.add(await downloadFn(id));
+        }
+      } else {
+        downloadResults = await Future.wait(
+          appsToInstall.map((id) => downloadFn(id, skipInstalls: true)),
+        );
       }
-    } else {
-      downloadResults = await Future.wait(
-        appsToInstall.map((id) => downloadFn(id, skipInstalls: true)),
-      );
-    }
-    for (var res in downloadResults) {
-      if (!errors.appIdNames.containsKey(res['id'])) {
-        try {
-          await installFn(
-            res['id'] as String,
-            res['willBeSilent'] as bool,
-            res['downloadedFile'] as DownloadedApk?,
-            res['downloadedDir'] as DownloadedDir?,
-          );
-        } catch (e) {
-          var id = res['id'] as String;
-          errors.add(id, e, appName: apps[id]?.name);
+      for (var res in downloadResults) {
+        if (!errors.appIdNames.containsKey(res['id'])) {
+          try {
+            await installFn(
+              res['id'] as String,
+              res['willBeSilent'] as bool,
+              res['downloadedFile'] as DownloadedApk?,
+              res['downloadedDir'] as DownloadedDir?,
+            );
+          } catch (e) {
+            var id = res['id'] as String;
+            errors.add(id, e, appName: apps[id]?.name);
+          }
         }
       }
+    } finally {
+      // Clear any remaining progress in case the flow was interrupted
+      // (e.g. unhandled error in a download, app backgrounded/killed, etc.)
+      for (var id in appsToInstall) {
+        apps[id]?.downloadProgress = null;
+      }
+      notify();
     }
 
     if (errors.idsByErrorString.isNotEmpty) {
