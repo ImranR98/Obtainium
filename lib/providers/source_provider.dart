@@ -730,6 +730,25 @@ abstract class AppSource {
     //
   }
 
+  /// A convenience for the common standardize-by-regex pattern: build a regex
+  /// from the source's [hosts] plus the given subdomain prefix and path, match
+  /// against [url], and return the match or throw [InvalidURLError].  Many
+  /// sources (16+) repeat this block verbatim; subclasses can call this
+  /// helper instead.
+  String standardizeUrlWithRegex(
+    String url, {
+    required String subdomainPrefix,
+    required String pathPattern,
+  }) {
+    final re = RegExp(
+      '^https?://$subdomainPrefix${getSourceRegex(hosts)}$pathPattern',
+      caseSensitive: false,
+    );
+    final match = re.firstMatch(url);
+    if (match == null) throw InvalidURLError(name);
+    return match.group(0)!;
+  }
+
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     throw NotImplementedError();
   }
@@ -1125,7 +1144,13 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
-bool isEnglish() => tr('and') == 'and'; // Quick hack, find a better way
+/// Whether the current locale is English.  Use sparingly — this exists because
+/// easy\_localization doesn't expose a public global locale without a context,
+/// and callers (list formatting, source labels) often run outside a widget tree.
+/// The comparison `tr('and') == 'and'` relies on the fact that English (and
+/// untranslated en-fallback keys) return the key unchanged, while every other
+/// locale returns a translated word.
+bool isEnglish() => tr('and') == 'and';
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 
 bool isVersionPseudo(App app) =>
@@ -1134,6 +1159,10 @@ bool isVersionPseudo(App app) =>
         app.additionalSettings['versionDetection'] != true);
 
 class SourceProvider {
+  static final SourceProvider _instance = SourceProvider._();
+  factory SourceProvider() => _instance;
+  SourceProvider._();
+
   // Builds a fresh set of source instances. Adding a source here makes it
   // available via the service. Kept private so callers go through [sources]
   // (cached) or, when per-call mutation is needed, [_buildSources] directly.

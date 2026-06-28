@@ -10,17 +10,14 @@ class APKCombo extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+[^/]+',
-      caseSensitive: false,
-    );
-    var match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: '(www\\.)?',
+    pathPattern: '/+[^/]+/+[^/]+',
+  );
 
   @override
   Future<String?> tryInferringAppId(
