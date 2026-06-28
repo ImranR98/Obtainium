@@ -272,12 +272,16 @@ Future<String> checkPartialDownloadHash(
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
   var client = IOClient(createHttpClient(allowInsecure));
-  var response = await client.send(req);
-  if (response.statusCode < 200 || response.statusCode > 299) {
-    throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
+  try {
+    var response = await client.send(req);
+    if (response.statusCode < 200 || response.statusCode > 299) {
+      throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
+    }
+    List<List<int>> bytes = await response.stream.take(bytesToGrab).toList();
+    return hashListOfLists(bytes);
+  } finally {
+    client.close();
   }
-  List<List<int>> bytes = await response.stream.take(bytesToGrab).toList();
-  return hashListOfLists(bytes);
 }
 
 Future<String?> checkETagHeader(
@@ -404,7 +408,11 @@ Future<File> downloadFile(
           break;
         }
       } else {
+        // The temp file disappeared: a concurrent download finished it (and
+        // renamed it to the final file). Stop waiting; the check below decides
+        // whether to reuse the completed file or start a fresh download.
         shouldReturn = downloadedFile.existsSync();
+        break;
       }
     }
     if (shouldReturn) {
@@ -439,7 +447,7 @@ Future<File> downloadFile(
     'GET',
     url,
     reqHeaders,
-    {},
+    {'allowInsecure': allowInsecure},
   );
   HttpClient responseClient = responseWithClient.value.key;
   HttpClientResponse response = responseWithClient.value.value;
@@ -892,6 +900,10 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       logs.add(
         'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
       );
+      // Actually wait before retrying so rate-limited hosts aren't hammered.
+      if (retryAfterXSeconds > 0) {
+        await Future.delayed(Duration(seconds: retryAfterXSeconds));
+      }
       return await bgUpdateCheck(taskId, {
         'toCheck': toRetry
             .map((entry) => {'key': entry.key, 'value': entry.value})

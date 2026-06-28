@@ -76,7 +76,11 @@ class LiteAPKs extends AppSource {
       throw getObtainiumHttpError(res1);
     }
 
-    var liteAppId = jsonDecode(res1.body)[0]['id'];
+    var posts = jsonDecode(res1.body);
+    if (posts is! List || posts.isEmpty) {
+      throw NoReleasesError();
+    }
+    var liteAppId = posts[0]['id'];
     if (liteAppId == null) {
       throw NoReleasesError();
     }

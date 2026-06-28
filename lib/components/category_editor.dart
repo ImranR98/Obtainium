@@ -344,6 +344,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   Future<void> _create() async {
     final result = await showCategoryEditor(context);
     if (result?.name == null) return;
+    if (!mounted) return;
     setState(() {
       if (widget.singleSelect) {
         _selected = {result!.name!};
@@ -357,6 +358,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   Future<void> _edit(String name) async {
     final result = await showCategoryEditor(context, existingName: name);
     if (result == null) return;
+    if (!mounted) return;
     final wasSelected = _selected.contains(name);
     setState(() {
       _selected.remove(name);

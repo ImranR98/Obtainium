@@ -323,6 +323,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
   late List<List<Widget>> formInputs;
   String? initKey;
   int forceUpdateKeyCount = 0;
+  // Text controllers created by initForm(); disposed in dispose() to avoid
+  // leaking them when the form is removed.
+  final List<TextEditingController> _textControllers = [];
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
@@ -358,6 +361,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         if (formItem is GeneratedFormTextField) {
           final formFieldKey = GlobalKey<FormFieldState>();
           var ctrl = TextEditingController(text: values[formItem.key]);
+          _textControllers.add(ctrl);
           return TypeAheadField<String>(
             controller: ctrl,
             builder: (context, controller, focusNode) {
@@ -499,6 +503,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void initState() {
     super.initState();
     initForm();
+  }
+
+  @override
+  void dispose() {
+    for (final c in _textControllers) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   @override

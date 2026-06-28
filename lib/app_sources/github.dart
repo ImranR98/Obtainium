@@ -579,8 +579,9 @@ class GitHub extends AppSource {
         }
         var nameToFilter = releases[i]['name'] as String?;
         if (nameToFilter == null || nameToFilter.trim().isEmpty) {
-          // Some leave titles empty so tag is used
-          nameToFilter = releases[i]['tag_name'] as String;
+          // Some leave titles empty so tag is used (guard against a missing or
+          // non-string tag_name rather than crashing on a bad cast).
+          nameToFilter = releases[i]['tag_name']?.toString() ?? '';
         }
         if (regexFilter != null &&
             !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {

@@ -108,12 +108,18 @@ class APKMirror extends AppSource {
       DateTime? releaseDate = dateString != null
           ? HttpDate.parse('$dateString GMT')
           : null;
-      String? version = titleString
-          ?.substring(
-            RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-            RegExp(' by ').allMatches(titleString).last.start,
-          )
-          .trim();
+      String? version;
+      if (titleString != null) {
+        final byMatches = RegExp(' by ').allMatches(titleString);
+        version = byMatches.isEmpty
+            ? titleString
+            : titleString
+                  .substring(
+                    RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
+                    byMatches.last.start,
+                  )
+                  .trim();
+      }
       if (version == null || version.isEmpty) {
         version = titleString;
       }

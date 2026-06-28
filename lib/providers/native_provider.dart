@@ -16,7 +16,7 @@ class NativeFeatures {
     var fontLoader = FontLoader('SystemFont');
     var fontFilePath = await AndroidSystemFont().getFilePath();
     fontLoader.addFont(_readFileBytes(fontFilePath!));
-    fontLoader.load();
+    await fontLoader.load();
     _systemFontLoaded = true;
   }
 }

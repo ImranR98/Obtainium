@@ -233,6 +233,7 @@ class NotificationsProvider {
   };
 
   Future<void> initialize() async {
+    if (isInitialized) return;
     isInitialized =
         await notifications.initialize(
           settings: const InitializationSettings(

@@ -295,6 +295,7 @@ class _ObtainiumState extends State<Obtainium> {
   var _lastUpdateInterval = -1;
   var _lastUseFGService = false;
   var _firstRunHandled = false;
+  var _launchByNotifChecked = false;
 
   void _manageServices(SettingsProvider settings) {
     var interval = settings.updateInterval;
@@ -481,9 +482,12 @@ class _ObtainiumState extends State<Obtainium> {
     _manageServices(settingsProvider);
     _handleFirstRun(settingsProvider, appsProvider, logs, context);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifs.checkLaunchByNotif();
-    });
+    if (!_launchByNotifChecked) {
+      _launchByNotifChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifs.checkLaunchByNotif();
+      });
+    }
 
     return WithForegroundTask(
       child: DynamicColorBuilder(
