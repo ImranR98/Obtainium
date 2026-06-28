@@ -522,6 +522,57 @@ Future<PackageInfo?> getInstalledInfo(
   return null;
 }
 
+const dhizukuPackageId = 'com.rosan.dhizuku';
+
+Future<String> checkPrivilegeInstallPermission() async {
+  return (await ShizukuApkInstaller().checkPermission())!;
+}
+
+void throwIfPrivilegeInstallPermissionDenied(String resCode) {
+  switch (resCode) {
+    case 'services_not_found':
+      throw ObtainiumError(tr('shizukuBinderNotFound'));
+    case 'old_shizuku':
+      throw ObtainiumError(tr('shizukuOld'));
+    case 'old_android_with_adb':
+      throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
+    case 'denied':
+      throw ObtainiumError(tr('cancelled'));
+  }
+}
+
+Future<bool> isDhizukuInstalled() async =>
+    (await getInstalledInfo(dhizukuPackageId, printErr: false)) != null;
+
+Future<void> logDhizukuShizukuFallback(
+  String resCode,
+  LogsProvider logs,
+) async {
+  if (resCode != 'granted_adb' && resCode != 'granted_root') return;
+  if (!await isDhizukuInstalled()) return;
+  await logs.add(tr('dhizukuNotActivatedUsingShizuku'));
+}
+
+Future<String> ensurePrivilegeInstallPermission({
+  LogsProvider? logs,
+}) async {
+  final resCode = await checkPrivilegeInstallPermission();
+  throwIfPrivilegeInstallPermissionDenied(resCode);
+  if (logs != null) {
+    await logDhizukuShizukuFallback(resCode, logs);
+  }
+  return resCode;
+}
+
+Future<void> notifyDhizukuShizukuFallback(String resCode) async {
+  if (resCode != 'granted_adb' && resCode != 'granted_root') return;
+  if (!await isDhizukuInstalled()) return;
+  Fluttertoast.showToast(
+    msg: tr('dhizukuNotActivatedUsingShizuku'),
+    toastLength: Toast.LENGTH_LONG,
+  );
+}
+
 Future<Directory> getAppStorageDir() async =>
     await getExternalStorageDirectory() ??
     await getApplicationDocumentsDirectory();
@@ -1427,16 +1478,7 @@ class AppsProvider with ChangeNotifier {
             throw ObtainiumError(tr('cancelled'));
           }
         } else {
-          switch ((await ShizukuApkInstaller().checkPermission())!) {
-            case 'services_not_found':
-              throw ObtainiumError(tr('shizukuBinderNotFound'));
-            case 'old_shizuku':
-              throw ObtainiumError(tr('shizukuOld'));
-            case 'old_android_with_adb':
-              throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
-            case 'denied':
-              throw ObtainiumError(tr('cancelled'));
-          }
+          await ensurePrivilegeInstallPermission(logs: logs);
         }
         if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
           // ignore: use_build_context_synchronously

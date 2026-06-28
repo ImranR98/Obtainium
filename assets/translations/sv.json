@@ -309,6 +309,7 @@
     "shizukuBinderNotFound": "Shizuku is not running",
     "shizukuOld": "Gammal Shizuku-version (<11) - uppdatera den",
     "shizukuOldAndroidWithADB": "Shizuku körs på Android < 8.1 med ADB - uppdatera Android eller använd Sui istället",
+    "dhizukuNotActivatedUsingShizuku": "Dhizuku is not activated as Device Owner, so Shizuku is being used instead. Activate Dhizuku in the Dhizuku app to use it.",
     "shizukuPretendToBeGooglePlay": "Ange Google Play som installationskälla (om Shizuku används)",
     "useSystemFont": "Använd systemteckensnittet",
     "useVersionCodeAsOSVersion": "Använd appversionskoden som OS-upptäckt version",

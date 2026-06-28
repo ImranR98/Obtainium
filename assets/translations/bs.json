@@ -309,6 +309,7 @@
     "shizukuBinderNotFound": "Shizuku nije pokrenut",
     "shizukuOld": "Stara Shizuku verzija (<11) - ažurirajte je",
     "shizukuOldAndroidWithADB": "Shizuku pokrenut na Android-u < 8.1 pomoću ADB-a - ažurirajte Android ili koristite Sui",
+    "dhizukuNotActivatedUsingShizuku": "Dhizuku is not activated as Device Owner, so Shizuku is being used instead. Activate Dhizuku in the Dhizuku app to use it.",
     "shizukuPretendToBeGooglePlay": "Postavi Google Play kao izvor instalacije (samo ako je Shizuku u upotrebi)",
     "useSystemFont": "Koristite sistemski font",
     "useVersionCodeAsOSVersion": "Koristite kod verzije aplikacije kao verziju koju je otkrio OS",
