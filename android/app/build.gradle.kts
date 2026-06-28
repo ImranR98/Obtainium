@@ -8,6 +8,7 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("dev.rikka.tools.refine")
 }
 
 val localProperties = Properties()
@@ -128,6 +129,11 @@ android.applicationVariants.configureEach {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
+    implementation("dev.rikka.tools.refine:runtime:4.4.0")
+    compileOnly("dev.rikka.hidden:stub:4.4.0")
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
 }
 
 flutter {

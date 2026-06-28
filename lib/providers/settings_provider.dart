@@ -77,6 +77,17 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  PrivilegeInstallBackend get privilegeInstallBackend {
+    final name = prefs?.getString('privilegeInstallBackend');
+    return PrivilegeInstallBackend.values.asNameMap()[name] ??
+        PrivilegeInstallBackend.none;
+  }
+
+  set privilegeInstallBackend(PrivilegeInstallBackend backend) {
+    prefs?.setString('privilegeInstallBackend', backend.name);
+    notifyListeners();
+  }
+
   ThemeSettings get theme {
     return ThemeSettings.values[prefs?.getInt('theme') ??
         ThemeSettings.system.index];

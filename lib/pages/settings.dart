@@ -16,7 +16,6 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -587,37 +586,24 @@ class _SettingsPageState extends State<SettingsPage> {
                             Flexible(child: Text(tr('useShizuku'))),
                             Switch(
                               value: settingsProvider.useShizuku,
-                              onChanged: (useShizuku) {
+                              onChanged: (useShizuku) async {
                                 if (useShizuku) {
-                                  ShizukuApkInstaller().checkPermission().then((
-                                    resCode,
-                                  ) {
-                                    settingsProvider.useShizuku = resCode!.startsWith('granted');
-                                    switch (resCode) {
-                                      case 'services_not_found':
-                                        showError(
-                                          ObtainiumError(tr('shizukuBinderNotFound')),
-                                          context,
-                                        );
-                                      case 'old_shizuku':
-                                        showError(
-                                          ObtainiumError(tr('shizukuOld')),
-                                          context,
-                                        );
-                                      case 'old_android_with_adb':
-                                        showError(
-                                          ObtainiumError(tr('shizukuOldAndroidWithADB')),
-                                          context,
-                                        );
-                                      case 'denied':
-                                        showError(
-                                          ObtainiumError(tr('cancelled')),
-                                          context,
-                                        );
-                                    }
-                                  });
+                                  try {
+                                    final resCode =
+                                        await ensurePrivilegeInstallPermission(
+                                      settings: settingsProvider,
+                                    );
+                                    settingsProvider.useShizuku =
+                                        resCode.startsWith('granted');
+                                    await notifyDhizukuShizukuFallback(resCode);
+                                  } catch (e) {
+                                    settingsProvider.useShizuku = false;
+                                    showError(e, context);
+                                  }
                                 } else {
                                   settingsProvider.useShizuku = false;
+                                  settingsProvider.privilegeInstallBackend =
+                                      PrivilegeInstallBackend.none;
                                 }
                               },
                             ),
