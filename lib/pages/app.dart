@@ -126,8 +126,7 @@ class _AppPageState extends State<AppPage> {
     ]);
   }
 
-  AppInMemory? _cachedApp(AppsProvider appsProvider) {
-    final source = appsProvider.apps[widget.appId];
+  AppInMemory? _cachedApp(AppInMemory? source) {
     if (source == null) {
       _appCache = null;
       _appCacheSig = null;
@@ -660,14 +659,16 @@ class _AppPageState extends State<AppPage> {
 
   @override
   Widget build(BuildContext context) {
-    var appsProvider = context.watch<AppsProvider>();
+    var appsProvider = context.read<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var showAppWebpageFinal =
         (settingsProvider.showAppWebpage &&
             !widget.showOppositeOfPreferredView) ||
         (!settingsProvider.showAppWebpage &&
             widget.showOppositeOfPreferredView);
-    bool areDownloadsRunning = appsProvider.areDownloadsRunning();
+    bool areDownloadsRunning = context.select<AppsProvider, bool>(
+      (p) => p.areDownloadsRunning(),
+    );
 
     // Builds a single positionally-rounded card sliver.
     Widget section(
@@ -692,7 +693,11 @@ class _AppPageState extends State<AppPage> {
     }
 
     var sourceProvider = SourceProvider();
-    AppInMemory? app = _cachedApp(appsProvider);
+    AppInMemory? app = _cachedApp(
+      context.select<AppsProvider, AppInMemory?>(
+        (p) => p.apps[widget.appId],
+      ),
+    );
     var source = app != null
         ? sourceProvider.getSource(
             app.app.url,

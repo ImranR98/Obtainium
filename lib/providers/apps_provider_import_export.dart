@@ -1,4 +1,13 @@
-part of 'apps_provider.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:easy_localization/easy_localization.dart';
+
+import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {

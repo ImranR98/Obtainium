@@ -1,4 +1,21 @@
-part of 'apps_provider.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_package_manager/android_package_manager.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:obtainium/app_sources/direct_apk_link.dart';
+import 'package:obtainium/app_sources/html.dart';
+import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
 extension AppsProviderLifecycle on AppsProvider {
@@ -177,7 +194,7 @@ extension AppsProviderLifecycle on AppsProvider {
   Future<void> loadApps({String? singleId}) async {
     await waitForAppsToLoad();
     final loadingCompleter = Completer<void>();
-    _appsLoadingCompleter = loadingCompleter;
+    appsLoadingCompleter = loadingCompleter;
     loadingApps = true;
     notify();
     try {
@@ -276,7 +293,7 @@ extension AppsProviderLifecycle on AppsProvider {
       }
     } finally {
       loadingApps = false;
-      _appsLoadingCompleter = null;
+      appsLoadingCompleter = null;
       loadingCompleter.complete();
       notify();
     }

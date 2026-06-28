@@ -230,7 +230,9 @@ class GitHub extends AppSource {
           }
         }
       } catch (err) {
-        // Ignore - ID will be extracted from the APK
+        LogsProvider().add(
+          'Failed to extract ID from build.gradle or APK: ${err.toString()}',
+        );
       }
     }
     return null;
@@ -366,7 +368,9 @@ class GitHub extends AppSource {
         try {
           newUrl = jsonDecode(res2.body)['html_url'];
         } catch (e) {
-          // Unexpected - ignore (keep old URL)
+          LogsProvider().add(
+            'Failed to parse redirect response for repo rename: ${e.toString()}',
+          );
         }
         if (newUrl != null) {
           throw RepositoryRenamedError(standardUrl, newUrl);

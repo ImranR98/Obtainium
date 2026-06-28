@@ -7,45 +7,33 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:battery_plus/battery_plus.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:typed_data';
 
-import 'package:android_intent_plus/flag.dart';
-import 'package:android_package_installer/android_package_installer.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
-import 'package:obtainium/app_sources/direct_apk_link.dart';
-import 'package:obtainium/app_sources/html.dart';
-import 'package:obtainium/components/app_dialogs.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:flutter_archive/flutter_archive.dart';
-import 'package:archive/archive.dart' as archive;
-import 'package:share_plus/share_plus.dart';
-import 'package:shared_storage/shared_storage.dart' as saf;
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
-part 'apps_provider_install.dart';
-part 'apps_provider_lifecycle.dart';
-part 'apps_provider_updates.dart';
-part 'apps_provider_import_export.dart';
+import 'package:obtainium/providers/apps_provider_import_export.dart';
+import 'package:obtainium/providers/apps_provider_install.dart';
+import 'package:obtainium/providers/apps_provider_lifecycle.dart';
+import 'package:obtainium/providers/apps_provider_updates.dart';
+
+export 'apps_provider_import_export.dart';
+export 'apps_provider_install.dart';
+export 'apps_provider_lifecycle.dart';
+export 'apps_provider_updates.dart';
 
 final pm = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
@@ -562,7 +550,7 @@ class AppsProvider with ChangeNotifier {
   LogsProvider logs = LogsProvider();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
-  Completer<void>? _appsLoadingCompleter;
+  Completer<void>? appsLoadingCompleter;
 
   // Coalesces bursts of saveApps()/removeApps() into a single auto-export.
   Timer? _autoExportDebounce;
@@ -597,8 +585,8 @@ class AppsProvider with ChangeNotifier {
   /// Waits for any in-flight [loadApps] to finish, so concurrent callers
   /// serialize instead of busy-waiting on a polling loop.
   Future<void> waitForAppsToLoad() async {
-    while (_appsLoadingCompleter != null) {
-      await _appsLoadingCompleter!.future;
+    while (appsLoadingCompleter != null) {
+      await appsLoadingCompleter!.future;
     }
   }
 

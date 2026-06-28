@@ -313,7 +313,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    AppsProvider appsProvider = context.watch<AppsProvider>();
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
     final pages = <NavigationPageItem>[
@@ -335,9 +334,9 @@ class _HomePageState extends State<HomePage> {
     // compact ones. A live badge shows the number of available updates.
     final layoutWidth = MediaQuery.sizeOf(context).width;
     final useRail = settingsProvider.isTV || layoutWidth >= 600;
-    final updateCount = appsProvider
-        .findExistingUpdates(installedOnly: true)
-        .length;
+    final updateCount = context.select<AppsProvider, int>(
+      (p) => p.findExistingUpdates(installedOnly: true).length,
+    );
 
     Widget destIcon(NavigationPageItem e, {bool selected = false}) {
       final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
@@ -359,7 +358,7 @@ class _HomePageState extends State<HomePage> {
     final useTwoPane = twoPane && currentIndex == 0;
 
     final detailPane =
-        selectedAppId != null && appsProvider.apps.containsKey(selectedAppId)
+        selectedAppId != null && context.read<AppsProvider>().apps.containsKey(selectedAppId)
         ? AppPage(
             key: ValueKey(selectedAppId),
             appId: selectedAppId!,

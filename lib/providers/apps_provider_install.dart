@@ -1,4 +1,28 @@
-part of 'apps_provider.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:android_package_installer/android_package_installer.dart';
+import 'package:android_package_manager/android_package_manager.dart';
+import 'package:archive/archive.dart' as archive;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_archive/flutter_archive.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:obtainium/components/app_dialogs.dart';
+import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
@@ -471,7 +495,7 @@ extension AppsProviderInstall on AppsProvider {
           deleteFile(a.file);
         }
       } catch (e) {
-        //
+        logs.add('Failed to delete bad download files: ${e.toString()}');
       } finally {
         throw ObtainiumError(tr('badDownload'));
       }
@@ -517,7 +541,7 @@ extension AppsProviderInstall on AppsProvider {
       try {
         deleteFile(file.file);
       } catch (e) {
-        //
+        logs.add('Failed to delete APK after failed install: ${e.toString()}');
       } finally {
         throw InstallError(code);
       }
@@ -555,16 +579,36 @@ extension AppsProviderInstall on AppsProvider {
   Future<void> moveObbFile(File file, String appId) async {
     if (!file.path.toLowerCase().endsWith('.obb')) return;
 
-    // TODO: Does not support Android 11+
-    if ((await DeviceInfoPlugin().androidInfo).version.sdkInt <= 29) {
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    if (sdkInt >= 30) {
+      try {
+        final obbDir = await saf.openDocumentTree(
+          initialUri: Uri.parse('${await getStorageRootPath()}/Android/obb'),
+        );
+        if (obbDir == null) return;
+        final appSpecificObbDoc =
+            await saf.child(obbDir, appId);
+        if (appSpecificObbDoc == null) return;
+        final obbFileName = file.path.split('/').last;
+        final obbBytes = await file.readAsBytes();
+        await saf.createFile(
+          appSpecificObbDoc.uri,
+          displayName: obbFileName,
+          mimeType: 'application/octet-stream',
+          bytes: obbBytes,
+        );
+        logs.add('Copied OBB file $obbFileName for $appId via SAF');
+      } catch (e) {
+        logs.add('Failed to place OBB file for $appId: ${e.toString()}');
+      }
+    } else {
       await Permission.storage.request();
+      String obbDirPath = "${await getStorageRootPath()}/Android/obb/$appId";
+      Directory(obbDirPath).createSync(recursive: true);
+      String obbFileName = file.path.split("/").last;
+      await file.copy("$obbDirPath/$obbFileName");
+      logs.add('Copied OBB file $obbFileName for $appId via direct file access');
     }
-
-    String obbDirPath = "${await getStorageRootPath()}/Android/obb/$appId";
-    Directory(obbDirPath).createSync(recursive: true);
-
-    String obbFileName = file.path.split("/").last;
-    await file.copy("$obbDirPath/$obbFileName");
   }
 
   void uninstallApp(String appId) async {

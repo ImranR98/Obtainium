@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -56,10 +57,14 @@ class SettingsProvider with ChangeNotifier {
   // SettingsProvider instances per request, so cache the results across them.
   static String? _cachedDefaultAppDir;
   static bool? _cachedIsTV;
+  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static final Map<String, String?> _secureCache = {};
 
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
+    prefsInstance = prefs;
+    await _loadSecureCache();
     if (_cachedDefaultAppDir == null || _cachedIsTV == null) {
       _cachedDefaultAppDir = (await getAppStorageDir()).path;
       final info = await DeviceInfoPlugin().androidInfo;
@@ -71,6 +76,24 @@ class SettingsProvider with ChangeNotifier {
     isTV = _cachedIsTV!;
     notifyListeners();
   }
+
+  static Future<void> _loadSecureCache() async {
+    if (_secureCache.isNotEmpty) return;
+    for (var key in _credsKeys) {
+      _secureCache[key] = await _secureStorage.read(key: key);
+      if (_secureCache[key] == null && prefsInstance != null) {
+        var legacy = prefsInstance!.getString(key);
+        if (legacy != null && legacy.isNotEmpty) {
+          await _secureStorage.write(key: key, value: legacy);
+          _secureCache[key] = legacy;
+          prefsInstance!.remove(key);
+        }
+      }
+    }
+  }
+
+  static final _credsKeys = {'github-creds', 'gitlab-creds'};
+  static SharedPreferences? prefsInstance;
 
   bool get useSystemFont {
     return prefs?.getBool('useSystemFont') ?? false;
@@ -304,12 +327,20 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
+    if (_credsKeys.contains(settingId)) {
+      return _secureCache[settingId];
+    }
     String? str = prefs?.getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
-    prefs?.setString(settingId, value);
+    if (_credsKeys.contains(settingId)) {
+      _secureCache[settingId] = value;
+      _secureStorage.write(key: settingId, value: value);
+    } else {
+      prefs?.setString(settingId, value);
+    }
     notifyListeners();
   }
 
