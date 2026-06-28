@@ -15,6 +15,12 @@ import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart';
+// The background headless task (bgUpdateCheck) runs without a widget tree
+// and therefore cannot use BuildContext-dependent translation APIs.  Direct
+// access to EasyLocalizationController and Localization is the only way to
+// load translations before the widget tree exists.  TODO: remove these
+// implementation imports if easy_localization ever exposes a public
+// context-free initialisation API.
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
@@ -48,7 +54,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
     Locale('en', 'EO'),
     'Esperanto',
   ), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
-  MapEntry(Locale('in'), 'Bahasa Indonesia'),
+  MapEntry(Locale('id'), 'Bahasa Indonesia'),
   MapEntry(Locale('ko'), '한국어'),
   MapEntry(Locale('ca'), 'Català'),
   MapEntry(Locale('ar'), 'العربية'),
@@ -375,6 +381,20 @@ class _ObtainiumState extends State<Obtainium> {
     initPlatformState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
+      final settingsProvider = context.read<SettingsProvider>();
+      final appsProvider = context.read<AppsProvider>();
+      final logs = context.read<LogsProvider>();
+      final notifs = context.read<NotificationsProvider>();
+      _manageServices(settingsProvider);
+      _handleFirstRun(settingsProvider, appsProvider, logs, context);
+      if (!_launchByNotifChecked) {
+        _launchByNotifChecked = true;
+        notifs.checkLaunchByNotif();
+      }
+      settingsProvider.addListener(() {
+        _manageServices(settingsProvider);
+        _handleFirstRun(settingsProvider, appsProvider, logs, context);
+      });
     });
   }
 
@@ -478,18 +498,6 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    AppsProvider appsProvider = context.read<AppsProvider>();
-    LogsProvider logs = context.read<LogsProvider>();
-    NotificationsProvider notifs = context.read<NotificationsProvider>();
-    _manageServices(settingsProvider);
-    _handleFirstRun(settingsProvider, appsProvider, logs, context);
-
-    if (!_launchByNotifChecked) {
-      _launchByNotifChecked = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifs.checkLaunchByNotif();
-      });
-    }
 
     return WithForegroundTask(
       child: DynamicColorBuilder(

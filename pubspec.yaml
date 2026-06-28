@@ -70,7 +70,7 @@ dependencies:
   shared_storage: # TODO: Is this maintained?
     git:
       url: https://github.com/AlexBacich/shared-storage
-      ref: master
+      ref: 6dbcdf2c2045e326f59c062f542724aedf73cb6e
   crypto: ^3.0.7
   bcrypt: ^1.2.0
   app_links: ^7.2.0
@@ -80,11 +80,11 @@ dependencies:
   android_system_font:
     git:
       url: https://github.com/re7gog/android_system_font
-      ref: master
+      ref: 077e15d7d0acb82283b89dfd82f4984b27b28f95
   shizuku_apk_installer:
     git:
       url: https://github.com/re7gog/shizuku_apk_installer
-      ref: master
+      ref: 3ef7f8fbf904848d144304556b0f80c91fee82a5
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.0.0

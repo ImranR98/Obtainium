@@ -40,6 +40,7 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/providers/config_keys.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
@@ -413,10 +414,11 @@ class App {
     try {
       json = appJSONCompatibilityModifiers(json);
     } catch (e) {
-      json = originalJSON;
       LogsProvider().add(
         'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}',
       );
+      json = originalJSON;
+      json['compatVersion'] = currentAppJSONCompatVersion;
     }
     return App(
       json['id'] as String,
@@ -564,6 +566,7 @@ String getSourceRegex(List<String> hosts) {
 
 HttpClient createHttpClient(bool insecure) {
   final client = HttpClient();
+  client.connectionTimeout = const Duration(seconds: 30);
   if (insecure) {
     client.badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
@@ -619,33 +622,48 @@ sourceRequestStreamResponse(
   throw ObtainiumError(tr('tooManyRedirects'));
 }
 
-Future<Response> httpClientResponseStreamToFinalResponse(
-  HttpClient httpClient,
-  String method,
-  String url,
-  HttpClientResponse response,
-) async {
-  final bytes = (await response.fold<BytesBuilder>(
-    BytesBuilder(),
-    (b, d) => b..add(d),
-  )).toBytes();
+  Future<Response> httpClientResponseStreamToFinalResponse(
+    HttpClient httpClient,
+    String method,
+    String url,
+    HttpClientResponse response,
+  ) async {
+    try {
+      final bytes = (await response.fold<BytesBuilder>(
+        BytesBuilder(),
+        (b, d) => b..add(d),
+      )).toBytes();
 
-  final headers = <String, String>{};
-  response.headers.forEach((name, values) {
-    headers[name] = values.join(', ');
-  });
+      final headers = <String, String>{};
+      response.headers.forEach((name, values) {
+        headers[name] = values.join(', ');
+      });
 
-  httpClient.close();
+      return http.Response.bytes(
+        bytes,
+        response.statusCode,
+        headers: headers,
+        request: http.Request(method, Uri.parse(url)),
+      );
+    } finally {
+      httpClient.close();
+    }
+  }
 
-  return http.Response.bytes(
-    bytes,
-    response.statusCode,
-    headers: headers,
-    request: http.Request(method, Uri.parse(url)),
-  );
+/// Lightweight HTTP helper mixin for classes that need request/response
+/// utilities without [AppSource]'s config-aware source-request wrapping.
+/// [AppSource] itself uses this mixin for [getRequestHeaders].
+mixin HttpClientMixin {
+  Future<Map<String, String>?> getRequestHeaders(
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) async {
+    return null;
+  }
 }
 
-abstract class AppSource {
+abstract class AppSource with HttpClientMixin {
   List<String> hosts = [];
   bool hostChanged = false;
   bool hostIdenticalDespiteAnyChange = false;
@@ -674,14 +692,6 @@ abstract class AppSource {
       url = sourceSpecificStandardizeURL(url);
     }
     return url;
-  }
-
-  Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings,
-    String url, {
-    bool forAPKDownload = false,
-  }) async {
-    return null;
   }
 
   App endOfGetAppChanges(App app) {
@@ -767,10 +777,10 @@ abstract class AppSource {
   // Some additional data may be needed for Apps regardless of Source
   List<List<GeneratedFormItem>>
   additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly = [
-    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
+    [GeneratedFormSwitch(AppConfigKey.trackOnly, label: tr('trackOnly'))],
     [
       GeneratedFormTextField(
-        'versionExtractionRegEx',
+        AppConfigKey.versionExtractionRegEx,
         label: tr('trimVersionString'),
         required: false,
         additionalValidators: [(value) => regExValidator(value)],
@@ -778,7 +788,7 @@ abstract class AppSource {
     ],
     [
       GeneratedFormTextField(
-        'matchGroupToUse',
+        AppConfigKey.matchGroupToUse,
         label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
         required: false,
         hint: '\$0',
@@ -786,21 +796,21 @@ abstract class AppSource {
     ],
     [
       GeneratedFormSwitch(
-        'versionDetection',
+        AppConfigKey.versionDetection,
         label: tr('versionDetectionExplanation'),
         defaultValue: true,
       ),
     ],
     [
       GeneratedFormSwitch(
-        'useVersionCodeAsOSVersion',
+        AppConfigKey.useVersionCodeAsOSVersion,
         label: tr('useVersionCodeAsOSVersion'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormTextField(
-        'apkFilterRegEx',
+        AppConfigKey.apkFilterRegEx,
         label: tr('filterAPKsByRegEx'),
         required: false,
         additionalValidators: [
@@ -812,50 +822,50 @@ abstract class AppSource {
     ],
     [
       GeneratedFormSwitch(
-        'invertAPKFilter',
+        AppConfigKey.invertAPKFilter,
         label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        'autoApkFilterByArch',
+        AppConfigKey.autoApkFilterByArch,
         label: tr('autoApkFilterByArch'),
         defaultValue: true,
       ),
     ],
-    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
-    [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
+    [GeneratedFormTextField(AppConfigKey.appName, label: tr('appName'), required: false)],
+    [GeneratedFormTextField(AppConfigKey.appAuthor, label: tr('author'), required: false)],
     [
       GeneratedFormSwitch(
-        'shizukuPretendToBeGooglePlay',
+        AppConfigKey.shizukuPretendToBeGooglePlay,
         label: tr('shizukuPretendToBeGooglePlay'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        'allowInsecure',
+        AppConfigKey.allowInsecure,
         label: tr('allowInsecure'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        'exemptFromBackgroundUpdates',
+        AppConfigKey.exemptFromBackgroundUpdates,
         label: tr('exemptFromBackgroundUpdates'),
       ),
     ],
     [
       GeneratedFormSwitch(
-        'skipUpdateNotifications',
+        AppConfigKey.skipUpdateNotifications,
         label: tr('skipUpdateNotifications'),
       ),
     ],
-    [GeneratedFormTextField('about', label: tr('about'), required: false)],
+    [GeneratedFormTextField(AppConfigKey.about, label: tr('about'), required: false)],
     [
       GeneratedFormSwitch(
-        'refreshBeforeDownload',
+        AppConfigKey.refreshBeforeDownload,
         label: tr('refreshBeforeDownload'),
       ),
     ],
@@ -868,16 +878,16 @@ abstract class AppSource {
     );
 
     final versionDetectionIdx = agnosticItems.indexWhere(
-      (row) => row.any((item) => item.key == 'versionDetection'),
+      (row) => row.any((item) => item.key == AppConfigKey.versionDetection),
     );
     if (showReleaseDateAsVersionToggle &&
         versionDetectionIdx >= 0 &&
         !agnosticItems.any(
-          (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
+          (row) => row.any((item) => item.key == AppConfigKey.releaseDateAsVersion),
         )) {
       agnosticItems.insert(versionDetectionIdx + 1, [
         GeneratedFormSwitch(
-          'releaseDateAsVersion',
+          AppConfigKey.releaseDateAsVersion,
           label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
           defaultValue: false,
         ),
@@ -898,14 +908,14 @@ abstract class AppSource {
       moreConditionalItems.addAll([
         [
           GeneratedFormSwitch(
-            'includeZips',
+            AppConfigKey.includeZips,
             label: tr('includeZips'),
             defaultValue: false,
           ),
         ],
         [
           GeneratedFormTextField(
-            'zippedApkFilterRegEx',
+            AppConfigKey.zippedApkFilterRegEx,
             label: tr('zippedApkFilterRegEx'),
             required: false,
             additionalValidators: [
@@ -922,14 +932,14 @@ abstract class AppSource {
       moreConditionalItems.addAll([
         [
           GeneratedFormSwitch(
-            'includeTarballs',
+            AppConfigKey.includeTarballs,
             label: tr('includeTarballs'),
             defaultValue: false,
           ),
         ],
         [
           GeneratedFormTextField(
-            'tarballedApkFilterRegEx',
+            AppConfigKey.tarballedApkFilterRegEx,
             label: tr('tarballedApkFilterRegEx'),
             required: false,
             additionalValidators: [
@@ -944,8 +954,8 @@ abstract class AppSource {
 
     if (versionDetectionDisallowed) {
       for (var item in agnosticItems.expand((row) => row)) {
-        if (item.key == 'versionDetection' ||
-            item.key == 'useVersionCodeAsOSVersion') {
+        if (item.key == AppConfigKey.versionDetection ||
+            item.key == AppConfigKey.useVersionCodeAsOSVersion) {
           (item as GeneratedFormSwitch).disabled = true;
           item.defaultValue = false;
         }
@@ -1239,7 +1249,7 @@ class SourceProvider {
           break;
         }
       } catch (e) {
-        // Ignore
+        LogsProvider().add('Source host-match error for ${s.runtimeType}: ${e.toString()}');
       }
     }
     if (source == null) {
@@ -1251,7 +1261,7 @@ class SourceProvider {
           source = s;
           break;
         } catch (e) {
-          //
+          LogsProvider().add('Source standardize error for ${s.runtimeType}: ${e.toString()}');
         }
       }
     }

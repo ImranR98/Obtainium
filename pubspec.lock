@@ -31,7 +31,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       url: "https://github.com/re7gog/android_system_font"
     source: git
@@ -932,7 +932,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
       resolved-ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
       url: "https://github.com/AlexBacich/shared-storage"
     source: git
@@ -941,7 +941,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
       resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
       url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git

@@ -376,6 +376,8 @@ extension AppsProviderLifecycle on AppsProvider {
             .forEach((element) {
               element.delete(recursive: true);
             });
+        final cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+        if (cachedIcon.existsSync()) cachedIcon.deleteSync();
         if (apps.containsKey(appId)) {
           apps.remove(appId);
         }

@@ -147,10 +147,11 @@ class APKPure extends AppSource {
     if (forAPKDownload) {
       return null;
     } else {
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
       return {
         "Ual-Access-Businessid": "projecta",
         "Ual-Access-ProjectA":
-            '{"device_info":{"os_ver":"${((await DeviceInfoPlugin().androidInfo).version.sdkInt)}"}}',
+            '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
       };
     }
   }

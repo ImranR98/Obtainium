@@ -210,13 +210,7 @@ class AppsPageState extends State<AppsPage> {
     super.dispose();
   }
 
-  /// A cheap fingerprint of everything the filter/sort/reorder pipeline depends
-  /// on. Excludes per-app download progress and icon bytes (which mutate in
-  /// place and don't affect ordering), so progress ticks reuse the cached list.
   int _pipelineSignature(List<AppInMemory> apps, SettingsProvider sp) {
-    // A structured hash (rather than a separator-joined string) so that a field
-    // value which happens to contain a separator character can't collide with a
-    // different combination of field values (e.g. an app named "Foo | Bar").
     final parts = <Object?>[
       filter.nameFilter,
       filter.authorFilter,
@@ -229,24 +223,17 @@ class AppsPageState extends State<AppsPage> {
       sp.sortOrder.index,
       sp.pinUpdates,
       sp.buryNonInstalled,
+      apps.length,
     ];
     for (final a in apps) {
       final app = a.app;
       parts.addAll(<Object?>[
         app.id,
-        app.installedVersion,
-        app.latestVersion,
-        app.releaseDate?.microsecondsSinceEpoch,
-        a.name,
-        a.author,
-        Object.hashAll(app.categories),
         app.pinned,
+        Object.hashAll(app.categories),
         app.hasPendingRepoRename,
-        app.url,
         app.overrideSource,
         app.additionalSettings['trackOnly'] == true,
-        app.additionalSettings['versionDetection'] == true,
-        app.additionalSettings['releaseDateAsVersion'] == true,
       ]);
     }
     return Object.hashAll(parts);
@@ -1482,7 +1469,7 @@ class AppListTile extends StatelessWidget {
               tr('repoRenamed'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: textColor, fontSize: 12),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor) ?? TextStyle(color: textColor, fontSize: 12),
             ),
           ),
         ],
@@ -1769,7 +1756,7 @@ class _DownloadProgressTrailing extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11) ?? const TextStyle(fontSize: 11),
             ),
           ],
         ),

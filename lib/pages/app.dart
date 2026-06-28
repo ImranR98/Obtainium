@@ -1012,12 +1012,15 @@ class _AppPageState extends State<AppPage> {
                         ],
                       ),
                       if (app?.downloadProgress != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: LinearProgressIndicator(
-                            value: app!.downloadProgress! >= 0
-                                ? app.downloadProgress! / 100
-                                : null,
+                        Semantics(
+                          label: tr('percentProgress', args: [app!.downloadProgress!.toInt().toString()]),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: LinearProgressIndicator(
+                              value: app.downloadProgress! >= 0
+                                  ? app.downloadProgress! / 100
+                                  : null,
+                            ),
                           ),
                         ),
                     ],
@@ -1073,7 +1076,7 @@ class AppInfoDialog extends StatelessWidget {
           ),
           Text(
             app.app.url,
-            style: textTheme.labelSmall!.copyWith(
+            style: textTheme.labelSmall?.copyWith(
               decoration: TextDecoration.underline,
             ),
           ),

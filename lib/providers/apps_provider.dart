@@ -392,7 +392,10 @@ Future<File> downloadFile(
     bool isDownloading = true;
     int currentTempFileSize = await tempDownloadedFile.length();
     bool shouldReturn = false;
-    while (isDownloading) {
+    int pollCount = 0;
+    const maxPolls = 43; // ~5 minutes at 7s per poll
+    while (isDownloading && pollCount < maxPolls) {
+      pollCount++;
       await Future.delayed(Duration(seconds: 7));
       if (tempDownloadedFile.existsSync()) {
         int newTempFileSize = await tempDownloadedFile.length();
@@ -464,7 +467,6 @@ Future<File> downloadFile(
   const downloadBufferSize = 32 * 1024; // 32KB
   final downloadBuffer = BytesBuilder();
   await response
-      .asBroadcastStream()
       .map((chunk) {
         received += chunk.length;
         final now = DateTime.now();
@@ -548,6 +550,11 @@ Future<Directory> getAppStorageDir() async =>
     await getApplicationDocumentsDirectory();
 
 class AppsProvider with ChangeNotifier {
+  // Background tasks may update apps on disk while the foreground instance is
+  // alive.  The bg path sets this timestamp after saving; the fg instance
+  // checks it before returning cached data and reloads from disk as needed.
+  static DateTime? _lastBackgroundSave;
+
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
@@ -562,13 +569,26 @@ class AppsProvider with ChangeNotifier {
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
+  bool _isBg = false;
   late Stream<FGBGType>? foregroundStream;
   late StreamSubscription<FGBGType>? foregroundSubscription;
   late Directory apkDir;
   late Directory iconsCacheDir;
   late SettingsProvider settingsProvider = SettingsProvider();
 
-  Iterable<AppInMemory> getAppValues() => apps.values;
+  Iterable<AppInMemory> getAppValues() {
+    _reloadIfBgSaved();
+    return apps.values;
+  }
+
+  void _reloadIfBgSaved() {
+    if (_lastBackgroundSave == null) return;
+    final lastSave = _lastBackgroundSave!;
+    _lastBackgroundSave = null;
+    if (!_isBg && lastSave.isAfter(DateTime.now().subtract(const Duration(seconds: 30)))) {
+      loadApps();
+    }
+  }
 
   /// Public wrapper around the protected [notifyListeners] so the provider's
   /// part-file extensions can request listeners to rebuild.
@@ -593,6 +613,7 @@ class AppsProvider with ChangeNotifier {
   }
 
   AppsProvider({bool isBg = false}) {
+    _isBg = isBg;
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -980,4 +1001,5 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
     }
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
+  AppsProvider._lastBackgroundSave = DateTime.now();
 }
