@@ -56,7 +56,7 @@ class _AppPageState extends State<AppPage> {
   // Memoizes the per-build deepCopy of the app so it is only re-copied when the
   // underlying app actually changes (instead of on every rebuild, e.g. each
   // download-progress tick).
-  String? _appCacheSig;
+  int? _appCacheSig;
   AppInMemory? _appCache;
 
   /// Lazily builds (and loads, once) the WebView controller. The controller and
@@ -98,9 +98,11 @@ class _AppPageState extends State<AppPage> {
   /// A fingerprint of everything this page reads from an [AppInMemory]
   /// (including download progress, icon and installed info), used to decide when
   /// the cached [deepCopy] needs to be refreshed.
-  String _appSignature(AppInMemory a) {
+  int _appSignature(AppInMemory a) {
     final app = a.app;
-    return [
+    // Structured hash so a field value containing the old separator character
+    // can't collide with a different combination of field values.
+    return Object.hashAll([
       a.downloadProgress,
       identityHashCode(a.icon),
       identityHashCode(a.installedInfo),
@@ -113,7 +115,7 @@ class _AppPageState extends State<AppPage> {
       app.overrideSource,
       app.releaseDate?.microsecondsSinceEpoch,
       app.lastUpdateCheck?.microsecondsSinceEpoch,
-      app.categories.join(','),
+      Object.hashAll(app.categories),
       app.pinned,
       app.hasPendingRepoRename,
       app.pendingRepoRenameUrl,
@@ -121,7 +123,7 @@ class _AppPageState extends State<AppPage> {
       app.otherAssetUrls.length,
       app.preferredApkIndex,
       app.additionalSettings.toString(),
-    ].join('\u0001');
+    ]);
   }
 
   AppInMemory? _cachedApp(AppsProvider appsProvider) {
@@ -302,6 +304,356 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  Future<void> _getUpdate(
+    String id,
+    BuildContext context,
+    AppsProvider appsProvider, {
+    bool resetVersion = false,
+  }) async {
+    try {
+      setState(() {
+        updating = true;
+      });
+      await appsProvider.checkUpdate(id);
+      if (resetVersion) {
+        appsProvider.apps[id]?.app.additionalSettings['versionDetection'] =
+            true;
+        if (appsProvider.apps[id]?.app.installedVersion != null) {
+          appsProvider.apps[id]?.app.installedVersion =
+              appsProvider.apps[id]?.app.latestVersion;
+        }
+        appsProvider.saveApps([appsProvider.apps[id]!.app]);
+      }
+    } catch (err) {
+      if (err is RepositoryRenamedError && context.mounted) {
+        await appsProvider.updatePendingRepoRename(id, err.newUrl);
+      } else if (context.mounted) {
+        showError(err, context);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          updating = false;
+        });
+      }
+    }
+  }
+
+  Widget _getAppWebView(BuildContext context, AppInMemory? app) {
+    if (app == null) return Container();
+    final controller = _ensureWebViewController(app.app.url)
+      ..setBackgroundColor(Theme.of(context).colorScheme.surface);
+    return WebViewWidget(key: ObjectKey(controller), controller: controller);
+  }
+
+  Future<void> _showMarkUpdatedDialog(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    AppInMemory? app,
+    AppsProvider appsProvider,
+  ) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: tr('alreadyUpToDateQuestion'),
+      confirmText: tr('yesMarkUpdated'),
+    );
+    if (!confirmed) return;
+    settingsProvider.selectionClick();
+    var updatedApp = app?.app;
+    if (updatedApp != null) {
+      updatedApp.installedVersion = updatedApp.latestVersion;
+      appsProvider.saveApps([updatedApp]);
+    }
+  }
+
+  Future<Map<String, dynamic>?> _showAdditionalOptionsDialog(
+    BuildContext context,
+    AppSource? source,
+    AppInMemory? app,
+  ) async {
+    var items = (source?.combinedAppSpecificSettingFormItems ?? []).map((row) {
+      row = row.map((e) {
+        if (app?.app.additionalSettings[e.key] != null) {
+          e.defaultValue = app?.app.additionalSettings[e.key];
+        }
+        return e;
+      }).toList();
+      return row;
+    }).toList();
+
+    Map<String, dynamic> values = {};
+    return Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (ctx) => Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar.large(
+                pinned: true,
+                title: Text(
+                  tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: GeneratedForm(
+                    tileMode: true,
+                    items: items,
+                    onValueChanges: (v, valid, isBuilding) {
+                      values = v;
+                    },
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    MediaQuery.of(context).padding.bottom + 24,
+                  ),
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(values),
+                    child: Text(tr('continue')),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleAdditionalOptionChanges(
+    Map<String, dynamic>? values,
+    BuildContext context,
+    AppInMemory? app,
+    AppSource? source,
+    AppsProvider appsProvider,
+  ) {
+    if (app != null && values != null) {
+      Map<String, dynamic> originalSettings = app.app.additionalSettings;
+      app.app.additionalSettings = values;
+      if (source?.enforceTrackOnly == true) {
+        app.app.additionalSettings['trackOnly'] = true;
+        if (context.mounted) {
+          showMessage(tr('appsFromSourceAreTrackOnly'), context);
+        }
+      }
+      var versionDetectionEnabled =
+          app.app.additionalSettings['versionDetection'] == true &&
+          originalSettings['versionDetection'] != true;
+      var releaseDateVersionEnabled =
+          app.app.additionalSettings['releaseDateAsVersion'] == true &&
+          originalSettings['releaseDateAsVersion'] != true;
+      var releaseDateVersionDisabled =
+          app.app.additionalSettings['releaseDateAsVersion'] != true &&
+          originalSettings['releaseDateAsVersion'] == true;
+      if (releaseDateVersionEnabled) {
+        if (app.app.releaseDate != null) {
+          bool isUpdated = app.app.installedVersion == app.app.latestVersion;
+          app.app.latestVersion = app.app.releaseDate!.microsecondsSinceEpoch
+              .toString();
+          if (isUpdated) {
+            app.app.installedVersion = app.app.latestVersion;
+          }
+        }
+      } else if (releaseDateVersionDisabled) {
+        app.app.installedVersion =
+            app.installedInfo?.versionName ?? app.app.installedVersion;
+      }
+      if (versionDetectionEnabled) {
+        app.app.additionalSettings['versionDetection'] = true;
+        app.app.additionalSettings['releaseDateAsVersion'] = false;
+      }
+      appsProvider.saveApps([app.app]).then((value) {
+        if (context.mounted) {
+          _getUpdate(
+            app.app.id,
+            context,
+            appsProvider,
+            resetVersion: versionDetectionEnabled,
+          );
+        }
+      });
+    }
+  }
+
+  AppBar _appScreenAppBar() => AppBar(
+    leading: IconButton(
+      icon: Icon(
+        widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
+      ),
+      onPressed: _closePage,
+    ),
+  );
+
+  Widget _getPrimaryButton(
+    BuildContext context,
+    AppInMemory? app,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    bool areDownloadsRunning,
+  ) {
+    final installed = app?.app.installedVersion;
+    final latest = app?.app.latestVersion;
+    final hasAction =
+        !updating &&
+        (installed == null || installed != latest) &&
+        !areDownloadsRunning;
+    final trackOnly = app?.app.additionalSettings['trackOnly'] == true;
+    return FilledButton.icon(
+      onPressed: hasAction
+          ? () async {
+              try {
+                var successMessage = installed == null
+                    ? tr('installed')
+                    : tr('appsUpdated');
+                var np = context.read<NotificationsProvider>();
+                settingsProvider.heavyImpact();
+                var res = await appsProvider.downloadAndInstallLatestApps(
+                  app?.app.id != null ? [app!.app.id] : [],
+                  globalNavigatorKey.currentContext,
+                );
+                if (res.isNotEmpty && !trackOnly && context.mounted) {
+                  showMessage(successMessage, context);
+                }
+                if (res.isNotEmpty && mounted) {
+                  _closePage();
+                }
+                if (res.isNotEmpty) {
+                  np.cancel(UpdateNotification([]).id);
+                  np.cancel(
+                    SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) showError(e, context);
+              }
+            }
+          : null,
+      icon: Icon(
+        installed == null
+            ? Icons.download_outlined
+            : Icons.system_update_alt_rounded,
+      ),
+      label: Text(
+        installed == null
+            ? (!trackOnly ? tr('install') : tr('markInstalled'))
+            : !trackOnly
+            ? tr('update')
+            : tr('markUpdated'),
+      ),
+    );
+  }
+
+  List<Widget> _getSecondaryActions(
+    BuildContext context,
+    AppInMemory? app,
+    AppSource? source,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    bool showAppWebpageFinal,
+    bool isVersionDetectionStandard,
+    bool trackOnly,
+  ) {
+    return <Widget>[
+      if (source != null &&
+          source.combinedAppSpecificSettingFormItems.isNotEmpty)
+        IconButton(
+          onPressed: app?.downloadProgress != null || updating
+              ? null
+              : () async {
+                  var values = await _showAdditionalOptionsDialog(
+                    context,
+                    source,
+                    app,
+                  );
+                  if (context.mounted) {
+                    _handleAdditionalOptionChanges(
+                      values,
+                      context,
+                      app,
+                      source,
+                      appsProvider,
+                    );
+                  }
+                },
+          tooltip: tr('additionalOptions'),
+          icon: const Icon(Icons.edit),
+        ),
+      if (app != null && app.installedInfo != null)
+        IconButton(
+          onPressed: () {
+            appsProvider.openAppSettings(app.app.id);
+          },
+          icon: const Icon(Icons.settings),
+          tooltip: tr('settings'),
+        ),
+      if (app != null && showAppWebpageFinal)
+        IconButton(
+          onPressed: () async {
+            await appsProvider.updateAppIcon(app.app.id, ignoreCache: true);
+            if (!context.mounted) return;
+            showDialog(
+              context: context,
+              builder: (BuildContext ctx) =>
+                  AppInfoDialog(app: app, appsProvider: appsProvider),
+            );
+          },
+          icon: const Icon(Icons.more_horiz),
+          tooltip: tr('more'),
+        ),
+      if (app?.app.installedVersion != null &&
+          app?.app.installedVersion != app?.app.latestVersion &&
+          !isVersionDetectionStandard &&
+          !trackOnly)
+        IconButton(
+          onPressed: app?.downloadProgress != null || updating
+              ? null
+              : () => _showMarkUpdatedDialog(
+                  context,
+                  settingsProvider,
+                  app,
+                  appsProvider,
+                ),
+          tooltip: tr('markUpdated'),
+          icon: const Icon(Icons.done),
+        ),
+      if ((!isVersionDetectionStandard || trackOnly) &&
+          app?.app.installedVersion != null &&
+          app?.app.installedVersion == app?.app.latestVersion)
+        IconButton(
+          onPressed: app?.app == null || updating
+              ? null
+              : () {
+                  app!.app.installedVersion = null;
+                  appsProvider.saveApps([app.app]);
+                },
+          icon: const Icon(Icons.restore_rounded),
+          tooltip: tr('resetInstallStatus'),
+        ),
+      IconButton(
+        onPressed: app?.downloadProgress != null || updating
+            ? null
+            : () {
+                appsProvider
+                    .removeAppsWithModal(context, app != null ? [app.app] : [])
+                    .then((value) {
+                      if (value == true) {
+                        _closePage();
+                      }
+                    });
+              },
+        tooltip: tr('remove'),
+        icon: const Icon(Icons.delete_outline),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.watch<AppsProvider>();
@@ -311,34 +663,6 @@ class _AppPageState extends State<AppPage> {
             !widget.showOppositeOfPreferredView) ||
         (!settingsProvider.showAppWebpage &&
             widget.showOppositeOfPreferredView);
-    getUpdate(String id, {bool resetVersion = false}) async {
-      try {
-        setState(() {
-          updating = true;
-        });
-        await appsProvider.checkUpdate(id);
-        if (resetVersion) {
-          appsProvider.apps[id]?.app.additionalSettings['versionDetection'] =
-              true;
-          if (appsProvider.apps[id]?.app.installedVersion != null) {
-            appsProvider.apps[id]?.app.installedVersion =
-                appsProvider.apps[id]?.app.latestVersion;
-          }
-          appsProvider.saveApps([appsProvider.apps[id]!.app]);
-        }
-      } catch (err) {
-        if (err is RepositoryRenamedError && context.mounted) {
-          await appsProvider.updatePendingRepoRename(id, err.newUrl);
-        } else if (context.mounted) {
-          showError(err, context);
-        }
-      } finally {
-        setState(() {
-          updating = false;
-        });
-      }
-    }
-
     bool areDownloadsRunning = appsProvider.areDownloadsRunning();
 
     // Builds a single positionally-rounded card sliver.
@@ -378,7 +702,7 @@ class _AppPageState extends State<AppPage> {
       prevApp = app;
       final idToCheck = app.app.id;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) getUpdate(idToCheck);
+        if (mounted) _getUpdate(idToCheck, context, appsProvider);
       });
     }
     var trackOnly = app?.app.additionalSettings['trackOnly'] == true;
@@ -391,279 +715,8 @@ class _AppPageState extends State<AppPage> {
         app?.app.apkUrls.isNotEmpty == true ||
         app?.app.otherAssetUrls.isNotEmpty == true;
 
-    getAppWebView() {
-      if (app == null) return Container();
-      final controller = _ensureWebViewController(app.app.url)
-        ..setBackgroundColor(Theme.of(context).colorScheme.surface);
-      return WebViewWidget(key: ObjectKey(controller), controller: controller);
-    }
-
-    showMarkUpdatedDialog() async {
-      final confirmed = await showConfirmDialog(
-        context,
-        title: tr('alreadyUpToDateQuestion'),
-        confirmText: tr('yesMarkUpdated'),
-      );
-      if (!confirmed) return;
-      settingsProvider.selectionClick();
-      var updatedApp = app?.app;
-      if (updatedApp != null) {
-        updatedApp.installedVersion = updatedApp.latestVersion;
-        appsProvider.saveApps([updatedApp]);
-      }
-    }
-
-    showAdditionalOptionsDialog() async {
-      var items = (source?.combinedAppSpecificSettingFormItems ?? []).map((
-        row,
-      ) {
-        row = row.map((e) {
-          if (app?.app.additionalSettings[e.key] != null) {
-            e.defaultValue = app?.app.additionalSettings[e.key];
-          }
-          return e;
-        }).toList();
-        return row;
-      }).toList();
-
-      Map<String, dynamic> values = {};
-      return Navigator.of(context).push<Map<String, dynamic>>(
-        MaterialPageRoute(
-          builder: (ctx) => Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            body: CustomScrollView(
-              slivers: [
-                SliverAppBar.large(
-                  pinned: true,
-                  title: Text(
-                    tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: GeneratedForm(
-                      tileMode: true,
-                      items: items,
-                      onValueChanges: (v, valid, isBuilding) {
-                        values = v;
-                      },
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      20,
-                      20,
-                      20,
-                      MediaQuery.of(context).padding.bottom + 24,
-                    ),
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(values),
-                      child: Text(tr('continue')),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    handleAdditionalOptionChanges(Map<String, dynamic>? values) {
-      if (app != null && values != null) {
-        Map<String, dynamic> originalSettings = app.app.additionalSettings;
-        app.app.additionalSettings = values;
-        if (source?.enforceTrackOnly == true) {
-          app.app.additionalSettings['trackOnly'] = true;
-          // ignore: use_build_context_synchronously
-          showMessage(tr('appsFromSourceAreTrackOnly'), context);
-        }
-        var versionDetectionEnabled =
-            app.app.additionalSettings['versionDetection'] == true &&
-            originalSettings['versionDetection'] != true;
-        var releaseDateVersionEnabled =
-            app.app.additionalSettings['releaseDateAsVersion'] == true &&
-            originalSettings['releaseDateAsVersion'] != true;
-        var releaseDateVersionDisabled =
-            app.app.additionalSettings['releaseDateAsVersion'] != true &&
-            originalSettings['releaseDateAsVersion'] == true;
-        if (releaseDateVersionEnabled) {
-          if (app.app.releaseDate != null) {
-            bool isUpdated = app.app.installedVersion == app.app.latestVersion;
-            app.app.latestVersion = app.app.releaseDate!.microsecondsSinceEpoch
-                .toString();
-            if (isUpdated) {
-              app.app.installedVersion = app.app.latestVersion;
-            }
-          }
-        } else if (releaseDateVersionDisabled) {
-          app.app.installedVersion =
-              app.installedInfo?.versionName ?? app.app.installedVersion;
-        }
-        if (versionDetectionEnabled) {
-          app.app.additionalSettings['versionDetection'] = true;
-          app.app.additionalSettings['releaseDateAsVersion'] = false;
-        }
-        appsProvider.saveApps([app.app]).then((value) {
-          getUpdate(app.app.id, resetVersion: versionDetectionEnabled);
-        });
-      }
-    }
-
-    appScreenAppBar() => AppBar(
-      leading: IconButton(
-        icon: Icon(
-          widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
-        ),
-        onPressed: _closePage,
-      ),
-    );
-
-    // Local card builder — scoped to build(context) so InheritedElement
-    // Primary action (Install / Update / Mark) remains its own compact helper
-    // so the install / update flow stays DRY with the old onPressed closure.
-    getPrimaryButton() {
-      final installed = app?.app.installedVersion;
-      final latest = app?.app.latestVersion;
-      final hasAction =
-          !updating &&
-          (installed == null || installed != latest) &&
-          !areDownloadsRunning;
-      final trackOnly = app?.app.additionalSettings['trackOnly'] == true;
-      return FilledButton.icon(
-        onPressed: hasAction
-            ? () async {
-                try {
-                  var successMessage = installed == null
-                      ? tr('installed')
-                      : tr('appsUpdated');
-                  var np = context.read<NotificationsProvider>();
-                  settingsProvider.heavyImpact();
-                  var res = await appsProvider.downloadAndInstallLatestApps(
-                    app?.app.id != null ? [app!.app.id] : [],
-                    globalNavigatorKey.currentContext,
-                  );
-                  if (res.isNotEmpty && !trackOnly && context.mounted) {
-                    showMessage(successMessage, context);
-                  }
-                  if (res.isNotEmpty && mounted) {
-                    _closePage();
-                  }
-                  if (res.isNotEmpty) {
-                    np.cancel(UpdateNotification([]).id);
-                    np.cancel(
-                      SilentUpdateAttemptNotification(
-                        [],
-                        id: res[0].hashCode,
-                      ).id,
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) showError(e, context);
-                }
-              }
-            : null,
-        icon: Icon(
-          installed == null
-              ? Icons.download_outlined
-              : Icons.system_update_alt_rounded,
-        ),
-        label: Text(
-          installed == null
-              ? (!trackOnly ? tr('install') : tr('markInstalled'))
-              : !trackOnly
-              ? tr('update')
-              : tr('markUpdated'),
-        ),
-      );
-    }
-
-    getSecondaryActions() {
-      return <Widget>[
-        if (source != null &&
-            source.combinedAppSpecificSettingFormItems.isNotEmpty)
-          IconButton(
-            onPressed: app?.downloadProgress != null || updating
-                ? null
-                : () async {
-                    var values = await showAdditionalOptionsDialog();
-                    handleAdditionalOptionChanges(values);
-                  },
-            tooltip: tr('additionalOptions'),
-            icon: const Icon(Icons.edit),
-          ),
-        if (app != null && app.installedInfo != null)
-          IconButton(
-            onPressed: () {
-              appsProvider.openAppSettings(app.app.id);
-            },
-            icon: const Icon(Icons.settings),
-            tooltip: tr('settings'),
-          ),
-        if (app != null && showAppWebpageFinal)
-          IconButton(
-            onPressed: () async {
-              await appsProvider.updateAppIcon(app.app.id, ignoreCache: true);
-              if (!context.mounted) return;
-              showDialog(
-                context: context,
-                builder: (BuildContext ctx) =>
-                    AppInfoDialog(app: app, appsProvider: appsProvider),
-              );
-            },
-            icon: const Icon(Icons.more_horiz),
-            tooltip: tr('more'),
-          ),
-        if (app?.app.installedVersion != null &&
-            app?.app.installedVersion != app?.app.latestVersion &&
-            !isVersionDetectionStandard &&
-            !trackOnly)
-          IconButton(
-            onPressed: app?.downloadProgress != null || updating
-                ? null
-                : showMarkUpdatedDialog,
-            tooltip: tr('markUpdated'),
-            icon: const Icon(Icons.done),
-          ),
-        if ((!isVersionDetectionStandard || trackOnly) &&
-            app?.app.installedVersion != null &&
-            app?.app.installedVersion == app?.app.latestVersion)
-          IconButton(
-            onPressed: app?.app == null || updating
-                ? null
-                : () {
-                    app!.app.installedVersion = null;
-                    appsProvider.saveApps([app.app]);
-                  },
-            icon: const Icon(Icons.restore_rounded),
-            tooltip: tr('resetInstallStatus'),
-          ),
-        IconButton(
-          onPressed: app?.downloadProgress != null || updating
-              ? null
-              : () {
-                  appsProvider
-                      .removeAppsWithModal(
-                        context,
-                        app != null ? [app.app] : [],
-                      )
-                      .then((value) {
-                        if (value == true) {
-                          _closePage();
-                        }
-                      });
-                },
-          tooltip: tr('remove'),
-          icon: const Icon(Icons.delete_outline),
-        ),
-      ];
-    }
-
     return Scaffold(
-      appBar: showAppWebpageFinal ? appScreenAppBar() : null,
+      appBar: showAppWebpageFinal ? _appScreenAppBar() : null,
       floatingActionButton: showAppWebpageFinal
           ? FloatingActionButton(
               onPressed: () {
@@ -686,11 +739,11 @@ class _AppPageState extends State<AppPage> {
       body: RefreshIndicator(
         onRefresh: () async {
           if (app != null) {
-            getUpdate(app.app.id);
+            _getUpdate(app.app.id, context, appsProvider);
           }
         },
         child: showAppWebpageFinal
-            ? getAppWebView()
+            ? _getAppWebView(context, app)
             : CustomScrollView(
                 slivers: [
                   // Back button — top-left
@@ -814,14 +867,17 @@ class _AppPageState extends State<AppPage> {
                     true,
                     certs || hasAssets ? false : true,
                     children: [
-                      GestureDetector(
-                        onLongPress: () {
-                          copyToClipboard(context, app?.app.url ?? '');
-                        },
-                        child: LinkText(
-                          text: app?.app.url ?? '',
-                          url: app?.app.url ?? '',
-                          style: const TextStyle(fontStyle: FontStyle.italic),
+                      Tooltip(
+                        message: tr('copyToClipboard'),
+                        child: GestureDetector(
+                          onLongPress: () {
+                            copyToClipboard(context, app?.app.url ?? '');
+                          },
+                          child: LinkText(
+                            text: app?.app.url ?? '',
+                            url: app?.app.url ?? '',
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -931,9 +987,24 @@ class _AppPageState extends State<AppPage> {
                     children: [
                       Row(
                         children: [
-                          ...getSecondaryActions(),
+                          ..._getSecondaryActions(
+                            context,
+                            app,
+                            source,
+                            appsProvider,
+                            settingsProvider,
+                            showAppWebpageFinal,
+                            isVersionDetectionStandard,
+                            trackOnly,
+                          ),
                           const Spacer(),
-                          getPrimaryButton(),
+                          _getPrimaryButton(
+                            context,
+                            app,
+                            appsProvider,
+                            settingsProvider,
+                            areDownloadsRunning,
+                          ),
                         ],
                       ),
                       if (app?.downloadProgress != null)

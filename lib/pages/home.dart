@@ -350,8 +350,8 @@ class _HomePageState extends State<HomePage> {
     final twoPane = settingsProvider.isTV || layoutWidth >= 900;
     final useTwoPane = twoPane && currentIndex == 0;
 
-    final detailPane = selectedAppId != null &&
-            appsProvider.apps.containsKey(selectedAppId)
+    final detailPane =
+        selectedAppId != null && appsProvider.apps.containsKey(selectedAppId)
         ? AppPage(
             key: ValueKey(selectedAppId),
             appId: selectedAppId!,
@@ -396,7 +396,11 @@ class _HomePageState extends State<HomePage> {
           );
         },
         child: currentIndex == 0
-            ? AppsPage(key: appsPageKey, onSelectionChanged: (has) => setState(() => _appsSelecting = has))
+            ? AppsPage(
+                key: appsPageKey,
+                onSelectionChanged: (has) =>
+                    setState(() => _appsSelecting = has),
+              )
             : pages.elementAt(currentIndex).widget,
       );
     }
@@ -471,7 +475,9 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : content,
-        floatingActionButton: useRail || currentIndex != 0 || isSelecting ? null : createFab,
+        floatingActionButton: useRail || currentIndex != 0 || isSelecting
+            ? null
+            : createFab,
         bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(

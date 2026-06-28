@@ -76,9 +76,16 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
   List<dynamic> arr,
 ) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
 
+// Bumped only for the one-time legacy migrations below. Apps whose stored JSON
+// already carries this version skip those legacy URL/source conversions. Their
+// default settings are still always reconciled afterwards, so this stays safe
+// even when newer builds add settings without bumping this number.
+const int currentAppJSONCompatVersion = 1;
+
 // App JSON schema has changed multiple times over the many versions of Obtainium
 // This function takes an App JSON and modifies it if needed to conform to the latest (current) version
 Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
+  final isCurrentCompat = json['compatVersion'] == currentAppJSONCompatVersion;
   var source = SourceProvider().getSource(
     json['url'],
     overrideSource: json['overrideSource'],
@@ -179,7 +186,7 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   if (additionalSettings['dontSortReleasesList'] == true) {
     additionalSettings['sortMethodChoice'] = 'none';
   }
-  if (source.runtimeType == HTML().runtimeType) {
+  if (!isCurrentCompat && source.runtimeType == HTML().runtimeType) {
     // HTML key rename
     if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
       additionalSettings['sortByLastLinkSegment'] =
@@ -293,21 +300,24 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
-  // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
-  // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
-  // While not causing problems for existing apps from that source that were added in a previous version
-  var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
-  if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
-    json['overrideSource'] = FDroid().runtimeType.toString();
-  } else if (overrideSourceWasUndefined) {
-    // Similar to above, but for third-party F-Droid repos
-    RegExpMatch? match = RegExp(
-      '^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)',
-    ).firstMatch(json['url'] as String);
-    if (match != null) {
-      json['overrideSource'] = FDroidRepo().runtimeType.toString();
+  if (!isCurrentCompat) {
+    // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
+    // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
+    // While not causing problems for existing apps from that source that were added in a previous version
+    var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
+    if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
+      json['overrideSource'] = FDroid().runtimeType.toString();
+    } else if (overrideSourceWasUndefined) {
+      // Similar to above, but for third-party F-Droid repos
+      RegExpMatch? match = RegExp(
+        '^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)',
+      ).firstMatch(json['url'] as String);
+      if (match != null) {
+        json['overrideSource'] = FDroidRepo().runtimeType.toString();
+      }
     }
   }
+  json['compatVersion'] = currentAppJSONCompatVersion;
   return json;
 }
 
@@ -465,6 +475,7 @@ class App {
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
     'pendingRepoRenameUrl': pendingRepoRenameUrl,
+    'compatVersion': currentAppJSONCompatVersion,
   };
 }
 
@@ -685,7 +696,6 @@ abstract class AppSource {
   }) async {
     var sp = SettingsProvider();
     await sp.initializeSettings();
-    getSourceConfigValues(additionalSettings, sp);
     var additionalSettingsPlusSourceConfig = {
       ...additionalSettings,
       ...(await getSourceConfigValues(additionalSettings, sp)),
@@ -924,7 +934,10 @@ abstract class AppSource {
     }
 
     return [
-      ...additionalSourceAppSpecificSettingFormItems,
+      // Clone so callers (e.g. the add-app form pre-filling default values)
+      // can't mutate the source-owned items. Sources are now cached/shared, so
+      // an in-place edit here would otherwise leak across apps.
+      ...cloneFormItems(additionalSourceAppSpecificSettingFormItems),
       ...agnosticItems,
       ...moreConditionalItems,
     ];
@@ -1121,8 +1134,10 @@ bool isVersionPseudo(App app) =>
         app.additionalSettings['versionDetection'] != true);
 
 class SourceProvider {
-  // Add more source classes here so they are available via the service
-  List<AppSource> get sources => [
+  // Builds a fresh set of source instances. Adding a source here makes it
+  // available via the service. Kept private so callers go through [sources]
+  // (cached) or, when per-call mutation is needed, [_buildSources] directly.
+  static List<AppSource> _buildSources() => [
     GitHub(),
     GitLab(),
     Codeberg(),
@@ -1151,15 +1166,23 @@ class SourceProvider {
     HTML(), // This should ALWAYS be the last option as they are tried in order
   ];
 
+  // Each source instance is immutable after construction (fields are only set
+  // in the constructor), so we can safely cache one shared, read-only set and
+  // reuse it across the many SourceProvider() throwaways created at runtime.
+  // The only path that mutates a source (the [overrideSource] branch in
+  // [getSource]) builds its own fresh instances so this cache stays pristine.
+  static List<AppSource>? _cachedSources;
+  List<AppSource> get sources => _cachedSources ??= _buildSources();
+
   // Add more mass url source classes here so they are available via the service
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
-    // [sources] rebuilds all source objects on each access, so evaluate it once.
-    final allSources = sources;
     if (overrideSource != null) {
-      var srcs = allSources.where(
+      // The override path mutates the chosen source's host config, so build a
+      // throwaway instance here rather than touching the shared cache.
+      var srcs = _buildSources().where(
         (e) => e.runtimeType.toString() == overrideSource,
       );
       if (srcs.isEmpty) {
@@ -1175,6 +1198,8 @@ class SourceProvider {
       }
       return res;
     }
+    // The non-override path is read-only, so reuse the cached source set.
+    final allSources = sources;
     AppSource? source;
     for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
       try {

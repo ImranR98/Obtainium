@@ -51,13 +51,24 @@ class SettingsProvider with ChangeNotifier {
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
+  // These are stable for the lifetime of the process but expensive to fetch
+  // (platform channel round-trips). Source code creates many throwaway
+  // SettingsProvider instances per request, so cache the results across them.
+  static String? _cachedDefaultAppDir;
+  static bool? _cachedIsTV;
+
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
-    defaultAppDir = (await getAppStorageDir()).path;
-    final info = await DeviceInfoPlugin().androidInfo;
-    isTV = info.systemFeatures.contains('android.hardware.type.television') ||
-        info.systemFeatures.contains('android.software.leanback');
+    if (_cachedDefaultAppDir == null || _cachedIsTV == null) {
+      _cachedDefaultAppDir = (await getAppStorageDir()).path;
+      final info = await DeviceInfoPlugin().androidInfo;
+      _cachedIsTV =
+          info.systemFeatures.contains('android.hardware.type.television') ||
+          info.systemFeatures.contains('android.software.leanback');
+    }
+    defaultAppDir = _cachedDefaultAppDir;
+    isTV = _cachedIsTV!;
     notifyListeners();
   }
 

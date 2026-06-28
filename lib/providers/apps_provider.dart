@@ -539,6 +539,12 @@ class AppsProvider with ChangeNotifier {
   bool gettingUpdates = false;
   LogsProvider logs = LogsProvider();
 
+  // Serializes concurrent loadApps() calls without busy-waiting.
+  Completer<void>? _appsLoadingCompleter;
+
+  // Coalesces bursts of saveApps()/removeApps() into a single auto-export.
+  Timer? _autoExportDebounce;
+
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   late Stream<FGBGType>? foregroundStream;
@@ -552,6 +558,24 @@ class AppsProvider with ChangeNotifier {
   /// Public wrapper around the protected [notifyListeners] so the provider's
   /// part-file extensions can request listeners to rebuild.
   void notify() => notifyListeners();
+
+  /// Waits for any in-flight [loadApps] to finish, so concurrent callers
+  /// serialize instead of busy-waiting on a polling loop.
+  Future<void> waitForAppsToLoad() async {
+    while (_appsLoadingCompleter != null) {
+      await _appsLoadingCompleter!.future;
+    }
+  }
+
+  /// Schedules a debounced automatic export. Coalesces the many per-app
+  /// save/remove operations that happen in bursts into a single export.
+  /// No-op (cheaply returns) if auto-export is disabled inside [export].
+  void scheduleAutoExport() {
+    _autoExportDebounce?.cancel();
+    _autoExportDebounce = Timer(const Duration(seconds: 2), () {
+      export(isAuto: true);
+    });
+  }
 
   AppsProvider({bool isBg = false}) {
     // Subscribe to changes in the app foreground status
@@ -601,6 +625,7 @@ class AppsProvider with ChangeNotifier {
   @override
   void dispose() {
     foregroundSubscription?.cancel();
+    _autoExportDebounce?.cancel();
     super.dispose();
   }
 

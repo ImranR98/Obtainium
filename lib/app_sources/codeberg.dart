@@ -43,10 +43,9 @@ class Codeberg extends AppSource {
       final standardUri = Uri.parse(standardUrl);
       final apiPath =
           '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
-      return standardUri.replace(
-        path: apiPath,
-        queryParameters: {'per_page': '100'},
-      ).toString();
+      return standardUri
+          .replace(path: apiPath, queryParameters: {'per_page': '100'})
+          .toString();
     }, null);
   }
 

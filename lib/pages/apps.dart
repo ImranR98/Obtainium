@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/app_list_builder.dart';
@@ -159,7 +160,7 @@ class AppsPageState extends State<AppsPage> {
   // when an input that affects the list contents/order changes — not on every
   // unrelated rebuild (e.g. download-progress ticks, which mutate apps in
   // place and are reflected live by the cached AppInMemory references).
-  String? _pipelineSig;
+  int? _pipelineSig;
   List<AppInMemory>? _pipelineResult;
 
   // Detects when downloads begin or end so the pipeline cache is invalidated
@@ -208,59 +209,535 @@ class AppsPageState extends State<AppsPage> {
   /// A cheap fingerprint of everything the filter/sort/reorder pipeline depends
   /// on. Excludes per-app download progress and icon bytes (which mutate in
   /// place and don't affect ordering), so progress ticks reuse the cached list.
-  String _pipelineSignature(List<AppInMemory> apps, SettingsProvider sp) {
-    final b = StringBuffer();
-    b
-      ..write(filter.nameFilter)
-      ..write('\u0001')
-      ..write(filter.authorFilter)
-      ..write('\u0001')
-      ..write(filter.idFilter)
-      ..write('\u0001')
-      ..write(filter.includeUptodate)
-      ..write(filter.includeNonInstalled)
-      ..write(filter.categoryFilter.join(','))
-      ..write('\u0001')
-      ..write(filter.sourceFilter)
-      ..write('\u0001')
-      ..write(sp.sortColumn.index)
-      ..write(sp.sortOrder.index)
-      ..write(sp.pinUpdates)
-      ..write(sp.buryNonInstalled)
-      ..write('\u0002');
+  int _pipelineSignature(List<AppInMemory> apps, SettingsProvider sp) {
+    // A structured hash (rather than a separator-joined string) so that a field
+    // value which happens to contain a separator character can't collide with a
+    // different combination of field values (e.g. an app named "Foo | Bar").
+    final parts = <Object?>[
+      filter.nameFilter,
+      filter.authorFilter,
+      filter.idFilter,
+      filter.includeUptodate,
+      filter.includeNonInstalled,
+      Object.hashAll(filter.categoryFilter),
+      filter.sourceFilter,
+      sp.sortColumn.index,
+      sp.sortOrder.index,
+      sp.pinUpdates,
+      sp.buryNonInstalled,
+    ];
     for (final a in apps) {
       final app = a.app;
-      b
-        ..write(app.id)
-        ..write('|')
-        ..write(app.installedVersion)
-        ..write('|')
-        ..write(app.latestVersion)
-        ..write('|')
-        ..write(app.releaseDate?.microsecondsSinceEpoch)
-        ..write('|')
-        ..write(a.name)
-        ..write('|')
-        ..write(a.author)
-        ..write('|')
-        ..write(app.categories.join(','))
-        ..write('|')
-        ..write(app.pinned)
-        ..write('|')
-        ..write(app.hasPendingRepoRename)
-        ..write('|')
-        ..write(app.url)
-        ..write('|')
-        ..write(app.overrideSource)
-        ..write('|')
-        ..write(app.additionalSettings['trackOnly'] == true)
-        ..write('|')
-        ..write(app.additionalSettings['versionDetection'] == true)
-        ..write('|')
-        ..write(app.additionalSettings['releaseDateAsVersion'] == true)
-        ..write('\u0003');
+      parts.addAll(<Object?>[
+        app.id,
+        app.installedVersion,
+        app.latestVersion,
+        app.releaseDate?.microsecondsSinceEpoch,
+        a.name,
+        a.author,
+        Object.hashAll(app.categories),
+        app.pinned,
+        app.hasPendingRepoRename,
+        app.url,
+        app.overrideSource,
+        app.additionalSettings['trackOnly'] == true,
+        app.additionalSettings['versionDetection'] == true,
+        app.additionalSettings['releaseDateAsVersion'] == true,
+      ]);
     }
-    return b.toString();
+    return Object.hashAll(parts);
+  }
+
+  /// Builds the "install/update all" action callback (or null when there's
+  /// nothing actionable / a download is in progress). Extracted from [build]
+  /// to keep that method focused; behaviour is identical to the previous inline
+  /// closure (the captured build-locals are now passed in as parameters).
+  VoidCallback? _massObtainCallback(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    List<String> existingUpdateIdsAllOrSelected,
+    List<String> newInstallIdsAllOrSelected,
+    List<String> trackOnlyUpdateIdsAllOrSelected,
+  ) {
+    return appsProvider.areDownloadsRunning() ||
+            (existingUpdateIdsAllOrSelected.isEmpty &&
+                newInstallIdsAllOrSelected.isEmpty &&
+                trackOnlyUpdateIdsAllOrSelected.isEmpty)
+        ? null
+        : () {
+            settingsProvider.heavyImpact();
+            List<GeneratedFormItem> formItems = [];
+            if (existingUpdateIdsAllOrSelected.isNotEmpty) {
+              formItems.add(
+                GeneratedFormSwitch(
+                  'updates',
+                  label: tr(
+                    'updateX',
+                    args: [
+                      plural(
+                        'apps',
+                        existingUpdateIdsAllOrSelected.length,
+                      ).toLowerCase(),
+                    ],
+                  ),
+                  defaultValue: true,
+                ),
+              );
+            }
+            if (newInstallIdsAllOrSelected.isNotEmpty) {
+              formItems.add(
+                GeneratedFormSwitch(
+                  'installs',
+                  label: tr(
+                    'installX',
+                    args: [
+                      plural(
+                        'apps',
+                        newInstallIdsAllOrSelected.length,
+                      ).toLowerCase(),
+                    ],
+                  ),
+                  defaultValue: existingUpdateIdsAllOrSelected.isEmpty,
+                ),
+              );
+            }
+            if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
+              formItems.add(
+                GeneratedFormSwitch(
+                  'trackonlies',
+                  label: tr(
+                    'markXTrackOnlyAsUpdated',
+                    args: [
+                      plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
+                    ],
+                  ),
+                  defaultValue:
+                      existingUpdateIdsAllOrSelected.isEmpty &&
+                      newInstallIdsAllOrSelected.isEmpty,
+                ),
+              );
+            }
+            showDialog<Map<String, dynamic>?>(
+              context: context,
+              builder: (BuildContext ctx) {
+                var totalApps =
+                    existingUpdateIdsAllOrSelected.length +
+                    newInstallIdsAllOrSelected.length +
+                    trackOnlyUpdateIdsAllOrSelected.length;
+                return GeneratedFormModal(
+                  title: tr(
+                    'changeX',
+                    args: [plural('apps', totalApps).toLowerCase()],
+                  ),
+                  items: formItems.map((e) => [e]).toList(),
+                  initValid: true,
+                );
+              },
+            ).then((values) async {
+              if (values != null) {
+                if (values.isEmpty) {
+                  values = getDefaultValuesFromFormItems([formItems]);
+                }
+                bool shouldInstallUpdates = values['updates'] == true;
+                bool shouldInstallNew = values['installs'] == true;
+                bool shouldMarkTrackOnlies = values['trackonlies'] == true;
+                List<String> toInstall = [];
+                if (shouldInstallUpdates) {
+                  toInstall.addAll(existingUpdateIdsAllOrSelected);
+                }
+                if (shouldInstallNew) {
+                  toInstall.addAll(newInstallIdsAllOrSelected);
+                }
+                if (shouldMarkTrackOnlies) {
+                  toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
+                }
+                appsProvider
+                    .downloadAndInstallLatestApps(
+                      toInstall,
+                      globalNavigatorKey.currentContext,
+                    )
+                    .catchError((e) {
+                      if (context.mounted) showError(e, context);
+                      return <String>[];
+                    })
+                    .then((value) {
+                      if (value.isNotEmpty) {
+                        if (context.mounted) {
+                          if (shouldInstallUpdates) {
+                            showMessage(tr('appsUpdated'), context);
+                          }
+                          var np = context.read<NotificationsProvider>();
+                          np.cancel(UpdateNotification([]).id);
+                        }
+                      }
+                    });
+              }
+            });
+          };
+  }
+
+  void _toggleAppSelected(App app) {
+    setState(() {
+      if (selectedAppIds.contains(app.id)) {
+        selectedAppIds.remove(app.id);
+      } else {
+        selectedAppIds.add(app.id);
+      }
+    });
+    widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+  }
+
+  Future<List<App>> _refresh(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+  ) {
+    settingsProvider.lightImpact();
+    setState(() {
+      refreshingSince = DateTime.now();
+    });
+    return appsProvider
+        .checkUpdates()
+        .catchError((e) {
+          if (context.mounted) showError(e is Map ? e['errors'] : e, context);
+          return <App>[];
+        })
+        .whenComplete(() {
+          setState(() {
+            refreshingSince = null;
+          });
+        });
+  }
+
+  List<Widget> _getLoadingWidgets(
+    BuildContext context,
+    AppsProvider appsProvider,
+    List<AppInMemory> listedApps,
+  ) {
+    return [
+      if (listedApps.isEmpty)
+        SliverFillRemaining(
+          child: EmptyState(
+            icon: appsProvider.apps.isEmpty
+                ? (appsProvider.loadingApps
+                      ? Icons.hourglass_empty_rounded
+                      : Icons.apps_outlined)
+                : Icons.search_off_rounded,
+            message: appsProvider.apps.isEmpty
+                ? appsProvider.loadingApps
+                      ? tr('pleaseWait')
+                      : tr('noApps')
+                : tr('noAppsForFilter'),
+          ),
+        ),
+      if (refreshingSince != null || appsProvider.loadingApps)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+            child: LinearProgressIndicator(
+              value: appsProvider.loadingApps
+                  ? null
+                  : appsProvider.apps.values
+                            .where(
+                              (element) =>
+                                  !(element.app.lastUpdateCheck?.isBefore(
+                                        refreshingSince!,
+                                      ) ??
+                                      true),
+                            )
+                            .length /
+                        (appsProvider.apps.isNotEmpty
+                            ? appsProvider.apps.length
+                            : 1),
+            ),
+          ),
+        ),
+    ];
+  }
+
+  Widget _buildTile(
+    int index,
+    BuildContext context,
+    List<AppInMemory> listedApps,
+    SettingsProvider settingsProvider,
+    AppsProvider appsProvider,
+  ) {
+    final aim = listedApps[index];
+    final app = aim.app;
+    return AppListTile(
+      appInMemory: aim,
+      settingsProvider: settingsProvider,
+      appsProvider: appsProvider,
+      multiSelected: selectedAppIds.contains(app.id),
+      detailSelected: widget.selectedAppId == app.id,
+      autofocus: index == 0 && settingsProvider.isTV,
+      onToggleSelected: () => _toggleAppSelected(app),
+      onTap: () {
+        if (selectedAppIds.isNotEmpty) {
+          _toggleAppSelected(app);
+        } else if (widget.onAppSelected != null) {
+          widget.onAppSelected!(app.id);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AppPage(appId: app.id)),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _appTileCard(
+    int index,
+    BuildContext context,
+    List<AppInMemory> listedApps,
+    SettingsProvider settingsProvider,
+    AppsProvider appsProvider,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: _buildTile(
+          index,
+          context,
+          listedApps,
+          settingsProvider,
+          appsProvider,
+        ),
+      ),
+    );
+  }
+
+  Widget _getCategoryCollapsibleTile(
+    int index,
+    BuildContext context,
+    List<AppInMemory> listedApps,
+    List<String?> listedCategories,
+    SettingsProvider settingsProvider,
+    AppsProvider appsProvider,
+  ) {
+    final category = listedCategories[index];
+    final appEntries = listedApps
+        .asMap()
+        .entries
+        .where(
+          (e) =>
+              e.value.app.categories.contains(category) ||
+              e.value.app.categories.isEmpty && category == null,
+        )
+        .toList();
+    final expanded = !collapsedCategories.contains(category);
+    return AppListCategorySection(
+      category: category,
+      expanded: expanded,
+      appCount: appEntries.length,
+      onToggle: () {
+        setState(() {
+          if (expanded) {
+            collapsedCategories.add(category);
+          } else {
+            collapsedCategories.remove(category);
+          }
+        });
+      },
+      buildTiles: () => [
+        for (final e in appEntries)
+          _buildTile(
+            e.key,
+            context,
+            listedApps,
+            settingsProvider,
+            appsProvider,
+          ),
+      ],
+    );
+  }
+
+  Widget _getSelectAllButton(
+    BuildContext context,
+    List<AppInMemory> listedApps,
+  ) {
+    return selectedAppIds.isEmpty
+        ? TextButton.icon(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              selectThese(listedApps.map((e) => e.app).toList());
+            },
+            icon: Icon(
+              Icons.select_all_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            label: Text(listedApps.length.toString()),
+          )
+        : TextButton.icon(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              clearSelected();
+            },
+            icon: Icon(
+              Icons.deselect_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            label: Text(selectedAppIds.length.toString()),
+          );
+  }
+
+  Widget _getDisplayedList(
+    BuildContext context,
+    List<AppInMemory> listedApps,
+    List<String?> listedCategories,
+    SettingsProvider settingsProvider,
+    AppsProvider appsProvider,
+  ) {
+    return settingsProvider.groupByCategory &&
+            !(listedCategories.isEmpty ||
+                (listedCategories.length == 1 && listedCategories[0] == null))
+        ? SliverList(
+            delegate: SliverChildBuilderDelegate((
+              BuildContext context,
+              int index,
+            ) {
+              return _getCategoryCollapsibleTile(
+                index,
+                context,
+                listedApps,
+                listedCategories,
+                settingsProvider,
+                appsProvider,
+              );
+            }, childCount: listedCategories.length),
+          )
+        : SliverList(
+            delegate: SliverChildBuilderDelegate((
+              BuildContext context,
+              int index,
+            ) {
+              return _appTileCard(
+                index,
+                context,
+                listedApps,
+                settingsProvider,
+                appsProvider,
+              );
+            }, childCount: listedApps.length),
+          );
+  }
+
+  Widget _getSearchBarSliver(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    List<AppInMemory> listedApps,
+  ) {
+    var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: SearchBar(
+          controller: searchController,
+          hintText: tr('search'),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 16),
+          ),
+          leading: const Icon(Icons.search_rounded),
+          trailing: [
+            _getSelectAllButton(context, listedApps),
+            if (!isFilterOff)
+              IconButton(
+                tooltip: '${tr('filter')} - ${tr('remove')}',
+                onPressed: () {
+                  _searchDebounce?.cancel();
+                  setState(() {
+                    filter = AppsFilter();
+                    searchController.clear();
+                  });
+                },
+                icon: const Icon(Icons.filter_alt_off_outlined),
+              ),
+            IconButton(
+              tooltip: tr('filterApps'),
+              onPressed: () => _showFilterDialog(context),
+              icon: const Icon(Icons.filter_list_rounded),
+            ),
+          ],
+          onChanged: (value) {
+            _searchDebounce?.cancel();
+            _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                setState(() {
+                  filter.nameFilter = value;
+                });
+              }
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _getUpdateBannerSliver(
+    BuildContext context,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    List<String> existingUpdateIdsAllOrSelected,
+    List<String> newInstallIdsAllOrSelected,
+    List<String> trackOnlyUpdateIdsAllOrSelected,
+  ) {
+    var onObtain = _massObtainCallback(
+      context,
+      appsProvider,
+      settingsProvider,
+      existingUpdateIdsAllOrSelected,
+      newInstallIdsAllOrSelected,
+      trackOnlyUpdateIdsAllOrSelected,
+    );
+    final cs = Theme.of(context).colorScheme;
+    return SliverToBoxAdapter(
+      child: AnimatedSize(
+        duration: ExpressiveMotion.medium,
+        curve: ExpressiveMotion.emphasized,
+        alignment: Alignment.topCenter,
+        child: onObtain == null
+            ? const SizedBox(width: double.infinity)
+            : Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: ConnectedCard(
+                  color: cs.primaryContainer,
+                  padding: null,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.system_update_alt_rounded,
+                          color: cs.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            selectedAppIds.isEmpty
+                                ? tr('installUpdateApps')
+                                : tr('installUpdateSelectedApps'),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: onObtain,
+                          child: Text(tr('update')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 
   @override
@@ -268,24 +745,6 @@ class AppsPageState extends State<AppsPage> {
     var appsProvider = context.watch<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
     var listedApps = appsProvider.getAppValues().toList();
-
-    refresh() {
-      settingsProvider.lightImpact();
-      setState(() {
-        refreshingSince = DateTime.now();
-      });
-      return appsProvider
-          .checkUpdates()
-          .catchError((e) {
-            if (context.mounted) showError(e is Map ? e['errors'] : e, context);
-            return <App>[];
-          })
-          .whenComplete(() {
-            setState(() {
-              refreshingSince = null;
-            });
-          });
-    }
 
     if (!appsProvider.loadingApps &&
         appsProvider.apps.isNotEmpty &&
@@ -298,17 +757,6 @@ class AppsPageState extends State<AppsPage> {
 
     var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
     selectedAppIds = selectedAppIds.where(listedAppIdSet.contains).toSet();
-
-    toggleAppSelected(App app) {
-      setState(() {
-        if (selectedAppIds.contains(app.id)) {
-          selectedAppIds.remove(app.id);
-        } else {
-          selectedAppIds.add(app.id);
-        }
-      });
-      widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
-    }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
@@ -398,377 +846,6 @@ class AppsPageState extends State<AppsPage> {
         .where((a) => selectedAppIds.contains(a.id))
         .toSet();
 
-    getLoadingWidgets() {
-      return [
-        if (listedApps.isEmpty)
-          SliverFillRemaining(
-            child: EmptyState(
-              icon: appsProvider.apps.isEmpty
-                  ? (appsProvider.loadingApps
-                        ? Icons.hourglass_empty_rounded
-                        : Icons.apps_outlined)
-                  : Icons.search_off_rounded,
-              message: appsProvider.apps.isEmpty
-                  ? appsProvider.loadingApps
-                        ? tr('pleaseWait')
-                        : tr('noApps')
-                  : tr('noAppsForFilter'),
-            ),
-          ),
-        if (refreshingSince != null || appsProvider.loadingApps)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
-              child: LinearProgressIndicator(
-                value: appsProvider.loadingApps
-                    ? null
-                    : appsProvider.apps.values
-                              .where(
-                                (element) =>
-                                    !(element.app.lastUpdateCheck?.isBefore(
-                                          refreshingSince!,
-                                        ) ??
-                                        true),
-                              )
-                              .length /
-                          (appsProvider.apps.isNotEmpty
-                              ? appsProvider.apps.length
-                              : 1),
-              ),
-            ),
-          ),
-      ];
-    }
-
-    buildTile(int index) {
-      final aim = listedApps[index];
-      final app = aim.app;
-      return AppListTile(
-        appInMemory: aim,
-        settingsProvider: settingsProvider,
-        appsProvider: appsProvider,
-        multiSelected: selectedAppIds.contains(app.id),
-        detailSelected: widget.selectedAppId == app.id,
-        autofocus: index == 0 && settingsProvider.isTV,
-        onToggleSelected: () => toggleAppSelected(app),
-        onTap: () {
-          if (selectedAppIds.isNotEmpty) {
-            toggleAppSelected(app);
-          } else if (widget.onAppSelected != null) {
-            widget.onAppSelected!(app.id);
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AppPage(appId: app.id)),
-            );
-          }
-        },
-      );
-    }
-
-    appTileCard(int index) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-        child: Card(clipBehavior: Clip.antiAlias, child: buildTile(index)),
-      );
-    }
-
-    getCategoryCollapsibleTile(int index) {
-      final category = listedCategories[index];
-      final appEntries = listedApps
-          .asMap()
-          .entries
-          .where(
-            (e) =>
-                e.value.app.categories.contains(category) ||
-                e.value.app.categories.isEmpty && category == null,
-          )
-          .toList();
-      final expanded = !collapsedCategories.contains(category);
-      return AppListCategorySection(
-        category: category,
-        expanded: expanded,
-        appCount: appEntries.length,
-        onToggle: () {
-          setState(() {
-            if (expanded) {
-              collapsedCategories.add(category);
-            } else {
-              collapsedCategories.remove(category);
-            }
-          });
-        },
-        buildTiles: () => [for (final e in appEntries) buildTile(e.key)],
-      );
-    }
-
-    getSelectAllButton() {
-      return selectedAppIds.isEmpty
-          ? TextButton.icon(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                selectThese(listedApps.map((e) => e.app).toList());
-              },
-              icon: Icon(
-                Icons.select_all_outlined,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              label: Text(listedApps.length.toString()),
-            )
-          : TextButton.icon(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                selectedAppIds.isEmpty
-                    ? selectThese(listedApps.map((e) => e.app).toList())
-                    : clearSelected();
-              },
-              icon: Icon(
-                selectedAppIds.isEmpty
-                    ? Icons.select_all_outlined
-                    : Icons.deselect_outlined,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              label: Text(selectedAppIds.length.toString()),
-            );
-    }
-
-    getMassObtainFunction() {
-      return appsProvider.areDownloadsRunning() ||
-              (existingUpdateIdsAllOrSelected.isEmpty &&
-                  newInstallIdsAllOrSelected.isEmpty &&
-                  trackOnlyUpdateIdsAllOrSelected.isEmpty)
-          ? null
-          : () {
-              settingsProvider.heavyImpact();
-              List<GeneratedFormItem> formItems = [];
-              if (existingUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'updates',
-                    label: tr(
-                      'updateX',
-                      args: [
-                        plural(
-                          'apps',
-                          existingUpdateIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    defaultValue: true,
-                  ),
-                );
-              }
-              if (newInstallIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'installs',
-                    label: tr(
-                      'installX',
-                      args: [
-                        plural(
-                          'apps',
-                          newInstallIdsAllOrSelected.length,
-                        ).toLowerCase(),
-                      ],
-                    ),
-                    defaultValue: existingUpdateIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              if (trackOnlyUpdateIdsAllOrSelected.isNotEmpty) {
-                formItems.add(
-                  GeneratedFormSwitch(
-                    'trackonlies',
-                    label: tr(
-                      'markXTrackOnlyAsUpdated',
-                      args: [
-                        plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
-                      ],
-                    ),
-                    defaultValue:
-                        existingUpdateIdsAllOrSelected.isEmpty &&
-                        newInstallIdsAllOrSelected.isEmpty,
-                  ),
-                );
-              }
-              showDialog<Map<String, dynamic>?>(
-                context: context,
-                builder: (BuildContext ctx) {
-                  var totalApps =
-                      existingUpdateIdsAllOrSelected.length +
-                      newInstallIdsAllOrSelected.length +
-                      trackOnlyUpdateIdsAllOrSelected.length;
-                  return GeneratedFormModal(
-                    title: tr(
-                      'changeX',
-                      args: [plural('apps', totalApps).toLowerCase()],
-                    ),
-                    items: formItems.map((e) => [e]).toList(),
-                    initValid: true,
-                  );
-                },
-              ).then((values) async {
-                if (values != null) {
-                  if (values.isEmpty) {
-                    values = getDefaultValuesFromFormItems([formItems]);
-                  }
-                  bool shouldInstallUpdates = values['updates'] == true;
-                  bool shouldInstallNew = values['installs'] == true;
-                  bool shouldMarkTrackOnlies = values['trackonlies'] == true;
-                  List<String> toInstall = [];
-                  if (shouldInstallUpdates) {
-                    toInstall.addAll(existingUpdateIdsAllOrSelected);
-                  }
-                  if (shouldInstallNew) {
-                    toInstall.addAll(newInstallIdsAllOrSelected);
-                  }
-                  if (shouldMarkTrackOnlies) {
-                    toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
-                  }
-                  appsProvider
-                      .downloadAndInstallLatestApps(
-                        toInstall,
-                        globalNavigatorKey.currentContext,
-                      )
-                      .catchError((e) {
-                        if (context.mounted) showError(e, context);
-                        return <String>[];
-                      })
-                      .then((value) {
-                        if (value.isNotEmpty) {
-                          if (context.mounted) {
-                            if (shouldInstallUpdates) {
-                              showMessage(tr('appsUpdated'), context);
-                            }
-                            var np = context.read<NotificationsProvider>();
-                            np.cancel(UpdateNotification([]).id);
-                          }
-                        }
-                      });
-                }
-              });
-            };
-    }
-
-    getDisplayedList() {
-      return settingsProvider.groupByCategory &&
-              !(listedCategories.isEmpty ||
-                  (listedCategories.length == 1 && listedCategories[0] == null))
-          ? SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return getCategoryCollapsibleTile(index);
-              }, childCount: listedCategories.length),
-            )
-          : SliverList(
-              delegate: SliverChildBuilderDelegate((
-                BuildContext context,
-                int index,
-              ) {
-                return appTileCard(index);
-              }, childCount: listedApps.length),
-            );
-    }
-
-    getSearchBarSliver() {
-      var isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: SearchBar(
-            controller: searchController,
-            hintText: tr('search'),
-            padding: const WidgetStatePropertyAll(
-              EdgeInsets.symmetric(horizontal: 16),
-            ),
-            leading: const Icon(Icons.search_rounded),
-            trailing: [
-              getSelectAllButton(),
-              if (!isFilterOff)
-                IconButton(
-                  tooltip: '${tr('filter')} - ${tr('remove')}',
-                  onPressed: () {
-                    _searchDebounce?.cancel();
-                    setState(() {
-                      filter = AppsFilter();
-                      searchController.clear();
-                    });
-                  },
-                  icon: const Icon(Icons.filter_alt_off_outlined),
-                ),
-              IconButton(
-                tooltip: tr('filterApps'),
-                onPressed: () => _showFilterDialog(context),
-                icon: const Icon(Icons.filter_list_rounded),
-              ),
-            ],
-            onChanged: (value) {
-              _searchDebounce?.cancel();
-              _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-                if (mounted) {
-                  setState(() {
-                    filter.nameFilter = value;
-                  });
-                }
-              });
-            },
-          ),
-        ),
-      );
-    }
-
-    getUpdateBannerSliver() {
-      var onObtain = getMassObtainFunction();
-      final cs = Theme.of(context).colorScheme;
-      return SliverToBoxAdapter(
-        child: AnimatedSize(
-          duration: ExpressiveMotion.medium,
-          curve: ExpressiveMotion.emphasized,
-          alignment: Alignment.topCenter,
-          child: onObtain == null
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: ConnectedCard(
-                    color: cs.primaryContainer,
-                    padding: null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.system_update_alt_rounded,
-                            color: cs.onPrimaryContainer,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              selectedAppIds.isEmpty
-                                  ? tr('installUpdateApps')
-                                  : tr('installUpdateSelectedApps'),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: cs.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: onObtain,
-                            child: Text(tr('update')),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-        ),
-      );
-    }
-
     return PopScope(
       canPop: selectedAppIds.isEmpty,
       onPopInvokedWithResult: (didPop, result) {
@@ -780,7 +857,7 @@ class AppsPageState extends State<AppsPage> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: RefreshIndicator(
           key: _refreshIndicatorKey,
-          onRefresh: refresh,
+          onRefresh: () => _refresh(context, appsProvider, settingsProvider),
           child: Scrollbar(
             interactive: true,
             controller: scrollController,
@@ -789,10 +866,25 @@ class AppsPageState extends State<AppsPage> {
               controller: scrollController,
               slivers: <Widget>[
                 CustomAppBar(title: tr('appsString')),
-                if (appsProvider.apps.isNotEmpty) getSearchBarSliver(),
-                if (appsProvider.apps.isNotEmpty) getUpdateBannerSliver(),
-                ...getLoadingWidgets(),
-                getDisplayedList(),
+                if (appsProvider.apps.isNotEmpty)
+                  _getSearchBarSliver(context, settingsProvider, listedApps),
+                if (appsProvider.apps.isNotEmpty)
+                  _getUpdateBannerSliver(
+                    context,
+                    appsProvider,
+                    settingsProvider,
+                    existingUpdateIdsAllOrSelected,
+                    newInstallIdsAllOrSelected,
+                    trackOnlyUpdateIdsAllOrSelected,
+                  ),
+                ..._getLoadingWidgets(context, appsProvider, listedApps),
+                _getDisplayedList(
+                  context,
+                  listedApps,
+                  listedCategories,
+                  settingsProvider,
+                  appsProvider,
+                ),
                 const SliverToBoxAdapter(child: SizedBox(height: 88)),
               ],
             ),
@@ -1232,6 +1324,18 @@ class _AppIconWidgetState extends State<AppIconWidget> {
     return Semantics(
       label: name,
       button: true,
+      // Mirror the icon's long-press gesture (open the app's detail/web view)
+      // so assistive technologies can reach it; the InkWell gesture itself is
+      // invisible to screen readers.
+      onLongPress: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                AppPage(appId: widget.appId, showOppositeOfPreferredView: true),
+          ),
+        );
+      },
       child: InkWell(
         child: FutureBuilder(
           future: _iconFuture,
@@ -1543,75 +1647,127 @@ class AppListTile extends StatelessWidget {
         // Removal is already handled inside confirmDismiss via
         // removeAppsWithModal; nothing to do here.
       },
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: categories.isEmpty
-              ? null
-              : LinearGradient(
-                  stops: stops,
-                  begin: const Alignment(-1, 0),
-                  end: const Alignment(-0.97, 0),
-                  colors: [
-                    ...categories.map(
-                      (e) => Color(
-                        settingsProvider.categories[e] ?? transparent,
-                      ).withAlpha(255),
-                    ),
-                    Color(transparent),
-                  ],
-                ),
-        ),
-        child: ListTile(
-          autofocus: autofocus,
-          tileColor: _app.pinned
-              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
-              : Colors.transparent,
-          selectedTileColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
-          selected: multiSelected || detailSelected,
-          onLongPress: onToggleSelected,
-          leading: (settingsProvider.isTV)
-              ? Checkbox(
-                  value: multiSelected,
-                  onChanged: (_) {
-                    onToggleSelected();
-                  },
-                )
-              : AppIconWidget(
-                  appId: _app.id,
-                  installed: appInMemory.installedInfo != null,
-                  appsProvider: appsProvider,
-                ),
-          title: Text(
-            maxLines: 1,
-            appInMemory.name,
-            style: TextStyle(
-              overflow: TextOverflow.ellipsis,
-              fontWeight: _app.pinned ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          subtitle: _app.hasPendingRepoRename
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_authorText(), _repoMovedRow(context)],
-                )
-              : _authorText(),
-          trailing:
-              appInMemory.downloadProgress != null &&
-                  appInMemory.downloadProgress! >= 0
-              ? SizedBox(
-                  child: Text(
-                    tr(
-                      'percentProgress',
-                      args: [appInMemory.downloadProgress!.toInt().toString()],
-                    ),
-                    textAlign: TextAlign.start,
+      child: Semantics(
+        // Expose the swipe gestures (install/update and remove) to assistive
+        // technologies, which can neither discover nor perform a Dismissible
+        // swipe on their own.
+        customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
+          if (canInstall || canUpdate)
+            CustomSemanticsAction(
+              label: canUpdate ? tr('update') : tr('install'),
+            ): () {
+              if (!appsProvider.areDownloadsRunning()) {
+                appsProvider.downloadAndInstallLatestApps([
+                  appId,
+                ], globalNavigatorKey.currentContext);
+              }
+            },
+          CustomSemanticsAction(label: tr('remove')): () {
+            appsProvider.removeAppsWithModal(context, [_app]);
+          },
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: categories.isEmpty
+                ? null
+                : LinearGradient(
+                    stops: stops,
+                    begin: const Alignment(-1, 0),
+                    end: const Alignment(-0.97, 0),
+                    colors: [
+                      ...categories.map(
+                        (e) => Color(
+                          settingsProvider.categories[e] ?? transparent,
+                        ).withAlpha(255),
+                      ),
+                      Color(transparent),
+                    ],
                   ),
-                )
-              : trailingRow,
-          onTap: onTap,
+          ),
+          child: ListTile(
+            autofocus: autofocus,
+            tileColor: _app.pinned
+                ? Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.06)
+                : Colors.transparent,
+            selectedTileColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
+            selected: multiSelected || detailSelected,
+            onLongPress: onToggleSelected,
+            leading: (settingsProvider.isTV)
+                ? Checkbox(
+                    value: multiSelected,
+                    onChanged: (_) {
+                      onToggleSelected();
+                    },
+                  )
+                : AppIconWidget(
+                    appId: _app.id,
+                    installed: appInMemory.installedInfo != null,
+                    appsProvider: appsProvider,
+                  ),
+            title: Text(
+              maxLines: 1,
+              appInMemory.name,
+              style: TextStyle(
+                overflow: TextOverflow.ellipsis,
+                fontWeight: _app.pinned ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            subtitle: _app.hasPendingRepoRename
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [_authorText(), _repoMovedRow(context)],
+                  )
+                : _authorText(),
+            trailing:
+                appInMemory.downloadProgress != null &&
+                    appInMemory.downloadProgress! >= 0
+                ? _DownloadProgressTrailing(
+                    progress: appInMemory.downloadProgress!,
+                  )
+                : trailingRow,
+            onTap: onTap,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact download-progress indicator shown in an app list tile's trailing
+/// slot (a small bar plus the integer percentage), kept consistent with the
+/// detail page's progress UI. Extracted into its own widget so the per-row
+/// markup stays focused and the percentage label is computed once.
+class _DownloadProgressTrailing extends StatelessWidget {
+  final double progress;
+  const _DownloadProgressTrailing({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = tr('percentProgress', args: [progress.toInt().toString()]);
+    return SizedBox(
+      width: 56,
+      child: Semantics(
+        label: label,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(value: progress / 100),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11),
+            ),
+          ],
         ),
       ),
     );

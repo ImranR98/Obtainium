@@ -175,107 +175,111 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<void> loadApps({String? singleId}) async {
-    while (loadingApps) {
-      await Future.delayed(const Duration(microseconds: 1));
-    }
+    await waitForAppsToLoad();
+    final loadingCompleter = Completer<void>();
+    _appsLoadingCompleter = loadingCompleter;
     loadingApps = true;
     notify();
-    var sp = SourceProvider();
-    List<List<String>> errors = [];
-    var installedAppsData = await getAllInstalledInfo();
-    List<String> removedAppIds = [];
-    await Future.wait(
-      (await getAppsDir()) // Parse Apps from JSON
-          .listSync()
-          .map((item) async {
-            App? app;
-            if (item.path.toLowerCase().endsWith('.json') &&
-                (singleId == null ||
-                    item.path.split('/').last.toLowerCase() ==
-                        '${singleId.toLowerCase()}.json')) {
-              try {
-                app = App.fromJson(
-                  jsonDecode(File(item.path).readAsStringSync()),
-                );
-              } catch (err) {
-                if (err is FormatException) {
-                  logs.add(
-                    'Corrupt JSON when loading App (will be ignored): $err',
-                  );
-                  item.renameSync('${item.path}.corrupt');
-                } else {
-                  rethrow;
-                }
-              }
-            }
-            if (app != null) {
-              // Save the app to the in-memory list without grabbing any OS info first
-              apps.update(
-                app.id,
-                (value) => AppInMemory(
-                  app!,
-                  value.downloadProgress,
-                  value.installedInfo,
-                  value.icon,
-                ),
-                ifAbsent: () => AppInMemory(app!, null, null, null),
-              );
-              notify();
-              try {
-                // Try getting the app's source to ensure no invalid apps get loaded
-                sp.getSource(app.url, overrideSource: app.overrideSource);
-                // If the app is installed, grab its OS data and reconcile install statuses
-                PackageInfo? installedInfo;
+    try {
+      var sp = SourceProvider();
+      List<List<String>> errors = [];
+      var installedAppsData = await getAllInstalledInfo();
+      List<String> removedAppIds = [];
+      await Future.wait(
+        (await getAppsDir()) // Parse Apps from JSON
+            .listSync()
+            .map((item) async {
+              App? app;
+              if (item.path.toLowerCase().endsWith('.json') &&
+                  (singleId == null ||
+                      item.path.split('/').last.toLowerCase() ==
+                          '${singleId.toLowerCase()}.json')) {
                 try {
-                  installedInfo = installedAppsData.firstWhere(
-                    (i) => i.packageName == app!.id,
+                  app = App.fromJson(
+                    jsonDecode(File(item.path).readAsStringSync()),
                   );
-                } catch (e) {
-                  // If the app isn't installed the above throws an error
-                }
-                // Reconcile differences between the installed and recorded install info
-                var moddedApp = getCorrectedInstallStatusAppIfPossible(
-                  app,
-                  installedInfo,
-                );
-                if (moddedApp != null) {
-                  app = moddedApp;
-                  // Note the app ID if it was uninstalled externally
-                  if (moddedApp.installedVersion == null) {
-                    removedAppIds.add(moddedApp.id);
+                } catch (err) {
+                  if (err is FormatException) {
+                    logs.add(
+                      'Corrupt JSON when loading App (will be ignored): $err',
+                    );
+                    item.renameSync('${item.path}.corrupt');
+                  } else {
+                    rethrow;
                   }
                 }
-                // Update the app in memory with install info and corrections
+              }
+              if (app != null) {
+                // Save the app to the in-memory list without grabbing any OS info first
                 apps.update(
                   app.id,
                   (value) => AppInMemory(
                     app!,
                     value.downloadProgress,
-                    installedInfo,
+                    value.installedInfo,
                     value.icon,
                   ),
-                  ifAbsent: () => AppInMemory(app!, null, installedInfo, null),
+                  ifAbsent: () => AppInMemory(app!, null, null, null),
                 );
-                notify();
-              } catch (e) {
-                errors.add([app!.id, app.finalName, e.toString()]);
+                try {
+                  // Try getting the app's source to ensure no invalid apps get loaded
+                  sp.getSource(app.url, overrideSource: app.overrideSource);
+                  // If the app is installed, grab its OS data and reconcile install statuses
+                  PackageInfo? installedInfo;
+                  try {
+                    installedInfo = installedAppsData.firstWhere(
+                      (i) => i.packageName == app!.id,
+                    );
+                  } catch (e) {
+                    // If the app isn't installed the above throws an error
+                  }
+                  // Reconcile differences between the installed and recorded install info
+                  var moddedApp = getCorrectedInstallStatusAppIfPossible(
+                    app,
+                    installedInfo,
+                  );
+                  if (moddedApp != null) {
+                    app = moddedApp;
+                    // Note the app ID if it was uninstalled externally
+                    if (moddedApp.installedVersion == null) {
+                      removedAppIds.add(moddedApp.id);
+                    }
+                  }
+                  // Update the app in memory with install info and corrections
+                  apps.update(
+                    app.id,
+                    (value) => AppInMemory(
+                      app!,
+                      value.downloadProgress,
+                      installedInfo,
+                      value.icon,
+                    ),
+                    ifAbsent: () =>
+                        AppInMemory(app!, null, installedInfo, null),
+                  );
+                } catch (e) {
+                  errors.add([app!.id, app.finalName, e.toString()]);
+                }
               }
-            }
-          }),
-    );
-    if (errors.isNotEmpty) {
-      removeApps(errors.map((e) => e[0]).toList());
-      NotificationsProvider().notify(
-        AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()),
+            }),
       );
+      if (errors.isNotEmpty) {
+        removeApps(errors.map((e) => e[0]).toList());
+        NotificationsProvider().notify(
+          AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()),
+        );
+      }
+      // Delete externally uninstalled Apps if needed
+      if (removedAppIds.isNotEmpty &&
+          settingsProvider.removeOnExternalUninstall) {
+        await removeApps(removedAppIds);
+      }
+    } finally {
+      loadingApps = false;
+      _appsLoadingCompleter = null;
+      loadingCompleter.complete();
+      notify();
     }
-    // Delete externally uninstalled Apps if needed
-    if (removedAppIds.isNotEmpty &&
-        settingsProvider.removeOnExternalUninstall) {
-      await removeApps(removedAppIds);
-    }
-    loadingApps = false;
-    notify();
   }
 
   Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
@@ -354,7 +358,7 @@ extension AppsProviderLifecycle on AppsProvider {
       }),
     );
     notify();
-    export(isAuto: true);
+    scheduleAutoExport();
   }
 
   Future<void> removeApps(List<String> appIds) async {
@@ -379,7 +383,7 @@ extension AppsProviderLifecycle on AppsProvider {
     );
     if (appIds.isNotEmpty) {
       notify();
-      export(isAuto: true);
+      scheduleAutoExport();
     }
   }
 

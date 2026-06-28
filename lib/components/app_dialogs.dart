@@ -53,15 +53,15 @@ class _AppFilePickerState extends State<AppFilePicker> {
           children: [
             urlsToSelectFrom.length > 1
                 ? Text(
-                    tr('appHasMoreThanOnePackage', args: [widget.app.finalName]),
+                    tr(
+                      'appHasMoreThanOnePackage',
+                      args: [widget.app.finalName],
+                    ),
                   )
                 : const SizedBox.shrink(),
             const SizedBox(height: 16),
             ...urlsToSelectFrom.map(
-              (u) => RadioListTile<String>(
-                title: Text(u.key),
-                value: u.value,
-              ),
+              (u) => RadioListTile<String>(title: Text(u.key), value: u.value),
             ),
             if (widget.archs != null) const SizedBox(height: 16),
             if (widget.archs != null)
@@ -112,8 +112,7 @@ class APKOriginWarningDialog extends StatefulWidget {
   final String apkUrl;
 
   @override
-  State<APKOriginWarningDialog> createState() =>
-      _APKOriginWarningDialogState();
+  State<APKOriginWarningDialog> createState() => _APKOriginWarningDialogState();
 }
 
 class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {

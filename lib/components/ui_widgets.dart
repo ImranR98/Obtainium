@@ -255,7 +255,12 @@ class LinkText extends StatelessWidget {
   final String url;
   final TextStyle? style;
 
-  const LinkText({super.key, required this.text, required this.url, this.style});
+  const LinkText({
+    super.key,
+    required this.text,
+    required this.url,
+    this.style,
+  });
 
   @override
   Widget build(BuildContext context) {

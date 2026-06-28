@@ -88,7 +88,8 @@ class RuStore extends AppSource {
     );
     var downloadDetails = (await decodeJsonBody(res1.bodyBytes))['body'];
     try {
-      if (res1.statusCode != 200 || downloadDetails['downloadUrls'][0]['url'] == null) {
+      if (res1.statusCode != 200 ||
+          downloadDetails['downloadUrls'][0]['url'] == null) {
         throw NoAPKError();
       }
     } catch (e) {

@@ -90,14 +90,16 @@ dependencies:
   battery_plus: ^7.0.0
   flutter_charset_detector: ^6.0.0
 
+  flutter_foreground_task: ^9.2.2
+  flutter_markdown_plus: ^1.0.7
+
+dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_foreground_task: ^9.2.2
-  flutter_markdown_plus: ^1.0.7
 
 flutter_launcher_icons:
   android: "ic_launcher"

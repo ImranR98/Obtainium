@@ -222,9 +222,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     dialogTheme: DialogThemeData(shape: dialogShape),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      shape: RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       shape: RoundedSuperellipseBorder(
@@ -248,9 +246,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      shape: RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
     ),
     inputDecorationTheme: InputDecorationThemeData(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

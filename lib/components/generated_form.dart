@@ -142,7 +142,6 @@ class GeneratedFormSwitch extends GeneratedFormItem {
   }
 }
 
-
 typedef OnValueChanges =
     void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
 

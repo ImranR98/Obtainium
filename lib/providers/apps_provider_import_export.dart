@@ -95,9 +95,7 @@ extension AppsProviderImportExport on AppsProvider {
         ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
             .map((e) => App.fromJson(e))
             .toList();
-    while (loadingApps) {
-      await Future.delayed(const Duration(microseconds: 1));
-    }
+    await waitForAppsToLoad();
     for (App a in importedApps) {
       var installedInfo = await getInstalledInfo(a.id, printErr: false);
       a.installedVersion =

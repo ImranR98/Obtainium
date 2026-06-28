@@ -79,10 +79,7 @@ class Farsroid extends AppSource {
     var apkLinks = (await grabLinksCommon(
       html2,
       res2.request!.url,
-      {
-        ...additionalSettings,
-        'skipSort': true,
-      },
+      {...additionalSettings, 'skipSort': true},
     )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
 
     apkLinks = filterApks(

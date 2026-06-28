@@ -105,7 +105,12 @@ extension AppsProviderInstall on AppsProvider {
           int? prog = progress?.ceil();
           if (apps[app.id] != null) {
             apps[app.id]!.downloadProgress = progress;
-            notify();
+            // Only rebuild listeners when the displayed (integer) percent
+            // actually changes, to avoid redundant whole-page rebuilds on
+            // every sub-percent download tick.
+            if (prevProg != prog) {
+              notify();
+            }
           }
           notif = DownloadNotification(app.finalName, prog ?? 100);
           if (prog != null && prevProg != prog) {
