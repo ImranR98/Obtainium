@@ -371,7 +371,9 @@ class SettingsProvider with ChangeNotifier {
       a.length == b.length && a.union(b).length == a.length;
 
   void resetLocaleSafe(BuildContext context) {
-    if (context.supportedLocales.contains(context.deviceLocale)) {
+    if (context.supportedLocales.any(
+      (l) => l.languageCode == context.deviceLocale.languageCode,
+    )) {
       context.resetLocale();
     } else {
       context.setLocale(context.fallbackLocale!);

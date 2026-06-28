@@ -360,9 +360,11 @@ class _ObtainiumState extends State<Obtainium> {
             });
       }
     }
+    final currentLang = context.locale.languageCode;
+    final deviceLang = context.deviceLocale.languageCode;
     if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
         (settings.forcedLocale == null &&
-            context.deviceLocale != context.locale)) {
+            deviceLang != currentLang)) {
       settings.resetLocaleSafe(context);
     }
   }
