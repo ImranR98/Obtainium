@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:animations/animations.dart';
 import 'package:app_links/app_links.dart';
@@ -198,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                     items: const [],
                     additionalWidgets: [
                       ExpansionTile(
-                        title: const Text('Raw JSON'),
+                        title: Text(tr('rawJson')),
                         children: [
                           Text(
                             dataStr,
@@ -213,11 +214,18 @@ class _HomePageState extends State<HomePage> {
               null) {
             // ignore: use_build_context_synchronously
             var appsProvider = context.read<AppsProvider>();
-            var result = await appsProvider.import(
-              action == 'app'
-                  ? '{ "apps": [$dataStr] }'
-                  : '{ "apps": $dataStr }',
-            );
+            // Parse dataStr as JSON and re-encode so injected content can't
+            // break out of the JSON structure.
+            dynamic parsedData;
+            try {
+              parsedData = jsonDecode(dataStr);
+            } catch (_) {
+              throw ObtainiumError(tr('invalidInput'));
+            }
+            final importPayload = jsonEncode(<String, dynamic>{
+              'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
+            });
+            var result = await appsProvider.import(importPayload);
             if (mounted) {
               showMessage(
                 tr(

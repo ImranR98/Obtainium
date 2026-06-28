@@ -616,7 +616,7 @@ sourceRequestStreamResponse(
 
     return MapEntry(currentUrl, MapEntry(httpClient, response));
   }
-  throw ObtainiumError('Too many redirects ($maxRedirects)');
+  throw ObtainiumError(tr('tooManyRedirects'));
 }
 
 Future<Response> httpClientResponseStreamToFinalResponse(

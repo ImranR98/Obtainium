@@ -214,7 +214,7 @@ extension AppsProviderInstall on AppsProvider {
       }
       if (newInfo == null) {
         downloadedFile.delete();
-        throw ObtainiumError('Could not get ID from APK');
+        throw ObtainiumError(tr('couldNotGetIdFromApk'));
       }
       downloadedFile = await handleAPKIDChange(
         app,
