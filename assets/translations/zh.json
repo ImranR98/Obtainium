@@ -310,6 +310,8 @@
     "shizukuOld": "Shizuku 版本过低（<11）- 请更新",
     "shizukuOldAndroidWithADB": "正在低版本 Android（<8.1）系统中以 ADB 模式运行 Shizuku - 请更新 Android 系统版本或使用 Sui 代替",
     "dhizukuNotActivatedUsingShizuku": "Dhizuku is not activated as Device Owner, so Shizuku is being used instead. Activate Dhizuku in the Dhizuku app to use it.",
+    "dhizukuInstallFailedTryingShizuku": "Dhizuku install failed; retrying with Shizuku.",
+    "dhizukuInstallFailedShizukuFallbackFailed": "Dhizuku and Shizuku install both failed.",
     "shizukuPretendToBeGooglePlay": "将安装来源伪装为 Google Play（需要使用 Shizuku）",
     "useSystemFont": "使用系统字体",
     "useVersionCodeAsOSVersion": "使用内部版本号代替应用定义的版本号",

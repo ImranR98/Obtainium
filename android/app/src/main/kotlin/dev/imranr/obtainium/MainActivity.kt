@@ -8,19 +8,25 @@ import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
- * The native surface is intentionally tiny: the capabilities below 
- * have no Flutter-plugin equivalent. Everything else (intent dispatch, 
+ * The native surface is intentionally tiny: the capabilities below
+ * have no Flutter-plugin equivalent. Everything else (intent dispatch,
  * foreground tracking, install verification, batching) lives in Dart.
  */
 class MainActivity : FlutterActivity() {
     private companion object {
         const val EXTERNAL_INSTALL_CHANNEL = "dev.imranr.obtainium/external_install"
+        const val PRIVILEGE_INSTALL_FALLBACK_CHANNEL =
+            "dev.imranr.obtainium/privilege_install_fallback"
         const val APK_MIME = "application/vnd.android.package-archive"
     }
 
+    private var fallbackHandler: PrivilegeInstallFallbackHandler? = null
     private var pendingShareIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +48,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        fallbackHandler = PrivilegeInstallFallbackHandler(applicationContext)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             EXTERNAL_INSTALL_CHANNEL,
@@ -58,6 +65,50 @@ class MainActivity : FlutterActivity() {
                         } catch (e: Exception) {
                             result.error("URI_FAILED", e.message, null)
                         }
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            PRIVILEGE_INSTALL_FALLBACK_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "installViaShizuku" -> {
+                    val apkUri = call.argument<String>("apkUri")
+                    val fakeInstallSource = call.argument<String>("fakeInstallSource") ?: ""
+                    if (apkUri == null) {
+                        result.error("error", "Missing apkUri", null)
+                        return@setMethodCallHandler
+                    }
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            val code = fallbackHandler!!.installViaShizuku(
+                                apkUri,
+                                fakeInstallSource,
+                            )
+                            result.success(code)
+                        } catch (e: Exception) {
+                            result.error("error", e.message, null)
+                        }
+                    }
+                }
+                "checkShizukuPermission" -> {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        try {
+                            val code = fallbackHandler!!.checkShizukuPermissionCode()
+                            result.success(code)
+                        } catch (e: Exception) {
+                            result.error("error", e.message, null)
+                        }
+                    }
+                }
+                "getShizukuBackendKind" -> {
+                    try {
+                        result.success(fallbackHandler!!.getShizukuBackendKind())
+                    } catch (e: Exception) {
+                        result.error("error", e.message, null)
                     }
                 }
                 else -> result.notImplemented()
@@ -101,10 +152,10 @@ class MainActivity : FlutterActivity() {
     private fun transformShareIntent(intent: Intent): Intent {
         if (intent.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-            val match = sharedText?.let { """https?://[^\s]+""".toRegex().find(it) } // Extract URL from shared text
+            val match = sharedText?.let { """https?://[^\s]+""".toRegex().find(it) }
             if (match != null) {
-                val url = match.value.trimEnd('.', ',', ';', '!', '?', ')') // Trim potential trailing punctuation
-                intent.apply { // "Redirect" the intent
+                val url = match.value.trimEnd('.', ',', ';', '!', '?', ')')
+                intent.apply {
                     action = Intent.ACTION_VIEW
                     data = Uri.parse("obtainium://add/${Uri.encode(url)}")
                 }

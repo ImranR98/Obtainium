@@ -590,7 +590,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 if (useShizuku) {
                                   try {
                                     final resCode =
-                                        await ensurePrivilegeInstallPermission();
+                                        await ensurePrivilegeInstallPermission(
+                                      settings: settingsProvider,
+                                    );
                                     settingsProvider.useShizuku =
                                         resCode.startsWith('granted');
                                     await notifyDhizukuShizukuFallback(resCode);
@@ -600,6 +602,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   }
                                 } else {
                                   settingsProvider.useShizuku = false;
+                                  settingsProvider.privilegeInstallBackend =
+                                      PrivilegeInstallBackend.none;
                                 }
                               },
                             ),
