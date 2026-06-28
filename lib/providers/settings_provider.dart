@@ -518,7 +518,7 @@ class SettingsProvider with ChangeNotifier {
       if (!(await saf.canRead(uri) ?? false) ||
           !(await saf.canWrite(uri) ?? false)) {
         uri = null;
-        prefs?.remove('exportDir');
+        await prefs?.remove('exportDir');
         notifyListeners();
       }
       return uri;
@@ -540,14 +540,16 @@ class SettingsProvider with ChangeNotifier {
     }
     if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
       if (newOneWayDataSyncDir == null) {
-        prefs?.remove('exportDir');
+        await prefs?.remove('exportDir');
       } else {
         prefs?.setString('exportDir', newOneWayDataSyncDir.toString());
       }
       notifyListeners();
     }
     for (var e in existingSAFPerms) {
-      await saf.releasePersistableUriPermission(e.uri);
+      if (e.uri != newOneWayDataSyncDir) {
+        await saf.releasePersistableUriPermission(e.uri);
+      }
     }
   }
 
