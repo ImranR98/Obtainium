@@ -48,6 +48,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String updateIntervalLabel = tr('neverManualOnly');
   bool showIntervalLabel = true;
   int? androidSdkInt;
+  // Stateless and its source list is statically cached, so hold one instance
+  // rather than allocating a new SourceProvider on every build().
+  final SourceProvider sourceProvider = SourceProvider();
   final Map<ColorSwatch<Object>, String> colorsNameMap =
       <ColorSwatch<Object>, String>{
         ColorTools.createPrimarySwatch(obtainiumThemeColor): 'Obtainium',
@@ -56,6 +59,9 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    // The interpolation nodes are constant, so build the spline once here
+    // rather than reconstructing it on every build().
+    initUpdateIntervalInterpolator();
     DeviceInfoPlugin().androidInfo.then((info) {
       if (mounted) {
         setState(() {
@@ -114,9 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    SourceProvider sourceProvider = SourceProvider();
     if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
-    initUpdateIntervalInterpolator();
     processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
     final sdk = androidSdkInt ?? 0;
 
