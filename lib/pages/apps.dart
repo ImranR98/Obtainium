@@ -126,9 +126,16 @@ void showChangeLogDialog(
 Null Function()? getChangeLogFn(BuildContext context, App app) {
   String? changesUrl;
   String? changeLog = app.changeLog;
-  if (changeLog?.split('\n').length == 1 &&
-      _changeLogUrlRegExp.hasMatch(changeLog!)) {
-    changesUrl = changeLog;
+  // Treat the changelog as a launchable link only when it is *only* a URL —
+  // not free-text that merely contains one (e.g. APKPure changelogs), which
+  // would otherwise be passed wholesale to the URL launcher and fail with
+  // ACTIVITY_NOT_FOUND.
+  final trimmedChangeLog = changeLog?.trim() ?? '';
+  final urlMatch = _changeLogUrlRegExp.firstMatch(trimmedChangeLog);
+  if (urlMatch != null &&
+      urlMatch.start == 0 &&
+      urlMatch.end == trimmedChangeLog.length) {
+    changesUrl = trimmedChangeLog;
     changeLog = null;
   }
   if (changeLog == null && changesUrl == null) return null;
