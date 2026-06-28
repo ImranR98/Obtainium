@@ -173,9 +173,13 @@ class APKPure extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    List<Map<String, dynamic>> apks = jsonDecode(
-      res.body,
-    )['version_list'].cast<Map<String, dynamic>>();
+    List<Map<String, dynamic>> apks;
+    try {
+      apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+    } catch (_) {
+      throw NoReleasesError();
+    }
 
     // group by version
     List<List<Map<String, dynamic>>> versions = apks

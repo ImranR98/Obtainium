@@ -84,11 +84,14 @@ class HuaweiAppGallery extends AppSource {
     if (appId.isEmpty) {
       throw NoReleasesError();
     }
-    var relDateStr = res.headers['location']
-        ?.split('?')[0]
+    // Drop the file extension, then the `appdl` segment, keeping the version
+    // segment (the 3rd-from-last reversed).  Guard against short lists.
+    var locSegments = res.headers['location']!
+        .split('?')[0]
         .split('.')
         .reversed
-        .toList()[1];
+        .toList();
+    var relDateStr = locSegments.length > 1 ? locSegments[1] : null;
     if (relDateStr == null || relDateStr.length != 10) {
       throw NoVersionError();
     }

@@ -49,7 +49,7 @@ class VivoAppStore extends AppSource {
       versionName,
       [MapEntry(apkName, apkUrl)],
       AppNames(developer, appName),
-      releaseDate: DateTime.parse(uploadTime),
+      releaseDate: DateTime.tryParse(uploadTime),
     );
   }
 

@@ -57,7 +57,7 @@ class Aptoide extends AppSource {
       additionalSettings,
     );
     if (res2.statusCode != 200) {
-      throw getObtainiumHttpError(res);
+      throw getObtainiumHttpError(res2);
     }
     return jsonDecode(res2.body)?['nodes']?['meta']?['data'];
   }

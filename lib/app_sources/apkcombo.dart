@@ -77,7 +77,7 @@ class APKCombo extends AppSource {
             );
           }).toList();
         })
-        .reduce((value, element) => [...value, ...element])
+        .expand((element) => element)
         .where((element) => element.value.isNotEmpty)
         .toList();
   }

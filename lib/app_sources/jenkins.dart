@@ -45,7 +45,10 @@ class Jenkins extends AppSource {
       if (version == null) {
         throw NoVersionError();
       }
-      var apkUrls = (json['artifacts'] as List<dynamic>)
+      final artifacts = json['artifacts'] is List
+          ? json['artifacts'] as List<dynamic>
+          : <dynamic>[];
+      var apkUrls = artifacts
           .map((e) {
             var path = (e['relativePath'] as String?);
             if (path != null && path.isNotEmpty) {

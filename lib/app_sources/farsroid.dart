@@ -72,7 +72,13 @@ class Farsroid extends AppSource {
       ),
       additionalSettings,
     );
-    var html2 = jsonDecode(res2.body)?['data']?['content'] as String? ?? '';
+    Map<String, dynamic>? farsroidJson;
+    try {
+      farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;
+    } catch (_) {
+      throw NoAPKError();
+    }
+    var html2 = farsroidJson?['data']?['content'] as String? ?? '';
     if (html2.isEmpty) {
       throw NoAPKError();
     }

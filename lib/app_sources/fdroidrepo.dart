@@ -256,8 +256,10 @@ class FDroidRepo extends AppSource {
         if (selectedReleases.length > 1 && pickHighestVersionCode) {
           selectedReleases.sort((e1, e2) {
             return int.parse(
-              e2.querySelector('versioncode')!.innerHtml,
-            ).compareTo(int.parse(e1.querySelector('versioncode')!.innerHtml));
+              e2.querySelector('versioncode')?.innerHtml ?? '0',
+            ).compareTo(
+              int.parse(e1.querySelector('versioncode')?.innerHtml ?? '0'),
+            );
           });
           selectedReleases = [selectedReleases[0]];
         }
@@ -271,10 +273,14 @@ class FDroidRepo extends AppSource {
       String? added = selectedReleases[0].querySelector('added')?.innerHtml;
       DateTime? releaseDate = added != null ? DateTime.parse(added) : null;
       List<String> apkUrls = selectedReleases
-          .map(
-            (e) =>
-                '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/${e.querySelector('apkname')!.innerHtml}',
-          )
+          .map((e) {
+            var apkName = e.querySelector('apkname')?.innerHtml;
+            return apkName != null
+                ? '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/$apkName'
+                : null;
+          })
+          .where((u) => u != null)
+          .cast<String>()
           .toList();
       return APKDetails(
         selectedVersion,

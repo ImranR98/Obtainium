@@ -504,7 +504,14 @@ Future<File> downloadFile(
   }
   if (response.statusCode < 200 || response.statusCode > 299) {
     deleteFile(tempDownloadedFile);
-    throw response.reasonPhrase;
+    throw ObtainiumError(
+      response.reasonPhrase.isNotEmpty
+          ? response.reasonPhrase
+          : tr(
+              'errorWithHttpStatusCode',
+              args: [response.statusCode.toString()],
+            ),
+    );
   }
   if (tempDownloadedFile.existsSync()) {
     tempDownloadedFile.renameSync(downloadedFile.path);
