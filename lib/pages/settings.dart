@@ -117,6 +117,93 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Widget _buildIntervalSliderTile(SettingsProvider settingsProvider) {
+    final rawSlider = Slider(
+      value: settingsProvider.updateIntervalSliderVal,
+      max: updateIntervalNodes.length.toDouble(),
+      divisions: updateIntervalNodes.length * 20,
+      label: updateIntervalLabel,
+      onChanged: (double value) {
+        setState(() {
+          settingsProvider.updateIntervalSliderVal = value;
+          processIntervalSliderValue(value);
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showIntervalLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showIntervalLabel = true;
+          settingsProvider.updateInterval = updateInterval;
+        });
+      },
+    );
+
+    final Widget intervalSlider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: settingsProvider.updateIntervalSliderVal <= 0
+                    ? null
+                    : () {
+                        setState(() {
+                          final newVal =
+                              (settingsProvider.updateIntervalSliderVal - 1)
+                                  .clamp(
+                                    0.0,
+                                    updateIntervalNodes.length.toDouble(),
+                                  );
+                          settingsProvider.updateIntervalSliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                          settingsProvider.updateInterval = updateInterval;
+                        });
+                      },
+              ),
+              Expanded(
+                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed:
+                    settingsProvider.updateIntervalSliderVal >=
+                        updateIntervalNodes.length.toDouble()
+                    ? null
+                    : () {
+                        setState(() {
+                          final newVal =
+                              (settingsProvider.updateIntervalSliderVal + 1)
+                                  .clamp(
+                                    0.0,
+                                    updateIntervalNodes.length.toDouble(),
+                                  );
+                          settingsProvider.updateIntervalSliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                          settingsProvider.updateInterval = updateInterval;
+                        });
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return SettingsTile(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          showIntervalLabel
+              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+              : const SizedBox(height: 20),
+          intervalSlider,
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
@@ -387,91 +474,6 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    final rawSlider = Slider(
-      value: settingsProvider.updateIntervalSliderVal,
-      max: updateIntervalNodes.length.toDouble(),
-      divisions: updateIntervalNodes.length * 20,
-      label: updateIntervalLabel,
-      onChanged: (double value) {
-        setState(() {
-          settingsProvider.updateIntervalSliderVal = value;
-          processIntervalSliderValue(value);
-        });
-      },
-      onChangeStart: (double value) {
-        setState(() {
-          showIntervalLabel = false;
-        });
-      },
-      onChangeEnd: (double value) {
-        setState(() {
-          showIntervalLabel = true;
-          settingsProvider.updateInterval = updateInterval;
-        });
-      },
-    );
-
-    final Widget intervalSlider = settingsProvider.isTV
-        ? Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove),
-                onPressed: settingsProvider.updateIntervalSliderVal <= 0
-                    ? null
-                    : () {
-                        setState(() {
-                          final newVal =
-                              (settingsProvider.updateIntervalSliderVal - 1)
-                                  .clamp(
-                                    0.0,
-                                    updateIntervalNodes.length.toDouble(),
-                                  );
-                          settingsProvider.updateIntervalSliderVal = newVal;
-                          processIntervalSliderValue(newVal);
-                          settingsProvider.updateInterval = updateInterval;
-                        });
-                      },
-              ),
-              Expanded(
-                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed:
-                    settingsProvider.updateIntervalSliderVal >=
-                        updateIntervalNodes.length.toDouble()
-                    ? null
-                    : () {
-                        setState(() {
-                          final newVal =
-                              (settingsProvider.updateIntervalSliderVal + 1)
-                                  .clamp(
-                                    0.0,
-                                    updateIntervalNodes.length.toDouble(),
-                                  );
-                          settingsProvider.updateIntervalSliderVal = newVal;
-                          processIntervalSliderValue(newVal);
-                          settingsProvider.updateInterval = updateInterval;
-                        });
-                      },
-              ),
-            ],
-          )
-        : rawSlider;
-
-    var intervalSliderTile = SettingsTile(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          showIntervalLabel
-              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-              : const SizedBox(height: 20),
-          intervalSlider,
-        ],
-      ),
-    );
-
     // Merge every source's config items into a single form so they read as one
     // connected block (rather than one disjointed block per source).
     var allSourceConfigItems = sourceProvider.sources
@@ -518,7 +520,10 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: settingsProvider.prefs == null
-                  ? const SizedBox()
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 20,
@@ -530,7 +535,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         SettingsGroup(
                           title: tr('updates'),
                           children: [
-                            intervalSliderTile,
+                            _buildIntervalSliderTile(settingsProvider),
                             if (showBgSection) ...[
                               SettingsToggleRow(
                                 label: tr('foregroundServiceExplanation'),

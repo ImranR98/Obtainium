@@ -40,6 +40,7 @@ class AppIcon extends StatelessWidget {
                 bytes!,
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
+                excludeFromSemantics: true,
                 opacity: dimmed ? const AlwaysStoppedAnimation(0.6) : null,
               )
             : ColoredBox(
@@ -52,6 +53,7 @@ class AppIcon extends StatelessWidget {
                         : Colors.white.withValues(alpha: 0.4),
                     colorBlendMode: BlendMode.modulate,
                     gaplessPlayback: true,
+                    excludeFromSemantics: true,
                     width: glyphSize,
                     height: glyphSize,
                   ),
@@ -264,12 +266,15 @@ class LinkText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => launchUrlString(url, mode: LaunchMode.externalApplication),
-      child: Text(
-        text,
-        style: (style ?? const TextStyle()).copyWith(
-          decoration: TextDecoration.underline,
+    return Semantics(
+      link: true,
+      child: InkWell(
+        onTap: () => launchUrlString(url, mode: LaunchMode.externalApplication),
+        child: Text(
+          text,
+          style: (style ?? const TextStyle()).copyWith(
+            decoration: TextDecoration.underline,
+          ),
         ),
       ),
     );

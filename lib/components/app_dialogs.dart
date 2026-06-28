@@ -116,19 +116,35 @@ class APKOriginWarningDialog extends StatefulWidget {
 }
 
 class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
+  bool _dontShowAgain = false;
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
       title: Text(tr('warning')),
-      content: Text(
-        tr(
-          'sourceIsXButPackageFromYPrompt',
-          args: [
-            Uri.parse(widget.sourceUrl).host,
-            Uri.parse(widget.apkUrl).host,
-          ],
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr(
+              'sourceIsXButPackageFromYPrompt',
+              args: [
+                Uri.parse(widget.sourceUrl).host,
+                Uri.parse(widget.apkUrl).host,
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: _dontShowAgain,
+            onChanged: (v) => setState(() => _dontShowAgain = v ?? false),
+            title: Text(tr('dontShowAgain')),
+          ),
+        ],
       ),
       actions: [
         TextButton(
@@ -139,7 +155,11 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
         ),
         FilledButton(
           onPressed: () {
-            context.read<SettingsProvider>().selectionClick();
+            final sp = context.read<SettingsProvider>();
+            sp.selectionClick();
+            if (_dontShowAgain) {
+              sp.hideAPKOriginWarning = true;
+            }
             Navigator.of(context).pop(true);
           },
           child: Text(tr('continue')),

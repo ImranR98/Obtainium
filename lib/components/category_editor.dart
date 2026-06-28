@@ -172,33 +172,37 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     Widget? icon,
   }) {
     final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? cs.onSurface : cs.outlineVariant,
-            width: selected ? 3 : 1,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selected ? cs.onSurface : cs.outlineVariant,
+              width: selected ? 3 : 1,
+            ),
           ),
+          child: icon == null
+              ? (selected
+                    ? Icon(
+                        Icons.check,
+                        size: 20,
+                        color:
+                            ThemeData.estimateBrightnessForColor(color) ==
+                                Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      )
+                    : null)
+              : Center(child: icon),
         ),
-        child: icon == null
-            ? (selected
-                  ? Icon(
-                      Icons.check,
-                      size: 20,
-                      color:
-                          ThemeData.estimateBrightnessForColor(color) ==
-                              Brightness.dark
-                          ? Colors.white
-                          : Colors.black,
-                    )
-                  : null)
-            : Center(child: icon),
       ),
     );
   }
@@ -391,18 +395,27 @@ class _CategorySelectorState extends State<CategorySelector> {
       runSpacing: 8,
       children: [
         for (final name in names)
-          GestureDetector(
-            onLongPress: () => _edit(name),
-            child: FilterChip(
-              avatar: CircleAvatar(
-                backgroundColor: Color(categories[name]!),
-                radius: 7,
+          Tooltip(
+            message: tr('editCategory'),
+            child: Semantics(
+              // Expose the long-press-to-edit gesture to assistive tech.
+              onLongPress: () => _edit(name),
+              child: GestureDetector(
+                onLongPress: () => _edit(name),
+                child: FilterChip(
+                  avatar: CircleAvatar(
+                    backgroundColor: Color(categories[name]!),
+                    radius: 7,
+                  ),
+                  label: Text(name),
+                  selected: _selected.contains(name),
+                  onSelected: (v) => _toggle(name, v),
+                  selectedColor: Color(
+                    categories[name]!,
+                  ).withValues(alpha: 0.22),
+                  showCheckmark: true,
+                ),
               ),
-              label: Text(name),
-              selected: _selected.contains(name),
-              onSelected: (v) => _toggle(name, v),
-              selectedColor: Color(categories[name]!).withValues(alpha: 0.22),
-              showCheckmark: true,
             ),
           ),
         if (widget.allowCreate)
