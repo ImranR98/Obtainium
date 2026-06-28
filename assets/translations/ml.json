@@ -310,6 +310,8 @@
     "shizukuOld": "പഴയ ഷിസുകു പതിപ്പ് (<11) - അത് അപ്‌ഡേറ്റ് ചെയ്യുക",
     "shizukuOldAndroidWithADB": "ആൻഡ്രോയിഡ് < 8.1 ഉള്ള ഷിസുകു ADB ഉപയോഗിച്ച് പ്രവർത്തിക്കുന്നു - ആൻഡ്രോയിഡ് അപ്‌ഡേറ്റ് ചെയ്യുക അല്ലെങ്കിൽ പകരം സ്യൂ ഉപയോഗിക്കുക",
     "dhizukuNotActivatedUsingShizuku": "Dhizuku is not activated as Device Owner, so Shizuku is being used instead. Activate Dhizuku in the Dhizuku app to use it.",
+    "dhizukuInstallFailedTryingShizuku": "Dhizuku install failed; retrying with Shizuku.",
+    "dhizukuInstallFailedShizukuFallbackFailed": "Dhizuku and Shizuku install both failed.",
     "shizukuPretendToBeGooglePlay": "Google Play ഇൻസ്റ്റാളേഷൻ ഉറവിടമായി സജ്ജമാക്കുക (ഷിസുകു ഉപയോഗിക്കുകയാണെങ്കിൽ)",
     "useSystemFont": "സിസ്റ്റം ഫോണ്ട് ഉപയോഗിക്കുക",
     "useVersionCodeAsOSVersion": "ആപ്പ് versionCode OS-ൽ കണ്ടെത്തിയ പതിപ്പായി ഉപയോഗിക്കുക",

@@ -39,6 +39,7 @@ import 'package:flutter_archive/flutter_archive.dart';
 import 'package:archive/archive.dart' as archive;
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
+import 'package:obtainium/providers/privilege_install_fallback.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 final pm = AndroidPackageManager();
@@ -524,6 +525,24 @@ Future<PackageInfo?> getInstalledInfo(
 
 const dhizukuPackageId = 'com.rosan.dhizuku';
 
+enum PrivilegeInstallBackend { none, dhizuku, shizuku, sui }
+
+Future<void> recordPrivilegeInstallBackend(
+  String resCode,
+  SettingsProvider settings,
+) async {
+  if (resCode == 'granted_owner') {
+    settings.privilegeInstallBackend = PrivilegeInstallBackend.dhizuku;
+  } else if (resCode.startsWith('granted_')) {
+    final kind = await PrivilegeInstallFallback.getShizukuBackendKind();
+    settings.privilegeInstallBackend = kind == 'sui'
+        ? PrivilegeInstallBackend.sui
+        : PrivilegeInstallBackend.shizuku;
+  } else {
+    settings.privilegeInstallBackend = PrivilegeInstallBackend.none;
+  }
+}
+
 Future<String> checkPrivilegeInstallPermission() async {
   return (await ShizukuApkInstaller().checkPermission())!;
 }
@@ -555,13 +574,69 @@ Future<void> logDhizukuShizukuFallback(
 
 Future<String> ensurePrivilegeInstallPermission({
   LogsProvider? logs,
+  required SettingsProvider settings,
 }) async {
-  final resCode = await checkPrivilegeInstallPermission();
+  final backend = settings.privilegeInstallBackend;
+  String resCode;
+
+  if (backend == PrivilegeInstallBackend.shizuku ||
+      backend == PrivilegeInstallBackend.sui) {
+    resCode =
+        (await PrivilegeInstallFallback.checkShizukuPermission()) ?? 'denied';
+  } else {
+    resCode = await checkPrivilegeInstallPermission();
+    if (resCode == 'denied' && await isDhizukuInstalled()) {
+      final shizukuCode = await PrivilegeInstallFallback.checkShizukuPermission();
+      if (shizukuCode != null && shizukuCode.startsWith('granted')) {
+        resCode = shizukuCode;
+      } else if (shizukuCode != null && shizukuCode != 'denied') {
+        resCode = shizukuCode;
+      }
+    }
+  }
+
   throwIfPrivilegeInstallPermissionDenied(resCode);
+  await recordPrivilegeInstallBackend(resCode, settings);
   if (logs != null) {
     await logDhizukuShizukuFallback(resCode, logs);
   }
   return resCode;
+}
+
+Future<int?> installViaPrivilegeInstaller(
+  String apkUri,
+  String fakeInstallSource, {
+  LogsProvider? logs,
+  required SettingsProvider settings,
+}) async {
+  final backend = settings.privilegeInstallBackend;
+
+  if (backend == PrivilegeInstallBackend.shizuku ||
+      backend == PrivilegeInstallBackend.sui) {
+    return await PrivilegeInstallFallback.installViaShizuku(
+      apkUri,
+      fakeInstallSource,
+    );
+  }
+
+  var code = await ShizukuApkInstaller().installAPK(apkUri, fakeInstallSource);
+  if (code != null &&
+      code != 0 &&
+      code != 3 &&
+      (backend == PrivilegeInstallBackend.dhizuku ||
+          backend == PrivilegeInstallBackend.none)) {
+    if (logs != null) {
+      await logs.add(tr('dhizukuInstallFailedTryingShizuku'));
+    }
+    code = await PrivilegeInstallFallback.installViaShizuku(
+      apkUri,
+      fakeInstallSource,
+    );
+    if (code != null && code != 0 && code != 3 && logs != null) {
+      await logs.add(tr('dhizukuInstallFailedShizukuFallbackFailed'));
+    }
+  }
+  return code;
 }
 
 Future<void> notifyDhizukuShizukuFallback(String resCode) async {
@@ -1137,9 +1212,11 @@ class AppsProvider with ChangeNotifier {
         apkFilePath: allAPKs.join(','),
       );
     } else {
-      code = await ShizukuApkInstaller().installAPK(
+      code = await installViaPrivilegeInstaller(
         file.file.uri.toString(),
         shizukuPretendToBeGooglePlay ? "com.android.vending" : "",
+        logs: logs,
+        settings: settingsProvider,
       );
     }
     bool installed = false;
@@ -1478,7 +1555,7 @@ class AppsProvider with ChangeNotifier {
             throw ObtainiumError(tr('cancelled'));
           }
         } else {
-          await ensurePrivilegeInstallPermission(logs: logs);
+          await ensurePrivilegeInstallPermission(logs: logs, settings: settingsProvider);
         }
         if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
           // ignore: use_build_context_synchronously

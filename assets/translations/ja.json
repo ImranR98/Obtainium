@@ -310,6 +310,8 @@
     "shizukuOld": "古いShizukuのバージョン (<11) - アップデートしてください",
     "shizukuOldAndroidWithADB": "ShizukuがAndroid 8.1未満でADBを使用して動作しています - Androidをアップデートするか、代わりにDhizukuまたはSuiを使用してください",
     "dhizukuNotActivatedUsingShizuku": "DhizukuがDevice Ownerとして有効化されていないため、Shizukuを使用しています。Dhizukuを使う場合はDhizukuアプリで有効化してください。",
+    "dhizukuInstallFailedTryingShizuku": "Dhizukuでのインストールに失敗したため、Shizukuで再試行します。",
+    "dhizukuInstallFailedShizukuFallbackFailed": "DhizukuとShizukuの両方でのインストールに失敗しました。",
     "shizukuPretendToBeGooglePlay": "Google Playをインストール元として設定する（Shizukuを使用する場合）",
     "useSystemFont": "システムフォントを使用する",
     "useVersionCodeAsOSVersion": "アプリのバージョンコードをOSで検出されたバージョンとして使用する",
