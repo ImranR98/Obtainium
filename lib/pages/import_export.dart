@@ -10,7 +10,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
-import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -21,21 +20,38 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
-class ImportExportPage extends StatefulWidget {
-  const ImportExportPage({super.key});
-
-  @override
-  State<ImportExportPage> createState() => _ImportExportPageState();
+Widget _actionTile({
+  required IconData icon,
+  required String label,
+  Widget? trailing,
+  required VoidCallback? onTap,
+}) {
+  return ListTile(
+    leading: Icon(icon),
+    title: Text(label),
+    trailing: trailing,
+    onTap: onTap,
+    enabled: onTap != null,
+  );
 }
 
-class _ImportExportPageState extends State<ImportExportPage> {
+/// The app-import controls (file import, source search, URL-list import, mass
+/// sources). Embedded in the Add App page (shown while no URL is entered).
+class ImportSection extends StatefulWidget {
+  const ImportSection({super.key});
+
+  @override
+  State<ImportSection> createState() => _ImportSectionState();
+}
+
+class _ImportSectionState extends State<ImportSection> {
   bool importInProgress = false;
 
   @override
   Widget build(BuildContext context) {
     SourceProvider sourceProvider = SourceProvider();
-    var appsProvider = context.watch<AppsProvider>();
-    var settingsProvider = context.watch<SettingsProvider>();
+    var appsProvider = context.read<AppsProvider>();
+    var settingsProvider = context.read<SettingsProvider>();
 
     urlListImport({String? initValue, bool overrideInitValid = false}) {
       showDialog<Map<String, dynamic>?>(
@@ -110,24 +126,6 @@ class _ImportExportPageState extends State<ImportExportPage> {
               });
         }
       });
-    }
-
-    runObtainiumExport({bool pickOnly = false}) async {
-      settingsProvider.selectionClick();
-      appsProvider
-          .export(
-            pickOnly:
-                pickOnly || (await settingsProvider.getExportDir()) == null,
-            sp: settingsProvider,
-          )
-          .then((String? result) {
-            if (result != null) {
-              showMessage(tr('exportedTo', args: [result]), context);
-            }
-          })
-          .catchError((e) {
-            showError(e, context);
-          });
     }
 
     runObtainiumImport() {
@@ -370,204 +368,182 @@ class _ImportExportPageState extends State<ImportExportPage> {
       sourceStrings[s.name] = [s.name];
     });
 
-    Widget actionTile({
-      required IconData icon,
-      required String label,
-      Widget? trailing,
-      required VoidCallback? onTap,
-    }) {
-      return ListTile(
-        leading: Icon(icon),
-        title: Text(label),
-        trailing: trailing,
-        onTap: onTap,
-        enabled: onTap != null,
-      );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 12,
+      children: [
+        if (importInProgress) const LinearProgressIndicator(),
+        Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _actionTile(
+                icon: Icons.download_outlined,
+                label: tr('obtainiumImport'),
+                onTap: importInProgress ? null : runObtainiumImport,
+              ),
+              _actionTile(
+                icon: Icons.travel_explore_outlined,
+                label: tr('searchX', args: [lowerCaseIfEnglish(tr('source'))]),
+                onTap: importInProgress
+                    ? null
+                    : () async {
+                        var searchSourceName =
+                            await showDialog<List<String>?>(
+                              context: context,
+                              builder: (BuildContext ctx) {
+                                return SelectionModal(
+                                  title: tr(
+                                    'selectX',
+                                    args: [tr('source').toLowerCase()],
+                                  ),
+                                  entries: sourceStrings,
+                                  selectedByDefault: false,
+                                  onlyOneSelectionAllowed: true,
+                                  titlesAreLinks: false,
+                                );
+                              },
+                            ) ??
+                            [];
+                        var searchSource = sourceProvider.sources
+                            .where((e) => searchSourceName.contains(e.name))
+                            .toList();
+                        if (searchSource.isNotEmpty) {
+                          runSourceSearch(searchSource[0]);
+                        }
+                      },
+              ),
+              _actionTile(
+                icon: Icons.format_list_bulleted_outlined,
+                label: tr('importFromURLList'),
+                onTap: importInProgress ? null : urlListImport,
+              ),
+              _actionTile(
+                icon: Icons.upload_file_outlined,
+                label: tr('importFromURLsInFile'),
+                onTap: importInProgress ? null : runUrlImport,
+              ),
+              ...sourceProvider.massUrlSources.map(
+                (source) => _actionTile(
+                  icon: Icons.cloud_download_outlined,
+                  label: tr('importX', args: [source.name]),
+                  onTap: importInProgress
+                      ? null
+                      : () => runMassSourceImport(source),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+          child: Text(
+            tr('importedAppsIdDisclaimer'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The app-export controls (export dir picker, export action, auto-export and
+/// settings-inclusion options). Embedded in the Settings page.
+class ExportSection extends StatelessWidget {
+  const ExportSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var appsProvider = context.read<AppsProvider>();
+    var settingsProvider = context.watch<SettingsProvider>();
+
+    runObtainiumExport({bool pickOnly = false}) async {
+      settingsProvider.selectionClick();
+      appsProvider
+          .export(
+            pickOnly:
+                pickOnly || (await settingsProvider.getExportDir()) == null,
+            sp: settingsProvider,
+          )
+          .then((String? result) {
+            if (result != null) {
+              showMessage(tr('exportedTo', args: [result]), context);
+            }
+          })
+          .catchError((e) {
+            showError(e, context);
+          });
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: CustomScrollView(
-        slivers: <Widget>[
-          CustomAppBar(title: tr('importExport')),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 12,
-                children: [
-                  if (importInProgress) const LinearProgressIndicator(),
-                  FutureBuilder(
-                    future: settingsProvider.getExportDir(),
-                    builder: (context, snapshot) {
-                      return Card(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            actionTile(
-                              icon: Icons.folder_open_outlined,
-                              label: tr('pickExportDir'),
-                              trailing: snapshot.data != null
-                                  ? Icon(
-                                      Icons.check_circle,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    )
-                                  : null,
-                              onTap: importInProgress
-                                  ? null
-                                  : () => runObtainiumExport(pickOnly: true),
-                            ),
-                            actionTile(
-                              icon: Icons.upload_outlined,
-                              label: tr('obtainiumExport'),
-                              onTap: importInProgress || snapshot.data == null
-                                  ? null
-                                  : runObtainiumExport,
-                            ),
-                            if (snapshot.data != null)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  0,
-                                  16,
-                                  12,
-                                ),
-                                child: GeneratedForm(
-                                  items: [
-                                    [
-                                      GeneratedFormSwitch(
-                                        'autoExportOnChanges',
-                                        label: tr('autoExportOnChanges'),
-                                        defaultValue: settingsProvider
-                                            .autoExportOnChanges,
-                                      ),
-                                    ],
-                                    [
-                                      GeneratedFormDropdown(
-                                        'exportSettings',
-                                        [
-                                          MapEntry('0', tr('none')),
-                                          MapEntry('1', tr('excludeSecrets')),
-                                          MapEntry('2', tr('all')),
-                                        ],
-                                        label: tr('includeSettings'),
-                                        defaultValue: settingsProvider
-                                            .exportSettings
-                                            .toString(),
-                                      ),
-                                    ],
-                                  ],
-                                  onValueChanges: (value, valid, isBuilding) {
-                                    if (valid && !isBuilding) {
-                                      if (value['autoExportOnChanges'] !=
-                                          null) {
-                                        settingsProvider.autoExportOnChanges =
-                                            value['autoExportOnChanges'] ==
-                                            true;
-                                      }
-                                      if (value['exportSettings'] != null) {
-                                        settingsProvider.exportSettings =
-                                            int.parse(value['exportSettings']);
-                                      }
-                                    }
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        actionTile(
-                          icon: Icons.download_outlined,
-                          label: tr('obtainiumImport'),
-                          onTap: importInProgress ? null : runObtainiumImport,
-                        ),
-                        actionTile(
-                          icon: Icons.travel_explore_outlined,
-                          label: tr(
-                            'searchX',
-                            args: [lowerCaseIfEnglish(tr('source'))],
-                          ),
-                          onTap: importInProgress
-                              ? null
-                              : () async {
-                                  var searchSourceName =
-                                      await showDialog<List<String>?>(
-                                        context: context,
-                                        builder: (BuildContext ctx) {
-                                          return SelectionModal(
-                                            title: tr(
-                                              'selectX',
-                                              args: [
-                                                tr('source').toLowerCase(),
-                                              ],
-                                            ),
-                                            entries: sourceStrings,
-                                            selectedByDefault: false,
-                                            onlyOneSelectionAllowed: true,
-                                            titlesAreLinks: false,
-                                          );
-                                        },
-                                      ) ??
-                                      [];
-                                  var searchSource = sourceProvider.sources
-                                      .where(
-                                        (e) =>
-                                            searchSourceName.contains(e.name),
-                                      )
-                                      .toList();
-                                  if (searchSource.isNotEmpty) {
-                                    runSourceSearch(searchSource[0]);
-                                  }
-                                },
-                        ),
-                        actionTile(
-                          icon: Icons.format_list_bulleted_outlined,
-                          label: tr('importFromURLList'),
-                          onTap: importInProgress ? null : urlListImport,
-                        ),
-                        actionTile(
-                          icon: Icons.upload_file_outlined,
-                          label: tr('importFromURLsInFile'),
-                          onTap: importInProgress ? null : runUrlImport,
-                        ),
-                        ...sourceProvider.massUrlSources.map(
-                          (source) => actionTile(
-                            icon: Icons.cloud_download_outlined,
-                            label: tr('importX', args: [source.name]),
-                            onTap: importInProgress
-                                ? null
-                                : () => runMassSourceImport(source),
-                          ),
+    return FutureBuilder(
+      future: settingsProvider.getExportDir(),
+      builder: (context, snapshot) {
+        return Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _actionTile(
+                icon: Icons.folder_open_outlined,
+                label: tr('pickExportDir'),
+                trailing: snapshot.data != null
+                    ? Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
+                onTap: () => runObtainiumExport(pickOnly: true),
+              ),
+              _actionTile(
+                icon: Icons.upload_outlined,
+                label: tr('obtainiumExport'),
+                onTap: snapshot.data == null ? null : runObtainiumExport,
+              ),
+              if (snapshot.data != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: GeneratedForm(
+                    items: [
+                      [
+                        GeneratedFormSwitch(
+                          'autoExportOnChanges',
+                          label: tr('autoExportOnChanges'),
+                          defaultValue: settingsProvider.autoExportOnChanges,
                         ),
                       ],
-                    ),
+                      [
+                        GeneratedFormDropdown(
+                          'exportSettings',
+                          [
+                            MapEntry('0', tr('none')),
+                            MapEntry('1', tr('excludeSecrets')),
+                            MapEntry('2', tr('all')),
+                          ],
+                          label: tr('includeSettings'),
+                          defaultValue: settingsProvider.exportSettings
+                              .toString(),
+                        ),
+                      ],
+                    ],
+                    onValueChanges: (value, valid, isBuilding) {
+                      if (valid && !isBuilding) {
+                        if (value['autoExportOnChanges'] != null) {
+                          settingsProvider.autoExportOnChanges =
+                              value['autoExportOnChanges'] == true;
+                        }
+                        if (value['exportSettings'] != null) {
+                          settingsProvider.exportSettings = int.parse(
+                            value['exportSettings'],
+                          );
+                        }
+                      }
+                    },
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                    child: Text(
-                      tr('importedAppsIdDisclaimer'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

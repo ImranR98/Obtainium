@@ -84,41 +84,38 @@ void showChangeLogDialog(
           changesUrl != null
               ? const SizedBox(height: 16)
               : const SizedBox.shrink(),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: math.min(MediaQuery.of(context).size.width, 560),
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
-            ),
-            child: appSource.changeLogIfAnyIsMarkDown
-                ? Markdown(
-                    shrinkWrap: true,
-                    styleSheet: MarkdownStyleSheet(
-                      blockquoteDecoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                      ),
+          // Rendered inline (non-scrolling) so the AlertDialog's own
+          // `scrollable: true` handles overflow. Nesting a scrolling Markdown
+          // (a ListView viewport) here caused a layout failure ("RenderBox was
+          // not laid out" on the dialog's shape).
+          appSource.changeLogIfAnyIsMarkDown
+              ? MarkdownBody(
+                  styleSheet: MarkdownStyleSheet(
+                    blockquoteDecoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
                     ),
-                    data: changeLog,
-                    onTapLink: (text, href, title) {
-                      if (href != null) {
-                        launchUrlString(
-                          href.startsWith('http://') ||
-                                  href.startsWith('https://')
-                              ? href
-                              : '${Uri.parse(app.url).origin}/$href',
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    extensionSet: md.ExtensionSet(
-                      md.ExtensionSet.gitHubFlavored.blockSyntaxes,
-                      [
-                        md.EmojiSyntax(),
-                        ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
-                      ],
-                    ),
-                  )
-                : SingleChildScrollView(child: Text(changeLog)),
-          ),
+                  ),
+                  data: changeLog,
+                  onTapLink: (text, href, title) {
+                    if (href != null) {
+                      launchUrlString(
+                        href.startsWith('http://') ||
+                                href.startsWith('https://')
+                            ? href
+                            : '${Uri.parse(app.url).origin}/$href',
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                  },
+                  extensionSet: md.ExtensionSet(
+                    md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+                    [
+                      md.EmojiSyntax(),
+                      ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+                    ],
+                  ),
+                )
+              : Text(changeLog),
         ],
         singleNullReturnButton: tr('ok'),
       );
@@ -1495,7 +1492,7 @@ class AppListTile extends StatelessWidget {
     var isInstalling = appInMemory.downloadProgress == -1;
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
-        : null;
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     Widget trailingRow = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -834,6 +834,8 @@ class AddAppPageState extends State<AddAppPage> {
                       appsProvider,
                       doingSomething,
                     ),
+                  if (pickedSource == null && userInput.isEmpty)
+                    const ImportSection(),
                   if (pickedSource != null)
                     FutureBuilder(
                       future: pickedSource?.getSourceNote(),

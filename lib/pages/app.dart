@@ -146,7 +146,11 @@ class _AppPageState extends State<AppPage> {
   void _closePage() {
     if (widget.onClose != null) {
       widget.onClose!();
-    } else if (mounted) {
+    } else if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
+      // Only pop when this page is still the top-most route. Without this,
+      // the post-install auto-close can fire a second pop while the user has
+      // already navigated back (the pop animation keeps the State mounted but
+      // the route is no longer current), emptying the navigator -> black screen.
       Navigator.of(context).pop();
     }
   }

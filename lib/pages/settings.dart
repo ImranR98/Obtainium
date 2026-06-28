@@ -519,22 +519,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 20,
                       children: [
-                        SettingsTile(
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                            ),
-                            leading: const Icon(Icons.import_export_outlined),
-                            title: Text(tr('importExport')),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ImportExportPage(),
-                                ),
-                              );
-                            },
-                          ),
+                        SettingsGroup(
+                          title: tr('obtainiumExport'),
+                          children: const [ExportSection()],
                         ),
                         SettingsGroup(
                           title: tr('updates'),
