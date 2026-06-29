@@ -14,8 +14,8 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
     if (Uri.parse(ambiguousUrl).isAbsolute) {
       return ambiguousUrl; // #2315
     }
-  } catch (e) {
-    //
+  } on FormatException {
+    // Non-parsable URL, fall through to resolve logic below
   }
   return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
 }
@@ -123,7 +123,8 @@ Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   if (res.statusCode != 200) {
     throw getObtainiumHttpError(res);
   }
-  return grabLinksCommon(res.body, res.request!.url, additionalSettings);
+  final reqUrl = res.request?.url ?? Uri.parse('');
+  return grabLinksCommon(res.body, reqUrl, additionalSettings);
 }
 
 // Note keys are URLs, values are filenames (opposite to the AppSource apkUrls)
@@ -189,9 +190,11 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       } catch (e) {
         // Some links may not have valid encoding
       }
-      return Uri.parse(
+    return AppSource.isApkOrContainerFile(
+      Uri.parse(
         (filterLinkByText ? element.value : link).trim(),
-      ).path.toLowerCase().endsWith('.apk');
+      ).path,
+    );
     }).toList();
   }
   if (!skipSort) {
@@ -385,7 +388,10 @@ class HTML extends AppSource {
         additionalSettings['intermediateLink']
             .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
             .toList();
-    for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
+    const int maxIntermediateLinkDepth = 10;
+    final int linkCount = (additionalSettings['intermediateLink'].length)
+        .clamp(0, maxIntermediateLinkDepth);
+    for (int i = 0; i < linkCount; i++) {
       var intLinks = await grabLinksCommonFromRes(
         await sourceRequest(currentUrl, additionalSettings),
         additionalSettings['intermediateLink'][i],
@@ -449,7 +455,7 @@ class HTML extends AppSource {
         headers: apkReqHeaders,
         allowInsecure: additionalSettings['allowInsecure'] == true,
       );
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
     }

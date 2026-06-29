@@ -12,15 +12,11 @@ class LiteAPKs extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/+[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -76,7 +72,11 @@ class LiteAPKs extends AppSource {
       throw getObtainiumHttpError(res1);
     }
 
-    var liteAppId = jsonDecode(res1.body)[0]['id'];
+    var posts = jsonDecode(res1.body);
+    if (posts is! List || posts.isEmpty) {
+      throw NoReleasesError();
+    }
+    var liteAppId = posts[0]['id'];
     if (liteAppId == null) {
       throw NoReleasesError();
     }
@@ -93,7 +93,7 @@ class LiteAPKs extends AppSource {
     var appName = json['data']?['title'] as String?;
     var author = json['data']?['publisher'] as String?;
     var version = json['data']?['versions']?[0]?['version'] as String?;
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     var apkUrls =

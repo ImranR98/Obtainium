@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -9,9 +8,12 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class GitLab extends AppSource {
+  // Reused for the pure getAppNames string helper instead of allocating a new
+  // GitHub source instance on every getLatestAPKDetails call.
+  final GitHub _gh = GitHub(hostChanged: true);
+
   GitLab({bool hostChanged = false}) {
     hosts = ['gitlab.com'];
     canSearch = true;
@@ -24,25 +26,8 @@ class GitLab extends AppSource {
         label: tr('gitlabPATLabel'),
         password: true,
         required: false,
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl:
+            'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
       ),
     ];
 
@@ -122,11 +107,7 @@ class GitLab extends AppSource {
     // Related to: (#1397, #1389, #1384, #1382, #1381, #1380, #1359, #854, #785, #697)
     var headers = <String, String>{};
     headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
-    if (headers.isNotEmpty) {
-      return headers;
-    } else {
-      return null;
-    }
+    return headers;
   }
 
   @override
@@ -135,8 +116,8 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
+    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
     return '$assetUrl${(Uri.parse(assetUrl).query.isEmpty ? '?' : '&')}$optionalAuth';
   }
 
@@ -146,11 +127,11 @@ class GitLab extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     // Prepare request params
-    var names = GitHub(hostChanged: true).getAppNames(standardUrl);
+    var names = _gh.getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
-    String? PAT = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (PAT != null) ? 'private_token=$PAT' : '';
+    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
+    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
 
     bool trackOnly = additionalSettings['trackOnly'] == true;
 
@@ -168,8 +149,12 @@ class GitLab extends AppSource {
     }
 
     // Request data from REST API
+    String releasesPath =
+        trackOnly ? 'repository/tags' : 'releases';
+    String query =
+        [if (optionalAuth.isNotEmpty) optionalAuth, 'per_page=100'].join('&');
     Response res = await sourceRequest(
-      'https://${hosts[0]}/api/v4/projects/$projectUriComponent/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
+      'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
       additionalSettings,
     );
     if (res.statusCode != 200) {
@@ -178,7 +163,11 @@ class GitLab extends AppSource {
 
     // Extract .apk details from received data
     Iterable<APKDetails> apkDetailsList = [];
-    var json = jsonDecode(res.body) as List<dynamic>;
+    var decoded = jsonDecode(res.body);
+    if (decoded is! List) {
+      throw NoReleasesError();
+    }
+    var json = decoded;
     apkDetailsList = json.map((e) {
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
           .map((e) {
@@ -196,16 +185,8 @@ class GitLab extends AppSource {
           .where(
             (s) =>
                 s.key.isNotEmpty &&
-                (s.key.toLowerCase().endsWith('.apk') ||
-                    s.key.toLowerCase().endsWith('.xapk') ||
-                    s.key.toLowerCase().endsWith('.apkm') ||
-                    s.key.toLowerCase().endsWith('.apks') ||
-                    s.value.toLowerCase().endsWith('.apk') ||
-                    s.value.toLowerCase().endsWith('.xapk') ||
-                    s.value.toLowerCase().endsWith('.apkm') ||
-                    s.value.toLowerCase().endsWith(
-                      '.apks',
-                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+                (AppSource.isApkOrContainerFile(s.key) ||
+                    AppSource.isApkOrContainerFile(s.value)),
           )
           .toList();
       var uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
@@ -223,10 +204,7 @@ class GitLab extends AppSource {
           .where(
             (s) =>
                 s.startsWith('/uploads/') &&
-                (s.endsWith('apk') ||
-                    s.endsWith(
-                      'xapk',
-                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+                AppSource.isApkOrContainerFile(s),
           )
           .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
           .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))
@@ -241,7 +219,7 @@ class GitLab extends AppSource {
       var releaseDateString =
           e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
       DateTime? releaseDate = releaseDateString != null
-          ? DateTime.parse(releaseDateString)
+          ? DateTime.tryParse(releaseDateString.toString())
           : null;
       return APKDetails(
         e['tag_name'] ?? e['name'],

@@ -14,6 +14,7 @@ class GeneratedFormModal extends StatefulWidget {
     this.additionalWidgets = const [],
     this.singleNullReturnButton,
     this.primaryActionColour,
+    this.tileMode = false,
   });
 
   final String title;
@@ -23,6 +24,7 @@ class GeneratedFormModal extends StatefulWidget {
   final List<Widget> additionalWidgets;
   final String? singleNullReturnButton;
   final Color? primaryActionColour;
+  final bool tileMode;
 
   @override
   State<GeneratedFormModal> createState() => _GeneratedFormModalState();
@@ -49,6 +51,7 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           if (widget.message.isNotEmpty) Text(widget.message),
           if (widget.message.isNotEmpty) const SizedBox(height: 16),
           GeneratedForm(
+            tileMode: widget.tileMode,
             items: widget.items,
             onValueChanges: (values, valid, isBuilding) {
               if (isBuilding) {
@@ -78,11 +81,12 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
           ),
         ),
         widget.singleNullReturnButton == null
-            ? TextButton(
+            ? FilledButton(
                 style: widget.primaryActionColour == null
                     ? null
-                    : TextButton.styleFrom(
-                        foregroundColor: widget.primaryActionColour,
+                    : FilledButton.styleFrom(
+                        backgroundColor: widget.primaryActionColour,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
                       ),
                 onPressed: !valid
                     ? null

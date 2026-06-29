@@ -1,30 +1,20 @@
 import 'package:flutter/material.dart';
 
-class CustomAppBar extends StatefulWidget {
+class CustomAppBar extends StatelessWidget {
   const CustomAppBar({super.key, required this.title});
 
   final String title;
 
   @override
-  State<CustomAppBar> createState() => _CustomAppBarState();
-}
-
-class _CustomAppBarState extends State<CustomAppBar> {
-  @override
   Widget build(BuildContext context) {
-    return SliverAppBar(
+    // Material 3 Expressive large top app bar: shows an oversized title that
+    // collapses to a standard bar as the user scrolls. A back button appears
+    // automatically when this page is pushed onto the navigator (Add / Import),
+    // and is absent for the root shell tabs (which have no route to pop).
+    return SliverAppBar.large(
       pinned: true,
-      automaticallyImplyLeading: false,
-      expandedHeight: 100,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        title: Text(
-          widget.title,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium!.color,
-          ),
-        ),
-      ),
+      automaticallyImplyLeading: true,
+      title: Text(title),
     );
   }
 }

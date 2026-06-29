@@ -1,5 +1,4 @@
 import 'package:obtainium/app_sources/github.dart';
-import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Codeberg extends AppSource {
@@ -17,15 +16,11 @@ class Codeberg extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/[^/]+/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -43,17 +38,10 @@ class Codeberg extends AppSource {
       final standardUri = Uri.parse(standardUrl);
       final apiPath =
           '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
-      return standardUri.replace(
-        path: apiPath,
-        queryParameters: {'per_page': '100'},
-      ).toString();
+      return standardUri
+          .replace(path: apiPath, queryParameters: {'per_page': '100'})
+          .toString();
     }, null);
-  }
-
-  AppNames getAppNames(String standardUrl) {
-    String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
-    return AppNames(names[0], names[1]);
   }
 
   @override

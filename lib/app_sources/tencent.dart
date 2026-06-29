@@ -66,14 +66,17 @@ class Tencent extends AppSource {
       if (json == null) {
         throw NoReleasesError();
       }
-      var version = json['versionName'];
-      var apkUrl = json['apkUrl64'];
-      apkUrl ??= json['apkUrl'];
+      String? version = json['versionName']?.toString();
+      String? apkUrl = json['apkUrl64']?.toString();
+      apkUrl ??= json['apkUrl']?.toString();
       if (apkUrl == null) {
         throw NoAPKError();
       }
-      var appName = json['appName'];
-      var author = json['author'];
+      if (version == null || version.isEmpty) {
+        throw NoVersionError();
+      }
+      String appName = json['appName']?.toString() ?? tr('app');
+      String author = json['author']?.toString() ?? name;
       var apkName =
           Uri.parse(apkUrl).queryParameters['fsname'] ??
           '${appId}_$version.apk';

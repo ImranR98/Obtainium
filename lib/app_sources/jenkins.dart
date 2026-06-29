@@ -21,8 +21,7 @@ class Jenkins extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) =>
-      '$standardUrl/-/releases';
+  String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
 
   @override
   Future<APKDetails> getLatestAPKDetails(
@@ -42,10 +41,13 @@ class Jenkins extends AppSource {
       var version = json['number'] == null
           ? null
           : (json['number'] as int).toString();
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
-      var apkUrls = (json['artifacts'] as List<dynamic>)
+      final artifacts = json['artifacts'] is List
+          ? json['artifacts'] as List<dynamic>
+          : <dynamic>[];
+      var apkUrls = artifacts
           .map((e) {
             var path = (e['relativePath'] as String?);
             if (path != null && path.isNotEmpty) {
@@ -60,7 +62,8 @@ class Jenkins extends AppSource {
           })
           .where(
             (url) =>
-                url.value.isNotEmpty && url.key.toLowerCase().endsWith('.apk'),
+                url.value.isNotEmpty &&
+                AppSource.isApkOrContainerFile(url.key),
           )
           .toList();
       return APKDetails(

@@ -14,15 +14,11 @@ class RockMods extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/apps/[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/apps/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -71,7 +67,7 @@ class RockMods extends AppSource {
       if (appName == null || appName.isEmpty) {
         var html = parse(res.body);
         var h1 = html.querySelector('h1');
-        appName = h1?.text?.trim() ?? standardUrl.split('/').last;
+        appName = h1?.text.trim() ?? standardUrl.split('/').last;
       }
 
       if (appVersion == null || appVersion.isEmpty) {

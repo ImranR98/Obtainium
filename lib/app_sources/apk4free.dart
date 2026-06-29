@@ -10,15 +10,11 @@ class Apk4Free extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/?',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/[^/]+/?',
     );
-    var match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -120,7 +116,7 @@ class Apk4Free extends AppSource {
           var href = link.attributes['href'];
           if (href == null) continue;
           href = href.trim();
-          if (href.toLowerCase().endsWith('.apk')) {
+          if (AppSource.isApkOrContainerFile(href)) {
             var linkText = link.text.trim();
             if (linkText.isEmpty) linkText = href.split('/').last;
             apkUrls.add(MapEntry(linkText, href));
@@ -136,7 +132,7 @@ class Apk4Free extends AppSource {
         var versionRegex = RegExp(r'v?(\d+(\.\d+)+)');
         for (var entry in apkUrls) {
           var match = versionRegex.firstMatch(entry.key);
-          if (match == null) match = versionRegex.firstMatch(entry.value);
+          match ??= versionRegex.firstMatch(entry.value);
           if (match != null) {
             appVersion = match.group(1);
             break;

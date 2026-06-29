@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -41,6 +42,8 @@ enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
 
 enum SortOrderSettings { ascending, descending }
 
+enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
+
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
   String? defaultAppDir;
@@ -49,15 +52,48 @@ class SettingsProvider with ChangeNotifier {
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
+  // These are stable for the lifetime of the process but expensive to fetch
+  // (platform channel round-trips). Source code creates many throwaway
+  // SettingsProvider instances per request, so cache the results across them.
+  static String? _cachedDefaultAppDir;
+  static bool? _cachedIsTV;
+  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static final Map<String, String?> _secureCache = {};
+
   // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
-    defaultAppDir = (await getAppStorageDir()).path;
-    final info = await DeviceInfoPlugin().androidInfo;
-    isTV = info.systemFeatures.contains('android.hardware.type.television') ||
-        info.systemFeatures.contains('android.software.leanback');
+    prefsInstance = prefs;
+    await _loadSecureCache();
+    if (_cachedDefaultAppDir == null || _cachedIsTV == null) {
+      _cachedDefaultAppDir = (await getAppStorageDir()).path;
+      final info = await DeviceInfoPlugin().androidInfo;
+      _cachedIsTV =
+          info.systemFeatures.contains('android.hardware.type.television') ||
+          info.systemFeatures.contains('android.software.leanback');
+    }
+    defaultAppDir = _cachedDefaultAppDir;
+    isTV = _cachedIsTV!;
     notifyListeners();
   }
+
+  static Future<void> _loadSecureCache() async {
+    if (_secureCache.isNotEmpty) return;
+    for (var key in _credsKeys) {
+      _secureCache[key] = await _secureStorage.read(key: key);
+      if (_secureCache[key] == null && prefsInstance != null) {
+        var legacy = prefsInstance!.getString(key);
+        if (legacy != null && legacy.isNotEmpty) {
+          await _secureStorage.write(key: key, value: legacy);
+          _secureCache[key] = legacy;
+          prefsInstance!.remove(key);
+        }
+      }
+    }
+  }
+
+  static final _credsKeys = {'github-creds', 'gitlab-creds'};
+  static SharedPreferences? prefsInstance;
 
   bool get useSystemFont {
     return prefs?.getBool('useSystemFont') ?? false;
@@ -93,7 +129,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   set themeColor(Color themeColor) {
-    prefs?.setInt('themeColor', themeColor.value);
+    prefs?.setInt('themeColor', themeColor.toARGB32());
     notifyListeners();
   }
 
@@ -103,6 +139,25 @@ class SettingsProvider with ChangeNotifier {
 
   set useMaterialYou(bool useMaterialYou) {
     prefs?.setBool('useMaterialYou', useMaterialYou);
+    notifyListeners();
+  }
+
+  ColourSchemeMode get colourSchemeMode {
+    final stored = prefs?.getInt('colourSchemeMode');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < ColourSchemeMode.values.length) {
+      return ColourSchemeMode.values[stored];
+    }
+    // Migrate from the legacy useMaterialYou boolean.
+    return (prefs?.getBool('useMaterialYou') ?? false)
+        ? ColourSchemeMode.materialYou
+        : ColourSchemeMode.standard;
+  }
+
+  set colourSchemeMode(ColourSchemeMode mode) {
+    prefs?.setInt('colourSchemeMode', mode.index);
+    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
     notifyListeners();
   }
 
@@ -213,6 +268,9 @@ class SettingsProvider with ChangeNotifier {
       if (!enforce) {
         return false;
       }
+      // Avoid a tight re-prompt loop (and toast spam) if the permission
+      // request resolves immediately instead of waiting on user interaction.
+      await Future.delayed(const Duration(seconds: 1));
     }
     return true;
   }
@@ -272,16 +330,24 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
+    if (_credsKeys.contains(settingId)) {
+      return _secureCache[settingId];
+    }
     String? str = prefs?.getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
-    prefs?.setString(settingId, value);
+    if (_credsKeys.contains(settingId)) {
+      _secureCache[settingId] = value;
+      _secureStorage.write(key: settingId, value: value);
+    } else {
+      prefs?.setString(settingId, value);
+    }
     notifyListeners();
   }
 
-  bool? getSettingBool(String settingId) {
+  bool getSettingBool(String settingId) {
     return prefs?.getBool(settingId) ?? false;
   }
 
@@ -290,8 +356,23 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Map<String, int> get categories =>
-      Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
+  String? _categoriesRaw;
+  Map<String, int>? _categoriesCache;
+
+  // Cached parse of the stored categories JSON, keyed by the raw string so it
+  // self-invalidates on any change (including imports that write prefs
+  // directly). Returns a stable instance while unchanged, so it doesn't
+  // re-parse on every access and `context.select((p) => p.categories)` can
+  // dedupe - previously this returned a fresh Map each call, forcing the
+  // category widgets to rebuild on every (unrelated) SettingsProvider change.
+  Map<String, int> get categories {
+    final raw = prefs?.getString('categories') ?? '{}';
+    if (raw != _categoriesRaw || _categoriesCache == null) {
+      _categoriesRaw = raw;
+      _categoriesCache = Map<String, int>.from(jsonDecode(raw));
+    }
+    return _categoriesCache!;
+  }
 
   void setCategories(Map<String, int> cats, {AppsProvider? appsProvider}) {
     if (appsProvider != null) {
@@ -339,7 +420,9 @@ class SettingsProvider with ChangeNotifier {
       a.length == b.length && a.union(b).length == a.length;
 
   void resetLocaleSafe(BuildContext context) {
-    if (context.supportedLocales.contains(context.deviceLocale)) {
+    if (context.supportedLocales.any(
+      (l) => l.languageCode == context.deviceLocale.languageCode,
+    )) {
       context.resetLocale();
     } else {
       context.setLocale(context.fallbackLocale!);
@@ -486,7 +569,7 @@ class SettingsProvider with ChangeNotifier {
       if (!(await saf.canRead(uri) ?? false) ||
           !(await saf.canWrite(uri) ?? false)) {
         uri = null;
-        prefs?.remove('exportDir');
+        await prefs?.remove('exportDir');
         notifyListeners();
       }
       return uri;
@@ -508,14 +591,16 @@ class SettingsProvider with ChangeNotifier {
     }
     if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
       if (newOneWayDataSyncDir == null) {
-        prefs?.remove('exportDir');
+        await prefs?.remove('exportDir');
       } else {
         prefs?.setString('exportDir', newOneWayDataSyncDir.toString());
       }
       notifyListeners();
     }
     for (var e in existingSAFPerms) {
-      await saf.releasePersistableUriPermission(e.uri);
+      if (e.uri != newOneWayDataSyncDir) {
+        await saf.releasePersistableUriPermission(e.uri);
+      }
     }
   }
 

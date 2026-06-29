@@ -43,12 +43,14 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
+/android/app/build/
 /android/app/debug
 /android/app/profile
 /android/app/release
 /android/app/.cxx
-/android/build/reports
+/android/build/
 /android/.kotlin
+/android/.gradle/
 
 # Custom
 TODO.txt

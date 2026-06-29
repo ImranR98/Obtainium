@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -10,10 +9,9 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class GitHub extends AppSource {
-  GitHub({hostChanged = false}) {
+  GitHub({bool hostChanged = false}) {
     hosts = ['github.com'];
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
@@ -27,25 +25,8 @@ class GitHub extends AppSource {
         label: tr('githubPATLabel'),
         password: true,
         required: false,
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl:
+            'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
       ),
       GeneratedFormTextField(
         'GHReqPrefix',
@@ -59,7 +40,7 @@ class GitHub extends AppSource {
                 throw true;
               }
               if (value != null) {
-                Uri.parse('https://${value}/api.github.com');
+                Uri.parse('https://$value/api.github.com');
               }
             } catch (e) {
               return tr('invalidInput');
@@ -67,25 +48,7 @@ class GitHub extends AppSource {
             return null;
           },
         ],
-        belowWidgets: [
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () {
-              launchUrlString(
-                'https://github.com/sky22333/hubproxy',
-                mode: LaunchMode.externalApplication,
-              );
-            },
-            child: Text(
-              tr('about'),
-              style: const TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
+        helpUrl: 'https://github.com/sky22333/hubproxy',
       ),
       GeneratedFormSwitch(
         'checkRepoRename',
@@ -192,17 +155,11 @@ class GitHub extends AppSource {
     bool includeZips = false,
     bool includeTarballs = false,
   }) {
-    var lower = name.toLowerCase();
-    return lower.endsWith('.apk') ||
-        lower.endsWith('.xapk') ||
-        lower.endsWith('.apkm') ||
-        lower.endsWith('.apks') ||
-        (includeZips && lower.endsWith('.zip')) ||
-        (includeTarballs &&
-            (lower.endsWith('.tar.gz') ||
-                lower.endsWith('.tgz') ||
-                lower.endsWith('.tar.bz2') ||
-                lower.endsWith('.tar.xz')));
+    return AppSource.isApkOrContainerFile(
+      name,
+      includeArchives: includeZips,
+      includeTarballs: includeTarballs,
+    );
   }
 
   @override
@@ -267,7 +224,9 @@ class GitHub extends AppSource {
           }
         }
       } catch (err) {
-        // Ignore - ID will be extracted from the APK
+        LogsProvider().add(
+          'Failed to extract ID from build.gradle or APK: ${err.toString()}',
+        );
       }
     }
     return null;
@@ -403,7 +362,9 @@ class GitHub extends AppSource {
         try {
           newUrl = jsonDecode(res2.body)['html_url'];
         } catch (e) {
-          // Unexpected - ignore (keep old URL)
+          LogsProvider().add(
+            'Failed to parse redirect response for repo rename: ${e.toString()}',
+          );
         }
         if (newUrl != null) {
           throw RepositoryRenamedError(standardUrl, newUrl);
@@ -472,7 +433,11 @@ class GitHub extends AppSource {
     }
     Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
-      var releases = jsonDecode(res.body) as List<dynamic>;
+      var decoded = jsonDecode(res.body);
+      if (decoded is! List) {
+        throw NoReleasesError();
+      }
+      var releases = decoded;
       if (latestRelease != null) {
         var latestTag = latestRelease['tag_name'] ?? latestRelease['name'];
         if (releases
@@ -571,9 +536,15 @@ class GitHub extends AppSource {
                 var reg = RegExp(stdFormats.last);
                 var matchA = reg.firstMatch(nameA);
                 var matchB = reg.firstMatch(nameB);
+                if (matchA == null || matchB == null) {
+                  return compareAlphaNumeric(
+                    (nameA as String),
+                    (nameB as String),
+                  );
+                }
                 return compareAlphaNumeric(
-                  (nameA as String).substring(matchA!.start, matchA.end),
-                  (nameB as String).substring(matchB!.start, matchB.end),
+                  (nameA as String).substring(matchA.start, matchA.end),
+                  (nameB as String).substring(matchB.start, matchB.end),
                 );
               } else {
                 // 'name'
@@ -616,8 +587,9 @@ class GitHub extends AppSource {
         }
         var nameToFilter = releases[i]['name'] as String?;
         if (nameToFilter == null || nameToFilter.trim().isEmpty) {
-          // Some leave titles empty so tag is used
-          nameToFilter = releases[i]['tag_name'] as String;
+          // Some leave titles empty so tag is used (guard against a missing or
+          // non-string tag_name rather than crashing on a bad cast).
+          nameToFilter = releases[i]['tag_name']?.toString() ?? '';
         }
         if (regexFilter != null &&
             !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
@@ -705,7 +677,7 @@ class GitHub extends AppSource {
         targetRelease,
         useLatestAssetDateAsReleaseDate,
       );
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       var changeLog = (targetRelease['body'] ?? '').toString();
@@ -811,7 +783,7 @@ class GitHub extends AppSource {
     }
   }
 
-  undoGHProxyMod(
+  String undoGHProxyMod(
     String reqUrl,
     Map<String, String> sourceConfigSettingValues,
   ) => reqUrl.replaceFirst(
@@ -849,10 +821,13 @@ class GitHub extends AppSource {
 
   void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
-      throw RateLimitError(
-        (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000)
-            .round(),
-      );
+      final resetEpochSeconds =
+          int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000');
+      final nowSeconds =
+          DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final remainingMinutes =
+          ((resetEpochSeconds - nowSeconds) / 60).ceil().clamp(0, 9999);
+      throw RateLimitError(remainingMinutes);
     }
   }
 }

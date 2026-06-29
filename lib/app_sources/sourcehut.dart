@@ -65,7 +65,7 @@ class SourceHut extends AppSource {
       List<APKDetails> apkDetailsList = [];
       int ind = 0;
 
-      for (var entry in parsedHtml.querySelectorAll('item').sublist(0, 6)) {
+      for (var entry in parsedHtml.querySelectorAll('item').take(6)) {
         ind++;
         String releasePage = // querySelector('link') fails for some reason
             entry
@@ -80,7 +80,7 @@ class SourceHut extends AppSource {
           break;
         }
         String? version = entry.querySelector('title')?.text.trim();
-        if (version == null) {
+        if (version == null || version.isEmpty) {
           throw NoVersionError();
         }
         String? releaseDateString = entry.querySelector('pubDate')?.innerHtml;
@@ -104,7 +104,7 @@ class SourceHut extends AppSource {
             parse(res2.body)
                 .querySelectorAll('a')
                 .map((e) => e.attributes['href'] ?? '')
-                .where((e) => e.toLowerCase().endsWith('.apk'))
+                .where((e) => AppSource.isApkOrContainerFile(e))
                 .map((e) => ensureAbsoluteUrl(e, standardUri))
                 .toList(),
           );

@@ -56,7 +56,12 @@ class CoolApk extends AppSource {
       throw getObtainiumHttpError(res);
     }
 
-    var json = jsonDecode(res.body);
+    Map<String, dynamic> json;
+    try {
+      json = jsonDecode(res.body);
+    } catch (_) {
+      throw NoReleasesError();
+    }
     if (json['status'] == -2 || json['data'] == null) {
       throw NoReleasesError();
     }
@@ -66,11 +71,14 @@ class CoolApk extends AppSource {
     String appName = detail['title'].toString();
     String author = detail['developername']?.toString() ?? 'CoolApk';
     String changelog = detail['changelog']?.toString() ?? '';
-    int? releaseDate = detail['lastupdate'] != null
-        ? (detail['lastupdate'] is int
-              ? detail['lastupdate'] * 1000
-              : int.parse(detail['lastupdate'].toString()) * 1000)
-        : null;
+    int? releaseDate;
+    var lastUpdate = detail['lastupdate'];
+    if (lastUpdate is int) {
+      releaseDate = lastUpdate * 1000;
+    } else if (lastUpdate != null) {
+      var parsed = int.tryParse(lastUpdate.toString());
+      releaseDate = parsed != null ? parsed * 1000 : null;
+    }
     String aid = detail['id'].toString();
 
     // get apk url

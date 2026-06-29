@@ -32,15 +32,11 @@ class Farsroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://([^\\.]+\\.)${getSourceRegex(hosts)}/[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'([^\.]+\.)',
+      pathPattern: r'/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -72,17 +68,20 @@ class Farsroid extends AppSource {
       ),
       additionalSettings,
     );
-    var html2 = jsonDecode(res2.body)?['data']?['content'] as String? ?? '';
+    Map<String, dynamic>? farsroidJson;
+    try {
+      farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;
+    } catch (_) {
+      throw NoAPKError();
+    }
+    var html2 = farsroidJson?['data']?['content'] as String? ?? '';
     if (html2.isEmpty) {
       throw NoAPKError();
     }
     var apkLinks = (await grabLinksCommon(
       html2,
       res2.request!.url,
-      {
-        ...additionalSettings,
-        'skipSort': true,
-      },
+      {...additionalSettings, 'skipSort': true},
     )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
 
     apkLinks = filterApks(

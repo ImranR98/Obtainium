@@ -15,15 +15,11 @@ class Aptoide extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'([^\.]+\.){2,}',
+      pathPattern: '',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -57,9 +53,13 @@ class Aptoide extends AppSource {
       additionalSettings,
     );
     if (res2.statusCode != 200) {
-      throw getObtainiumHttpError(res);
+      throw getObtainiumHttpError(res2);
     }
-    return jsonDecode(res2.body)?['nodes']?['meta']?['data'];
+    var data = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
+    if (data == null) {
+      throw NoReleasesError();
+    }
+    return data;
   }
 
   @override
@@ -73,7 +73,7 @@ class Aptoide extends AppSource {
     String? dateStr = appDetails['updated'];
     String? version = appDetails['file']?['vername'];
     String? apkUrl = appDetails['file']?['path'];
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     if (apkUrl == null) {

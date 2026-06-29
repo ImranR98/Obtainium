@@ -52,15 +52,11 @@ class APKMirror extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/apk/[^/]+/[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/apk/[^/]+/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
   }
 
   @override
@@ -99,21 +95,30 @@ class APKMirror extends AppSource {
         break;
       }
       String? titleString = targetRelease?.querySelector('title')?.innerHtml;
-      String? dateString = targetRelease
-          ?.querySelector('pubDate')
-          ?.innerHtml
-          .split(' ')
-          .sublist(0, 5)
-          .join(' ');
-      DateTime? releaseDate = dateString != null
-          ? HttpDate.parse('$dateString GMT')
+      var pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
+      String? dateString = pubDateRaw != null
+          ? pubDateRaw.split(' ').take(5).join(' ')
           : null;
-      String? version = titleString
-          ?.substring(
-            RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-            RegExp(' by ').allMatches(titleString).last.start,
-          )
-          .trim();
+      DateTime? releaseDate;
+      if (dateString != null) {
+        try {
+          releaseDate = HttpDate.parse('$dateString GMT');
+        } catch (e) {
+          releaseDate = null;
+        }
+      }
+      String? version;
+      if (titleString != null) {
+        final byMatches = RegExp(' by ').allMatches(titleString);
+        version = byMatches.isEmpty
+            ? titleString
+            : titleString
+                  .substring(
+                    RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
+                    byMatches.last.start,
+                  )
+                  .trim();
+      }
       if (version == null || version.isEmpty) {
         version = titleString;
       }

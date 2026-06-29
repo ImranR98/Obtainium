@@ -94,7 +94,7 @@ class NeutronCode extends AppSource {
           .querySelector('.pd-version-txt')
           ?.nextElementSibling
           ?.innerHtml;
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       String? apkUrl = 'https://${hosts[0]}/download/$filename';

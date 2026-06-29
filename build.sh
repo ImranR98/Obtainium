@@ -1,12 +1,13 @@
 #!/bin/bash
 # Convenience script
+set -euo pipefail
 
 CURR_DIR="$(pwd)"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 trap "cd \"$CURR_DIR\"" EXIT
 cd "$SCRIPT_DIR"
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
     git fetch && git merge origin/main && git push # Typically run after a PR to main, so bring dev up to date
 fi
 
@@ -33,11 +34,18 @@ fi
 
 # flutter pub upgrade --tighten --major-versions
 
+flutter clean
 flutter pub get
 # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
-sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
+# Apply idempotently: the replacement text still contains "-Wl," so a naive
+# repeated sed would accumulate "--build-id=none" on every run. Guard the glob
+# too so a missing match doesn't abort under "set -e".
+for cmakelists in ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt; do
+    [ -f "$cmakelists" ] || continue
+    grep -q -- '--build-id=none' "$cmakelists" ||
+        sed -i -e 's/-Wl,/-Wl,--build-id=none,/' "$cmakelists"
+done
 
-rm ./build/app/outputs/flutter-apk/* 2>/dev/null                                       # Get rid of older builds if any
 flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal # Build (both split and combined APKs)
 for file in ./build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
 flutter build apk --flavor fdroid -t lib/main_fdroid.dart && # Do the same for the F-Droid flavour

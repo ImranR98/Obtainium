@@ -45,14 +45,27 @@ class Log {
 }
 
 class LogsProvider {
-  LogsProvider({bool runDefaultClear = true}) {
-    clear(before: DateTime.now().subtract(const Duration(days: 7)));
+  static final LogsProvider _instance = LogsProvider._();
+  static Database? _db;
+  static bool _defaultClearScheduled = false;
+
+  // Shared singleton: many call sites construct LogsProvider() ad-hoc just to
+  // log a line. A factory avoids doing DB work (the 7-day cleanup DELETE) on
+  // every such construction - the cleanup runs at most once per process.
+  factory LogsProvider({bool runDefaultClear = true}) {
+    if (runDefaultClear && !_defaultClearScheduled) {
+      _defaultClearScheduled = true;
+      _instance
+          .clear(before: DateTime.now().subtract(const Duration(days: 7)))
+          .catchError((_) => 0);
+    }
+    return _instance;
   }
 
-  Database? db;
+  LogsProvider._();
 
   Future<Database> getDB() async {
-    db ??= await openDatabase(
+    _db ??= await openDatabase(
       dbPath,
       version: 1,
       onCreate: (Database db, int version) async {
@@ -65,14 +78,14 @@ create table if not exists $logTable (
 ''');
       },
     );
-    return db!;
+    return _db!;
   }
 
   Future<Log> add(String message, {LogLevels level = LogLevels.info}) async {
     Log l = Log(message, level);
     l.id = await (await getDB()).insert(logTable, l.toMap());
     if (kDebugMode) {
-      print(l);
+      debugPrint(l.toString());
     }
     return l;
   }
@@ -104,6 +117,11 @@ create table if not exists $logTable (
       );
     }
     return res;
+  }
+
+  static Future<void> close() async {
+    await _db?.close();
+    _db = null;
   }
 }
 

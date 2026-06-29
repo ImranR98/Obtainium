@@ -83,10 +83,14 @@ class APKPure extends AppSource {
   ) async {
     var apkUrls = versionVariants
         .map((e) {
-          String appId = e['package_name'];
-          String versionCode = e['version_code'];
+          String? appId = e['package_name']?.toString();
+          String? versionCode = e['version_code']?.toString();
+          if (appId == null || versionCode == null) {
+            return null;
+          }
 
-          List<String> architectures = e['native_code']?.cast<String>();
+          List<String> architectures =
+              e['native_code']?.cast<String>() ?? <String>[];
           String architectureString = architectures.join(',');
           if (architectures.contains("universal") ||
               architectures.contains("unlimited")) {
@@ -98,8 +102,12 @@ class APKPure extends AppSource {
             return null;
           }
 
-          String type = e['asset']['type'];
-          String downloadUri = e['asset']['url'];
+          var asset = e['asset'];
+          String? type = asset is Map ? asset['type']?.toString() : null;
+          String? downloadUri = asset is Map ? asset['url']?.toString() : null;
+          if (type == null || downloadUri == null) {
+            return null;
+          }
 
           return MapEntry(
             '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
@@ -116,10 +124,15 @@ class APKPure extends AppSource {
 
     // get version details from first variant
     var v = versionVariants.first;
-    String version = v['version_name'];
-    String author = v['developer'];
-    String appName = v['title'];
-    DateTime releaseDate = DateTime.parse(v['update_date']);
+    String? version = v['version_name']?.toString();
+    if (version == null || version.isEmpty) {
+      throw NoVersionError();
+    }
+    String author = v['developer']?.toString() ?? name;
+    String appName = v['title']?.toString() ?? tr('app');
+    DateTime? releaseDate = v['update_date'] != null
+        ? DateTime.tryParse(v['update_date'].toString())
+        : null;
     String? changeLog = v['whatsnew'];
     if (changeLog != null && changeLog.isEmpty) {
       changeLog = null;
@@ -147,10 +160,11 @@ class APKPure extends AppSource {
     if (forAPKDownload) {
       return null;
     } else {
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
       return {
         "Ual-Access-Businessid": "projecta",
         "Ual-Access-ProjectA":
-            '{"device_info":{"os_ver":"${((await DeviceInfoPlugin().androidInfo).version.sdkInt)}"}}',
+            '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
       };
     }
   }
@@ -173,9 +187,13 @@ class APKPure extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    List<Map<String, dynamic>> apks = jsonDecode(
-      res.body,
-    )['version_list'].cast<Map<String, dynamic>>();
+    List<Map<String, dynamic>> apks;
+    try {
+      apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+    } catch (_) {
+      throw NoReleasesError();
+    }
 
     // group by version
     List<List<Map<String, dynamic>>> versions = apks

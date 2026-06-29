@@ -147,7 +147,7 @@ void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
             child: Text(e.toString()),
           ),
           actions: [
-            TextButton(
+            FilledButton.tonal(
               onPressed: () {
                 Navigator.of(context).pop(null);
               },
@@ -177,7 +177,7 @@ String list2FriendlyString(List<String> list) {
                   (e.key == list.length - 1
                       ? ''
                       : e.key == list.length - 2
-                      ? '${isUsingEnglish ? ',' : ''} and '
+                      ? '${isUsingEnglish ? ',' : ''} ${tr('and')} '
                       : ', '),
             )
             .join('');

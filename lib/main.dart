@@ -15,6 +15,12 @@ import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart';
+// The background headless task (bgUpdateCheck) runs without a widget tree
+// and therefore cannot use BuildContext-dependent translation APIs.  Direct
+// access to EasyLocalizationController and Localization is the only way to
+// load translations before the widget tree exists.  TODO: remove these
+// implementation imports if easy_localization ever exposes a public
+// context-free initialisation API.
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
@@ -48,7 +54,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
     Locale('en', 'EO'),
     'Esperanto',
   ), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
-  MapEntry(Locale('in'), 'Bahasa Indonesia'),
+  MapEntry(Locale('id'), 'Bahasa Indonesia'),
   MapEntry(Locale('ko'), '한국어'),
   MapEntry(Locale('ca'), 'Català'),
   MapEntry(Locale('ar'), 'العربية'),
@@ -89,11 +95,11 @@ Future<void> loadTranslations() async {
 }
 
 @pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessTask task) async {
-  String taskId = task.taskId;
-  bool isTimeout = task.timeout;
+void backgroundFetchHeadlessTask(HeadlessEvent event) async {
+  String taskId = event.taskId;
+  bool isTimeout = event.timeout;
   if (isTimeout) {
-    print('BG update task timed out.');
+    debugPrint('BG update task timed out.');
     BackgroundFetch.finish(taskId);
     return;
   }
@@ -111,7 +117,7 @@ class MyTaskHandler extends TaskHandler {
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    print('onStart(starter: ${starter.name})');
+    debugPrint('onStart(starter: ${starter.name})');
     bgUpdateCheck('bg_check', null);
   }
 
@@ -122,7 +128,7 @@ class MyTaskHandler extends TaskHandler {
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
-    print('Foreground service onDestroy(isTimeout: $isTimeout)');
+    debugPrint('Foreground service onDestroy(isTimeout: $isTimeout)');
   }
 
   @override
@@ -140,6 +146,7 @@ void main() async {
     );
   } catch (e) {
     // Already added, do nothing (see #375)
+    debugPrint('Failed to load custom CA certificate: $e');
   }
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
@@ -169,11 +176,119 @@ void main() async {
         path: localeDir,
         fallbackLocale: fallbackLocale,
         useOnlyLangCode: false,
+        useFallbackTranslations: true,
         child: const Obtainium(),
       ),
     ),
   );
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+}
+
+/// Builds the app-wide Material 3 Expressive [ThemeData] for a given
+/// [colorScheme]. Expressive character lives here (large rounded shapes,
+/// emphasized motion, updated M3 component looks) so it propagates to every
+/// screen without per-widget styling.
+ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
+  // Expressive shape tokens: large squircle (rounded-superellipse) corners.
+  final cardShape = RoundedSuperellipseBorder(
+    borderRadius: BorderRadius.circular(24),
+  );
+  const buttonShape = StadiumBorder();
+  final dialogShape = RoundedSuperellipseBorder(
+    borderRadius: BorderRadius.circular(28),
+  );
+  final fieldShape = RoundedSuperellipseBorder(
+    borderRadius: BorderRadius.circular(16),
+  );
+
+  // Fully rounded, comfortably-tall buttons (very M3 Expressive).
+  final pillButtonStyle = ButtonStyle(
+    shape: const WidgetStatePropertyAll(buttonShape),
+    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    fontFamily: fontFamily,
+    // Emphasized, springy page transitions for forward navigation.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+      },
+    ),
+    cardTheme: CardThemeData(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: cardShape,
+      margin: EdgeInsets.zero,
+    ),
+    dialogTheme: DialogThemeData(shape: dialogShape),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      shape: RoundedSuperellipseBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+    ),
+    appBarTheme: const AppBarThemeData(centerTitle: false),
+    expansionTileTheme: ExpansionTileThemeData(
+      shape: cardShape,
+      collapsedShape: cardShape,
+    ),
+    listTileTheme: ListTileThemeData(shape: fieldShape),
+    chipTheme: const ChipThemeData(shape: StadiumBorder()),
+    searchBarTheme: const SearchBarThemeData(
+      elevation: WidgetStatePropertyAll(0),
+    ),
+    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
+    textButtonTheme: TextButtonThemeData(
+      style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    inputDecorationTheme: InputDecorationThemeData(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+    ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      inputDecorationTheme: InputDecorationThemeData(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+      ),
+      menuStyle: MenuStyle(
+        shape: WidgetStatePropertyAll(
+          RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+    ),
+    sliderTheme: SliderThemeData(
+      // Opt into the updated (2024) Material 3 slider appearance.
+      // ignore: deprecated_member_use
+      year2023: false,
+      activeTrackColor: colorScheme.primary,
+      inactiveTrackColor: colorScheme.surfaceContainerHighest,
+      thumbColor: colorScheme.primary,
+      overlayColor: colorScheme.primary.withValues(alpha: 0.12),
+    ),
+    // Opt into the updated (2024) Material 3 Expressive progress indicators
+    // (wavy active track / gapped circular) across the whole app.
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      // ignore: deprecated_member_use
+      year2023: false,
+    ),
+  );
 }
 
 class Obtainium extends StatefulWidget {
@@ -187,6 +302,7 @@ class _ObtainiumState extends State<Obtainium> {
   var _lastUpdateInterval = -1;
   var _lastUseFGService = false;
   var _firstRunHandled = false;
+  var _launchByNotifChecked = false;
 
   void _manageServices(SettingsProvider settings) {
     var interval = settings.updateInterval;
@@ -251,9 +367,11 @@ class _ObtainiumState extends State<Obtainium> {
             });
       }
     }
+    final currentLang = context.locale.languageCode;
+    final deviceLang = context.deviceLocale.languageCode;
     if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
         (settings.forcedLocale == null &&
-            context.deviceLocale != context.locale)) {
+            deviceLang != currentLang)) {
       settings.resetLocaleSafe(context);
     }
   }
@@ -264,17 +382,31 @@ class _ObtainiumState extends State<Obtainium> {
     initPlatformState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
+      final settingsProvider = context.read<SettingsProvider>();
+      final appsProvider = context.read<AppsProvider>();
+      final logs = context.read<LogsProvider>();
+      final notifs = context.read<NotificationsProvider>();
+      _manageServices(settingsProvider);
+      _handleFirstRun(settingsProvider, appsProvider, logs, context);
+      if (!_launchByNotifChecked) {
+        _launchByNotifChecked = true;
+        notifs.checkLaunchByNotif();
+      }
+      settingsProvider.addListener(() {
+        _manageServices(settingsProvider);
+        _handleFirstRun(settingsProvider, appsProvider, logs, context);
+      });
     });
   }
 
   Future<void> requestNonOptionalPermissions() async {
+    var settingsProvider = context.read<SettingsProvider>();
     final NotificationPermission notificationPermission =
         await FlutterForegroundTask.checkNotificationPermission();
     if (notificationPermission != NotificationPermission.granted) {
       await FlutterForegroundTask.requestNotificationPermission();
     }
     if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-      var settingsProvider = context.read<SettingsProvider>();
       if (settingsProvider.showBatteryOptimizationPrompt) {
         await FlutterForegroundTask.requestIgnoreBatteryOptimization();
       }
@@ -327,14 +459,16 @@ class _ObtainiumState extends State<Obtainium> {
     return null;
   }
 
-  stopForegroundService() async {
+  Future<ServiceRequestResult?> stopForegroundService() async {
     if (await FlutterForegroundTask.isRunningService) {
       return FlutterForegroundTask.stopService();
     }
+    return null;
   }
 
   @override
   void dispose() {
+    LogsProvider.close();
     super.dispose();
   }
 
@@ -366,15 +500,6 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    AppsProvider appsProvider = context.read<AppsProvider>();
-    LogsProvider logs = context.read<LogsProvider>();
-    NotificationsProvider notifs = context.read<NotificationsProvider>();
-    _manageServices(settingsProvider);
-    _handleFirstRun(settingsProvider, appsProvider, logs, context);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifs.checkLaunchByNotif();
-    });
 
     return WithForegroundTask(
       child: DynamicColorBuilder(
@@ -382,18 +507,26 @@ class _ObtainiumState extends State<Obtainium> {
           // Decide on a colour/brightness scheme based on OS and user settings
           ColorScheme lightColorScheme;
           ColorScheme darkColorScheme;
+          final schemeMode = settingsProvider.colourSchemeMode;
           if (lightDynamic != null &&
               darkDynamic != null &&
-              settingsProvider.useMaterialYou) {
+              schemeMode == ColourSchemeMode.materialYou) {
             lightColorScheme = lightDynamic.harmonized();
             darkColorScheme = darkDynamic.harmonized();
           } else {
+            final variant = switch (schemeMode) {
+              ColourSchemeMode.vibrant => DynamicSchemeVariant.vibrant,
+              ColourSchemeMode.expressive => DynamicSchemeVariant.expressive,
+              _ => DynamicSchemeVariant.tonalSpot,
+            };
             lightColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
+              dynamicSchemeVariant: variant,
             );
             darkColorScheme = ColorScheme.fromSeed(
               seedColor: settingsProvider.themeColor,
               brightness: Brightness.dark,
+              dynamicSchemeVariant: variant,
             );
           }
 
@@ -413,69 +546,17 @@ class _ObtainiumState extends State<Obtainium> {
             locale: context.locale,
             navigatorKey: globalNavigatorKey,
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.dark
+            theme: buildObtainiumTheme(
+              settingsProvider.theme == ThemeSettings.dark
                   ? darkColorScheme
                   : lightColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
-              sliderTheme: SliderThemeData(
-                activeTrackColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary,
-                inactiveTrackColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .surfaceContainerHighest,
-                thumbColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary,
-                overlayColor:
-                    (settingsProvider.theme == ThemeSettings.dark
-                        ? darkColorScheme
-                        : lightColorScheme)
-                    .primary
-                    .withAlpha(30),
-              ),
+              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
-            darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: settingsProvider.theme == ThemeSettings.light
+            darkTheme: buildObtainiumTheme(
+              settingsProvider.theme == ThemeSettings.light
                   ? lightColorScheme
                   : darkColorScheme,
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
-              sliderTheme: SliderThemeData(
-                activeTrackColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary,
-                inactiveTrackColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .surfaceContainerHighest,
-                thumbColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary,
-                overlayColor:
-                    (settingsProvider.theme == ThemeSettings.light
-                        ? lightColorScheme
-                        : darkColorScheme)
-                    .primary
-                    .withAlpha(30),
-              ),
+              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{

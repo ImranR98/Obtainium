@@ -100,7 +100,7 @@ class Uptodown extends AppSource {
     var appId = appDetails['appId'];
     var fileId = appDetails['fileId'];
     var extension = appDetails['extension'];
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     if (fileId == null) {
@@ -119,7 +119,7 @@ class Uptodown extends AppSource {
     }
     return APKDetails(
       version,
-      [MapEntry('$appId.$extension', apkUrl)],
+      [MapEntry('$appId.${extension ?? 'apk'}', apkUrl)],
       AppNames(author, appName),
       releaseDate: relDate,
     );

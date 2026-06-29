@@ -37,19 +37,25 @@ class VivoAppStore extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     var json = await getDetailJson(standardUrl, additionalSettings);
-    var appName = json['title_zh'].toString();
-    var packageName = json['package_name'].toString();
-    var versionName = json['version_name'].toString();
-    var versionCode = json['version_code'].toString();
-    var developer = json['developer'].toString();
-    var uploadTime = json['upload_time'].toString();
-    var apkUrl = json['download_url'].toString();
+    var versionName = json['version_name']?.toString();
+    var apkUrl = json['download_url']?.toString();
+    if (versionName == null) {
+      throw NoVersionError();
+    }
+    if (apkUrl == null) {
+      throw NoAPKError();
+    }
+    var appName = json['title_zh']?.toString() ?? tr('app');
+    var packageName = json['package_name']?.toString() ?? '';
+    var versionCode = json['version_code']?.toString() ?? '';
+    var developer = json['developer']?.toString() ?? name;
+    var uploadTime = json['upload_time']?.toString();
     var apkName = '${packageName}_$versionCode.apk';
     return APKDetails(
       versionName,
       [MapEntry(apkName, apkUrl)],
       AppNames(developer, appName),
-      releaseDate: DateTime.parse(uploadTime),
+      releaseDate: uploadTime != null ? DateTime.tryParse(uploadTime) : null,
     );
   }
 
@@ -66,13 +72,14 @@ class VivoAppStore extends AppSource {
       throw getObtainiumHttpError(response);
     }
     var json = jsonDecode(response.body);
-    if (json['code'] != 0 || !json['data']['appSearchResponse']['result']) {
+    if (json['code'] != 0 ||
+        json['data']?['appSearchResponse']?['result'] != true) {
       throw NoReleasesError();
     }
     Map<String, List<String>> results = {};
     var resultsJson = json['data']['appSearchResponse']?['value'];
-    if (resultsJson != null) {
-      for (var item in (resultsJson as List<dynamic>)) {
+    if (resultsJson is List) {
+      for (var item in resultsJson) {
         results['$appDetailUrl${item['id']}'] = [
           item['title_zh'].toString(),
           item['developer'].toString(),

@@ -7,6 +7,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
@@ -117,16 +118,16 @@ class FDroid extends AppSource {
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitHub = true;
-          } catch (e) {
-            //
+          } on InvalidURLError {
+            // URL does not match GitHub format, silently skipped
           }
           try {
             GitLab(
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitLab = true;
-          } catch (e) {
-            //
+          } on InvalidURLError {
+            // URL does not match GitLab format, silently skipped
           }
           if ((isGitHub || isGitLab) &&
               (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
@@ -137,10 +138,17 @@ class FDroid extends AppSource {
           }
         }
       } catch (e) {
-        // Fail silently
+        LogsProvider().add(
+          'Failed to process changelog for F-Droid app: ${e.toString()}',
+        );
       }
       if ((details.changeLog?.length ?? 0) > 2048) {
-        details.changeLog = '${details.changeLog!.substring(0, 2048)}...';
+        final cl = details.changeLog!;
+        var end = 2048;
+        if (end > 0 && cl.codeUnitAt(end - 1) >= 0xD800 && cl.codeUnitAt(end - 1) <= 0xDBFF) {
+          end--;
+        }
+        details.changeLog = '${cl.substring(0, end)}...';
       }
     }
     return details;
@@ -240,16 +248,19 @@ class FDroid extends AppSource {
           if (RegExp(
             filterVersionsByRegEx!,
           ).hasMatch(releases[i]['versionName'])) {
+            // Releases are ordered highest-version-first, so the first match is
+            // the newest matching version.
             version = releases[i]['versionName'];
+            break;
           }
         }
-        if (version == null) {
+        if (version == null || version.isEmpty) {
           throw NoVersionError();
         }
       }
       // Default to the highest version
       version ??= releases[0]['versionName'];
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       // If a suggested release was not already picked, pick all those with the selected version
