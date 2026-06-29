@@ -157,6 +157,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                     maxLines: null,
                     minLines: 8,
                     decoration: InputDecoration(
+                      hintText: tr('appURLList'),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     validator: _validate,
