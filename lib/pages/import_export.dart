@@ -34,6 +34,30 @@ Widget _actionTile({
   );
 }
 
+/// Wraps each action in a [ConnectedCard] with positional radii so consecutive
+/// tiles read as one connected block with a small gap between them.
+List<Widget> _buildConnectedActionTiles(
+  List<({IconData icon, String label, VoidCallback? onTap})> tiles,
+) {
+  final result = <Widget>[];
+  for (var i = 0; i < tiles.length; i++) {
+    final tile = tiles[i];
+    result.add(
+      ConnectedCard(
+        isFirst: i == 0,
+        isLast: i == tiles.length - 1,
+        padding: null,
+        child: _actionTile(
+          icon: tile.icon,
+          label: tile.label,
+          onTap: tile.onTap,
+        ),
+      ),
+    );
+  }
+  return result;
+}
+
 /// The app-import controls (file import, source search, URL-list import, mass
 /// sources). Embedded in the Add App page (shown while no URL is entered).
 class ImportSection extends StatefulWidget {
@@ -272,39 +296,27 @@ class _ImportSectionState extends State<ImportSection> {
       spacing: 12,
       children: [
         if (importInProgress) const LinearProgressIndicator(),
-        Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _actionTile(
-                icon: Icons.download_outlined,
-                label: tr('obtainiumImport'),
-                onTap: importInProgress ? null : runObtainiumImport,
-              ),
-              _actionTile(
-                icon: Icons.format_list_bulleted_outlined,
-                label: tr('importFromURLList'),
-                onTap: importInProgress ? null : urlListImport,
-              ),
-              _actionTile(
-                icon: Icons.upload_file_outlined,
-                label: tr('importFromURLsInFile'),
-                onTap: importInProgress ? null : runUrlImport,
-              ),
-              ...sourceProvider.massUrlSources.map(
-                (source) => _actionTile(
-                  icon: Icons.cloud_download_outlined,
-                  label: tr('importX', args: [source.name]),
-                  onTap: importInProgress
-                      ? null
-                      : () => runMassSourceImport(source),
-                ),
-              ),
-            ],
+        ConnectedCard(
+          isFirst: true,
+          isLast: true,
+          padding: null,
+          child: _actionTile(
+            icon: Icons.download_outlined,
+            label: tr('obtainiumImport'),
+            onTap: importInProgress ? null : runObtainiumImport,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+        ..._buildConnectedActionTiles([
+          (icon: Icons.format_list_bulleted_outlined, label: tr('importFromURLList'), onTap: importInProgress ? null : urlListImport),
+          (icon: Icons.upload_file_outlined, label: tr('importFromURLsInFile'), onTap: importInProgress ? null : runUrlImport),
+          ...sourceProvider.massUrlSources.map(
+            (source) => (icon: Icons.cloud_download_outlined, label: tr('importX', args: [source.name]), onTap: importInProgress ? null : () => runMassSourceImport(source)),
+          ),
+        ]),
+        ConnectedCard(
+          isFirst: true,
+          isLast: true,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Text(
             tr('importedAppsIdDisclaimer'),
             textAlign: TextAlign.center,
