@@ -318,6 +318,7 @@ class _ImportSectionState extends State<ImportSection> {
                 ConnectedCard(
                   isFirst: i == 0,
                   isLast: i == tiles.length - 1,
+                  padding: null,
                   child: tiles[i],
                 ),
             ];
