@@ -20,17 +20,8 @@ git pull
 FLUTTER_GIT_URL="https://github.com/flutter/flutter/" ./bin/flutter upgrade
 cd ..
 
-# Keep global Flutter, if any, in sync
-if [ -f ~/flutter/bin/flutter ]; then
-    cd ~/flutter
-    ./bin/flutter channel stable
-    ./bin/flutter upgrade
-    cd "$SCRIPT_DIR"
-fi
-
-if [ -z "$(which flutter)" ]; then
-    export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
-fi
+# Always use local Flutter even if global install exists
+export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
 
 # flutter pub upgrade --tighten --major-versions
 
