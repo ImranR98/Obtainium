@@ -48,7 +48,7 @@ dependencies:
   url_launcher: ^6.3.2
   permission_handler: ^12.0.3
   fluttertoast: ^9.1.0
-  device_info_plus: ^13.1.0
+  device_info_plus: ^13.2.0
   file_picker: ^12.0.0-beta.7
   animations: ^2.2.0
   android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
@@ -59,7 +59,7 @@ dependencies:
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: master
-  share_plus: ^13.1.0
+  share_plus: ^13.2.0
   sqflite: ^2.4.3
   easy_localization: ^3.0.8
   intl: ^0.20.2
@@ -67,7 +67,7 @@ dependencies:
   flutter_archive: ^6.3.1
   archive: ^4.0.9
   hsluv: ^1.1.3
-  connectivity_plus: ^7.1.1
+  connectivity_plus: ^7.2.0
   shared_storage: # TODO: Is this maintained?
     git:
       url: https://github.com/AlexBacich/shared-storage
@@ -88,7 +88,7 @@ dependencies:
       ref: 3ef7f8fbf904848d144304556b0f80c91fee82a5
   markdown: ^7.3.1
   flutter_typeahead: ^6.0.0
-  battery_plus: ^7.0.0
+  battery_plus: ^7.1.0
   flutter_charset_detector: ^6.0.0
 
   flutter_foreground_task: ^9.2.2
