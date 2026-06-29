@@ -821,10 +821,13 @@ class GitHub extends AppSource {
 
   void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
-      throw RateLimitError(
-        (int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000') / 60000000)
-            .round(),
-      );
+      final resetEpochSeconds =
+          int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000');
+      final nowSeconds =
+          DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final remainingMinutes =
+          ((resetEpochSeconds - nowSeconds) / 60).ceil().clamp(0, 9999);
+      throw RateLimitError(remainingMinutes);
     }
   }
 }

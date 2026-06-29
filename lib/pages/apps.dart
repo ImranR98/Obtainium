@@ -64,11 +64,6 @@ class AppsPageState extends State<AppsPage> {
   int? _pipelineSig;
   List<AppInMemory>? _pipelineResult;
 
-  // Detects when downloads begin or end so the pipeline cache is invalidated
-  // on state transitions (showing/hiding progress UI) without flushing on
-  // every per-tick progress update.
-  bool _downloadsWereActive = false;
-
   // Debounces search-field input so rapid typing doesn't re-run the pipeline on
   // every keystroke.
   Timer? _searchDebounce;
@@ -403,24 +398,17 @@ class AppsPageState extends State<AppsPage> {
     BuildContext context,
     List<AppInMemory> listedApps,
     List<String?> listedCategories,
+    Map<String?, List<int>> groupedByCategory,
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
     final category = listedCategories[index];
-    final appEntries = listedApps
-        .asMap()
-        .entries
-        .where(
-          (e) =>
-              e.value.app.categories.contains(category) ||
-              e.value.app.categories.isEmpty && category == null,
-        )
-        .toList();
+    final appIndices = groupedByCategory[category] ?? [];
     final expanded = !collapsedCategories.contains(category);
     return AppListCategorySection(
       category: category,
       expanded: expanded,
-      appCount: appEntries.length,
+      appCount: appIndices.length,
       onToggle: () {
         setState(() {
           if (expanded) {
@@ -431,9 +419,9 @@ class AppsPageState extends State<AppsPage> {
         });
       },
       buildTiles: () => [
-        for (final e in appEntries)
+        for (final i in appIndices)
           _buildTile(
-            e.key,
+            i,
             context,
             listedApps,
             settingsProvider,
@@ -476,6 +464,7 @@ class AppsPageState extends State<AppsPage> {
     BuildContext context,
     List<AppInMemory> listedApps,
     List<String?> listedCategories,
+    Map<String?, List<int>> groupedByCategory,
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
@@ -492,6 +481,7 @@ class AppsPageState extends State<AppsPage> {
                 context,
                 listedApps,
                 listedCategories,
+                groupedByCategory,
                 settingsProvider,
                 appsProvider,
               );
@@ -630,8 +620,16 @@ class AppsPageState extends State<AppsPage> {
 
   @override
   Widget build(BuildContext context) {
-    var appsProvider = context.watch<AppsProvider>();
-    var settingsProvider = context.watch<SettingsProvider>();
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
+
+    // Watch for changes that affect the pipeline result (app data changes,
+    // loading state) without triggering rebuilds on every download tick.
+    context.select((AppsProvider p) => p.loadingApps);
+    final pipelineSig = context.select(
+      (AppsProvider p) => _pipelineSignature(p.getAppValues().toList(), settingsProvider),
+    );
+
     var listedApps = appsProvider.getAppValues().toList();
 
     if (!appsProvider.loadingApps &&
@@ -648,19 +646,10 @@ class AppsPageState extends State<AppsPage> {
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
-    // Invalidate the pipeline cache when downloads start or stop so the
-    // UI reflects progress changes without recomputing on every tick.
-    final downloadsActive = appsProvider.areDownloadsRunning();
-    if (downloadsActive != _downloadsWereActive) {
-      _pipelineResult = null;
-      _downloadsWereActive = downloadsActive;
-    }
-
-    final pipelineSig = _pipelineSignature(listedApps, settingsProvider);
     if (pipelineSig == _pipelineSig && _pipelineResult != null) {
       listedApps = _pipelineResult!;
     } else {
-      listedApps = AppListBuilder.filter(listedApps, filter, sourceProvider);
+      listedApps = AppListBuilder.filter(listedApps, filter);
       listedApps = AppListBuilder.sort(
         listedApps,
         settingsProvider.sortColumn,
@@ -708,25 +697,23 @@ class AppsPageState extends State<AppsPage> {
         .where(isNotTrackOnly)
         .toList();
 
-    List<String?> getListedCategories() {
-      final cats = <String?>{};
-      for (final e in listedApps) {
-        if (e.app.categories.isEmpty) {
-          cats.add(null);
-        } else {
-          cats.addAll(e.app.categories);
+    final groupedByCategory = <String?, List<int>>{};
+    for (var i = 0; i < listedApps.length; i++) {
+      final app = listedApps[i];
+      if (app.app.categories.isEmpty) {
+        groupedByCategory.putIfAbsent(null, () => []).add(i);
+      } else {
+        for (final cat in app.app.categories) {
+          groupedByCategory.putIfAbsent(cat, () => []).add(i);
         }
       }
-      return cats.toList();
     }
-
-    var listedCategories = getListedCategories();
+    var listedCategories = groupedByCategory.keys.toList();
     listedCategories.sort((a, b) {
-      return a != null && b != null
-          ? a.toLowerCase().compareTo(b.toLowerCase())
-          : a == null
-          ? 1
-          : -1;
+      if (a == null && b == null) return 0;
+      if (a == null) return 1;
+      if (b == null) return -1;
+      return a.toLowerCase().compareTo(b.toLowerCase());
     });
 
     Set<App> selectedApps = listedApps
@@ -770,6 +757,7 @@ class AppsPageState extends State<AppsPage> {
                   context,
                   listedApps,
                   listedCategories,
+                  groupedByCategory,
                   settingsProvider,
                   appsProvider,
                 ),

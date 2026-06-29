@@ -317,6 +317,33 @@ class _TVTextFieldFocusState extends State<_TVTextFieldFocus> {
   }
 }
 
+class _FormSwitchRow extends StatelessWidget {
+  const _FormSwitchRow({
+    required this.item,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final GeneratedFormSwitch item;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(child: Text(item.label)),
+        const SizedBox(width: 8),
+        Switch(
+          value: value,
+          onChanged: item.disabled ? null : onChanged,
+        ),
+      ],
+    );
+  }
+}
+
 class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
@@ -534,23 +561,17 @@ class _GeneratedFormState extends State<GeneratedForm> {
         final item = widget.items[r][e];
         String fieldKey = item.key;
         if (item is GeneratedFormSwitch) {
-          renderedInputs[r][e] = Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(child: Text(item.label)),
-              const SizedBox(width: 8),
-              Switch(
-                value: values[fieldKey],
-                onChanged: item.disabled
-                    ? null
-                    : (value) {
-                        setState(() {
-                          values[fieldKey] = value;
-                          someValueChanged();
-                        });
-                      },
-              ),
-            ],
+          renderedInputs[r][e] = _FormSwitchRow(
+            item: item,
+            value: values[fieldKey] as bool,
+            onChanged: item.disabled
+                ? null
+                : (value) {
+                    setState(() {
+                      values[fieldKey] = value;
+                      someValueChanged();
+                    });
+                  },
           );
         } else if (item is GeneratedFormSubForm) {
           List<Widget> subformColumn = [];

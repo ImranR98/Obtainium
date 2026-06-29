@@ -72,7 +72,7 @@ create table if not exists $logTable (
     Log l = Log(message, level);
     l.id = await (await getDB()).insert(logTable, l.toMap());
     if (kDebugMode) {
-      print(l);
+      debugPrint(l.toString());
     }
     return l;
   }

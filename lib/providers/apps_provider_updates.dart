@@ -36,7 +36,8 @@ extension AppsProviderUpdates on AppsProvider {
   }
 
   Future<App?> checkUpdate(String appId) async {
-    App? currentApp = apps[appId]!.app;
+    App? currentApp = apps[appId]?.app;
+    if (currentApp == null) return null;
     App? newApp = await fetchUpdate(appId);
     if (newApp == null) {
       return null;
@@ -162,17 +163,22 @@ extension AppsProviderUpdates on AppsProvider {
     bool nonInstalledOnly = false,
   }) {
     List<String> updateAppIds = [];
-    List<String> appIds = apps.keys.toList();
-    for (int i = 0; i < appIds.length; i++) {
-      App? app = apps[appIds[i]]!.app;
-      if (app.installedVersion != app.latestVersion &&
-          (!installedOnly || !nonInstalledOnly)) {
-        if ((app.installedVersion == null &&
-                (nonInstalledOnly || !installedOnly) ||
-            (app.installedVersion != null &&
-                (installedOnly || !nonInstalledOnly)))) {
+    for (final appId in apps.keys) {
+      final app = apps[appId]!.app;
+      if (installedOnly && nonInstalledOnly) {
+        continue;
+      }
+      if (installedOnly) {
+        if (app.installedVersion != null &&
+            app.installedVersion != app.latestVersion) {
           updateAppIds.add(app.id);
         }
+      } else if (nonInstalledOnly) {
+        if (app.installedVersion == null) {
+          updateAppIds.add(app.id);
+        }
+      } else if (app.installedVersion != app.latestVersion) {
+        updateAppIds.add(app.id);
       }
     }
     return updateAppIds;

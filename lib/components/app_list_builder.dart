@@ -1,6 +1,5 @@
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:obtainium/providers/source_provider.dart';
 
 class AppsFilter {
   late String nameFilter;
@@ -55,7 +54,6 @@ class AppListBuilder {
   static List<AppInMemory> filter(
     List<AppInMemory> apps,
     AppsFilter filter,
-    SourceProvider sourceProvider,
   ) {
     final nameTokens = filter.nameFilter.isNotEmpty
         ? filter.nameFilter
@@ -100,14 +98,7 @@ class AppListBuilder {
         return false;
       }
       if (filter.sourceFilter.isNotEmpty &&
-          sourceProvider
-                  .getSource(
-                    app.app.url,
-                    overrideSource: app.app.overrideSource,
-                  )
-                  .runtimeType
-                  .toString() !=
-              filter.sourceFilter) {
+          app.sourceType != filter.sourceFilter) {
         return false;
       }
       return true;

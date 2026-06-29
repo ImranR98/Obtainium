@@ -14,8 +14,8 @@ String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
     if (Uri.parse(ambiguousUrl).isAbsolute) {
       return ambiguousUrl; // #2315
     }
-  } catch (e) {
-    //
+  } on FormatException {
+    // Non-parsable URL, fall through to resolve logic below
   }
   return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
 }

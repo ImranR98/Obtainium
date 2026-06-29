@@ -146,6 +146,7 @@ void main() async {
     );
   } catch (e) {
     // Already added, do nothing (see #375)
+    debugPrint('Failed to load custom CA certificate: $e');
   }
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
@@ -467,6 +468,7 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   void dispose() {
+    LogsProvider.close();
     super.dispose();
   }
 

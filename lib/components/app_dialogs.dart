@@ -30,11 +30,13 @@ class _AppFilePickerState extends State<AppFilePicker> {
 
   @override
   Widget build(BuildContext context) {
-    fileUrl ??= widget.initVal;
     var urlsToSelectFrom = widget.app.apkUrls;
     if (widget.pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...widget.app.otherAssetUrls];
     }
+    fileUrl ??=
+        widget.initVal ??
+        (urlsToSelectFrom.isNotEmpty ? urlsToSelectFrom.first : null);
     return AlertDialog(
       scrollable: true,
       title: Text(
@@ -42,44 +44,49 @@ class _AppFilePickerState extends State<AppFilePicker> {
             ? tr('selectX', args: [lowerCaseIfEnglish(tr('releaseAsset'))])
             : tr('pickAnAPK'),
       ),
-      content: RadioGroup<String>(
-        groupValue: fileUrl!.value,
-        onChanged: (String? val) {
-          setState(() {
-            fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
-          });
-        },
-        child: Column(
-          children: [
-            urlsToSelectFrom.length > 1
-                ? Text(
-                    tr(
-                      'appHasMoreThanOnePackage',
-                      args: [widget.app.finalName],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-            const SizedBox(height: 16),
-            ...urlsToSelectFrom.map(
-              (u) => RadioListTile<String>(title: Text(u.key), value: u.value),
-            ),
-            if (widget.archs != null) const SizedBox(height: 16),
-            if (widget.archs != null)
-              Text(
-                widget.archs!.length == 1
-                    ? tr('deviceSupportsXArch', args: [widget.archs![0]])
-                    : tr('deviceSupportsFollowingArchs') +
-                          list2FriendlyString(
-                            widget.archs!.map((e) => '\'$e\'').toList(),
+      content: fileUrl == null
+          ? const SizedBox.shrink()
+          : RadioGroup<String>(
+              groupValue: fileUrl!.value,
+              onChanged: (String? val) {
+                setState(() {
+                  fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
+                });
+              },
+              child: Column(
+                children: [
+                  urlsToSelectFrom.length > 1
+                      ? Text(
+                          tr(
+                            'appHasMoreThanOnePackage',
+                            args: [widget.app.finalName],
                           ),
-                style: const TextStyle(
-                  fontStyle: FontStyle.italic,
-                  fontSize: 12,
-                ),
+                        )
+                      : const SizedBox.shrink(),
+                  const SizedBox(height: 16),
+                  ...urlsToSelectFrom.map(
+                    (u) => RadioListTile<String>(
+                      title: Text(u.key),
+                      value: u.value,
+                    ),
+                  ),
+                  if (widget.archs != null) const SizedBox(height: 16),
+                  if (widget.archs != null)
+                    Text(
+                      widget.archs!.length == 1
+                          ? tr('deviceSupportsXArch', args: [widget.archs![0]])
+                          : tr('deviceSupportsFollowingArchs') +
+                                list2FriendlyString(
+                                  widget.archs!.map((e) => '\'$e\'').toList(),
+                                ),
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
               ),
-          ],
-        ),
-      ),
+            ),
       actions: [
         TextButton(
           onPressed: () {

@@ -52,13 +52,14 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
     super.dispose();
   }
 
-  void _importFromFile() {
-    FilePicker.pickFiles().then((result) {
+  Future<void> _importFromFile() async {
+    try {
+      final result = await FilePicker.pickFiles();
       if (result != null) {
         var path = result.files.single.path;
         if (path == null) return;
         var urls = RegExp('https?://[^"]+')
-            .allMatches(File(path).readAsStringSync())
+            .allMatches(await File(path).readAsString())
             .map((e) => e.input.substring(e.start, e.end))
             .toSet()
             .toList()
@@ -77,7 +78,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
           });
         }
       }
-    }).catchError((e) {
+    } catch (e) {
       if (mounted) {
         if (e is PlatformException || e is MissingPluginException) {
           showError(ObtainiumError(tr('noFilePickerAvailable')), context);
@@ -85,7 +86,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
           showError(e, context);
         }
       }
-    });
+    }
   }
 
   String? _validate(String? value) {

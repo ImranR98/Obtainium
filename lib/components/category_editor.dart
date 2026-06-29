@@ -78,6 +78,9 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   late final TextEditingController _nameCtrl = TextEditingController(
     text: widget.existingName ?? '',
   );
+  late final ValueNotifier<String> _nameNotifier = ValueNotifier(
+    widget.existingName ?? '',
+  );
   late Color _color = widget.initialColor;
 
   bool get _isEditing => widget.existingName != null;
@@ -85,6 +88,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _nameNotifier.dispose();
     super.dispose();
   }
 
@@ -210,7 +214,6 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final canSave = _nameCtrl.text.trim().isNotEmpty;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -232,7 +235,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(labelText: tr('categoryName')),
-            onChanged: (_) => setState(() {}),
+            onChanged: (value) => _nameNotifier.value = value,
             onSubmitted: (_) {
               if (_nameCtrl.text.trim().isNotEmpty) _save();
             },
@@ -289,9 +292,15 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
                 child: Text(tr('cancel')),
               ),
               const SizedBox(width: 8),
-              FilledButton(
-                onPressed: canSave ? _save : null,
-                child: Text(tr('continue')),
+              ValueListenableBuilder<String>(
+                valueListenable: _nameNotifier,
+                builder: (context, value, _) {
+                  final canSave = value.trim().isNotEmpty;
+                  return FilledButton(
+                    onPressed: canSave ? _save : null,
+                    child: Text(tr('continue')),
+                  );
+                },
               ),
             ],
           ),
@@ -374,7 +383,9 @@ class _CategorySelectorState extends State<CategorySelector> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final categories = context.watch<SettingsProvider>().categories;
+    final categories = context.select<SettingsProvider, Map<String, int>>(
+      (p) => p.categories,
+    );
     final names = categories.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     // Drop selections whose category no longer exists.
@@ -404,14 +415,14 @@ class _CategorySelectorState extends State<CategorySelector> {
                 onLongPress: () => _edit(name),
                 child: FilterChip(
                   avatar: CircleAvatar(
-                    backgroundColor: Color(categories[name]!),
+                    backgroundColor: Color(categories[name] ?? 0xFFCCCCCC),
                     radius: 7,
                   ),
                   label: Text(name),
                   selected: _selected.contains(name),
                   onSelected: (v) => _toggle(name, v),
                   selectedColor: Color(
-                    categories[name]!,
+                    categories[name] ?? 0xFFCCCCCC,
                   ).withValues(alpha: 0.22),
                   showCheckmark: true,
                 ),

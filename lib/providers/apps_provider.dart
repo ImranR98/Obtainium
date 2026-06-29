@@ -35,6 +35,21 @@ export 'apps_provider_install.dart';
 export 'apps_provider_lifecycle.dart';
 export 'apps_provider_updates.dart';
 
+// Named constants for magic numbers and hardcoded values
+const int _obtainiumDefaultRetries = 3;
+const int _obtainiumRetryDelaySeconds = 5;
+const int _obtainiumPartialHashCheckStartingSize = 1024;
+const int _obtainiumPartialHashCheckLowerLimit = 128;
+const int _obtainiumPartialHashCheckDecrement = 256;
+const int _obtainiumMaxDownloadPolls = 43;
+const int _obtainiumDownloadPollIntervalSeconds = 7;
+const int _obtainiumProgressUpdateIntervalMs = 500;
+const int _obtainiumDownloadBufferSize = 32 * 1024;
+const int _obtainiumDownloadProgressFallback = 30;
+const int _obtainiumBgUpdateMaxAttempts = 4;
+const int _obtainiumBgUpdateMaxRetryWaitSeconds = 5;
+const int _obtainiumBgClientExceptionRetryWaitSeconds = 15 * 60;
+
 final pm = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
@@ -43,10 +58,11 @@ class AppInMemory {
   double? downloadProgress;
   PackageInfo? installedInfo;
   Uint8List? icon;
+  String? sourceType;
 
-  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon);
+  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon, {this.sourceType});
   AppInMemory deepCopy() =>
-      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon);
+      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon, sourceType: sourceType);
 
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
@@ -185,7 +201,7 @@ Future<File> downloadFileWithRetry(
   String destDir, {
   bool useExisting = true,
   Map<String, String>? headers,
-  int retries = 3,
+  int retries = _obtainiumDefaultRetries,
   bool allowInsecure = false,
   LogsProvider? logs,
 }) async {
@@ -203,7 +219,7 @@ Future<File> downloadFileWithRetry(
     );
   } catch (e) {
     if (retries > 0 && e is ClientException) {
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(Duration(seconds: _obtainiumRetryDelaySeconds));
       return await downloadFileWithRetry(
         url,
         fileName,
@@ -231,12 +247,12 @@ String hashListOfLists(List<List<int>> data) {
 
 Future<String> checkPartialDownloadHashDynamic(
   String url, {
-  int startingSize = 1024,
-  int lowerLimit = 128,
+  int startingSize = _obtainiumPartialHashCheckStartingSize,
+  int lowerLimit = _obtainiumPartialHashCheckLowerLimit,
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  for (int i = startingSize; i >= lowerLimit; i -= 256) {
+  for (int i = startingSize; i >= lowerLimit; i -= _obtainiumPartialHashCheckDecrement) {
     List<String> ab = await Future.wait([
       checkPartialDownloadHash(
         url,
@@ -294,6 +310,7 @@ Future<String?> checkETagHeader(
   var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
+  response.stream.drain();
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
       ?.replaceAll('"', '')
@@ -364,12 +381,11 @@ Future<File> downloadFile(
   if (useExisting && downloadedFile.existsSync()) {
     var length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
-      // If there is no content length reported, assume it the existing file is fully downloaded
-      // Also if the range feature is not supported, don't trust the content length if any (#1542)
+      headersClient.close();
       return downloadedFile;
     } else {
-      // Check if resume needed/possible
       if (length == fullContentLength) {
+        headersClient.close();
         return downloadedFile;
       }
       if (length > fullContentLength) {
@@ -391,10 +407,9 @@ Future<File> downloadFile(
     int currentTempFileSize = await tempDownloadedFile.length();
     bool shouldReturn = false;
     int pollCount = 0;
-    const maxPolls = 43; // ~5 minutes at 7s per poll
-    while (isDownloading && pollCount < maxPolls) {
+    while (isDownloading && pollCount < _obtainiumMaxDownloadPolls) {
       pollCount++;
-      await Future.delayed(Duration(seconds: 7));
+      await Future.delayed(Duration(seconds: _obtainiumDownloadPollIntervalSeconds));
       if (tempDownloadedFile.existsSync()) {
         int newTempFileSize = await tempDownloadedFile.length();
         if (newTempFileSize > currentTempFileSize) {
@@ -461,8 +476,10 @@ Future<File> downloadFile(
   if (rangeStart > 0 && fullContentLength != null) {
     received = rangeStart;
   }
-  const downloadUIUpdateInterval = Duration(milliseconds: 500);
-  const downloadBufferSize = 32 * 1024; // 32KB
+
+  const downloadUIUpdateInterval = Duration(milliseconds: _obtainiumProgressUpdateIntervalMs);
+  const downloadBufferSizeLocal = _obtainiumDownloadBufferSize;
+
   final downloadBuffer = BytesBuilder();
   await response
       .map((chunk) {
@@ -474,7 +491,7 @@ Future<File> downloadFile(
                     downloadUIUpdateInterval)) {
           progress = fullContentLength != null
               ? clampDouble((received / fullContentLength) * 100, 0, 100)
-              : 30;
+              : _obtainiumDownloadProgressFallback.toDouble();
           onProgress(progress);
           lastProgressUpdate = now;
         }
@@ -484,7 +501,7 @@ Future<File> downloadFile(
         StreamTransformer<List<int>, List<int>>.fromHandlers(
           handleData: (List<int> data, EventSink<List<int>> s) {
             downloadBuffer.add(data);
-            if (downloadBuffer.length >= downloadBufferSize) {
+            if (downloadBuffer.length >= downloadBufferSizeLocal) {
               s.add(downloadBuffer.takeBytes());
             }
           },
@@ -565,6 +582,9 @@ class AppsProvider with ChangeNotifier {
   // Coalesces bursts of saveApps()/removeApps() into a single auto-export.
   Timer? _autoExportDebounce;
 
+  // Set in dispose() to guard against deferred callbacks running post-disposal.
+  bool _disposed = false;
+
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   bool _isBg = false;
@@ -582,9 +602,12 @@ class AppsProvider with ChangeNotifier {
   void _reloadIfBgSaved() {
     if (_lastBackgroundSave == null) return;
     final lastSave = _lastBackgroundSave!;
-    _lastBackgroundSave = null;
     if (!_isBg && lastSave.isAfter(DateTime.now().subtract(const Duration(seconds: 30)))) {
-      loadApps();
+      loadApps().then((_) {
+        _lastBackgroundSave = null;
+      });
+    } else {
+      _lastBackgroundSave = null;
     }
   }
 
@@ -606,7 +629,9 @@ class AppsProvider with ChangeNotifier {
   void scheduleAutoExport() {
     _autoExportDebounce?.cancel();
     _autoExportDebounce = Timer(const Duration(seconds: 2), () {
-      export(isAuto: true);
+      if (!_disposed) {
+        export(isAuto: true);
+      }
     });
   }
 
@@ -644,20 +669,20 @@ class AppsProvider with ChangeNotifier {
         await loadApps();
         // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
-        apkDir
-            .listSync()
-            .where((element) => element.statSync().modified.isBefore(cutoff))
-            .forEach((partialApk) {
-              if (!areDownloadsRunning()) {
-                partialApk.delete(recursive: true);
-              }
-            });
+        await for (var partialApk in apkDir.list()) {
+          if ((await partialApk.stat()).modified.isBefore(cutoff)) {
+            if (!areDownloadsRunning()) {
+              await partialApk.delete(recursive: true);
+            }
+          }
+        }
       }
     }();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
     super.dispose();
@@ -669,7 +694,7 @@ class AppsProvider with ChangeNotifier {
   }) async {
     List<dynamic> results = await SourceProvider().getAppsByURLNaive(
       urls,
-      alreadyAddedUrls: apps.values.map((e) => e.app.url).toList(),
+      alreadyAddedUrls: apps.values.map((e) => e.app.url).toSet(),
       sourceOverride: sourceOverride,
     );
     List<App> pps = results[0];
@@ -714,8 +739,8 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
 
-  int maxAttempts = 4;
-  int maxRetryWaitSeconds = 5;
+  int maxAttempts = _obtainiumBgUpdateMaxAttempts;
+  int maxRetryWaitSeconds = _obtainiumBgUpdateMaxRetryWaitSeconds;
 
   var netResult = await (Connectivity().checkConnectivity());
   if (netResult.contains(ConnectivityResult.none) ||
@@ -847,7 +872,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             int minRetryIntervalForThisApp = err is RateLimitError
                 ? (err.remainingMinutes * 60)
                 : err is ClientException
-                ? (15 * 60)
+                ? (_obtainiumBgClientExceptionRetryWaitSeconds)
                 : (toCheckApp.value + 1);
             if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
               minRetryIntervalForThisApp = maxRetryWaitSeconds;

@@ -24,6 +24,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
+// Named constants for magic numbers and hardcoded values
+const int _downloadCompleteProgress = 100;
+const int _remainingStepsProgress = 90;
+const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
+
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
   Future<File> handleAPKIDChange(
@@ -107,7 +112,7 @@ extension AppsProviderInstall on AppsProvider {
         app.url,
         additionalSettingsPlusSourceConfig,
       );
-      var notif = DownloadNotification(app.finalName, 100);
+      var notif = DownloadNotification(app.finalName, _downloadCompleteProgress);
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
@@ -136,7 +141,7 @@ extension AppsProviderInstall on AppsProvider {
               notify();
             }
           }
-          notif = DownloadNotification(app.finalName, prog ?? 100);
+          notif = DownloadNotification(app.finalName, prog ?? _downloadCompleteProgress);
           if (prog != null && prevProg != prog) {
             notificationsProvider?.notify(notif);
           }
@@ -149,9 +154,9 @@ extension AppsProviderInstall on AppsProvider {
       );
       // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
-        apps[app.id]!.downloadProgress = -1;
+        apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
         notify();
-        notif = DownloadNotification(app.finalName, -1);
+        notif = DownloadNotification(app.finalName, _remainingStepsProgress);
         notificationsProvider?.notify(notif);
       }
       PackageInfo? newInfo;
@@ -375,7 +380,7 @@ extension AppsProviderInstall on AppsProvider {
     // speed. Above the threshold, stream through the file to avoid OOM on
     // devices with limited RAM (large tarballs can exceed available memory
     // once decompressed).
-    const int inMemoryThreshold = 64 * 1024 * 1024; // 64 MB
+    const int inMemoryThreshold = _inMemoryThreshold64MB; // 64 MB
     if (fileSize <= inMemoryThreshold) {
       await _extractTarballInMemory(tarballFile, destinationPath);
     } else {
@@ -854,7 +859,7 @@ extension AppsProviderInstall on AppsProvider {
       DownloadedApk? downloadedFile,
       DownloadedDir? downloadedDir,
     ) async {
-      apps[id]?.downloadProgress = -1;
+      apps[id]?.downloadProgress = _remainingStepsProgress.toDouble();
       notify();
       try {
         bool sayInstalled = true;
@@ -952,7 +957,7 @@ extension AppsProviderInstall on AppsProvider {
         // Bridge download-to-install gap so the Dismissible stays disabled.
         // Use 100 (download complete) rather than -1 (installing) so the UI
         // doesn't report "Installing" before installation actually begins.
-        apps[id]?.downloadProgress = 100;
+        apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
         notify();
         willBeSilent = await canInstallSilently(apps[id]!.app);
         if (!settingsProvider.useShizuku) {

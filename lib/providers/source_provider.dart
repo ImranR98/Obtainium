@@ -52,12 +52,12 @@ class AppNames {
 }
 
 class APKDetails {
-  late String version;
-  late List<MapEntry<String, String>> apkUrls;
-  late AppNames names;
-  late DateTime? releaseDate;
-  late String? changeLog;
-  late List<MapEntry<String, String>> allAssetUrls;
+  String version;
+  List<MapEntry<String, String>> apkUrls;
+  final AppNames names;
+  final DateTime? releaseDate;
+  String? changeLog;
+  final List<MapEntry<String, String>> allAssetUrls;
 
   APKDetails(
     this.version,
@@ -82,6 +82,8 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
 // default settings are still always reconciled afterwards, so this stays safe
 // even when newer builds add settings without bumping this number.
 const int currentAppJSONCompatVersion = 1;
+const _maxRedirects = 10;
+const _connectionTimeoutSeconds = 30;
 
 // App JSON schema has changed multiple times over the many versions of Obtainium
 // This function takes an App JSON and modifies it if needed to conform to the latest (current) version
@@ -323,22 +325,22 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
 }
 
 class App {
-  late String id;
-  late String url;
-  late String author;
-  late String name;
+  String id;
+  String url;
+  final String author;
+  String name;
   String? installedVersion;
-  late String latestVersion;
-  List<MapEntry<String, String>> apkUrls = []; // Key is name, value is URL
+  String latestVersion;
+  List<MapEntry<String, String>> apkUrls = [];
   List<MapEntry<String, String>> otherAssetUrls = [];
-  late int preferredApkIndex;
-  late Map<String, dynamic> additionalSettings;
-  late DateTime? lastUpdateCheck;
+  int preferredApkIndex;
+  Map<String, dynamic> additionalSettings;
+  final DateTime? lastUpdateCheck;
   bool pinned = false;
   List<String> categories;
-  late DateTime? releaseDate;
-  late String? changeLog;
-  late String? overrideSource;
+  final DateTime? releaseDate;
+  String? changeLog;
+  final String? overrideSource;
   bool allowIdChange = false;
   String? pendingRepoRenameUrl;
   App(
@@ -566,7 +568,7 @@ String getSourceRegex(List<String> hosts) {
 
 HttpClient createHttpClient(bool insecure) {
   final client = HttpClient();
-  client.connectionTimeout = const Duration(seconds: 30);
+  client.connectionTimeout = Duration(seconds: _connectionTimeoutSeconds);
   if (insecure) {
     client.badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
@@ -585,10 +587,10 @@ sourceRequestStreamResponse(
 }) async {
   var currentUrl = Uri.parse(url);
   var redirectCount = 0;
-  const maxRedirects = 10;
   List<Cookie> cookies = [];
-  while (redirectCount < maxRedirects) {
-    var httpClient = createHttpClient(
+  HttpClient? httpClient;
+  while (redirectCount < _maxRedirects) {
+    httpClient = createHttpClient(
       additionalSettings['allowInsecure'] == true,
     );
     var request = await httpClient.openUrl(method, currentUrl);
@@ -613,12 +615,14 @@ sourceRequestStreamResponse(
         redirectCount++;
         cookies = response.cookies;
         httpClient.close();
+        httpClient = null;
         continue;
       }
     }
 
     return MapEntry(currentUrl, MapEntry(httpClient, response));
   }
+  httpClient?.close();
   throw ObtainiumError(tr('tooManyRedirects'));
 }
 
@@ -1076,7 +1080,6 @@ abstract class AppSource with HttpClientMixin {
 ObtainiumError getObtainiumHttpError(Response res) {
   return ObtainiumError(
     (res.reasonPhrase != null &&
-            res.reasonPhrase != null &&
             res.reasonPhrase!.isNotEmpty)
         ? res.reasonPhrase!
         : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]),
@@ -1416,29 +1419,40 @@ class SourceProvider {
   // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getAppsByURLNaive(
     List<String> urls, {
-    List<String> alreadyAddedUrls = const [],
+    Set<String> alreadyAddedUrls = const {},
     AppSource? sourceOverride,
   }) async {
     List<App> apps = [];
     Map<String, dynamic> errors = {};
-    for (var url in urls) {
-      try {
-        if (alreadyAddedUrls.contains(url)) {
-          throw ObtainiumError(tr('appAlreadyAdded'));
-        }
-        var source = sourceOverride ?? getSource(url);
-        apps.add(
-          await getApp(
+    const concurrency = 4;
+    for (var i = 0; i < urls.length; i += concurrency) {
+      final end = i + concurrency > urls.length ? urls.length : i + concurrency;
+      final batch = urls.sublist(i, end);
+      final results = await Future.wait(batch.map((url) async {
+        try {
+          if (alreadyAddedUrls.contains(url)) {
+            throw ObtainiumError(tr('appAlreadyAdded'));
+          }
+          var source = sourceOverride ?? getSource(url);
+          return await getApp(
             source,
             url,
             sourceIsOverriden: sourceOverride != null,
             getDefaultValuesFromFormItems(
               source.combinedAppSpecificSettingFormItems,
             ),
-          ),
-        );
-      } catch (e) {
-        errors.addAll(<String, dynamic>{url: e});
+          );
+        } catch (e) {
+          return e;
+        }
+      }));
+      for (var j = 0; j < batch.length; j++) {
+        final result = results[j];
+        if (result is App) {
+          apps.add(result);
+        } else {
+          errors[batch[j]] = result;
+        }
       }
     }
     return [apps, errors];

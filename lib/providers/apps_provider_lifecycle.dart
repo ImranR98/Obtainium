@@ -200,6 +200,10 @@ extension AppsProviderLifecycle on AppsProvider {
       var sp = SourceProvider();
       List<List<String>> errors = [];
       var installedAppsData = await getAllInstalledInfo();
+      Map<String, PackageInfo> installedAppsMap = {
+        for (var i in installedAppsData)
+          if (i.packageName != null) i.packageName!: i,
+      };
       List<String> removedAppIds = [];
       await Future.wait(
         (await getAppsDir()) // Parse Apps from JSON
@@ -212,7 +216,7 @@ extension AppsProviderLifecycle on AppsProvider {
                           '${singleId.toLowerCase()}.json')) {
                 try {
                   app = App.fromJson(
-                    jsonDecode(File(item.path).readAsStringSync()),
+                    jsonDecode(await File(item.path).readAsString()),
                   );
                 } catch (err) {
                   if (err is FormatException) {
@@ -239,16 +243,10 @@ extension AppsProviderLifecycle on AppsProvider {
                 );
                 try {
                   // Try getting the app's source to ensure no invalid apps get loaded
-                  sp.getSource(app.url, overrideSource: app.overrideSource);
+                  var src = sp.getSource(app.url, overrideSource: app.overrideSource);
+                  var sourceType = src.runtimeType.toString();
                   // If the app is installed, grab its OS data and reconcile install statuses
-                  PackageInfo? installedInfo;
-                  try {
-                    installedInfo = installedAppsData.firstWhere(
-                      (i) => i.packageName == app!.id,
-                    );
-                  } catch (e) {
-                    // If the app isn't installed the above throws an error
-                  }
+                  PackageInfo? installedInfo = installedAppsMap[app.id];
                   // Reconcile differences between the installed and recorded install info
                   var moddedApp = getCorrectedInstallStatusAppIfPossible(
                     app,
@@ -269,9 +267,10 @@ extension AppsProviderLifecycle on AppsProvider {
                       value.downloadProgress,
                       installedInfo,
                       value.icon,
+                      sourceType: sourceType,
                     ),
                     ifAbsent: () =>
-                        AppInMemory(app!, null, installedInfo, null),
+                        AppInMemory(app!, null, installedInfo, null, sourceType: sourceType),
                   );
                 } catch (e) {
                   errors.add([app!.id, app.finalName, e.toString()]);
@@ -316,6 +315,7 @@ extension AppsProviderLifecycle on AppsProvider {
             value.downloadProgress,
             value.installedInfo,
             icon,
+            sourceType: value.sourceType,
           ),
           ifAbsent: () => AppInMemory(
             apps[appId]!.app,
@@ -349,15 +349,16 @@ extension AppsProviderLifecycle on AppsProvider {
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
           String filePath = '${(await getAppsDir()).path}/${app.id}.json';
-          File(
+          await File(
             '$filePath.tmp',
-          ).writeAsStringSync(jsonEncode(app.toJson())); // #2089
-          File('$filePath.tmp').renameSync(filePath);
+          ).writeAsString(jsonEncode(app.toJson())); // #2089
+          await File('$filePath.tmp').rename(filePath);
         }
         try {
           this.apps.update(
             app.id,
-            (value) => AppInMemory(app, value.downloadProgress, info, icon),
+            (value) => AppInMemory(app, value.downloadProgress, info, icon,
+                sourceType: value.sourceType),
             ifAbsent: onlyIfExists
                 ? null
                 : () => AppInMemory(app, null, info, icon),

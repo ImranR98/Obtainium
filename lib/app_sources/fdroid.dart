@@ -118,16 +118,16 @@ class FDroid extends AppSource {
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitHub = true;
-          } catch (e) {
-            //
+          } on InvalidURLError {
+            // URL does not match GitHub format, silently skipped
           }
           try {
             GitLab(
               hostChanged: true,
             ).sourceSpecificStandardizeURL(details.changeLog!);
             isGitLab = true;
-          } catch (e) {
-            //
+          } on InvalidURLError {
+            // URL does not match GitLab format, silently skipped
           }
           if ((isGitHub || isGitLab) &&
               (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {

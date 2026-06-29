@@ -28,24 +28,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  List<int> updateIntervalNodes = [
-    15,
-    30,
-    60,
-    120,
-    180,
-    360,
-    720,
-    1440,
-    4320,
-    10080,
-    20160,
-    43200,
-  ];
-  int updateInterval = 0;
-  late SplineInterpolation updateIntervalInterpolator; // 🤓
-  String updateIntervalLabel = tr('neverManualOnly');
-  bool showIntervalLabel = true;
   int? androidSdkInt;
   // Stateless and its source list is statically cached, so hold one instance
   // rather than allocating a new SourceProvider on every build().
@@ -58,9 +40,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    // The interpolation nodes are constant, so build the spline once here
-    // rather than reconstructing it on every build().
-    initUpdateIntervalInterpolator();
     DeviceInfoPlugin().androidInfo.then((info) {
       if (mounted) {
         setState(() {
@@ -70,144 +49,10 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  void initUpdateIntervalInterpolator() {
-    List<InterpolationNode> nodes = [];
-    for (final (index, element) in updateIntervalNodes.indexed) {
-      nodes.add(
-        InterpolationNode(x: index.toDouble() + 1, y: element.toDouble()),
-      );
-    }
-    updateIntervalInterpolator = SplineInterpolation(nodes: nodes);
-  }
-
-  void processIntervalSliderValue(double val) {
-    if (val < 0.5) {
-      updateInterval = 0;
-      updateIntervalLabel = tr('neverManualOnly');
-      return;
-    }
-    int valInterpolated = 0;
-    if (val < 1) {
-      valInterpolated = 15;
-    } else {
-      valInterpolated = updateIntervalInterpolator.compute(val).round();
-    }
-    if (valInterpolated < 60) {
-      updateInterval = valInterpolated;
-      updateIntervalLabel = plural('minute', valInterpolated);
-    } else if (valInterpolated < 8 * 60) {
-      int valRounded = (valInterpolated / 15).floor() * 15;
-      updateInterval = valRounded;
-      updateIntervalLabel = plural('hour', valRounded ~/ 60);
-      int mins = valRounded % 60;
-      if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
-    } else if (valInterpolated < 24 * 60) {
-      int valRounded = (valInterpolated / 30).floor() * 30;
-      updateInterval = valRounded;
-      updateIntervalLabel = plural('hour', valRounded / 60);
-    } else if (valInterpolated < 7 * 24 * 60) {
-      int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
-      updateInterval = valRounded;
-      updateIntervalLabel = plural('day', valRounded / (24 * 60));
-    } else {
-      int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
-      updateInterval = valRounded;
-      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
-    }
-  }
-
-  Widget _buildIntervalSliderTile(SettingsProvider settingsProvider) {
-    final rawSlider = Slider(
-      value: settingsProvider.updateIntervalSliderVal,
-      max: updateIntervalNodes.length.toDouble(),
-      divisions: updateIntervalNodes.length * 20,
-      label: updateIntervalLabel,
-      onChanged: (double value) {
-        setState(() {
-          settingsProvider.updateIntervalSliderVal = value;
-          processIntervalSliderValue(value);
-        });
-      },
-      onChangeStart: (double value) {
-        setState(() {
-          showIntervalLabel = false;
-        });
-      },
-      onChangeEnd: (double value) {
-        setState(() {
-          showIntervalLabel = true;
-          settingsProvider.updateInterval = updateInterval;
-        });
-      },
-    );
-
-    final Widget intervalSlider = settingsProvider.isTV
-        ? Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove),
-                onPressed: settingsProvider.updateIntervalSliderVal <= 0
-                    ? null
-                    : () {
-                        setState(() {
-                          final newVal =
-                              (settingsProvider.updateIntervalSliderVal - 1)
-                                  .clamp(
-                                    0.0,
-                                    updateIntervalNodes.length.toDouble(),
-                                  );
-                          settingsProvider.updateIntervalSliderVal = newVal;
-                          processIntervalSliderValue(newVal);
-                          settingsProvider.updateInterval = updateInterval;
-                        });
-                      },
-              ),
-              Expanded(
-                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed:
-                    settingsProvider.updateIntervalSliderVal >=
-                        updateIntervalNodes.length.toDouble()
-                    ? null
-                    : () {
-                        setState(() {
-                          final newVal =
-                              (settingsProvider.updateIntervalSliderVal + 1)
-                                  .clamp(
-                                    0.0,
-                                    updateIntervalNodes.length.toDouble(),
-                                  );
-                          settingsProvider.updateIntervalSliderVal = newVal;
-                          processIntervalSliderValue(newVal);
-                          settingsProvider.updateInterval = updateInterval;
-                        });
-                      },
-              ),
-            ],
-          )
-        : rawSlider;
-
-    return SettingsTile(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          showIntervalLabel
-              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-              : const SizedBox(height: 20),
-          intervalSlider,
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
-    processIntervalSliderValue(settingsProvider.updateIntervalSliderVal);
     final sdk = androidSdkInt ?? 0;
 
     Widget caption(String text) => Padding(
@@ -534,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         SettingsGroup(
                           title: tr('updates'),
                           children: [
-                            _buildIntervalSliderTile(settingsProvider),
+                            const _UpdateIntervalSliderTile(),
                             if (showBgSection) ...[
                               SettingsToggleRow(
                                 label: tr('foregroundServiceExplanation'),
@@ -673,47 +518,49 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ShizukuApkInstaller()
                                       .checkPermission()
                                       .then((resCode) {
-                                    settingsProvider.useShizuku =
-                                        resCode?.startsWith('granted') ??
+                                        settingsProvider.useShizuku =
+                                            resCode?.startsWith('granted') ??
                                             false;
-                                    if (!context.mounted) return;
-                                    switch (resCode) {
-                                      case 'services_not_found':
-                                        showError(
-                                          ObtainiumError(
-                                            tr('shizukuBinderNotFound'),
-                                          ),
-                                          context,
-                                        );
-                                      case 'old_shizuku':
-                                        showError(
-                                          ObtainiumError(tr('shizukuOld')),
-                                          context,
-                                        );
-                                      case 'old_android_with_adb':
-                                        showError(
-                                          ObtainiumError(
-                                            tr('shizukuOldAndroidWithADB'),
-                                          ),
-                                          context,
-                                        );
-                                      case 'denied':
-                                        showError(
-                                          ObtainiumError(tr('cancelled')),
-                                          context,
-                                        );
-                                      case null:
-                                        showError(
-                                          ObtainiumError(
-                                            tr('unexpectedError'),
-                                          ),
-                                          context,
-                                        );
-                                    }
-                                  }).catchError((e) {
-                                    settingsProvider.useShizuku = false;
-                                    if (context.mounted) showError(e, context);
-                                  });
+                                        if (!context.mounted) return;
+                                        switch (resCode) {
+                                          case 'services_not_found':
+                                            showError(
+                                              ObtainiumError(
+                                                tr('shizukuBinderNotFound'),
+                                              ),
+                                              context,
+                                            );
+                                          case 'old_shizuku':
+                                            showError(
+                                              ObtainiumError(tr('shizukuOld')),
+                                              context,
+                                            );
+                                          case 'old_android_with_adb':
+                                            showError(
+                                              ObtainiumError(
+                                                tr('shizukuOldAndroidWithADB'),
+                                              ),
+                                              context,
+                                            );
+                                          case 'denied':
+                                            showError(
+                                              ObtainiumError(tr('cancelled')),
+                                              context,
+                                            );
+                                          case null:
+                                            showError(
+                                              ObtainiumError(
+                                                tr('unexpectedError'),
+                                              ),
+                                              context,
+                                            );
+                                        }
+                                      })
+                                      .catchError((e) {
+                                        settingsProvider.useShizuku = false;
+                                        if (context.mounted)
+                                          showError(e, context);
+                                      });
                                 } else {
                                   settingsProvider.useShizuku = false;
                                 }
@@ -766,18 +613,20 @@ class _SettingsPageState extends State<SettingsPage> {
                                   if (useSystemFont) {
                                     NativeFeatures.loadSystemFont()
                                         .then((_) {
-                                      settingsProvider.useSystemFont = true;
-                                    }).catchError((e) {
-                                      settingsProvider.useSystemFont = false;
-                                      if (context.mounted) {
-                                        showError(
-                                          ObtainiumError(
-                                            '${tr('unexpectedError')}: $e',
-                                          ),
-                                          context,
-                                        );
-                                      }
-                                    });
+                                          settingsProvider.useSystemFont = true;
+                                        })
+                                        .catchError((e) {
+                                          settingsProvider.useSystemFont =
+                                              false;
+                                          if (context.mounted) {
+                                            showError(
+                                              ObtainiumError(
+                                                '${tr('unexpectedError')}: $e',
+                                              ),
+                                              context,
+                                            );
+                                          }
+                                        });
                                   } else {
                                     settingsProvider.useSystemFont = false;
                                   }
@@ -926,6 +775,185 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The background-update-interval slider tile. Kept as its own [StatefulWidget]
+/// so that dragging the slider only rebuilds this tile rather than the entire
+/// (large) settings page; the chosen value is only committed to the
+/// [SettingsProvider] when the drag ends.
+class _UpdateIntervalSliderTile extends StatefulWidget {
+  const _UpdateIntervalSliderTile();
+
+  @override
+  State<_UpdateIntervalSliderTile> createState() =>
+      _UpdateIntervalSliderTileState();
+}
+
+class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
+  final List<int> updateIntervalNodes = [
+    15,
+    30,
+    60,
+    120,
+    180,
+    360,
+    720,
+    1440,
+    4320,
+    10080,
+    20160,
+    43200,
+  ];
+  int updateInterval = 0;
+  late SplineInterpolation updateIntervalInterpolator; // 🤓
+  String updateIntervalLabel = tr('neverManualOnly');
+  bool showIntervalLabel = true;
+  late double sliderVal;
+
+  @override
+  void initState() {
+    super.initState();
+    // The interpolation nodes are constant, so build the spline once here
+    // rather than reconstructing it on every build().
+    initUpdateIntervalInterpolator();
+    sliderVal = context.read<SettingsProvider>().updateIntervalSliderVal;
+    processIntervalSliderValue(sliderVal);
+  }
+
+  void initUpdateIntervalInterpolator() {
+    List<InterpolationNode> nodes = [];
+    for (final (index, element) in updateIntervalNodes.indexed) {
+      nodes.add(
+        InterpolationNode(x: index.toDouble() + 1, y: element.toDouble()),
+      );
+    }
+    updateIntervalInterpolator = SplineInterpolation(nodes: nodes);
+  }
+
+  void processIntervalSliderValue(double val) {
+    if (val < 0.5) {
+      updateInterval = 0;
+      updateIntervalLabel = tr('neverManualOnly');
+      return;
+    }
+    int valInterpolated = 0;
+    if (val < 1) {
+      valInterpolated = 15;
+    } else {
+      valInterpolated = updateIntervalInterpolator.compute(val).round();
+    }
+    if (valInterpolated < 60) {
+      updateInterval = valInterpolated;
+      updateIntervalLabel = plural('minute', valInterpolated);
+    } else if (valInterpolated < 8 * 60) {
+      int valRounded = (valInterpolated / 15).floor() * 15;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('hour', valRounded ~/ 60);
+      int mins = valRounded % 60;
+      if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
+    } else if (valInterpolated < 24 * 60) {
+      int valRounded = (valInterpolated / 30).floor() * 30;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('hour', valRounded ~/ 60);
+    } else if (valInterpolated < 7 * 24 * 60) {
+      int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
+    } else {
+      int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
+      updateInterval = valRounded;
+      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
+    }
+  }
+
+  void _commit(double value) {
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.updateIntervalSliderVal = value;
+    settingsProvider.updateInterval = updateInterval;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final rawSlider = Slider(
+      value: sliderVal,
+      max: updateIntervalNodes.length.toDouble(),
+      divisions: updateIntervalNodes.length * 20,
+      label: updateIntervalLabel,
+      onChanged: (double value) {
+        setState(() {
+          sliderVal = value;
+          processIntervalSliderValue(value);
+        });
+      },
+      onChangeStart: (double value) {
+        setState(() {
+          showIntervalLabel = false;
+        });
+      },
+      onChangeEnd: (double value) {
+        setState(() {
+          showIntervalLabel = true;
+        });
+        _commit(value);
+      },
+    );
+
+    final Widget intervalSlider = settingsProvider.isTV
+        ? Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
+                onPressed: sliderVal <= 0
+                    ? null
+                    : () {
+                        final newVal = (sliderVal - 1).clamp(
+                          0.0,
+                          updateIntervalNodes.length.toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                        });
+                        _commit(newVal);
+                      },
+              ),
+              Expanded(
+                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: sliderVal >= updateIntervalNodes.length.toDouble()
+                    ? null
+                    : () {
+                        final newVal = (sliderVal + 1).clamp(
+                          0.0,
+                          updateIntervalNodes.length.toDouble(),
+                        );
+                        setState(() {
+                          sliderVal = newVal;
+                          processIntervalSliderValue(newVal);
+                        });
+                        _commit(newVal);
+                      },
+              ),
+            ],
+          )
+        : rawSlider;
+
+    return SettingsTile(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          showIntervalLabel
+              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+              : const SizedBox(height: 20),
+          intervalSlider,
         ],
       ),
     );

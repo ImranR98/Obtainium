@@ -30,6 +30,8 @@ class AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final cacheDim = (size * devicePixelRatio).round();
     return ClipRSuperellipse(
       borderRadius: BorderRadius.circular(radius),
       child: SizedBox(
@@ -41,6 +43,8 @@ class AppIcon extends StatelessWidget {
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
                 excludeFromSemantics: true,
+                cacheWidth: cacheDim,
+                cacheHeight: cacheDim,
                 opacity: dimmed ? const AlwaysStoppedAnimation(0.6) : null,
               )
             : ColoredBox(
