@@ -104,7 +104,7 @@ class SourceHut extends AppSource {
             parse(res2.body)
                 .querySelectorAll('a')
                 .map((e) => e.attributes['href'] ?? '')
-                .where((e) => e.toLowerCase().endsWith('.apk'))
+                .where((e) => AppSource.isApkOrContainerFile(e))
                 .map((e) => ensureAbsoluteUrl(e, standardUri))
                 .toList(),
           );

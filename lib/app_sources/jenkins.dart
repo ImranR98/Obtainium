@@ -63,7 +63,8 @@ class Jenkins extends AppSource {
           })
           .where(
             (url) =>
-                url.value.isNotEmpty && url.key.toLowerCase().endsWith('.apk'),
+                url.value.isNotEmpty &&
+                AppSource.isApkOrContainerFile(url.key),
           )
           .toList();
       return APKDetails(

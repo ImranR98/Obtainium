@@ -95,7 +95,17 @@ List<String> generateStandardVersionRegExStrings() {
     '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+',
   ];
   var preSuffixes = ['-', '\\+'];
-  var suffixes = ['alpha', 'beta', 'ose', '[0-9]+'];
+  var suffixes = [
+    'alpha',
+    'beta',
+    'rc',
+    'pre',
+    'dev',
+    'snapshot',
+    'nightly',
+    'ose',
+    '[0-9]+',
+  ];
   var finals = ['\\+[0-9]+', '[0-9]+'];
   List<String> results = [];
   for (var b in basics) {

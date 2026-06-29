@@ -212,7 +212,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ) !=
               null) {
-            // ignore: use_build_context_synchronously
+            if (!mounted) return;
             var appsProvider = context.read<AppsProvider>();
             // Parse dataStr as JSON and re-encode so injected content can't
             // break out of the JSON structure.

@@ -95,13 +95,22 @@ class SourceForge extends AppSource {
             }
           }
           return version;
-        } catch (e) {
+        } on RangeError {
+          // URL structure had no extractable version segments.
+          return null;
+        } on NoVersionError {
           return null;
         }
       }
 
       var apkUrlListAllReleases = allDownloadLinks
-          .where((element) => element.toLowerCase().endsWith('.apk/download'))
+          .where((element) {
+            var lower = element.toLowerCase();
+            return lower.endsWith('/download') &&
+                AppSource.isApkOrContainerFile(
+                  lower.substring(0, lower.length - '/download'.length),
+                );
+          })
           .where((element) => getVersion(element) != null)
           .toList();
       if (apkUrlListAllReleases.isEmpty) {

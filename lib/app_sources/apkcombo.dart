@@ -63,7 +63,7 @@ class APKCombo extends AppSource {
           return e.querySelectorAll('a').map((e) {
             String? url = e.attributes['href'];
             if (url != null &&
-                !Uri.parse(url).path.toLowerCase().endsWith('.apk')) {
+                !AppSource.isApkOrContainerFile(Uri.parse(url).path)) {
               url = null;
             }
             String verCode =

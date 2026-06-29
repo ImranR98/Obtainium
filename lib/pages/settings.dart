@@ -6,7 +6,7 @@ import 'package:obtainium/components/category_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/logs_dialog.dart';
 import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -17,7 +17,6 @@ import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -671,11 +670,12 @@ class _SettingsPageState extends State<SettingsPage> {
                               value: settingsProvider.useShizuku,
                               onChanged: (useShizuku) {
                                 if (useShizuku) {
-                                  ShizukuApkInstaller().checkPermission().then((
-                                    resCode,
-                                  ) {
-                                    settingsProvider.useShizuku = resCode!
-                                        .startsWith('granted');
+                                  ShizukuApkInstaller()
+                                      .checkPermission()
+                                      .then((resCode) {
+                                    settingsProvider.useShizuku =
+                                        resCode?.startsWith('granted') ??
+                                            false;
                                     if (!context.mounted) return;
                                     switch (resCode) {
                                       case 'services_not_found':
@@ -702,7 +702,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                           ObtainiumError(tr('cancelled')),
                                           context,
                                         );
+                                      case null:
+                                        showError(
+                                          ObtainiumError(
+                                            tr('unexpectedError'),
+                                          ),
+                                          context,
+                                        );
                                     }
+                                  }).catchError((e) {
+                                    settingsProvider.useShizuku = false;
+                                    if (context.mounted) showError(e, context);
                                   });
                                 } else {
                                   settingsProvider.useShizuku = false;
@@ -754,8 +764,19 @@ class _SettingsPageState extends State<SettingsPage> {
                                 value: settingsProvider.useSystemFont,
                                 onChanged: (useSystemFont) {
                                   if (useSystemFont) {
-                                    NativeFeatures.loadSystemFont().then((val) {
+                                    NativeFeatures.loadSystemFont()
+                                        .then((_) {
                                       settingsProvider.useSystemFont = true;
+                                    }).catchError((e) {
+                                      settingsProvider.useSystemFont = false;
+                                      if (context.mounted) {
+                                        showError(
+                                          ObtainiumError(
+                                            '${tr('unexpectedError')}: $e',
+                                          ),
+                                          context,
+                                        );
+                                      }
                                     });
                                   } else {
                                     settingsProvider.useSystemFont = false;
@@ -907,103 +928,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class LogsDialog extends StatefulWidget {
-  const LogsDialog({super.key});
-
-  @override
-  State<LogsDialog> createState() => _LogsDialogState();
-}
-
-class _LogsDialogState extends State<LogsDialog> {
-  String? logString;
-  List<int> days = [7, 5, 4, 3, 2, 1];
-
-  @override
-  Widget build(BuildContext context) {
-    var logsProvider = context.read<LogsProvider>();
-    void filterLogs(int days) {
-      logsProvider
-          .get(after: DateTime.now().subtract(Duration(days: days)))
-          .then((value) {
-            if (!mounted) return;
-            setState(() {
-              String l = value.map((e) => e.toString()).join('\n\n');
-              logString = l.isNotEmpty ? l : tr('noLogs');
-            });
-          });
-    }
-
-    if (logString == null) {
-      filterLogs(days.first);
-    }
-
-    return AlertDialog(
-      scrollable: true,
-      title: Text(tr('appLogs')),
-      content: Column(
-        children: [
-          DropdownMenu(
-            initialSelection: days.first,
-            expandedInsets: EdgeInsets.zero,
-            dropdownMenuEntries: days
-                .map(
-                  (e) => DropdownMenuEntry(value: e, label: plural('day', e)),
-                )
-                .toList(),
-            onSelected: (d) {
-              filterLogs(d ?? 7);
-            },
-          ),
-          const SizedBox(height: 32),
-          Text(logString ?? ''),
-        ],
-      ),
-      actions: [
-        TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.error,
-          ),
-          onPressed: () async {
-            var cont =
-                (await showDialog<Map<String, dynamic>?>(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return GeneratedFormModal(
-                      title: tr('appLogs'),
-                      items: const [],
-                      initValid: true,
-                      message: tr('removeFromObtainium'),
-                    );
-                  },
-                )) !=
-                null;
-            if (cont) {
-              logsProvider.clear();
-              if (context.mounted) Navigator.of(context).pop();
-            }
-          },
-          child: Text(tr('remove')),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(tr('close')),
-        ),
-        FilledButton.tonal(
-          onPressed: () {
-            SharePlus.instance.share(
-              ShareParams(text: logString ?? '', subject: tr('appLogs')),
-            );
-            Navigator.of(context).pop();
-          },
-          child: Text(tr('share')),
-        ),
-      ],
     );
   }
 }

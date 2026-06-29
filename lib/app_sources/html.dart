@@ -189,9 +189,11 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       } catch (e) {
         // Some links may not have valid encoding
       }
-      return Uri.parse(
+    return AppSource.isApkOrContainerFile(
+      Uri.parse(
         (filterLinkByText ? element.value : link).trim(),
-      ).path.toLowerCase().endsWith('.apk');
+      ).path,
+    );
     }).toList();
   }
   if (!skipSort) {

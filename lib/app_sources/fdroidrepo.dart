@@ -213,7 +213,6 @@ class FDroidRepo extends AppSource {
       }
       var authorName = body.querySelector('repo')?.attributes['name'] ?? name;
       String appId = foundApps[0].attributes['id']!;
-      foundApps[0].querySelector('name')?.innerHtml ?? appId;
       var appName = foundApps[0].querySelector('name')?.innerHtml ?? appId;
       var releases = foundApps[0].querySelectorAll('package');
       if (releases.isEmpty) {

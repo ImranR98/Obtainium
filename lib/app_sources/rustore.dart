@@ -99,10 +99,7 @@ class RuStore extends AppSource {
     return APKDetails(
       version,
       getApkUrlsFromUrls([
-        (downloadDetails['downloadUrls'][0]['url'] as String).replaceAll(
-          RegExp('\\.zip\$'),
-          '.apk',
-        ),
+        downloadDetails['downloadUrls'][0]['url'] as String,
       ]),
       AppNames(author, appName),
       releaseDate: relDate,

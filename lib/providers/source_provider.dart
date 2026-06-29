@@ -740,6 +740,41 @@ abstract class AppSource with HttpClientMixin {
     //
   }
 
+  /// File extensions Obtainium recognizes as installable Android package
+  /// containers. Centralized here so every source agrees on what counts as an
+  /// "APK"; previously each source defined this inconsistently (some only
+  /// accepted `.apk` and silently missed `.xapk`/`.apkm`/`.apks` releases).
+  static const List<String> apkContainerExtensions = [
+    '.apk',
+    '.xapk',
+    '.apkm',
+    '.apks',
+  ];
+
+  static const List<String> archiveExtensions = ['.zip'];
+
+  static const List<String> tarballExtensions = [
+    '.tar.gz',
+    '.tgz',
+    '.tar.bz2',
+    '.tar.xz',
+  ];
+
+  /// Whether [name] (a filename or URL) refers to an APK-type container that
+  /// Obtainium can install. Optionally also accept generic zip archives and
+  /// tarballs (some sources bundle split APKs that way).
+  static bool isApkOrContainerFile(
+    String name, {
+    bool includeArchives = false,
+    bool includeTarballs = false,
+  }) {
+    final lower = name.toLowerCase();
+    bool endsWithAny(List<String> exts) => exts.any(lower.endsWith);
+    return endsWithAny(apkContainerExtensions) ||
+        (includeArchives && endsWithAny(archiveExtensions)) ||
+        (includeTarballs && endsWithAny(tarballExtensions));
+  }
+
   /// A convenience for the common standardize-by-regex pattern: build a regex
   /// from the source's [hosts] plus the given subdomain prefix and path, match
   /// against [url], and return the match or throw [InvalidURLError].  Many

@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:intl/intl.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/motion.dart';
@@ -140,6 +139,9 @@ class _AppIconWidgetState extends State<AppIconWidget> {
     return Semantics(
       label: name,
       button: true,
+      // Expose the InkWell's double-tap "open app" action to accessibility
+      // services (screen readers can't perform a double-tap gesture).
+      onTap: widget.installed ? () => pm.openApp(widget.appId) : null,
       onLongPress: () {
         Navigator.push(
           context,
@@ -326,7 +328,7 @@ class AppListTile extends StatelessWidget {
                   Container(
                     constraints: BoxConstraints(
                       maxWidth: math.min(
-                        MediaQuery.of(context).size.width / 4,
+                        MediaQuery.sizeOf(context).width / 4,
                         160,
                       ),
                     ),
@@ -544,7 +546,7 @@ class AppListTile extends StatelessWidget {
 /// slot (a small bar plus the integer percentage).
 class DownloadProgressTrailing extends StatelessWidget {
   final double progress;
-  const DownloadProgressTrailing({required this.progress});
+  const DownloadProgressTrailing({super.key, required this.progress});
 
   @override
   Widget build(BuildContext context) {

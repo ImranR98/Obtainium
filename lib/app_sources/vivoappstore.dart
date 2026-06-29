@@ -71,8 +71,8 @@ class VivoAppStore extends AppSource {
     }
     Map<String, List<String>> results = {};
     var resultsJson = json['data']['appSearchResponse']?['value'];
-    if (resultsJson != null) {
-      for (var item in (resultsJson as List<dynamic>)) {
+    if (resultsJson is List) {
+      for (var item in resultsJson) {
         results['$appDetailUrl${item['id']}'] = [
           item['title_zh'].toString(),
           item['developer'].toString(),

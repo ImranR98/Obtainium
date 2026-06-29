@@ -120,7 +120,7 @@ class Apk4Free extends AppSource {
           var href = link.attributes['href'];
           if (href == null) continue;
           href = href.trim();
-          if (href.toLowerCase().endsWith('.apk')) {
+          if (AppSource.isApkOrContainerFile(href)) {
             var linkText = link.text.trim();
             if (linkText.isEmpty) linkText = href.split('/').last;
             apkUrls.add(MapEntry(linkText, href));

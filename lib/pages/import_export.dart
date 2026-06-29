@@ -46,10 +46,12 @@ class ImportSection extends StatefulWidget {
 
 class _ImportSectionState extends State<ImportSection> {
   bool importInProgress = false;
+  // SourceProvider is stateless and its source list is statically cached, so
+  // hold one instance rather than allocating a new one on every build().
+  final SourceProvider sourceProvider = SourceProvider();
 
   @override
   Widget build(BuildContext context) {
-    SourceProvider sourceProvider = SourceProvider();
     var appsProvider = context.read<AppsProvider>();
     var settingsProvider = context.read<SettingsProvider>();
 
@@ -132,30 +134,31 @@ class _ImportSectionState extends State<ImportSection> {
       settingsProvider.selectionClick();
       FilePicker.pickFiles()
           .then((result) {
+            if (result == null) {
+              // User canceled the picker.
+              showMessage(tr('cancelled'), context);
+              return;
+            }
             setState(() {
               importInProgress = true;
             });
-            if (result != null) {
-              var path = result.files.single.path;
-              if (path == null) {
-                throw ObtainiumError(tr('noFilePickerAvailable'));
-              }
-              String data = File(path).readAsStringSync();
-              try {
-                jsonDecode(data);
-              } catch (e) {
-                throw ObtainiumError(tr('invalidInput'));
-              }
-              appsProvider.import(data).then((value) {
-                appsProvider.addMissingCategories(settingsProvider);
-                showMessage(
-                  '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-                  context,
-                );
-              });
-            } else {
-              // User canceled the picker
+            var path = result.files.single.path;
+            if (path == null) {
+              throw ObtainiumError(tr('noFilePickerAvailable'));
             }
+            String data = File(path).readAsStringSync();
+            try {
+              jsonDecode(data);
+            } catch (e) {
+              throw ObtainiumError(tr('invalidInput'));
+            }
+            appsProvider.import(data).then((value) {
+              appsProvider.addMissingCategories(settingsProvider);
+              showMessage(
+                '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
+                context,
+              );
+            });
           })
           .catchError((e) {
             if (e is PlatformException || e is MissingPluginException) {
@@ -610,9 +613,8 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
   }
 }
 
-// ignore: must_be_immutable
 class SelectionModal extends StatefulWidget {
-  SelectionModal({
+  const SelectionModal({
     super.key,
     required this.entries,
     this.selectedByDefault = true,
@@ -622,12 +624,12 @@ class SelectionModal extends StatefulWidget {
     this.deselectThese = const [],
   });
 
-  String? title;
-  Map<String, List<String>> entries;
-  bool selectedByDefault;
-  List<String> deselectThese;
-  bool onlyOneSelectionAllowed;
-  bool titlesAreLinks;
+  final String? title;
+  final Map<String, List<String>> entries;
+  final bool selectedByDefault;
+  final List<String> deselectThese;
+  final bool onlyOneSelectionAllowed;
+  final bool titlesAreLinks;
 
   @override
   State<SelectionModal> createState() => _SelectionModalState();

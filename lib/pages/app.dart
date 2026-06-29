@@ -741,7 +741,7 @@ class _AppPageState extends State<AppPage> {
                 );
               },
               tooltip: tr('more'),
-              child: const Icon(Icons.settings),
+              child: const Icon(Icons.info_outline),
             )
           : null,
       backgroundColor: Theme.of(context).colorScheme.surface,

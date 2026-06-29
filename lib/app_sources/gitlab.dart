@@ -149,8 +149,12 @@ class GitLab extends AppSource {
     }
 
     // Request data from REST API
+    String releasesPath =
+        trackOnly ? 'repository/tags' : 'releases';
+    String query =
+        [if (optionalAuth.isNotEmpty) optionalAuth, 'per_page=100'].join('&');
     Response res = await sourceRequest(
-      'https://${hosts[0]}/api/v4/projects/$projectUriComponent/${trackOnly ? 'repository/tags' : 'releases'}?$optionalAuth',
+      'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
       additionalSettings,
     );
     if (res.statusCode != 200) {
@@ -159,7 +163,11 @@ class GitLab extends AppSource {
 
     // Extract .apk details from received data
     Iterable<APKDetails> apkDetailsList = [];
-    var json = jsonDecode(res.body) as List<dynamic>;
+    var decoded = jsonDecode(res.body);
+    if (decoded is! List) {
+      throw NoReleasesError();
+    }
+    var json = decoded;
     apkDetailsList = json.map((e) {
       var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
           .map((e) {
@@ -177,16 +185,8 @@ class GitLab extends AppSource {
           .where(
             (s) =>
                 s.key.isNotEmpty &&
-                (s.key.toLowerCase().endsWith('.apk') ||
-                    s.key.toLowerCase().endsWith('.xapk') ||
-                    s.key.toLowerCase().endsWith('.apkm') ||
-                    s.key.toLowerCase().endsWith('.apks') ||
-                    s.value.toLowerCase().endsWith('.apk') ||
-                    s.value.toLowerCase().endsWith('.xapk') ||
-                    s.value.toLowerCase().endsWith('.apkm') ||
-                    s.value.toLowerCase().endsWith(
-                      '.apks',
-                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+                (AppSource.isApkOrContainerFile(s.key) ||
+                    AppSource.isApkOrContainerFile(s.value)),
           )
           .toList();
       var uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
@@ -204,10 +204,7 @@ class GitLab extends AppSource {
           .where(
             (s) =>
                 s.startsWith('/uploads/') &&
-                (s.endsWith('apk') ||
-                    s.endsWith(
-                      'xapk',
-                    )), // TODO: Supported file types should be centralized somewhere and shared between sources
+                AppSource.isApkOrContainerFile(s),
           )
           .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
           .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))

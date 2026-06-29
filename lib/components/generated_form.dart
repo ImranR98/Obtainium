@@ -518,12 +518,20 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (widget.key.toString() != initKey) {
       initForm();
     }
-    for (var r = 0; r < formInputs.length; r++) {
-      for (var e = 0; e < formInputs[r].length; e++) {
+    // Build a fresh render list each frame instead of mutating the
+    // state-held [formInputs] (mutating state during build() is a Flutter
+    // anti-pattern that can trigger rebuild loops). Persistent text/dropdown
+    // field widgets are reused by reference; switch/subform slots are
+    // (re)built here into the local copy only.
+    final List<List<Widget>> renderedInputs = [
+      for (final row in formInputs) [...row],
+    ];
+    for (var r = 0; r < renderedInputs.length; r++) {
+      for (var e = 0; e < renderedInputs[r].length; e++) {
         final item = widget.items[r][e];
         String fieldKey = item.key;
         if (item is GeneratedFormSwitch) {
-          formInputs[r][e] = Row(
+          renderedInputs[r][e] = Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(child: Text(item.label)),
@@ -633,14 +641,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
               ),
             ),
           );
-          formInputs[r][e] = Column(children: subformColumn);
+          renderedInputs[r][e] = Column(children: subformColumn);
         }
       }
     }
 
     // Build one Row widget per input row.
     final List<Widget> inputRowWidgets = [];
-    formInputs.asMap().entries.forEach((rowInputs) {
+    renderedInputs.asMap().entries.forEach((rowInputs) {
       List<Widget> rowItems = [];
       rowInputs.value.asMap().entries.forEach((rowInput) {
         if (rowInput.key > 0) {

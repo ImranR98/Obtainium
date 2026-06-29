@@ -155,17 +155,11 @@ class GitHub extends AppSource {
     bool includeZips = false,
     bool includeTarballs = false,
   }) {
-    var lower = name.toLowerCase();
-    return lower.endsWith('.apk') ||
-        lower.endsWith('.xapk') ||
-        lower.endsWith('.apkm') ||
-        lower.endsWith('.apks') ||
-        (includeZips && lower.endsWith('.zip')) ||
-        (includeTarballs &&
-            (lower.endsWith('.tar.gz') ||
-                lower.endsWith('.tgz') ||
-                lower.endsWith('.tar.bz2') ||
-                lower.endsWith('.tar.xz')));
+    return AppSource.isApkOrContainerFile(
+      name,
+      includeArchives: includeZips,
+      includeTarballs: includeTarballs,
+    );
   }
 
   @override
@@ -439,7 +433,11 @@ class GitHub extends AppSource {
     }
     Response res = await sourceRequest(requestUrl, additionalSettings);
     if (res.statusCode == 200) {
-      var releases = jsonDecode(res.body) as List<dynamic>;
+      var decoded = jsonDecode(res.body);
+      if (decoded is! List) {
+        throw NoReleasesError();
+      }
+      var releases = decoded;
       if (latestRelease != null) {
         var latestTag = latestRelease['tag_name'] ?? latestRelease['name'];
         if (releases

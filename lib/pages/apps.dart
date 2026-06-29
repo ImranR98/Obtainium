@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:obtainium/components/app_list_builder.dart';
 import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/components/category_editor.dart';
@@ -23,7 +21,6 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class AppsPage extends StatefulWidget {
   const AppsPage({
