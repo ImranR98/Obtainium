@@ -9,8 +9,7 @@
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"
         android:localeConfig="@xml/locales_config"
-        android:memtagMode="async"
-        android:supportsRtl="true">
+        android:memtagMode="async">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -38,7 +37,8 @@
             </intent-filter>
             <intent-filter>
                 <action
-                    android:name="com.android_package_installer.content.SESSION_API_PACKAGE_INSTALLED" />
+                    android:name="com.android_package_installer.content.SESSION_API_PACKAGE_INSTALLED"
+                    android:exported="false" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

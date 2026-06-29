@@ -19,26 +19,19 @@ KEYSTORE_LOCATION="$1"
 BUILD_DIR="$2"
 
 read -s -p "Enter your keystore password: " KEYSTORE_PASSWORD
-export KEYSTORE_PASSWORD
 
 if [ -z "$ANDROID_HOME" ]; then
-  ANDROID_HOME="$HOME/Android/Sdk"
+  ANDROID_HOME=~/Android/Sdk
 fi
 if [ ! -d "$ANDROID_HOME" ]; then
   echo "Could not find Android SDK!" >&2
   exit 1
 fi
 
-APKSIGNER=$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -name 'apksigner' -type f | sort -V | tail -1)
-if [ -z "$APKSIGNER" ]; then
-  echo "Could not find apksigner in ${ANDROID_HOME}/build-tools!" >&2
-  exit 1
-fi
-
 for apk in "$BUILD_DIR"/*-release*.apk; do
   unsignedApk=${apk/-release/-unsigned}
   mv "$apk" "$unsignedApk"
-  "$APKSIGNER" sign --ks "$KEYSTORE_LOCATION" --ks-pass env:KEYSTORE_PASSWORD --out "${apk}" "${unsignedApk}"
+  ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | tail -1)/apksigner sign --ks "$KEYSTORE_LOCATION" --ks-pass pass:"${KEYSTORE_PASSWORD}" --out "${apk}" "${unsignedApk}"
   sha256sum ${apk} | cut -d " " -f 1 >"$apk".sha256
   gpg --batch --sign --detach-sig "$apk".sha256
   rm "$unsignedApk"

@@ -1,51 +1,86 @@
-# Toolchain image: matches the build environment in
-# .github/workflows/release.yml — ubuntu-latest -> ubuntu:24.04,
-# actions/setup-java -> Temurin JDK 21, and AGP-managed Android build-tools/NDK
-# (CI pins none) — BUT Flutter is intentionally NOT installed here.
-#
-# Flutter comes from the repo's pinned .flutter submodule (mounted at runtime by
-# docker/builder.sh), so the Flutter version stays reproducible and matches
-# build.sh. (This is the one deliberate divergence from release.yml, which uses
-# the floating `stable` channel.)
-#
-# For a fully reproducible image, pin by digest: FROM ubuntu:24.04@sha256:<digest>
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV JAVA_HOME=/opt/java/temurin-21
-ENV ANDROID_HOME=/opt/android-sdk
-ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV PATH="${PATH}:${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools"
+ENV DEBIAN_FRONTEND noninteractive
+ENV ANDROID_SDK_ROOT /opt/android-sdk-linux
+ENV PATH "${PATH}:/opt/flutter/bin:/root/.pub-cache/bin:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools"
 
-# System deps for Flutter Android builds (no Linux desktop / GTK toolchain).
-RUN apt-get update && \
+ENV HOME=/root
+
+# Prereqs
+RUN \
+    apt-get update &&\
     apt-get install -y --no-install-recommends \
-        bash ca-certificates curl file git git-lfs openssl unzip wget xz-utils zip && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* && \
-    git config --system --add safe.directory '*'
+        bash \
+        curl \
+        file \
+        git 2.x \
+        unzip \
+        xz-utils \
+        zip \
+        libglu1-mesa \
+        libxi-dev \
+        libxmu-dev \
+        libglu1-mesa-dev \
+        git-lfs \
+        openssl \
+        wget
 
-# Temurin JDK 21 — matches actions/setup-java (distribution: temurin, java-version: 21).
-# The Adoptium "latest 21 GA" URL mirrors what setup-java resolves.
-RUN mkdir -p /opt/java && \
-    wget -q "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" -O /tmp/jdk.tar.gz && \
-    tar -xzf /tmp/jdk.tar.gz -C /opt/java && \
-    rm /tmp/jdk.tar.gz && \
-    mv /opt/java/jdk-21* "${JAVA_HOME}"
+# Build prereqs
+RUN \
+    apt-get install -y \
+        cmake curl git wget unzip libgconf-2-4 gdb libstdc++6 libglu1-mesa fonts-droid-fallback lib32stdc++6 python3 sed \
+        cmake ninja-build build-essential libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev clang pkg-config libgtk-3-dev \
+        liblzma-dev libmount-dev libblkid-dev libgcrypt20-dev libgpg-error-dev libssl-dev libpng-dev libjpeg-dev \
+        libtiff-dev libgif-dev libgtk-3-dev
 
-# Android command-line tools + a base SDK. NDK/cmake are deliberately NOT
-# pre-installed: AGP auto-downloads them at build time (exactly like CI, which
-# pins none; the NDK version still comes from build.gradle.kts). ANDROID_HOME is
-# made writable so the non-root runtime user can install them on demand.
-ARG CMDLINE_TOOLS_URL=https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
-RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-    wget -q "${CMDLINE_TOOLS_URL}" -O /tmp/tools.zip && \
-    unzip -q /tmp/tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    rm /tmp/tools.zip && \
-    mkdir -p /root/.android && touch /root/.android/repositories.cfg && \
-    yes | sdkmanager --licenses && \
-    sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" && \
-    chmod -R a+w ${ANDROID_HOME}
+# Android SDK prequisites
+# https://developer.android.com/studio#command-tools
+RUN \
+    apt-get install -y --no-install-recommends \
+        git \
+        git-lfs \
+        openssl \
+        wget \
+        unzip
 
-# Flutter is provided by the repo's pinned .flutter submodule at runtime
-# (see docker/builder.sh), NOT installed in the image.
+# Android SDK
+RUN \
+    wget --quiet  https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O /tmp/tools.zip && \
+    mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    unzip -q /tmp/tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
+    rm -v /tmp/tools.zip && \
+    mkdir -p /root/.android/ && touch /root/.android/repositories.cfg &&\
+    apt-get install -y --no-install-recommends openjdk-21-jdk openjdk-21-jre &&\
+    yes | sdkmanager --licenses &&\
+    sdkmanager --update
+
+    # Platform tools
+# Get latest with sdkmanager --list
+RUN sdkmanager --install "build-tools;33.0.1"
+RUN sdkmanager --install "ndk;26.3.11579264"
+RUN sdkmanager --install "cmake;4.0.2"
+RUN sdkmanager --install platform-tools
+RUN sdkmanager --install emulator
+RUN sdkmanager --install tools
+RUN sdkmanager --install "platforms;android-28"
+RUN sdkmanager --install "platforms;android-31"
+RUN sdkmanager --install "platforms;android-32"
+RUN sdkmanager --install "platforms;android-33"
+RUN sdkmanager --install "platforms;android-34"
+RUN sdkmanager --install "platforms;android-35"
+
+# Flutter
+ARG DEV_UID=0
+RUN \
+    wget --quiet https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.29.3-stable.tar.xz -O /tmp/flutter.tar.xz &&\
+    mkdir -p /opt &&\
+    cd /opt &&\
+    tar xf /tmp/flutter.tar.xz &&\
+    rm /tmp/flutter.tar.xz &&\
+    git config --global --add safe.directory /opt/flutter &&\
+    dart pub global activate cider &&\
+    chown -R ${DEV_UID} /opt/flutter
+RUN flutter --disable-analytics
+RUN flutter upgrade
+RUN chmod a+w /opt/flutter/packages -R
