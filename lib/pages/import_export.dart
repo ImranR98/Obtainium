@@ -34,6 +34,168 @@ Widget _actionTile({
   );
 }
 
+class ImportFromURLListPage extends StatefulWidget {
+  const ImportFromURLListPage({super.key});
+
+  @override
+  State<ImportFromURLListPage> createState() => _ImportFromURLListPageState();
+}
+
+class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
+  final _urlController = TextEditingController();
+  bool _importing = false;
+  final SourceProvider _sourceProvider = SourceProvider();
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  void _importFromFile() {
+    FilePicker.pickFiles().then((result) {
+      if (result != null) {
+        var path = result.files.single.path;
+        if (path == null) return;
+        var urls = RegExp('https?://[^"]+')
+            .allMatches(File(path).readAsStringSync())
+            .map((e) => e.input.substring(e.start, e.end))
+            .toSet()
+            .toList()
+            .where((url) {
+              try {
+                _sourceProvider.getSource(url);
+                return true;
+              } catch (_) {
+                return false;
+              }
+            })
+            .join('\n');
+        if (mounted) {
+          setState(() {
+            _urlController.text = urls;
+          });
+        }
+      }
+    }).catchError((e) {
+      if (mounted) {
+        if (e is PlatformException || e is MissingPluginException) {
+          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+        } else {
+          showError(e, context);
+        }
+      }
+    });
+  }
+
+  String? _validate(String? value) {
+    if (value != null && value.isNotEmpty) {
+      var lines = value.trim().split('\n');
+      for (int i = 0; i < lines.length; i++) {
+        try {
+          _sourceProvider.getSource(lines[i]);
+        } catch (e) {
+          return '${tr('line')} ${i + 1}: $e';
+        }
+      }
+    }
+    return null;
+  }
+
+  void _import() {
+    var urls = _urlController.text.trim().split('\n').where((l) => l.isNotEmpty).toList();
+    if (urls.isEmpty) return;
+    final appsProvider = context.read<AppsProvider>();
+    setState(() => _importing = true);
+    appsProvider
+        .addAppsByURL(urls)
+        .then((errors) {
+          if (!mounted) return;
+          if (errors.isEmpty) {
+            showMessage(
+              tr('importedX', args: [plural('apps', urls.length).toLowerCase()]),
+              context,
+            );
+            Navigator.of(context).pop();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return ImportErrorDialog(
+                  urlsLength: urls.length,
+                  errors: errors,
+                );
+              },
+            );
+          }
+        })
+        .catchError((e) {
+          if (mounted) showError(e, context);
+        })
+        .whenComplete(() {
+          if (mounted) setState(() => _importing = false);
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(title: Text(tr('importFromURLList'))),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 16,
+                children: [
+                  TextFormField(
+                    controller: _urlController,
+                    maxLines: null,
+                    minLines: 8,
+                    decoration: InputDecoration(
+                      labelText: tr('appURLList'),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    validator: _validate,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _importing ? null : _importFromFile,
+                    icon: const Icon(Icons.upload_file_outlined),
+                    label: Text(tr('importFromURLsInFile')),
+                  ),
+                  FilledButton(
+                    onPressed: _importing ? null : _import,
+                    child: _importing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(tr('import')),
+                  ),
+                  ConnectedCard(
+                    isFirst: true,
+                    isLast: true,
+                    child: Text(
+                      tr('importedAppsIdDisclaimer'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// The app-import controls (file import, source search, URL-list import, mass
 /// sources). Embedded in the Add App page (shown while no URL is entered).
 class ImportSection extends StatefulWidget {
@@ -53,81 +215,6 @@ class _ImportSectionState extends State<ImportSection> {
   Widget build(BuildContext context) {
     var appsProvider = context.read<AppsProvider>();
     var settingsProvider = context.read<SettingsProvider>();
-
-    urlListImport({String? initValue, bool overrideInitValid = false}) {
-      showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (BuildContext ctx) {
-          return GeneratedFormModal(
-            initValid: overrideInitValid,
-            title: tr('importFromURLList'),
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appURLList',
-                  defaultValue: initValue ?? '',
-                  label: tr('appURLList'),
-                  max: 7,
-                  additionalValidators: [
-                    (dynamic value) {
-                      if (value != null && value.isNotEmpty) {
-                        var lines = value.trim().split('\n');
-                        for (int i = 0; i < lines.length; i++) {
-                          try {
-                            sourceProvider.getSource(lines[i]);
-                          } catch (e) {
-                            return '${tr('line')} ${i + 1}: $e';
-                          }
-                        }
-                      }
-                      return null;
-                    },
-                  ],
-                ),
-              ],
-            ],
-          );
-        },
-      ).then((values) {
-        if (values != null) {
-          var urls = (values['appURLList'] as String).split('\n');
-          setState(() {
-            importInProgress = true;
-          });
-          appsProvider
-              .addAppsByURL(urls)
-              .then((errors) {
-                if (errors.isEmpty) {
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', urls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: urls.length,
-                        errors: errors,
-                      );
-                    },
-                  );
-                }
-              })
-              .catchError((e) {
-                showError(e, context);
-              })
-              .whenComplete(() {
-                setState(() {
-                  importInProgress = false;
-                });
-              });
-        }
-      });
-    }
 
     runObtainiumImport() {
       settingsProvider.selectionClick();
@@ -170,40 +257,6 @@ class _ImportSectionState extends State<ImportSection> {
             setState(() {
               importInProgress = false;
             });
-          });
-    }
-
-    runUrlImport() {
-      FilePicker.pickFiles()
-          .then((result) {
-            if (result != null) {
-              var path = result.files.single.path;
-              if (path == null) return;
-              urlListImport(
-                overrideInitValid: true,
-                initValue: RegExp('https?://[^"]+')
-                    .allMatches(File(path).readAsStringSync())
-                    .map((e) => e.input.substring(e.start, e.end))
-                    .toSet()
-                    .toList()
-                    .where((url) {
-                      try {
-                        sourceProvider.getSource(url);
-                        return true;
-                      } catch (e) {
-                        return false;
-                      }
-                    })
-                    .join('\n'),
-              );
-            }
-          })
-          .catchError((e) {
-            if (e is PlatformException || e is MissingPluginException) {
-              showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-            } else {
-              showError(e, context);
-            }
           });
     }
 
@@ -289,12 +342,14 @@ class _ImportSectionState extends State<ImportSection> {
               _actionTile(
                 icon: Icons.format_list_bulleted_outlined,
                 label: tr('importFromURLList'),
-                onTap: importInProgress ? null : urlListImport,
-              ),
-              _actionTile(
-                icon: Icons.upload_file_outlined,
-                label: tr('importFromURLsInFile'),
-                onTap: importInProgress ? null : runUrlImport,
+                onTap: importInProgress
+                    ? null
+                    : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ImportFromURLListPage(),
+                          ),
+                        ),
               ),
               ...sourceProvider.massUrlSources.map(
                 (source) => _actionTile(
@@ -303,13 +358,6 @@ class _ImportSectionState extends State<ImportSection> {
                   onTap: importInProgress
                       ? null
                       : () => runMassSourceImport(source),
-                ),
-              ),
-              ListTile(
-                title: Text(
-                  tr('importedAppsIdDisclaimer'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
                 ),
               ),
             ];
