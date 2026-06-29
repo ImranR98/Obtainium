@@ -29,7 +29,7 @@ if [ ! -d "$ANDROID_HOME" ]; then
   exit 1
 fi
 
-APKSIGNER=$(find "${ANDROID_HOME}/build-tools" -maxdepth 1 -name 'apksigner' -type f | sort -V | tail -1)
+APKSIGNER=$(find "${ANDROID_HOME}/build-tools" -maxdepth 2 -name 'apksigner' -type f | sort -V | tail -1)
 if [ -z "$APKSIGNER" ]; then
   echo "Could not find apksigner in ${ANDROID_HOME}/build-tools!" >&2
   exit 1
