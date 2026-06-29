@@ -151,13 +151,12 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 16,
                 children: [
+                  Text(tr('appURLList'), style: Theme.of(context).textTheme.titleSmall),
                   TextFormField(
                     controller: _urlController,
                     maxLines: null,
                     minLines: 8,
                     decoration: InputDecoration(
-                      labelText: tr('appURLList'),
-                      alignLabelWithText: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     validator: _validate,
