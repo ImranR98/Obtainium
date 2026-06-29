@@ -28,6 +28,7 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
+  - [APKCombo](https://apkcombo.com/)
   - [itch.io](https://itch.io/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)

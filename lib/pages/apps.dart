@@ -745,39 +745,47 @@ class AppsPageState extends State<AppsPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: RefreshIndicator(
-          key: _refreshIndicatorKey,
-          onRefresh: () => _refresh(context, appsProvider, settingsProvider),
-          child: Scrollbar(
-            interactive: true,
-            controller: scrollController,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
+        body: GestureDetector(
+          // Tapping outside the search field (empty list area, background,
+          // etc.) defocuses it / dismisses the keyboard. Taps on interactive
+          // children (the search bar, list tiles) are handled by those
+          // children, so they don't trigger this.
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: RefreshIndicator(
+            key: _refreshIndicatorKey,
+            onRefresh: () => _refresh(context, appsProvider, settingsProvider),
+            child: Scrollbar(
+              interactive: true,
               controller: scrollController,
-              slivers: <Widget>[
-                CustomAppBar(title: tr('appsString')),
-                if (appsProvider.apps.isNotEmpty)
-                  _getSearchBarSliver(context, settingsProvider, listedApps),
-                if (appsProvider.apps.isNotEmpty)
-                  _getUpdateBannerSliver(
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                controller: scrollController,
+                slivers: <Widget>[
+                  CustomAppBar(title: tr('appsString')),
+                  if (appsProvider.apps.isNotEmpty)
+                    _getSearchBarSliver(context, settingsProvider, listedApps),
+                  if (appsProvider.apps.isNotEmpty)
+                    _getUpdateBannerSliver(
+                      context,
+                      appsProvider,
+                      settingsProvider,
+                      existingUpdateIdsAllOrSelected,
+                      newInstallIdsAllOrSelected,
+                      trackOnlyUpdateIdsAllOrSelected,
+                    ),
+                  ..._getLoadingWidgets(context, appsProvider, listedApps),
+                  _getDisplayedList(
                     context,
-                    appsProvider,
+                    listedApps,
+                    listedCategories,
+                    groupedByCategory,
                     settingsProvider,
-                    existingUpdateIdsAllOrSelected,
-                    newInstallIdsAllOrSelected,
-                    trackOnlyUpdateIdsAllOrSelected,
+                    appsProvider,
                   ),
-                ..._getLoadingWidgets(context, appsProvider, listedApps),
-                _getDisplayedList(
-                  context,
-                  listedApps,
-                  listedCategories,
-                  groupedByCategory,
-                  settingsProvider,
-                  appsProvider,
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 88)),
-              ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 88)),
+                ],
+              ),
             ),
           ),
         ),
