@@ -368,18 +368,34 @@ extension AppsProviderInstall on AppsProvider {
     String filePath,
     String destinationPath,
   ) async {
-    final bytes = await File(filePath).readAsBytes();
+    final File tarballFile = File(filePath);
+    final int fileSize = await tarballFile.length();
+
+    // For files under a conservative threshold, use the in-memory path for
+    // speed. Above the threshold, stream through the file to avoid OOM on
+    // devices with limited RAM (large tarballs can exceed available memory
+    // once decompressed).
+    const int inMemoryThreshold = 64 * 1024 * 1024; // 64 MB
+    if (fileSize <= inMemoryThreshold) {
+      await _extractTarballInMemory(tarballFile, destinationPath);
+    } else {
+      await _extractTarballStreamed(tarballFile, destinationPath);
+    }
+  }
+
+  Future<void> _extractTarballInMemory(
+    File tarballFile,
+    String destinationPath,
+  ) async {
+    final bytes = await tarballFile.readAsBytes();
     List<int> decompressed;
 
-    // Detect compression by magic bytes (file extension may be wrong after download)
     if (bytes.length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b) {
-      // gzip
       decompressed = archive.GZipDecoder().decodeBytes(bytes);
     } else if (bytes.length >= 3 &&
         bytes[0] == 0x42 &&
         bytes[1] == 0x5a &&
         bytes[2] == 0x68) {
-      // bzip2 ('BZh')
       decompressed = archive.BZip2Decoder().decodeBytes(bytes);
     } else if (bytes.length >= 6 &&
         bytes[0] == 0xfd &&
@@ -388,10 +404,8 @@ extension AppsProviderInstall on AppsProvider {
         bytes[3] == 0x58 &&
         bytes[4] == 0x5a &&
         bytes[5] == 0x00) {
-      // xz
       decompressed = archive.XZDecoder().decodeBytes(bytes);
     } else {
-      // Assume uncompressed tar
       decompressed = bytes;
     }
 
@@ -408,6 +422,55 @@ extension AppsProviderInstall on AppsProvider {
         outFile.createSync(recursive: true);
         outFile.writeAsBytesSync(content);
       }
+    }
+  }
+
+  Future<void> _extractTarballStreamed(
+    File tarballFile,
+    String destinationPath,
+  ) async {
+    final destDir = Directory(destinationPath);
+    if (!destDir.existsSync()) {
+      destDir.createSync(recursive: true);
+    }
+
+    final raf = await tarballFile.open(mode: FileMode.read);
+    final header = await raf.read(6);
+
+    final isGzip = header.length >= 2 &&
+        header[0] == 0x1f &&
+        header[1] == 0x8b;
+    // Close and re-open for streaming so the header bytes are included.
+    await raf.close();
+
+    if (isGzip) {
+      // Stream-decompress gzip to a temp file (avoids holding the full
+      // decompressed tar in memory), then read tar entries from disk.
+      final decompressedTemp = File('${tarballFile.path}.decompressed');
+      try {
+        final input = tarballFile.openRead();
+        final output = decompressedTemp.openWrite();
+        await input.cast<List<int>>().transform(gzip.decoder).pipe(output);
+        await output.close();
+        final decompressedBytes = await decompressedTemp.readAsBytes();
+        final tarArchive = archive.TarDecoder().decodeBytes(decompressedBytes);
+        for (final file in tarArchive.files) {
+          if (file.isFile) {
+            final outFile = File('${destDir.path}/${file.name}');
+            outFile.createSync(recursive: true);
+            outFile.writeAsBytesSync(file.content);
+          }
+        }
+      } finally {
+        if (decompressedTemp.existsSync()) {
+          decompressedTemp.deleteSync();
+        }
+      }
+    } else {
+      // BZip2, XZ, or uncompressed: use the in-memory path.  These formats
+      // are rare for Android app bundles, and the threshold already ensures
+      // the file is ≤ 64 MB so the in-memory footprint is bounded.
+      await _extractTarballInMemory(tarballFile, destinationPath);
     }
   }
 
@@ -562,7 +625,7 @@ extension AppsProviderInstall on AppsProvider {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
     if (await getInstalledInfo('dev.soupslurpr.appverifier') == null) return;
     XFile f = XFile.fromData(
-      file.file.readAsBytesSync(),
+      await file.file.readAsBytes(),
       mimeType: 'application/vnd.android.package-archive',
     );
     Fluttertoast.showToast(

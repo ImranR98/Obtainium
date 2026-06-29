@@ -143,7 +143,12 @@ class FDroid extends AppSource {
         );
       }
       if ((details.changeLog?.length ?? 0) > 2048) {
-        details.changeLog = '${details.changeLog!.substring(0, 2048)}...';
+        final cl = details.changeLog!;
+        var end = 2048;
+        if (end > 0 && cl.codeUnitAt(end - 1) >= 0xD800 && cl.codeUnitAt(end - 1) <= 0xDBFF) {
+          end--;
+        }
+        details.changeLog = '${cl.substring(0, end)}...';
       }
     }
     return details;

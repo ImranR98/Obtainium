@@ -346,7 +346,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   void initForm() {
     initKey = widget.key.toString();
-    // Initialize form values as all empty
+    for (final c in _textControllers) {
+      c.dispose();
+    }
+    _textControllers.clear();
     values.clear();
     for (var row in widget.items) {
       for (var e in row) {

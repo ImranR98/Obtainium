@@ -122,7 +122,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final confirmed = await showConfirmDialog(
       context,
       title: tr('deleteCategoriesQuestion'),
-      content: tr('categoryDeleteWarning'),
+      content: Text(tr('categoryDeleteWarning')),
     );
     if (!confirmed) return;
     final cats = Map<String, int>.from(settingsProvider.categories)

@@ -313,7 +313,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+    final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
     final pages = <NavigationPageItem>[
       NavigationPageItem(
@@ -333,7 +334,7 @@ class _HomePageState extends State<HomePage> {
     // Adaptive navigation: a rail on wide/landscape/TV layouts, a bottom bar on
     // compact ones. A live badge shows the number of available updates.
     final layoutWidth = MediaQuery.sizeOf(context).width;
-    final useRail = settingsProvider.isTV || layoutWidth >= 600;
+    final useRail = isTV || layoutWidth >= 600;
     final updateCount = context.select<AppsProvider, int>(
       (p) => p.findExistingUpdates(installedOnly: true).length,
     );
@@ -354,7 +355,7 @@ class _HomePageState extends State<HomePage> {
         : selectedIndexHistory.last;
 
     // When on Apps and wide enough, split into a two-pane list + detail view.
-    final twoPane = settingsProvider.isTV || layoutWidth >= 900;
+    final twoPane = isTV || layoutWidth >= 900;
     final useTwoPane = twoPane && currentIndex == 0;
 
     final detailPane =

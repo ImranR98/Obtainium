@@ -639,6 +639,28 @@ class _SelectionModalState extends State<SelectionModal> {
   Map<MapEntry<String, List<String>>, bool> entrySelections = {};
   String filterRegex = '';
   @override
+  void didUpdateWidget(SelectionModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.entries != oldWidget.entries ||
+        widget.selectedByDefault != oldWidget.selectedByDefault ||
+        widget.deselectThese != oldWidget.deselectThese) {
+      entrySelections.clear();
+      for (var entry in widget.entries.entries) {
+        entrySelections.putIfAbsent(
+          entry,
+          () =>
+              widget.selectedByDefault &&
+              !widget.onlyOneSelectionAllowed &&
+              !widget.deselectThese.contains(entry.key),
+        );
+      }
+      if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
+        selectOnlyOne(widget.entries.entries.first.key);
+      }
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     for (var entry in widget.entries.entries) {

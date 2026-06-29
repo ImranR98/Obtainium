@@ -53,6 +53,9 @@ class AddAppPageState extends State<AddAppPage> {
     }
   }
 
+  Future<String?>? _sourceNoteFuture;
+  String? _sourceNoteSourceKey;
+
   void linkFn(String input) {
     try {
       if (input.isEmpty) {
@@ -802,6 +805,17 @@ class AddAppPageState extends State<AddAppPage> {
 
     bool doingSomething = gettingAppInfo || searching;
 
+    if (pickedSource != null) {
+      final sourceKey = pickedSource.runtimeType.toString();
+      if (_sourceNoteSourceKey != sourceKey) {
+        _sourceNoteSourceKey = sourceKey;
+        _sourceNoteFuture = pickedSource?.getSourceNote();
+      }
+    } else {
+      _sourceNoteFuture = null;
+      _sourceNoteSourceKey = null;
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       bottomNavigationBar: pickedSource == null
@@ -840,7 +854,7 @@ class AddAppPageState extends State<AddAppPage> {
                   ],
                   if (pickedSource != null)
                     FutureBuilder(
-                      future: pickedSource?.getSourceNote(),
+                      future: _sourceNoteFuture,
                       builder: (ctx, val) {
                         if (val.data != null && val.data!.isNotEmpty) {
                           return Padding(

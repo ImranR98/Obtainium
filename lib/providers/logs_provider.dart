@@ -45,14 +45,14 @@ class Log {
 }
 
 class LogsProvider {
+  static Database? _db;
+
   LogsProvider({bool runDefaultClear = true}) {
     clear(before: DateTime.now().subtract(const Duration(days: 7)));
   }
 
-  Database? db;
-
   Future<Database> getDB() async {
-    db ??= await openDatabase(
+    _db ??= await openDatabase(
       dbPath,
       version: 1,
       onCreate: (Database db, int version) async {
@@ -65,7 +65,7 @@ create table if not exists $logTable (
 ''');
       },
     );
-    return db!;
+    return _db!;
   }
 
   Future<Log> add(String message, {LogLevels level = LogLevels.info}) async {
@@ -104,6 +104,11 @@ create table if not exists $logTable (
       );
     }
     return res;
+  }
+
+  static Future<void> close() async {
+    await _db?.close();
+    _db = null;
   }
 }
 

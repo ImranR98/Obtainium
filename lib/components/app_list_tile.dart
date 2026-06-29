@@ -309,7 +309,8 @@ class AppListTile extends StatelessWidget {
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
-    Widget trailingRow = Row(
+    Widget trailingRow = LayoutBuilder(
+      builder: (context, constraints) => Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,7 +329,7 @@ class AppListTile extends StatelessWidget {
                   Container(
                     constraints: BoxConstraints(
                       maxWidth: math.min(
-                        MediaQuery.sizeOf(context).width / 4,
+                        constraints.maxWidth / 4,
                         160,
                       ),
                     ),
@@ -367,12 +368,12 @@ class AppListTile extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ));
 
     var transparent = Colors.transparent.toARGB32();
     var categories = _app.categories;
     List<double> stops = [
-      if (categories.isNotEmpty)
+      if (categories.length > 1)
         ...categories.asMap().entries.map(
           (e) => ((e.key / (categories.length - 1)) - 0.0001),
         ),

@@ -86,49 +86,43 @@ class HighlightableButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = highlight
+        ? FilledButton.styleFrom()
+        : TextButton.styleFrom();
     if (icon != null) {
-      return highlight
-          ? FilledButton.tonalIcon(
-              onPressed: onPressed,
-              onLongPress: onLongPress,
-              icon: icon!,
-              label: label,
-            )
-          : TextButton.icon(
-              onPressed: onPressed,
-              onLongPress: onLongPress,
-              icon: icon!,
-              label: label,
-            );
+      return TextButton.icon(
+        onPressed: onPressed,
+        onLongPress: onLongPress,
+        icon: icon!,
+        label: label,
+        style: style,
+      );
     }
-    return highlight
-        ? FilledButton.tonal(
-            onPressed: onPressed,
-            onLongPress: onLongPress,
-            child: label,
-          )
-        : TextButton(
-            onPressed: onPressed,
-            onLongPress: onLongPress,
-            child: label,
-          );
+    return TextButton(
+      onPressed: onPressed,
+      onLongPress: onLongPress,
+      child: label,
+      style: style,
+    );
   }
 }
 
 /// Copies [text] to the clipboard and shows a brief confirmation snackbar.
-void copyToClipboard(BuildContext context, String text) {
-  Clipboard.setData(ClipboardData(text: text));
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+Future<void> copyToClipboard(BuildContext context, String text) async {
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+  }
 }
 
 /// Shows a simple confirm/cancel dialog, resolving to true only if the user
-/// confirmed. [content] may be a [Widget] or any other value (shown as Text).
+/// confirmed.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
-  Object? content,
+  Widget? content,
   String? confirmText,
   String? cancelText,
   bool autofocusConfirm = false,
@@ -137,11 +131,7 @@ Future<bool> showConfirmDialog(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(title),
-      content: content == null
-          ? null
-          : content is Widget
-          ? content
-          : Text(content.toString()),
+      content: content,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -201,7 +191,7 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: colorScheme.onSurfaceVariant),
+            Icon(icon, size: 56, color: colorScheme.onSurfaceVariant, semanticLabel: message),
             if (message != null) ...[
               const SizedBox(height: 16),
               Text(

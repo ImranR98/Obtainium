@@ -343,7 +343,9 @@ class _AppPageState extends State<AppPage> {
   }
 
   Widget _getAppWebView(BuildContext context, AppInMemory? app) {
-    if (app == null) return Container();
+    if (app == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final controller = _ensureWebViewController(app.app.url)
       ..setBackgroundColor(Theme.of(context).colorScheme.surface);
     return WebViewWidget(key: ObjectKey(controller), controller: controller);
@@ -748,7 +750,7 @@ class _AppPageState extends State<AppPage> {
       body: RefreshIndicator(
         onRefresh: () async {
           if (app != null) {
-            _getUpdate(app.app.id, context, appsProvider);
+            await _getUpdate(app.app.id, context, appsProvider);
           }
         },
         child: showAppWebpageFinal

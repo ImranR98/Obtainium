@@ -123,7 +123,8 @@ Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   if (res.statusCode != 200) {
     throw getObtainiumHttpError(res);
   }
-  return grabLinksCommon(res.body, res.request!.url, additionalSettings);
+  final reqUrl = res.request?.url ?? Uri.parse('');
+  return grabLinksCommon(res.body, reqUrl, additionalSettings);
 }
 
 // Note keys are URLs, values are filenames (opposite to the AppSource apkUrls)
@@ -387,7 +388,10 @@ class HTML extends AppSource {
         additionalSettings['intermediateLink']
             .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
             .toList();
-    for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
+    const int maxIntermediateLinkDepth = 10;
+    final int linkCount = (additionalSettings['intermediateLink'].length)
+        .clamp(0, maxIntermediateLinkDepth);
+    for (int i = 0; i < linkCount; i++) {
       var intLinks = await grabLinksCommonFromRes(
         await sourceRequest(currentUrl, additionalSettings),
         additionalSettings['intermediateLink'][i],
