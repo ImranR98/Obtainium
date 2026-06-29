@@ -77,10 +77,6 @@ android {
 
     buildTypes {
         getByName("release") {
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
             val releaseSigningConfig = signingConfigs.getByName("release")
             signingConfig = if (keystorePropertiesExists && releaseSigningConfig.storeFile != null) {
                 releaseSigningConfig

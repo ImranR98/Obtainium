@@ -1,37 +1,11 @@
-# Preserve the app itself and all plugin classes. The Flutter Gradle plugin
-# forces R8 on release builds, and these classes are accessed reflectively
-# (GeneratedPluginRegistrant, MethodChannel lookup, JNI callbacks) so R8
-# cannot trace the usage and strips them — causing immediate launch crashes
-# (NoClassDefFoundError) or MissingPluginException at runtime.
--keep class dev.imranr.obtainium.** { *; }
--keep class io.flutter.plugins.** { *; }
--keep class io.flutter.embedding.** { *; }
--keep class com.android_package_installer.** { *; }
--keep class com.pravera.flutter_foreground_task.** { *; }
--keep class rikka.shizuku.** { *; }
--keep class rikka.sui.** { *; }
--keep class com.afollestad.materialdialogs.** { *; }
--keep class com.baseflow.permissionhandler.** { *; }
--keep class com.dexterous.flutterlocalnotifications.** { *; }
--keep class com.tekartik.sqflite.** { *; }
--keep class com.transistorsoft.** { *; }
--keep class com.llfbandit.app_links.** { *; }
--keep class com.madlonkay.flutter_charset_detector.** { *; }
--keep class com.ajinasokan.flutter_fgbg.** { *; }
--keep class com.anggrayudi.storage.** { *; }
--keep class com.it_nomads.fluttersecurestorage.** { *; }
--keep class com.getkeepsafe.relinker.** { *; }
--keep class com.rosan.dhizuku.** { *; }
--keep class com.kineapps.flutterarchive.** { *; }
--keep class org.lsposed.hiddenapibypass.** { *; }
--keep class dev.fluttercommunity.plus.** { *; }
--keep class dev.re.** { *; }
--keep class dev.rikka.tools.** { *; }
--keep class com.mr.flutter.** { *; }
+# The Flutter Gradle plugin appends this file automatically when it exists
+# (FlutterPlugin.kt lines 222-225). It also applies flutter_proguard_rules.pro
+# which ships -dontwarn android.**, -dontwarn io.flutter.plugin.**, and an
+# -if..-keep for FlutterPlugin implementations — so those are not repeated here.
+# This file only adds what the SDK's defaults don't cover.
 
 # androidx.window transitively provides optional OEM-supplied extension /
-# sidecar classes that are *not* present at compile time — they live on the
-# device (or are absent, in which case the library falls back gracefully).
-# Suppress the R8 missing-class errors so the build completes.
+# sidecar classes that are compile-time-only stubs, absent from the classpath
+# at build time. R8 (rightly) rejects them unless we tell it to ignore.
 -dontwarn androidx.window.extensions.**
 -dontwarn androidx.window.sidecar.**
