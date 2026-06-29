@@ -92,9 +92,11 @@ class _LogsDialogState extends State<LogsDialog> {
         ),
         FilledButton.tonal(
           onPressed: () {
-            SharePlus.instance.share(
-              ShareParams(text: logString ?? '', subject: tr('appLogs')),
-            );
+            SharePlus.instance
+                .share(
+                  ShareParams(text: logString ?? '', subject: tr('appLogs')),
+                )
+                .ignore();
             Navigator.of(context).pop();
           },
           child: Text(tr('share')),

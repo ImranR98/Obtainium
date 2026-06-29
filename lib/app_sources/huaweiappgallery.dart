@@ -53,6 +53,9 @@ class HuaweiAppGallery extends AppSource {
         .split('.')
         .reversed
         .toList();
+    if (parts.length < 2) {
+      return '';
+    }
     parts.removeAt(0);
     parts.removeAt(0);
     return parts.reversed.join('.');

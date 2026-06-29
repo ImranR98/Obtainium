@@ -177,7 +177,7 @@ String list2FriendlyString(List<String> list) {
                   (e.key == list.length - 1
                       ? ''
                       : e.key == list.length - 2
-                      ? '${isUsingEnglish ? ',' : ''} and '
+                      ? '${isUsingEnglish ? ',' : ''} ${tr('and')} '
                       : ', '),
             )
             .join('');

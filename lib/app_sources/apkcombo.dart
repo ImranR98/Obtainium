@@ -33,11 +33,14 @@ class APKCombo extends AppSource {
     String url, {
     bool forAPKDownload = false,
   }) async {
+    // A curl-style User-Agent is needed to get past Cloudflare when scraping
+    // apkcombo.com. Do NOT set an explicit Host header: the APK download is
+    // served by a Cloudflare R2 presigned URL on a different host, and sending
+    // an apkcombo.com Host there makes R2 reject the signed request (403).
     return {
       "User-Agent": "curl/8.0.1",
       "Accept": "*/*",
       "Connection": "keep-alive",
-      "Host": hosts[0],
     };
   }
 
@@ -52,30 +55,45 @@ class APKCombo extends AppSource {
     var html = parse(res.body);
     return html
         .querySelectorAll('#variants-tab > div > ul > li')
-        .map((e) {
-          String? arch = e
+        .map((li) {
+          String? arch = li
               .querySelector('code')
               ?.text
               .trim()
               .replaceAll(',', '')
               .replaceAll(':', '-')
               .replaceAll(' ', '-');
-          return e.querySelectorAll('a').map((e) {
-            String? url = e.attributes['href'];
-            if (url != null &&
+          // Each variant lists its current build first, then older builds. Take
+          // only the first valid (current) download link per variant, otherwise
+          // every historical build is returned as a separate "APK" (dozens of
+          // near-identical choices, and silent updates get disabled).
+          for (final a in li.querySelectorAll('a')) {
+            String? url = a.attributes['href'];
+            // Current apkcombo download links are "/r2?u=<encoded R2 presigned
+            // URL>" redirectors. Unwrap them to the actual (AWS4-signed) .apk
+            // URL so the extension check passes and the link can later be
+            // matched by its stable R2 object path. See issue #341.
+            if (url != null) {
+              var parsed = Uri.parse(url);
+              if (parsed.path == '/r2' &&
+                  parsed.queryParameters['u'] != null) {
+                url = parsed.queryParameters['u'];
+              }
+            }
+            if (url == null ||
                 !AppSource.isApkOrContainerFile(Uri.parse(url).path)) {
-              url = null;
+              continue;
             }
             String verCode =
-                e.querySelector('.info .header .vercode')?.text.trim() ?? '';
+                a.querySelector('.info .header .vercode')?.text.trim() ?? '';
             return MapEntry<String, String>(
               arch != null ? '$arch-$verCode.apk' : '',
-              url ?? '',
+              url,
             );
-          }).toList();
+          }
+          return null;
         })
-        .expand((element) => element)
-        .where((element) => element.value.isNotEmpty)
+        .nonNulls
         .toList();
   }
 
@@ -85,6 +103,8 @@ class APKCombo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+    // The R2 presigned URLs expire (X-Amz-Expires), so re-scrape fresh links at
+    // download time and match the stored asset by its (stable) R2 object path.
     var freshURLs = await getApkUrls(standardUrl, additionalSettings);
     var path2Match = Uri.parse(assetUrl).path;
     for (var url in freshURLs) {
@@ -107,7 +127,7 @@ class APKCombo extends AppSource {
     }
     var res = parse(preres.body);
     String? version = res.querySelector('div.version')?.text.trim();
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     String appName = res.querySelector('div.app_name')?.text.trim() ?? appId;
@@ -119,7 +139,8 @@ class APKCombo extends AppSource {
     DateTime? releaseDate;
     if (infoArray.length >= 2) {
       try {
-        releaseDate = DateFormat('MMMM d, yyyy').parse(infoArray[1]);
+        // The page shows an abbreviated, English month (e.g. "Nov 20, 2025").
+        releaseDate = DateFormat('MMM d, yyyy', 'en_US').parse(infoArray[1]);
       } catch (e) {
         // ignore
       }

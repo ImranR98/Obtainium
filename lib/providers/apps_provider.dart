@@ -143,14 +143,25 @@ List<String> generateStandardVersionRegExStrings() {
 List<String> standardVersionRegExStrings =
     generateStandardVersionRegExStrings();
 
+// Precompiled once (instead of rebuilding hundreds of RegExp objects on every
+// call) since findStandardFormatsForVersion runs inside hot paths like the
+// GitHub release sort comparator.
+final List<MapEntry<String, RegExp>> _strictStandardVersionRegExes =
+    standardVersionRegExStrings
+        .map((p) => MapEntry(p, RegExp('^$p\$')))
+        .toList();
+final List<MapEntry<String, RegExp>> _looseStandardVersionRegExes =
+    standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
+
 Set<String> findStandardFormatsForVersion(String version, bool strict) {
   // If !strict, even a substring match is valid
   Set<String> results = {};
-  for (var pattern in standardVersionRegExStrings) {
-    if (RegExp(
-      '${strict ? '^' : ''}$pattern${strict ? '\$' : ''}',
-    ).hasMatch(version)) {
-      results.add(pattern);
+  final patterns = strict
+      ? _strictStandardVersionRegExes
+      : _looseStandardVersionRegExes;
+  for (var entry in patterns) {
+    if (entry.value.hasMatch(version)) {
+      results.add(entry.key);
     }
   }
   return results;
@@ -310,7 +321,7 @@ Future<String?> checkETagHeader(
   var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
-  response.stream.drain();
+  unawaited(response.stream.drain<void>().catchError((_) {}));
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
       ?.replaceAll('"', '')
@@ -351,7 +362,7 @@ Future<File> downloadFile(
   // whether it supports partial downloads (range request), and
   // what the total size of the file is (if provided)
   String ext = resHeaders['content-disposition']?.split('.').last ?? 'apk';
-  if (ext.endsWith('"') || ext.endsWith("other")) {
+  if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
   if (((Uri.tryParse(url)?.path ?? url).toLowerCase().endsWith('.apk') ||
@@ -381,11 +392,9 @@ Future<File> downloadFile(
   if (useExisting && downloadedFile.existsSync()) {
     var length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
-      headersClient.close();
       return downloadedFile;
     } else {
       if (length == fullContentLength) {
-        headersClient.close();
         return downloadedFile;
       }
       if (length > fullContentLength) {
@@ -451,11 +460,11 @@ Future<File> downloadFile(
       : null;
   int rangeStart = targetFileLength ?? 0;
   IOSink? sink;
-  req = Request('GET', Uri.parse(url));
-  req.headers.addAll(reqHeaders);
+  bool sentRangeRequest = false;
   if (rangeFeatureEnabled && fullContentLength != null && rangeStart > 0) {
     reqHeaders.addAll({'range': 'bytes=$rangeStart-${fullContentLength - 1}'});
     sink = tempDownloadedFile.openWrite(mode: FileMode.writeOnlyAppend);
+    sentRangeRequest = true;
   } else if (tempDownloadedFile.existsSync()) {
     deleteFile(tempDownloadedFile);
   }
@@ -467,6 +476,18 @@ Future<File> downloadFile(
   );
   HttpClient responseClient = responseWithClient.value.key;
   HttpClientResponse response = responseWithClient.value.value;
+  // If we requested a byte range to resume a partial download but the server
+  // ignored it and returned the full file (200 instead of 206 Partial
+  // Content), appending would corrupt the file - discard the partial data and
+  // start the download over from the beginning.
+  if (sentRangeRequest && response.statusCode == HttpStatus.ok) {
+    await sink?.close();
+    sink = null;
+    rangeStart = 0;
+    if (tempDownloadedFile.existsSync()) {
+      deleteFile(tempDownloadedFile);
+    }
+  }
   sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
 
   // Perform the download

@@ -268,6 +268,9 @@ class SettingsProvider with ChangeNotifier {
       if (!enforce) {
         return false;
       }
+      // Avoid a tight re-prompt loop (and toast spam) if the permission
+      // request resolves immediately instead of waiting on user interaction.
+      await Future.delayed(const Duration(seconds: 1));
     }
     return true;
   }
@@ -344,7 +347,7 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool? getSettingBool(String settingId) {
+  bool getSettingBool(String settingId) {
     return prefs?.getBool(settingId) ?? false;
   }
 
@@ -353,8 +356,23 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Map<String, int> get categories =>
-      Map<String, int>.from(jsonDecode(prefs?.getString('categories') ?? '{}'));
+  String? _categoriesRaw;
+  Map<String, int>? _categoriesCache;
+
+  // Cached parse of the stored categories JSON, keyed by the raw string so it
+  // self-invalidates on any change (including imports that write prefs
+  // directly). Returns a stable instance while unchanged, so it doesn't
+  // re-parse on every access and `context.select((p) => p.categories)` can
+  // dedupe - previously this returned a fresh Map each call, forcing the
+  // category widgets to rebuild on every (unrelated) SettingsProvider change.
+  Map<String, int> get categories {
+    final raw = prefs?.getString('categories') ?? '{}';
+    if (raw != _categoriesRaw || _categoriesCache == null) {
+      _categoriesRaw = raw;
+      _categoriesCache = Map<String, int>.from(jsonDecode(raw));
+    }
+    return _categoriesCache!;
+  }
 
   void setCategories(Map<String, int> cats, {AppsProvider? appsProvider}) {
     if (appsProvider != null) {

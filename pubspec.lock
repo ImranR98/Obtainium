@@ -31,7 +31,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
+      ref: HEAD
       resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       url: "https://github.com/re7gog/android_system_font"
     source: git
@@ -980,7 +980,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
+      ref: HEAD
       resolved-ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
       url: "https://github.com/AlexBacich/shared-storage"
     source: git
@@ -989,7 +989,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
+      ref: HEAD
       resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
       url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git
@@ -1099,10 +1099,10 @@ packages:
     dependency: transitive
     description:
       name: timezone
-      sha256: "784a5e34d2eb62e1326f24d6f600aaaee452eb8ca8ef2f384a59244e292d158b"
+      sha256: "981d1020d6ef8fe1e7b3de5054e5b25579ae7c403d7734adc508ffc47668e9cb"
       url: "https://pub.dev"
     source: hosted
-    version: "0.11.0"
+    version: "0.11.1"
   typed_data:
     dependency: transitive
     description:

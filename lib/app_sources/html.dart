@@ -455,7 +455,7 @@ class HTML extends AppSource {
         headers: apkReqHeaders,
         allowInsecure: additionalSettings['allowInsecure'] == true,
       );
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
     }

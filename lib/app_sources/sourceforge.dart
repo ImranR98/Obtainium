@@ -103,7 +103,9 @@ class SourceForge extends AppSource {
         }
       }
 
-      var apkUrlListAllReleases = allDownloadLinks
+      // Compute each release's version exactly once (getVersion runs regex /
+      // string work, so the previous repeated calls were wasteful).
+      var releasesWithVersions = allDownloadLinks
           .where((element) {
             var lower = element.toLowerCase();
             return lower.endsWith('/download') &&
@@ -111,20 +113,21 @@ class SourceForge extends AppSource {
                   lower.substring(0, lower.length - '/download'.length),
                 );
           })
-          .where((element) => getVersion(element) != null)
+          .map((element) => MapEntry(element, getVersion(element)))
+          .where((entry) => entry.value != null)
           .toList();
-      if (apkUrlListAllReleases.isEmpty) {
+      if (releasesWithVersions.isEmpty) {
         throw NoReleasesError();
       }
-      String? version = getVersion(apkUrlListAllReleases[0]);
-      if (version == null) {
+      String? version = releasesWithVersions.first.value;
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
 
-      var apkUrlList =
-          apkUrlListAllReleases // This can be used skipped for fallback support later
-              .where((element) => getVersion(element) == version)
-              .toList();
+      var apkUrlList = releasesWithVersions
+          .where((entry) => entry.value == version)
+          .map((entry) => entry.key)
+          .toList();
       var segments = standardUrl.split('/');
       return APKDetails(
         version,

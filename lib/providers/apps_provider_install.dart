@@ -932,10 +932,7 @@ extension AppsProviderInstall on AppsProvider {
       }
     }
 
-    Future<Map<Object?, Object?>> downloadFn(
-      String id, {
-      bool skipInstalls = false,
-    }) async {
+    Future<Map<Object?, Object?>> downloadFn(String id) async {
       bool willBeSilent = false;
       DownloadedApk? downloadedFile;
       DownloadedDir? downloadedDir;
@@ -997,13 +994,13 @@ extension AppsProviderInstall on AppsProvider {
 
     List<Map<Object?, Object?>> downloadResults = [];
     try {
-      if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+      if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
         for (var id in appsToInstall) {
           downloadResults.add(await downloadFn(id));
         }
       } else {
         downloadResults = await Future.wait(
-          appsToInstall.map((id) => downloadFn(id, skipInstalls: true)),
+          appsToInstall.map((id) => downloadFn(id)),
         );
       }
       for (var res in downloadResults) {
@@ -1119,7 +1116,7 @@ extension AppsProviderInstall on AppsProvider {
               .getRequestHeaders(
                 app.additionalSettings,
                 fileUrl.value,
-                forAPKDownload: fileUrl.key.endsWith('.apk') ? true : false,
+                forAPKDownload: fileUrl.key.endsWith('.apk'),
               ),
           useExisting: false,
           allowInsecure: app.additionalSettings['allowInsecure'] == true,

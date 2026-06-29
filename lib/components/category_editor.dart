@@ -389,7 +389,15 @@ class _CategorySelectorState extends State<CategorySelector> {
     final names = categories.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     // Drop selections whose category no longer exists.
-    _selected = _selected.where(categories.containsKey).toSet();
+    final prunedSelected = _selected.where(categories.containsKey).toSet();
+    if (prunedSelected.length != _selected.length) {
+      _selected = prunedSelected;
+      // Notify the host of the pruned selection after this frame (can't emit
+      // during build()).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _emit();
+      });
+    }
 
     if (names.isEmpty && !widget.allowCreate) {
       return Text(

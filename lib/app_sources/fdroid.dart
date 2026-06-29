@@ -248,16 +248,19 @@ class FDroid extends AppSource {
           if (RegExp(
             filterVersionsByRegEx!,
           ).hasMatch(releases[i]['versionName'])) {
+            // Releases are ordered highest-version-first, so the first match is
+            // the newest matching version.
             version = releases[i]['versionName'];
+            break;
           }
         }
-        if (version == null) {
+        if (version == null || version.isEmpty) {
           throw NoVersionError();
         }
       }
       // Default to the highest version
       version ??= releases[0]['versionName'];
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       // If a suggested release was not already picked, pick all those with the selected version

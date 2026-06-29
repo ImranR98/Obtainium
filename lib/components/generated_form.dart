@@ -72,6 +72,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
       hint: hint,
       password: password,
       textInputType: textInputType,
+      autoCompleteOptions: autoCompleteOptions,
       helpUrl: helpUrl,
     );
   }
@@ -113,14 +114,14 @@ class GeneratedFormDropdown extends GeneratedFormItem {
 }
 
 class GeneratedFormSwitch extends GeneratedFormItem {
-  bool disabled = false;
+  bool disabled;
 
   GeneratedFormSwitch(
     super.key, {
     super.label,
     super.belowWidgets,
     bool super.defaultValue = false,
-    bool disabled = false,
+    this.disabled = false,
     List<String? Function(bool value)> super.additionalValidators = const [],
   });
 
@@ -136,7 +137,7 @@ class GeneratedFormSwitch extends GeneratedFormItem {
       label: label,
       belowWidgets: belowWidgets,
       defaultValue: defaultValue,
-      disabled: false,
+      disabled: disabled,
       additionalValidators: List.from(additionalValidators),
     );
   }
@@ -424,7 +425,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           onPressed: () => launchUrlString(
                             formItem.helpUrl!,
                             mode: LaunchMode.externalApplication,
-                          ),
+                          ).ignore(),
                         )
                       : formItem.belowWidgets.isNotEmpty
                       ? IconButton(

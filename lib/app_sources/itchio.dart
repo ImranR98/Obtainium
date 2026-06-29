@@ -164,7 +164,7 @@ class ItchIO extends AppSource {
 
     if (abbrDates.isEmpty) return null;
 
-    DateTime dateTimeFilter(DateTime a, b) {
+    DateTime dateTimeFilter(DateTime a, DateTime b) {
       return a.microsecondsSinceEpoch > b.microsecondsSinceEpoch ? a : b;
     }
 
@@ -175,13 +175,14 @@ class ItchIO extends AppSource {
 
   /// Extracts the app title from the page title.
   String _parseTitle(Document document) {
-    String? title;
-    Element titleElement = document.getElementsByTagName('title')[0];
-    title = titleElement.text;
+    final titleElements = document.getElementsByTagName('title');
+    if (titleElements.isEmpty) {
+      return '';
+    }
+    String title = titleElements.first.text;
     // The title is in format: GAMENAME by GAMEAUTHOR
     // Then, get just the first part
-    title = title.split(' by ').first.trim();
-    return title;
+    return title.split(' by ').first.trim();
   }
 
   /// Resolves the app author from subdomain or author span.

@@ -21,8 +21,7 @@ class Jenkins extends AppSource {
   }
 
   @override
-  String? changeLogPageFromStandardUrl(String standardUrl) =>
-      '$standardUrl/-/releases';
+  String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
 
   @override
   Future<APKDetails> getLatestAPKDetails(
@@ -42,7 +41,7 @@ class Jenkins extends AppSource {
       var version = json['number'] == null
           ? null
           : (json['number'] as int).toString();
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       final artifacts = json['artifacts'] is List

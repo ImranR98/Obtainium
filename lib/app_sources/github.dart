@@ -677,7 +677,7 @@ class GitHub extends AppSource {
         targetRelease,
         useLatestAssetDateAsReleaseDate,
       );
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       var changeLog = (targetRelease['body'] ?? '').toString();

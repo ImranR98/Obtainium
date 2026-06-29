@@ -62,8 +62,9 @@ class RuStore extends AppSource {
     if (res0.statusCode != 200) {
       throw getObtainiumHttpError(res0);
     }
-    var appDetails = (await decodeJsonBody(res0.bodyBytes))['body'];
-    if (appDetails['appId'] == null) {
+    var decoded = await decodeJsonBody(res0.bodyBytes);
+    var appDetails = decoded is Map ? decoded['body'] : null;
+    if (appDetails is! Map || appDetails['appId'] == null) {
       throw NoReleasesError();
     }
 
@@ -72,12 +73,12 @@ class RuStore extends AppSource {
     String? dateStr = appDetails['appVerUpdatedAt'];
     String? version = appDetails['versionName'];
     String? changeLog = appDetails['whatsNew'];
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     DateTime? relDate;
     if (dateStr != null) {
-      relDate = DateTime.parse(dateStr);
+      relDate = DateTime.tryParse(dateStr);
     }
 
     Response res1 = await sourceRequest(
@@ -86,7 +87,8 @@ class RuStore extends AppSource {
       followRedirects: false,
       postBody: {"appId": appDetails['appId'], "firstInstall": true},
     );
-    var downloadDetails = (await decodeJsonBody(res1.bodyBytes))['body'];
+    var downloadDecoded = await decodeJsonBody(res1.bodyBytes);
+    var downloadDetails = downloadDecoded is Map ? downloadDecoded['body'] : null;
     try {
       if (res1.statusCode != 200 ||
           downloadDetails['downloadUrls'][0]['url'] == null) {

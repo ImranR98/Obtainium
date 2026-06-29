@@ -32,7 +32,7 @@ class TelegramApp extends AppSource {
       var version = messages.isNotEmpty
           ? messages.last.innerHtml.split('\n').first.trim().split(' ').first
           : null;
-      if (version == null) {
+      if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       String? apkUrl = 'https://telegram.org/dl/android/apk';

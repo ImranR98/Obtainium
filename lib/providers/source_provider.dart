@@ -10,6 +10,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
@@ -40,7 +41,6 @@ import 'package:obtainium/app_sources/vivoappstore.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/mass_app_sources/githubstars.dart';
-import 'package:obtainium/providers/config_keys.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
@@ -93,9 +93,9 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     json['url'],
     overrideSource: json['overrideSource'],
   );
-  var formItems = source.combinedAppSpecificSettingFormItems.reduce(
-    (value, element) => [...value, ...element],
-  );
+  // Read-only: only used here to read defaults/keys/types, never mutated, so a
+  // shared memoized list is safe and avoids re-cloning the form tree per app.
+  var formItems = source.flatCombinedFormItemsReadOnly;
   Map<String, dynamic> additionalSettings = getDefaultValuesFromFormItems([
     formItems,
   ]);
@@ -175,9 +175,6 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
       apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
     } catch (e) {
       apkUrls = assumed2DlistToStringMapList(List<dynamic>.from(apkUrlJson));
-      apkUrls = List<dynamic>.from(
-        apkUrlJson,
-      ).map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
     }
     json['apkUrls'] = jsonEncode(stringMapListTo2DList(apkUrls));
   }
@@ -499,13 +496,26 @@ String preStandardizeUrl(String url) {
           ((uri?.path.isEmpty ?? false) && url.endsWith('/'))) &&
       (uri?.queryParameters.isEmpty ?? false);
 
-  url =
-      url
-          .split('/')
-          .where((e) => e.isNotEmpty)
-          .join('/')
-          .replaceFirst(':/', '://') +
-      (trailingSlash ? '/' : '');
+  // Only normalize duplicate slashes in the scheme/host/path portion; leave the
+  // query string and fragment untouched so any slashes they contain (e.g. a URL
+  // passed as a query parameter) aren't mangled.
+  var splitIndex = url.length;
+  var queryStart = url.indexOf('?');
+  if (queryStart >= 0 && queryStart < splitIndex) {
+    splitIndex = queryStart;
+  }
+  var fragmentStart = url.indexOf('#');
+  if (fragmentStart >= 0 && fragmentStart < splitIndex) {
+    splitIndex = fragmentStart;
+  }
+  var mainPart = url.substring(0, splitIndex);
+  var rest = url.substring(splitIndex);
+  mainPart = mainPart
+      .split('/')
+      .where((e) => e.isNotEmpty)
+      .join('/')
+      .replaceFirst(':/', '://');
+  url = mainPart + (trailingSlash ? '/' : '') + rest;
   return url;
 }
 
@@ -626,33 +636,33 @@ sourceRequestStreamResponse(
   throw ObtainiumError(tr('tooManyRedirects'));
 }
 
-  Future<Response> httpClientResponseStreamToFinalResponse(
-    HttpClient httpClient,
-    String method,
-    String url,
-    HttpClientResponse response,
-  ) async {
-    try {
-      final bytes = (await response.fold<BytesBuilder>(
-        BytesBuilder(),
-        (b, d) => b..add(d),
-      )).toBytes();
+Future<Response> httpClientResponseStreamToFinalResponse(
+  HttpClient httpClient,
+  String method,
+  String url,
+  HttpClientResponse response,
+) async {
+  try {
+    final bytes = (await response.fold<BytesBuilder>(
+      BytesBuilder(),
+      (b, d) => b..add(d),
+    )).toBytes();
 
-      final headers = <String, String>{};
-      response.headers.forEach((name, values) {
-        headers[name] = values.join(', ');
-      });
+    final headers = <String, String>{};
+    response.headers.forEach((name, values) {
+      headers[name] = values.join(', ');
+    });
 
-      return http.Response.bytes(
-        bytes,
-        response.statusCode,
-        headers: headers,
-        request: http.Request(method, Uri.parse(url)),
-      );
-    } finally {
-      httpClient.close();
-    }
+    return http.Response.bytes(
+      bytes,
+      response.statusCode,
+      headers: headers,
+      request: http.Request(method, Uri.parse(url)),
+    );
+  } finally {
+    httpClient.close();
   }
+}
 
 /// Lightweight HTTP helper mixin for classes that need request/response
 /// utilities without [AppSource]'s config-aware source-request wrapping.
@@ -816,10 +826,10 @@ abstract class AppSource with HttpClientMixin {
   // Some additional data may be needed for Apps regardless of Source
   List<List<GeneratedFormItem>>
   additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly = [
-    [GeneratedFormSwitch(AppConfigKey.trackOnly, label: tr('trackOnly'))],
+    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
     [
       GeneratedFormTextField(
-        AppConfigKey.versionExtractionRegEx,
+        'versionExtractionRegEx',
         label: tr('trimVersionString'),
         required: false,
         additionalValidators: [(value) => regExValidator(value)],
@@ -827,7 +837,7 @@ abstract class AppSource with HttpClientMixin {
     ],
     [
       GeneratedFormTextField(
-        AppConfigKey.matchGroupToUse,
+        'matchGroupToUse',
         label: tr('matchGroupToUseForX', args: [tr('trimVersionString')]),
         required: false,
         hint: '\$0',
@@ -835,21 +845,21 @@ abstract class AppSource with HttpClientMixin {
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.versionDetection,
+        'versionDetection',
         label: tr('versionDetectionExplanation'),
         defaultValue: true,
       ),
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.useVersionCodeAsOSVersion,
+        'useVersionCodeAsOSVersion',
         label: tr('useVersionCodeAsOSVersion'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormTextField(
-        AppConfigKey.apkFilterRegEx,
+        'apkFilterRegEx',
         label: tr('filterAPKsByRegEx'),
         required: false,
         additionalValidators: [
@@ -861,50 +871,50 @@ abstract class AppSource with HttpClientMixin {
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.invertAPKFilter,
+        'invertAPKFilter',
         label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.autoApkFilterByArch,
+        'autoApkFilterByArch',
         label: tr('autoApkFilterByArch'),
         defaultValue: true,
       ),
     ],
-    [GeneratedFormTextField(AppConfigKey.appName, label: tr('appName'), required: false)],
-    [GeneratedFormTextField(AppConfigKey.appAuthor, label: tr('author'), required: false)],
+    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
+    [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
     [
       GeneratedFormSwitch(
-        AppConfigKey.shizukuPretendToBeGooglePlay,
+        'shizukuPretendToBeGooglePlay',
         label: tr('shizukuPretendToBeGooglePlay'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.allowInsecure,
+        'allowInsecure',
         label: tr('allowInsecure'),
         defaultValue: false,
       ),
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.exemptFromBackgroundUpdates,
+        'exemptFromBackgroundUpdates',
         label: tr('exemptFromBackgroundUpdates'),
       ),
     ],
     [
       GeneratedFormSwitch(
-        AppConfigKey.skipUpdateNotifications,
+        'skipUpdateNotifications',
         label: tr('skipUpdateNotifications'),
       ),
     ],
-    [GeneratedFormTextField(AppConfigKey.about, label: tr('about'), required: false)],
+    [GeneratedFormTextField('about', label: tr('about'), required: false)],
     [
       GeneratedFormSwitch(
-        AppConfigKey.refreshBeforeDownload,
+        'refreshBeforeDownload',
         label: tr('refreshBeforeDownload'),
       ),
     ],
@@ -917,16 +927,16 @@ abstract class AppSource with HttpClientMixin {
     );
 
     final versionDetectionIdx = agnosticItems.indexWhere(
-      (row) => row.any((item) => item.key == AppConfigKey.versionDetection),
+      (row) => row.any((item) => item.key == 'versionDetection'),
     );
     if (showReleaseDateAsVersionToggle &&
         versionDetectionIdx >= 0 &&
         !agnosticItems.any(
-          (row) => row.any((item) => item.key == AppConfigKey.releaseDateAsVersion),
+          (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
         )) {
       agnosticItems.insert(versionDetectionIdx + 1, [
         GeneratedFormSwitch(
-          AppConfigKey.releaseDateAsVersion,
+          'releaseDateAsVersion',
           label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
           defaultValue: false,
         ),
@@ -947,14 +957,14 @@ abstract class AppSource with HttpClientMixin {
       moreConditionalItems.addAll([
         [
           GeneratedFormSwitch(
-            AppConfigKey.includeZips,
+            'includeZips',
             label: tr('includeZips'),
             defaultValue: false,
           ),
         ],
         [
           GeneratedFormTextField(
-            AppConfigKey.zippedApkFilterRegEx,
+            'zippedApkFilterRegEx',
             label: tr('zippedApkFilterRegEx'),
             required: false,
             additionalValidators: [
@@ -971,14 +981,14 @@ abstract class AppSource with HttpClientMixin {
       moreConditionalItems.addAll([
         [
           GeneratedFormSwitch(
-            AppConfigKey.includeTarballs,
+            'includeTarballs',
             label: tr('includeTarballs'),
             defaultValue: false,
           ),
         ],
         [
           GeneratedFormTextField(
-            AppConfigKey.tarballedApkFilterRegEx,
+            'tarballedApkFilterRegEx',
             label: tr('tarballedApkFilterRegEx'),
             required: false,
             additionalValidators: [
@@ -993,8 +1003,8 @@ abstract class AppSource with HttpClientMixin {
 
     if (versionDetectionDisallowed) {
       for (var item in agnosticItems.expand((row) => row)) {
-        if (item.key == AppConfigKey.versionDetection ||
-            item.key == AppConfigKey.useVersionCodeAsOSVersion) {
+        if (item.key == 'versionDetection' ||
+            item.key == 'useVersionCodeAsOSVersion') {
           (item as GeneratedFormSwitch).disabled = true;
           item.defaultValue = false;
         }
@@ -1010,6 +1020,24 @@ abstract class AppSource with HttpClientMixin {
       ...moreConditionalItems,
     ];
   }
+
+  // Cheap, cached emptiness check for [combinedAppSpecificSettingFormItems],
+  // used in hot build paths (e.g. the app detail page) to avoid cloning the
+  // entire form-item tree just to test isNotEmpty. Emptiness is invariant for a
+  // given source instance, so caching the boolean is safe.
+  bool? _hasAppSpecificSettingsCache;
+  bool get hasAppSpecificSettings =>
+      _hasAppSpecificSettingsCache ??=
+          combinedAppSpecificSettingFormItems.isNotEmpty;
+
+  // Flattened, read-only view of [combinedAppSpecificSettingFormItems],
+  // memoized so read-only callers (notably the per-app JSON migration at load,
+  // which runs for every stored app) don't re-clone the whole form-item tree
+  // each time. Callers MUST treat these as read-only - the list is shared.
+  List<GeneratedFormItem>? _flatCombinedFormItemsCache;
+  List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
+      _flatCombinedFormItemsCache ??=
+          combinedAppSpecificSettingFormItems.expand((row) => row).toList();
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   // If the source has been overridden, we expect the user to define one-time values as additional settings - don't use the stored values
@@ -1236,6 +1264,7 @@ class SourceProvider {
     LiteAPKs(),
     Jenkins(),
     APKMirror(),
+    APKCombo(),
     RockMods(),
     TelegramApp(),
     NeutronCode(),

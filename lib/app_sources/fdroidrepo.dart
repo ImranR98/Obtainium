@@ -80,7 +80,8 @@ class FDroidRepo extends AppSource {
       var body = parse(res.body);
       Map<String, List<String>> results = {};
       body.querySelectorAll('application').toList().forEach((app) {
-        String appId = app.attributes['id']!;
+        String? appId = app.attributes['id'];
+        if (appId == null) return;
         String appName = app.querySelector('name')?.innerHtml ?? appId;
         String appDesc = app.querySelector('desc')?.innerHtml ?? '';
         if (query.isEmpty ||
@@ -212,7 +213,7 @@ class FDroidRepo extends AppSource {
         throw ObtainiumError(tr('appWithIdOrNameNotFound'));
       }
       var authorName = body.querySelector('repo')?.attributes['name'] ?? name;
-      String appId = foundApps[0].attributes['id']!;
+      String appId = foundApps[0].attributes['id'] ?? appIdOrName;
       var appName = foundApps[0].querySelector('name')?.innerHtml ?? appId;
       var releases = foundApps[0].querySelectorAll('package');
       if (releases.isEmpty) {
@@ -254,11 +255,16 @@ class FDroidRepo extends AppSource {
             .toList();
         if (selectedReleases.length > 1 && pickHighestVersionCode) {
           selectedReleases.sort((e1, e2) {
-            return int.parse(
-              e2.querySelector('versioncode')?.innerHtml ?? '0',
-            ).compareTo(
-              int.parse(e1.querySelector('versioncode')?.innerHtml ?? '0'),
-            );
+            return (int.tryParse(
+                  e2.querySelector('versioncode')?.innerHtml ?? '',
+                ) ??
+                0)
+                .compareTo(
+                  int.tryParse(
+                        e1.querySelector('versioncode')?.innerHtml ?? '',
+                      ) ??
+                      0,
+                );
           });
           selectedReleases = [selectedReleases[0]];
         }

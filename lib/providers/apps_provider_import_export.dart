@@ -129,7 +129,10 @@ extension AppsProviderImportExport on AppsProvider {
             value.map((e) => e as String).toList(),
           );
         } else {
-          settingsProvider.prefs?.setString(key, value as String);
+          // Use setSettingString so credential keys (e.g. github-creds) are
+          // routed to secure storage rather than plain prefs, where reads would
+          // otherwise never pick them up until the next app restart.
+          settingsProvider.setSettingString(key, value as String);
         }
       });
     }

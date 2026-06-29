@@ -10,6 +10,10 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class GitLab extends AppSource {
+  // Reused for the pure getAppNames string helper instead of allocating a new
+  // GitHub source instance on every getLatestAPKDetails call.
+  final GitHub _gh = GitHub(hostChanged: true);
+
   GitLab({bool hostChanged = false}) {
     hosts = ['gitlab.com'];
     canSearch = true;
@@ -103,11 +107,7 @@ class GitLab extends AppSource {
     // Related to: (#1397, #1389, #1384, #1382, #1381, #1380, #1359, #854, #785, #697)
     var headers = <String, String>{};
     headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
-    if (headers.isNotEmpty) {
-      return headers;
-    } else {
-      return null;
-    }
+    return headers;
   }
 
   @override
@@ -127,7 +127,7 @@ class GitLab extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     // Prepare request params
-    var names = GitHub(hostChanged: true).getAppNames(standardUrl);
+    var names = _gh.getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
     String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
@@ -219,7 +219,7 @@ class GitLab extends AppSource {
       var releaseDateString =
           e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
       DateTime? releaseDate = releaseDateString != null
-          ? DateTime.parse(releaseDateString)
+          ? DateTime.tryParse(releaseDateString.toString())
           : null;
       return APKDetails(
         e['tag_name'] ?? e['name'],

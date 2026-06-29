@@ -506,6 +506,7 @@ class _AppPageState extends State<AppPage> {
     final installed = app?.app.installedVersion;
     final latest = app?.app.latestVersion;
     final hasAction =
+        app != null &&
         !updating &&
         (installed == null || installed != latest) &&
         !areDownloadsRunning;
@@ -520,7 +521,7 @@ class _AppPageState extends State<AppPage> {
                 var np = context.read<NotificationsProvider>();
                 settingsProvider.heavyImpact();
                 var res = await appsProvider.downloadAndInstallLatestApps(
-                  app?.app.id != null ? [app!.app.id] : [],
+                  [app.app.id],
                   globalNavigatorKey.currentContext,
                 );
                 if (res.isNotEmpty && !trackOnly && context.mounted) {
@@ -566,8 +567,7 @@ class _AppPageState extends State<AppPage> {
     bool trackOnly,
   ) {
     return <Widget>[
-      if (source != null &&
-          source.combinedAppSpecificSettingFormItems.isNotEmpty)
+      if (source != null && source.hasAppSpecificSettings)
         IconButton(
           onPressed: app?.downloadProgress != null || updating
               ? null
@@ -670,6 +670,14 @@ class _AppPageState extends State<AppPage> {
             widget.showOppositeOfPreferredView);
     bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
+    );
+    // AppInMemory objects are mutated in place during a download (only the
+    // downloadProgress field changes), so selecting the app object alone never
+    // detects progress ticks - its identity is unchanged, so context.select
+    // treats it as equal and skips the rebuild, leaving the progress bar empty.
+    // Subscribe to the progress value itself so this page rebuilds on each tick.
+    context.select<AppsProvider, double?>(
+      (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
     // Builds a single positionally-rounded card sliver.

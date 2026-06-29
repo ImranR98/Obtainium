@@ -29,6 +29,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
+  bool _settingsInitStarted = false;
   // Stateless and its source list is statically cached, so hold one instance
   // rather than allocating a new SourceProvider on every build().
   final SourceProvider sourceProvider = SourceProvider();
@@ -52,7 +53,10 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    if (settingsProvider.prefs == null) settingsProvider.initializeSettings();
+    if (settingsProvider.prefs == null && !_settingsInitStarted) {
+      _settingsInitStarted = true;
+      settingsProvider.initializeSettings();
+    }
     final sdk = androidSdkInt ?? 0;
 
     Widget caption(String text) => Padding(
@@ -320,8 +324,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
     // Merge every source's config items into a single form so they read as one
     // connected block (rather than one disjointed block per source).
+    // Clone the items so the per-build mutation of defaultValue below doesn't
+    // leak into the shared (cached) source instances' own form items.
     var allSourceConfigItems = sourceProvider.sources
         .expand((e) => e.sourceConfigSettingFormItems)
+        .map((e) => e.clone())
         .toList();
     for (var item in allSourceConfigItems) {
       if (item is GeneratedFormSwitch) {
@@ -725,7 +732,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         launchUrlString(
                           settingsProvider.sourceUrl,
                           mode: LaunchMode.externalApplication,
-                        );
+                        ).ignore();
                       },
                       icon: const Icon(Icons.code),
                       tooltip: tr('appSource'),
@@ -735,7 +742,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         launchUrlString(
                           'https://wiki.obtainium.page/',
                           mode: LaunchMode.externalApplication,
-                        );
+                        ).ignore();
                       },
                       icon: const Icon(Icons.help_outline_rounded),
                       tooltip: tr('wiki'),
@@ -745,7 +752,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         launchUrlString(
                           'https://apps.obtainium.page/',
                           mode: LaunchMode.externalApplication,
-                        );
+                        ).ignore();
                       },
                       icon: const Icon(Icons.apps_rounded),
                       tooltip: tr('crowdsourcedConfigsLabel'),

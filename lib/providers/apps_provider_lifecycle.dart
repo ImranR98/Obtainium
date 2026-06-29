@@ -470,7 +470,7 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   void addMissingCategories(SettingsProvider settingsProvider) {
-    var cats = settingsProvider.categories;
+    var cats = Map<String, int>.from(settingsProvider.categories);
     apps.forEach((key, value) {
       for (var c in value.app.categories) {
         if (!cats.containsKey(c)) {

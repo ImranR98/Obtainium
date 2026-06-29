@@ -259,12 +259,14 @@ class AddAppPageState extends State<AddAppPage> {
     } catch (e) {
       if (context.mounted) showError(e, context);
     } finally {
-      setState(() {
-        gettingAppInfo = false;
-        if (resetUserInputAfter) {
-          changeUserInput('', false, true);
-        }
-      });
+      if (mounted) {
+        setState(() {
+          gettingAppInfo = false;
+          if (resetUserInputAfter) {
+            changeUserInput('', false, true);
+          }
+        });
+      }
     }
   }
 
@@ -359,13 +361,14 @@ class AddAppPageState extends State<AddAppPage> {
                     await e.search(searchQuery, querySettings: querySettings),
                   );
                 } catch (err) {
-                  if (err is! CredsNeededError) {
-                    rethrow;
-                  } else {
+                  // Surface the failing source's error but don't abort the
+                  // entire multi-source search - other sources should still
+                  // return their results.
+                  if (err is ObtainiumError) {
                     err.unexpected = true;
-                    if (context.mounted) showError(err, context);
-                    return null;
                   }
+                  if (context.mounted) showError(err, context);
+                  return null;
                 }
               }),
         )).where((a) => a != null).toList();
@@ -418,9 +421,11 @@ class AddAppPageState extends State<AddAppPage> {
     } catch (e) {
       if (context.mounted) showError(e, context);
     } finally {
-      setState(() {
-        searching = false;
-      });
+      if (mounted) {
+        setState(() {
+          searching = false;
+        });
+      }
     }
   }
 
@@ -761,7 +766,7 @@ class AddAppPageState extends State<AddAppPage> {
                                   launchUrlString(
                                     'https://${e.hosts[0]}',
                                     mode: LaunchMode.externalApplication,
-                                  );
+                                  ).ignore();
                                 }
                               : null,
                         );
@@ -789,7 +794,7 @@ class AddAppPageState extends State<AddAppPage> {
             launchUrlString(
               'https://apps.obtainium.page/',
               mode: LaunchMode.externalApplication,
-            );
+            ).ignore();
           },
         ),
       ],
@@ -822,7 +827,6 @@ class AddAppPageState extends State<AddAppPage> {
           ? _getSourcesListWidget(context)
           : null,
       body: CustomScrollView(
-        shrinkWrap: true,
         slivers: <Widget>[
           CustomAppBar(title: tr('addApp')),
           SliverToBoxAdapter(

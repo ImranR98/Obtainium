@@ -93,7 +93,7 @@ class LiteAPKs extends AppSource {
     var appName = json['data']?['title'] as String?;
     var author = json['data']?['publisher'] as String?;
     var version = json['data']?['versions']?[0]?['version'] as String?;
-    if (version == null) {
+    if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
     var apkUrls =

@@ -63,7 +63,7 @@ void showChangeLogDialog(
                             ? href
                             : '${Uri.parse(app.url).origin}/$href',
                         mode: LaunchMode.externalApplication,
-                      );
+                      ).ignore();
                     }
                   },
                   extensionSet: md.ExtensionSet(
@@ -82,7 +82,7 @@ void showChangeLogDialog(
   );
 }
 
-Null Function()? getChangeLogFn(BuildContext context, App app) {
+VoidCallback? getChangeLogFn(BuildContext context, App app) {
   String? changesUrl;
   String? changeLog = app.changeLog;
   final trimmedChangeLog = changeLog?.trim() ?? '';
@@ -103,7 +103,10 @@ Null Function()? getChangeLogFn(BuildContext context, App app) {
     if (changeLog != null) {
       showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
     } else if (changesUrl != null) {
-      launchUrlString(changesUrl!, mode: LaunchMode.externalApplication);
+      launchUrlString(
+        changesUrl!,
+        mode: LaunchMode.externalApplication,
+      ).ignore();
     }
   };
 }
@@ -305,7 +308,6 @@ class AppListTile extends StatelessWidget {
     var hasUpdate =
         _app.installedVersion != null &&
         _app.installedVersion != _app.latestVersion;
-    var isInstalling = appInMemory.downloadProgress == -1;
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
@@ -318,7 +320,7 @@ class AppListTile extends StatelessWidget {
         hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
         HighlightableButton(
           highlight: settingsProvider.highlightTouchTargets,
-          onPressed: isInstalling ? null : showChangesFn,
+          onPressed: showChangesFn,
           label: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -351,13 +353,11 @@ class AppListTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isInstalling
-                        ? tr('installing')
-                        : _changesButtonString(showChangesFn != null),
+                    _changesButtonString(showChangesFn != null),
                     style: TextStyle(
                       fontStyle: FontStyle.italic,
                       color: updateColor,
-                      decoration: isInstalling || showChangesFn == null
+                      decoration: showChangesFn == null
                           ? TextDecoration.none
                           : TextDecoration.underline,
                     ),
@@ -376,12 +376,11 @@ class AppListTile extends StatelessWidget {
       if (categories.length > 1)
         ...categories.asMap().entries.map(
           (e) => ((e.key / (categories.length - 1)) - 0.0001),
-        ),
+        )
+      else if (categories.length == 1)
+        0.9999,
       1,
     ];
-    if (stops.length == 2) {
-      stops[0] = 0.9999;
-    }
     final appId = _app.id;
     final installed = _app.installedVersion;
     final latest = _app.latestVersion;
@@ -445,9 +444,15 @@ class AppListTile extends StatelessWidget {
         if (direction == DismissDirection.startToEnd) {
           if ((canInstall || canUpdate) &&
               !appsProvider.areDownloadsRunning()) {
-            appsProvider.downloadAndInstallLatestApps([
-              appId,
-            ], globalNavigatorKey.currentContext);
+            appsProvider
+                .downloadAndInstallLatestApps([
+                  appId,
+                ], globalNavigatorKey.currentContext)
+                .catchError((e) {
+                  var ctx = globalNavigatorKey.currentContext;
+                  if (ctx != null) showError(e, ctx);
+                  return <String>[];
+                });
           }
           return false;
         } else {
@@ -597,7 +602,8 @@ class AppListCategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String capFirstChar(String str) => str[0].toUpperCase() + str.substring(1);
+    String capFirstChar(String str) =>
+        str.isEmpty ? str : str[0].toUpperCase() + str.substring(1);
     final colorScheme = Theme.of(context).colorScheme;
     final showItems = expanded && appCount > 0;
     final tiles = showItems ? buildTiles() : const <Widget>[];

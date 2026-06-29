@@ -220,34 +220,37 @@ class _ImportSectionState extends State<ImportSection> {
     runObtainiumImport() {
       settingsProvider.selectionClick();
       FilePicker.pickFiles()
-          .then((result) {
+          .then((result) async {
             if (result == null) {
               // User canceled the picker.
               showMessage(tr('cancelled'), context);
               return;
             }
-            setState(() {
-              importInProgress = true;
-            });
+            if (mounted) {
+              setState(() {
+                importInProgress = true;
+              });
+            }
             var path = result.files.single.path;
             if (path == null) {
               throw ObtainiumError(tr('noFilePickerAvailable'));
             }
-            String data = File(path).readAsStringSync();
+            String data = await File(path).readAsString();
             try {
               jsonDecode(data);
             } catch (e) {
               throw ObtainiumError(tr('invalidInput'));
             }
-            appsProvider.import(data).then((value) {
-              appsProvider.addMissingCategories(settingsProvider);
-              showMessage(
-                '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-                context,
-              );
-            });
+            var value = await appsProvider.import(data);
+            appsProvider.addMissingCategories(settingsProvider);
+            if (!context.mounted) return;
+            showMessage(
+              '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
+              context,
+            );
           })
           .catchError((e) {
+            if (!mounted) return;
             if (e is PlatformException || e is MissingPluginException) {
               showError(ObtainiumError(tr('noFilePickerAvailable')), context);
             } else {
@@ -255,9 +258,11 @@ class _ImportSectionState extends State<ImportSection> {
             }
           })
           .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
+            if (mounted) {
+              setState(() {
+                importInProgress = false;
+              });
+            }
           });
     }
 
@@ -275,12 +280,15 @@ class _ImportSectionState extends State<ImportSection> {
               },
             );
             if (values != null) {
-              setState(() {
-                importInProgress = true;
-              });
+              if (mounted) {
+                setState(() {
+                  importInProgress = true;
+                });
+              }
               var urlsWithDescriptions = await source.getUrlsWithDescriptions(
                 values.values.map((e) => e.toString()).toList(),
               );
+              if (!context.mounted) return;
               var selectedUrls = await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -289,6 +297,7 @@ class _ImportSectionState extends State<ImportSection> {
               );
               if (selectedUrls != null) {
                 var errors = await appsProvider.addAppsByURL(selectedUrls);
+                if (!context.mounted) return;
                 if (errors.isEmpty) {
                   showMessage(
                     tr(
@@ -312,12 +321,14 @@ class _ImportSectionState extends State<ImportSection> {
             }
           }()
           .catchError((e) {
-            showError(e, context);
+            if (mounted) showError(e, context);
           })
           .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
+            if (mounted) {
+              setState(() {
+                importInProgress = false;
+              });
+            }
           });
     }
 
@@ -380,13 +391,29 @@ class _ImportSectionState extends State<ImportSection> {
 
 /// The app-export controls (export dir picker, export action, auto-export and
 /// settings-inclusion options). Embedded in the Settings page.
-class ExportSection extends StatelessWidget {
+class ExportSection extends StatefulWidget {
   const ExportSection({super.key});
+
+  @override
+  State<ExportSection> createState() => _ExportSectionState();
+}
+
+class _ExportSectionState extends State<ExportSection> {
+  Future<Uri?>? _exportDirFuture;
+  String? _lastExportDirKey;
 
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.read<AppsProvider>();
     var settingsProvider = context.watch<SettingsProvider>();
+
+    // Recreate the export-dir lookup future only when the stored directory
+    // actually changes, instead of re-running the SAF read on every rebuild.
+    final exportDirKey = settingsProvider.prefs?.getString('exportDir');
+    if (_exportDirFuture == null || exportDirKey != _lastExportDirKey) {
+      _lastExportDirKey = exportDirKey;
+      _exportDirFuture = settingsProvider.getExportDir();
+    }
 
     runObtainiumExport({bool pickOnly = false}) async {
       settingsProvider.selectionClick();
@@ -397,17 +424,17 @@ class ExportSection extends StatelessWidget {
             sp: settingsProvider,
           )
           .then((String? result) {
-            if (result != null) {
+            if (mounted && result != null) {
               showMessage(tr('exportedTo', args: [result]), context);
             }
           })
           .catchError((e) {
-            showError(e, context);
+            if (mounted) showError(e, context);
           });
     }
 
     return FutureBuilder(
-      future: settingsProvider.getExportDir(),
+      future: _exportDirFuture,
       builder: (context, snapshot) {
         return Card(
           child: Column(
@@ -462,9 +489,8 @@ class ExportSection extends StatelessWidget {
                               value['autoExportOnChanges'] == true;
                         }
                         if (value['exportSettings'] != null) {
-                          settingsProvider.exportSettings = int.parse(
-                            value['exportSettings'],
-                          );
+                          settingsProvider.exportSettings =
+                              int.tryParse('${value['exportSettings']}') ?? 1;
                         }
                       }
                     },

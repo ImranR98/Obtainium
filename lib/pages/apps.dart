@@ -642,7 +642,22 @@ class AppsPageState extends State<AppsPage> {
     }
 
     var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    selectedAppIds = selectedAppIds.where(listedAppIdSet.contains).toSet();
+    final prunedSelection = selectedAppIds
+        .where(listedAppIdSet.contains)
+        .toSet();
+    if (prunedSelection.length != selectedAppIds.length) {
+      final hadSelection = selectedAppIds.isNotEmpty;
+      selectedAppIds = prunedSelection;
+      // Some selected apps are no longer listed; if that empties the selection,
+      // tell the shell after this frame (can't notify during build()).
+      if (hadSelection != selectedAppIds.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+          }
+        });
+      }
+    }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
 
@@ -952,33 +967,37 @@ class AppsPageState extends State<AppsPage> {
     }
 
     showMassMarkDialog() async {
-      final confirmed = await showConfirmDialog(
-        context,
-        title: tr(
-          'markXSelectedAppsAsUpdated',
-          args: [selectedAppIds.length.toString()],
-        ),
-        content: Text(
-          tr('onlyWorksWithNonVersionDetectApps'),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
+      try {
+        final confirmed = await showConfirmDialog(
+          context,
+          title: tr(
+            'markXSelectedAppsAsUpdated',
+            args: [selectedAppIds.length.toString()],
           ),
-        ),
-      );
-      if (!confirmed) return;
-      settingsProvider.selectionClick();
-      appsProvider.saveApps(
-        selectedApps.map((a) {
-          if (a.installedVersion != null &&
-              !appsProvider.isVersionDetectionPossible(
-                appsProvider.apps[a.id],
-              )) {
-            a.installedVersion = a.latestVersion;
-          }
-          return a;
-        }).toList(),
-      );
+          content: Text(
+            tr('onlyWorksWithNonVersionDetectApps'),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+        if (!confirmed) return;
+        settingsProvider.selectionClick();
+        appsProvider.saveApps(
+          selectedApps.map((a) {
+            if (a.installedVersion != null &&
+                !appsProvider.isVersionDetectionPossible(
+                  appsProvider.apps[a.id],
+                )) {
+              a.installedVersion = a.latestVersion;
+            }
+            return a;
+          }).toList(),
+        );
+      } catch (e) {
+        if (context.mounted) showError(e, context);
+      }
     }
 
     pinSelectedApps() {
@@ -1057,7 +1076,7 @@ class AppsPageState extends State<AppsPage> {
                           text: urls,
                           subject: 'Obtainium - ${tr('appsString')}',
                         ),
-                      );
+                      ).ignore();
                     },
                   ),
                   optionTile(
@@ -1076,7 +1095,7 @@ class AppsPageState extends State<AppsPage> {
                                 text: urls,
                                 subject: 'Obtainium - ${tr('appsString')}',
                               ),
-                            );
+                            ).ignore();
                           },
                   ),
                   optionTile(
@@ -1104,7 +1123,7 @@ class AppsPageState extends State<AppsPage> {
                                 files: [f],
                                 fileNameOverrides: ['$fn.json'],
                               ),
-                            );
+                            ).ignore();
                           },
                   ),
                   optionTile(

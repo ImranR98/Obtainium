@@ -263,7 +263,11 @@ class LinkText extends StatelessWidget {
     return Semantics(
       link: true,
       child: InkWell(
-        onTap: () => launchUrlString(url, mode: LaunchMode.externalApplication),
+        onTap: () =>
+            launchUrlString(
+              url,
+              mode: LaunchMode.externalApplication,
+            ).ignore(),
         child: Text(
           text,
           style: (style ?? const TextStyle()).copyWith(

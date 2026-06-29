@@ -95,15 +95,18 @@ class APKMirror extends AppSource {
         break;
       }
       String? titleString = targetRelease?.querySelector('title')?.innerHtml;
-      String? dateString = targetRelease
-          ?.querySelector('pubDate')
-          ?.innerHtml
-          .split(' ')
-          .sublist(0, 5)
-          .join(' ');
-      DateTime? releaseDate = dateString != null
-          ? HttpDate.parse('$dateString GMT')
+      var pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
+      String? dateString = pubDateRaw != null
+          ? pubDateRaw.split(' ').take(5).join(' ')
           : null;
+      DateTime? releaseDate;
+      if (dateString != null) {
+        try {
+          releaseDate = HttpDate.parse('$dateString GMT');
+        } catch (e) {
+          releaseDate = null;
+        }
+      }
       String? version;
       if (titleString != null) {
         final byMatches = RegExp(' by ').allMatches(titleString);

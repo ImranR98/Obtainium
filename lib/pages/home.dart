@@ -245,19 +245,21 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Check initial link if app was in cold state (terminated)
-    final appLink = await _appLinks.getInitialLink();
-    var initLinked = false;
-    if (appLink != null) {
-      await interpretLink(appLink);
-      initLinked = true;
+    final initialLink = await _appLinks.getInitialLink();
+    if (initialLink != null) {
+      await interpretLink(initialLink);
     }
-    // Handle link when app is in warm state (front or background)
+    // Some platforms also replay the launch link on the stream; ignore only
+    // that exact duplicate (once) so a genuine new warm link is never dropped.
+    var dedupeInitial = initialLink != null;
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
-      if (!initLinked) {
-        await interpretLink(uri);
-      } else {
-        initLinked = false;
+      if (dedupeInitial) {
+        dedupeInitial = false;
+        if (uri == initialLink) {
+          return;
+        }
       }
+      await interpretLink(uri);
     });
   }
 
@@ -292,8 +294,8 @@ class _HomePageState extends State<HomePage> {
       // Wait for any existing AppsPage to detach before reusing its GlobalKey.
       await _waitUntil(
         () => appsPageKey.currentState == null,
-        interval: Duration.zero,
-        maxAttempts: 1000,
+        interval: const Duration(milliseconds: 16),
+        maxAttempts: 120,
       );
       setState(() {
         selectedIndexHistory.clear();
