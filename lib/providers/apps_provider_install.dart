@@ -191,7 +191,7 @@ extension AppsProviderInstall on AppsProvider {
         apkDir = Directory(apkDirPath);
         var apks = apkDir
             .listSync(recursive: true)
-            .where((e) => e.path.toLowerCase().endsWith('.apk'))
+            .where((e) => AppSource.isApkOrContainerFile(e.path))
             .toList();
 
         FileSystemEntity? temp;
@@ -489,10 +489,7 @@ extension AppsProviderInstall on AppsProvider {
     bool needsBGWorkaround = false,
     bool shizukuPretendToBeGooglePlay = false,
   }) async {
-    // We don't know which APKs in an XAPK or ZIP are supported by the user's device
-    // So we try installing all of them and assume success if at least one installed
-    // If 0 APKs installed, throw the first install error encountered
-    // Obviously this approach is naive and is undesirable in many cases, needs to be improved
+    // Try installing all APKs; succeed if at least one installed.
     var somethingInstalled = false;
     try {
       MultiAppMultiError errors = MultiAppMultiError();
@@ -501,7 +498,7 @@ extension AppsProviderInstall on AppsProvider {
           in dir.extracted
               .listSync(recursive: true, followLinks: false)
               .whereType<File>()) {
-        if (file.path.toLowerCase().endsWith('.apk')) {
+        if (AppSource.isApkOrContainerFile(file.path)) {
           apkFiles.add(file);
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
@@ -587,11 +584,9 @@ extension AppsProviderInstall on AppsProvider {
       }
     }
     if (needsBGWorkaround) {
-      // The below 'await' will never return if we are in a background process
-      // To work around this, we should assume the install will be successful
-      // So we update the app's installed version first as we will never get to the later code
-      // We can't conditionally get rid of the 'await' as this causes install fails (BG process times out) - see #896
-      // TODO: When fixed, update this function and the calls to it accordingly
+      // Background process workaround (#896): the `await installApk` below
+      // will never return in BG, so pre-update the installed version.
+      // TODO(#896): Remove this when platform install API supports BG completion.
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;
       await saveApps([
@@ -1126,7 +1121,7 @@ extension AppsProviderInstall on AppsProvider {
               .getRequestHeaders(
                 app.additionalSettings,
                 fileUrl.value,
-                forAPKDownload: fileUrl.key.endsWith('.apk'),
+                forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
               ),
           useExisting: false,
           allowInsecure: app.additionalSettings['allowInsecure'] == true,

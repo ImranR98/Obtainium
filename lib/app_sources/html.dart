@@ -284,6 +284,7 @@ class HTML extends AppSource {
     ],
   ];
   HTML() {
+    suppressStandardVersionExtraction = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormSubForm('intermediateLink', [

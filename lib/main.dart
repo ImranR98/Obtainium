@@ -10,6 +10,7 @@ import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -182,112 +183,6 @@ void main() async {
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
-/// Builds the app-wide Material 3 Expressive [ThemeData] for a given
-/// [colorScheme]. Expressive character lives here (large rounded shapes,
-/// emphasized motion, updated M3 component looks) so it propagates to every
-/// screen without per-widget styling.
-ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
-  // Expressive shape tokens: large squircle (rounded-superellipse) corners.
-  final cardShape = RoundedSuperellipseBorder(
-    borderRadius: BorderRadius.circular(24),
-  );
-  const buttonShape = StadiumBorder();
-  final dialogShape = RoundedSuperellipseBorder(
-    borderRadius: BorderRadius.circular(28),
-  );
-  final fieldShape = RoundedSuperellipseBorder(
-    borderRadius: BorderRadius.circular(16),
-  );
-
-  // Fully rounded, comfortably-tall buttons (very M3 Expressive).
-  final pillButtonStyle = ButtonStyle(
-    shape: const WidgetStatePropertyAll(buttonShape),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-  );
-
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: colorScheme,
-    fontFamily: fontFamily,
-    // Emphasized, springy page transitions for forward navigation.
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: <TargetPlatform, PageTransitionsBuilder>{
-        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(),
-        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
-      },
-    ),
-    cardTheme: CardThemeData(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: cardShape,
-      margin: EdgeInsets.zero,
-    ),
-    dialogTheme: DialogThemeData(shape: dialogShape),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-    bottomSheetTheme: const BottomSheetThemeData(
-      shape: RoundedSuperellipseBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-    ),
-    appBarTheme: const AppBarThemeData(centerTitle: false),
-    expansionTileTheme: ExpansionTileThemeData(
-      shape: cardShape,
-      collapsedShape: cardShape,
-    ),
-    listTileTheme: ListTileThemeData(shape: fieldShape),
-    chipTheme: const ChipThemeData(shape: StadiumBorder()),
-    searchBarTheme: const SearchBarThemeData(
-      elevation: WidgetStatePropertyAll(0),
-    ),
-    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
-    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
-    textButtonTheme: TextButtonThemeData(
-      style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
-    ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
-    ),
-    inputDecorationTheme: InputDecorationThemeData(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
-    ),
-    dropdownMenuTheme: DropdownMenuThemeData(
-      inputDecorationTheme: InputDecorationThemeData(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
-      ),
-      menuStyle: MenuStyle(
-        shape: WidgetStatePropertyAll(
-          RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      ),
-    ),
-    sliderTheme: SliderThemeData(
-      // Opt into the updated (2024) Material 3 slider appearance.
-      // ignore: deprecated_member_use
-      year2023: false,
-      activeTrackColor: colorScheme.primary,
-      inactiveTrackColor: colorScheme.surfaceContainerHighest,
-      thumbColor: colorScheme.primary,
-      overlayColor: colorScheme.primary.withValues(alpha: 0.12),
-    ),
-    // Opt into the updated (2024) Material 3 Expressive progress indicators
-    // (wavy active track / gapped circular) across the whole app.
-    progressIndicatorTheme: const ProgressIndicatorThemeData(
-      // ignore: deprecated_member_use
-      year2023: false,
-    ),
-  );
-}
 
 class Obtainium extends StatefulWidget {
   const Obtainium({super.key});

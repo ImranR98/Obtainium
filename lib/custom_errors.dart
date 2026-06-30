@@ -2,11 +2,7 @@ import 'dart:io';
 
 import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:provider/provider.dart';
 
 class ObtainiumError {
   late String message;
@@ -115,53 +111,6 @@ class MultiAppMultiError extends ObtainiumError {
   String toString() => idsByErrorString.entries
       .map((e) => errorsAppsString(e.key, e.value))
       .join('\n\n');
-}
-
-void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  Provider.of<LogsProvider>(
-    context,
-    listen: false,
-  ).add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
-  if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(e.toString())));
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          scrollable: true,
-          title: Text(
-            e is MultiAppMultiError
-                ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown'),
-          ),
-          content: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Text(e.toString()),
-          ),
-          actions: [
-            FilledButton.tonal(
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              child: Text(tr('ok')),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-void showError(dynamic e, BuildContext context) {
-  showMessage(e, context, isError: true);
 }
 
 String list2FriendlyString(List<String> list) {

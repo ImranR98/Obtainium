@@ -8,7 +8,6 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/motion.dart';
 import 'package:obtainium/components/ui_widgets.dart';
-import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';

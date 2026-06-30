@@ -385,9 +385,9 @@ flutter build apk --flavor normal   # or use ./build.sh
 | Task | Start here |
 | --- | --- |
 | Add a new app source | New file in `app_sources/`, register in `SourceProvider._buildSources()` |
-| Add a per-app option | The source's `additionalSourceAppSpecificSettingFormItems` (or the base `additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly`) |
-| Add a global setting | A typed getter/setter in `settings_provider.dart` + a `SettingsToggleRow` in `settings.dart` |
+| Add a per-app option | The source's `additionalSourceAppSpecificSettingFormItems` (or the base `_commonAppSettingFormItems` accessed via `combinedAppSpecificSettingFormItems`) |
+| Add a global setting | A typed getter/setter in `settings_provider.dart` + a corresponding widget in `settings.dart` (e.g. `SettingsToggleRow`, `GeneratedFormDropdown`) |
 | Change update logic | `apps_provider_updates.dart` (foreground) / `bgUpdateCheck` (background) |
 | Change install behaviour | `apps_provider_install.dart` |
 | Add a reusable widget/dialog | `components/ui_widgets.dart` (or a dedicated component file) |
-| Theme/shape/motion tweaks | `buildObtainiumTheme()` in `main.dart`, `ui_shapes.dart`, `motion.dart` |
+| Theme/shape/motion tweaks | `buildObtainiumTheme()` in `lib/theme.dart`, `ui_shapes.dart`, `motion.dart` |

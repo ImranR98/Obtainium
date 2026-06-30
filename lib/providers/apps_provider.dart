@@ -268,9 +268,7 @@ Future<File> downloadFileWithRetry(
 
 String hashListOfLists(List<List<int>> data) {
   var bytes = utf8.encode(jsonEncode(data));
-  var digest = sha256.convert(bytes);
-  var hash = digest.toString();
-  return hash.hashCode.toString();
+  return sha256.convert(bytes).toString();
 }
 
 Future<String> checkPartialDownloadHashDynamic(
@@ -338,14 +336,15 @@ Future<String?> checkETagHeader(
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
   var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
-  await response.stream.drain<void>().catchError((_) {});
+  await response.stream.drain<void>().catchError((err) {
+    debugPrint('Error draining response stream: $err');
+  });
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
       ?.replaceAll('"', '')
@@ -420,13 +419,15 @@ Future<File> downloadFile(
   bool allowInsecure = false,
   LogsProvider? logs,
 }) async {
-  // Send the initial request but cancel it as soon as you have the headers
   var reqHeaders = headers ?? {};
   var req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
   var headersClient = IOClient(createHttpClient(allowInsecure));
   StreamedResponse headersResponse = await headersClient.send(req);
   var resHeaders = headersResponse.headers;
+  await headersResponse.stream.drain<void>().catchError((err) {
+    debugPrint('Error draining header-probe stream: $err');
+  });
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
@@ -435,7 +436,7 @@ Future<File> downloadFile(
   if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
-  if (((Uri.tryParse(url)?.path ?? url).toLowerCase().endsWith('.apk') ||
+  if ((AppSource.isApkOrContainerFile(Uri.tryParse(url)?.path ?? url) ||
           ext == 'attachment') &&
       ext != 'apk') {
     ext = 'apk';
@@ -727,9 +728,7 @@ class AppsProvider with ChangeNotifier {
         }
       }
       if (!isBg) {
-        // Load Apps into memory (in background processes, this is done later instead of in the constructor)
         await loadApps();
-        // Delete any partial APKs (if safe to do so)
         var cutoff = DateTime.now().subtract(const Duration(days: 7));
         await for (var partialApk in apkDir.list()) {
           if ((await partialApk.stat()).modified.isBefore(cutoff)) {
@@ -739,7 +738,9 @@ class AppsProvider with ChangeNotifier {
           }
         }
       }
-    }();
+    }().catchError((e) {
+      debugPrint('AppsProvider async init error: $e');
+    });
   }
 
   @override
@@ -923,171 +924,18 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   }
 
   if (toCheck.isNotEmpty) {
-    // Task is either in update mode or install mode
-    // If in update mode, we check for updates.
-    // We divide the results into 4 groups:
-    // - toNotify - Apps with updates that the user will be notified about (can't be silently installed)
-    // - toThrow - Apps with update check errors that the user will be notified about (no retry)
-    // After grouping the updates, we take care of toNotify and toThrow first
-    // Then we run the function again in install mode (toCheck is empty)
-
-    var enoughTimePassed =
-        appsProvider.settingsProvider.updateInterval != 0 &&
-        appsProvider.settingsProvider.lastCompletedBGCheckTime
-            .add(
-              Duration(minutes: appsProvider.settingsProvider.updateInterval),
-            )
-            .isBefore(DateTime.now());
-    if (!enoughTimePassed) {
-      debugPrint(
-        'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
-      );
-      return;
-    }
-
-    logs.add('BG update task: Started (${toCheck.length}).');
-
-    // Init. vars.
-    List<App> updates = []; // All updates found (silent and non-silent)
-    List<App> toNotify =
-        []; // All non-silent updates that the user will be notified about
-    List<MapEntry<String, int>> toRetry =
-        []; // All apps that got errors while checking
-    var retryAfterXSeconds = 0;
-    MultiAppMultiError?
-    errors; // All errors including those that will lead to a retry
-    MultiAppMultiError toThrow =
-        MultiAppMultiError(); // All errors that will not lead to a retry, just a notification
-    CheckingUpdatesNotification notif = CheckingUpdatesNotification(
-      plural('apps', toCheck.length),
-    ); // The notif. to show while checking
-
-    try {
-      // Check for updates
-      notificationsProvider.notify(notif, cancelExisting: true);
-      updates = await appsProvider.checkUpdates(
-        specificIds: toCheck.map((e) => e.key).toList(),
-        sp: appsProvider.settingsProvider,
-      );
-    } catch (e) {
-      if (e is Map) {
-        updates = e['updates'];
-        errors = e['errors'];
-        errors!.rawErrors.forEach((key, err) {
-          logs.add(
-            'BG update task: Got error on checking for $key \'${err.toString()}\'.',
-          );
-
-          var toCheckApp = toCheck.where((element) => element.key == key).first;
-          if (toCheckApp.value < maxAttempts) {
-            toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
-            // Next task interval is based on the error with the longest retry time
-            int minRetryIntervalForThisApp = err is RateLimitError
-                ? (err.remainingMinutes * 60)
-                : err is ClientException
-                ? (_obtainiumBgClientExceptionRetryWaitSeconds)
-                : (toCheckApp.value + 1);
-            if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
-              minRetryIntervalForThisApp = maxRetryWaitSeconds;
-            }
-            if (minRetryIntervalForThisApp > retryAfterXSeconds) {
-              retryAfterXSeconds = minRetryIntervalForThisApp;
-            }
-          } else {
-            if (err is! RateLimitError) {
-              toThrow.add(key, err, appName: errors?.appIdNames[key]);
-            }
-          }
-        });
-      } else {
-        // We don't expect to ever get here in any situation so no need to catch (but log it in case)
-        logs.add('Fatal error in BG update task: ${e.toString()}');
-        rethrow;
-      }
-    } finally {
-      notificationsProvider.cancel(notif.id);
-    }
-
-    // Filter out updates that will be installed silently (the rest go into toNotify)
-    List<App> trackOnlyToNotify = [];
-    List<App> exemptToNotify = [];
-    for (var i = 0; i < updates.length; i++) {
-      var canInstallSilently = await appsProvider.canInstallSilently(
-        updates[i],
-      );
-      if (networkRestricted || chargingRestricted || !canInstallSilently) {
-        if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
-          logs.add(
-            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
-          );
-          if (updates[i].additionalSettings['trackOnly'] == true) {
-            trackOnlyToNotify.add(updates[i]);
-          } else if (updates[i]
-                  .additionalSettings['exemptFromBackgroundUpdates'] ==
-              true) {
-            exemptToNotify.add(updates[i]);
-          } else {
-            toNotify.add(updates[i]);
-          }
-        }
-      }
-    }
-
-    // Send separate notifications to avoid one being cancelled
-    // when the other is processed
-    if (toNotify.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(toNotify));
-    }
-    if (trackOnlyToNotify.isNotEmpty) {
-      notificationsProvider.notify(
-        TrackOnlyUpdateNotification(trackOnlyToNotify),
-      );
-    }
-    if (exemptToNotify.isNotEmpty) {
-      notificationsProvider.notify(TrackOnlyUpdateNotification(exemptToNotify));
-    }
-
-    // Send the error notifications (grouped by error string)
-    if (toThrow.rawErrors.isNotEmpty) {
-      for (var element in toThrow.idsByErrorString.entries) {
-        notificationsProvider.notify(
-          ErrorCheckingUpdatesNotification(
-            errors!.errorsAppsString(element.key, element.value),
-            id: Random().nextInt(10000),
-          ),
-        );
-      }
-    }
-    // if there are update checks to retry, schedule a retry task
-    logs.add('BG update task: Done checking for updates.');
-    if (toRetry.isNotEmpty) {
-      logs.add(
-        'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
-      );
-      // Actually wait before retrying so rate-limited hosts aren't hammered.
-      if (retryAfterXSeconds > 0) {
-        await Future.delayed(Duration(seconds: retryAfterXSeconds));
-      }
-      return await bgUpdateCheck(taskId, {
-        'toCheck': toRetry
-            .map((entry) => {'key': entry.key, 'value': entry.value})
-            .toList(),
-        'toInstall': toInstall
-            .map((entry) => {'key': entry.key, 'value': entry.value})
-            .toList(),
-      });
-    } else {
-      // If there are no more update checks, call the function in install mode
-      logs.add(
-        'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
-      );
-      return await bgUpdateCheck(taskId, {
-        'toCheck': [],
-        'toInstall': toInstall
-            .map((entry) => {'key': entry.key, 'value': entry.value})
-            .toList(),
-      });
-    }
+    await _bgRunUpdateCheck(
+      taskId,
+      toCheck,
+      toInstall,
+      networkRestricted,
+      chargingRestricted,
+      maxAttempts,
+      maxRetryWaitSeconds,
+      appsProvider,
+      notificationsProvider,
+      logs,
+    );
   } else {
     await _runBGInstallMode(
       toInstall,
@@ -1100,4 +948,161 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
   AppsProvider._lastBackgroundSave = DateTime.now();
+}
+
+Future<void> _bgRunUpdateCheck(
+  String taskId,
+  List<MapEntry<String, int>> toCheck,
+  List<MapEntry<String, int>> toInstall,
+  bool networkRestricted,
+  bool chargingRestricted,
+  int maxAttempts,
+  int maxRetryWaitSeconds,
+  AppsProvider appsProvider,
+  NotificationsProvider notificationsProvider,
+  LogsProvider logs,
+) async {
+  var enoughTimePassed =
+      appsProvider.settingsProvider.updateInterval != 0 &&
+      appsProvider.settingsProvider.lastCompletedBGCheckTime
+          .add(
+            Duration(minutes: appsProvider.settingsProvider.updateInterval),
+          )
+          .isBefore(DateTime.now());
+  if (!enoughTimePassed) {
+    debugPrint(
+      'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
+    );
+    return;
+  }
+
+  logs.add('BG update task: Started (${toCheck.length}).');
+
+  List<App> updates = [];
+  List<App> toNotify = [];
+  List<MapEntry<String, int>> toRetry = [];
+  var retryAfterXSeconds = 0;
+  MultiAppMultiError? errors;
+  MultiAppMultiError toThrow = MultiAppMultiError();
+  CheckingUpdatesNotification notif = CheckingUpdatesNotification(
+    plural('apps', toCheck.length),
+  );
+
+  try {
+    notificationsProvider.notify(notif, cancelExisting: true);
+    updates = await appsProvider.checkUpdates(
+      specificIds: toCheck.map((e) => e.key).toList(),
+      sp: appsProvider.settingsProvider,
+    );
+  } catch (e) {
+    if (e is Map) {
+      updates = e['updates'];
+      errors = e['errors'];
+      errors!.rawErrors.forEach((key, err) {
+        logs.add(
+          'BG update task: Got error on checking for $key \'${err.toString()}\'.',
+        );
+
+        var toCheckApp = toCheck.where((element) => element.key == key).first;
+        if (toCheckApp.value < maxAttempts) {
+          toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
+          int minRetryIntervalForThisApp = err is RateLimitError
+              ? (err.remainingMinutes * 60)
+              : err is ClientException
+              ? (_obtainiumBgClientExceptionRetryWaitSeconds)
+              : (toCheckApp.value + 1);
+          if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
+            minRetryIntervalForThisApp = maxRetryWaitSeconds;
+          }
+          if (minRetryIntervalForThisApp > retryAfterXSeconds) {
+            retryAfterXSeconds = minRetryIntervalForThisApp;
+          }
+        } else {
+          if (err is! RateLimitError) {
+            toThrow.add(key, err, appName: errors?.appIdNames[key]);
+          }
+        }
+      });
+    } else {
+      logs.add('Fatal error in BG update task: ${e.toString()}');
+      rethrow;
+    }
+  } finally {
+    notificationsProvider.cancel(notif.id);
+  }
+
+  List<App> trackOnlyToNotify = [];
+  List<App> exemptToNotify = [];
+  for (var i = 0; i < updates.length; i++) {
+    var canInstallSilently = await appsProvider.canInstallSilently(
+      updates[i],
+    );
+    if (networkRestricted || chargingRestricted || !canInstallSilently) {
+      if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
+        logs.add(
+          'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
+        );
+        if (updates[i].additionalSettings['trackOnly'] == true) {
+          trackOnlyToNotify.add(updates[i]);
+        } else if (updates[i]
+                .additionalSettings['exemptFromBackgroundUpdates'] ==
+            true) {
+          exemptToNotify.add(updates[i]);
+        } else {
+          toNotify.add(updates[i]);
+        }
+      }
+    }
+  }
+
+  if (toNotify.isNotEmpty) {
+    notificationsProvider.notify(UpdateNotification(toNotify));
+  }
+  if (trackOnlyToNotify.isNotEmpty) {
+    notificationsProvider.notify(
+      TrackOnlyUpdateNotification(trackOnlyToNotify),
+    );
+  }
+  if (exemptToNotify.isNotEmpty) {
+    notificationsProvider.notify(TrackOnlyUpdateNotification(exemptToNotify));
+  }
+
+  if (toThrow.rawErrors.isNotEmpty) {
+    for (var element in toThrow.idsByErrorString.entries) {
+      notificationsProvider.notify(
+        ErrorCheckingUpdatesNotification(
+          errors!.errorsAppsString(element.key, element.value),
+          id: Random().nextInt(10000),
+        ),
+      );
+    }
+  }
+
+  logs.add('BG update task: Done checking for updates.');
+  if (toRetry.isNotEmpty) {
+    logs.add(
+      'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
+    );
+    if (retryAfterXSeconds > 0) {
+      await Future.delayed(Duration(seconds: retryAfterXSeconds));
+    }
+    return await bgUpdateCheck(taskId, {
+      'toCheck': toRetry
+          .map((entry) => {'key': entry.key, 'value': entry.value})
+          .toList(),
+      'toInstall': toInstall
+          .map((entry) => {'key': entry.key, 'value': entry.value})
+          .toList(),
+    });
+  } else {
+    logs.add(
+      'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
+    );
+    return await bgUpdateCheck(taskId, {
+      'toCheck': [],
+      'toInstall': toInstall
+          .map((entry) => {'key': entry.key, 'value': entry.value})
+          .toList(),
+    });
+  }
 }
