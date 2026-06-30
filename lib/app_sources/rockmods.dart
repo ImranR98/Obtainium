@@ -26,7 +26,7 @@ class RockMods extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    return Uri.parse(standardUrl).pathSegments.last;
+    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
   }
 
   @override

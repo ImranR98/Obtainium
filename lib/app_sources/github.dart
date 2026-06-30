@@ -466,20 +466,20 @@ class GitHub extends AppSource {
           }).toList() ??
           [];
 
-      DateTime? getPublishDateFromRelease(dynamic rel) =>
-          rel?['published_at'] != null
-          ? DateTime.parse(rel['published_at'])
-          : rel?['commit']?['created'] != null
-          ? DateTime.parse(rel['commit']['created'])
-          : null;
+      DateTime? getPublishDateFromRelease(dynamic rel) {
+        var pub = rel?['published_at'];
+        if (pub is String) return DateTime.tryParse(pub);
+        var commitCreated = rel?['commit']?['created'];
+        if (commitCreated is String) return DateTime.tryParse(commitCreated);
+        return null;
+      }
       DateTime? getNewestAssetDateFromRelease(dynamic rel) {
         var allAssets = rel['assets'] as List<dynamic>?;
         var filteredAssets = rel['filteredAssets'] as List<dynamic>?;
         var t = (filteredAssets ?? allAssets)
             ?.map((e) {
-              return e?['updated_at'] != null
-                  ? DateTime.parse(e['updated_at'])
-                  : null;
+              var updated = e?['updated_at'];
+              return updated is String ? DateTime.tryParse(updated) : null;
             })
             .where((e) => e != null)
             .toList();
@@ -516,18 +516,18 @@ class GitHub extends AppSource {
             if (sortMethod == 'date' ||
                 (sortMethod == 'smartname-datefallback' &&
                     stdFormats.isEmpty)) {
-              return (getReleaseDateFromRelease(
-                        a,
-                        useLatestAssetDateAsReleaseDate,
-                      ) ??
-                      DateTime(1))
-                  .compareTo(
-                    getReleaseDateFromRelease(
-                          b,
-                          useLatestAssetDateAsReleaseDate,
-                        ) ??
-                        DateTime(0),
-                  );
+              var dateA = getReleaseDateFromRelease(
+                a,
+                useLatestAssetDateAsReleaseDate,
+              );
+              var dateB = getReleaseDateFromRelease(
+                b,
+                useLatestAssetDateAsReleaseDate,
+              );
+              if (dateA == null && dateB == null) return 0;
+              if (dateA == null) return 1;
+              if (dateB == null) return -1;
+              return dateA.compareTo(dateB);
             } else {
               if (sortMethod != 'name' && stdFormats.isNotEmpty) {
                 var reg = RegExp(stdFormats.last);
@@ -785,10 +785,10 @@ class GitHub extends AppSource {
   String undoGHProxyMod(
     String reqUrl,
     Map<String, String> sourceConfigSettingValues,
-  ) => reqUrl.replaceFirst(
-    'https://${sourceConfigSettingValues['GHReqPrefix']}/',
-    '',
-  );
+  ) {
+    var prefix = 'https://${sourceConfigSettingValues['GHReqPrefix']}/';
+    return reqUrl.startsWith(prefix) ? reqUrl.substring(prefix.length) : reqUrl;
+  }
 
   @override
   Future<Map<String, List<String>>> search(
@@ -821,7 +821,8 @@ class GitHub extends AppSource {
   void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
       final resetEpochSeconds =
-          int.tryParse(res.headers['x-ratelimit-reset'] ?? '') ?? 1800000000;
+          int.tryParse(res.headers['x-ratelimit-reset'] ?? '') ??
+          DateTime.now().millisecondsSinceEpoch ~/ 1000 + 3600;
       final nowSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final remainingMinutes = ((resetEpochSeconds - nowSeconds) / 60)
           .ceil()

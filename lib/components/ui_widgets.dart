@@ -278,3 +278,36 @@ class LinkText extends StatelessWidget {
     );
   }
 }
+
+class ActionListTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool autoPop;
+
+  const ActionListTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.trailing,
+    this.onTap,
+    this.autoPop = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: trailing,
+      enabled: onTap != null,
+      onTap: onTap == null
+          ? null
+          : () {
+              if (autoPop) Navigator.of(context).pop();
+              onTap?.call();
+            },
+    );
+  }
+}

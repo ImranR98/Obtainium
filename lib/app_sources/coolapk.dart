@@ -31,8 +31,7 @@ class CoolApk extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    String appId = Uri.parse(standardUrl).pathSegments.last;
-    return appId;
+    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
   }
 
   @override

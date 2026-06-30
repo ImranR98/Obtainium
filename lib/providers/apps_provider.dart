@@ -76,6 +76,21 @@ class AppInMemory {
     sourceType: sourceType,
   );
 
+  AppInMemory copyWith({
+    App? app,
+    double? downloadProgress,
+    PackageInfo? installedInfo,
+    Uint8List? icon,
+    String? sourceType,
+  }) =>
+      AppInMemory(
+        app ?? this.app,
+        downloadProgress ?? this.downloadProgress,
+        installedInfo ?? this.installedInfo,
+        icon ?? this.icon,
+        sourceType: sourceType ?? this.sourceType,
+      );
+
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
 
@@ -179,42 +194,32 @@ Set<String> findStandardFormatsForVersion(String version, bool strict) {
   return results;
 }
 
-List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) {
-  String? temp;
+/// Removes all matching elements and appends the last match to the end.
+/// This is intentionally deduplicating — only one instance is re-added.
+List<T> _moveToEnd<T extends Object>(List<T> arr, bool Function(T) match) {
+  T? temp;
   arr.removeWhere((element) {
-    bool res = element == str || element == strB;
-    if (res) {
+    if (match(element)) {
       temp = element;
+      return true;
     }
-    return res;
+    return false;
   });
   if (temp != null) {
-    arr = [...arr, temp!];
+    arr = [...arr, temp as T];
   }
   return arr;
 }
+
+List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) =>
+    _moveToEnd(arr, (e) => e == str || e == strB);
 
 List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
   List<MapEntry<String, int>> arr,
   MapEntry<String, int> str, {
   MapEntry<String, int>? strB,
-}) {
-  MapEntry<String, int>? temp;
-  arr.removeWhere((element) {
-    bool resA = element.key == str.key;
-    bool resB = element.key == strB?.key;
-    if (resA) {
-      temp = str;
-    } else if (resB) {
-      temp = strB;
-    }
-    return resA || resB;
-  });
-  if (temp != null) {
-    arr = [...arr, temp!];
-  }
-  return arr;
-}
+}) =>
+    _moveToEnd(arr, (e) => e.key == str.key || e.key == strB?.key);
 
 Future<File> downloadFileWithRetry(
   String url,
@@ -358,6 +363,52 @@ void deleteFile(File file) {
   }
 }
 
+/// Waits for a concurrent download to finish by polling the temp file size.
+/// Returns the completed file if one is available, or null if a fresh download is needed.
+Future<File?> _waitForConcurrentDownload(
+  File tempDownloadedFile,
+  File downloadedFile,
+  LogsProvider? logs,
+) async {
+  logs?.add(
+    'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
+  );
+  int currentTempFileSize = await tempDownloadedFile.length();
+  int pollCount = 0;
+  while (pollCount < _obtainiumMaxDownloadPolls) {
+    pollCount++;
+    await Future.delayed(
+      Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
+    );
+    if (tempDownloadedFile.existsSync()) {
+      int newTempFileSize = await tempDownloadedFile.length();
+      if (newTempFileSize > currentTempFileSize) {
+        currentTempFileSize = newTempFileSize;
+        logs?.add(
+          'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+        );
+      } else {
+        logs?.add(
+          'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
+        );
+        break;
+      }
+    } else {
+      return downloadedFile.existsSync() ? downloadedFile : null;
+    }
+  }
+  if (downloadedFile.existsSync()) {
+    logs?.add(
+      'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
+    );
+    return downloadedFile;
+  }
+  logs?.add(
+    'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+  );
+  return null;
+}
+
 Future<File> downloadFile(
   String url,
   String fileName,
@@ -422,55 +473,18 @@ Future<File> downloadFile(
     }
   }
 
-  // Download to a '.temp' file (to distinguish btn. complete/incomplete files)
+    // Download to a '.temp' file (to distinguish between complete/incomplete files)
   File tempDownloadedFile = File('${downloadedFile.path}.part');
 
   // If there is already a temp file, a download may already be in progress - account for this (see #2073)
   bool tempFileExists = tempDownloadedFile.existsSync();
   if (tempFileExists && useExisting) {
-    logs?.add(
-      'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
+    var result = await _waitForConcurrentDownload(
+      tempDownloadedFile,
+      downloadedFile,
+      logs,
     );
-    bool isDownloading = true;
-    int currentTempFileSize = await tempDownloadedFile.length();
-    bool shouldReturn = false;
-    int pollCount = 0;
-    while (isDownloading && pollCount < _obtainiumMaxDownloadPolls) {
-      pollCount++;
-      await Future.delayed(
-        Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
-      );
-      if (tempDownloadedFile.existsSync()) {
-        int newTempFileSize = await tempDownloadedFile.length();
-        if (newTempFileSize > currentTempFileSize) {
-          currentTempFileSize = newTempFileSize;
-          logs?.add(
-            'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
-          );
-        } else {
-          logs?.add(
-            'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
-          );
-          break;
-        }
-      } else {
-        // The temp file disappeared: a concurrent download finished it (and
-        // renamed it to the final file). Stop waiting; the check below decides
-        // whether to reuse the completed file or start a fresh download.
-        shouldReturn = downloadedFile.existsSync();
-        break;
-      }
-    }
-    if (shouldReturn) {
-      logs?.add(
-        'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
-      );
-      return downloadedFile;
-    } else {
-      logs?.add(
-        'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
-      );
-    }
+    if (result != null) return result;
   }
 
   // If the range feature is not available (or you need to start a ranged req from 0),
@@ -760,6 +774,57 @@ class AppsProvider with ChangeNotifier {
   }
 }
 
+Future<void> _runBGInstallMode(
+  List<MapEntry<String, int>> toInstall,
+  bool networkRestricted,
+  bool chargingRestricted,
+  AppsProvider appsProvider,
+  NotificationsProvider notificationsProvider,
+  LogsProvider logs,
+) async {
+  logs.add('BG install task: Started (${toInstall.length}).');
+  if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
+    var temp = appsProvider.findExistingUpdates(installedOnly: true);
+    for (var i = 0; i < temp.length; i++) {
+      if (await appsProvider.canInstallSilently(
+        appsProvider.apps[temp[i]]!.app,
+      )) {
+        toInstall.add(MapEntry(temp[i], 0));
+      }
+    }
+  }
+  if (toInstall.isNotEmpty) {
+    var tempObtArr = toInstall.where(
+      (element) =>
+          element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
+    );
+    if (tempObtArr.isNotEmpty) {
+      var obt = tempObtArr.first;
+      toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
+    }
+    try {
+      await appsProvider.downloadAndInstallLatestApps(
+        toInstall.map((e) => e.key).toList(),
+        null,
+        notificationsProvider: notificationsProvider,
+        forceParallelDownloads: true,
+      );
+    } catch (e) {
+      if (e is MultiAppMultiError) {
+        e.idsByErrorString.forEach((key, value) {
+          notificationsProvider.notify(
+            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+          );
+        });
+      } else {
+        logs.add('Fatal error in BG install task: ${e.toString()}');
+        rethrow;
+      }
+    }
+    logs.add('BG install task: Done installing updates.');
+  }
+}
+
 /// Background updater function
 ///
 /// @param `List<MapEntry<String, int>>?` toCheck: The appIds to check for updates (with the number of previous attempts made per appid) (defaults to all apps)
@@ -1023,52 +1088,14 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       });
     }
   } else {
-    // In install mode...
-    // If you haven't explicitly been given updates to install, grab all available silent updates
-    logs.add('BG install task: Started (${toInstall.length}).');
-    if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
-      var temp = appsProvider.findExistingUpdates(installedOnly: true);
-      for (var i = 0; i < temp.length; i++) {
-        if (await appsProvider.canInstallSilently(
-          appsProvider.apps[temp[i]]!.app,
-        )) {
-          toInstall.add(MapEntry(temp[i], 0));
-        }
-      }
-    }
-    if (toInstall.isNotEmpty) {
-      var tempObtArr = toInstall.where(
-        (element) =>
-            element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
-      );
-      if (tempObtArr.isNotEmpty) {
-        // Move obtainium to the end of the list as it must always install last
-        var obt = tempObtArr.first;
-        toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
-      }
-      // Loop through all updates and install each
-      try {
-        await appsProvider.downloadAndInstallLatestApps(
-          toInstall.map((e) => e.key).toList(),
-          null,
-          notificationsProvider: notificationsProvider,
-          forceParallelDownloads: true,
-        );
-      } catch (e) {
-        if (e is MultiAppMultiError) {
-          e.idsByErrorString.forEach((key, value) {
-            notificationsProvider.notify(
-              ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
-            );
-          });
-        } else {
-          // We don't expect to ever get here in any situation so no need to catch (but log it in case)
-          logs.add('Fatal error in BG install task: ${e.toString()}');
-          rethrow;
-        }
-      }
-      logs.add('BG install task: Done installing updates.');
-    }
+    await _runBGInstallMode(
+      toInstall,
+      networkRestricted,
+      chargingRestricted,
+      appsProvider,
+      notificationsProvider,
+      logs,
+    );
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
   AppsProvider._lastBackgroundSave = DateTime.now();

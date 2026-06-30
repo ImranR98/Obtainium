@@ -136,8 +136,9 @@ class SettingsProvider with ChangeNotifier {
   }
 
   set useMaterialYou(bool useMaterialYou) {
-    prefs?.setBool('useMaterialYou', useMaterialYou);
-    notifyListeners();
+    colourSchemeMode = useMaterialYou
+        ? ColourSchemeMode.materialYou
+        : ColourSchemeMode.standard;
   }
 
   ColourSchemeMode get colourSchemeMode {

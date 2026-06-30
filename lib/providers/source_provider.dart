@@ -84,6 +84,25 @@ const int currentAppJSONCompatVersion = 1;
 const _maxRedirects = 10;
 const _connectionTimeoutSeconds = 30;
 
+Map<String, dynamic> _migrateAppToHTML(
+  Map<String, dynamic> json,
+  Map<String, dynamic> additionalSettings, {
+  required String newUrl,
+  Map<String, dynamic>? overrides,
+}) {
+  json['url'] = newUrl;
+  var replacement = getDefaultValuesFromFormItems(
+    HTML().combinedAppSpecificSettingFormItems,
+  );
+  for (var s in replacement.keys) {
+    if (additionalSettings.containsKey(s)) {
+      replacement[s] = additionalSettings[s];
+    }
+  }
+  if (overrides != null) replacement.addAll(overrides);
+  return replacement;
+}
+
 /// Applies any legacy JSON transformations so the stored [json] matches the
 /// current schema. Default-setting reconciliation always runs; one-time
 /// migrations (URL rewrites, format conversions) are gated by compatVersion.
@@ -213,21 +232,18 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     // Steam source apps should be converted to HTML (#1244)
     var legacySteamSourceApps = ['steam', 'steam-chat-app'];
     if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
-      json['url'] = '${json['url']}/mobile';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
+      additionalSettings = _migrateAppToHTML(
+        json,
+        additionalSettings,
+        newUrl: '${json['url']}/mobile',
+        overrides: {
+          'customLinkFilterRegex':
+              '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk',
+          'versionExtractionRegEx':
+              '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk',
+          'matchGroupToUse': '\$1',
+        },
       );
-      for (var s in replacementAdditionalSettings.keys) {
-        if (additionalSettings.containsKey(s)) {
-          replacementAdditionalSettings[s] = additionalSettings[s];
-        }
-      }
-      replacementAdditionalSettings['customLinkFilterRegex'] =
-          '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk';
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          replacementAdditionalSettings['customLinkFilterRegex'];
-      replacementAdditionalSettings['matchGroupToUse'] = '\$1';
-      additionalSettings = replacementAdditionalSettings;
     }
     // Signal apps from before it was removed should be converted to HTML (#1928)
     if (json['url'] == 'https://signal.org' &&
@@ -238,13 +254,12 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
         additionalSettings['trackOnly'] == false &&
         additionalSettings['versionExtractionRegEx'] == '' &&
         json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://updates.signal.org/android/latest.json';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
+      additionalSettings = _migrateAppToHTML(
+        json,
+        additionalSettings,
+        newUrl: 'https://updates.signal.org/android/latest.json',
+        overrides: {'versionExtractionRegEx': r'\d+.\d+.\d+'},
       );
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          '\\d+.\\d+.\\d+';
-      additionalSettings = replacementAdditionalSettings;
     }
     // WhatsApp from before it was removed should be converted to HTML (#1943)
     if (json['url'] == 'https://whatsapp.com' &&
@@ -255,12 +270,12 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
         additionalSettings['trackOnly'] == false &&
         additionalSettings['versionExtractionRegEx'] == '' &&
         json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://whatsapp.com/android';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
+      additionalSettings = _migrateAppToHTML(
+        json,
+        additionalSettings,
+        newUrl: 'https://whatsapp.com/android',
+        overrides: {'refreshBeforeDownload': true},
       );
-      replacementAdditionalSettings['refreshBeforeDownload'] = true;
-      additionalSettings = replacementAdditionalSettings;
     }
     // VLC from before it was removed should be converted to HTML (#1943)
     if (json['url'] == 'https://videolan.org' &&
@@ -271,13 +286,13 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
         additionalSettings['trackOnly'] == false &&
         additionalSettings['versionExtractionRegEx'] == '' &&
         json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://www.videolan.org/vlc/download-android.html';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
-      );
-      replacementAdditionalSettings['refreshBeforeDownload'] = true;
-      replacementAdditionalSettings['intermediateLink'] =
-          <Map<String, dynamic>>[
+      additionalSettings = _migrateAppToHTML(
+        json,
+        additionalSettings,
+        newUrl: 'https://www.videolan.org/vlc/download-android.html',
+        overrides: {
+          'refreshBeforeDownload': true,
+          'intermediateLink': <Map<String, dynamic>>[
             {
               'customLinkFilterRegex': 'APK',
               'filterByLinkText': true,
@@ -286,17 +301,17 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
               'sortByLastLinkSegment': false,
             },
             {
-              'customLinkFilterRegex': 'arm64-v8a\\.apk\$',
+              'customLinkFilterRegex': r'arm64-v8a\.apk$',
               'filterByLinkText': false,
               'skipSort': false,
               'reverseSort': false,
               'sortByLastLinkSegment': false,
             },
-          ];
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          '/vlc-android/([^/]+)/';
-      replacementAdditionalSettings['matchGroupToUse'] = "1";
-      additionalSettings = replacementAdditionalSettings;
+          ],
+          'versionExtractionRegEx': '/vlc-android/([^/]+)/',
+          'matchGroupToUse': '1',
+        },
+      );
     }
   }
   json['additionalSettings'] = jsonEncode(additionalSettings);
@@ -306,14 +321,14 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     // While not causing problems for existing apps from that source that were added in a previous version
     var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
     if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
-      json['overrideSource'] = FDroid().runtimeType.toString();
+      json['overrideSource'] = FDroid().sourceIdentifier;
     } else if (overrideSourceWasUndefined) {
       // Similar to above, but for third-party F-Droid repos
       RegExpMatch? match = RegExp(
         '^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)',
       ).firstMatch(json['url'] as String);
       if (match != null) {
-        json['overrideSource'] = FDroidRepo().runtimeType.toString();
+        json['overrideSource'] = FDroidRepo().sourceIdentifier;
       }
     }
   }
@@ -394,7 +409,7 @@ class App {
     name,
     installedVersion,
     latestVersion,
-    apkUrls,
+    List<MapEntry<String, String>>.from(apkUrls),
     preferredApkIndex,
     Map.from(additionalSettings),
     lastUpdateCheck,
@@ -692,6 +707,7 @@ abstract class AppSource with HttpClientMixin {
   bool urlsAlwaysHaveExtension = false;
   bool allowIncludeZips = false;
   bool allowIncludeTarballs = false;
+  String get sourceIdentifier => runtimeType.toString();
 
   AppSource() {
     name = runtimeType.toString();
@@ -816,7 +832,7 @@ abstract class AppSource with HttpClientMixin {
     throw NotImplementedError();
   }
 
-  // Different Sources may need different kinds of additional data for Apps
+  // Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
   List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
       [];
 
@@ -1094,6 +1110,16 @@ abstract class AppSource with HttpClientMixin {
     throw NotImplementedError();
   }
 
+  static String stripLastPathSegment(String url) =>
+      Uri.parse(url).replace(pathSegments: Uri.parse(url).pathSegments.sublist(0, Uri.parse(url).pathSegments.length - 1)).toString();
+
+  static Future<String?> tryInferAppIdFromLastPathSegment(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
+    return Uri.parse(standardUrl).pathSegments.where((s) => s.isNotEmpty).lastOrNull;
+  }
+
   Future<String?> tryInferringAppId(
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
@@ -1264,7 +1290,7 @@ class SourceProvider {
     TelegramApp(),
     NeutronCode(),
     DirectAPKLink(),
-    HTML(), // This should ALWAYS be the last option as they are tried in order
+    HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
   ];
 
   // Each source instance is immutable after construction (fields are only set
@@ -1284,7 +1310,7 @@ class SourceProvider {
       // The override path mutates the chosen source's host config, so build a
       // throwaway instance here rather than touching the shared cache.
       var srcs = _buildSources().where(
-        (e) => e.runtimeType.toString() == overrideSource,
+        (e) => e.sourceIdentifier == overrideSource,
       );
       if (srcs.isEmpty) {
         throw UnsupportedURLError();
@@ -1428,7 +1454,7 @@ class SourceProvider {
       releaseDate: apk.releaseDate,
       changeLog: apk.changeLog,
       overrideSource: sourceIsOverriden
-          ? source.runtimeType.toString()
+          ? source.sourceIdentifier
           : currentApp?.overrideSource,
       allowIdChange:
           currentApp?.allowIdChange ??

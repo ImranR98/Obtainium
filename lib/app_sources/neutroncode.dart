@@ -106,7 +106,7 @@ class NeutronCode extends AppSource {
       return APKDetails(
         version,
         getApkUrlsFromUrls([apkUrl]),
-        AppNames(runtimeType.toString(), name ?? standardUrl.split('/').last),
+        AppNames(sourceIdentifier, name ?? standardUrl.split('/').last),
         releaseDate: dateString != null ? DateTime.parse(dateString) : null,
         changeLog: changeLogElements.isNotEmpty
             ? changeLogElements.last.innerHtml

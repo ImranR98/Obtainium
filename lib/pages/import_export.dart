@@ -13,22 +13,6 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-
-Widget _actionTile({
-  required IconData icon,
-  required String label,
-  Widget? trailing,
-  required VoidCallback? onTap,
-}) {
-  return ListTile(
-    leading: Icon(icon),
-    title: Text(label),
-    trailing: trailing,
-    onTap: onTap,
-    enabled: onTap != null,
-  );
-}
-
 class ImportFromURLListPage extends StatefulWidget {
   const ImportFromURLListPage({super.key});
 
@@ -352,7 +336,7 @@ class _ImportSectionState extends State<ImportSection> {
           isFirst: true,
           isLast: true,
           padding: null,
-          child: _actionTile(
+          child: ActionListTile(
             icon: Icons.download_outlined,
             label: tr('obtainiumImport'),
             onTap: importInProgress ? null : runObtainiumImport,
@@ -362,7 +346,7 @@ class _ImportSectionState extends State<ImportSection> {
           spacing: 2,
           children: () {
             final tiles = <Widget>[
-              _actionTile(
+              ActionListTile(
                 icon: Icons.format_list_bulleted_outlined,
                 label: tr('importFromURLList'),
                 onTap: importInProgress
@@ -375,7 +359,7 @@ class _ImportSectionState extends State<ImportSection> {
                       ),
               ),
               ...sourceProvider.massUrlSources.map(
-                (source) => _actionTile(
+                (source) => ActionListTile(
                   icon: Icons.cloud_download_outlined,
                   label: tr('importX', args: [source.name]),
                   onTap: importInProgress
@@ -453,7 +437,7 @@ class _ExportSectionState extends State<ExportSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _actionTile(
+              ActionListTile(
                 icon: Icons.folder_open_outlined,
                 label: tr('pickExportDir'),
                 trailing: snapshot.data != null
@@ -464,7 +448,7 @@ class _ExportSectionState extends State<ExportSection> {
                     : null,
                 onTap: () => runObtainiumExport(pickOnly: true),
               ),
-              _actionTile(
+              ActionListTile(
                 icon: Icons.upload_outlined,
                 label: tr('obtainiumExport'),
                 onTap: snapshot.data == null ? null : runObtainiumExport,

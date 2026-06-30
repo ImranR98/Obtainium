@@ -444,333 +444,19 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: tr('obtainiumExport'),
                           children: const [ExportSection()],
                         ),
-                        SettingsGroup(
-                          title: tr('updates'),
-                          children: [
-                            const _UpdateIntervalSliderTile(),
-                            if (showBgSection) ...[
-                              SettingsToggleRow(
-                                label: tr('foregroundServiceExplanation'),
-                                value: settingsProvider.useFGService,
-                                onChanged: (value) {
-                                  settingsProvider.useFGService = value;
-                                },
-                              ),
-                              SettingsToggleRow(
-                                label: tr('enableBackgroundUpdates'),
-                                value: settingsProvider.enableBackgroundUpdates,
-                                onChanged: (value) {
-                                  settingsProvider.enableBackgroundUpdates =
-                                      value;
-                                },
-                                helpWidgets: [
-                                  Text(tr('backgroundUpdateReqsExplanation')),
-                                  const SizedBox(height: 8),
-                                  Text(tr('backgroundUpdateLimitsExplanation')),
-                                ],
-                              ),
-                              if (settingsProvider.enableBackgroundUpdates)
-                                SettingsToggleRow(
-                                  label: tr('bgUpdatesOnWiFiOnly'),
-                                  value: settingsProvider.bgUpdatesOnWiFiOnly,
-                                  onChanged: (value) {
-                                    settingsProvider.bgUpdatesOnWiFiOnly =
-                                        value;
-                                  },
-                                ),
-                              if (settingsProvider.enableBackgroundUpdates)
-                                SettingsToggleRow(
-                                  label: tr('bgUpdatesWhileChargingOnly'),
-                                  value: settingsProvider
-                                      .bgUpdatesWhileChargingOnly,
-                                  onChanged: (value) {
-                                    settingsProvider
-                                            .bgUpdatesWhileChargingOnly =
-                                        value;
-                                  },
-                                ),
-                            ],
-                            SettingsToggleRow(
-                              label: tr('checkOnStart'),
-                              value: settingsProvider.checkOnStart,
-                              onChanged: (value) {
-                                settingsProvider.checkOnStart = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('checkUpdateOnDetailPage'),
-                              value: settingsProvider.checkUpdateOnDetailPage,
-                              onChanged: (value) {
-                                settingsProvider.checkUpdateOnDetailPage =
-                                    value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('onlyCheckInstalledOrTrackOnlyApps'),
-                              value: settingsProvider
-                                  .onlyCheckInstalledOrTrackOnlyApps,
-                              onChanged: (value) {
-                                settingsProvider
-                                        .onlyCheckInstalledOrTrackOnlyApps =
-                                    value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('removeOnExternalUninstall'),
-                              value: settingsProvider.removeOnExternalUninstall,
-                              onChanged: (value) {
-                                settingsProvider.removeOnExternalUninstall =
-                                    value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('includePrereleasesByDefault'),
-                              value:
-                                  settingsProvider.includePrereleasesByDefault,
-                              onChanged: (value) {
-                                settingsProvider.includePrereleasesByDefault =
-                                    value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('tactileFeedbackEnabled'),
-                              value: settingsProvider.tactileFeedbackEnabled,
-                              onChanged: (value) {
-                                settingsProvider.tactileFeedbackEnabled = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('showBatteryOptimizationPrompt'),
-                              value: settingsProvider
-                                  .showBatteryOptimizationPrompt,
-                              onChanged: (value) {
-                                settingsProvider.showBatteryOptimizationPrompt =
-                                    value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('showAppDowngradeError'),
-                              value: settingsProvider.showAppDowngradeError,
-                              onChanged: (value) {
-                                settingsProvider.showAppDowngradeError = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('parallelDownloads'),
-                              value: settingsProvider.parallelDownloads,
-                              onChanged: (value) {
-                                settingsProvider.parallelDownloads = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('beforeNewInstallsShareToAppVerifier'),
-                              value: settingsProvider
-                                  .beforeNewInstallsShareToAppVerifier,
-                              onChanged: (value) {
-                                settingsProvider
-                                        .beforeNewInstallsShareToAppVerifier =
-                                    value;
-                              },
-                              subtitle: LinkText(
-                                text: tr('about'),
-                                url:
-                                    'https://github.com/soupslurpr/AppVerifier',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                            SettingsToggleRow(
-                              label: tr('useShizuku'),
-                              value: settingsProvider.useShizuku,
-                              onChanged: (useShizuku) {
-                                if (useShizuku) {
-                                  ShizukuApkInstaller()
-                                      .checkPermission()
-                                      .then((resCode) {
-                                        settingsProvider.useShizuku =
-                                            resCode?.startsWith('granted') ??
-                                            false;
-                                        if (!context.mounted) return;
-                                        switch (resCode) {
-                                          case 'services_not_found':
-                                            showError(
-                                              ObtainiumError(
-                                                tr('shizukuBinderNotFound'),
-                                              ),
-                                              context,
-                                            );
-                                          case 'old_shizuku':
-                                            showError(
-                                              ObtainiumError(tr('shizukuOld')),
-                                              context,
-                                            );
-                                          case 'old_android_with_adb':
-                                            showError(
-                                              ObtainiumError(
-                                                tr('shizukuOldAndroidWithADB'),
-                                              ),
-                                              context,
-                                            );
-                                          case 'denied':
-                                            showError(
-                                              ObtainiumError(tr('cancelled')),
-                                              context,
-                                            );
-                                          case null:
-                                            showError(
-                                              ObtainiumError(
-                                                tr('unexpectedError'),
-                                              ),
-                                              context,
-                                            );
-                                        }
-                                      })
-                                      .catchError((e) {
-                                        settingsProvider.useShizuku = false;
-                                        if (context.mounted) {
-                                          showError(e, context);
-                                        }
-                                      });
-                                } else {
-                                  settingsProvider.useShizuku = false;
-                                }
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('shizukuPretendToBeGooglePlay'),
-                              value:
-                                  settingsProvider.shizukuPretendToBeGooglePlay,
-                              onChanged: (value) {
-                                settingsProvider.shizukuPretendToBeGooglePlay =
-                                    value;
-                              },
-                            ),
-                          ],
-                        ),
+                        _buildUpdatesSection(showBgSection, sdk),
                         if (sourceSpecificForm != null)
                           SettingsGroup(
                             title: tr('sourceSpecific'),
                             children: [sourceSpecificForm],
                           ),
-                        SettingsGroup(
-                          title: tr('appearance'),
-                          children: [
-                            themeModeControl,
-                            if (settingsProvider.theme ==
-                                    ThemeSettings.system &&
-                                (androidSdkInt ?? 30) < 29)
-                              _caption(
-                                context,
-                                tr('followSystemThemeExplanation'),
-                              ),
-                            if (settingsProvider.theme != ThemeSettings.light)
-                              SettingsToggleRow(
-                                label: tr('useBlackTheme'),
-                                value: settingsProvider.useBlackTheme,
-                                onChanged: (value) {
-                                  settingsProvider.useBlackTheme = value;
-                                },
-                              ),
-                            _fieldTile(context, colourSchemeDropdown),
-                            if (settingsProvider.colourSchemeMode !=
-                                ColourSchemeMode.materialYou)
-                              colorPicker,
-                            _fieldTile(context, sortDropdown),
-                            orderControl,
-                            _fieldTile(context, localeDropdown),
-                            if (sdk >= 29)
-                              SettingsToggleRow(
-                                label: tr('useSystemFont'),
-                                value: settingsProvider.useSystemFont,
-                                onChanged: (useSystemFont) {
-                                  if (useSystemFont) {
-                                    NativeFeatures.loadSystemFont()
-                                        .then((_) {
-                                          settingsProvider.useSystemFont = true;
-                                        })
-                                        .catchError((e) {
-                                          settingsProvider.useSystemFont =
-                                              false;
-                                          if (context.mounted) {
-                                            showError(
-                                              ObtainiumError(
-                                                '${tr('unexpectedError')}: $e',
-                                              ),
-                                              context,
-                                            );
-                                          }
-                                        });
-                                  } else {
-                                    settingsProvider.useSystemFont = false;
-                                  }
-                                },
-                              ),
-                            SettingsToggleRow(
-                              label: tr('showWebInAppView'),
-                              value: settingsProvider.showAppWebpage,
-                              onChanged: (value) {
-                                settingsProvider.showAppWebpage = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('pinUpdates'),
-                              value: settingsProvider.pinUpdates,
-                              onChanged: (value) {
-                                settingsProvider.pinUpdates = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('moveNonInstalledAppsToBottom'),
-                              value: settingsProvider.buryNonInstalled,
-                              onChanged: (value) {
-                                settingsProvider.buryNonInstalled = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('groupByCategory'),
-                              value: settingsProvider.groupByCategory,
-                              onChanged: (value) {
-                                settingsProvider.groupByCategory = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('dontShowTrackOnlyWarnings'),
-                              value: settingsProvider.hideTrackOnlyWarning,
-                              onChanged: (value) {
-                                settingsProvider.hideTrackOnlyWarning = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('dontShowAPKOriginWarnings'),
-                              value: settingsProvider.hideAPKOriginWarning,
-                              onChanged: (value) {
-                                settingsProvider.hideAPKOriginWarning = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('disablePageTransitions'),
-                              value: settingsProvider.disablePageTransitions,
-                              onChanged: (value) {
-                                settingsProvider.disablePageTransitions = value;
-                              },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('reversePageTransitions'),
-                              value: settingsProvider.reversePageTransitions,
-                              onChanged: settingsProvider.disablePageTransitions
-                                  ? null
-                                  : (value) {
-                                      settingsProvider.reversePageTransitions =
-                                          value;
-                                    },
-                            ),
-                            SettingsToggleRow(
-                              label: tr('highlightTouchTargets'),
-                              value: settingsProvider.highlightTouchTargets,
-                              onChanged: (value) {
-                                settingsProvider.highlightTouchTargets = value;
-                              },
-                            ),
-                          ],
+                        _buildAppearanceSection(
+                          colorPicker,
+                          themeModeControl,
+                          sortDropdown,
+                          orderControl,
+                          localeDropdown,
+                          colourSchemeDropdown,
                         ),
                         SettingsGroup(
                           title: tr('categories'),
@@ -788,6 +474,234 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildFooter(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildUpdatesSection(bool showBgSection, int sdk) {
+    final settingsProvider = context.read<SettingsProvider>();
+    return SettingsGroup(
+      title: tr('updates'),
+      children: [
+        const _UpdateIntervalSliderTile(),
+        if (showBgSection) ...[
+          SettingsToggleRow(
+            label: tr('foregroundServiceExplanation'),
+            value: settingsProvider.useFGService,
+            onChanged: (value) => settingsProvider.useFGService = value,
+          ),
+          SettingsToggleRow(
+            label: tr('enableBackgroundUpdates'),
+            value: settingsProvider.enableBackgroundUpdates,
+            onChanged: (value) => settingsProvider.enableBackgroundUpdates = value,
+            helpWidgets: [
+              Text(tr('backgroundUpdateReqsExplanation')),
+              const SizedBox(height: 8),
+              Text(tr('backgroundUpdateLimitsExplanation')),
+            ],
+          ),
+          if (settingsProvider.enableBackgroundUpdates)
+            SettingsToggleRow(
+              label: tr('bgUpdatesOnWiFiOnly'),
+              value: settingsProvider.bgUpdatesOnWiFiOnly,
+              onChanged: (value) => settingsProvider.bgUpdatesOnWiFiOnly = value,
+            ),
+          if (settingsProvider.enableBackgroundUpdates)
+            SettingsToggleRow(
+              label: tr('bgUpdatesWhileChargingOnly'),
+              value: settingsProvider.bgUpdatesWhileChargingOnly,
+              onChanged: (value) => settingsProvider.bgUpdatesWhileChargingOnly = value,
+            ),
+        ],
+        SettingsToggleRow(
+          label: tr('checkOnStart'),
+          value: settingsProvider.checkOnStart,
+          onChanged: (value) => settingsProvider.checkOnStart = value,
+        ),
+        SettingsToggleRow(
+          label: tr('checkUpdateOnDetailPage'),
+          value: settingsProvider.checkUpdateOnDetailPage,
+          onChanged: (value) => settingsProvider.checkUpdateOnDetailPage = value,
+        ),
+        SettingsToggleRow(
+          label: tr('onlyCheckInstalledOrTrackOnlyApps'),
+          value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          onChanged: (value) => settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
+        ),
+        SettingsToggleRow(
+          label: tr('removeOnExternalUninstall'),
+          value: settingsProvider.removeOnExternalUninstall,
+          onChanged: (value) => settingsProvider.removeOnExternalUninstall = value,
+        ),
+        SettingsToggleRow(
+          label: tr('includePrereleasesByDefault'),
+          value: settingsProvider.includePrereleasesByDefault,
+          onChanged: (value) => settingsProvider.includePrereleasesByDefault = value,
+        ),
+        SettingsToggleRow(
+          label: tr('tactileFeedbackEnabled'),
+          value: settingsProvider.tactileFeedbackEnabled,
+          onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
+        ),
+        SettingsToggleRow(
+          label: tr('showBatteryOptimizationPrompt'),
+          value: settingsProvider.showBatteryOptimizationPrompt,
+          onChanged: (value) => settingsProvider.showBatteryOptimizationPrompt = value,
+        ),
+        SettingsToggleRow(
+          label: tr('showAppDowngradeError'),
+          value: settingsProvider.showAppDowngradeError,
+          onChanged: (value) => settingsProvider.showAppDowngradeError = value,
+        ),
+        SettingsToggleRow(
+          label: tr('parallelDownloads'),
+          value: settingsProvider.parallelDownloads,
+          onChanged: (value) => settingsProvider.parallelDownloads = value,
+        ),
+        SettingsToggleRow(
+          label: tr('beforeNewInstallsShareToAppVerifier'),
+          value: settingsProvider.beforeNewInstallsShareToAppVerifier,
+          onChanged: (value) => settingsProvider.beforeNewInstallsShareToAppVerifier = value,
+          subtitle: LinkText(
+            text: tr('about'),
+            url: 'https://github.com/soupslurpr/AppVerifier',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        SettingsToggleRow(
+          label: tr('useShizuku'),
+          value: settingsProvider.useShizuku,
+          onChanged: (useShizuku) => _handleShizukuToggle(useShizuku),
+        ),
+        SettingsToggleRow(
+          label: tr('shizukuPretendToBeGooglePlay'),
+          value: settingsProvider.shizukuPretendToBeGooglePlay,
+          onChanged: (value) => settingsProvider.shizukuPretendToBeGooglePlay = value,
+        ),
+      ],
+    );
+  }
+
+  void _handleShizukuToggle(bool useShizuku) {
+    final settingsProvider = context.read<SettingsProvider>();
+    if (useShizuku) {
+      ShizukuApkInstaller().checkPermission().then((resCode) {
+        settingsProvider.useShizuku = resCode?.startsWith('granted') ?? false;
+        if (!context.mounted) return;
+        switch (resCode) {
+          case 'services_not_found':
+            showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
+          case 'old_shizuku':
+            showError(ObtainiumError(tr('shizukuOld')), context);
+          case 'old_android_with_adb':
+            showError(ObtainiumError(tr('shizukuOldAndroidWithADB')), context);
+          case 'denied':
+            showError(ObtainiumError(tr('cancelled')), context);
+          case null:
+            showError(ObtainiumError(tr('unexpectedError')), context);
+        }
+      }).catchError((e) {
+        settingsProvider.useShizuku = false;
+        if (context.mounted) showError(e, context);
+      });
+    } else {
+      settingsProvider.useShizuku = false;
+    }
+  }
+
+  Widget _buildAppearanceSection(
+    Widget colorPicker,
+    Widget themeModeControl,
+    Widget sortDropdown,
+    Widget orderControl,
+    Widget localeDropdown,
+    Widget colourSchemeDropdown,
+  ) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final sdk = androidSdkInt ?? 0;
+    return SettingsGroup(
+      title: tr('appearance'),
+      children: [
+        themeModeControl,
+        if (settingsProvider.theme == ThemeSettings.system && (androidSdkInt ?? 30) < 29)
+          _caption(context, tr('followSystemThemeExplanation')),
+        if (settingsProvider.theme != ThemeSettings.light)
+          SettingsToggleRow(
+            label: tr('useBlackTheme'),
+            value: settingsProvider.useBlackTheme,
+            onChanged: (value) => settingsProvider.useBlackTheme = value,
+          ),
+        _fieldTile(context, colourSchemeDropdown),
+        if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou) colorPicker,
+        _fieldTile(context, sortDropdown),
+        orderControl,
+        _fieldTile(context, localeDropdown),
+        if (sdk >= 29)
+          SettingsToggleRow(
+            label: tr('useSystemFont'),
+            value: settingsProvider.useSystemFont,
+            onChanged: (useSystemFont) {
+              if (useSystemFont) {
+                NativeFeatures.loadSystemFont().then((_) {
+                  settingsProvider.useSystemFont = true;
+                }).catchError((e) {
+                  settingsProvider.useSystemFont = false;
+                  if (context.mounted) {
+                    showError(ObtainiumError('${tr('unexpectedError')}: $e'), context);
+                  }
+                });
+              } else {
+                settingsProvider.useSystemFont = false;
+              }
+            },
+          ),
+        SettingsToggleRow(
+          label: tr('showWebInAppView'),
+          value: settingsProvider.showAppWebpage,
+          onChanged: (value) => settingsProvider.showAppWebpage = value,
+        ),
+        SettingsToggleRow(
+          label: tr('pinUpdates'),
+          value: settingsProvider.pinUpdates,
+          onChanged: (value) => settingsProvider.pinUpdates = value,
+        ),
+        SettingsToggleRow(
+          label: tr('moveNonInstalledAppsToBottom'),
+          value: settingsProvider.buryNonInstalled,
+          onChanged: (value) => settingsProvider.buryNonInstalled = value,
+        ),
+        SettingsToggleRow(
+          label: tr('groupByCategory'),
+          value: settingsProvider.groupByCategory,
+          onChanged: (value) => settingsProvider.groupByCategory = value,
+        ),
+        SettingsToggleRow(
+          label: tr('dontShowTrackOnlyWarnings'),
+          value: settingsProvider.hideTrackOnlyWarning,
+          onChanged: (value) => settingsProvider.hideTrackOnlyWarning = value,
+        ),
+        SettingsToggleRow(
+          label: tr('dontShowAPKOriginWarnings'),
+          value: settingsProvider.hideAPKOriginWarning,
+          onChanged: (value) => settingsProvider.hideAPKOriginWarning = value,
+        ),
+        SettingsToggleRow(
+          label: tr('disablePageTransitions'),
+          value: settingsProvider.disablePageTransitions,
+          onChanged: (value) => settingsProvider.disablePageTransitions = value,
+        ),
+        SettingsToggleRow(
+          label: tr('reversePageTransitions'),
+          value: settingsProvider.reversePageTransitions,
+          onChanged: settingsProvider.disablePageTransitions
+              ? null
+              : (value) => settingsProvider.reversePageTransitions = value,
+        ),
+        SettingsToggleRow(
+          label: tr('highlightTouchTargets'),
+          value: settingsProvider.highlightTouchTargets,
+          onChanged: (value) => settingsProvider.highlightTouchTargets = value,
+        ),
+      ],
     );
   }
 }

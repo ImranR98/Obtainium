@@ -17,6 +17,12 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
+class VersionComparison {
+  final bool areEqual;
+  final String version;
+  const VersionComparison({required this.areEqual, required this.version});
+}
+
 extension AppsProviderLifecycle on AppsProvider {
   Future<Directory> getAppsDir() async {
     Directory appsDir = Directory(
@@ -63,7 +69,7 @@ extension AppsProviderLifecycle on AppsProvider {
             naiveStandardVersionDetection);
   }
 
-  // Given an App and it's on-device info...
+  // Given an App and its on-device info...
   // Reconcile unexpected differences between its reported installed version, real installed version, and reported latest version
   App? getCorrectedInstallStatusAppIfPossible(
     App app,
@@ -102,8 +108,8 @@ extension AppsProviderLifecycle on AppsProvider {
         realInstalledVersion,
         app.installedVersion!,
       );
-      if (correctedInstalledVersion?.key == false) {
-        app.installedVersion = correctedInstalledVersion!.value;
+      if (correctedInstalledVersion?.areEqual == false) {
+        app.installedVersion = correctedInstalledVersion!.version;
         modded = true;
       } else if (naiveStandardVersionDetection) {
         app.installedVersion = realInstalledVersion;
@@ -120,8 +126,8 @@ extension AppsProviderLifecycle on AppsProvider {
         app.installedVersion!,
         app.latestVersion,
       );
-      if (correctedInstalledVersion?.key == true) {
-        app.installedVersion = correctedInstalledVersion!.value;
+      if (correctedInstalledVersion?.areEqual == true) {
+        app.installedVersion = correctedInstalledVersion!.version;
         modded = true;
       }
     }
@@ -140,14 +146,10 @@ extension AppsProviderLifecycle on AppsProvider {
     return modded ? app : null;
   }
 
-  MapEntry<bool, String>? reconcileVersionDifferences(
+  VersionComparison? reconcileVersionDifferences(
     String templateVersion,
     String comparisonVersion,
   ) {
-    // Returns null if the versions don't share a common standard format
-    // Returns <true, comparisonVersion> if they share a common format and are equal
-    // Returns <false, templateVersion> if they share a common format but are not equal
-    // templateVersion must fully match a standard format, while comparisonVersion can have a substring match
     var templateVersionFormats = findStandardFormatsForVersion(
       templateVersion,
       true,
@@ -174,10 +176,10 @@ extension AppsProviderLifecycle on AppsProvider {
         comparisonVersion,
         templateVersion,
       )) {
-        return MapEntry(true, comparisonVersion);
+        return VersionComparison(areEqual: true, version: comparisonVersion);
       }
     }
-    return MapEntry(false, templateVersion);
+    return VersionComparison(areEqual: false, version: templateVersion);
   }
 
   bool doStringsMatchUnderRegEx(String pattern, String value1, String value2) {
@@ -230,15 +232,9 @@ extension AppsProviderLifecycle on AppsProvider {
                 }
               }
               if (app != null) {
-                // Save the app to the in-memory list without grabbing any OS info first
                 apps.update(
                   app.id,
-                  (value) => AppInMemory(
-                    app!,
-                    value.downloadProgress,
-                    value.installedInfo,
-                    value.icon,
-                  ),
+                  (value) => value.copyWith(app: app!),
                   ifAbsent: () => AppInMemory(app!, null, null, null),
                 );
                 try {
@@ -265,11 +261,9 @@ extension AppsProviderLifecycle on AppsProvider {
                   // Update the app in memory with install info and corrections
                   apps.update(
                     app.id,
-                    (value) => AppInMemory(
-                      app!,
-                      value.downloadProgress,
-                      installedInfo,
-                      value.icon,
+                    (value) => value.copyWith(
+                      app: app!,
+                      installedInfo: installedInfo,
                       sourceType: sourceType,
                     ),
                     ifAbsent: () => AppInMemory(
@@ -318,13 +312,7 @@ extension AppsProviderLifecycle on AppsProvider {
       if (icon != null) {
         apps.update(
           apps[appId]!.app.id,
-          (value) => AppInMemory(
-            apps[appId]!.app,
-            value.downloadProgress,
-            value.installedInfo,
-            icon,
-            sourceType: value.sourceType,
-          ),
+          (value) => value.copyWith(icon: icon),
           ifAbsent: () => AppInMemory(
             apps[appId]!.app,
             null,
@@ -362,24 +350,14 @@ extension AppsProviderLifecycle on AppsProvider {
           ).writeAsString(jsonEncode(app.toJson())); // #2089
           await File('$filePath.tmp').rename(filePath);
         }
-        try {
-          this.apps.update(
-            app.id,
-            (value) => AppInMemory(
-              app,
-              value.downloadProgress,
-              info,
-              icon,
-              sourceType: value.sourceType,
-            ),
-            ifAbsent: onlyIfExists
-                ? null
-                : () => AppInMemory(app, null, info, icon),
+        if (this.apps.containsKey(app.id)) {
+          this.apps[app.id] = this.apps[app.id]!.copyWith(
+            app: app,
+            installedInfo: info,
+            icon: icon,
           );
-        } catch (e) {
-          if (e is! ArgumentError || e.name != 'key') {
-            rethrow;
-          }
+        } else if (!onlyIfExists) {
+          this.apps[app.id] = AppInMemory(app, null, info, icon);
         }
         if (info == null) {
           final cachedIcon = File('${iconsCacheDir.path}/${app.id}.png');

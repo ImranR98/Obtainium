@@ -63,8 +63,6 @@ List<MapEntry<Locale, String>> supportedLocales = const [
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
-// Set by main_fdroid.dart before calling main() when building the F-Droid flavour.
-// Must be false for the normal build flavour.
 bool fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();

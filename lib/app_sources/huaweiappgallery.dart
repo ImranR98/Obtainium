@@ -22,7 +22,7 @@ class HuaweiAppGallery extends AppSource {
   );
 
   String getDlUrl(String standardUrl) =>
-      'https://${hosts[0].replaceAll('appgallery.huawei', 'appgallery.cloud.huawei')}/appdl/${standardUrl.split('/').last}';
+      'https://${hosts[1]}/appdl/${standardUrl.split('/').last}';
 
   Future<Response> requestAppdlRedirect(
     String dlUrl,

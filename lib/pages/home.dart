@@ -418,7 +418,6 @@ class _HomePageState extends State<HomePage> {
 
     // Shows the "Add" FAB, or hides it entirely while the user is
     // mass‑selecting apps (the apps page will show its own action FAB).
-    final isSelecting = _appsSelecting;
     final createFab = FloatingActionButton(
       onPressed: () => pushAddApp(),
       tooltip: tr('addApp'),
@@ -448,7 +447,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   FocusTraversalGroup(
                     child: NavigationRail(
-                      leading: currentIndex == 0 && !isSelecting
+                      leading: currentIndex == 0 && !_appsSelecting
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: createFab,
@@ -486,7 +485,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : content,
-        floatingActionButton: useRail || currentIndex != 0 || isSelecting
+        floatingActionButton: useRail || currentIndex != 0 || _appsSelecting
             ? null
             : createFab,
         bottomNavigationBar: useRail

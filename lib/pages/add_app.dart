@@ -96,7 +96,7 @@ class AddAppPageState extends State<AddAppPage> {
                 overrideSource: pickedSourceOverride,
               )
             : null;
-        if (pickedSource?.runtimeType != source.runtimeType ||
+        if (pickedSource?.sourceIdentifier != source?.sourceIdentifier ||
             overrideChanged ||
             (prevHost != null && prevHost != source?.hosts[0])) {
           pickedSource = source;

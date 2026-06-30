@@ -1040,19 +1040,10 @@ class AppsPageState extends State<AppsPage> {
             required IconData icon,
             required String label,
             required VoidCallback? onTap,
-          }) {
-            return ListTile(
-              leading: Icon(icon),
-              title: Text(label),
-              enabled: onTap != null,
-              onTap: onTap == null
-                  ? null
-                  : () {
-                      Navigator.of(ctx).pop();
-                      onTap();
-                    },
-            );
-          }
+          }) =>
+              ActionListTile(
+                icon: icon, label: label, onTap: onTap, autoPop: true,
+              );
 
           return SafeArea(
             child: SingleChildScrollView(

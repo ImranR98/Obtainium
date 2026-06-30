@@ -88,7 +88,7 @@ class FDroidRepo extends AppSource {
             appId.contains(query) ||
             appName.contains(query) ||
             appDesc.contains(query)) {
-          results['${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}?appId=$appId'] =
+          results['${AppSource.stripLastPathSegment(res.request!.url.toString())}?appId=$appId'] =
               [appName, appDesc];
         }
       });
@@ -153,7 +153,7 @@ class FDroidRepo extends AppSource {
     );
     if (res.statusCode != 200) {
       var base = url.endsWith('/index.xml')
-          ? url.split('/').reversed.toList().sublist(1).reversed.join('/')
+          ? AppSource.stripLastPathSegment(url)
           : url;
       res = await sourceRequest('$base/repo/index.xml', additionalSettings);
       if (res.statusCode != 200) {
@@ -281,7 +281,7 @@ class FDroidRepo extends AppSource {
           .map((e) {
             var apkName = e.querySelector('apkname')?.innerHtml;
             return apkName != null
-                ? '${res.request!.url.toString().split('/').reversed.toList().sublist(1).reversed.join('/')}/$apkName'
+                ? '${AppSource.stripLastPathSegment(res.request!.url.toString())}/$apkName'
                 : null;
           })
           .where((u) => u != null)
