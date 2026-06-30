@@ -63,7 +63,9 @@ List<MapEntry<Locale, String>> supportedLocales = const [
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
-var fdroid = false;
+// Set by main_fdroid.dart before calling main() when building the F-Droid flavour.
+// Must be false for the normal build flavour.
+bool fdroid = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -410,10 +412,12 @@ class _ObtainiumState extends State<Obtainium> {
     }
   }
 
+  var _fgServiceInitialized = false;
+
   void initForegroundService() {
-    // ignore: invalid_use_of_visible_for_testing_member
-    if (!FlutterForegroundTask.isInitialized) {
-      FlutterForegroundTask.init(
+    if (_fgServiceInitialized) return;
+    _fgServiceInitialized = true;
+    FlutterForegroundTask.init(
         androidNotificationOptions: AndroidNotificationOptions(
           channelId: 'bg_update',
           channelName: tr('foregroundService'),
@@ -432,7 +436,6 @@ class _ObtainiumState extends State<Obtainium> {
           allowWifiLock: true,
         ),
       );
-    }
   }
 
   Future<ServiceRequestResult?> startForegroundService(bool restart) async {

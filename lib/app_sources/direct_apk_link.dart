@@ -4,6 +4,9 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Tracks an APK at a direct URL (e.g. `https://example.com/app.apk`).
+/// Delegates version detection and downloading to [HTML] with pseudo-versioning
+/// (partial APK hash or ETag).
 class DirectAPKLink extends AppSource {
   HTML html = HTML();
 
@@ -40,7 +43,7 @@ class DirectAPKLink extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     if (!forSelection) {
-      return url;
+      return Uri.tryParse(url)?.toString() ?? url;
     }
     RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
     var match = standardUrlRegExA.firstMatch(url);

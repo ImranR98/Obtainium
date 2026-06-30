@@ -44,11 +44,11 @@ extension AppsProviderLifecycle on AppsProvider {
         ? app.installedInfo?.versionCode.toString()
         : app.installedInfo?.versionName;
     bool isHTMLWithNoVersionDetection =
-        (source.runtimeType == HTML().runtimeType &&
+        (source is HTML &&
         (app.app.additionalSettings['versionExtractionRegEx'] as String?)
                 ?.isNotEmpty !=
             true);
-    bool isDirectAPKLink = source.runtimeType == DirectAPKLink().runtimeType;
+    bool isDirectAPKLink = source is DirectAPKLink;
     return app.app.additionalSettings['trackOnly'] != true &&
         app.app.additionalSettings['releaseDateAsVersion'] != true &&
         !isHTMLWithNoVersionDetection &&
@@ -247,7 +247,7 @@ extension AppsProviderLifecycle on AppsProvider {
                     app.url,
                     overrideSource: app.overrideSource,
                   );
-                  var sourceType = src.runtimeType.toString();
+                  var sourceType = src.name;
                   // If the app is installed, grab its OS data and reconcile install statuses
                   PackageInfo? installedInfo = installedAppsMap[app.id];
                   // Reconcile differences between the installed and recorded install info

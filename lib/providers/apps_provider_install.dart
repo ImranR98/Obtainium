@@ -954,8 +954,8 @@ extension AppsProviderInstall on AppsProvider {
             );
         if (downloadedArtifact is DownloadedApk) {
           downloadedFile = downloadedArtifact;
-        } else {
-          downloadedDir = downloadedArtifact as DownloadedDir;
+        } else if (downloadedArtifact is DownloadedDir) {
+          downloadedDir = downloadedArtifact;
         }
         id = downloadedFile?.appId ?? downloadedDir!.appId;
         // Bridge download-to-install gap so the Dismissible stays disabled.
@@ -1132,6 +1132,7 @@ extension AppsProviderInstall on AppsProvider {
         notificationsProvider.notify(
           DownloadedNotification(fileUrl.key, fileUrl.value),
         );
+        downloadedIds.add(fileUrl.key);
       } catch (e) {
         errors.add(fileUrl.key, e);
       } finally {

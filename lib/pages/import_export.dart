@@ -1,8 +1,3 @@
-// The import/export flows intentionally use the page's BuildContext across
-// async gaps to show dialogs/snackbars; the page stays mounted for the whole
-// operation (import/export progress is shown inline). These are pre-existing,
-// deliberate uses (several already had inline ignores), so suppress file-wide.
-// ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
 import 'dart:io';
 
@@ -235,6 +230,7 @@ class _ImportSectionState extends State<ImportSection> {
           .then((result) async {
             if (result == null) {
               // User canceled the picker.
+              // ignore: use_build_context_synchronously
               showMessage(tr('cancelled'), context);
               return;
             }
@@ -264,8 +260,10 @@ class _ImportSectionState extends State<ImportSection> {
           .catchError((e) {
             if (!mounted) return;
             if (e is PlatformException || e is MissingPluginException) {
+              // ignore: use_build_context_synchronously
               showError(ObtainiumError(tr('noFilePickerAvailable')), context);
             } else {
+              // ignore: use_build_context_synchronously
               showError(e, context);
             }
           })
@@ -333,6 +331,7 @@ class _ImportSectionState extends State<ImportSection> {
             }
           }()
           .catchError((e) {
+            // ignore: use_build_context_synchronously
             if (mounted) showError(e, context);
           })
           .whenComplete(() {
@@ -437,10 +436,12 @@ class _ExportSectionState extends State<ExportSection> {
           )
           .then((String? result) {
             if (mounted && result != null) {
+              // ignore: use_build_context_synchronously
               showMessage(tr('exportedTo', args: [result]), context);
             }
           })
           .catchError((e) {
+            // ignore: use_build_context_synchronously
             if (mounted) showError(e, context);
           });
     }

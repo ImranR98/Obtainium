@@ -3,6 +3,11 @@ import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Fetches the latest release from a SourceForge project's RSS feed.
+///
+/// Version is extracted from path segments after stripping the filename and
+/// optionally a subdirectory. The URL should point to the project root
+/// (e.g. `https://sourceforge.net/projects/example`).
 class SourceForge extends AppSource {
   SourceForge() {
     hosts = ['sourceforge.net'];
@@ -62,19 +67,15 @@ class SourceForge extends AppSource {
           .toList();
       getVersion(String url) {
         try {
+          /// Strips the last path segment (filename) and optionally another
+          /// (subdirectory) to extract the version from the remaining segments.
           var segments = url
               .substring(standardUrl.length)
               .split('/')
               .where((element) => element.isNotEmpty)
-              .toList()
-              .reversed
-              .toList()
-              .sublist(1)
-              .reversed
               .toList();
-          segments = segments.length > 1
-              ? segments.reversed.toList().sublist(1).reversed.toList()
-              : segments;
+          if (segments.isNotEmpty) segments.removeLast();
+          if (segments.length > 1) segments.removeLast();
           var version = segments.isNotEmpty ? segments.join('/') : null;
           if (version != null) {
             try {

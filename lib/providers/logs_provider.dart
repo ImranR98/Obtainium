@@ -44,6 +44,10 @@ class Log {
   }
 }
 
+/// Singleton sqflite-backed logger with automatic 7-day cleanup.
+///
+/// Use `LogsProvider().add(msg)` to log; the factory returns a shared instance.
+/// Old entries (>7 days) are cleaned up once per process lifetime.
 class LogsProvider {
   static final LogsProvider _instance = LogsProvider._();
   static Database? _db;

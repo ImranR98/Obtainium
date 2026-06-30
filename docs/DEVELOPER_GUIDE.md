@@ -324,16 +324,24 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 - Guard every `setState`/`Navigator`/`ScaffoldMessenger` call after an `await` with
   `if (!mounted) return;` / `if (!context.mounted) return;`.
 - Deep-copy an `App` before mutating; never mutate provider-owned objects in place.
-- Cache expensive build inputs (e.g. `FutureBuilder` futures, `SplineInterpolation`,
-  `SourceProvider`/`DeviceInfoPlugin` instances) in fields/`initState`, not in `build()`.
 
 **Errors / robustness**
-- Never silently swallow exceptions. Either rethrow or `logs.add(...)` via `LogsProvider`.
 - Throw `ObtainiumError` (or a typed subclass in `custom_errors.dart`) rather than raw
-  `String`s.
-- Parsers must be defensive: use `int.tryParse`/`DateTime.tryParse`, null-check regex
-  matches before `.start/.end`, guard list indexes and `firstMatch`, and wrap
-  `jsonDecode` of remote responses.
+  `String`s. Key types: `RateLimitError` (with remaining minutes), `InvalidURLError`,
+  `NoReleasesError`, `NoAPKError`, `NoVersionError`, `DowngradeError`, `InstallError`,
+  `IDChangedError`, `RepositoryRenamedError`.
+- Use `showError(dynamic e, BuildContext)` for unexpected/error-level messages (shows a
+  dialog) and `showMessage(...)` for informational messages (shows a snackbar).
+- `MultiAppMultiError` bundles multiple per-app errors for batch operations; use
+  `errors.add(appId, error, appName:)` to collect them.
+- Never silently swallow exceptions. Either rethrow or `logs.add(...)`.
+
+**Categories & colour coding**
+- Categories are stored as `Map<String, int>` (name → ARGB colour) in shared preferences.
+- `generateRandomLightColor()` in `generated_form.dart` produces pastel colours using the
+  HSLuv colour space with golden-angle hue distribution.
+- `addMissingCategories()` in `apps_provider_lifecycle.dart` reconciles any categories
+  found in stored apps but missing from the settings map.
 
 **Resources**
 - Always `close()` an `HttpClient`/`IOClient` (use `finally`). Dispose
@@ -344,22 +352,8 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
   `Theme.of(context).colorScheme`.
 - All user-facing strings go through `tr()` / `plural()` with a key in **every**
   `assets/translations/*.json` (at minimum `en.json`).
-- Add `Semantics` for non-obvious gestures (swipe actions, double-tap-to-open, long-press
-  edit), `semanticLabel` for meaningful icons, and exclude decorative images.
-- Destructive actions use `foregroundColor: colorScheme.error`; dialogs use
-  `TextButton` (cancel) + `FilledButton` (confirm).
 - Reuse `ConnectedCard`/`SettingsTile`/`positionalTileShape` for grouped tiles instead of
   hand-rolling `Material(shape: ...)`.
-
-**Code style (enforced by `analysis_options.yaml`)**
-- `flutter_lints` plus stricter rules: `require_trailing_commas`, `use_super_parameters`,
-  `unnecessary_parenthesis`, `avoid_dynamic_calls`, `unawaited_futures`,
-  `prefer_const_*`, `avoid_positional_boolean_parameters`, `use_decorated_box`,
-  `use_colored_box`.
-- File naming is `snake_case` (e.g. `direct_apk_link.dart`).
-- Use `debugPrint`, not `print`.
-- Run `dart format .` and **`flutter analyze` (must pass with zero issues)** before
-  committing.
 
 ---
 

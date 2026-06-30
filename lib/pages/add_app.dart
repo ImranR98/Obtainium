@@ -152,7 +152,6 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<bool> _getReleaseDateAsVersionConfirmationIfNeeded(
-    bool userPickedTrackOnly,
     BuildContext context,
   ) async {
     return (!(additionalSettings['releaseDateAsVersion'] == true &&
@@ -189,7 +188,6 @@ class AddAppPageState extends State<AddAppPage> {
             settingsProvider,
           )) &&
           (await _getReleaseDateAsVersionConfirmationIfNeeded(
-            userPickedTrackOnly,
             // ignore: use_build_context_synchronously
             context,
           ))) {
@@ -227,8 +225,8 @@ class AddAppPageState extends State<AddAppPage> {
           DownloadedDir? downloadedDir;
           if (downloadedArtifact is DownloadedApk) {
             downloadedFile = downloadedArtifact;
-          } else {
-            downloadedDir = downloadedArtifact as DownloadedDir;
+          } else if (downloadedArtifact is DownloadedDir) {
+            downloadedDir = downloadedArtifact;
           }
           app.id = downloadedFile?.appId ?? downloadedDir!.appId;
         }
@@ -357,7 +355,7 @@ class AddAppPageState extends State<AddAppPage> {
                     }
                   }
                   return MapEntry(
-                    e.runtimeType.toString(),
+                    e.name,
                     await e.search(searchQuery, querySettings: querySettings),
                   );
                 } catch (err) {
@@ -524,7 +522,7 @@ class AddAppPageState extends State<AddAppPage> {
                                     pickedSource.runtimeType == s.runtimeType),
                           )
                           .map(
-                            (s) => MapEntry(s.runtimeType.toString(), s.name),
+                            (s) => MapEntry(s.name, s.name),
                           ),
                     ],
                     label: tr('overrideSource'),
@@ -642,7 +640,7 @@ class AddAppPageState extends State<AddAppPage> {
         return GeneratedForm(
           tileMode: true,
           key: Key(
-            '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}',
+            '${pickedSource!.name}-${pickedSource!.hostChanged.toString()}-${pickedSource!.hostIdenticalDespiteAnyChange.toString()}',
           ),
           items: [
             ...formItems,
@@ -699,7 +697,7 @@ class AddAppPageState extends State<AddAppPage> {
         GeneratedForm(
           tileMode: true,
           key: Key(
-            '${pickedSource.runtimeType.toString()}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}-appId',
+            '${pickedSource!.name}-${pickedSource!.hostChanged.toString()}-${pickedSource!.hostIdenticalDespiteAnyChange.toString()}-appId',
           ),
           items: [
             [
@@ -811,7 +809,7 @@ class AddAppPageState extends State<AddAppPage> {
     bool doingSomething = gettingAppInfo || searching;
 
     if (pickedSource != null) {
-      final sourceKey = pickedSource.runtimeType.toString();
+      final sourceKey = pickedSource!.name;
       if (_sourceNoteSourceKey != sourceKey) {
         _sourceNoteSourceKey = sourceKey;
         _sourceNoteFuture = pickedSource?.getSourceNote();

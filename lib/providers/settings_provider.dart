@@ -52,21 +52,19 @@ class SettingsProvider with ChangeNotifier {
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
-  // These are stable for the lifetime of the process but expensive to fetch
-  // (platform channel round-trips). Source code creates many throwaway
-  // SettingsProvider instances per request, so cache the results across them.
+  /// Platform properties that are stable for the process lifetime but expensive
+  /// to fetch (platform channel round-trips). Cached across all provider instances.
   static String? _cachedDefaultAppDir;
   static bool? _cachedIsTV;
   static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static final Map<String, String?> _secureCache = {};
 
-  // Not done in constructor as we want to be able to await it
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
-    prefsInstance = prefs;
+    prefsInstance ??= prefs;
     await _loadSecureCache();
-    if (_cachedDefaultAppDir == null || _cachedIsTV == null) {
-      _cachedDefaultAppDir = (await getAppStorageDir()).path;
+    _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
+    if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
       _cachedIsTV =
           info.systemFeatures.contains('android.hardware.type.television') ||
@@ -254,6 +252,8 @@ class SettingsProvider with ChangeNotifier {
     return false;
   }
 
+  /// Prompts the user for the Android install-permission grant. Loops until
+  /// granted (if [enforce] is true) or cancelled.
   Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
@@ -359,12 +359,8 @@ class SettingsProvider with ChangeNotifier {
   String? _categoriesRaw;
   Map<String, int>? _categoriesCache;
 
-  // Cached parse of the stored categories JSON, keyed by the raw string so it
-  // self-invalidates on any change (including imports that write prefs
-  // directly). Returns a stable instance while unchanged, so it doesn't
-  // re-parse on every access and `context.select((p) => p.categories)` can
-  // dedupe - previously this returned a fresh Map each call, forcing the
-  // category widgets to rebuild on every (unrelated) SettingsProvider change.
+  /// Parsed and memoized category map. Invalidates automatically when the raw
+  /// JSON changes (including from imports), avoiding re-parse on every access.
   Map<String, int> get categories {
     final raw = prefs?.getString('categories') ?? '{}';
     if (raw != _categoriesRaw || _categoriesCache == null) {

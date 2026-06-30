@@ -45,8 +45,8 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
-  late String author;
-  late String name;
+  String author;
+  String name;
 
   AppNames(this.author, this.name);
 }
@@ -77,16 +77,16 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
   List<dynamic> arr,
 ) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
 
-// Bumped only for the one-time legacy migrations below. Apps whose stored JSON
-// already carries this version skip those legacy URL/source conversions. Their
-// default settings are still always reconciled afterwards, so this stays safe
-// even when newer builds add settings without bumping this number.
+/// Gating version for one-time legacy app-JSON migrations. Apps whose stored
+/// JSON carries this version skip the legacy conversions; default-settings
+/// reconciliation always runs regardless.
 const int currentAppJSONCompatVersion = 1;
 const _maxRedirects = 10;
 const _connectionTimeoutSeconds = 30;
 
-// App JSON schema has changed multiple times over the many versions of Obtainium
-// This function takes an App JSON and modifies it if needed to conform to the latest (current) version
+/// Applies any legacy JSON transformations so the stored [json] matches the
+/// current schema. Default-setting reconciliation always runs; one-time
+/// migrations (URL rewrites, format conversions) are gated by compatVersion.
 Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   final isCurrentCompat = json['compatVersion'] == currentAppJSONCompatVersion;
   var source = SourceProvider().getSource(
@@ -186,7 +186,7 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   if (additionalSettings['dontSortReleasesList'] == true) {
     additionalSettings['sortMethodChoice'] = 'none';
   }
-  if (!isCurrentCompat && source.runtimeType == HTML().runtimeType) {
+  if (!isCurrentCompat && source is HTML) {
     // HTML key rename
     if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
       additionalSettings['sortByLastLinkSegment'] =
@@ -480,10 +480,11 @@ class App {
   };
 }
 
-// Ensure the input is starts with HTTPS and has no WWW
+/// Ensures the URL is well-formed and starts with HTTPS.
 String preStandardizeUrl(String url) {
   var firstDotIndex = url.indexOf('.');
-  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1)) {
+  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1) &&
+      !url.contains('[')) {
     throw UnsupportedURLError();
   }
   if (url.toLowerCase().indexOf('http://') != 0 &&
@@ -1047,11 +1048,11 @@ abstract class AppSource with HttpClientMixin {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : additionalSettings[e.key] ??
-                (e.runtimeType == GeneratedFormSwitch
+                (e is GeneratedFormSwitch
                     ? settingsProvider.getSettingBool(e.key).toString()
                     : settingsProvider.getSettingString(e.key));
       if (val != null) {
-        if (e.runtimeType == GeneratedFormSwitch) {
+        if (e is GeneratedFormSwitch) {
           val = val.toString();
         }
         results[e.key] = val;
@@ -1371,9 +1372,7 @@ class SourceProvider {
       additionalSettings,
     );
 
-    if (source.runtimeType !=
-            HTML().runtimeType && // Some sources do it separately
-        source.runtimeType != SourceForge().runtimeType) {
+    if (source is! HTML && source is! SourceForge) {
       String? extractedVersion = extractVersion(
         additionalSettings['versionExtractionRegEx'] as String?,
         additionalSettings['matchGroupToUse'] as String?,

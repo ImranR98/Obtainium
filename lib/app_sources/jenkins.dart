@@ -4,6 +4,10 @@ import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Fetches APKs from the last successful build of a Jenkins job.
+///
+/// The URL must point to a specific job (e.g. `https://jenkins.example.com/job/myapp`).
+/// Version is the build number; release date is the build timestamp.
 class Jenkins extends AppSource {
   Jenkins() {
     versionDetectionDisallowed = true;

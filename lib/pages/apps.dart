@@ -646,21 +646,25 @@ class AppsPageState extends State<AppsPage> {
     }
 
     var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    final prunedSelection = selectedAppIds
-        .where(listedAppIdSet.contains)
-        .toSet();
-    if (prunedSelection.length != selectedAppIds.length) {
-      final hadSelection = selectedAppIds.isNotEmpty;
-      selectedAppIds = prunedSelection;
-      // Some selected apps are no longer listed; if that empties the selection,
-      // tell the shell after this frame (can't notify during build()).
-      if (hadSelection != selectedAppIds.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
+    final hadSelection = selectedAppIds.isNotEmpty;
+    final localSelected = selectedAppIds.where(listedAppIdSet.contains).toSet();
+    if (localSelected.length != selectedAppIds.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final freshListedIds = appsProvider
+              .getAppValues()
+              .map((e) => e.app.id)
+              .toSet();
+          setState(() {
+            selectedAppIds = selectedAppIds
+                .where(freshListedIds.contains)
+                .toSet();
+          });
+          if (hadSelection != selectedAppIds.isNotEmpty) {
             widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
           }
-        });
-      }
+        }
+      });
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
@@ -701,19 +705,22 @@ class AppsPageState extends State<AppsPage> {
         .toList();
 
     List<String> trackOnlyUpdateIdsAllOrSelected = [];
-    bool isNotTrackOnly(String id) {
+    for (var id in existingUpdateIdsAllOrSelected) {
       if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
-        return false;
       }
-      return true;
     }
-
+    for (var id in newInstallIdsAllOrSelected) {
+      if (appsProvider.apps[id]!.app.additionalSettings['trackOnly'] == true &&
+          !trackOnlyUpdateIdsAllOrSelected.contains(id)) {
+        trackOnlyUpdateIdsAllOrSelected.add(id);
+      }
+    }
     existingUpdateIdsAllOrSelected = existingUpdateIdsAllOrSelected
-        .where(isNotTrackOnly)
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
         .toList();
     newInstallIdsAllOrSelected = newInstallIdsAllOrSelected
-        .where(isNotTrackOnly)
+        .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
         .toList();
 
     final groupedByCategory = <String?, List<int>>{};
@@ -866,7 +873,7 @@ class AppsPageState extends State<AppsPage> {
                 [
                   MapEntry('', tr('none')),
                   ...sourceProvider.sources.map(
-                    (e) => MapEntry(e.runtimeType.toString(), e.name),
+                    (e) => MapEntry(e.name, e.name),
                   ),
                 ],
               ),

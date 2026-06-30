@@ -1,5 +1,3 @@
-<div align="center"><a href="https://github.com/Safouene1/support-palestine-banner/blob/master/Markdown-pages/Support.md"><img src="https://raw.githubusercontent.com/Safouene1/support-palestine-banner/master/banner-support.svg" alt="Support Palestine" style="width: 100%;"></a></div>
-
 # ![Obtainium Icon](./assets/graphics/icon_small.png) Obtainium
 
 Get Android app updates straight from the source.
@@ -68,10 +66,14 @@ Or, contribute some configurations to the website by creating a PR at [this repo
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
      
 Verification info:
-- Package ID: `dev.imranr.obtainium`
-- SHA-256 hash of signing certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
-  - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
-- [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
+
+| Item | Value |
+|------|-------|
+| Package ID | `dev.imranr.obtainium` |
+| Signing cert SHA-256 | `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62` |
+| PGP Public Key | [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (verify APK hashes) |
+
+The signing certificate is also valid for the F-Droid flavour, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.

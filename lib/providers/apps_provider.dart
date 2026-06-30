@@ -53,6 +53,7 @@ const int _obtainiumBgClientExceptionRetryWaitSeconds = 15 * 60;
 final pm = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
+/// Runtime wrapper for [App] holding download state and OS package info.
 class AppInMemory {
   late App app;
   double? downloadProgress;

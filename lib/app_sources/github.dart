@@ -741,7 +741,10 @@ class GitHub extends AppSource {
 
   AppNames getAppNames(String standardUrl) {
     String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
+    var pathStart = temp.indexOf('/');
+    if (pathStart < 0) throw InvalidURLError(name);
+    List<String> names = temp.substring(pathStart + 1).split('/');
+    if (names.isEmpty || names[0].isEmpty) throw InvalidURLError(name);
     return AppNames(names[0], names.sublist(1).join('/'));
   }
 

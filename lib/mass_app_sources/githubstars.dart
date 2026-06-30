@@ -6,6 +6,10 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Bulk import source: fetches all starred repos of a GitHub user.
+///
+/// Paginates through the GitHub API (100 repos per page) and returns each
+/// repo's URL, full name, and description. Rate limits are checked per page.
 class GitHubStars implements MassAppUrlSource {
   @override
   late String name = tr('githubStarredRepos');
