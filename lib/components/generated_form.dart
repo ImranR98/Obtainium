@@ -705,18 +705,16 @@ class _GeneratedFormState extends State<GeneratedForm> {
           widget.items[r].isNotEmpty &&
           (widget.items[r][0] is GeneratedFormTextField ||
               widget.items[r][0] is GeneratedFormDropdown);
-      bool isSwitchRow(int r) =>
-          widget.items[r].isNotEmpty &&
-          widget.items[r][0] is GeneratedFormSwitch;
       final colorScheme = Theme.of(context).colorScheme;
       final n = inputRowWidgets.length;
       final List<Widget> children = [];
       for (var r = 0; r < n; r++) {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
-            : isSwitchRow(r)
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
-            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+            : (widget.items[r].isNotEmpty &&
+                    widget.items[r][0] is GeneratedFormSwitch)
+                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
         children.add(
           Material(
             // Fields use a distinct, slightly more prominent tone so they

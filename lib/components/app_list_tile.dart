@@ -618,8 +618,6 @@ class AppListCategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String capFirstChar(String str) =>
-        str.isEmpty ? str : str[0].toUpperCase() + str.substring(1);
     final colorScheme = Theme.of(context).colorScheme;
     final showItems = expanded && appCount > 0;
     final tiles = showItems ? buildTiles() : const <Widget>[];
@@ -658,7 +656,10 @@ class AppListCategorySection extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        capFirstChar(category ?? tr('noCategory')),
+                        (() {
+                          final s = category ?? tr('noCategory');
+                          return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+                        })(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),

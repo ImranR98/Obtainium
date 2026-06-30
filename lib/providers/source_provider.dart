@@ -9,7 +9,6 @@ import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:html/dom.dart';
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -589,20 +588,6 @@ String preStandardizeUrl(String url) {
   url = mainPart + (trailingSlash ? '/' : '') + rest;
   return url;
 }
-
-/// Extracts anchor hrefs from parsed HTML that match [hrefPattern], prepending a base URL.
-List<String> getLinksFromParsedHTML(
-  Document dom,
-  RegExp hrefPattern,
-  String prependToLinks,
-) => dom
-    .querySelectorAll('a')
-    .where((element) {
-      if (element.attributes['href'] == null) return false;
-      return hrefPattern.hasMatch(element.attributes['href']!);
-    })
-    .map((e) => '$prependToLinks${e.attributes['href']!}')
-    .toList();
 
 /// Builds a flat map of default values from nested [GeneratedFormItem] rows.
 Map<String, dynamic> getDefaultValuesFromFormItems(
