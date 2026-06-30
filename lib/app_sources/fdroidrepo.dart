@@ -256,9 +256,9 @@ class FDroidRepo extends AppSource {
         if (selectedReleases.length > 1 && pickHighestVersionCode) {
           selectedReleases.sort((e1, e2) {
             return (int.tryParse(
-                  e2.querySelector('versioncode')?.innerHtml ?? '',
-                ) ??
-                0)
+                      e2.querySelector('versioncode')?.innerHtml ?? '',
+                    ) ??
+                    0)
                 .compareTo(
                   int.tryParse(
                         e1.querySelector('versioncode')?.innerHtml ?? '',

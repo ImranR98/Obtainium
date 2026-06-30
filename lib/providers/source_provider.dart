@@ -519,8 +519,6 @@ String preStandardizeUrl(String url) {
   return url;
 }
 
-String noAPKFound = tr('noAPKFound');
-
 List<String> getLinksFromParsedHTML(
   Document dom,
   RegExp hrefPattern,
@@ -600,9 +598,7 @@ sourceRequestStreamResponse(
   List<Cookie> cookies = [];
   HttpClient? httpClient;
   while (redirectCount < _maxRedirects) {
-    httpClient = createHttpClient(
-      additionalSettings['allowInsecure'] == true,
-    );
+    httpClient = createHttpClient(additionalSettings['allowInsecure'] == true);
     var request = await httpClient.openUrl(method, currentUrl);
     if (requestHeaders != null) {
       requestHeaders.forEach((key, value) {
@@ -1026,9 +1022,8 @@ abstract class AppSource with HttpClientMixin {
   // entire form-item tree just to test isNotEmpty. Emptiness is invariant for a
   // given source instance, so caching the boolean is safe.
   bool? _hasAppSpecificSettingsCache;
-  bool get hasAppSpecificSettings =>
-      _hasAppSpecificSettingsCache ??=
-          combinedAppSpecificSettingFormItems.isNotEmpty;
+  bool get hasAppSpecificSettings => _hasAppSpecificSettingsCache ??=
+      combinedAppSpecificSettingFormItems.isNotEmpty;
 
   // Flattened, read-only view of [combinedAppSpecificSettingFormItems],
   // memoized so read-only callers (notably the per-app JSON migration at load,
@@ -1036,8 +1031,9 @@ abstract class AppSource with HttpClientMixin {
   // each time. Callers MUST treat these as read-only - the list is shared.
   List<GeneratedFormItem>? _flatCombinedFormItemsCache;
   List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
-      _flatCombinedFormItemsCache ??=
-          combinedAppSpecificSettingFormItems.expand((row) => row).toList();
+      _flatCombinedFormItemsCache ??= combinedAppSpecificSettingFormItems
+          .expand((row) => row)
+          .toList();
 
   // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
   // If the source has been overridden, we expect the user to define one-time values as additional settings - don't use the stored values
@@ -1107,8 +1103,7 @@ abstract class AppSource with HttpClientMixin {
 
 ObtainiumError getObtainiumHttpError(Response res) {
   return ObtainiumError(
-    (res.reasonPhrase != null &&
-            res.reasonPhrase!.isNotEmpty)
+    (res.reasonPhrase != null && res.reasonPhrase!.isNotEmpty)
         ? res.reasonPhrase!
         : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]),
   );
@@ -1147,7 +1142,6 @@ String? intValidator(String? value, {bool positive = false}) {
 }
 
 bool isTempId(App app) {
-  // return app.id == generateTempID(app.url, app.additionalSettings);
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
@@ -1316,7 +1310,9 @@ class SourceProvider {
           break;
         }
       } catch (e) {
-        LogsProvider().add('Source host-match error for ${s.runtimeType}: ${e.toString()}');
+        LogsProvider().add(
+          'Source host-match error for ${s.runtimeType}: ${e.toString()}',
+        );
       }
     }
     if (source == null) {
@@ -1328,7 +1324,9 @@ class SourceProvider {
           source = s;
           break;
         } catch (e) {
-          LogsProvider().add('Source standardize error for ${s.runtimeType}: ${e.toString()}');
+          LogsProvider().add(
+            'Source standardize error for ${s.runtimeType}: ${e.toString()}',
+          );
         }
       }
     }
@@ -1457,24 +1455,26 @@ class SourceProvider {
     for (var i = 0; i < urls.length; i += concurrency) {
       final end = i + concurrency > urls.length ? urls.length : i + concurrency;
       final batch = urls.sublist(i, end);
-      final results = await Future.wait(batch.map((url) async {
-        try {
-          if (alreadyAddedUrls.contains(url)) {
-            throw ObtainiumError(tr('appAlreadyAdded'));
+      final results = await Future.wait(
+        batch.map((url) async {
+          try {
+            if (alreadyAddedUrls.contains(url)) {
+              throw ObtainiumError(tr('appAlreadyAdded'));
+            }
+            var source = sourceOverride ?? getSource(url);
+            return await getApp(
+              source,
+              url,
+              sourceIsOverriden: sourceOverride != null,
+              getDefaultValuesFromFormItems(
+                source.combinedAppSpecificSettingFormItems,
+              ),
+            );
+          } catch (e) {
+            return e;
           }
-          var source = sourceOverride ?? getSource(url);
-          return await getApp(
-            source,
-            url,
-            sourceIsOverriden: sourceOverride != null,
-            getDefaultValuesFromFormItems(
-              source.combinedAppSpecificSettingFormItems,
-            ),
-          );
-        } catch (e) {
-          return e;
-        }
-      }));
+        }),
+      );
       for (var j = 0; j < batch.length; j++) {
         final result = results[j];
         if (result is App) {

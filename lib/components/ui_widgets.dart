@@ -90,9 +90,7 @@ class HighlightableButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = highlight
-        ? FilledButton.styleFrom()
-        : TextButton.styleFrom();
+    final style = highlight ? FilledButton.styleFrom() : TextButton.styleFrom();
     if (icon != null) {
       return TextButton.icon(
         onPressed: onPressed,
@@ -105,8 +103,8 @@ class HighlightableButton extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       onLongPress: onLongPress,
-      child: label,
       style: style,
+      child: label,
     );
   }
 }
@@ -195,7 +193,12 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: colorScheme.onSurfaceVariant, semanticLabel: message),
+            Icon(
+              icon,
+              size: 56,
+              color: colorScheme.onSurfaceVariant,
+              semanticLabel: message,
+            ),
             if (message != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -264,10 +267,7 @@ class LinkText extends StatelessWidget {
       link: true,
       child: InkWell(
         onTap: () =>
-            launchUrlString(
-              url,
-              mode: LaunchMode.externalApplication,
-            ).ignore(),
+            launchUrlString(url, mode: LaunchMode.externalApplication).ignore(),
         child: Text(
           text,
           style: (style ?? const TextStyle()).copyWith(

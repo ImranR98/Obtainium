@@ -75,8 +75,7 @@ class APKCombo extends AppSource {
             // matched by its stable R2 object path. See issue #341.
             if (url != null) {
               var parsed = Uri.parse(url);
-              if (parsed.path == '/r2' &&
-                  parsed.queryParameters['u'] != null) {
+              if (parsed.path == '/r2' && parsed.queryParameters['u'] != null) {
                 url = parsed.queryParameters['u'];
               }
             }

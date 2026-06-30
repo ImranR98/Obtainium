@@ -13,8 +13,6 @@ class GitHubStars implements MassAppUrlSource {
   @override
   late List<String> requiredArgs = [tr('uname')];
 
-  // Reuse a single GitHub source instance instead of constructing one per page
-  // request (each construction sets up form items and runs translations).
   final GitHub _gh = GitHub();
 
   Future<Map<String, List<String>>> getOnePageOfUserStarredUrlsWithDescriptions(
@@ -23,10 +21,7 @@ class GitHubStars implements MassAppUrlSource {
   ) async {
     var resUrl =
         'https://api.github.com/users/$username/starred?per_page=100&page=$page';
-    Response res = await get(
-      Uri.parse(resUrl),
-      headers: await _gh.getRequestHeaders({}, resUrl),
-    );
+    Response res = await _gh.sourceRequest(resUrl, {});
     if (res.statusCode == 200) {
       Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body) as List<dynamic>)) {

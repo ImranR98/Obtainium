@@ -190,11 +190,9 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       } catch (e) {
         // Some links may not have valid encoding
       }
-    return AppSource.isApkOrContainerFile(
-      Uri.parse(
-        (filterLinkByText ? element.value : link).trim(),
-      ).path,
-    );
+      return AppSource.isApkOrContainerFile(
+        Uri.parse((filterLinkByText ? element.value : link).trim()).path,
+      );
     }).toList();
   }
   if (!skipSort) {
@@ -389,8 +387,10 @@ class HTML extends AppSource {
             .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
             .toList();
     const int maxIntermediateLinkDepth = 10;
-    final int linkCount = (additionalSettings['intermediateLink'].length)
-        .clamp(0, maxIntermediateLinkDepth);
+    final int linkCount = (additionalSettings['intermediateLink'].length).clamp(
+      0,
+      maxIntermediateLinkDepth,
+    );
     for (int i = 0; i < linkCount; i++) {
       var intLinks = await grabLinksCommonFromRes(
         await sourceRequest(currentUrl, additionalSettings),

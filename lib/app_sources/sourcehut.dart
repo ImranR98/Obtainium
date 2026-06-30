@@ -23,17 +23,14 @@ class SourceHut extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'/[^/]+/[^/]+',
+  );
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
@@ -86,9 +83,6 @@ class SourceHut extends AppSource {
         String? releaseDateString = entry.querySelector('pubDate')?.innerHtml;
         DateTime? releaseDate;
         try {
-          releaseDate = releaseDateString != null
-              ? DateFormat('E, dd MMM yyyy HH:mm:ss Z').parse(releaseDateString)
-              : null;
           releaseDate = releaseDateString != null
               ? DateFormat(
                   'EEE, dd MMM yyyy HH:mm:ss Z',

@@ -51,10 +51,7 @@ class AppsFilter {
 }
 
 class AppListBuilder {
-  static List<AppInMemory> filter(
-    List<AppInMemory> apps,
-    AppsFilter filter,
-  ) {
+  static List<AppInMemory> filter(List<AppInMemory> apps, AppsFilter filter) {
     final nameTokens = filter.nameFilter.isNotEmpty
         ? filter.nameFilter
               .split(' ')

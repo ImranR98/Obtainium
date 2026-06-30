@@ -361,7 +361,8 @@ class _HomePageState extends State<HomePage> {
     final useTwoPane = twoPane && currentIndex == 0;
 
     final detailPane =
-        selectedAppId != null && context.read<AppsProvider>().apps.containsKey(selectedAppId)
+        selectedAppId != null &&
+            context.read<AppsProvider>().apps.containsKey(selectedAppId)
         ? AppPage(
             key: ValueKey(selectedAppId),
             appId: selectedAppId!,

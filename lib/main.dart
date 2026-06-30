@@ -113,8 +113,6 @@ void startCallback() {
 }
 
 class MyTaskHandler extends TaskHandler {
-  static const String incrementCountCommand = 'incrementCount';
-
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     debugPrint('onStart(starter: ${starter.name})');
@@ -370,8 +368,7 @@ class _ObtainiumState extends State<Obtainium> {
     final currentLang = context.locale.languageCode;
     final deviceLang = context.deviceLocale.languageCode;
     if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
-        (settings.forcedLocale == null &&
-            deviceLang != currentLang)) {
+        (settings.forcedLocale == null && deviceLang != currentLang)) {
       settings.resetLocaleSafe(context);
     }
   }

@@ -96,9 +96,7 @@ class APKMirror extends AppSource {
       }
       String? titleString = targetRelease?.querySelector('title')?.innerHtml;
       var pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
-      String? dateString = pubDateRaw != null
-          ? pubDateRaw.split(' ').take(5).join(' ')
-          : null;
+      String? dateString = pubDateRaw?.split(' ').take(5).join(' ');
       DateTime? releaseDate;
       if (dateString != null) {
         try {

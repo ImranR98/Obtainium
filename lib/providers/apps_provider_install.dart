@@ -112,7 +112,10 @@ extension AppsProviderInstall on AppsProvider {
         app.url,
         additionalSettingsPlusSourceConfig,
       );
-      var notif = DownloadNotification(app.finalName, _downloadCompleteProgress);
+      var notif = DownloadNotification(
+        app.finalName,
+        _downloadCompleteProgress,
+      );
       notificationsProvider?.cancel(notif.id);
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
@@ -141,7 +144,10 @@ extension AppsProviderInstall on AppsProvider {
               notify();
             }
           }
-          notif = DownloadNotification(app.finalName, prog ?? _downloadCompleteProgress);
+          notif = DownloadNotification(
+            app.finalName,
+            prog ?? _downloadCompleteProgress,
+          );
           if (prog != null && prevProg != prog) {
             notificationsProvider?.notify(notif);
           }
@@ -442,9 +448,7 @@ extension AppsProviderInstall on AppsProvider {
     final raf = await tarballFile.open(mode: FileMode.read);
     final header = await raf.read(6);
 
-    final isGzip = header.length >= 2 &&
-        header[0] == 0x1f &&
-        header[1] == 0x8b;
+    final isGzip = header.length >= 2 && header[0] == 0x1f && header[1] == 0x8b;
     // Close and re-open for streaming so the header bytes are included.
     await raf.close();
 
@@ -654,8 +658,7 @@ extension AppsProviderInstall on AppsProvider {
           initialUri: Uri.parse('${await getStorageRootPath()}/Android/obb'),
         );
         if (obbDir == null) return;
-        final appSpecificObbDoc =
-            await saf.child(obbDir, appId);
+        final appSpecificObbDoc = await saf.child(obbDir, appId);
         if (appSpecificObbDoc == null) return;
         final obbFileName = file.path.split('/').last;
         final obbBytes = await file.readAsBytes();
@@ -675,11 +678,13 @@ extension AppsProviderInstall on AppsProvider {
       Directory(obbDirPath).createSync(recursive: true);
       String obbFileName = file.path.split("/").last;
       await file.copy("$obbDirPath/$obbFileName");
-      logs.add('Copied OBB file $obbFileName for $appId via direct file access');
+      logs.add(
+        'Copied OBB file $obbFileName for $appId via direct file access',
+      );
     }
   }
 
-  void uninstallApp(String appId) async {
+  Future<void> uninstallApp(String appId) async {
     var intent = AndroidIntent(
       action: 'android.intent.action.DELETE',
       data: 'package:$appId',
@@ -1134,7 +1139,7 @@ extension AppsProviderInstall on AppsProvider {
       }
     }
 
-    if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+    if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
       for (var urlWithApp in filesToDownload) {
         await downloadFn(urlWithApp.key, urlWithApp.value);
       }

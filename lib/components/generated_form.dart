@@ -336,10 +336,7 @@ class _FormSwitchRow extends StatelessWidget {
       children: [
         Flexible(child: Text(item.label)),
         const SizedBox(width: 8),
-        Switch(
-          value: value,
-          onChanged: item.disabled ? null : onChanged,
-        ),
+        Switch(value: value, onChanged: item.disabled ? null : onChanged),
       ],
     );
   }

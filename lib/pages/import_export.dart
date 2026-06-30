@@ -104,7 +104,11 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
   }
 
   void _import() {
-    var urls = _urlController.text.trim().split('\n').where((l) => l.isNotEmpty).toList();
+    var urls = _urlController.text
+        .trim()
+        .split('\n')
+        .where((l) => l.isNotEmpty)
+        .toList();
     if (urls.isEmpty) return;
     final appsProvider = context.read<AppsProvider>();
     setState(() => _importing = true);
@@ -114,7 +118,10 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
           if (!mounted) return;
           if (errors.isEmpty) {
             showMessage(
-              tr('importedX', args: [plural('apps', urls.length).toLowerCase()]),
+              tr(
+                'importedX',
+                args: [plural('apps', urls.length).toLowerCase()],
+              ),
               context,
             );
             Navigator.of(context).pop();
@@ -158,7 +165,9 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                     minLines: 8,
                     decoration: InputDecoration(
                       labelText: tr('appURLList'),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
                     validator: _validate,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -184,7 +193,10 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                     child: Text(
                       tr('importedAppsIdDisclaimer'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -357,11 +369,11 @@ class _ImportSectionState extends State<ImportSection> {
                 onTap: importInProgress
                     ? null
                     : () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ImportFromURLListPage(),
-                          ),
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ImportFromURLListPage(),
                         ),
+                      ),
               ),
               ...sourceProvider.massUrlSources.map(
                 (source) => _actionTile(

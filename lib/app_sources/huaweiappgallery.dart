@@ -12,17 +12,14 @@ class HuaweiAppGallery extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}(/#)?/(app|appdl)/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'(/#)?/(app|appdl)/[^/]+',
+  );
 
   String getDlUrl(String standardUrl) =>
       'https://${hosts[0].replaceAll('appgallery.huawei', 'appgallery.cloud.huawei')}/appdl/${standardUrl.split('/').last}';

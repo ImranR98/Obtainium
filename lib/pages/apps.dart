@@ -49,7 +49,6 @@ class AppsPage extends StatefulWidget {
   State<AppsPage> createState() => AppsPageState();
 }
 
-
 class AppsPageState extends State<AppsPage> {
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
@@ -430,13 +429,7 @@ class AppsPageState extends State<AppsPage> {
       },
       buildTiles: () => [
         for (final i in appIndices)
-          _buildTile(
-            i,
-            context,
-            listedApps,
-            settingsProvider,
-            appsProvider,
-          ),
+          _buildTile(i, context, listedApps, settingsProvider, appsProvider),
       ],
     );
   }
@@ -637,7 +630,8 @@ class AppsPageState extends State<AppsPage> {
     // loading state) without triggering rebuilds on every download tick.
     context.select((AppsProvider p) => p.loadingApps);
     final pipelineSig = context.select(
-      (AppsProvider p) => _pipelineSignature(p.getAppValues().toList(), settingsProvider),
+      (AppsProvider p) =>
+          _pipelineSignature(p.getAppValues().toList(), settingsProvider),
     );
 
     var listedApps = appsProvider.getAppValues().toList();
@@ -1089,12 +1083,14 @@ class AppsPageState extends State<AppsPage> {
                         urls += '${a.url}\n';
                       }
                       urls = urls.substring(0, urls.length - 1);
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: urls,
-                          subject: 'Obtainium - ${tr('appsString')}',
-                        ),
-                      ).ignore();
+                      SharePlus.instance
+                          .share(
+                            ShareParams(
+                              text: urls,
+                              subject: 'Obtainium - ${tr('appsString')}',
+                            ),
+                          )
+                          .ignore();
                     },
                   ),
                   optionTile(
@@ -1108,12 +1104,14 @@ class AppsPageState extends State<AppsPage> {
                               urls +=
                                   'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
                             }
-                            SharePlus.instance.share(
-                              ShareParams(
-                                text: urls,
-                                subject: 'Obtainium - ${tr('appsString')}',
-                              ),
-                            ).ignore();
+                            SharePlus.instance
+                                .share(
+                                  ShareParams(
+                                    text: urls,
+                                    subject: 'Obtainium - ${tr('appsString')}',
+                                  ),
+                                )
+                                .ignore();
                           },
                   ),
                   optionTile(
@@ -1136,12 +1134,14 @@ class AppsPageState extends State<AppsPage> {
                               mimeType: 'application/json',
                               name: fn,
                             );
-                            SharePlus.instance.share(
-                              ShareParams(
-                                files: [f],
-                                fileNameOverrides: ['$fn.json'],
-                              ),
-                            ).ignore();
+                            SharePlus.instance
+                                .share(
+                                  ShareParams(
+                                    files: [f],
+                                    fileNameOverrides: ['$fn.json'],
+                                  ),
+                                )
+                                .ignore();
                           },
                   ),
                   optionTile(

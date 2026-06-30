@@ -81,7 +81,7 @@ class Aptoide extends AppSource {
     }
     DateTime? relDate;
     if (dateStr != null) {
-      relDate = DateTime.parse(dateStr);
+      relDate = DateTime.tryParse(dateStr);
     }
 
     return APKDetails(

@@ -19,17 +19,14 @@ class ItchIO extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://[a-z0-9-]+.${getSourceRegex(hosts)}/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'[a-z0-9-]+\.',
+    pathPattern: r'/[^/]+',
+  );
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
@@ -129,8 +126,8 @@ class ItchIO extends AppSource {
     if (matches.isEmpty) return null;
 
     int compareVersions(String v1, String v2) {
-      List<int> c1 = v1.split('.').map(int.parse).toList();
-      List<int> c2 = v2.split('.').map(int.parse).toList();
+      List<int> c1 = v1.split('.').map((s) => int.tryParse(s) ?? 0).toList();
+      List<int> c2 = v2.split('.').map((s) => int.tryParse(s) ?? 0).toList();
       int maxLen = c1.length > c2.length ? c1.length : c2.length;
       for (int i = 0; i < maxLen; i++) {
         int p1 = i < c1.length ? c1[i] : 0;

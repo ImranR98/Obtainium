@@ -294,7 +294,11 @@ class AppListTile extends StatelessWidget {
               tr('repoRenamed'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor) ?? TextStyle(color: textColor, fontSize: 12),
+              style:
+                  Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: textColor) ??
+                  TextStyle(color: textColor, fontSize: 12),
             ),
           ),
         ],
@@ -321,62 +325,60 @@ class AppListTile extends StatelessWidget {
         : Theme.of(context).colorScheme.onSurfaceVariant;
     Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        hasUpdate ? _updateButton(context) : const SizedBox.shrink(),
-        hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
-        HighlightableButton(
-          highlight: settingsProvider.highlightTouchTargets,
-          onPressed: showChangesFn,
-          label: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    constraints: BoxConstraints(
-                      maxWidth: math.min(
-                        constraints.maxWidth / 4,
-                        160,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          hasUpdate ? _updateButton(context) : const SizedBox.shrink(),
+          hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
+          HighlightableButton(
+            highlight: settingsProvider.highlightTouchTargets,
+            onPressed: showChangesFn,
+            label: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      constraints: BoxConstraints(
+                        maxWidth: math.min(constraints.maxWidth / 4, 160),
+                      ),
+                      child: Text(
+                        _versionText(),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: isVersionPseudo(_app)
+                            ? TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: updateColor,
+                              )
+                            : TextStyle(color: updateColor),
                       ),
                     ),
-                    child: Text(
-                      _versionText(),
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: isVersionPseudo(_app)
-                          ? TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: updateColor,
-                            )
-                          : TextStyle(color: updateColor),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _changesButtonString(showChangesFn != null),
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: updateColor,
+                        decoration: showChangesFn == null
+                            ? TextDecoration.none
+                            : TextDecoration.underline,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _changesButtonString(showChangesFn != null),
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: updateColor,
-                      decoration: showChangesFn == null
-                          ? TextDecoration.none
-                          : TextDecoration.underline,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ));
+        ],
+      ),
+    );
 
     var transparent = Colors.transparent.toARGB32();
     var categories = _app.categories;
@@ -458,7 +460,7 @@ class AppListTile extends StatelessWidget {
                 ], globalNavigatorKey.currentContext)
                 .catchError((e) {
                   var ctx = globalNavigatorKey.currentContext;
-                  if (ctx != null) showError(e, ctx);
+                  if (ctx != null && ctx.mounted) showError(e, ctx);
                   return <String>[];
                 });
           }
@@ -584,7 +586,11 @@ class DownloadProgressTrailing extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11) ?? const TextStyle(fontSize: 11),
+              style:
+                  Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 11) ??
+                  const TextStyle(fontSize: 11),
             ),
           ],
         ),
@@ -664,11 +670,7 @@ class AppListCategorySection extends StatelessWidget {
             ),
           ),
           ...tiles.asMap().entries.map(
-            (e) => segment(
-              e.key + 1,
-              colorScheme.surfaceContainerLow,
-              e.value,
-            ),
+            (e) => segment(e.key + 1, colorScheme.surfaceContainerLow, e.value),
           ),
         ],
       ),

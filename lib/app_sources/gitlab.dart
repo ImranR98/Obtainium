@@ -149,10 +149,11 @@ class GitLab extends AppSource {
     }
 
     // Request data from REST API
-    String releasesPath =
-        trackOnly ? 'repository/tags' : 'releases';
-    String query =
-        [if (optionalAuth.isNotEmpty) optionalAuth, 'per_page=100'].join('&');
+    String releasesPath = trackOnly ? 'repository/tags' : 'releases';
+    String query = [
+      if (optionalAuth.isNotEmpty) optionalAuth,
+      'per_page=100',
+    ].join('&');
     Response res = await sourceRequest(
       'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
       additionalSettings,
@@ -203,8 +204,7 @@ class GitLab extends AppSource {
           .split('\n')
           .where(
             (s) =>
-                s.startsWith('/uploads/') &&
-                AppSource.isApkOrContainerFile(s),
+                s.startsWith('/uploads/') && AppSource.isApkOrContainerFile(s),
           )
           .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
           .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))

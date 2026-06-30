@@ -70,7 +70,6 @@ lib/
 │  ├─ logs_provider.dart            sqflite-backed logs
 │  ├─ notifications_provider.dart   flutter_local_notifications wrappers
 │  ├─ native_provider.dart          platform channel helpers (e.g. system font)
-│  └─ config_keys.dart              AppConfigKey typed constants for settings keys
 ├─ app_sources/              One file per supported source (see §4)
 └─ mass_app_sources/         Bulk URL providers (e.g. GitHubStars)
 ```
@@ -199,12 +198,6 @@ Override the contract methods you need:
   → arch filtering → builds the final `App`. This is where `versionExtractionRegEx`,
   `releaseDateAsVersion`, `apkFilterRegEx`, `autoApkFilterByArch`, app-id inference, and
   `overrideSource` are all applied.
-
-### `config_keys.dart`
-
-`AppConfigKey` holds typed `static const String` keys for every `additionalSettings`
-entry (e.g. `AppConfigKey.trackOnly`, `AppConfigKey.apkFilterRegEx`). **Use these
-constants** instead of raw string literals — they give compile-time typo protection.
 
 ---
 
@@ -398,7 +391,7 @@ flutter build apk --flavor normal   # or use ./build.sh
 | Task | Start here |
 | --- | --- |
 | Add a new app source | New file in `app_sources/`, register in `SourceProvider._buildSources()` |
-| Add a per-app option | `AppConfigKey` + the source's `additionalSourceAppSpecificSettingFormItems` (or the base `additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly`) |
+| Add a per-app option | The source's `additionalSourceAppSpecificSettingFormItems` (or the base `additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly`) |
 | Add a global setting | A typed getter/setter in `settings_provider.dart` + a `SettingsToggleRow` in `settings.dart` |
 | Change update logic | `apps_provider_updates.dart` (foreground) / `bgUpdateCheck` (background) |
 | Change install behaviour | `apps_provider_install.dart` |

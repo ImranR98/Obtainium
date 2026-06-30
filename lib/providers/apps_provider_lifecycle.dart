@@ -243,7 +243,10 @@ extension AppsProviderLifecycle on AppsProvider {
                 );
                 try {
                   // Try getting the app's source to ensure no invalid apps get loaded
-                  var src = sp.getSource(app.url, overrideSource: app.overrideSource);
+                  var src = sp.getSource(
+                    app.url,
+                    overrideSource: app.overrideSource,
+                  );
                   var sourceType = src.runtimeType.toString();
                   // If the app is installed, grab its OS data and reconcile install statuses
                   PackageInfo? installedInfo = installedAppsMap[app.id];
@@ -269,8 +272,13 @@ extension AppsProviderLifecycle on AppsProvider {
                       value.icon,
                       sourceType: sourceType,
                     ),
-                    ifAbsent: () =>
-                        AppInMemory(app!, null, installedInfo, null, sourceType: sourceType),
+                    ifAbsent: () => AppInMemory(
+                      app!,
+                      null,
+                      installedInfo,
+                      null,
+                      sourceType: sourceType,
+                    ),
                   );
                 } catch (e) {
                   errors.add([app!.id, app.finalName, e.toString()]);
@@ -357,8 +365,13 @@ extension AppsProviderLifecycle on AppsProvider {
         try {
           this.apps.update(
             app.id,
-            (value) => AppInMemory(app, value.downloadProgress, info, icon,
-                sourceType: value.sourceType),
+            (value) => AppInMemory(
+              app,
+              value.downloadProgress,
+              info,
+              icon,
+              sourceType: value.sourceType,
+            ),
             ifAbsent: onlyIfExists
                 ? null
                 : () => AppInMemory(app, null, info, icon),

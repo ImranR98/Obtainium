@@ -520,10 +520,9 @@ class _AppPageState extends State<AppPage> {
                     : tr('appsUpdated');
                 var np = context.read<NotificationsProvider>();
                 settingsProvider.heavyImpact();
-                var res = await appsProvider.downloadAndInstallLatestApps(
-                  [app.app.id],
-                  globalNavigatorKey.currentContext,
-                );
+                var res = await appsProvider.downloadAndInstallLatestApps([
+                  app.app.id,
+                ], globalNavigatorKey.currentContext);
                 if (res.isNotEmpty && !trackOnly && context.mounted) {
                   showMessage(successMessage, context);
                 }
@@ -704,9 +703,7 @@ class _AppPageState extends State<AppPage> {
 
     var sourceProvider = SourceProvider();
     AppInMemory? app = _cachedApp(
-      context.select<AppsProvider, AppInMemory?>(
-        (p) => p.apps[widget.appId],
-      ),
+      context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
     var source = app != null
         ? sourceProvider.getSource(
@@ -1029,7 +1026,12 @@ class _AppPageState extends State<AppPage> {
                       if (app?.downloadProgress != null)
                         Semantics(
                           label: app!.downloadProgress! >= 0
-                              ? tr('percentProgress', args: [app.downloadProgress!.toInt().toString()])
+                              ? tr(
+                                  'percentProgress',
+                                  args: [
+                                    app.downloadProgress!.toInt().toString(),
+                                  ],
+                                )
                               : tr('installing'),
                           child: Padding(
                             padding: const EdgeInsets.only(top: 12),

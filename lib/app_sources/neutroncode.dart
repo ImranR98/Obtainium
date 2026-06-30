@@ -10,17 +10,14 @@ class NeutronCode extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/downloads/file/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'/downloads/file/[^/]+',
+  );
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;

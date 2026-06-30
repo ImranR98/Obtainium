@@ -17,18 +17,14 @@ class CoolApk extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      r'^https?://(www\.)?coolapk\.com/apk/[^/]+',
-      caseSensitive: false,
-    );
-    var match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    String standardizedUrl = match.group(0)!;
-    return standardizedUrl;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'/apk/[^/]+',
+  );
 
   @override
   Future<String?> tryInferringAppId(

@@ -60,9 +60,20 @@ class AppInMemory {
   Uint8List? icon;
   String? sourceType;
 
-  AppInMemory(this.app, this.downloadProgress, this.installedInfo, this.icon, {this.sourceType});
-  AppInMemory deepCopy() =>
-      AppInMemory(app.deepCopy(), downloadProgress, installedInfo, icon, sourceType: sourceType);
+  AppInMemory(
+    this.app,
+    this.downloadProgress,
+    this.installedInfo,
+    this.icon, {
+    this.sourceType,
+  });
+  AppInMemory deepCopy() => AppInMemory(
+    app.deepCopy(),
+    downloadProgress,
+    installedInfo,
+    icon,
+    sourceType: sourceType,
+  );
 
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
@@ -263,7 +274,14 @@ Future<String> checkPartialDownloadHashDynamic(
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  for (int i = startingSize; i >= lowerLimit; i -= _obtainiumPartialHashCheckDecrement) {
+  for (
+    int i = startingSize;
+    i >= lowerLimit;
+    i -= _obtainiumPartialHashCheckDecrement
+  ) {
+    // Both requests fetch the same byte range to confirm the hash is
+    // stable. The loop decrements on mismatch; when two consecutive
+    // requests agree, the hash is considered valid.
     List<String> ab = await Future.wait([
       checkPartialDownloadHash(
         url,
@@ -418,7 +436,9 @@ Future<File> downloadFile(
     int pollCount = 0;
     while (isDownloading && pollCount < _obtainiumMaxDownloadPolls) {
       pollCount++;
-      await Future.delayed(Duration(seconds: _obtainiumDownloadPollIntervalSeconds));
+      await Future.delayed(
+        Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
+      );
       if (tempDownloadedFile.existsSync()) {
         int newTempFileSize = await tempDownloadedFile.length();
         if (newTempFileSize > currentTempFileSize) {
@@ -498,7 +518,9 @@ Future<File> downloadFile(
     received = rangeStart;
   }
 
-  const downloadUIUpdateInterval = Duration(milliseconds: _obtainiumProgressUpdateIntervalMs);
+  const downloadUIUpdateInterval = Duration(
+    milliseconds: _obtainiumProgressUpdateIntervalMs,
+  );
   const downloadBufferSizeLocal = _obtainiumDownloadBufferSize;
 
   final downloadBuffer = BytesBuilder();
@@ -623,8 +645,11 @@ class AppsProvider with ChangeNotifier {
   void _reloadIfBgSaved() {
     if (_lastBackgroundSave == null) return;
     final lastSave = _lastBackgroundSave!;
-    if (!_isBg && lastSave.isAfter(DateTime.now().subtract(const Duration(seconds: 30)))) {
-      loadApps().then((_) {
+    if (!_isBg &&
+        lastSave.isAfter(
+          DateTime.now().subtract(const Duration(seconds: 30)),
+        )) {
+      loadApps().whenComplete(() {
         _lastBackgroundSave = null;
       });
     } else {

@@ -233,17 +233,14 @@ class GitHub extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'/[^/]+/[^/]+',
+  );
 
   @override
   Future<Map<String, String>?> getRequestHeaders(
@@ -757,9 +754,8 @@ class GitHub extends AppSource {
   }) async {
     Response res = await sourceRequest(requestUrl, {});
     if (res.statusCode == 200) {
-      int minStarCount = querySettings['minStarCount'] != null
-          ? int.parse(querySettings['minStarCount'])
-          : 0;
+      int minStarCount =
+          int.tryParse(querySettings['minStarCount']?.toString() ?? '') ?? 0;
       Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body)[rootProp] as List<dynamic>)) {
         if ((e['stargazers_count'] ?? e['stars_count'] ?? 0) >= minStarCount) {
@@ -822,11 +818,11 @@ class GitHub extends AppSource {
   void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
       final resetEpochSeconds =
-          int.parse(res.headers['x-ratelimit-reset'] ?? '1800000000');
-      final nowSeconds =
-          DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      final remainingMinutes =
-          ((resetEpochSeconds - nowSeconds) / 60).ceil().clamp(0, 9999);
+          int.tryParse(res.headers['x-ratelimit-reset'] ?? '') ?? 1800000000;
+      final nowSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final remainingMinutes = ((resetEpochSeconds - nowSeconds) / 60)
+          .ceil()
+          .clamp(0, 9999);
       throw RateLimitError(remainingMinutes);
     }
   }

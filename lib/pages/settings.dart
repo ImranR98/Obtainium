@@ -50,6 +50,159 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Widget _caption(BuildContext context, String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+    child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+  );
+
+  Widget _fieldTile(BuildContext context, Widget field) => SettingsTile(
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    padding: EdgeInsets.zero,
+    child: DropdownMenuTheme(
+      data: DropdownMenuThemeData(
+        inputDecorationTheme: const InputDecorationThemeData(
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+      ),
+      child: field,
+    ),
+  );
+
+  Future<bool> _colorPickerDialog(SettingsProvider settingsProvider) async {
+    return ColorPicker(
+      color: settingsProvider.themeColor,
+      onColorChanged: (Color color) =>
+          setState(() => settingsProvider.themeColor = color),
+      actionButtons: const ColorPickerActionButtons(
+        okButton: true,
+        closeButton: true,
+        dialogActionButtons: false,
+      ),
+      pickersEnabled: const <ColorPickerType, bool>{
+        ColorPickerType.both: false,
+        ColorPickerType.primary: false,
+        ColorPickerType.accent: false,
+        ColorPickerType.bw: false,
+        ColorPickerType.custom: true,
+        ColorPickerType.wheel: true,
+      },
+      pickerTypeLabels: <ColorPickerType, String>{
+        ColorPickerType.custom: tr('standard'),
+        ColorPickerType.wheel: tr('custom'),
+      },
+      title: Text(
+        tr('selectX', args: [tr('colour').toLowerCase()]),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      wheelDiameter: 192,
+      wheelSquareBorderRadius: 32,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      spacing: 8,
+      runSpacing: 8,
+      enableShadesSelection: false,
+      customColorSwatchesAndNames: colorsNameMap,
+      showMaterialName: true,
+      showColorName: true,
+      materialNameTextStyle: Theme.of(context).textTheme.bodySmall,
+      colorNameTextStyle: Theme.of(context).textTheme.bodySmall,
+      copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+        longPressMenu: true,
+      ),
+    ).showPickerDialog(
+      context,
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> a1,
+            Animation<double> a2,
+            Widget widget,
+          ) {
+            final double curvedValue = Curves.easeInOutCubicEmphasized
+                .transform(a1.value);
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
+              child: Opacity(opacity: a1.value, child: widget),
+            );
+          },
+      transitionDuration: const Duration(milliseconds: 250),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) => SliverToBoxAdapter(
+    child: Column(
+      children: [
+        const Divider(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              onPressed: () {
+                launchUrlString(
+                  context.read<SettingsProvider>().sourceUrl,
+                  mode: LaunchMode.externalApplication,
+                ).ignore();
+              },
+              icon: const Icon(Icons.code),
+              tooltip: tr('appSource'),
+            ),
+            IconButton(
+              onPressed: () {
+                launchUrlString(
+                  'https://wiki.obtainium.page/',
+                  mode: LaunchMode.externalApplication,
+                ).ignore();
+              },
+              icon: const Icon(Icons.help_outline_rounded),
+              tooltip: tr('wiki'),
+            ),
+            IconButton(
+              onPressed: () {
+                launchUrlString(
+                  'https://apps.obtainium.page/',
+                  mode: LaunchMode.externalApplication,
+                ).ignore();
+              },
+              icon: const Icon(Icons.apps_rounded),
+              tooltip: tr('crowdsourcedConfigsLabel'),
+            ),
+            IconButton(
+              onPressed: () {
+                context.read<LogsProvider>().get().then((logs) {
+                  if (!context.mounted) return;
+                  if (logs.isEmpty) {
+                    showMessage(ObtainiumError(tr('noLogs')), context);
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        return const LogsDialog();
+                      },
+                    );
+                  }
+                });
+              },
+              icon: const Icon(Icons.bug_report_outlined),
+              tooltip: tr('appLogs'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
@@ -58,98 +211,6 @@ class _SettingsPageState extends State<SettingsPage> {
       settingsProvider.initializeSettings();
     }
     final sdk = androidSdkInt ?? 0;
-
-    Widget caption(String text) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-      child: Text(text, style: Theme.of(context).textTheme.labelSmall),
-    );
-
-    // Wraps a dropdown/field in a distinct-tone tile so it stands out from the
-    // surrounding control tiles while still joining the positional-radii run.
-    Widget fieldTile(Widget field) => SettingsTile(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      padding: EdgeInsets.zero,
-      child: DropdownMenuTheme(
-        data: DropdownMenuThemeData(
-          inputDecorationTheme: const InputDecorationThemeData(
-            filled: false,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          ),
-          menuStyle: MenuStyle(
-            shape: WidgetStatePropertyAll(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          ),
-        ),
-        child: field,
-      ),
-    );
-
-    Future<bool> colorPickerDialog() async {
-      return ColorPicker(
-        color: settingsProvider.themeColor,
-        onColorChanged: (Color color) =>
-            setState(() => settingsProvider.themeColor = color),
-        actionButtons: const ColorPickerActionButtons(
-          okButton: true,
-          closeButton: true,
-          dialogActionButtons: false,
-        ),
-        pickersEnabled: const <ColorPickerType, bool>{
-          ColorPickerType.both: false,
-          ColorPickerType.primary: false,
-          ColorPickerType.accent: false,
-          ColorPickerType.bw: false,
-          ColorPickerType.custom: true,
-          ColorPickerType.wheel: true,
-        },
-        pickerTypeLabels: <ColorPickerType, String>{
-          ColorPickerType.custom: tr('standard'),
-          ColorPickerType.wheel: tr('custom'),
-        },
-        title: Text(
-          tr('selectX', args: [tr('colour').toLowerCase()]),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        wheelDiameter: 192,
-        wheelSquareBorderRadius: 32,
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        spacing: 8,
-        runSpacing: 8,
-        enableShadesSelection: false,
-        customColorSwatchesAndNames: colorsNameMap,
-        showMaterialName: true,
-        showColorName: true,
-        materialNameTextStyle: Theme.of(context).textTheme.bodySmall,
-        colorNameTextStyle: Theme.of(context).textTheme.bodySmall,
-        copyPasteBehavior: const ColorPickerCopyPasteBehavior(
-          longPressMenu: true,
-        ),
-      ).showPickerDialog(
-        context,
-        transitionBuilder:
-            (
-              BuildContext context,
-              Animation<double> a1,
-              Animation<double> a2,
-              Widget widget,
-            ) {
-              final double curvedValue = Curves.easeInOutCubicEmphasized
-                  .transform(a1.value);
-              return Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
-                child: Opacity(opacity: a1.value, child: widget),
-              );
-            },
-        transitionDuration: const Duration(milliseconds: 250),
-      );
-    }
 
     var colorPicker = SettingsTile(
       child: ListTile(
@@ -167,7 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onSelectFocus: false,
           onSelect: () async {
             final Color colorBeforeDialog = settingsProvider.themeColor;
-            if (!(await colorPickerDialog())) {
+            if (!(await _colorPickerDialog(settingsProvider))) {
               setState(() {
                 settingsProvider.themeColor = colorBeforeDialog;
               });
@@ -565,8 +626,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                       })
                                       .catchError((e) {
                                         settingsProvider.useShizuku = false;
-                                        if (context.mounted)
+                                        if (context.mounted) {
                                           showError(e, context);
+                                        }
                                       });
                                 } else {
                                   settingsProvider.useShizuku = false;
@@ -596,7 +658,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             if (settingsProvider.theme ==
                                     ThemeSettings.system &&
                                 (androidSdkInt ?? 30) < 29)
-                              caption(tr('followSystemThemeExplanation')),
+                              _caption(
+                                context,
+                                tr('followSystemThemeExplanation'),
+                              ),
                             if (settingsProvider.theme != ThemeSettings.light)
                               SettingsToggleRow(
                                 label: tr('useBlackTheme'),
@@ -605,13 +670,13 @@ class _SettingsPageState extends State<SettingsPage> {
                                   settingsProvider.useBlackTheme = value;
                                 },
                               ),
-                            fieldTile(colourSchemeDropdown),
+                            _fieldTile(context, colourSchemeDropdown),
                             if (settingsProvider.colourSchemeMode !=
                                 ColourSchemeMode.materialYou)
                               colorPicker,
-                            fieldTile(sortDropdown),
+                            _fieldTile(context, sortDropdown),
                             orderControl,
-                            fieldTile(localeDropdown),
+                            _fieldTile(context, localeDropdown),
                             if (sdk >= 29)
                               SettingsToggleRow(
                                 label: tr('useSystemFont'),
@@ -720,68 +785,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const Divider(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        launchUrlString(
-                          settingsProvider.sourceUrl,
-                          mode: LaunchMode.externalApplication,
-                        ).ignore();
-                      },
-                      icon: const Icon(Icons.code),
-                      tooltip: tr('appSource'),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        launchUrlString(
-                          'https://wiki.obtainium.page/',
-                          mode: LaunchMode.externalApplication,
-                        ).ignore();
-                      },
-                      icon: const Icon(Icons.help_outline_rounded),
-                      tooltip: tr('wiki'),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        launchUrlString(
-                          'https://apps.obtainium.page/',
-                          mode: LaunchMode.externalApplication,
-                        ).ignore();
-                      },
-                      icon: const Icon(Icons.apps_rounded),
-                      tooltip: tr('crowdsourcedConfigsLabel'),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        context.read<LogsProvider>().get().then((logs) {
-                          if (!context.mounted) return;
-                          if (logs.isEmpty) {
-                            showMessage(ObtainiumError(tr('noLogs')), context);
-                          } else {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext ctx) {
-                                return const LogsDialog();
-                              },
-                            );
-                          }
-                        });
-                      },
-                      icon: const Icon(Icons.bug_report_outlined),
-                      tooltip: tr('appLogs'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
+          _buildFooter(context),
         ],
       ),
     );
@@ -816,7 +820,7 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
     43200,
   ];
   int updateInterval = 0;
-  late SplineInterpolation updateIntervalInterpolator; // 🤓
+  late SplineInterpolation updateIntervalInterpolator;
   String updateIntervalLabel = tr('neverManualOnly');
   bool showIntervalLabel = true;
   late double sliderVal;

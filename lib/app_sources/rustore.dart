@@ -17,17 +17,14 @@ class RuStore extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/catalog/app/+[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: r'(www\.)?',
+    pathPattern: r'/catalog/app/+[^/]+',
+  );
 
   @override
   Future<String?> tryInferringAppId(
@@ -88,7 +85,9 @@ class RuStore extends AppSource {
       postBody: {"appId": appDetails['appId'], "firstInstall": true},
     );
     var downloadDecoded = await decodeJsonBody(res1.bodyBytes);
-    var downloadDetails = downloadDecoded is Map ? downloadDecoded['body'] : null;
+    var downloadDetails = downloadDecoded is Map
+        ? downloadDecoded['body']
+        : null;
     try {
       if (res1.statusCode != 200 ||
           downloadDetails['downloadUrls'][0]['url'] == null) {
@@ -100,9 +99,7 @@ class RuStore extends AppSource {
 
     return APKDetails(
       version,
-      getApkUrlsFromUrls([
-        downloadDetails['downloadUrls'][0]['url'] as String,
-      ]),
+      getApkUrlsFromUrls([downloadDetails['downloadUrls'][0]['url'] as String]),
       AppNames(author, appName),
       releaseDate: relDate,
       changeLog: changeLog,

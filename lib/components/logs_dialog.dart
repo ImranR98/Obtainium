@@ -23,15 +23,16 @@ class _LogsDialogState extends State<LogsDialog> {
   }
 
   void filterLogs(int days) {
-    context.read<LogsProvider>()
+    context
+        .read<LogsProvider>()
         .get(after: DateTime.now().subtract(Duration(days: days)))
         .then((value) {
-      if (!mounted) return;
-      setState(() {
-        String l = value.map((e) => e.toString()).join('\n\n');
-        logString = l.isNotEmpty ? l : tr('noLogs');
-      });
-    });
+          if (!mounted) return;
+          setState(() {
+            String l = value.map((e) => e.toString()).join('\n\n');
+            logString = l.isNotEmpty ? l : tr('noLogs');
+          });
+        });
   }
 
   @override
