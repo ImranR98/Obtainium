@@ -14,6 +14,7 @@ class RuStore extends AppSource {
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
     changeLogIfAnyIsMarkDown = false;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -25,14 +26,6 @@ class RuStore extends AppSource {
     subdomainPrefix: r'(www\.)?',
     pathPattern: r'/catalog/app/+[^/]+',
   );
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
-  }
 
   Future<dynamic> decodeJsonBody(Uint8List bytes) async {
     try {

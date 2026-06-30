@@ -341,7 +341,9 @@ class SettingsProvider with ChangeNotifier {
   void setSettingString(String settingId, String value) {
     if (_credsKeys.contains(settingId)) {
       _secureCache[settingId] = value;
-      _secureStorage.write(key: settingId, value: value);
+      _secureStorage
+          .write(key: settingId, value: value)
+          .catchError((e) => debugPrint('Failed to persist credential: $e'));
     } else {
       prefs?.setString(settingId, value);
     }

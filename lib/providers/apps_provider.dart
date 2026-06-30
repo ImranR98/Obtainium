@@ -345,7 +345,7 @@ Future<String?> checkETagHeader(
   var client = IOClient(createHttpClient(allowInsecure));
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
-  unawaited(response.stream.drain<void>().catchError((_) {}));
+  await response.stream.drain<void>().catchError((_) {});
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
       ?.replaceAll('"', '')
@@ -632,6 +632,7 @@ class AppsProvider with ChangeNotifier {
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
   bool gettingUpdates = false;
+  Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
 
   // Serializes concurrent loadApps() calls without busy-waiting.

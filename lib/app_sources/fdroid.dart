@@ -16,6 +16,7 @@ class FDroid extends AppSource {
     name = tr('fdroid');
     naiveStandardVersionDetection = true;
     canSearch = true;
+    inferAppIdFromUrlPath = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormTextField(
@@ -65,14 +66,6 @@ class FDroid extends AppSource {
       throw InvalidURLError(name);
     }
     return match.group(0)!;
-  }
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
   }
 
   @override

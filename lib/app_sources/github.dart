@@ -202,14 +202,15 @@ class GitHub extends AppSource {
             appIds = appIds
                 .map((appId) {
                   if (appId.startsWith('\${') && appId.endsWith('}')) {
-                    appId = trimmedLines
+                    var varLine = trimmedLines
                         .where(
                           (l) => l.startsWith(
                             'def ${appId.substring(2, appId.length - 1)}',
                           ),
                         )
-                        .first;
-                    appId = appId.split(appId.contains('"') ? '"' : '\'')[1];
+                        .firstOrNull;
+                    if (varLine == null) return '';
+                    appId = varLine.split(varLine.contains('"') ? '"' : '\'')[1];
                   }
                   return appId;
                 })
@@ -374,7 +375,7 @@ class GitHub extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 
-  Future<APKDetails> getLatestAPKDetailsCommon(
+  Future<APKDetails> _fetchReleaseDetails(
     String requestUrl,
     String standardUrl,
     Map<String, dynamic> additionalSettings, {
@@ -544,7 +545,6 @@ class GitHub extends AppSource {
                   (nameB as String).substring(matchB.start, matchB.end),
                 );
               } else {
-                // 'name'
                 return compareAlphaNumeric(
                   (nameA as String),
                   (nameB as String),
@@ -695,14 +695,14 @@ class GitHub extends AppSource {
     }
   }
 
-  Future<APKDetails> getLatestAPKDetailsCommon2(
+  Future<APKDetails> fetchReleaseDetailsWithTagFallback(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
     Future<String> Function(bool) reqUrlGenerator,
     dynamic Function(Response)? onHttpErrorCode,
   ) async {
     try {
-      return await getLatestAPKDetailsCommon(
+      return await _fetchReleaseDetails(
         await reqUrlGenerator(false),
         standardUrl,
         additionalSettings,
@@ -710,7 +710,7 @@ class GitHub extends AppSource {
       );
     } catch (err) {
       if (err is NoReleasesError && additionalSettings['trackOnly'] == true) {
-        return await getLatestAPKDetailsCommon(
+        return await _fetchReleaseDetails(
           await reqUrlGenerator(true),
           standardUrl,
           additionalSettings,
@@ -727,7 +727,7 @@ class GitHub extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await getLatestAPKDetailsCommon2(
+    return await fetchReleaseDetailsWithTagFallback(
       standardUrl,
       additionalSettings,
       (bool useTagUrl) async {

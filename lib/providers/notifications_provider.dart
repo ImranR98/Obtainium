@@ -111,7 +111,7 @@ class SilentUpdateNotification extends ObtainiumNotification {
 class SilentUpdateAttemptNotification extends ObtainiumNotification {
   SilentUpdateAttemptNotification(List<App> updates, {int? id})
     : super(
-        id ?? 4,
+        id ?? 8,
         tr('appsPossiblyUpdated'),
         _buildUpdateMessage(
           updates,

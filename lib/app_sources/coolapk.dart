@@ -6,7 +6,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'dart:math';
 
-// kanged from https://github.com/DUpdateSystem/UpgradeAll/blob/b2f92c9/core-websdk/src/main/java/net/xzos/upgradeall/core/websdk/api/client_proxy/hubs/CoolApk.kt
+// Adapted from https://github.com/DUpdateSystem/UpgradeAll
 class CoolApk extends AppSource {
   CoolApk() {
     name = tr('coolApk');
@@ -14,6 +14,7 @@ class CoolApk extends AppSource {
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
     allowOverride = false;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -27,14 +28,6 @@ class CoolApk extends AppSource {
   );
 
   @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
-  }
-
-  @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
@@ -42,7 +35,6 @@ class CoolApk extends AppSource {
     String appId = (await tryInferringAppId(standardUrl))!;
     String apiUrl = 'https://api2.coolapk.com';
 
-    // get latest
     var detailUrl = '$apiUrl/v6/apk/detail?id=$appId';
     var headers = await getRequestHeaders(additionalSettings, detailUrl);
     var res = await sourceRequest(detailUrl, additionalSettings);
@@ -76,7 +68,6 @@ class CoolApk extends AppSource {
     }
     String aid = detail['id'].toString();
 
-    // get apk url
     String apkUrl = await _getLatestApkUrl(
       apiUrl,
       appId,
@@ -124,7 +115,6 @@ class CoolApk extends AppSource {
     bool forAPKDownload = false,
   }) async {
     var tokenPair = _getToken();
-    // CoolAPK header
     return {
       'User-Agent':
           'Dalvik/2.1.0 (Linux; U; Android 9; MI 8 SE MIUI/9.5.9) (#Build; Xiaomi; MI 8 SE; PKQ1.181121.001; 9) +CoolMarket/12.4.2-2208241-universal',
@@ -157,8 +147,7 @@ class CoolApk extends AppSource {
       (_) => rand.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join(':');
 
-    // 加密算法来自 https://github.com/XiaoMengXinX/FuckCoolapkTokenV2、https://github.com/Coolapk-UWP/Coolapk-UWP
-    // device
+    // Token generation adapted from https://github.com/XiaoMengXinX/FuckCoolapkTokenV2 and https://github.com/Coolapk-UWP/Coolapk-UWP
     String aid = randHexString(16);
     String mac = randMacAddress();
     const manufactor = 'Google';
@@ -166,26 +155,22 @@ class CoolApk extends AppSource {
     const model = 'Pixel 5a';
     const buildNumber = 'SQ1D.220105.007';
 
-    // generate deviceCode
     String deviceCode = base64.encode(
       '$aid; ; ; $mac; $manufactor; $brand; $model; $buildNumber'.codeUnits,
     );
 
-    // generate timestamp
     String timeStamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000)
         .toString();
     String base64TimeStamp = base64.encode(timeStamp.codeUnits);
     String md5TimeStamp = md5.convert(timeStamp.codeUnits).toString();
     String md5DeviceCode = md5.convert(deviceCode.codeUnits).toString();
 
-    // generate token
     String token =
         'token://com.coolapk.market/dcf01e569c1e3db93a3d0fcf191a622c?$md5TimeStamp\$$md5DeviceCode&com.coolapk.market';
     String base64Token = base64.encode(token.codeUnits);
     String md5Base64Token = md5.convert(base64Token.codeUnits).toString();
     String md5Token = md5.convert(token.codeUnits).toString();
 
-    // generate salt and hash
     String bcryptSalt =
         '\$2a\$10\$${base64TimeStamp.substring(0, 14)}/${md5Token.substring(0, 6)}u';
     String bcryptResult = BCrypt.hashpw(md5Base64Token, bcryptSalt);

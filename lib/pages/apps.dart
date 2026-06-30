@@ -1155,6 +1155,7 @@ class AppsPageState extends State<AppsPage> {
                             globalNavigatorKey.currentContext ?? context,
                           )
                           .catchError(
+                            // Context-safe guarded by if(mounted) in showError.
                             // ignore: invalid_return_type_for_catch_error
                             (e) => showError(
                               e,

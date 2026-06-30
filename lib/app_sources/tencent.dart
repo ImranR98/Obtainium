@@ -10,6 +10,7 @@ class Tencent extends AppSource {
     hosts = ['sj.qq.com'];
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -21,14 +22,6 @@ class Tencent extends AppSource {
     subdomainPrefix: '',
     pathPattern: r'/appdetail/[^/]+',
   );
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
-  }
 
   @override
   Future<APKDetails> getLatestAPKDetails(

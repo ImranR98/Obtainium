@@ -580,6 +580,9 @@ extension AppsProviderInstall on AppsProvider {
         newInfo.versionCode! < appInfo.versionCode! &&
         !(await canDowngradeApps())) {
       if (settingsProvider.showAppDowngradeError) {
+        try {
+          file.file.deleteSync();
+        } catch (_) {}
         throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
       }
     }

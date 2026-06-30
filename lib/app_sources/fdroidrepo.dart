@@ -110,7 +110,8 @@ class FDroidRepo extends AppSource {
                   item.required = false;
                 }
               } catch (e) {
-                //
+                // ignore: avoid_print
+                print('Failed to parse appId from URL: $e');
               }
             }
             return item;

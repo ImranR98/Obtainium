@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:obtainium/custom_errors.dart';
@@ -88,22 +89,26 @@ extension AppsProviderUpdates on AppsProvider {
     SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
-    if (!gettingUpdates) {
-      gettingUpdates = true;
-      try {
-        List<String> appIds = getAppsSortedByUpdateCheckTime(
-          ignoreAppsCheckedAfter: ignoreAppsCheckedAfter,
-          onlyCheckInstalledOrTrackOnlyApps:
-              settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
-        );
-        if (specificIds != null) {
-          appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
-        }
-        // Check updates with bounded concurrency and persist results in
-        // batches (one saveApps -> one notify -> one rebuild per chunk).
-        // Previously every app saved itself the moment its check finished,
-        // causing one full UI rebuild per app and firing unbounded parallel
-        // network requests at once, which froze the UI during a refresh.
+    if (gettingUpdates) {
+      updateCheckCompleter ??= Completer<List<App>>();
+      return updateCheckCompleter!.future;
+    }
+    gettingUpdates = true;
+    updateCheckCompleter = Completer<List<App>>();
+    try {
+      List<String> appIds = getAppsSortedByUpdateCheckTime(
+        ignoreAppsCheckedAfter: ignoreAppsCheckedAfter,
+        onlyCheckInstalledOrTrackOnlyApps:
+            settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+      );
+      if (specificIds != null) {
+        appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
+      }
+      // Check updates with bounded concurrency and persist results in
+      // batches (one saveApps -> one notify -> one rebuild per chunk).
+      // Previously every app saved itself the moment its check finished,
+      // causing one full UI rebuild per app and firing unbounded parallel
+      // network requests at once, which froze the UI during a refresh.
         const int maxConcurrent = 8;
         for (var start = 0; start < appIds.length; start += maxConcurrent) {
           final end = (start + maxConcurrent < appIds.length)
@@ -145,16 +150,23 @@ extension AppsProviderUpdates on AppsProvider {
             await saveApps(chunkFetched);
           }
         }
-      } finally {
-        gettingUpdates = false;
-      }
+    } catch (e) {
+      updateCheckCompleter?.completeError(e);
+      updateCheckCompleter = null;
+      rethrow;
+    } finally {
+      gettingUpdates = false;
     }
     if (errors.idsByErrorString.isNotEmpty) {
       var res = <String, dynamic>{};
       res['errors'] = errors;
       res['updates'] = updates;
+      updateCheckCompleter?.completeError(res);
+      updateCheckCompleter = null;
       throw res;
     }
+    updateCheckCompleter?.complete(updates);
+    updateCheckCompleter = null;
     return updates;
   }
 

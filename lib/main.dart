@@ -301,6 +301,7 @@ class _ObtainiumState extends State<Obtainium> {
   var _lastUseFGService = false;
   var _firstRunHandled = false;
   var _launchByNotifChecked = false;
+  void Function()? _settingsListener;
 
   void _manageServices(SettingsProvider settings) {
     var interval = settings.updateInterval;
@@ -389,10 +390,11 @@ class _ObtainiumState extends State<Obtainium> {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
       }
-      settingsProvider.addListener(() {
+      _settingsListener = () {
         _manageServices(settingsProvider);
         _handleFirstRun(settingsProvider, appsProvider, logs, context);
-      });
+      };
+      settingsProvider.addListener(_settingsListener!);
     });
   }
 
@@ -466,6 +468,12 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   void dispose() {
+    if (_settingsListener != null) {
+      try {
+        final settingsProvider = context.read<SettingsProvider>();
+        settingsProvider.removeListener(_settingsListener!);
+      } catch (_) {}
+    }
     LogsProvider.close();
     super.dispose();
   }

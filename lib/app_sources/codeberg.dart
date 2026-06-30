@@ -32,7 +32,7 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await gh.getLatestAPKDetailsCommon2(standardUrl, additionalSettings, (
+    return await gh.fetchReleaseDetailsWithTagFallback(standardUrl, additionalSettings, (
       bool useTagUrl,
     ) async {
       final standardUri = Uri.parse(standardUrl);

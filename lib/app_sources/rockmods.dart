@@ -10,6 +10,7 @@ class RockMods extends AppSource {
     hosts = ['rockmods.net'];
     enforceTrackOnly = true;
     naiveStandardVersionDetection = true;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -19,14 +20,6 @@ class RockMods extends AppSource {
       subdomainPrefix: r'(www\.)?',
       pathPattern: r'/apps/[^/]+',
     );
-  }
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
   }
 
   @override

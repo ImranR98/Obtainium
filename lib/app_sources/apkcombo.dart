@@ -7,6 +7,7 @@ class APKCombo extends AppSource {
   APKCombo() {
     hosts = ['apkcombo.com'];
     showReleaseDateAsVersionToggle = true;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -18,14 +19,6 @@ class APKCombo extends AppSource {
     subdomainPrefix: '(www\\.)?',
     pathPattern: '/+[^/]+/+[^/]+',
   );
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
-  }
 
   @override
   Future<Map<String, String>?> getRequestHeaders(

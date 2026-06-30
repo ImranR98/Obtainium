@@ -697,6 +697,7 @@ abstract class AppSource with HttpClientMixin {
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
   bool appIdInferIsOptional = false;
+  bool inferAppIdFromUrlPath = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
   bool allowOverride = true;
@@ -837,8 +838,8 @@ abstract class AppSource with HttpClientMixin {
       [];
 
   // Some additional data may be needed for Apps regardless of Source
-  List<List<GeneratedFormItem>>
-  additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly = [
+  final List<List<GeneratedFormItem>>
+  _commonAppSettingFormItems = [
     [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
     [
       GeneratedFormTextField(
@@ -936,7 +937,7 @@ abstract class AppSource with HttpClientMixin {
   // Previous 2 variables combined into one at runtime for convenient usage + additional processing
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
     var agnosticItems = cloneFormItems(
-      additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly,
+      _commonAppSettingFormItems,
     );
 
     final versionDetectionIdx = agnosticItems.indexWhere(
@@ -1124,6 +1125,9 @@ abstract class AppSource with HttpClientMixin {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
+    if (inferAppIdFromUrlPath) {
+      return tryInferAppIdFromLastPathSegment(standardUrl);
+    }
     return null;
   }
 }

@@ -44,6 +44,7 @@ class APKPure extends AppSource {
         ),
       ],
     ];
+    inferAppIdFromUrlPath = true;
   }
 
   @override
@@ -66,14 +67,6 @@ class APKPure extends AppSource {
       throw InvalidURLError(name);
     }
     return match.group(0)!;
-  }
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return AppSource.tryInferAppIdFromLastPathSegment(standardUrl);
   }
 
   Future<APKDetails> getDetailsForVersion(
