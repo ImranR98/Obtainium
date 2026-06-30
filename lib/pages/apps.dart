@@ -121,6 +121,16 @@ class AppsPageState extends State<AppsPage> {
       final app = a.app;
       parts.addAll(<Object?>[
         app.id,
+        a.name,
+        a.author,
+        // installedVersion/latestVersion determine hasUpdate, the version text,
+        // filtering (up-to-date / not-installed) and reorder (updates first), so
+        // the cached pipeline result must invalidate when either changes -
+        // otherwise an update check would leave stale tiles with no update
+        // button or swipe-to-update.
+        app.installedVersion,
+        app.latestVersion,
+        app.releaseDate,
         app.pinned,
         Object.hashAll(app.categories),
         app.hasPendingRepoRename,

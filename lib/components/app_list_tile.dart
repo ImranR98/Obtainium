@@ -304,6 +304,14 @@ class AppListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // AppInMemory objects are mutated in place during a download (only the
+    // downloadProgress field changes), so the apps-list page does not rebuild
+    // on each tick (its pipeline signature ignores progress). Subscribe to this
+    // app's live progress value directly so only this tile rebuilds per tick,
+    // and so the bar clears when progress is reset to null after install.
+    final downloadProgress = context.select<AppsProvider, double?>(
+      (p) => p.apps[_app.id]?.downloadProgress,
+    );
     var showChangesFn = getChangeLogFn(context, _app);
     var hasUpdate =
         _app.installedVersion != null &&
@@ -430,7 +438,7 @@ class AppListTile extends StatelessWidget {
 
     return Dismissible(
       key: ValueKey(appId),
-      direction: appInMemory.downloadProgress == null
+      direction: downloadProgress == null
           ? DismissDirection.horizontal
           : DismissDirection.none,
       background: swipeBackground ?? const SizedBox.shrink(),
@@ -533,12 +541,8 @@ class AppListTile extends StatelessWidget {
                     children: [_authorText(), _repoMovedRow(context)],
                   )
                 : _authorText(),
-            trailing:
-                appInMemory.downloadProgress != null &&
-                    appInMemory.downloadProgress! >= 0
-                ? DownloadProgressTrailing(
-                    progress: appInMemory.downloadProgress!,
-                  )
+            trailing: downloadProgress != null
+                ? DownloadProgressTrailing(progress: downloadProgress)
                 : trailingRow,
             onTap: onTap,
           ),
@@ -556,9 +560,12 @@ class DownloadProgressTrailing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = tr('percentProgress', args: [progress.toInt().toString()]);
+    final installing = progress < 0;
+    final label = installing
+        ? tr('installing')
+        : tr('percentProgress', args: [progress.toInt().toString()]);
     return SizedBox(
-      width: 56,
+      width: 64,
       child: Semantics(
         label: label,
         child: Column(
@@ -567,12 +574,16 @@ class DownloadProgressTrailing extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(value: progress / 100),
+              child: LinearProgressIndicator(
+                value: installing ? null : progress / 100,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11) ?? const TextStyle(fontSize: 11),
             ),
           ],

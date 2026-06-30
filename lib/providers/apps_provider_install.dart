@@ -859,7 +859,9 @@ extension AppsProviderInstall on AppsProvider {
       DownloadedApk? downloadedFile,
       DownloadedDir? downloadedDir,
     ) async {
-      apps[id]?.downloadProgress = _remainingStepsProgress.toDouble();
+      // Installation has actually begun: use -1 (installing) so the UI shows an
+      // indeterminate "Installing" indicator rather than a frozen percentage.
+      apps[id]?.downloadProgress = -1;
       notify();
       try {
         bool sayInstalled = true;

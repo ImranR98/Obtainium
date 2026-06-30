@@ -1028,7 +1028,9 @@ class _AppPageState extends State<AppPage> {
                       ),
                       if (app?.downloadProgress != null)
                         Semantics(
-                          label: tr('percentProgress', args: [app!.downloadProgress!.toInt().toString()]),
+                          label: app!.downloadProgress! >= 0
+                              ? tr('percentProgress', args: [app.downloadProgress!.toInt().toString()])
+                              : tr('installing'),
                           child: Padding(
                             padding: const EdgeInsets.only(top: 12),
                             child: LinearProgressIndicator(
