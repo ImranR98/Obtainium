@@ -4,8 +4,9 @@ import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Base class for all Obtainium-specific errors, wrapping a human-readable message.
 class ObtainiumError {
-  late String message;
+  final String message;
   bool unexpected;
   ObtainiumError(this.message, {this.unexpected = false});
   @override
@@ -14,22 +15,26 @@ class ObtainiumError {
   }
 }
 
+/// Thrown when an HTTP response indicates a rate limit has been exceeded.
 class RateLimitError extends ObtainiumError {
-  late int remainingMinutes;
+  final int remainingMinutes;
   RateLimitError(this.remainingMinutes)
     : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
 }
 
+/// Thrown when a URL does not match the expected format for the given source.
 class InvalidURLError extends ObtainiumError {
   InvalidURLError(String sourceName)
     : super(tr('invalidURLForSource', args: [sourceName]));
 }
 
+/// Thrown when a source requires credentials that have not been configured.
 class CredsNeededError extends ObtainiumError {
   CredsNeededError(String sourceName)
     : super(tr('requiresCredentialsInSettings', args: [sourceName]));
 }
 
+/// Thrown when a source returns no releases or assets for the requested app.
 class NoReleasesError extends ObtainiumError {
   NoReleasesError({String? note})
     : super(
@@ -37,18 +42,22 @@ class NoReleasesError extends ObtainiumError {
       );
 }
 
+/// Thrown when no installable APK files were found for the app.
 class NoAPKError extends ObtainiumError {
   NoAPKError() : super(tr('noAPKFound'));
 }
 
+/// Thrown when version information could not be extracted from the source data.
 class NoVersionError extends ObtainiumError {
   NoVersionError() : super(tr('noVersionFound'));
 }
 
+/// Thrown when a URL does not match any supported app source.
 class UnsupportedURLError extends ObtainiumError {
   UnsupportedURLError() : super(tr('urlMatchesNoSource'));
 }
 
+/// Thrown when attempting to install an older version of an app over a newer one.
 class DowngradeError extends ObtainiumError {
   DowngradeError(int currentVersionCode, int newVersionCode)
     : super(
@@ -56,25 +65,30 @@ class DowngradeError extends ObtainiumError {
       );
 }
 
+/// Thrown when the Android package installer returns a failure status code.
 class InstallError extends ObtainiumError {
   InstallError(int code)
     : super(PackageInstallerStatus.byCode(code).name.substring(7));
 }
 
+/// Thrown when a downloaded APK's package ID differs from the expected app ID.
 class IDChangedError extends ObtainiumError {
   IDChangedError(String newId) : super('${tr('appIdMismatch')} - $newId');
 }
 
+/// Thrown when a source repository has been renamed or moved, carrying the new URL.
 class RepositoryRenamedError extends ObtainiumError {
   final String oldUrl;
   final String newUrl;
   RepositoryRenamedError(this.oldUrl, this.newUrl) : super(tr('repoRenamed'));
 }
 
+/// Thrown when a source method that hasn't been implemented is called.
 class NotImplementedError extends ObtainiumError {
   NotImplementedError() : super(tr('functionNotImplemented'));
 }
 
+/// Aggregates errors from multiple apps into a single error, grouped by error string.
 class MultiAppMultiError extends ObtainiumError {
   Map<String, dynamic> rawErrors = {};
   Map<String, List<String>> idsByErrorString = {};

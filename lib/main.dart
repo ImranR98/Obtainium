@@ -192,6 +192,8 @@ class Obtainium extends StatefulWidget {
 }
 
 class _ObtainiumState extends State<Obtainium> {
+  static const _foregroundServiceId = 666;
+  static const _fgTaskRepeatMs = 900000;
   var _lastUpdateInterval = -1;
   var _lastUseFGService = false;
   var _firstRunHandled = false;
@@ -324,7 +326,7 @@ class _ObtainiumState extends State<Obtainium> {
           playSound: false,
         ),
         foregroundTaskOptions: ForegroundTaskOptions(
-          eventAction: ForegroundTaskEventAction.repeat(900000),
+          eventAction: ForegroundTaskEventAction.repeat(_fgTaskRepeatMs),
           autoRunOnBoot: true,
           autoRunOnMyPackageReplaced: true,
           allowWakeLock: true,
@@ -342,7 +344,7 @@ class _ObtainiumState extends State<Obtainium> {
     } else {
       return FlutterForegroundTask.startService(
         serviceTypes: [ForegroundServiceTypes.specialUse],
-        serviceId: 666,
+        serviceId: _foregroundServiceId,
         notificationTitle: tr('foregroundService'),
         notificationText: tr('fgServiceNotice'),
         notificationIcon: NotificationIcon(
@@ -367,7 +369,9 @@ class _ObtainiumState extends State<Obtainium> {
       try {
         final settingsProvider = context.read<SettingsProvider>();
         settingsProvider.removeListener(_settingsListener!);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Failed to remove settings listener: $e');
+      }
     }
     LogsProvider.close();
     super.dispose();

@@ -268,6 +268,33 @@ class AppsPageState extends State<AppsPage> {
           };
   }
 
+  List<AppInMemory> _getFilteredAndSortedApps(
+    List<AppInMemory> listedApps,
+    AppsFilter filter,
+    SettingsProvider settingsProvider,
+    Set<String> existingUpdates,
+    int pipelineSig,
+  ) {
+    if (pipelineSig == _pipelineSig && _pipelineResult != null) {
+      return _pipelineResult!;
+    }
+    var result = AppListBuilder.filter(listedApps, filter);
+    result = AppListBuilder.sort(
+      result,
+      settingsProvider.sortColumn,
+      settingsProvider.sortOrder,
+    );
+    result = AppListBuilder.reorder(
+      result,
+      settingsProvider.pinUpdates,
+      settingsProvider.buryNonInstalled,
+      existingUpdates,
+    );
+    _pipelineSig = pipelineSig;
+    _pipelineResult = result;
+    return result;
+  }
+
   void _toggleAppSelected(App app) {
     setState(() {
       if (selectedAppIds.contains(app.id)) {
@@ -667,25 +694,13 @@ class AppsPageState extends State<AppsPage> {
     }
 
     var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
-
-    if (pipelineSig == _pipelineSig && _pipelineResult != null) {
-      listedApps = _pipelineResult!;
-    } else {
-      listedApps = AppListBuilder.filter(listedApps, filter);
-      listedApps = AppListBuilder.sort(
-        listedApps,
-        settingsProvider.sortColumn,
-        settingsProvider.sortOrder,
-      );
-      listedApps = AppListBuilder.reorder(
-        listedApps,
-        settingsProvider.pinUpdates,
-        settingsProvider.buryNonInstalled,
-        existingUpdates.map((e) => e).toSet(),
-      );
-      _pipelineSig = pipelineSig;
-      _pipelineResult = listedApps;
-    }
+    listedApps = _getFilteredAndSortedApps(
+      listedApps,
+      filter,
+      settingsProvider,
+      existingUpdates.toSet(),
+      pipelineSig,
+    );
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
@@ -906,279 +921,314 @@ class AppsPageState extends State<AppsPage> {
     }
   }
 
+  VoidCallback _launchCategorizeDialogCallback(
+    BuildContext context,
+    Set<App> selectedApps,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+  ) {
+    return () async {
+      try {
+        Set<String>? preselected;
+        var showPrompt = false;
+        for (var element in selectedApps) {
+          var currentCats = element.categories.toSet();
+          if (preselected == null) {
+            preselected = currentCats;
+          } else {
+            if (!settingsProvider.setEqual(currentCats, preselected)) {
+              showPrompt = true;
+              break;
+            }
+          }
+        }
+        var cont = true;
+        if (showPrompt) {
+          cont =
+              await showDialog<Map<String, dynamic>?>(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return GeneratedFormModal(
+                    title: tr('categorize'),
+                    items: const [],
+                    initValid: true,
+                    message: tr('selectedCategorizeWarning'),
+                  );
+                },
+              ) !=
+              null;
+        }
+        if (cont && context.mounted) {
+          var pendingCategories = !showPrompt
+              ? (preselected ?? <String>{})
+              : <String>{};
+          var categoriesChanged = false;
+          await showDialog<Map<String, dynamic>?>(
+            context: context,
+            builder: (BuildContext ctx) {
+              return GeneratedFormModal(
+                title: tr('categorize'),
+                items: const [],
+                initValid: true,
+                singleNullReturnButton: tr('continue'),
+                additionalWidgets: [
+                  CategorySelector(
+                    selected: !showPrompt ? (preselected ?? {}) : {},
+                    onChanged: (categories) {
+                      pendingCategories = categories;
+                      categoriesChanged = true;
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+          if (categoriesChanged) {
+            appsProvider.saveApps(
+              selectedApps.map((e) {
+                e.categories = pendingCategories.toList();
+                return e;
+              }).toList(),
+            );
+          }
+        }
+      } catch (err) {
+        if (context.mounted) showError(err, context);
+      }
+    };
+  }
+
+  Future<void> _showMassMarkDialog(
+    BuildContext context,
+    Set<App> selectedApps,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+  ) async {
+    try {
+      final confirmed = await showConfirmDialog(
+        context,
+        title: tr(
+          'markXSelectedAppsAsUpdated',
+          args: [selectedAppIds.length.toString()],
+        ),
+        content: Text(
+          tr('onlyWorksWithNonVersionDetectApps'),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+      if (!confirmed) return;
+      settingsProvider.selectionClick();
+      appsProvider.saveApps(
+        selectedApps.map((a) {
+          if (a.installedVersion != null &&
+              !appsProvider.isVersionDetectionPossible(
+                appsProvider.apps[a.id],
+              )) {
+            a.installedVersion = a.latestVersion;
+          }
+          return a;
+        }).toList(),
+      );
+    } catch (e) {
+      if (context.mounted) showError(e, context);
+    }
+  }
+
+  void _pinSelectedApps(
+    Set<App> selectedApps,
+    AppsProvider appsProvider,
+  ) {
+    var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+    appsProvider.saveApps(
+      selectedApps.map((e) {
+        e.pinned = pinStatus;
+        return e;
+      }).toList(),
+    );
+  }
+
+  void _showMoreOptionsBottomSheet(
+    BuildContext context,
+    Set<App> selectedApps,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+  ) {
+    final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
+    final hasSelection = selectedAppIds.isNotEmpty;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext ctx) {
+        Widget optionTile({
+          required IconData icon,
+          required String label,
+          required VoidCallback? onTap,
+        }) =>
+            ActionListTile(
+              icon: icon, label: label, onTap: onTap, autoPop: true,
+            );
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                optionTile(
+                  icon: Icons.delete_outline,
+                  label: tr('removeSelectedApps'),
+                  onTap: hasSelection
+                      ? () {
+                          appsProvider.removeAppsWithModal(
+                            context,
+                            selectedApps.toList(),
+                          );
+                        }
+                      : null,
+                ),
+                optionTile(
+                  icon: Icons.category_outlined,
+                  label: tr('categorize'),
+                  onTap: hasSelection
+                      ? _launchCategorizeDialogCallback(
+                          context,
+                          selectedApps,
+                          appsProvider,
+                          settingsProvider,
+                        )
+                      : null,
+                ),
+                optionTile(
+                  icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
+                  onTap: () => _pinSelectedApps(selectedApps, appsProvider),
+                ),
+                optionTile(
+                  icon: Icons.share_outlined,
+                  label: tr('shareSelectedAppURLs'),
+                  onTap: () {
+                    String urls = '';
+                    for (var a in selectedApps) {
+                      urls += '${a.url}\n';
+                    }
+                    urls = urls.substring(0, urls.length - 1);
+                    SharePlus.instance
+                        .share(
+                          ShareParams(
+                            text: urls,
+                            subject: 'Obtainium - ${tr('appsString')}',
+                          ),
+                        )
+                        .ignore();
+                  },
+                ),
+                optionTile(
+                  icon: Icons.link_outlined,
+                  label: tr('shareAppConfigLinks'),
+                  onTap: !hasSelection
+                      ? null
+                      : () {
+                          String urls = '';
+                          for (var a in selectedApps) {
+                            urls +=
+                                'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                          }
+                          SharePlus.instance
+                              .share(
+                                ShareParams(
+                                  text: urls,
+                                  subject: 'Obtainium - ${tr('appsString')}',
+                                ),
+                              )
+                              .ignore();
+                        },
+                ),
+                optionTile(
+                  icon: Icons.file_download_outlined,
+                  label: '${tr('share')} - ${tr('obtainiumExport')}',
+                  onTap: !hasSelection
+                      ? null
+                      : () {
+                          var encoder = const JsonEncoder.withIndent("    ");
+                          var exportJSON = encoder.convert(
+                            appsProvider.generateExportJSON(
+                              appIds: selectedApps.map((e) => e.id).toList(),
+                              overrideExportSettings: 0,
+                            ),
+                          );
+                          String fn =
+                              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
+                          XFile f = XFile.fromData(
+                            Uint8List.fromList(utf8.encode(exportJSON)),
+                            mimeType: 'application/json',
+                            name: fn,
+                          );
+                          SharePlus.instance
+                              .share(
+                                ShareParams(
+                                  files: [f],
+                                  fileNameOverrides: ['$fn.json'],
+                                ),
+                              )
+                              .ignore();
+                        },
+                ),
+                optionTile(
+                  icon: Icons.download_outlined,
+                  label: tr(
+                    'downloadX',
+                    args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                  ),
+                  onTap: () {
+                    appsProvider
+                        .downloadAppAssets(
+                          selectedApps.map((e) => e.id).toList(),
+                          globalNavigatorKey.currentContext ?? context,
+                        )
+                        .catchError(
+                          // Context-safe guarded by if(mounted) in showError.
+                          // ignore: invalid_return_type_for_catch_error
+                          (e) => showError(
+                            e,
+                            globalNavigatorKey.currentContext ?? context,
+                          ),
+                        );
+                  },
+                ),
+                optionTile(
+                  icon: Icons.done_all,
+                  label: tr('markSelectedAppsUpdated'),
+                  onTap: appsProvider.areDownloadsRunning()
+                      ? null
+                      : () => _showMassMarkDialog(
+                          context,
+                          selectedApps,
+                          appsProvider,
+                          settingsProvider,
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showMoreOptions(
     BuildContext context,
     AppsProvider appsProvider,
     SettingsProvider settingsProvider,
     Set<App> selectedApps,
   ) {
-    launchCategorizeDialog() {
-      return () async {
-        try {
-          Set<String>? preselected;
-          var showPrompt = false;
-          for (var element in selectedApps) {
-            var currentCats = element.categories.toSet();
-            if (preselected == null) {
-              preselected = currentCats;
-            } else {
-              if (!settingsProvider.setEqual(currentCats, preselected)) {
-                showPrompt = true;
-                break;
-              }
-            }
-          }
-          var cont = true;
-          if (showPrompt) {
-            cont =
-                await showDialog<Map<String, dynamic>?>(
-                  context: context,
-                  builder: (BuildContext ctx) {
-                    return GeneratedFormModal(
-                      title: tr('categorize'),
-                      items: const [],
-                      initValid: true,
-                      message: tr('selectedCategorizeWarning'),
-                    );
-                  },
-                ) !=
-                null;
-          }
-          if (cont && context.mounted) {
-            var pendingCategories = !showPrompt
-                ? (preselected ?? <String>{})
-                : <String>{};
-            var categoriesChanged = false;
-            await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('categorize'),
-                  items: const [],
-                  initValid: true,
-                  singleNullReturnButton: tr('continue'),
-                  additionalWidgets: [
-                    CategorySelector(
-                      selected: !showPrompt ? (preselected ?? {}) : {},
-                      onChanged: (categories) {
-                        pendingCategories = categories;
-                        categoriesChanged = true;
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-            if (categoriesChanged) {
-              appsProvider.saveApps(
-                selectedApps.map((e) {
-                  e.categories = pendingCategories.toList();
-                  return e;
-                }).toList(),
-              );
-            }
-          }
-        } catch (err) {
-          if (context.mounted) showError(err, context);
-        }
-      };
-    }
-
-    showMassMarkDialog() async {
-      try {
-        final confirmed = await showConfirmDialog(
-          context,
-          title: tr(
-            'markXSelectedAppsAsUpdated',
-            args: [selectedAppIds.length.toString()],
-          ),
-          content: Text(
-            tr('onlyWorksWithNonVersionDetectApps'),
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        );
-        if (!confirmed) return;
-        settingsProvider.selectionClick();
-        appsProvider.saveApps(
-          selectedApps.map((a) {
-            if (a.installedVersion != null &&
-                !appsProvider.isVersionDetectionPossible(
-                  appsProvider.apps[a.id],
-                )) {
-              a.installedVersion = a.latestVersion;
-            }
-            return a;
-          }).toList(),
-        );
-      } catch (e) {
-        if (context.mounted) showError(e, context);
-      }
-    }
-
-    pinSelectedApps() {
-      var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
-      appsProvider.saveApps(
-        selectedApps.map((e) {
-          e.pinned = pinStatus;
-          return e;
-        }).toList(),
-      );
-    }
-
-    showMoreOptionsDialog() {
-      final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
-      final hasSelection = selectedAppIds.isNotEmpty;
-      return showModalBottomSheet(
-        context: context,
-        showDragHandle: true,
-        builder: (BuildContext ctx) {
-          Widget optionTile({
-            required IconData icon,
-            required String label,
-            required VoidCallback? onTap,
-          }) =>
-              ActionListTile(
-                icon: icon, label: label, onTap: onTap, autoPop: true,
-              );
-
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  optionTile(
-                    icon: Icons.delete_outline,
-                    label: tr('removeSelectedApps'),
-                    onTap: hasSelection
-                        ? () {
-                            appsProvider.removeAppsWithModal(
-                              context,
-                              selectedApps.toList(),
-                            );
-                          }
-                        : null,
-                  ),
-                  optionTile(
-                    icon: Icons.category_outlined,
-                    label: tr('categorize'),
-                    onTap: hasSelection ? launchCategorizeDialog() : null,
-                  ),
-                  optionTile(
-                    icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                    label: isPinned ? tr('unpinFromTop') : tr('pinToTop'),
-                    onTap: pinSelectedApps,
-                  ),
-                  optionTile(
-                    icon: Icons.share_outlined,
-                    label: tr('shareSelectedAppURLs'),
-                    onTap: () {
-                      String urls = '';
-                      for (var a in selectedApps) {
-                        urls += '${a.url}\n';
-                      }
-                      urls = urls.substring(0, urls.length - 1);
-                      SharePlus.instance
-                          .share(
-                            ShareParams(
-                              text: urls,
-                              subject: 'Obtainium - ${tr('appsString')}',
-                            ),
-                          )
-                          .ignore();
-                    },
-                  ),
-                  optionTile(
-                    icon: Icons.link_outlined,
-                    label: tr('shareAppConfigLinks'),
-                    onTap: !hasSelection
-                        ? null
-                        : () {
-                            String urls = '';
-                            for (var a in selectedApps) {
-                              urls +=
-                                  'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
-                            }
-                            SharePlus.instance
-                                .share(
-                                  ShareParams(
-                                    text: urls,
-                                    subject: 'Obtainium - ${tr('appsString')}',
-                                  ),
-                                )
-                                .ignore();
-                          },
-                  ),
-                  optionTile(
-                    icon: Icons.file_download_outlined,
-                    label: '${tr('share')} - ${tr('obtainiumExport')}',
-                    onTap: !hasSelection
-                        ? null
-                        : () {
-                            var encoder = const JsonEncoder.withIndent("    ");
-                            var exportJSON = encoder.convert(
-                              appsProvider.generateExportJSON(
-                                appIds: selectedApps.map((e) => e.id).toList(),
-                                overrideExportSettings: 0,
-                              ),
-                            );
-                            String fn =
-                                '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-                            XFile f = XFile.fromData(
-                              Uint8List.fromList(utf8.encode(exportJSON)),
-                              mimeType: 'application/json',
-                              name: fn,
-                            );
-                            SharePlus.instance
-                                .share(
-                                  ShareParams(
-                                    files: [f],
-                                    fileNameOverrides: ['$fn.json'],
-                                  ),
-                                )
-                                .ignore();
-                          },
-                  ),
-                  optionTile(
-                    icon: Icons.download_outlined,
-                    label: tr(
-                      'downloadX',
-                      args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                    ),
-                    onTap: () {
-                      appsProvider
-                          .downloadAppAssets(
-                            selectedApps.map((e) => e.id).toList(),
-                            globalNavigatorKey.currentContext ?? context,
-                          )
-                          .catchError(
-                            // Context-safe guarded by if(mounted) in showError.
-                            // ignore: invalid_return_type_for_catch_error
-                            (e) => showError(
-                              e,
-                              globalNavigatorKey.currentContext ?? context,
-                            ),
-                          );
-                    },
-                  ),
-                  optionTile(
-                    icon: Icons.done_all,
-                    label: tr('markSelectedAppsUpdated'),
-                    onTap: appsProvider.areDownloadsRunning()
-                        ? null
-                        : showMassMarkDialog,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    showMoreOptionsDialog();
+    _showMoreOptionsBottomSheet(
+      context,
+      selectedApps,
+      appsProvider,
+      settingsProvider,
+    );
   }
 
   void openAppById(String appId) {

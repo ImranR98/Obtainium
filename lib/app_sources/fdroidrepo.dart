@@ -3,6 +3,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroidRepo extends AppSource {
@@ -110,8 +111,9 @@ class FDroidRepo extends AppSource {
                   item.required = false;
                 }
               } catch (e) {
-                // ignore: avoid_print
-                print('Failed to parse appId from URL: $e');
+                LogsProvider().add(
+                  'Failed to parse appId from URL: $e',
+                );
               }
             }
             return item;

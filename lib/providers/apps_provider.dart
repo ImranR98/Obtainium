@@ -269,7 +269,7 @@ Future<File> downloadFileWithRetry(
 
 String hashListOfLists(List<List<int>> data) {
   var bytes = utf8.encode(jsonEncode(data));
-  return sha256.convert(bytes).toString();
+  return sha256.convert(bytes).toString().substring(0, 8);
 }
 
 Future<String> checkPartialDownloadHashDynamic(
@@ -409,6 +409,7 @@ Future<File?> _waitForConcurrentDownload(
   return null;
 }
 
+/// Downloads a file to [destDir] with progress reporting, resuming partial downloads when supported.
 Future<File> downloadFile(
   String url,
   String fileName,

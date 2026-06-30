@@ -214,7 +214,7 @@ class _ImportSectionState extends State<ImportSection> {
           .then((result) async {
             if (result == null) {
               // User canceled the picker.
-              // ignore: use_build_context_synchronously
+              if (!context.mounted) return;
               showMessage(tr('cancelled'), context);
               return;
             }
@@ -242,12 +242,10 @@ class _ImportSectionState extends State<ImportSection> {
             );
           })
           .catchError((e) {
-            if (!mounted) return;
+            if (!context.mounted) return;
             if (e is PlatformException || e is MissingPluginException) {
-              // ignore: use_build_context_synchronously
               showError(ObtainiumError(tr('noFilePickerAvailable')), context);
             } else {
-              // ignore: use_build_context_synchronously
               showError(e, context);
             }
           })
@@ -315,8 +313,8 @@ class _ImportSectionState extends State<ImportSection> {
             }
           }()
           .catchError((e) {
-            // ignore: use_build_context_synchronously
-            if (mounted) showError(e, context);
+            if (!context.mounted) return;
+            showError(e, context);
           })
           .whenComplete(() {
             if (mounted) {
@@ -419,14 +417,14 @@ class _ExportSectionState extends State<ExportSection> {
             sp: settingsProvider,
           )
           .then((String? result) {
-            if (mounted && result != null) {
-              // ignore: use_build_context_synchronously
+            if (result != null) {
+              if (!context.mounted) return;
               showMessage(tr('exportedTo', args: [result]), context);
             }
           })
           .catchError((e) {
-            // ignore: use_build_context_synchronously
-            if (mounted) showError(e, context);
+            if (!context.mounted) return;
+            showError(e, context);
           });
     }
 
@@ -594,37 +592,14 @@ class _SelectionModalState extends State<SelectionModal> {
     if (widget.entries != oldWidget.entries ||
         widget.selectedByDefault != oldWidget.selectedByDefault ||
         widget.deselectThese != oldWidget.deselectThese) {
-      entrySelections.clear();
-      for (var entry in widget.entries.entries) {
-        entrySelections.putIfAbsent(
-          entry,
-          () =>
-              widget.selectedByDefault &&
-              !widget.onlyOneSelectionAllowed &&
-              !widget.deselectThese.contains(entry.key),
-        );
-      }
-      if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
-        selectOnlyOne(widget.entries.entries.first.key);
-      }
+      _resetEntrySelections();
     }
   }
 
   @override
   void initState() {
     super.initState();
-    for (var entry in widget.entries.entries) {
-      entrySelections.putIfAbsent(
-        entry,
-        () =>
-            widget.selectedByDefault &&
-            !widget.onlyOneSelectionAllowed &&
-            !widget.deselectThese.contains(entry.key),
-      );
-    }
-    if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
-      selectOnlyOne(widget.entries.entries.first.key);
-    }
+    _resetEntrySelections();
   }
 
   void selectOnlyOne(String url) {
@@ -637,6 +612,211 @@ class _SelectionModalState extends State<SelectionModal> {
     for (var e in entrySelections.keys) {
       entrySelections[e] = !deselect;
     }
+  }
+
+  void _resetEntrySelections() {
+    entrySelections.clear();
+    for (var entry in widget.entries.entries) {
+      entrySelections.putIfAbsent(
+        entry,
+        () =>
+            widget.selectedByDefault &&
+            !widget.onlyOneSelectionAllowed &&
+            !widget.deselectThese.contains(entry.key),
+      );
+    }
+    if (widget.selectedByDefault && widget.onlyOneSelectionAllowed && widget.entries.entries.isNotEmpty) {
+      selectOnlyOne(widget.entries.entries.first.key);
+    }
+  }
+
+  Widget _buildSelectAllButton() {
+    if (widget.onlyOneSelectionAllowed) {
+      return SizedBox.shrink();
+    }
+    var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
+    return noneSelected
+        ? TextButton(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              setState(() {
+                selectAll();
+              });
+            },
+            child: Text(tr('selectAll')),
+          )
+        : TextButton(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              setState(() {
+                selectAll(deselect: true);
+              });
+            },
+            child: Text(tr('deselectX', args: [''])),
+          );
+  }
+
+  void _selectThis(MapEntry<String, List<String>> entry, bool? value) {
+    setState(() {
+      value ??= false;
+      if (value! && widget.onlyOneSelectionAllowed) {
+        selectOnlyOne(entry.key);
+      } else {
+        entrySelections[entry] = value!;
+      }
+    });
+  }
+
+  Widget _buildUrlLink(MapEntry<String, List<String>> entry) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.titlesAreLinks)
+          LinkText(
+            text: entry.value.isEmpty ? entry.key : entry.value[0],
+            url: entry.key,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          )
+        else
+          Text(
+            entry.value.isEmpty ? entry.key : entry.value[0],
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.start,
+          ),
+        if (widget.titlesAreLinks)
+          Text(
+            Uri.parse(entry.key).host,
+            style: const TextStyle(
+              decoration: TextDecoration.underline,
+              fontSize: 12,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDescriptionText(MapEntry<String, List<String>> entry) {
+    return entry.value.length <= 1
+        ? const SizedBox.shrink()
+        : Text(
+            entry.value[1].length > 128
+                ? '${entry.value[1].substring(0, 128)}...'
+                : entry.value[1],
+            style: const TextStyle(
+              fontStyle: FontStyle.italic,
+              fontSize: 12,
+            ),
+          );
+  }
+
+  Widget _buildSingleSelectTile(MapEntry<String, List<String>> entry) {
+    return ListTile(
+      title: InkWell(
+        onTap: widget.titlesAreLinks
+            ? null
+            : () {
+                _selectThis(entry, !(entrySelections[entry] ?? false));
+              },
+        child: _buildUrlLink(entry),
+      ),
+      subtitle: entry.value.length <= 1
+          ? null
+          : InkWell(
+              onTap: () {
+                setState(() {
+                  selectOnlyOne(entry.key);
+                });
+              },
+              child: _buildDescriptionText(entry),
+            ),
+      leading: Radio<String>(value: entry.key),
+    );
+  }
+
+  Widget _buildMultiSelectTile(MapEntry<String, List<String>> entry) {
+    return Row(
+      children: [
+        Checkbox(
+          value: entrySelections[entry],
+          onChanged: (value) {
+            _selectThis(entry, value);
+          },
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: widget.titlesAreLinks
+                    ? null
+                    : () {
+                        _selectThis(
+                          entry,
+                          !(entrySelections[entry] ?? false),
+                        );
+                      },
+                child: _buildUrlLink(entry),
+              ),
+              entry.value.length <= 1
+                  ? const SizedBox.shrink()
+                  : InkWell(
+                      onTap: () {
+                        _selectThis(
+                          entry,
+                          !(entrySelections[entry] ?? false),
+                        );
+                      },
+                      child: _buildDescriptionText(entry),
+                    ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildTVFooter() {
+    if (!context.read<SettingsProvider>().isTV ||
+        widget.onlyOneSelectionAllowed) {
+      return [];
+    }
+    return [
+      const SizedBox(height: 8),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(tr('cancel')),
+          ),
+          TextButton(
+            onPressed: entrySelections.values.where((b) => b).isEmpty
+                ? null
+                : () => Navigator.of(context).pop(
+                    entrySelections.entries
+                        .where((entry) => entry.value)
+                        .map((e) => e.key.key)
+                        .toList(),
+                  ),
+            child: Text(
+              tr(
+                'selectX',
+                args: [
+                  entrySelections.values
+                      .where((b) => b)
+                      .length
+                      .toString(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
   }
 
   @override
@@ -660,31 +840,6 @@ class _SelectionModalState extends State<SelectionModal> {
           filteredEntrySelections.putIfAbsent(key, () => value);
         }
       });
-    }
-    getSelectAllButton() {
-      if (widget.onlyOneSelectionAllowed) {
-        return SizedBox.shrink();
-      }
-      var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
-      return noneSelected
-          ? TextButton(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                setState(() {
-                  selectAll();
-                });
-              },
-              child: Text(tr('selectAll')),
-            )
-          : TextButton(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                setState(() {
-                  selectAll(deselect: true);
-                });
-              },
-              child: Text(tr('deselectX', args: [''])),
-            );
     }
 
     final selectedRadioKey = entrySelections.entries
@@ -736,161 +891,16 @@ class _SelectionModalState extends State<SelectionModal> {
               },
             ),
             ...filteredEntrySelections.keys.map((entry) {
-              selectThis(bool? value) {
-                setState(() {
-                  value ??= false;
-                  if (value! && widget.onlyOneSelectionAllowed) {
-                    selectOnlyOne(entry.key);
-                  } else {
-                    entrySelections[entry] = value!;
-                  }
-                });
-              }
-
-              var urlLink = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.titlesAreLinks)
-                    LinkText(
-                      text: entry.value.isEmpty ? entry.key : entry.value[0],
-                      url: entry.key,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  else
-                    Text(
-                      entry.value.isEmpty ? entry.key : entry.value[0],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.start,
-                    ),
-                  if (widget.titlesAreLinks)
-                    Text(
-                      Uri.parse(entry.key).host,
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
-              );
-
-              var descriptionText = entry.value.length <= 1
-                  ? const SizedBox.shrink()
-                  : Text(
-                      entry.value[1].length > 128
-                          ? '${entry.value[1].substring(0, 128)}...'
-                          : entry.value[1],
-                      style: const TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 12,
-                      ),
-                    );
-
-              var singleSelectTile = ListTile(
-                title: InkWell(
-                  onTap: widget.titlesAreLinks
-                      ? null
-                      : () {
-                          selectThis(!(entrySelections[entry] ?? false));
-                        },
-                  child: urlLink,
-                ),
-                subtitle: entry.value.length <= 1
-                    ? null
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectOnlyOne(entry.key);
-                          });
-                        },
-                        child: descriptionText,
-                      ),
-                leading: Radio<String>(value: entry.key),
-              );
-
-              var multiSelectTile = Row(
-                children: [
-                  Checkbox(
-                    value: entrySelections[entry],
-                    onChanged: (value) {
-                      selectThis(value);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: widget.titlesAreLinks
-                              ? null
-                              : () {
-                                  selectThis(
-                                    !(entrySelections[entry] ?? false),
-                                  );
-                                },
-                          child: urlLink,
-                        ),
-                        entry.value.length <= 1
-                            ? const SizedBox.shrink()
-                            : InkWell(
-                                onTap: () {
-                                  selectThis(
-                                    !(entrySelections[entry] ?? false),
-                                  );
-                                },
-                                child: descriptionText,
-                              ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-
               return widget.onlyOneSelectionAllowed
-                  ? singleSelectTile
-                  : multiSelectTile;
+                  ? _buildSingleSelectTile(entry)
+                  : _buildMultiSelectTile(entry);
             }),
-            if (isTV && !widget.onlyOneSelectionAllowed) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(tr('cancel')),
-                  ),
-                  TextButton(
-                    onPressed: entrySelections.values.where((b) => b).isEmpty
-                        ? null
-                        : () => Navigator.of(context).pop(
-                            entrySelections.entries
-                                .where((entry) => entry.value)
-                                .map((e) => e.key.key)
-                                .toList(),
-                          ),
-                    child: Text(
-                      tr(
-                        'selectX',
-                        args: [
-                          entrySelections.values
-                              .where((b) => b)
-                              .length
-                              .toString(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ..._buildTVFooter(),
           ],
         ),
       ),
       actions: [
-        getSelectAllButton(),
+        _buildSelectAllButton(),
         TextButton(
           autofocus: isTV,
           onPressed: () {

@@ -650,6 +650,343 @@ class _AppPageState extends State<AppPage> {
     ];
   }
 
+  // Builds a single positionally-rounded card sliver.
+  Widget _buildSection(
+    bool isFirst,
+    bool isLast, {
+    required List<Widget> children,
+  }) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+        child: ConnectedCard(
+          isFirst: isFirst,
+          isLast: isLast,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: children,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          8,
+          MediaQuery.of(context).padding.top + 8,
+          0,
+          0,
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: _closePage,
+              icon: Icon(
+                widget.onClose != null
+                    ? Icons.close_rounded
+                    : Icons.arrow_back,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderSection(AppInMemory? app) {
+    return _buildSection(
+      true,
+      true,
+      children: [
+        Row(
+          children: [
+            AppIcon(bytes: app?.icon, size: 56, radius: 14),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    app?.name ?? tr('app'),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    tr(
+                      'byX',
+                      args: [app?.author ?? tr('unknown')],
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildVersionInfoSections(AppInMemory? app) {
+    return [
+      _buildSection(
+        true,
+        false,
+        children: [
+          () {
+            String l = appInstalledVersionText(app?.app);
+            final upToDate =
+                app?.app.installedVersion == app?.app.latestVersion;
+            if (!upToDate) {
+              l += '\n${app?.app.latestVersion} ${tr('latest')}';
+            }
+            return Text(
+              l,
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            );
+          }(),
+          if (app?.app.releaseDate != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                app!.app.releaseDate!
+                    .toLocal()
+                    .toString()
+                    .split('.')
+                    .first,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+        ],
+      ),
+      const SliverToBoxAdapter(child: SizedBox(height: 2)),
+      _buildSection(
+        false,
+        true,
+        children: [
+          Text(
+            tr(
+              'lastUpdateCheckX',
+              args: [
+                app?.app.lastUpdateCheck
+                        ?.toLocal()
+                        .toString()
+                        .split('.')
+                        .first ??
+                    tr('never'),
+              ],
+            ),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _buildSourceInfoSections(
+    AppInMemory? app,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    bool certs,
+    bool hasAssets,
+  ) {
+    return [
+      _buildSection(
+        true,
+        certs || hasAssets ? false : true,
+        children: [
+          Tooltip(
+            message: tr('copyToClipboard'),
+            child: GestureDetector(
+              onLongPress: () {
+                copyToClipboard(context, app?.app.url ?? '');
+              },
+              child: LinkText(
+                text: app?.app.url ?? '',
+                url: app?.app.url ?? '',
+                style: const TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            app?.app.id ?? '',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+      if (certs) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        _buildSection(
+          false,
+          !hasAssets,
+          children: [
+            Text(
+              // ignore: unnecessary_non_null_assertion
+              '${plural('certificateHash', app!.certificateHashes.length)}'
+              // ignore: unnecessary_non_null_assertion
+              '${app!.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            // ignore: unnecessary_non_null_assertion
+            ...app!.certificateHashes.map(
+              (h) => Tooltip(
+                message: tr('copyToClipboard'),
+                child: GestureDetector(
+                  onLongPress: () {
+                    copyToClipboard(context, h);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 2,
+                    ),
+                    child: Text(
+                      h,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      if (hasAssets) ...[
+        const SliverToBoxAdapter(child: SizedBox(height: 2)),
+        _buildSection(
+          false,
+          true,
+          children: [
+            Center(
+              child: HighlightableButton(
+                highlight: settingsProvider.highlightTouchTargets,
+                onPressed: app?.app == null || updating
+                    ? null
+                    : () async {
+                        try {
+                          await appsProvider.downloadAppAssets([
+                            app!.app.id,
+                          ], context);
+                        } catch (e) {
+                          if (mounted) {
+                            showError(e, context);
+                          }
+                        }
+                      },
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: Text(
+                  tr(
+                    'downloadX',
+                    args: [lowerCaseIfEnglish(tr('releaseAsset'))],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ];
+  }
+
+  Widget _buildCategorySection(
+    AppInMemory? app,
+    AppsProvider appsProvider,
+  ) {
+    return _buildSection(
+      true,
+      true,
+      children: [
+        CategorySelector(
+          alignment: WrapAlignment.start,
+          selected: app?.app.categories.toSet() ?? {},
+          onChanged: (categories) {
+            if (app != null) {
+              app.app.categories = categories.toList();
+              appsProvider.saveApps([app.app]);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionsSection(
+    AppInMemory? app,
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+    AppSource? source,
+    bool showAppWebpageFinal,
+    bool isVersionDetectionStandard,
+    bool trackOnly,
+    bool areDownloadsRunning,
+  ) {
+    return _buildSection(
+      true,
+      true,
+      children: [
+        Row(
+          children: [
+            ..._getSecondaryActions(
+              context,
+              app,
+              source,
+              appsProvider,
+              settingsProvider,
+              showAppWebpageFinal,
+              isVersionDetectionStandard,
+              trackOnly,
+            ),
+            const Spacer(),
+            _getPrimaryButton(
+              context,
+              app,
+              appsProvider,
+              settingsProvider,
+              areDownloadsRunning,
+            ),
+          ],
+        ),
+        if (app?.downloadProgress != null)
+          Semantics(
+            label: app!.downloadProgress! >= 0
+                ? tr(
+                    'percentProgress',
+                    args: [
+                      app.downloadProgress!.toInt().toString(),
+                    ],
+                  )
+                : tr('installing'),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: LinearProgressIndicator(
+                value: app.downloadProgress! >= 0
+                    ? app.downloadProgress! / 100
+                    : null,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var appsProvider = context.read<AppsProvider>();
@@ -670,28 +1007,6 @@ class _AppPageState extends State<AppPage> {
     context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
-
-    // Builds a single positionally-rounded card sliver.
-    Widget section(
-      bool isFirst,
-      bool isLast, {
-      required List<Widget> children,
-    }) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: ConnectedCard(
-            isFirst: isFirst,
-            isLast: isLast,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: children,
-            ),
-          ),
-        ),
-      );
-    }
 
     var sourceProvider = SourceProvider();
     AppInMemory? app = _cachedApp(
@@ -755,286 +1070,29 @@ class _AppPageState extends State<AppPage> {
             : CustomScrollView(
                 slivers: [
                   // Back button — top-left
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        8,
-                        MediaQuery.of(context).padding.top + 8,
-                        0,
-                        0,
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: _closePage,
-                            icon: Icon(
-                              widget.onClose != null
-                                  ? Icons.close_rounded
-                                  : Icons.arrow_back,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildBackButton(),
                   // ===== Section 1 — Icon + name + author =====
-                  section(
-                    true,
-                    true,
-                    children: [
-                      Row(
-                        children: [
-                          AppIcon(bytes: app?.icon, size: 56, radius: 14),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  app?.name ?? tr('app'),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  tr(
-                                    'byX',
-                                    args: [app?.author ?? tr('unknown')],
-                                  ),
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  _buildHeaderSection(app),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 2 — Version, last-check
-                  section(
-                    true,
-                    false,
-                    children: [
-                      () {
-                        String l = appInstalledVersionText(app?.app);
-                        final upToDate =
-                            app?.app.installedVersion == app?.app.latestVersion;
-                        if (!upToDate) {
-                          l += '\n${app?.app.latestVersion} ${tr('latest')}';
-                        }
-                        return Text(
-                          l,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        );
-                      }(),
-                      if (app?.app.releaseDate != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            app!.app.releaseDate!
-                                .toLocal()
-                                .toString()
-                                .split('.')
-                                .first,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 2)),
-                  section(
-                    false,
-                    true,
-                    children: [
-                      Text(
-                        tr(
-                          'lastUpdateCheckX',
-                          args: [
-                            app?.app.lastUpdateCheck
-                                    ?.toLocal()
-                                    .toString()
-                                    .split('.')
-                                    .first ??
-                                tr('never'),
-                          ],
-                        ),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+                  ..._buildVersionInfoSections(app),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 3 — URL, certificate (opt), download asset
-                  section(
-                    true,
-                    certs || hasAssets ? false : true,
-                    children: [
-                      Tooltip(
-                        message: tr('copyToClipboard'),
-                        child: GestureDetector(
-                          onLongPress: () {
-                            copyToClipboard(context, app?.app.url ?? '');
-                          },
-                          child: LinkText(
-                            text: app?.app.url ?? '',
-                            url: app?.app.url ?? '',
-                            style: const TextStyle(fontStyle: FontStyle.italic),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        app?.app.id ?? '',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (certs) ...[
-                    const SliverToBoxAdapter(child: SizedBox(height: 2)),
-                    section(
-                      false,
-                      !hasAssets,
-                      children: [
-                        Text(
-                          '${plural('certificateHash', app.certificateHashes.length)}'
-                          '${app.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        ...app.certificateHashes.map(
-                          (h) => Tooltip(
-                            message: tr('copyToClipboard'),
-                            child: GestureDetector(
-                              onLongPress: () {
-                                copyToClipboard(context, h);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 2,
-                                ),
-                                child: Text(
-                                  h,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (hasAssets) ...[
-                    const SliverToBoxAdapter(child: SizedBox(height: 2)),
-                    section(
-                      false,
-                      true,
-                      children: [
-                        Center(
-                          child: HighlightableButton(
-                            highlight: settingsProvider.highlightTouchTargets,
-                            onPressed: app?.app == null || updating
-                                ? null
-                                : () async {
-                                    try {
-                                      await appsProvider.downloadAppAssets([
-                                        app!.app.id,
-                                      ], context);
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        showError(e, context);
-                                      }
-                                    }
-                                  },
-                            icon: const Icon(Icons.download_outlined, size: 18),
-                            label: Text(
-                              tr(
-                                'downloadX',
-                                args: [lowerCaseIfEnglish(tr('releaseAsset'))],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ..._buildSourceInfoSections(app, appsProvider, settingsProvider, certs, hasAssets),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 4 — Categories
-                  section(
-                    true,
-                    true,
-                    children: [
-                      CategorySelector(
-                        alignment: WrapAlignment.start,
-                        selected: app?.app.categories.toSet() ?? {},
-                        onChanged: (categories) {
-                          if (app != null) {
-                            app.app.categories = categories.toList();
-                            appsProvider.saveApps([app.app]);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+                  _buildCategorySection(app, appsProvider),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   // Section 5 — Actions
-                  section(
-                    true,
-                    true,
-                    children: [
-                      Row(
-                        children: [
-                          ..._getSecondaryActions(
-                            context,
-                            app,
-                            source,
-                            appsProvider,
-                            settingsProvider,
-                            showAppWebpageFinal,
-                            isVersionDetectionStandard,
-                            trackOnly,
-                          ),
-                          const Spacer(),
-                          _getPrimaryButton(
-                            context,
-                            app,
-                            appsProvider,
-                            settingsProvider,
-                            areDownloadsRunning,
-                          ),
-                        ],
-                      ),
-                      if (app?.downloadProgress != null)
-                        Semantics(
-                          label: app!.downloadProgress! >= 0
-                              ? tr(
-                                  'percentProgress',
-                                  args: [
-                                    app.downloadProgress!.toInt().toString(),
-                                  ],
-                                )
-                              : tr('installing'),
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: LinearProgressIndicator(
-                              value: app.downloadProgress! >= 0
-                                  ? app.downloadProgress! / 100
-                                  : null,
-                            ),
-                          ),
-                        ),
-                    ],
+                  _buildActionsSection(
+                    app,
+                    appsProvider,
+                    settingsProvider,
+                    source,
+                    showAppWebpageFinal,
+                    isVersionDetectionStandard,
+                    trackOnly,
+                    areDownloadsRunning,
                   ),
                   SliverPadding(
                     padding: EdgeInsets.only(

@@ -125,7 +125,7 @@ class AddAppPageState extends State<AddAppPage> {
     var useTrackOnly = userPickedTrackOnly || pickedSource!.enforceTrackOnly;
     if (useTrackOnly &&
         (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
-      // ignore: use_build_context_synchronously
+      if (!context.mounted) return false;
       var values = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
@@ -155,19 +155,19 @@ class AddAppPageState extends State<AddAppPage> {
   Future<bool> _getReleaseDateAsVersionConfirmationIfNeeded(
     BuildContext context,
   ) async {
-    return (!(additionalSettings['releaseDateAsVersion'] == true &&
-        // ignore: use_build_context_synchronously
-        await showDialog(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('releaseDateAsVersion'),
-                  items: const [],
-                  message: tr('releaseDateAsVersionExplanation'),
-                );
-              },
-            ) ==
-            null));
+    if (additionalSettings['releaseDateAsVersion'] != true) return true;
+    if (!context.mounted) return false;
+    return await showDialog(
+          context: context,
+          builder: (BuildContext ctx) {
+            return GeneratedFormModal(
+              title: tr('releaseDateAsVersion'),
+              items: const [],
+              message: tr('releaseDateAsVersionExplanation'),
+            );
+          },
+        ) !=
+        null;
   }
 
   Future<void> _addApp(
@@ -183,15 +183,18 @@ class AddAppPageState extends State<AddAppPage> {
     try {
       var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
       App? app;
-      if ((await _getTrackOnlyConfirmationIfNeeded(
-            userPickedTrackOnly,
-            context,
-            settingsProvider,
-          )) &&
-          (await _getReleaseDateAsVersionConfirmationIfNeeded(
-            // ignore: use_build_context_synchronously
-            context,
-          ))) {
+      var confirmed = await _getTrackOnlyConfirmationIfNeeded(
+        userPickedTrackOnly,
+        context,
+        settingsProvider,
+      );
+      if (!context.mounted) return;
+      if (confirmed) {
+        confirmed = await _getReleaseDateAsVersionConfirmationIfNeeded(
+          context,
+        );
+      }
+      if (confirmed) {
         var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
         app = await sourceProvider.getApp(
           pickedSource!,
@@ -203,9 +206,9 @@ class AddAppPageState extends State<AddAppPage> {
         );
         // Only download the APK here if you need to for the package ID
         if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
+          if (!context.mounted) return;
           var apkUrl = await appsProvider.confirmAppFileUrl(
             app,
-            // ignore: use_build_context_synchronously
             context,
             false,
           );
@@ -216,7 +219,7 @@ class AddAppPageState extends State<AddAppPage> {
               .map((e) => e.value)
               .toList()
               .indexOf(apkUrl.value);
-          // ignore: use_build_context_synchronously
+          if (!context.mounted) return;
           var downloadedArtifact = await appsProvider.downloadApp(
             app,
             globalNavigatorKey.currentContext,
@@ -228,6 +231,9 @@ class AddAppPageState extends State<AddAppPage> {
             downloadedFile = downloadedArtifact;
           } else if (downloadedArtifact is DownloadedDir) {
             downloadedDir = downloadedArtifact;
+          }
+          if (downloadedFile == null && downloadedDir == null) {
+            throw ObtainiumError(tr('downloadFailed'));
           }
           app.id = downloadedFile?.appId ?? downloadedDir!.appId;
         }
@@ -393,10 +399,10 @@ class AddAppPageState extends State<AddAppPage> {
         if (res.isEmpty) {
           throw ObtainiumError(tr('noResults'));
         }
+        if (!context.mounted) return;
         List<String>? selectedUrls = res.isEmpty
             ? []
             : await showDialog<List<String>?>(
-                // ignore: use_build_context_synchronously
                 context: context,
                 builder: (BuildContext ctx) {
                   return SelectionModal(

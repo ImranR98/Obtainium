@@ -25,6 +25,9 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 // Named constants for magic numbers and hardcoded values
+const int _androidApiLevelR = 30;
+const int _androidApiLevelS = 31;
+const double _installingProgressSentinel = -1;
 const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
 const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
@@ -80,6 +83,7 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
+  /// Downloads the preferred APK for [app], returning a [DownloadedApk] or [DownloadedDir].
   Future<Object> downloadApp(
     App app,
     BuildContext? context, {
@@ -197,17 +201,7 @@ extension AppsProviderInstall on AppsProvider {
             .where((e) => AppSource.isApkOrContainerFile(e.path))
             .toList();
 
-        FileSystemEntity? temp;
-        apks.removeWhere((element) {
-          bool res = element.uri.pathSegments.last.startsWith(app.id);
-          if (res) {
-            temp = element;
-          }
-          return res;
-        });
-        if (temp != null) {
-          apks = [temp!, ...apks];
-        }
+        apks = _preferMatchingApk(apks, app.id);
 
         String? filterRegEx;
         if (isTarball &&
@@ -311,7 +305,7 @@ extension AppsProviderInstall on AppsProvider {
     var osInfo = await DeviceInfoPlugin().androidInfo;
     String? installerPackageName;
     try {
-      installerPackageName = osInfo.version.sdkInt >= 30
+      installerPackageName = osInfo.version.sdkInt >= _androidApiLevelR
           ? (await pm.getInstallSourceInfo(
               packageName: app.id,
             ))?.installingPackageName
@@ -347,7 +341,7 @@ extension AppsProviderInstall on AppsProvider {
       // If we did not install the app, silent install is not possible
       return false;
     }
-    if (osInfo.version.sdkInt < 31) {
+    if (osInfo.version.sdkInt < _androidApiLevelS) {
       // The OS must also be new enough
       logs.add('Android SDK too old: ${osInfo.version.sdkInt}');
       return false;
@@ -508,17 +502,7 @@ extension AppsProviderInstall on AppsProvider {
         }
       }
 
-      File? temp;
-      apkFiles.removeWhere((element) {
-        bool res = element.uri.pathSegments.last.startsWith(dir.appId);
-        if (res) {
-          temp = element;
-        }
-        return res;
-      });
-      if (temp != null) {
-        apkFiles = [temp!, ...apkFiles];
-      }
+      apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
 
       try {
         var wasInstalled = await installApk(
@@ -547,6 +531,7 @@ extension AppsProviderInstall on AppsProvider {
     return somethingInstalled;
   }
 
+  /// Installs a downloaded APK file, with optional auxiliary split APKs and Shizuku support.
   Future<bool> installApk(
     DownloadedApk file,
     BuildContext? firstTimeWithContext, {
@@ -585,7 +570,9 @@ extension AppsProviderInstall on AppsProvider {
       if (settingsProvider.showAppDowngradeError) {
         try {
           file.file.deleteSync();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Failed to delete downgraded APK file: $e');
+        }
         throw DowngradeError(oldVersionCode, newVersionCode);
       }
     }
@@ -655,7 +642,7 @@ extension AppsProviderInstall on AppsProvider {
     if (!file.path.toLowerCase().endsWith('.obb')) return;
 
     final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
-    if (sdkInt >= 30) {
+    if (sdkInt >= _androidApiLevelR) {
       try {
         final obbDir = await saf.openDocumentTree(
           initialUri: Uri.parse('${await getStorageRootPath()}/Android/obb'),
@@ -861,166 +848,45 @@ extension AppsProviderInstall on AppsProvider {
     );
     appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
 
-    Future<void> installFn(
-      String id,
-      bool willBeSilent,
-      DownloadedApk? downloadedFile,
-      DownloadedDir? downloadedDir,
-    ) async {
-      // Installation has actually begun: use -1 (installing) so the UI shows an
-      // indeterminate "Installing" indicator rather than a frozen percentage.
-      apps[id]?.downloadProgress = -1;
-      notify();
-      try {
-        bool sayInstalled = true;
-        var contextIfNewInstall = apps[id]?.installedInfo == null
-            ? context
-            : null;
-        bool needBGWorkaround =
-            willBeSilent && context == null && !settingsProvider.useShizuku;
-        bool shizukuPretendToBeGooglePlay =
-            settingsProvider.shizukuPretendToBeGooglePlay ||
-            apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
-                true;
-        if (downloadedFile != null) {
-          if (needBGWorkaround) {
-            // ignore: use_build_context_synchronously
-            installApk(
-              downloadedFile,
-              contextIfNewInstall,
-              needsBGWorkaround: true,
-              shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
-            );
-          } else {
-            // ignore: use_build_context_synchronously
-            sayInstalled = await installApk(
-              downloadedFile,
-              contextIfNewInstall,
-              shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
-            );
-          }
-        } else {
-          if (needBGWorkaround) {
-            // ignore: use_build_context_synchronously
-            installApkDir(
-              downloadedDir!,
-              contextIfNewInstall,
-              needsBGWorkaround: true,
-            );
-          } else {
-            // ignore: use_build_context_synchronously
-            sayInstalled = await installApkDir(
-              downloadedDir!,
-              contextIfNewInstall,
-              shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
-            );
-          }
-        }
-        if (willBeSilent && context == null) {
-          if (!settingsProvider.useShizuku) {
-            notificationsProvider?.notify(
-              SilentUpdateAttemptNotification([apps[id]!.app], id: id.hashCode),
-            );
-          } else {
-            notificationsProvider?.notify(
-              SilentUpdateNotification(
-                [apps[id]!.app],
-                sayInstalled,
-                id: id.hashCode,
-              ),
-            );
-          }
-        }
-        if (sayInstalled) {
-          installedIds.add(id);
-          // Dismiss the update notification since the app was successfully installed
-          notificationsProvider?.cancel(UpdateNotification([]).id);
-        }
-      } finally {
-        apps[id]?.downloadProgress = null;
-        notify();
-      }
-    }
-
-    Future<Map<Object?, Object?>> downloadFn(String id) async {
-      bool willBeSilent = false;
-      DownloadedApk? downloadedFile;
-      DownloadedDir? downloadedDir;
-      try {
-        var downloadedArtifact =
-            // ignore: use_build_context_synchronously
-            await downloadApp(
-              apps[id]!.app,
-              context,
-              notificationsProvider: notificationsProvider,
-              useExisting: useExisting,
-            );
-        if (downloadedArtifact is DownloadedApk) {
-          downloadedFile = downloadedArtifact;
-        } else if (downloadedArtifact is DownloadedDir) {
-          downloadedDir = downloadedArtifact;
-        }
-        id = downloadedFile?.appId ?? downloadedDir!.appId;
-        // Bridge download-to-install gap so the Dismissible stays disabled.
-        // Use 100 (download complete) rather than -1 (installing) so the UI
-        // doesn't report "Installing" before installation actually begins.
-        apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
-        notify();
-        willBeSilent = await canInstallSilently(apps[id]!.app);
-        if (!settingsProvider.useShizuku) {
-          if (!(await settingsProvider.getInstallPermission(enforce: false))) {
-            throw ObtainiumError(tr('cancelled'));
-          }
-        } else {
-          switch ((await ShizukuApkInstaller().checkPermission())!) {
-            case 'services_not_found':
-              throw ObtainiumError(tr('shizukuBinderNotFound'));
-            case 'old_shizuku':
-              throw ObtainiumError(tr('shizukuOld'));
-            case 'old_android_with_adb':
-              throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
-            case 'denied':
-              throw ObtainiumError(tr('cancelled'));
-          }
-        }
-        if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
-          // ignore: use_build_context_synchronously
-          await waitForUserToReturnToForeground(context);
-        }
-      } catch (e) {
-        errors.add(id, e, appName: apps[id]?.name);
-        if (apps[id] != null) {
-          apps[id]!.downloadProgress = null;
-          notify();
-        }
-      }
-      return {
-        'id': id,
-        'willBeSilent': willBeSilent,
-        'downloadedFile': downloadedFile,
-        'downloadedDir': downloadedDir,
-      };
-    }
-
     List<Map<Object?, Object?>> downloadResults = [];
     try {
       if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
         for (var id in appsToInstall) {
-          downloadResults.add(await downloadFn(id));
+          downloadResults.add(await _downloadAppForInstall(
+            id,
+            // ignore: use_build_context_synchronously
+            context,
+            notificationsProvider,
+            useExisting,
+            errors,
+          ));
         }
       } else {
         downloadResults = await Future.wait(
-          appsToInstall.map((id) => downloadFn(id)),
+          appsToInstall.map((id) => _downloadAppForInstall(
+            id,
+            context,
+            notificationsProvider,
+            useExisting,
+            errors,
+          )),
         );
       }
       for (var res in downloadResults) {
         if (!errors.appIdNames.containsKey(res['id'])) {
           try {
-            await installFn(
+            // ignore: use_build_context_synchronously
+            // ignore: use_build_context_synchronously
+            await _installDownloadedApp(
               res['id'] as String,
               res['willBeSilent'] as bool,
               res['downloadedFile'] as DownloadedApk?,
               res['downloadedDir'] as DownloadedDir?,
+              installedIds,
+              errors,
+              // ignore: use_build_context_synchronously
+              context,
+              notificationsProvider,
             );
           } catch (e) {
             var id = res['id'] as String;
@@ -1108,49 +974,26 @@ extension AppsProviderInstall on AppsProvider {
     MultiAppMultiError errors = MultiAppMultiError();
     List<String> downloadedIds = [];
 
-    Future<void> downloadFn(MapEntry<String, String> fileUrl, App app) async {
-      try {
-        String downloadPath = '${await getStorageRootPath()}/Download';
-        await downloadFile(
-          fileUrl.value,
-          fileUrl.key,
-          true,
-          (double? progress) {
-            notificationsProvider.notify(
-              DownloadNotification(fileUrl.key, progress?.ceil() ?? 0),
-            );
-          },
-          downloadPath,
-          headers: await SourceProvider()
-              .getSource(app.url, overrideSource: app.overrideSource)
-              .getRequestHeaders(
-                app.additionalSettings,
-                fileUrl.value,
-                forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
-              ),
-          useExisting: false,
-          allowInsecure: app.additionalSettings['allowInsecure'] == true,
-          logs: logs,
-        );
-        notificationsProvider.notify(
-          DownloadedNotification(fileUrl.key, fileUrl.value),
-        );
-        downloadedIds.add(fileUrl.key);
-      } catch (e) {
-        errors.add(fileUrl.key, e);
-      } finally {
-        notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id);
-      }
-    }
-
     if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
       for (var urlWithApp in filesToDownload) {
-        await downloadFn(urlWithApp.key, urlWithApp.value);
+        await _downloadAssetFile(
+          urlWithApp.key,
+          urlWithApp.value,
+          errors,
+          downloadedIds,
+          notificationsProvider,
+        );
       }
     } else {
       await Future.wait(
         filesToDownload.map(
-          (urlWithApp) => downloadFn(urlWithApp.key, urlWithApp.value),
+          (urlWithApp) => _downloadAssetFile(
+            urlWithApp.key,
+            urlWithApp.value,
+            errors,
+            downloadedIds,
+            notificationsProvider,
+          ),
         ),
       );
     }
@@ -1158,5 +1001,212 @@ extension AppsProviderInstall on AppsProvider {
       throw errors;
     }
     return downloadedIds;
+  }
+
+  List<FileSystemEntity> _preferMatchingApk(List<FileSystemEntity> apks, String appId) {
+    FileSystemEntity? temp;
+    apks.removeWhere((element) {
+      bool res = element.uri.pathSegments.last.startsWith(appId);
+      if (res) {
+        temp = element;
+      }
+      return res;
+    });
+    if (temp != null) {
+      apks = [temp!, ...apks];
+    }
+    return apks;
+  }
+
+  Future<void> _installDownloadedApp(
+    String id,
+    bool willBeSilent,
+    DownloadedApk? downloadedFile,
+    DownloadedDir? downloadedDir,
+    List<String> installedIds,
+    MultiAppMultiError errors,
+    BuildContext? context,
+    NotificationsProvider? notificationsProvider,
+  ) async {
+    // Installation has actually begun: use -1 (installing) so the UI shows an
+    // indeterminate "Installing" indicator rather than a frozen percentage.
+    apps[id]?.downloadProgress = _installingProgressSentinel;
+    notify();
+    try {
+      bool sayInstalled = true;
+      var contextIfNewInstall = apps[id]?.installedInfo == null
+          ? context
+          : null;
+      bool needBGWorkaround =
+          willBeSilent && context == null && !settingsProvider.useShizuku;
+      bool shizukuPretendToBeGooglePlay =
+          settingsProvider.shizukuPretendToBeGooglePlay ||
+          apps[id]!.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
+              true;
+      if (downloadedFile != null) {
+        if (needBGWorkaround) {
+          // ignore: use_build_context_synchronously
+          installApk(
+            downloadedFile,
+            contextIfNewInstall,
+            needsBGWorkaround: true,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+        } else {
+          // ignore: use_build_context_synchronously
+          sayInstalled = await installApk(
+            downloadedFile,
+            contextIfNewInstall,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+        }
+      } else {
+        if (needBGWorkaround) {
+          // ignore: use_build_context_synchronously
+          installApkDir(
+            downloadedDir!,
+            contextIfNewInstall,
+            needsBGWorkaround: true,
+          );
+        } else {
+          // ignore: use_build_context_synchronously
+          sayInstalled = await installApkDir(
+            downloadedDir!,
+            contextIfNewInstall,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+        }
+      }
+      if (willBeSilent && context == null) {
+        if (!settingsProvider.useShizuku) {
+          notificationsProvider?.notify(
+            SilentUpdateAttemptNotification([apps[id]!.app], id: id.hashCode),
+          );
+        } else {
+          notificationsProvider?.notify(
+            SilentUpdateNotification(
+              [apps[id]!.app],
+              sayInstalled,
+              id: id.hashCode,
+            ),
+          );
+        }
+      }
+      if (sayInstalled) {
+        installedIds.add(id);
+        // Dismiss the update notification since the app was successfully installed
+        notificationsProvider?.cancel(UpdateNotification([]).id);
+      }
+    } finally {
+      apps[id]?.downloadProgress = null;
+      notify();
+    }
+  }
+
+  Future<Map<Object?, Object?>> _downloadAppForInstall(
+    String id,
+    BuildContext? context,
+    NotificationsProvider? notificationsProvider,
+    bool useExisting,
+    MultiAppMultiError errors,
+  ) async {
+    bool willBeSilent = false;
+    DownloadedApk? downloadedFile;
+    DownloadedDir? downloadedDir;
+    try {
+      var downloadedArtifact =
+          // ignore: use_build_context_synchronously
+          await downloadApp(
+            apps[id]!.app,
+            context,
+            notificationsProvider: notificationsProvider,
+            useExisting: useExisting,
+          );
+      if (downloadedArtifact is DownloadedApk) {
+        downloadedFile = downloadedArtifact;
+      } else if (downloadedArtifact is DownloadedDir) {
+        downloadedDir = downloadedArtifact;
+      }
+      id = downloadedFile?.appId ?? downloadedDir!.appId;
+      // Bridge download-to-install gap so the Dismissible stays disabled.
+      // Use 100 (download complete) rather than -1 (installing) so the UI
+      // doesn't report "Installing" before installation actually begins.
+      apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
+      notify();
+      willBeSilent = await canInstallSilently(apps[id]!.app);
+      if (!settingsProvider.useShizuku) {
+        if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+          throw ObtainiumError(tr('cancelled'));
+        }
+      } else {
+        switch ((await ShizukuApkInstaller().checkPermission())!) {
+          case 'services_not_found':
+            throw ObtainiumError(tr('shizukuBinderNotFound'));
+          case 'old_shizuku':
+            throw ObtainiumError(tr('shizukuOld'));
+          case 'old_android_with_adb':
+            throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
+          case 'denied':
+            throw ObtainiumError(tr('cancelled'));
+        }
+      }
+      if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
+        // ignore: use_build_context_synchronously
+        await waitForUserToReturnToForeground(context);
+      }
+    } catch (e) {
+      errors.add(id, e, appName: apps[id]?.name);
+      if (apps[id] != null) {
+        apps[id]!.downloadProgress = null;
+        notify();
+      }
+    }
+    return {
+      'id': id,
+      'willBeSilent': willBeSilent,
+      'downloadedFile': downloadedFile,
+      'downloadedDir': downloadedDir,
+    };
+  }
+
+  Future<void> _downloadAssetFile(
+    MapEntry<String, String> fileUrl,
+    App app,
+    MultiAppMultiError errors,
+    List<String> downloadedIds,
+    NotificationsProvider notificationsProvider,
+  ) async {
+    try {
+      String downloadPath = '${await getStorageRootPath()}/Download';
+      await downloadFile(
+        fileUrl.value,
+        fileUrl.key,
+        true,
+        (double? progress) {
+          notificationsProvider.notify(
+            DownloadNotification(fileUrl.key, progress?.ceil() ?? 0),
+          );
+        },
+        downloadPath,
+        headers: await SourceProvider()
+            .getSource(app.url, overrideSource: app.overrideSource)
+            .getRequestHeaders(
+              app.additionalSettings,
+              fileUrl.value,
+              forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
+            ),
+        useExisting: false,
+        allowInsecure: app.additionalSettings['allowInsecure'] == true,
+        logs: logs,
+      );
+      notificationsProvider.notify(
+        DownloadedNotification(fileUrl.key, fileUrl.value),
+      );
+      downloadedIds.add(fileUrl.key);
+    } catch (e) {
+      errors.add(fileUrl.key, e);
+    } finally {
+      notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id);
+    }
   }
 }

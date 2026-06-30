@@ -8,18 +8,6 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
-  try {
-    ambiguousUrl = ambiguousUrl.trim();
-    if (Uri.parse(ambiguousUrl).isAbsolute) {
-      return ambiguousUrl; // #2315
-    }
-  } on FormatException {
-    // Non-parsable URL, fall through to resolve logic below
-  }
-  return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
-}
-
 int compareAlphaNumeric(String a, String b) {
   List<String> aParts = _splitAlphaNumeric(a);
   List<String> bParts = _splitAlphaNumeric(b);

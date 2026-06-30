@@ -318,7 +318,7 @@ class GitHub extends AppSource {
     Map<String, dynamic> additionalSettings,
     Map<String, String> sourceConfigSettingValues,
   ) async {
-    if (sourceConfigSettingValues['checkRepoRename'] == "false") {
+    if (sourceConfigSettingValues['checkRepoRename'] != 'true') {
       return;
     }
     var uri = Uri.tryParse(standardUrl);
@@ -488,7 +488,8 @@ class GitHub extends AppSource {
         releases = releases.reversed.toList();
       } else {
         releases.sort((a, b) {
-          // See #478 and #534
+          // Sort releases consistently: move the user's selected "latest" release
+          // to the end so it's considered first after the reverse below (#478, #534)
           if (a == b) {
             return 0;
           } else if (a == null) {
@@ -545,7 +546,7 @@ class GitHub extends AppSource {
       if (latestRelease != null &&
           (latestRelease['tag_name'] ?? latestRelease['name']) != null &&
           releases.isNotEmpty &&
-          latestRelease !=
+          (latestRelease['tag_name'] ?? latestRelease['name']) !=
               (releases[releases.length - 1]['tag_name'] ??
                   releases[0]['name'])) {
         var ind = releases.indexWhere(
@@ -808,10 +809,11 @@ class GitHub extends AppSource {
 
   void rateLimitErrorCheck(Response res) {
     if (res.headers['x-ratelimit-remaining'] == '0') {
+      final now = DateTime.now();
       final resetEpochSeconds =
           int.tryParse(res.headers['x-ratelimit-reset'] ?? '') ??
-          DateTime.now().millisecondsSinceEpoch ~/ 1000 + 3600;
-      final nowSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+          now.millisecondsSinceEpoch ~/ 1000 + 3600;
+      final nowSeconds = now.millisecondsSinceEpoch ~/ 1000;
       final remainingMinutes = ((resetEpochSeconds - nowSeconds) / 60)
           .ceil()
           .clamp(0, 9999);

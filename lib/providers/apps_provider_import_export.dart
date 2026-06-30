@@ -11,6 +11,7 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 
 /// Import/export of app configurations for [AppsProvider].
 extension AppsProviderImportExport on AppsProvider {
+  /// Builds an exportable JSON map containing app data and optionally settings.
   Map<String, dynamic> generateExportJSON({
     List<String>? appIds,
     int? overrideExportSettings,
@@ -45,6 +46,7 @@ extension AppsProviderImportExport on AppsProvider {
     return finalExport;
   }
 
+  /// Exports all app data (and optionally settings) as a JSON file to the configured export directory.
   Future<String?> export({
     bool pickOnly = false,
     isAuto = false,
@@ -97,6 +99,7 @@ extension AppsProviderImportExport on AppsProvider {
     return returnPath;
   }
 
+  /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
   Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
     var decodedJSON = jsonDecode(appsJSON);
     var newFormat = decodedJSON is! List;

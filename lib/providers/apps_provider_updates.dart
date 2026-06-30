@@ -47,6 +47,7 @@ extension AppsProviderUpdates on AppsProvider {
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
+  /// Returns app IDs sorted by last update check time, oldest first, with optional filters.
   List<String> getAppsSortedByUpdateCheckTime({
     DateTime? ignoreAppsCheckedAfter,
     bool onlyCheckInstalledOrTrackOnlyApps = false,
@@ -170,6 +171,7 @@ extension AppsProviderUpdates on AppsProvider {
     return updates;
   }
 
+  /// Finds app IDs whose installed version differs from the latest version, with optional filtering.
   List<String> findExistingUpdates({
     bool installedOnly = false,
     bool nonInstalledOnly = false,

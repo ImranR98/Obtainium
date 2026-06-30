@@ -30,8 +30,8 @@ should follow when working in this codebase.
   `LogsProvider`) are created here and read everywhere via `context.read/watch/select`.
 - `buildObtainiumTheme()` builds the app-wide Material 3 Expressive `ThemeData` once;
   **all shape/motion character lives here** (squircle `RoundedSuperellipseBorder`
-  cards/dialogs, `StadiumBorder` pill buttons, emphasized page transitions, 2024 M3
-  sliders/progress indicators). Do not re-style these per widget — extend the theme.
+  cards/dialogs, `StadiumBorder` pill buttons, emphasized page transitions, Material 3
+  expressive sliders/progress indicators). Do not re-style these per widget — extend the theme.
 - `_ObtainiumState` runs **side effects in `initState` (post-frame), not in `build()`**:
   permission requests, foreground/background service management (`_manageServices`),
   first-run handling (`_handleFirstRun`), and the launch-by-notification check. Each is
@@ -132,8 +132,8 @@ This is the heart of Obtainium. **To add support for a new app source, add one f
 ### `AppSource` (abstract, in `source_provider.dart`)
 
 A source is a subclass of `AppSource`. The base class is effectively **immutable after
-construction** (all config is set in the subclass constructor), which is why instances
-can be cached and shared (see below).
+construction** (all config is set in the subclass constructor body — a few sources
+override `name` after `super()`), which is why instances can be cached and shared.
 
 Configure behaviour by setting fields in the constructor:
 
@@ -141,7 +141,7 @@ Configure behaviour by setting fields in the constructor:
 class MySource extends AppSource {
   MySource() {
     hosts = ['example.com'];          // domains this source matches
-    name = runtimeType.toString();    // set automatically in super()
+    name = 'MySource';                // set automatically in super() as runtimeType, can be overridden
     canSearch = true;                 // supports search()
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
@@ -171,8 +171,8 @@ Override the contract methods you need:
 ### Helpers you should reuse (don't reinvent)
 
 - **`standardizeUrlWithRegex(url, subdomainPrefix:, pathPattern:)`** — the common
-  "regex against host + path, return match or throw `InvalidURLError`" pattern. 16+
-  sources duplicated this; use the helper.
+  "regex against host + path, return match or throw `InvalidURLError`" pattern. Most
+  sources should adopt this helper rather than inlining their own regex construction.
 - **`AppSource.isApkOrContainerFile(name, {includeArchives, includeTarballs})`** — the
   **single source of truth** for "is this file an installable container?". Recognizes
   `.apk/.xapk/.apkm/.apks` (+ optional `.zip` and tarballs). Use it instead of

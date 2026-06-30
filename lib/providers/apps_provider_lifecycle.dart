@@ -17,6 +17,8 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
+const _corruptFileSuffix = '.corrupt';
+
 class VersionComparison {
   final bool areEqual;
   final String version;
@@ -24,6 +26,20 @@ class VersionComparison {
 }
 
 extension AppsProviderLifecycle on AppsProvider {
+  bool _getNaiveStandardVersionDetection(App app) {
+    var source = SourceProvider()
+        .getSource(app.url, overrideSource: app.overrideSource);
+    return app.additionalSettings['naiveStandardVersionDetection'] == true ||
+        source.naiveStandardVersionDetection;
+  }
+
+  String? _getRealInstalledVersion(
+      App app, PackageInfo? installedInfo) {
+    return app.additionalSettings['useVersionCodeAsOSVersion'] == true
+        ? installedInfo?.versionCode.toString()
+        : installedInfo?.versionName;
+  }
+
   Future<Directory> getAppsDir() async {
     Directory appsDir = Directory(
       '${(await getAppStorageDir()).path}/app_data',
@@ -43,12 +59,9 @@ extension AppsProviderLifecycle on AppsProvider {
       overrideSource: app.app.overrideSource,
     );
     var naiveStandardVersionDetection =
-        app.app.additionalSettings['naiveStandardVersionDetection'] == true ||
-        source.naiveStandardVersionDetection;
+        _getNaiveStandardVersionDetection(app.app);
     String? realInstalledVersion =
-        app.app.additionalSettings['useVersionCodeAsOSVersion'] == true
-        ? app.installedInfo?.versionCode.toString()
-        : app.installedInfo?.versionName;
+        _getRealInstalledVersion(app.app, app.installedInfo);
     bool isHTMLWithNoVersionDetection =
         (source is HTML &&
         (app.app.additionalSettings['versionExtractionRegEx'] as String?)
@@ -80,14 +93,9 @@ extension AppsProviderLifecycle on AppsProvider {
     var versionDetectionIsStandard =
         app.additionalSettings['versionDetection'] == true;
     var naiveStandardVersionDetection =
-        app.additionalSettings['naiveStandardVersionDetection'] == true ||
-        SourceProvider()
-            .getSource(app.url, overrideSource: app.overrideSource)
-            .naiveStandardVersionDetection;
+        _getNaiveStandardVersionDetection(app);
     String? realInstalledVersion =
-        app.additionalSettings['useVersionCodeAsOSVersion'] == true
-        ? installedInfo?.versionCode.toString()
-        : installedInfo?.versionName;
+        _getRealInstalledVersion(app, installedInfo);
     // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       // App says it's installed but isn't really (and isn't track only) - set to not installed
@@ -221,13 +229,11 @@ extension AppsProviderLifecycle on AppsProvider {
                     jsonDecode(await File(item.path).readAsString()),
                   );
                 } catch (err) {
+                  logs.add(
+                    'Error when loading App (will be ignored): $err',
+                  );
                   if (err is FormatException) {
-                    logs.add(
-                      'Corrupt JSON when loading App (will be ignored): $err',
-                    );
-                    item.renameSync('${item.path}.corrupt');
-                  } else {
-                    rethrow;
+                    item.rename('${item.path}$_corruptFileSuffix');
                   }
                 }
               }
@@ -324,6 +330,7 @@ extension AppsProviderLifecycle on AppsProvider {
     }
   }
 
+  /// Persists a list of [App] objects to disk as JSON files and updates in-memory state.
   Future<void> saveApps(
     List<App> apps, {
     bool attemptToCorrectInstallStatus = true,
@@ -369,6 +376,7 @@ extension AppsProviderLifecycle on AppsProvider {
     scheduleAutoExport();
   }
 
+  /// Deletes app JSON files, cached APKs, and icons for the given app IDs, then updates state.
   Future<void> removeApps(List<String> appIds) async {
     var apkFiles = apkDir.listSync();
     await Future.wait(

@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -13,7 +14,7 @@ DateTime? parseDateTimeMMMddCommayyyy(String? dateString) {
         ? DateFormat('MMMM dd, yyyy').parse(dateString)
         : releaseDate;
   } catch (err) {
-    // ignore
+    debugPrint('Failed to parse release date: $err');
   }
   return releaseDate;
 }

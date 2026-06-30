@@ -10,7 +10,6 @@ import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/dom.dart';
-import 'package:http/http.dart';
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -69,13 +68,27 @@ class APKDetails {
   });
 }
 
+/// Converts a list of [MapEntry] pairs into a 2D list of strings for JSON encoding.
 List<List<String>> stringMapListTo2DList(
   List<MapEntry<String, String>> mapList,
 ) => mapList.map((e) => [e.key, e.value]).toList();
 
+/// Converts a 2D list (decoded from JSON) back into a list of [MapEntry] pairs.
 List<MapEntry<String, String>> assumed2DlistToStringMapList(
   List<dynamic> arr,
 ) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
+
+String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
+  try {
+    ambiguousUrl = ambiguousUrl.trim();
+    if (Uri.parse(ambiguousUrl).isAbsolute) {
+      return ambiguousUrl;
+    }
+  } on FormatException {
+    // Non-parsable URL, fall through to resolve logic below
+  }
+  return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
+}
 
 /// Gating version for one-time legacy app-JSON migrations. Apps whose stored
 /// JSON carries this version skip the legacy conversions; default-settings
@@ -83,6 +96,7 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
 const int currentAppJSONCompatVersion = 1;
 const _maxRedirects = 10;
 const _connectionTimeoutSeconds = 30;
+const _defaultMatchGroup = '0';
 
 Map<String, dynamic> _migrateAppToHTML(
   Map<String, dynamic> json,
@@ -111,7 +125,9 @@ void _migrateAdditionalDataToSettings(
   List<GeneratedFormItem> formItems,
 ) {
   if (json['additionalData'] == null) return;
-  List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
+  final decoded = jsonDecode(json['additionalData']);
+  if (decoded is! List) return;
+  List<String> temp = List<String>.from(decoded);
   temp.asMap().forEach((i, value) {
     if (i < formItems.length) {
       if (formItems[i] is GeneratedFormSwitch) {
@@ -124,7 +140,7 @@ void _migrateAdditionalDataToSettings(
   additionalSettings['trackOnly'] =
       json['trackOnly'] == 'true' || json['trackOnly'] == true;
   additionalSettings['noVersionDetection'] =
-      json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
+      json['noVersionDetection'] == 'true' || json['noVersionDetection'] == true;
 }
 
 /// Converts legacy booleans `noVersionDetection` / `releaseDateAsVersion`
@@ -574,6 +590,7 @@ String preStandardizeUrl(String url) {
   return url;
 }
 
+/// Extracts anchor hrefs from parsed HTML that match [hrefPattern], prepending a base URL.
 List<String> getLinksFromParsedHTML(
   Document dom,
   RegExp hrefPattern,
@@ -587,6 +604,7 @@ List<String> getLinksFromParsedHTML(
     .map((e) => '$prependToLinks${e.attributes['href']!}')
     .toList();
 
+/// Builds a flat map of default values from nested [GeneratedFormItem] rows.
 Map<String, dynamic> getDefaultValuesFromFormItems(
   List<List<GeneratedFormItem>> items,
 ) {
@@ -597,6 +615,7 @@ Map<String, dynamic> getDefaultValuesFromFormItems(
   );
 }
 
+/// Parses a list of raw URLs into filename→URL [MapEntry] pairs, extracting APK filenames.
 List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
     urls.map((e) {
       var segments = e.split('/').where((el) => el.trim().isNotEmpty);
@@ -604,6 +623,7 @@ List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
       return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
     }).toList();
 
+/// Narrows a list of APK URLs to those matching the device's supported ABIs.
 Future<List<MapEntry<String, String>>> filterApksByArch(
   List<MapEntry<String, String>> apkUrls,
 ) async {
@@ -625,10 +645,12 @@ Future<List<MapEntry<String, String>>> filterApksByArch(
   return apkUrls;
 }
 
+/// Builds a regex alternation pattern from a list of hostname strings, escaping dots.
 String getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
 
+/// Creates an [HttpClient] with a connection timeout, optionally accepting bad certificates.
 HttpClient createHttpClient(bool insecure) {
   final client = HttpClient();
   client.connectionTimeout = Duration(seconds: _connectionTimeoutSeconds);
@@ -639,6 +661,7 @@ HttpClient createHttpClient(bool insecure) {
   return client;
 }
 
+/// Performs an HTTP request with redirect following, returning the final URL, client, and streamed response.
 Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
 sourceRequestStreamResponse(
   String method,
@@ -669,7 +692,8 @@ sourceRequestStreamResponse(
     final response = await request.close();
 
     if (followRedirects &&
-        (response.statusCode >= 300 && response.statusCode <= 399)) {
+        (response.statusCode >= 301 && response.statusCode <= 308 &&
+            response.statusCode != 304)) {
       final location = response.headers.value(HttpHeaders.locationHeader);
       if (location != null) {
         currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
@@ -687,7 +711,7 @@ sourceRequestStreamResponse(
   throw ObtainiumError(tr('tooManyRedirects'));
 }
 
-Future<Response> httpClientResponseStreamToFinalResponse(
+Future<http.Response> httpClientResponseStreamToFinalResponse(
   HttpClient httpClient,
   String method,
   String url,
@@ -766,7 +790,7 @@ abstract class AppSource with HttpClientMixin {
     return app;
   }
 
-  Future<Response> sourceRequest(
+  Future<http.Response> sourceRequest(
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
@@ -1147,8 +1171,13 @@ abstract class AppSource with HttpClientMixin {
     throw NotImplementedError();
   }
 
-  static String stripLastPathSegment(String url) =>
-      Uri.parse(url).replace(pathSegments: Uri.parse(url).pathSegments.sublist(0, Uri.parse(url).pathSegments.length - 1)).toString();
+  static String stripLastPathSegment(String url) {
+    final uri = Uri.parse(url);
+    return uri
+        .replace(pathSegments:
+            uri.pathSegments.sublist(0, uri.pathSegments.length - 1))
+        .toString();
+  }
 
   static Future<String?> tryInferAppIdFromLastPathSegment(
     String standardUrl, {
@@ -1168,7 +1197,7 @@ abstract class AppSource with HttpClientMixin {
   }
 }
 
-ObtainiumError getObtainiumHttpError(Response res) {
+ObtainiumError getObtainiumHttpError(http.Response res) {
   return ObtainiumError(
     (res.reasonPhrase != null && res.reasonPhrase!.isNotEmpty)
         ? res.reasonPhrase!
@@ -1194,24 +1223,12 @@ String? regExValidator(String? value) {
   return null;
 }
 
-String? intValidator(String? value, {bool positive = false}) {
-  if (value == null) {
-    return tr('invalidInput');
-  }
-  var num = int.tryParse(value);
-  if (num == null) {
-    return tr('invalidInput');
-  }
-  if (positive && num <= 0) {
-    return tr('invalidInput');
-  }
-  return null;
-}
-
+/// Returns true if the app's ID is a numeric placeholder (temporary ID) rather than a real package name.
 bool isTempId(App app) {
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
+/// Replaces `$N` references in a string with the corresponding regex match groups.
 String? replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
   if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
     matchGroupString = '\$$matchGroupString';
@@ -1239,6 +1256,7 @@ String? replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
   return outputString;
 }
 
+/// Applies a version extraction regex to a string and returns the captured match group.
 String? extractVersion(
   String? versionExtractionRegEx,
   String? matchGroupString,
@@ -1252,7 +1270,7 @@ String? extractVersion(
     }
     matchGroupString = matchGroupString?.trim() ?? '';
     if (matchGroupString.isEmpty) {
-      matchGroupString = "0";
+      matchGroupString = _defaultMatchGroup;
     }
     version = replaceMatchGroupsInString(match.last, matchGroupString);
     if (version?.isNotEmpty != true) {
@@ -1264,6 +1282,7 @@ String? extractVersion(
   }
 }
 
+/// Filters APK URLs by a regex pattern on their filenames, optionally inverting the match.
 List<MapEntry<String, String>> filterApks(
   List<MapEntry<String, String>> apkUrls,
   String? apkFilterRegEx,
@@ -1286,8 +1305,10 @@ List<MapEntry<String, String>> filterApks(
 /// untranslated en-fallback keys) return the key unchanged, while every other
 /// locale returns a translated word.
 bool isEnglish() => tr('and') == 'and';
+/// Lowercases [str] only if the current locale is English, preserving case for other languages.
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 
+/// Returns true when the app uses pseudo-versioning (track-only or disabled version detection).
 bool isVersionPseudo(App app) =>
     app.additionalSettings['trackOnly'] == true ||
     (app.installedVersion != null &&
@@ -1414,6 +1435,27 @@ class SourceProvider {
     Map<String, dynamic> additionalSettings,
   ) => (standardUrl + additionalSettings.toString()).hashCode.toString();
 
+  Future<String?> _resolveAppId(
+    AppSource source,
+    App? currentApp,
+    Map<String, dynamic> additionalSettings,
+    bool trackOnly,
+    String standardUrl,
+    bool inferAppIdIfOptional,
+  ) async {
+    return currentApp?.id ??
+        (additionalSettings['appId'] as String?) ??
+        (!trackOnly &&
+                (!source.appIdInferIsOptional ||
+                    (source.appIdInferIsOptional && inferAppIdIfOptional))
+            ? await source.tryInferringAppId(
+                standardUrl,
+                additionalSettings: additionalSettings,
+              )
+            : null) ??
+        generateTempID(standardUrl, additionalSettings);
+  }
+
   Future<App> getApp(
     AppSource source,
     String url,
@@ -1462,18 +1504,14 @@ class SourceProvider {
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
     App finalApp = App(
-      currentApp?.id ??
-          ((additionalSettings['appId'] != null)
-              ? additionalSettings['appId']
-              : null) ??
-          (!trackOnly &&
-                  (!source.appIdInferIsOptional ||
-                      (source.appIdInferIsOptional && inferAppIdIfOptional))
-              ? await source.tryInferringAppId(
-                  standardUrl,
-                  additionalSettings: additionalSettings,
-                )
-              : null) ??
+      await _resolveAppId(
+            source,
+            currentApp,
+            additionalSettings,
+            trackOnly,
+            standardUrl,
+            inferAppIdIfOptional,
+          ) ??
           generateTempID(standardUrl, additionalSettings),
       standardUrl,
       apk.names.author,

@@ -365,6 +365,144 @@ class _GeneratedFormState extends State<GeneratedForm> {
     widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
+  Widget _initTextField(GeneratedFormTextField formItem) {
+    final formFieldKey = GlobalKey<FormFieldState>();
+    var ctrl = TextEditingController(text: values[formItem.key]);
+    _textControllers.add(ctrl);
+    return TypeAheadField<String>(
+      controller: ctrl,
+      builder: (context, controller, focusNode) {
+        final textField = TextFormField(
+          controller: ctrl,
+          focusNode: focusNode,
+          keyboardType: formItem.textInputType,
+          obscureText: formItem.password,
+          autocorrect: !formItem.password,
+          enableSuggestions: !formItem.password,
+          key: formFieldKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          onChanged: (value) {
+            setState(() {
+              values[formItem.key] = value;
+              someValueChanged();
+            });
+          },
+          decoration: InputDecoration(
+            labelText: formItem.label + (formItem.required ? ' *' : ''),
+            hintText: formItem.hint,
+            filled: widget.tileMode ? false : null,
+            border: widget.tileMode ? InputBorder.none : null,
+            enabledBorder: widget.tileMode ? InputBorder.none : null,
+            focusedBorder: widget.tileMode ? InputBorder.none : null,
+            suffixIcon: formItem.helpUrl != null
+                ? IconButton(
+                    icon: const Icon(Icons.open_in_new),
+                    tooltip: tr('about'),
+                    onPressed: () => launchUrlString(
+                      formItem.helpUrl!,
+                      mode: LaunchMode.externalApplication,
+                    ).ignore(),
+                  )
+                : formItem.belowWidgets.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.help_outline),
+                    tooltip: tr('about'),
+                    onPressed: () => showHelpDialog(
+                      context,
+                      title: formItem.label,
+                      content: formItem.belowWidgets,
+                    ),
+                  )
+                : null,
+          ),
+          minLines: formItem.max <= 1 ? null : formItem.max,
+          maxLines: formItem.max <= 1 ? 1 : formItem.max,
+          validator: (value) {
+            if (formItem.required &&
+                (value == null || value.trim().isEmpty)) {
+              return '${formItem.label} ${tr('requiredInBrackets')}';
+            }
+            for (var validator in formItem.additionalValidators) {
+              String? result = validator(value);
+              if (result != null) {
+                return result;
+              }
+            }
+            return null;
+          },
+        );
+        if (context.read<SettingsProvider>().isTV) {
+          return _TVTextFieldFocus(
+            textFocusNode: focusNode,
+            child: textField,
+          );
+        }
+        return textField;
+      },
+      itemBuilder: (context, value) {
+        return ListTile(title: Text(value));
+      },
+      onSelected: (value) {
+        ctrl.text = value;
+        setState(() {
+          values[formItem.key] = value;
+          someValueChanged();
+        });
+      },
+      suggestionsCallback: (search) {
+        return formItem.autoCompleteOptions
+            ?.where((t) => t.toLowerCase().contains(search.toLowerCase()))
+            .toList();
+      },
+      hideOnEmpty: true,
+    );
+  }
+
+  Widget _initDropdown(GeneratedFormDropdown formItem) {
+    if (formItem.opts!.isEmpty) {
+      return Text(tr('dropdownNoOptsError'));
+    }
+    return DropdownButtonFormField(
+      decoration: InputDecoration(
+        labelText: formItem.label,
+        filled: widget.tileMode ? false : null,
+        border: widget.tileMode ? InputBorder.none : null,
+        enabledBorder: widget.tileMode ? InputBorder.none : null,
+        focusedBorder: widget.tileMode ? InputBorder.none : null,
+      ),
+      initialValue: values[formItem.key],
+      items: formItem.opts!.map((e2) {
+        var enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
+        return DropdownMenuItem(
+          value: e2.key,
+          enabled: enabled,
+          child: Opacity(
+            opacity: enabled ? 1 : 0.5,
+            child: Text(e2.value),
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          values[formItem.key] = value ?? formItem.opts!.first.key;
+          someValueChanged();
+        });
+      },
+    );
+  }
+
+  void _initSubForm(GeneratedFormSubForm formItem) {
+    values[formItem.key] = [];
+    for (Map<String, dynamic> v
+        in ((formItem.defaultValue ?? []) as List<dynamic>)) {
+      var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
+      for (var element in v.entries) {
+        fullDefaults[element.key] = element.value;
+      }
+      values[formItem.key].add(fullDefaults);
+    }
+  }
+
   void initForm() {
     initKey = widget.key.toString();
     for (final c in _textControllers) {
@@ -383,139 +521,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return row.value.asMap().entries.map((e) {
         var formItem = e.value;
         if (formItem is GeneratedFormTextField) {
-          final formFieldKey = GlobalKey<FormFieldState>();
-          var ctrl = TextEditingController(text: values[formItem.key]);
-          _textControllers.add(ctrl);
-          return TypeAheadField<String>(
-            controller: ctrl,
-            builder: (context, controller, focusNode) {
-              final textField = TextFormField(
-                controller: ctrl,
-                focusNode: focusNode,
-                keyboardType: formItem.textInputType,
-                obscureText: formItem.password,
-                autocorrect: !formItem.password,
-                enableSuggestions: !formItem.password,
-                key: formFieldKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                onChanged: (value) {
-                  setState(() {
-                    values[formItem.key] = value;
-                    someValueChanged();
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: formItem.label + (formItem.required ? ' *' : ''),
-                  hintText: formItem.hint,
-                  filled: widget.tileMode ? false : null,
-                  border: widget.tileMode ? InputBorder.none : null,
-                  enabledBorder: widget.tileMode ? InputBorder.none : null,
-                  focusedBorder: widget.tileMode ? InputBorder.none : null,
-                  suffixIcon: formItem.helpUrl != null
-                      ? IconButton(
-                          icon: const Icon(Icons.open_in_new),
-                          tooltip: tr('about'),
-                          onPressed: () => launchUrlString(
-                            formItem.helpUrl!,
-                            mode: LaunchMode.externalApplication,
-                          ).ignore(),
-                        )
-                      : formItem.belowWidgets.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.help_outline),
-                          tooltip: tr('about'),
-                          onPressed: () => showHelpDialog(
-                            context,
-                            title: formItem.label,
-                            content: formItem.belowWidgets,
-                          ),
-                        )
-                      : null,
-                ),
-                minLines: formItem.max <= 1 ? null : formItem.max,
-                maxLines: formItem.max <= 1 ? 1 : formItem.max,
-                validator: (value) {
-                  if (formItem.required &&
-                      (value == null || value.trim().isEmpty)) {
-                    return '${formItem.label} ${tr('requiredInBrackets')}';
-                  }
-                  for (var validator in formItem.additionalValidators) {
-                    String? result = validator(value);
-                    if (result != null) {
-                      return result;
-                    }
-                  }
-                  return null;
-                },
-              );
-              if (context.read<SettingsProvider>().isTV) {
-                return _TVTextFieldFocus(
-                  textFocusNode: focusNode,
-                  child: textField,
-                );
-              }
-              return textField;
-            },
-            itemBuilder: (context, value) {
-              return ListTile(title: Text(value));
-            },
-            onSelected: (value) {
-              ctrl.text = value;
-              setState(() {
-                values[formItem.key] = value;
-                someValueChanged();
-              });
-            },
-            suggestionsCallback: (search) {
-              return formItem.autoCompleteOptions
-                  ?.where((t) => t.toLowerCase().contains(search.toLowerCase()))
-                  .toList();
-            },
-            hideOnEmpty: true,
-          );
+          return _initTextField(formItem);
         } else if (formItem is GeneratedFormDropdown) {
-          if (formItem.opts!.isEmpty) {
-            return Text(tr('dropdownNoOptsError'));
-          }
-          return DropdownButtonFormField(
-            decoration: InputDecoration(
-              labelText: formItem.label,
-              filled: widget.tileMode ? false : null,
-              border: widget.tileMode ? InputBorder.none : null,
-              enabledBorder: widget.tileMode ? InputBorder.none : null,
-              focusedBorder: widget.tileMode ? InputBorder.none : null,
-            ),
-            initialValue: values[formItem.key],
-            items: formItem.opts!.map((e2) {
-              var enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
-              return DropdownMenuItem(
-                value: e2.key,
-                enabled: enabled,
-                child: Opacity(
-                  opacity: enabled ? 1 : 0.5,
-                  child: Text(e2.value),
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                values[formItem.key] = value ?? formItem.opts!.first.key;
-                someValueChanged();
-              });
-            },
-          );
+          return _initDropdown(formItem);
         } else if (formItem is GeneratedFormSubForm) {
-          values[formItem.key] = [];
-          for (Map<String, dynamic> v
-              in ((formItem.defaultValue ?? []) as List<dynamic>)) {
-            var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
-            for (var element in v.entries) {
-              fullDefaults[element.key] = element.value;
-            }
-            values[formItem.key].add(fullDefaults);
-          }
+          _initSubForm(formItem);
           return Container();
         } else {
+          debugPrint('GeneratedForm: Unrecognized item type: ${formItem.runtimeType}');
           return Container();
         }
       }).toList();
@@ -535,6 +548,101 @@ class _GeneratedFormState extends State<GeneratedForm> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey) {
+    List<Widget> subformColumn = [];
+    var compact = item.items.length == 1 && item.items[0].length == 1;
+    for (int i = 0; i < values[fieldKey].length; i++) {
+      var internalFormKey = ValueKey(
+        generateRandomNumber(
+          values[fieldKey].length,
+          seed2: i,
+          seed3: forceUpdateKeyCount,
+        ),
+      );
+      subformColumn.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!compact) const SizedBox(height: 16),
+            if (!compact)
+              Text(
+                '${item.label} (${i + 1})',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            GeneratedForm(
+              key: internalFormKey,
+              items: cloneFormItems(item.items)
+                  .map(
+                    (x) => x.map((y) {
+                      y.defaultValue = values[fieldKey]?[i]?[y.key];
+                      y.key = '${y.key.toString()},$internalFormKey';
+                      return y;
+                    }).toList(),
+                  )
+                  .toList(),
+              onValueChanges: (values, valid, isBuilding) {
+                values = values.map(
+                  (key, value) => MapEntry(key.split(',')[0], value),
+                );
+                if (valid) {
+                  this.values[fieldKey]?[i] = values;
+                }
+                someValueChanged(
+                  isBuilding: isBuilding,
+                  forceInvalid: !valid,
+                );
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: (values[fieldKey].length > 0)
+                      ? () {
+                          var temp = List.from(values[fieldKey]);
+                          temp.removeAt(i);
+                          values[fieldKey] = List.from(temp);
+                          forceUpdateKeyCount++;
+                          someValueChanged();
+                        }
+                      : null,
+                  label: Text('${item.label} (${i + 1})'),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    subformColumn.add(
+      Padding(
+        padding: const EdgeInsets.only(bottom: 0, top: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton.tonalIcon(
+                onPressed: () {
+                  values[fieldKey].add(
+                    getDefaultValuesFromFormItems(item.items),
+                  );
+                  forceUpdateKeyCount++;
+                  someValueChanged();
+                },
+                icon: const Icon(Icons.add),
+                label: Text(item.label),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return Column(children: subformColumn);
   }
 
   @override
@@ -568,98 +676,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   },
           );
         } else if (item is GeneratedFormSubForm) {
-          List<Widget> subformColumn = [];
-          var compact = item.items.length == 1 && item.items[0].length == 1;
-          for (int i = 0; i < values[fieldKey].length; i++) {
-            var internalFormKey = ValueKey(
-              generateRandomNumber(
-                values[fieldKey].length,
-                seed2: i,
-                seed3: forceUpdateKeyCount,
-              ),
-            );
-            subformColumn.add(
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!compact) const SizedBox(height: 16),
-                  if (!compact)
-                    Text(
-                      '${item.label} (${i + 1})',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  GeneratedForm(
-                    key: internalFormKey,
-                    items: cloneFormItems(item.items)
-                        .map(
-                          (x) => x.map((y) {
-                            y.defaultValue = values[fieldKey]?[i]?[y.key];
-                            y.key = '${y.key.toString()},$internalFormKey';
-                            return y;
-                          }).toList(),
-                        )
-                        .toList(),
-                    onValueChanges: (values, valid, isBuilding) {
-                      values = values.map(
-                        (key, value) => MapEntry(key.split(',')[0], value),
-                      );
-                      if (valid) {
-                        this.values[fieldKey]?[i] = values;
-                      }
-                      someValueChanged(
-                        isBuilding: isBuilding,
-                        forceInvalid: !valid,
-                      );
-                    },
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.error,
-                        ),
-                        onPressed: (values[fieldKey].length > 0)
-                            ? () {
-                                var temp = List.from(values[fieldKey]);
-                                temp.removeAt(i);
-                                values[fieldKey] = List.from(temp);
-                                forceUpdateKeyCount++;
-                                someValueChanged();
-                              }
-                            : null,
-                        label: Text('${item.label} (${i + 1})'),
-                        icon: const Icon(Icons.delete_outline_rounded),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }
-          subformColumn.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 0, top: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: () {
-                        values[fieldKey].add(
-                          getDefaultValuesFromFormItems(item.items),
-                        );
-                        forceUpdateKeyCount++;
-                        someValueChanged();
-                      },
-                      icon: const Icon(Icons.add),
-                      label: Text(item.label),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-          renderedInputs[r][e] = Column(children: subformColumn);
+          renderedInputs[r][e] = _buildSubForm(item, fieldKey);
         }
       }
     }
