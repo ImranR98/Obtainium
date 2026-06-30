@@ -133,9 +133,9 @@ extension AppsProviderUpdates on AppsProvider {
                 }
                 if (e is RepositoryRenamedError) {
                   await updatePendingRepoRename(appId, e.newUrl);
-                } else {
-                  errors.add(appId, e, appName: apps[appId]?.name);
+                  return null;
                 }
+                errors.add(appId, e, appName: apps[appId]?.name);
                 return null;
               }
             }),
@@ -172,16 +172,13 @@ extension AppsProviderUpdates on AppsProvider {
   }
 
   /// Finds app IDs whose installed version differs from the latest version, with optional filtering.
-  List<String> findExistingUpdates({
+  List<String> findAppIdsWithPendingUpdates({
     bool installedOnly = false,
     bool nonInstalledOnly = false,
   }) {
     List<String> updateAppIds = [];
     for (final appId in apps.keys) {
       final app = apps[appId]!.app;
-      if (installedOnly && nonInstalledOnly) {
-        continue;
-      }
       if (installedOnly) {
         if (app.installedVersion != null &&
             app.installedVersion != app.latestVersion) {

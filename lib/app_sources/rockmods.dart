@@ -73,8 +73,7 @@ class RockMods extends AppSource {
         AppNames(appAuthor ?? name, appName),
       );
     } catch (e) {
-      if (e is ObtainiumError) rethrow;
-      throw ObtainiumError('RockMods Error: $e');
+      rethrowOrWrapError(e);
     }
   }
 }

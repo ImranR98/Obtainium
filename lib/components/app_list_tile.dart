@@ -17,7 +17,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-final RegExp _changeLogUrlRegExp = RegExp(
+final RegExp _changelogUrlRegEx = RegExp(
   '(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?',
 );
 
@@ -85,7 +85,7 @@ VoidCallback? getChangeLogFn(BuildContext context, App app) {
   String? changesUrl;
   String? changeLog = app.changeLog;
   final trimmedChangeLog = changeLog?.trim() ?? '';
-  final urlMatch = _changeLogUrlRegExp.firstMatch(trimmedChangeLog);
+  final urlMatch = _changelogUrlRegEx.firstMatch(trimmedChangeLog);
   if (urlMatch != null &&
       urlMatch.start == 0 &&
       urlMatch.end == trimmedChangeLog.length) {
@@ -143,7 +143,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
       button: true,
       // Expose the InkWell's double-tap "open app" action to accessibility
       // services (screen readers can't perform a double-tap gesture).
-      onTap: widget.installed ? () => pm.openApp(widget.appId) : null,
+      onTap: widget.installed ? () => packageManager.openApp(widget.appId) : null,
       onLongPress: () {
         Navigator.push(
           context,
@@ -163,7 +163,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           ),
         ),
         onDoubleTap: () {
-          pm.openApp(widget.appId);
+          packageManager.openApp(widget.appId);
         },
         onLongPress: () {
           Navigator.push(
@@ -258,7 +258,7 @@ class AppListTile extends StatelessWidget {
     return installed ?? tr('notInstalled');
   }
 
-  String _changesButtonString(bool hasChangeLogFn) {
+  String _changesLabel(bool hasChangeLogFn) {
     return _app.releaseDate == null
         ? hasChangeLogFn
               ? tr('changes')
@@ -361,7 +361,7 @@ class AppListTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _changesButtonString(showChangesFn != null),
+                      _changesLabel(showChangesFn != null),
                       style: TextStyle(
                         fontStyle: FontStyle.italic,
                         color: updateColor,

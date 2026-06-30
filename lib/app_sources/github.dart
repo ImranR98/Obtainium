@@ -65,13 +65,7 @@ class GitHub extends AppSource {
           defaultValue: false,
         ),
       ],
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
+      AppSource.fallbackToOlderReleasesFormItem,
       [
         GeneratedFormTextField(
           'filterReleaseTitlesByRegEx',
@@ -775,7 +769,9 @@ class GitHub extends AppSource {
     String reqUrl,
     Map<String, String> sourceConfigSettingValues,
   ) {
-    var prefix = 'https://${sourceConfigSettingValues['GHReqPrefix']}/';
+    var ghReqPrefix = sourceConfigSettingValues['GHReqPrefix'];
+    if (ghReqPrefix == null || ghReqPrefix.isEmpty) return reqUrl;
+    var prefix = 'https://$ghReqPrefix/';
     return reqUrl.startsWith(prefix) ? reqUrl.substring(prefix.length) : reqUrl;
   }
 

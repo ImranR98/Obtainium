@@ -11,7 +11,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
-  static const _maxChangeLogBytes = 2048;
+  static const _maxChangeLogCodeUnits = 2048;
   FDroid() {
     hosts = ['f-droid.org'];
     name = tr('fdroid');
@@ -136,9 +136,9 @@ class FDroid extends AppSource {
           'Failed to process changelog for F-Droid app: ${e.toString()}',
         );
       }
-      if ((details.changeLog?.length ?? 0) > _maxChangeLogBytes) {
+      if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {
         final cl = details.changeLog!;
-        var end = _maxChangeLogBytes;
+        var end = _maxChangeLogCodeUnits;
         if (end > 0 &&
             cl.codeUnitAt(end - 1) >= 0xD800 &&
             cl.codeUnitAt(end - 1) <= 0xDBFF) {
@@ -244,8 +244,6 @@ class FDroid extends AppSource {
           if (RegExp(
             filterVersionsByRegEx!,
           ).hasMatch(releases[i]['versionName'])) {
-            // Releases are ordered highest-version-first, so the first match is
-            // the newest matching version.
             version = releases[i]['versionName'];
             break;
           }

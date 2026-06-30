@@ -78,9 +78,11 @@ class Farsroid extends AppSource {
     if (html2.isEmpty) {
       throw NoAPKError();
     }
+    var requestUrl = res2.request?.url;
+    if (requestUrl == null) throw NoAPKError();
     var apkLinks = (await grabLinksCommon(
       html2,
-      res2.request!.url,
+      requestUrl,
       {...additionalSettings, 'skipSort': true},
     )).map((l) => MapEntry(Uri.parse(l.key).pathSegments.last, l.key)).toList();
 

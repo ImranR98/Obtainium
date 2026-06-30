@@ -51,7 +51,7 @@ const int _obtainiumBgUpdateMaxAttempts = 4;
 const int _obtainiumBgUpdateMaxRetryWaitSeconds = 5;
 const int _obtainiumBgClientExceptionRetryWaitSeconds = 15 * 60;
 
-final pm = AndroidPackageManager();
+final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
 /// Runtime wrapper for [App] holding download state and OS package info.
@@ -95,6 +95,10 @@ class AppInMemory {
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
 
+  bool get needsRefreshBeforeDownload =>
+      app.additionalSettings['refreshBeforeDownload'] == true ||
+      (app.apkUrls.isNotEmpty && app.apkUrls.first.value == 'placeholder');
+
   bool get hasMultipleSigners {
     return installedInfo?.signingInfo?.hasMultipleSigners ?? false;
   }
@@ -131,7 +135,7 @@ class DownloadedDir {
   DownloadedDir(this.appId, this.file, this.extracted, this.type);
 }
 
-List<String> generateStandardVersionRegExStrings() {
+List<String> _generateStandardVersionRegExStrings() {
   var basics = [
     '[0-9]+',
     '[0-9]+\\.[0-9]+',
@@ -168,18 +172,17 @@ List<String> generateStandardVersionRegExStrings() {
   return results;
 }
 
-List<String> standardVersionRegExStrings =
-    generateStandardVersionRegExStrings();
+final _standardVersionRegExStrings = _generateStandardVersionRegExStrings();
 
 // Precompiled once (instead of rebuilding hundreds of RegExp objects on every
 // call) since findStandardFormatsForVersion runs inside hot paths like the
 // GitHub release sort comparator.
 final List<MapEntry<String, RegExp>> _strictStandardVersionRegExes =
-    standardVersionRegExStrings
+    _standardVersionRegExStrings
         .map((p) => MapEntry(p, RegExp('^$p\$')))
         .toList();
 final List<MapEntry<String, RegExp>> _looseStandardVersionRegExes =
-    standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
+    _standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
 
 Set<String> findStandardFormatsForVersion(String version, bool strict) {
   // If !strict, even a substring match is valid
@@ -476,7 +479,6 @@ Future<File> downloadFile(
     }
   }
 
-    // Download to a '.temp' file (to distinguish between complete/incomplete files)
   File tempDownloadedFile = File('${downloadedFile.path}.part');
 
   // If there is already a temp file, a download may already be in progress - account for this (see #2073)
@@ -528,7 +530,6 @@ Future<File> downloadFile(
   }
   sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
 
-  // Perform the download
   var received = 0;
   double? progress;
   DateTime? lastProgressUpdate; // Track last progress update time
@@ -592,6 +593,9 @@ Future<File> downloadFile(
     );
   }
   if (tempDownloadedFile.existsSync()) {
+    if (downloadedFile.existsSync()) {
+      downloadedFile.deleteSync();
+    }
     tempDownloadedFile.renameSync(downloadedFile.path);
   }
   responseClient.close();
@@ -599,7 +603,7 @@ Future<File> downloadFile(
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
-  return await pm.getInstalledPackages(flags: packageInfoFlags) ?? [];
+  return await packageManager.getInstalledPackages(flags: packageInfoFlags) ?? [];
 }
 
 Future<PackageInfo?> getInstalledInfo(
@@ -608,7 +612,7 @@ Future<PackageInfo?> getInstalledInfo(
 }) async {
   if (packageName != null) {
     try {
-      return await pm.getPackageInfo(
+      return await packageManager.getPackageInfo(
         packageName: packageName,
         flags: packageInfoFlags,
       );
@@ -650,11 +654,11 @@ class AppsProvider with ChangeNotifier {
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   bool _isBg = false;
-  late Stream<FGBGType>? foregroundStream;
-  late StreamSubscription<FGBGType>? foregroundSubscription;
-  late Directory apkDir;
-  late Directory iconsCacheDir;
-  late SettingsProvider settingsProvider = SettingsProvider();
+  late final Stream<FGBGType>? foregroundStream;
+  late final StreamSubscription<FGBGType>? foregroundSubscription;
+  late final Directory apkDir;
+  late final Directory iconsCacheDir;
+  late final SettingsProvider settingsProvider;
 
   Iterable<AppInMemory> getAppValues() {
     _reloadIfBgSaved();
@@ -700,8 +704,9 @@ class AppsProvider with ChangeNotifier {
     });
   }
 
-  AppsProvider({bool isBg = false}) {
+  AppsProvider({bool isBg = false, SettingsProvider? settingsProvider}) {
     _isBg = isBg;
+    this.settingsProvider = settingsProvider ?? SettingsProvider();
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -711,7 +716,7 @@ class AppsProvider with ChangeNotifier {
       }
     });
     () async {
-      await settingsProvider.initializeSettings();
+      await this.settingsProvider.initializeSettings();
       var cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         apkDir = cacheDirs!.first;
@@ -788,7 +793,7 @@ Future<void> _runBGInstallMode(
 ) async {
   logs.add('BG install task: Started (${toInstall.length}).');
   if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
-    var temp = appsProvider.findExistingUpdates(installedOnly: true);
+    var temp = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
     for (var i = 0; i < temp.length; i++) {
       if (await appsProvider.canInstallSilently(
         appsProvider.apps[temp[i]]!.app,
@@ -798,12 +803,12 @@ Future<void> _runBGInstallMode(
     }
   }
   if (toInstall.isNotEmpty) {
-    var tempObtArr = toInstall.where(
+    var obtainiumEntries = toInstall.where(
       (element) =>
           element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
     );
-    if (tempObtArr.isNotEmpty) {
-      var obt = tempObtArr.first;
+    if (obtainiumEntries.isNotEmpty) {
+      var obt = obtainiumEntries.first;
       toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
     }
     try {
@@ -829,21 +834,13 @@ Future<void> _runBGInstallMode(
   }
 }
 
-/// Background updater function
+/// Background update check and installation orchestrator.
 ///
-/// @param `List<MapEntry<String, int>>?` toCheck: The appIds to check for updates (with the number of previous attempts made per appid) (defaults to all apps)
+/// In "update mode" (toCheck is non-empty): checks [toCheck] apps in parallel,
+/// notifies the user of any non-silent updates, and retries failed checks.
 ///
-/// @param `List<String>?` toInstall: The appIds to attempt to update (if empty - which is the default - all pending updates are taken)
-///
-/// When toCheck is empty, the function is in "install mode" (else it is in "update mode").
-/// In update mode, all apps in toCheck are checked for updates (in parallel).
-/// If an update is available and it cannot be installed silently, the user is notified of the available update.
-/// If there are any errors, we recursively call the same function with retry count for the relevant apps decremented (if zero, the user is notified).
-///
-/// Once all update checks are complete, the task is run again in install mode.
-/// In this mode, all pending silent updates are downloaded (in parallel) and installed in the background.
-/// If there is an error, the user is notified.
-///
+/// In "install mode" (toCheck is empty): downloads and silently installs all
+/// pending updates, placing Obtainium last in the install queue.
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   debugPrint('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
@@ -998,9 +995,9 @@ Future<void> _bgRunUpdateCheck(
     );
   } catch (e) {
     if (e is Map) {
-      updates = e['updates'];
+      updates = e['updates'] ?? [];
       errors = e['errors'];
-      errors!.rawErrors.forEach((key, err) {
+      errors?.rawErrors.forEach((key, err) {
         logs.add(
           'BG update task: Got error on checking for $key \'${err.toString()}\'.',
         );
@@ -1073,7 +1070,7 @@ Future<void> _bgRunUpdateCheck(
     for (var element in toThrow.idsByErrorString.entries) {
       notificationsProvider.notify(
         ErrorCheckingUpdatesNotification(
-          errors!.errorsAppsString(element.key, element.value),
+          (errors ?? toThrow).errorsAppsString(element.key, element.value),
           id: Random().nextInt(10000),
         ),
       );

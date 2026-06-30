@@ -10,7 +10,7 @@ import 'dart:math';
 class CoolApk extends AppSource {
   CoolApk() {
     name = tr('coolApk');
-    hosts = ['www.coolapk.com', 'api2.coolapk.com'];
+    hosts = ['coolapk.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
     allowOverride = false;

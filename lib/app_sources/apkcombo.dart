@@ -133,12 +133,7 @@ class APKCombo extends AppSource {
         .toList();
     DateTime? releaseDate;
     if (infoArray.length >= 2) {
-      try {
-        // The page shows an abbreviated, English month (e.g. "Nov 20, 2025").
-        releaseDate = DateFormat('MMM d, yyyy', 'en_US').parse(infoArray[1]);
-      } catch (e) {
-        // ignore
-      }
+      releaseDate = DateFormat('MMM d, yyyy', 'en_US').tryParse(infoArray[1]);
     }
     return APKDetails(
       version,

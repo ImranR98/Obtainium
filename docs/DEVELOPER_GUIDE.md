@@ -163,10 +163,10 @@ Override the contract methods you need:
 | `getLatestAPKDetails(standardUrl, additionalSettings)` | **The main job:** fetch the latest release and return `APKDetails(version, apkUrls, names, releaseDate, changeLog, allAssetUrls)`. |
 | `tryInferringAppId(standardUrl, {...})` | Best-effort detect the Android package id (optional). |
 | `search(query, {querySettings})` | Return `{url: [name, description]}` (only if `canSearch`). |
-| `getRequestHeaders(...)` | Provide auth/format headers (via `HttpClientMixin`). |
+| `getRequestHeaders(...)` | Provide auth/format headers (defined on `AppSource`). |
 | `getSourceNote()` | Markdown note shown in the UI (e.g. "add a token to avoid rate limits"). |
-| `changeLogPageFromStandardUrl(url)` | URL of the human-readable changelog/releases page. |
-| `generalReqPrefetchModifier` / `assetUrlPrefetchModifier` | Rewrite request/asset URLs before fetching (e.g. through a proxy). |
+| `changeLogPageFromStandardUrl(url)` | URL of the human-readable changelog/releases page. Set `changeLogPageIsStandardUrl = true` in the constructor instead of overriding this if the changelog page is the same as the standard URL. |
+| `postProcessApp(app)` | Transform the `App` object after all other processing (e.g. F-Droid repos update the URL with an `appId` query param). |
 
 ### Helpers you should reuse (don't reinvent)
 
@@ -211,7 +211,7 @@ Override the contract methods you need:
 - **Two-pane** list+detail on very wide screens (`width >= 900`) for the Apps tab.
 - Single-pane content on wide screens is **width-capped at 720px** and centered.
 - Update count is shown as a live `Badge` driven by
-  `context.select<AppsProvider>(...findExistingUpdates...)`.
+  `context.select<AppsProvider>(...findAppIdsWithPendingUpdates...)`.
 - Only **two tabs** (Apps, Settings). "Add App" is a FAB; Import/Export are folded into
   the Add App page and Settings respectively.
 

@@ -1,6 +1,6 @@
-// Exposes functions that can be used to send notifications to the user
+// Exposes functions that can be used to send notifications to the user.
 //
-// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
+// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app.
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -152,7 +152,6 @@ class AppsRemovedNotification extends ObtainiumNotification {
         tr('appsRemovedNotifDescription'),
         Importance.max,
       ) {
-    message = '';
     for (var r in namedReasons) {
       message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
     }
@@ -163,7 +162,7 @@ class AppsRemovedNotification extends ObtainiumNotification {
 class DownloadNotification extends ObtainiumNotification {
   DownloadNotification(String appName, int progPercent)
     : super(
-        appName.hashCode,
+        appName.hashCode.abs(),
         tr('downloadingX', args: [appName]),
         '',
         'APP_DOWNLOADING',
@@ -178,7 +177,7 @@ class DownloadNotification extends ObtainiumNotification {
 class DownloadedNotification extends ObtainiumNotification {
   DownloadedNotification(String fileName, String downloadUrl)
     : super(
-        downloadUrl.hashCode,
+        downloadUrl.hashCode.abs(),
         tr('downloadedX', args: [fileName]),
         '',
         'FILE_DOWNLOADED',

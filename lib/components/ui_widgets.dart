@@ -319,7 +319,7 @@ void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
   Provider.of<LogsProvider>(
     context,
     listen: false,
-  ).add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
+  ).add(e.toString(), level: isError ? LogLevel.error : LogLevel.info);
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(
       context,

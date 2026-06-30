@@ -123,7 +123,7 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  App endOfGetAppChanges(App app) {
+  App postProcessApp(App app) {
     var uri = Uri.parse(app.url);
     String? appId;
     if (!isTempId(app)) {

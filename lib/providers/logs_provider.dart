@@ -9,11 +9,11 @@ const String messageColumn = 'message';
 const String timestampColumn = 'timestamp';
 const String dbPath = 'logs.db';
 
-enum LogLevels { debug, info, warning, error }
+enum LogLevel { debug, info, warning, error }
 
 class Log {
   int? id;
-  late LogLevels level;
+  late LogLevel level;
   late String message;
   DateTime timestamp = DateTime.now();
 
@@ -31,7 +31,7 @@ class Log {
 
   Log.fromMap(Map<String, Object?> map) {
     id = map[idColumn] as int;
-    level = LogLevels.values.elementAt(map[levelColumn] as int);
+    level = LogLevel.values.elementAt(map[levelColumn] as int);
     message = map[messageColumn] as String;
     timestamp = DateTime.fromMillisecondsSinceEpoch(
       map[timestampColumn] as int,
@@ -85,7 +85,7 @@ create table if not exists $logTable (
     return _db!;
   }
 
-  Future<Log> add(String message, {LogLevels level = LogLevels.info}) async {
+  Future<Log> add(String message, {LogLevel level = LogLevel.info}) async {
     Log l = Log(message, level);
     l.id = await (await getDB()).insert(logTable, l.toMap());
     if (kDebugMode) {

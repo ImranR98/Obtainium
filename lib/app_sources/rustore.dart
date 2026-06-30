@@ -31,11 +31,7 @@ class RuStore extends AppSource {
     try {
       return jsonDecode((await CharsetDetector.autoDecode(bytes)).string);
     } catch (e) {
-      try {
-        return jsonDecode(utf8.decode(bytes));
-      } catch (_) {
-        rethrow;
-      }
+      return jsonDecode(utf8.decode(bytes));
     }
   }
 

@@ -8,7 +8,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// Delegates version detection and downloading to [HTML] with pseudo-versioning
 /// (partial APK hash or ETag).
 class DirectAPKLink extends AppSource {
-  HTML html = HTML();
+  final HTML html = HTML();
 
   DirectAPKLink() {
     name = tr('directAPKLink');

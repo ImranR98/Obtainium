@@ -32,13 +32,7 @@ class GitLab extends AppSource {
     ];
 
     additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
+      AppSource.fallbackToOlderReleasesFormItem,
     ];
   }
 
@@ -103,7 +97,7 @@ class GitLab extends AppSource {
     String url, {
     bool forAPKDownload = false,
   }) async {
-    // Change headers to pacify, e.g. cloudflare protection
+    // Provide headers acceptable to, e.g. Cloudflare protection
     var headers = <String, String>{};
     headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
     return headers;
@@ -125,7 +119,6 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    // Prepare request params
     var names = _gh.getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
@@ -232,7 +225,6 @@ class GitLab extends AppSource {
     }
     var finalResult = apkDetailsList.first;
 
-    // Fallback procedure
     bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
     if (finalResult.apkUrls.isEmpty && fallbackToOlderReleases && !trackOnly) {

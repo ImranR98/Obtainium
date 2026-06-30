@@ -16,13 +16,7 @@ class APKMirror extends AppSource {
     showReleaseDateAsVersionToggle = true;
 
     additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
+      AppSource.fallbackToOlderReleasesFormItem,
       [
         GeneratedFormTextField(
           'filterReleaseTitlesByRegEx',
@@ -136,7 +130,10 @@ class APKMirror extends AppSource {
 
   AppNames getAppNames(String standardUrl) {
     String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
+    var pathStart = temp.indexOf('/');
+    if (pathStart < 0 || pathStart + 1 >= temp.length) throw InvalidURLError(name);
+    List<String> names = temp.substring(pathStart + 1).split('/');
+    if (names.length < 3) throw InvalidURLError(name);
     return AppNames(names[1], names[2]);
   }
 }

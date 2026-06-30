@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:android_system_font/android_system_font.dart';
 import 'package:flutter/services.dart';

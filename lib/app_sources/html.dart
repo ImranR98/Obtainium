@@ -16,8 +16,8 @@ int compareAlphaNumeric(String a, String b) {
     String aPart = aParts[i];
     String bPart = bParts[i];
 
-    bool aIsNumber = _isNumeric(aPart);
-    bool bIsNumber = _isNumeric(bPart);
+    bool aIsNumber = _isDigit(aPart);
+    bool bIsNumber = _isDigit(bPart);
 
     if (aIsNumber && bIsNumber) {
       int aNumber = int.parse(aPart);
@@ -66,11 +66,11 @@ List<String> _splitAlphaNumeric(String s) {
   List<String> parts = [];
   StringBuffer sb = StringBuffer();
 
-  bool isNumeric = _isNumeric(s[0]);
+  bool isNumeric = _isDigit(s[0]);
   sb.write(s[0]);
 
   for (int i = 1; i < s.length; i++) {
-    bool currentIsNumeric = _isNumeric(s[i]);
+    bool currentIsNumeric = _isDigit(s[i]);
     if (currentIsNumeric == isNumeric) {
       sb.write(s[i]);
     } else {
@@ -86,7 +86,7 @@ List<String> _splitAlphaNumeric(String s) {
   return parts;
 }
 
-bool _isNumeric(String s) {
+bool _isDigit(String s) {
   if (s.isEmpty) return false;
   return s.codeUnitAt(0) >= 48 && s.codeUnitAt(0) <= 57;
 }

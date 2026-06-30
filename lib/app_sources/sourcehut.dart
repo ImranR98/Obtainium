@@ -2,22 +2,16 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SourceHut extends AppSource {
   SourceHut() {
     hosts = ['git.sr.ht'];
+    changeLogPageIsStandardUrl = true;
     showReleaseDateAsVersionToggle = true;
 
     additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
+      AppSource.fallbackToOlderReleasesFormItem,
     ];
   }
 
@@ -30,9 +24,6 @@ class SourceHut extends AppSource {
     subdomainPrefix: r'(www\.)?',
     pathPattern: r'/[^/]+/[^/]+',
   );
-
-  @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
 
   @override
   Future<APKDetails> getLatestAPKDetails(
@@ -63,9 +54,8 @@ class SourceHut extends AppSource {
 
       for (var entry in parsedHtml.querySelectorAll('item').take(6)) {
         ind++;
-        String releasePage = // querySelector('link') fails for some reason
-            entry
-                .querySelector('guid') // Luckily guid is identical
+        String releasePage = entry
+                .querySelector('guid')
                 ?.innerHtml
                 .trim() ??
             '';

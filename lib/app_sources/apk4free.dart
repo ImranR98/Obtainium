@@ -146,8 +146,7 @@ class Apk4Free extends AppSource {
 
       return APKDetails(appVersion.trim(), apkUrls, AppNames(name, fullTitle));
     } catch (e) {
-      if (e is ObtainiumError) rethrow;
-      throw ObtainiumError('$name Error: $e');
+      rethrowOrWrapError(e);
     }
   }
 }

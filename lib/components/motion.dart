@@ -7,6 +7,6 @@ abstract final class ExpressiveMotion {
   /// Emphasized easing for expand/collapse and other container motion.
   static const Curve emphasized = Curves.easeInOutCubicEmphasized;
 
-  static const Duration short = Durations.short4; // 200ms
-  static const Duration medium = Durations.medium2; // 300ms
+  static const Duration short = Durations.short4;
+  static const Duration medium = Durations.medium2;
 }

@@ -7,6 +7,7 @@ class NeutronCode extends AppSource {
   NeutronCode() {
     hosts = ['neutroncode.com'];
     showReleaseDateAsVersionToggle = true;
+    changeLogPageIsStandardUrl = true;
   }
 
   @override
@@ -19,41 +20,17 @@ class NeutronCode extends AppSource {
     pathPattern: r'/downloads/file/[^/]+',
   );
 
-  @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
+  static const _monthMap = {
+    'january': '01', 'february': '02', 'march': '03',
+    'april': '04', 'may': '05', 'june': '06',
+    'july': '07', 'august': '08', 'september': '09',
+    'october': '10', 'november': '11', 'december': '12',
+  };
 
-  String monthNameToNumberString(String s) {
-    switch (s.toLowerCase()) {
-      case 'january':
-        return '01';
-      case 'february':
-        return '02';
-      case 'march':
-        return '03';
-      case 'april':
-        return '04';
-      case 'may':
-        return '05';
-      case 'june':
-        return '06';
-      case 'july':
-        return '07';
-      case 'august':
-        return '08';
-      case 'september':
-        return '09';
-      case 'october':
-        return '10';
-      case 'november':
-        return '11';
-      case 'december':
-        return '12';
-      default:
-        throw ArgumentError('Invalid month name: $s');
-    }
-  }
+  String monthNameToNumberString(String s) =>
+      _monthMap[s.toLowerCase()] ?? (throw ArgumentError('Invalid month name: $s'));
 
-  String? customDateParse(String dateString) {
+  String? formatDateForParsing(String dateString) {
     List<String> parts = dateString.split(' ');
     if (parts.length != 3) {
       return null;
@@ -100,7 +77,7 @@ class NeutronCode extends AppSource {
           ?.nextElementSibling
           ?.innerHtml;
       var dateString = dateStringOriginal != null
-          ? (customDateParse(dateStringOriginal))
+          ? (formatDateForParsing(dateStringOriginal))
           : null;
       var changeLogElements = http.querySelectorAll('.pd-fdesc p');
       return APKDetails(

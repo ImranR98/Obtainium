@@ -63,7 +63,6 @@ class ItchIO extends AppSource {
   List<(String, String, bool)> _extractDownload(String body) {
     var parser = parse(body);
 
-    // Results containers
     List<(String, String, bool)> downloads = [];
 
     // It seems that in every spot, the download buttons are in this container.
@@ -287,14 +286,12 @@ class ItchIO extends AppSource {
         additionalSettings,
       );
 
-      // Metadata extraction
       Document storePage = parse(body);
       String title = _parseTitle(storePage);
       String author = _parseAuthor(storePage, standardUrl);
       String? dateVersion = _getDateVersion(storePage);
       String? version = _parseVersion(storePage);
 
-      // Resolve tokenized download page
       String downloadPageBody = await _getDownloadPageBody(
         standardUrl,
         additionalSettings,
@@ -342,8 +339,7 @@ class ItchIO extends AppSource {
 
       return APKDetails(version, apkLinks, AppNames(author, title));
     } catch (e) {
-      if (e is ObtainiumError) rethrow;
-      throw ObtainiumError('itch.io Error: $e');
+      rethrowOrWrapError(e);
     }
   }
 

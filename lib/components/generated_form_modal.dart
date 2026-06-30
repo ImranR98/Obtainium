@@ -91,10 +91,8 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
                 onPressed: !valid
                     ? null
                     : () {
-                        if (valid) {
-                          context.read<SettingsProvider>().selectionClick();
-                          Navigator.of(context).pop(values);
-                        }
+                        context.read<SettingsProvider>().selectionClick();
+                        Navigator.of(context).pop(values);
                       },
                 child: Text(tr('continue')),
               )

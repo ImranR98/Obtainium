@@ -693,7 +693,7 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    var existingUpdates = appsProvider.findExistingUpdates(installedOnly: true);
+    var existingUpdates = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
     listedApps = _getFilteredAndSortedApps(
       listedApps,
       filter,
@@ -710,7 +710,7 @@ class AppsPageState extends State<AppsPage> {
         )
         .toList();
     var newInstallIdsAllOrSelected = appsProvider
-        .findExistingUpdates(nonInstalledOnly: true)
+        .findAppIdsWithPendingUpdates(nonInstalledOnly: true)
         .where(
           (element) => selectedAppIds.isEmpty
               ? listedAppIdSet.contains(element)

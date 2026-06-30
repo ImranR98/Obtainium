@@ -18,13 +18,7 @@ extension AppsProviderImportExport on AppsProvider {
   }) {
     Map<String, dynamic> finalExport = {};
     finalExport['apps'] = apps.values
-        .where((e) {
-          if (appIds == null) {
-            return true;
-          } else {
-            return appIds.contains(e.app.id);
-          }
-        })
+        .where((e) => appIds == null || appIds.contains(e.app.id))
         .map((e) => e.app.toJson())
         .toList();
     int shouldExportSettings = settingsProvider.exportSettings;

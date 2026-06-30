@@ -13,11 +13,12 @@ class Jenkins extends AppSource {
     versionDetectionDisallowed = true;
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;
+    changeLogPageIsStandardUrl = true;
   }
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp('.*/job/[^/]+');
+    RegExp standardUrlRegEx = RegExp('https?://[^/]+/job/[^/]+', caseSensitive: false);
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
@@ -26,9 +27,6 @@ class Jenkins extends AppSource {
   }
 
   String trimJobUrl(String url) => sourceSpecificStandardizeURL(url);
-
-  @override
-  String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;
 
   @override
   Future<APKDetails> getLatestAPKDetails(

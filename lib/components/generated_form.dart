@@ -4,6 +4,7 @@ import 'package:hsluv/hsluv.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/ui_shapes.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -32,12 +33,12 @@ abstract class GeneratedFormItem {
 
 class GeneratedFormTextField extends GeneratedFormItem {
   late bool required;
-  late int max;
-  late String? hint;
-  late bool password;
-  late TextInputType? textInputType;
-  late List<String>? autoCompleteOptions;
-  late String? helpUrl;
+  final int max;
+  final String? hint;
+  final bool password;
+  final TextInputType? textInputType;
+  final List<String>? autoCompleteOptions;
+  final String? helpUrl;
 
   GeneratedFormTextField(
     super.key, {
@@ -79,7 +80,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
 }
 
 class GeneratedFormDropdown extends GeneratedFormItem {
-  late List<MapEntry<String, String>>? opts;
+  final List<MapEntry<String, String>>? opts;
   List<String>? disabledOptKeys;
 
   GeneratedFormDropdown(
@@ -343,13 +344,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   String? initKey;
-  int forceUpdateKeyCount = 0;
+  int _subFormGenerationCount = 0;
   // Text controllers created by initForm(); disposed in dispose() to avoid
   // leaking them when the form is removed.
   final List<TextEditingController> _textControllers = [];
 
   // If any value changes, call this to update the parent with value and validity
-  void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
+  void notifyFormChange({bool isBuilding = false, bool forceInvalid = false}) {
     Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < formInputs.length; r++) {
@@ -384,7 +385,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           onChanged: (value) {
             setState(() {
               values[formItem.key] = value;
-              someValueChanged();
+              notifyFormChange();
             });
           },
           decoration: InputDecoration(
@@ -446,7 +447,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         ctrl.text = value;
         setState(() {
           values[formItem.key] = value;
-          someValueChanged();
+          notifyFormChange();
         });
       },
       suggestionsCallback: (search) {
@@ -485,7 +486,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       onChanged: (value) {
         setState(() {
           values[formItem.key] = value ?? formItem.opts!.first.key;
-          someValueChanged();
+          notifyFormChange();
         });
       },
     );
@@ -516,7 +517,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
     }
 
-    // Dynamically create form inputs
     formInputs = widget.items.asMap().entries.map((row) {
       return row.value.asMap().entries.map((e) {
         var formItem = e.value;
@@ -528,12 +528,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
           _initSubForm(formItem);
           return Container();
         } else {
-          debugPrint('GeneratedForm: Unrecognized item type: ${formItem.runtimeType}');
-          return Container();
+          throw ObtainiumError('Unrecognized form item type: ${formItem.runtimeType}', unexpected: true);
         }
       }).toList();
     }).toList();
-    someValueChanged(isBuilding: true);
+    notifyFormChange(isBuilding: true);
   }
 
   @override
@@ -558,7 +557,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         generateRandomNumber(
           values[fieldKey].length,
           seed2: i,
-          seed3: forceUpdateKeyCount,
+          seed3: _subFormGenerationCount,
         ),
       );
       subformColumn.add(
@@ -589,7 +588,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 if (valid) {
                   this.values[fieldKey]?[i] = values;
                 }
-                someValueChanged(
+                notifyFormChange(
                   isBuilding: isBuilding,
                   forceInvalid: !valid,
                 );
@@ -607,8 +606,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           var temp = List.from(values[fieldKey]);
                           temp.removeAt(i);
                           values[fieldKey] = List.from(temp);
-                          forceUpdateKeyCount++;
-                          someValueChanged();
+                          _subFormGenerationCount++;
+                          notifyFormChange();
                         }
                       : null,
                   label: Text('${item.label} (${i + 1})'),
@@ -631,8 +630,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   values[fieldKey].add(
                     getDefaultValuesFromFormItems(item.items),
                   );
-                  forceUpdateKeyCount++;
-                  someValueChanged();
+                  _subFormGenerationCount++;
+                  notifyFormChange();
                 },
                 icon: const Icon(Icons.add),
                 label: Text(item.label),
@@ -671,7 +670,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 : (value) {
                     setState(() {
                       values[fieldKey] = value;
-                      someValueChanged();
+                      notifyFormChange();
                     });
                   },
           );
@@ -681,7 +680,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }
     }
 
-    // Build one Row widget per input row.
     final List<Widget> inputRowWidgets = [];
     renderedInputs.asMap().entries.forEach((rowInputs) {
       List<Widget> rowItems = [];

@@ -16,12 +16,8 @@ import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart';
-// The background headless task (bgUpdateCheck) runs without a widget tree
-// and therefore cannot use BuildContext-dependent translation APIs.  Direct
-// access to EasyLocalizationController and Localization is the only way to
-// load translations before the widget tree exists.  TODO: remove these
-// implementation imports if easy_localization ever exposes a public
-// context-free initialisation API.
+// Needed for background task translation loading (no widget tree available).
+// TODO: remove if easy_localization adds a context-free init API.
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
@@ -64,7 +60,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
 ];
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
-bool fdroid = false;
+bool isFdroidBuild = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -110,10 +106,10 @@ void backgroundFetchHeadlessTask(HeadlessEvent event) async {
 
 @pragma('vm:entry-point')
 void startCallback() {
-  FlutterForegroundTask.setTaskHandler(MyTaskHandler());
+  FlutterForegroundTask.setTaskHandler(BackgroundUpdateTaskHandler());
 }
 
-class MyTaskHandler extends TaskHandler {
+class BackgroundUpdateTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     debugPrint('onStart(starter: ${starter.name})');
@@ -159,14 +155,15 @@ void main() async {
     );
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
+  final settingsProvider = SettingsProvider();
   final np = NotificationsProvider();
   await np.initialize();
   FlutterForegroundTask.initCommunicationPort();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AppsProvider()),
-        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider(create: (context) => AppsProvider(settingsProvider: settingsProvider)),
+        ChangeNotifierProvider.value(value: settingsProvider),
         Provider(create: (context) => np),
         Provider(create: (context) => LogsProvider()),
       ],
@@ -233,7 +230,7 @@ class _ObtainiumState extends State<Obtainium> {
     var isFirstRun = settings.checkAndFlipFirstRun();
     if (isFirstRun) {
       logs.add('This is the first ever run of Obtainium.');
-      if (!fdroid) {
+      if (!isFdroidBuild) {
         getInstalledInfo(obtainiumId)
             .then((value) {
               if (value?.versionName != null) {

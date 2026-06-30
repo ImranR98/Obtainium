@@ -6,10 +6,8 @@ const double connectedTileBigRadius = 24;
 /// Corner radius for the inner (joined) corners of a connected tile run.
 const double connectedTileSmallRadius = 6;
 
-/// The vertical border radius for one tile within a connected run: the first
-/// tile gets a large top radius and the last tile gets a large bottom radius,
-/// while the joined inner edges stay small. This produces the Material 3
-/// Expressive "split list" look used across settings, forms and the app list.
+/// Produces connected-tile radii: first tile gets top radius, last gets
+/// bottom radius, joined inner edges stay small. M3 Expressive "split list" look.
 BorderRadius positionalTileRadius({
   required bool isFirst,
   required bool isLast,

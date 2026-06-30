@@ -35,6 +35,7 @@ class NavigationPageItem {
 }
 
 class _HomePageState extends State<HomePage> {
+  final SourceProvider _sourceProvider = SourceProvider();
   List<int> selectedIndexHistory = [];
   bool isReversing = false;
   late AppLinks _appLinks;
@@ -170,7 +171,7 @@ class _HomePageState extends State<HomePage> {
           );
 
           // See if we already have this app
-          String standardizedUrl = SourceProvider()
+          String standardizedUrl = _sourceProvider
               .getSource(data)
               .standardizeUrl(data);
 
@@ -315,14 +316,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = context.read<SettingsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
     final pages = <NavigationPageItem>[
       NavigationPageItem(
         tr('appsString'),
         Icons.apps_outlined,
-        const SizedBox.shrink(), // Built below using appsPageKey.
+        const SizedBox.shrink(),
         selectedIcon: Icons.apps,
       ),
       NavigationPageItem(
@@ -338,7 +339,7 @@ class _HomePageState extends State<HomePage> {
     final layoutWidth = MediaQuery.sizeOf(context).width;
     final useRail = isTV || layoutWidth >= 600;
     final updateCount = context.select<AppsProvider, int>(
-      (p) => p.findExistingUpdates(installedOnly: true).length,
+      (p) => p.findAppIdsWithPendingUpdates(installedOnly: true).length,
     );
 
     Widget destIcon(NavigationPageItem e, {bool selected = false}) {

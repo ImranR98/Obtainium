@@ -22,13 +22,7 @@ class APKPure extends AppSource {
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
     additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'fallbackToOlderReleases',
-          label: tr('fallbackToOlderReleases'),
-          defaultValue: true,
-        ),
-      ],
+      AppSource.fallbackToOlderReleasesFormItem,
       [
         GeneratedFormSwitch(
           'stayOneVersionBehind',
@@ -115,7 +109,6 @@ class APKPure extends AppSource {
       throw NoAPKError();
     }
 
-    // get version details from first variant
     var v = versionVariants.first;
     String? version = v['version_name']?.toString();
     if (version == null || version.isEmpty) {
@@ -175,7 +168,6 @@ class APKPure extends AppSource {
     List<String> supportedArchs =
         (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-    // request versions from API
     var res = await sourceRequest(
       "https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en",
       additionalSettings,

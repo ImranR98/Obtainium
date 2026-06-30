@@ -1,6 +1,6 @@
-// Defines App sources and provides functions used to interact with them
+// Defines App sources and provides functions used to interact with them.
 //
-// AppSource is an abstract class with a concrete implementation for each source
+// AppSource is an abstract class with a concrete implementation for each source.
 
 import 'dart:convert';
 import 'dart:io';
@@ -724,26 +724,14 @@ Future<http.Response> httpClientResponseStreamToFinalResponse(
   }
 }
 
-/// Lightweight HTTP helper mixin for classes that need request/response
-/// utilities without [AppSource]'s config-aware source-request wrapping.
-/// [AppSource] itself uses this mixin for [getRequestHeaders].
-mixin HttpClientMixin {
-  Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings,
-    String url, {
-    bool forAPKDownload = false,
-  }) async {
-    return null;
-  }
-}
-
-abstract class AppSource with HttpClientMixin {
+abstract class AppSource {
   List<String> hosts = [];
   bool hostChanged = false;
   bool hostIdenticalDespiteAnyChange = false;
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
+  bool changeLogPageIsStandardUrl = false;
   bool appIdInferIsOptional = false;
   bool inferAppIdFromUrlPath = false;
   bool allowSubDomains = false;
@@ -759,8 +747,21 @@ abstract class AppSource with HttpClientMixin {
   bool allowIncludeTarballs = false;
   String get sourceIdentifier => runtimeType.toString();
 
+  Future<Map<String, String>?> getRequestHeaders(
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) async {
+    return null;
+  }
+
   AppSource() {
     name = runtimeType.toString();
+  }
+
+  Never rethrowOrWrapError(dynamic e) {
+    if (e is ObtainiumError) throw e;
+    throw ObtainiumError('$name Error: $e');
   }
 
   String standardizeUrl(String url) {
@@ -771,8 +772,18 @@ abstract class AppSource with HttpClientMixin {
     return url;
   }
 
-  App endOfGetAppChanges(App app) {
+  App postProcessApp(App app) {
     return app;
+  }
+
+  Future<Map<String, dynamic>> buildMergedSettings(
+    Map<String, dynamic> additionalSettings,
+    SettingsProvider settingsProvider,
+  ) async {
+    return {
+      ...additionalSettings,
+      ...(await getSourceConfigValues(additionalSettings, settingsProvider)),
+    };
   }
 
   Future<http.Response> sourceRequest(
@@ -783,10 +794,10 @@ abstract class AppSource with HttpClientMixin {
   }) async {
     var sp = SettingsProvider();
     await sp.initializeSettings();
-    var additionalSettingsPlusSourceConfig = {
-      ...additionalSettings,
-      ...(await getSourceConfigValues(additionalSettings, sp)),
-    };
+    var additionalSettingsPlusSourceConfig = await buildMergedSettings(
+      additionalSettings,
+      sp,
+    );
     url = await generalReqPrefetchModifier(
       url,
       additionalSettingsPlusSourceConfig,
@@ -813,9 +824,7 @@ abstract class AppSource with HttpClientMixin {
     );
   }
 
-  void runOnAddAppInputChange(String inputUrl) {
-    //
-  }
+  void runOnAddAppInputChange(String inputUrl) {}
 
   /// File extensions Obtainium recognizes as installable Android package
   /// containers. Centralized here so every source agrees on what counts as an
@@ -885,6 +894,14 @@ abstract class AppSource with HttpClientMixin {
   /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
   List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
       [];
+
+  static List<GeneratedFormItem> get fallbackToOlderReleasesFormItem => [
+        GeneratedFormSwitch(
+          'fallbackToOlderReleases',
+          label: tr('fallbackToOlderReleases'),
+          defaultValue: true,
+        ),
+      ];
 
   /// Some additional data may be needed for Apps regardless of Source
   final List<List<GeneratedFormItem>>
@@ -1124,7 +1141,7 @@ abstract class AppSource with HttpClientMixin {
   }
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
-    return null;
+    return changeLogPageIsStandardUrl ? standardUrl : null;
   }
 
   Future<String?> getSourceNote() async {
@@ -1283,12 +1300,8 @@ List<MapEntry<String, String>> filterApks(
   return apkUrls;
 }
 
-/// Whether the current locale is English.  Use sparingly — this exists because
-/// easy\_localization doesn't expose a public global locale without a context,
-/// and callers (list formatting, source labels) often run outside a widget tree.
-/// The comparison `tr('and') == 'and'` relies on the fact that English (and
-/// untranslated en-fallback keys) return the key unchanged, while every other
-/// locale returns a translated word.
+/// Whether the current locale is English, based on translating the word 'and'.
+/// Used when no widget tree context is available for locale lookup.
 bool isEnglish() => tr('and') == 'and';
 /// Lowercases [str] only if the current locale is English, preserving case for other languages.
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
@@ -1504,7 +1517,7 @@ class SourceProvider {
       currentApp?.installedVersion,
       apk.version,
       apk.apkUrls,
-      apk.apkUrls.length - 1 >= 0 ? apk.apkUrls.length - 1 : 0,
+      apk.apkUrls.length - 1,
       additionalSettings,
       DateTime.now(),
       currentApp?.pinned ?? false,
@@ -1523,7 +1536,7 @@ class SourceProvider {
           .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
           .toList(),
     );
-    return source.endOfGetAppChanges(finalApp);
+    return source.postProcessApp(finalApp);
   }
 
   // Returns errors in [results, errors] instead of throwing them

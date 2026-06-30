@@ -34,6 +34,7 @@ class AppPage extends StatefulWidget {
 }
 
 class _AppPageState extends State<AppPage> {
+  final SourceProvider _sourceProvider = SourceProvider();
   WebViewController? _webViewController;
   bool _webViewLoaded = false;
   AppInMemory? prevApp;
@@ -144,159 +145,6 @@ class _AppPageState extends State<AppPage> {
       // the route is no longer current), emptying the navigator -> black screen.
       Navigator.of(context).pop();
     }
-  }
-
-  Widget buildRepoRenameWarning({
-    required AppInMemory? app,
-    required AppsProvider appsProvider,
-    required Future<void> Function(String id) onUpdate,
-  }) {
-    if (app?.app.hasPendingRepoRename != true) {
-      return const SizedBox.shrink();
-    }
-    var appValue = app!;
-    var pendingUrl = appValue.app.pendingRepoRenameUrl!;
-    final colorScheme = ColorScheme.of(context);
-    final textTheme = TextTheme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 2,
-      children: [
-        ConnectedCard(
-          isFirst: true,
-          isLast: false,
-          color: colorScheme.surfaceContainer,
-          padding: null,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                spacing: 12,
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 24,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          tr('repoRenamed'),
-                          style: textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          tr('repoRenamedExplanation'),
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        ConnectedCard(
-          isFirst: false,
-          isLast: false,
-          color: colorScheme.surfaceContainer,
-          padding: null,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                spacing: 12,
-                children: [
-                  Icon(
-                    Icons.link_rounded,
-                    size: 24,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          tr('newUrl'),
-                          style: textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          pendingUrl,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        ConnectedCard(
-          isFirst: false,
-          isLast: true,
-          color: colorScheme.surfaceContainer,
-          padding: null,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                // Min tap target has a height of 48dp
-                vertical: 10 - 4,
-              ),
-              child: Row(
-                spacing: 12,
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        await appsProvider.updatePendingRepoRename(
-                          appValue.app.id,
-                          null,
-                        );
-                      },
-                      child: Text(tr('dismiss')),
-                    ),
-                  ),
-                  Expanded(
-                    child: FilledButton.tonal(
-                      onPressed: () async {
-                        await appsProvider.acceptRepoRename(
-                          appValue.app.id,
-                          pendingUrl,
-                        );
-                        if (mounted) {
-                          onUpdate(appValue.app.id);
-                        }
-                      },
-                      child: Text(tr('updateUrl')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   Future<void> _getUpdate(
@@ -1008,12 +856,11 @@ class _AppPageState extends State<AppPage> {
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
-    var sourceProvider = SourceProvider();
     AppInMemory? app = _cachedApp(
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
     var source = app != null
-        ? sourceProvider.getSource(
+        ? _sourceProvider.getSource(
             app.app.url,
             overrideSource: app.app.overrideSource,
           )

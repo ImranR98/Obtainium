@@ -17,7 +17,7 @@ class Aptoide extends AppSource {
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     return standardizeUrlWithRegex(
       url,
-      subdomainPrefix: r'([^\.]+\.){2,}',
+      subdomainPrefix: r'([^\.]+\.)+',
       pathPattern: '',
     );
   }

@@ -82,8 +82,8 @@ extension AppsProviderLifecycle on AppsProvider {
             naiveStandardVersionDetection);
   }
 
-  // Given an App and its on-device info...
-  // Reconcile unexpected differences between its reported installed version, real installed version, and reported latest version
+  /// Reconciles reported vs. real installed/latest versions for [app].
+  /// Returns the modified app if any corrections were made, or null.
   App? getCorrectedInstallStatusAppIfPossible(
     App app,
     PackageInfo? installedInfo,
@@ -96,17 +96,15 @@ extension AppsProviderLifecycle on AppsProvider {
         _getNaiveStandardVersionDetection(app);
     String? realInstalledVersion =
         _getRealInstalledVersion(app, installedInfo);
-    // FIRST, COMPARE THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE ONE IS NULL
+    // 1. Compare reported vs. real installed versions where one is null.
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
-      // App says it's installed but isn't really (and isn't track only) - set to not installed
       app.installedVersion = null;
       modded = true;
     } else if (realInstalledVersion != null && app.installedVersion == null) {
-      // App says it's not installed but really is - set to installed and use real package versionName (or versionCode if chosen)
       app.installedVersion = realInstalledVersion;
       modded = true;
     }
-    // SECOND, RECONCILE DIFFERENCES BETWEEN THE APP'S REPORTED AND REAL INSTALLED VERSIONS, WHERE NEITHER IS NULL
+    // 2. Reconcile differences between reported and real installed versions.
     if (realInstalledVersion != null &&
         realInstalledVersion != app.installedVersion &&
         versionDetectionIsStandard) {
@@ -124,7 +122,7 @@ extension AppsProviderLifecycle on AppsProvider {
         modded = true;
       }
     }
-    // THIRD, RECONCILE THE APP'S REPORTED INSTALLED AND LATEST VERSIONS
+    // 3. Reconcile reported installed and latest versions.
     if (app.installedVersion != null &&
         app.installedVersion != app.latestVersion &&
         versionDetectionIsStandard) {
@@ -139,7 +137,7 @@ extension AppsProviderLifecycle on AppsProvider {
         modded = true;
       }
     }
-    // FOURTH, DISABLE VERSION DETECTION IF ENABLED AND THE REPORTED/REAL INSTALLED VERSIONS ARE NOT STANDARDIZED
+    // 4. Disable version detection if versions are not standardizable.
     if (installedInfo != null &&
         versionDetectionIsStandard &&
         !isVersionDetectionPossible(

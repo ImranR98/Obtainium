@@ -96,7 +96,7 @@ class VivoAppStore extends AppSource {
     var vivoAppId = parseVivoAppId(standardUrl);
     var apiBaseUrl = 'https://h5-api.appstore.vivo.com.cn/detail/';
     var params = '?frompage=messageh5&app_version=2100';
-    var detailUrl = '$apiBaseUrl$vivoAppId$params';
+    var detailUrl = '$apiBaseUrl${Uri.encodeComponent(vivoAppId)}$params';
     var response = await sourceRequest(detailUrl, additionalSettings);
     if (response.statusCode != 200) {
       throw getObtainiumHttpError(response);
@@ -109,7 +109,7 @@ class VivoAppStore extends AppSource {
   }
 
   String parseVivoAppId(String url) {
-    var appId = Uri.parse(url.replaceAll('/#', '')).queryParameters['appId'];
+    var appId = Uri.parse(url.replaceFirst('/#', '')).queryParameters['appId'];
     if (appId == null || appId.isEmpty) {
       throw InvalidURLError(name);
     }
