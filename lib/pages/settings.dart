@@ -589,18 +589,24 @@ class _SettingsPageState extends State<SettingsPage> {
         if (!context.mounted) return;
         switch (resCode) {
           case 'services_not_found':
+            // ignore: use_build_context_synchronously
             showError(ObtainiumError(tr('shizukuBinderNotFound')), context);
           case 'old_shizuku':
+            // ignore: use_build_context_synchronously
             showError(ObtainiumError(tr('shizukuOld')), context);
           case 'old_android_with_adb':
+            // ignore: use_build_context_synchronously
             showError(ObtainiumError(tr('shizukuOldAndroidWithADB')), context);
           case 'denied':
+            // ignore: use_build_context_synchronously
             showError(ObtainiumError(tr('cancelled')), context);
           case null:
+            // ignore: use_build_context_synchronously
             showError(ObtainiumError(tr('unexpectedError')), context);
         }
       }).catchError((e) {
         settingsProvider.useShizuku = false;
+        // ignore: use_build_context_synchronously
         if (context.mounted) showError(e, context);
       });
     } else {
@@ -646,6 +652,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 }).catchError((e) {
                   settingsProvider.useSystemFont = false;
                   if (context.mounted) {
+                    // ignore: use_build_context_synchronously
                     showError(ObtainiumError('${tr('unexpectedError')}: $e'), context);
                   }
                 });
