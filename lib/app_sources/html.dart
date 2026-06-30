@@ -114,8 +114,8 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
         )
         .toList();
 
-// Given an HTTP response, grab some links according to the common additional settings
-// (those that apply to intermediate and final steps)
+/// Given an HTTP response, grab some links according to the common additional settings
+/// (those that apply to intermediate and final steps)
 Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   Response res,
   Map<String, dynamic> additionalSettings,
@@ -127,7 +127,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   return grabLinksCommon(res.body, reqUrl, additionalSettings);
 }
 
-// Note keys are URLs, values are filenames (opposite to the AppSource apkUrls)
+/// Note: keys are URLs, values are filenames (opposite to the AppSource apkUrls)
 Future<List<MapEntry<String, String>>> grabLinksCommon(
   String rawBody,
   Uri reqUrl,

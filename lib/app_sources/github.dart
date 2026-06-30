@@ -150,18 +150,6 @@ class GitHub extends AppSource {
     ];
   }
 
-  bool isApkContainer(
-    String name, {
-    bool includeZips = false,
-    bool includeTarballs = false,
-  }) {
-    return AppSource.isApkOrContainerFile(
-      name,
-      includeArchives: includeZips,
-      includeTarballs: includeTarballs,
-    );
-  }
-
   @override
   Future<String?> tryInferringAppId(
     String standardUrl, {
@@ -220,7 +208,7 @@ class GitHub extends AppSource {
             }
           } catch (err) {
             LogsProvider().add(
-              'Error parsing build.gradle from ${res.request!.url.toString()}: ${err.toString()}',
+              'Error parsing build.gradle from ${res.request?.url.toString() ?? standardUrl}: ${err.toString()}',
             );
           }
         }
@@ -452,9 +440,9 @@ class GitHub extends AppSource {
           (release['assets'] as List<dynamic>?)?.map((e) {
             var name = e['name'].toString();
             var url =
-                !isApkContainer(
+                !AppSource.isApkOrContainerFile(
                   name,
-                  includeZips: includeZips,
+                  includeArchives: includeZips,
                   includeTarballs: includeTarballs,
                 )
                 ? (e['browser_download_url'] ?? e['url'])
@@ -604,9 +592,9 @@ class GitHub extends AppSource {
             .toList();
         var apkAssetsWithUrls = allAssetsWithUrls.where((element) {
           var name = (element['final_url'] as MapEntry<String, String>).key;
-          return isApkContainer(
+          return AppSource.isApkOrContainerFile(
             name,
-            includeZips: includeZips,
+            includeArchives: includeZips,
             includeTarballs: includeTarballs,
           );
         }).toList();

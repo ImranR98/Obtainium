@@ -1,4 +1,5 @@
 // Defines App sources and provides functions used to interact with them
+//
 // AppSource is an abstract class with a concrete implementation for each source
 
 import 'dart:convert';
@@ -872,11 +873,11 @@ abstract class AppSource with HttpClientMixin {
     throw NotImplementedError();
   }
 
-  // Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
+  /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
   List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
       [];
 
-  // Some additional data may be needed for Apps regardless of Source
+  /// Some additional data may be needed for Apps regardless of Source
   final List<List<GeneratedFormItem>>
   _commonAppSettingFormItems = [
     [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
@@ -973,7 +974,7 @@ abstract class AppSource with HttpClientMixin {
     ],
   ];
 
-  // Previous 2 variables combined into one at runtime for convenient usage + additional processing
+  /// Previous 2 variables combined into one at runtime for convenient usage + additional processing
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
     var agnosticItems = cloneFormItems(
       _commonAppSettingFormItems,
@@ -1074,26 +1075,22 @@ abstract class AppSource with HttpClientMixin {
     ];
   }
 
-  // Cheap, cached emptiness check for [combinedAppSpecificSettingFormItems],
-  // used in hot build paths (e.g. the app detail page) to avoid cloning the
-  // entire form-item tree just to test isNotEmpty. Emptiness is invariant for a
-  // given source instance, so caching the boolean is safe.
+  /// Cached emptiness check for [combinedAppSpecificSettingFormItems], used to
+  /// avoid cloning the form-item tree just to test isNotEmpty.
   bool? _hasAppSpecificSettingsCache;
   bool get hasAppSpecificSettings => _hasAppSpecificSettingsCache ??=
       combinedAppSpecificSettingFormItems.isNotEmpty;
 
-  // Flattened, read-only view of [combinedAppSpecificSettingFormItems],
-  // memoized so read-only callers (notably the per-app JSON migration at load,
-  // which runs for every stored app) don't re-clone the whole form-item tree
-  // each time. Callers MUST treat these as read-only - the list is shared.
+  /// Flattened, read-only view of [combinedAppSpecificSettingFormItems],
+  /// memoized for callers that only need to enumerate keys without cloning.
   List<GeneratedFormItem>? _flatCombinedFormItemsCache;
   List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
       _flatCombinedFormItemsCache ??= combinedAppSpecificSettingFormItems
           .expand((row) => row)
           .toList();
 
-  // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
-  // If the source has been overridden, we expect the user to define one-time values as additional settings - don't use the stored values
+  /// Source-level additional settings (not specific to Apps) backed by [SettingsProvider].
+  /// If the source has been overridden, per-app additional settings take precedence.
   List<GeneratedFormItem> sourceConfigSettingFormItems = [];
   Future<Map<String, String>> getSourceConfigValues(
     Map<String, dynamic> additionalSettings,
@@ -1219,9 +1216,7 @@ String? replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
   if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
     matchGroupString = '\$$matchGroupString';
   }
-  // Regular expression to match numbers in the input string
   final numberRegex = RegExp(r'\$\d+');
-  // Extract all numbers from the input string
   final numbers = numberRegex.allMatches(matchGroupString);
   if (numbers.isEmpty) {
     // If no numbers found, return the original string
@@ -1336,15 +1331,12 @@ class SourceProvider {
     HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
   ];
 
-  // Each source instance is immutable after construction (fields are only set
-  // in the constructor), so we can safely cache one shared, read-only set and
-  // reuse it across the many SourceProvider() throwaways created at runtime.
-  // The only path that mutates a source (the [overrideSource] branch in
-  // [getSource]) builds its own fresh instances so this cache stays pristine.
+  /// Cached, read-only source list built lazily by [_buildSources].
+  /// Because sources are immutable after construction, the cache is safe.
   static List<AppSource>? _cachedSources;
   List<AppSource> get sources => _cachedSources ??= _buildSources();
 
-  // Add more mass url source classes here so they are available via the service
+  /// Add mass URL source classes here so they are available via the service.
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url, {String? overrideSource}) {

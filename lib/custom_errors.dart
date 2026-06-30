@@ -89,9 +89,11 @@ class MultiAppMultiError extends ObtainiumError {
     rawErrors[appId] = error;
     var string = error.toString();
     var tempIds = idsByErrorString.remove(string);
-    tempIds ??= [];
+    if (tempIds == null) {
+      tempIds = [];
+      idsByErrorString[string] = tempIds;
+    }
     tempIds.add(appId);
-    idsByErrorString.putIfAbsent(string, () => tempIds!);
     if (appName != null) {
       appIdNames[appId] = appName;
     }

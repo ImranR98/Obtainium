@@ -15,7 +15,8 @@ class Jenkins extends AppSource {
     showReleaseDateAsVersionToggle = true;
   }
 
-  String trimJobUrl(String url) {
+  @override
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     RegExp standardUrlRegEx = RegExp('.*/job/[^/]+');
     RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
@@ -23,6 +24,8 @@ class Jenkins extends AppSource {
     }
     return match.group(0)!;
   }
+
+  String trimJobUrl(String url) => sourceSpecificStandardizeURL(url);
 
   @override
   String? changeLogPageFromStandardUrl(String standardUrl) => standardUrl;

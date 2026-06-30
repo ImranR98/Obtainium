@@ -32,7 +32,10 @@ class CoolApk extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = (await tryInferringAppId(standardUrl))!;
+    String? appId = await tryInferringAppId(standardUrl);
+    if (appId == null) {
+      throw NoReleasesError();
+    }
     String apiUrl = 'https://api2.coolapk.com';
 
     var detailUrl = '$apiUrl/v6/apk/detail?id=$appId';

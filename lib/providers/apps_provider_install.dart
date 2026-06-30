@@ -40,14 +40,18 @@ extension AppsProviderInstall on AppsProvider {
     // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
     // The former case should be handled (give the App its real ID), the latter is a security issue
     var isTempIdBool = isTempId(app);
-    if (app.id != newInfo.packageName) {
+    final actualPackageName = newInfo.packageName;
+    if (app.id != actualPackageName) {
+      if (actualPackageName == null) {
+        throw ObtainiumError(tr('couldNotGetIdFromApk'));
+      }
       if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
-        throw IDChangedError(newInfo.packageName!);
+        throw IDChangedError(actualPackageName);
       }
       var idChangeWasAllowed = app.allowIdChange;
       app.allowIdChange = false;
       var originalAppId = app.id;
-      app.id = newInfo.packageName!;
+      app.id = actualPackageName;
       downloadedFile = downloadedFile.renameSync(
         '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}',
       );
@@ -158,7 +162,6 @@ extension AppsProviderInstall on AppsProvider {
         allowInsecure: app.additionalSettings['allowInsecure'] == true,
         logs: logs,
       );
-      // Set to 90 for remaining steps, will make null in 'finally'
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
         notify();
@@ -565,22 +568,25 @@ extension AppsProviderInstall on AppsProvider {
         }
       } catch (e) {
         logs.add('Failed to delete bad download files: ${e.toString()}');
-      } finally {
-        throw ObtainiumError(tr('badDownload'));
       }
+      throw ObtainiumError(tr('badDownload'));
     }
     PackageInfo? appInfo = await getInstalledInfo(apps[file.appId]!.app.id);
     logs.add(
       'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
     );
+    final newVersionCode = newInfo.versionCode;
+    final oldVersionCode = appInfo?.versionCode;
     if (appInfo != null &&
-        newInfo.versionCode! < appInfo.versionCode! &&
+        newVersionCode != null &&
+        oldVersionCode != null &&
+        newVersionCode < oldVersionCode &&
         !(await canDowngradeApps())) {
       if (settingsProvider.showAppDowngradeError) {
         try {
           file.file.deleteSync();
         } catch (_) {}
-        throw DowngradeError(appInfo.versionCode!, newInfo.versionCode!);
+        throw DowngradeError(oldVersionCode, newVersionCode);
       }
     }
     if (needsBGWorkaround) {
@@ -612,9 +618,8 @@ extension AppsProviderInstall on AppsProvider {
         deleteFile(file.file);
       } catch (e) {
         logs.add('Failed to delete APK after failed install: ${e.toString()}');
-      } finally {
-        throw InstallError(code);
       }
+      throw InstallError(code);
     } else if (code == 0) {
       installed = true;
       apps[file.appId]!.app.installedVersion =
@@ -836,7 +841,7 @@ extension AppsProviderInstall on AppsProvider {
     );
 
     // Mark all specified track-only apps as latest
-    saveApps(
+    await saveApps(
       trackOnlyAppsToUpdate.map((e) {
         var a = apps[e]!.app;
         a.installedVersion = a.latestVersion;

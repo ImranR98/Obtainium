@@ -68,8 +68,8 @@ class SourceForge extends AppSource {
           .toList();
       getVersion(String url) {
         try {
-          /// Strips the last path segment (filename) and optionally another
-          /// (subdirectory) to extract the version from the remaining segments.
+    /// Strips the last path segment (filename) and optionally another
+    /// (subdirectory) to extract the version from the remaining segments.
           var segments = url
               .substring(standardUrl.length)
               .split('/')

@@ -146,7 +146,7 @@ class ItchIO extends AppSource {
 
   /// Extracts the "Updated" date and formats it as YYYYMMDD for versioning.
   String? _getDateVersion(Document document) {
-    // Check if we have any "abbr" dates. If now exit early.
+    // Check if we have any "abbr" dates. If none exit early.
     List<Element> abbrElements = document.querySelectorAll('abbr');
     if (abbrElements.isEmpty) return null;
 

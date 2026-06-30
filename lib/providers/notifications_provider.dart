@@ -1,4 +1,5 @@
 // Exposes functions that can be used to send notifications to the user
+//
 // Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
 
 import 'package:easy_localization/easy_localization.dart';

@@ -28,7 +28,10 @@ class Tencent extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = (await tryInferringAppId(standardUrl))!;
+    String? appId = await tryInferringAppId(standardUrl);
+    if (appId == null) {
+      throw NoReleasesError();
+    }
     String baseHost = Uri.parse(
       standardUrl,
     ).host.split('.').reversed.toList().sublist(0, 2).reversed.join('.');

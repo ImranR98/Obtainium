@@ -1,4 +1,5 @@
-// Manages state related to the list of Apps tracked by Obtainium,
+// Manages state related to the list of Apps tracked by Obtainium.
+//
 // Exposes related functions such as those used to add, remove, download, and install Apps.
 
 import 'dart:async';
@@ -612,7 +613,7 @@ Future<PackageInfo?> getInstalledInfo(
       );
     } catch (e) {
       if (printErr) {
-        debugPrint(e.toString()); // OK
+        debugPrint(e.toString());
       }
     }
   }

@@ -88,7 +88,7 @@ class FDroidRepo extends AppSource {
             appId.contains(query) ||
             appName.contains(query) ||
             appDesc.contains(query)) {
-          results['${AppSource.stripLastPathSegment(res.request!.url.toString())}?appId=$appId'] =
+          results['${AppSource.stripLastPathSegment((res.request?.url ?? Uri.parse('')).toString())}?appId=$appId'] =
               [appName, appDesc];
         }
       });
@@ -282,7 +282,7 @@ class FDroidRepo extends AppSource {
           .map((e) {
             var apkName = e.querySelector('apkname')?.innerHtml;
             return apkName != null
-                ? '${AppSource.stripLastPathSegment(res.request!.url.toString())}/$apkName'
+                ? '${AppSource.stripLastPathSegment((res.request?.url ?? Uri.parse('')).toString())}/$apkName'
                 : null;
           })
           .where((u) => u != null)

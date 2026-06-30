@@ -167,7 +167,10 @@ class APKPure extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = (await tryInferringAppId(standardUrl))!;
+    String? appId = await tryInferringAppId(standardUrl);
+    if (appId == null) {
+      throw NoReleasesError();
+    }
 
     List<String> supportedArchs =
         (await DeviceInfoPlugin().androidInfo).supportedAbis;

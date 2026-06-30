@@ -208,17 +208,13 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   }
 }
 
-// Generates a color in the HSLuv (Pastel) color space
-// https://pub.dev/documentation/hsluv/latest/hsluv/Hsluv/hpluvToRgb.html
+/// Generates a pastel color using the HSLuv color space with golden-angle hue
+/// distribution for consistent category coloring.
 Color generateRandomLightColor() {
   final randomSeed = Random().nextInt(120);
-  // https://en.wikipedia.org/wiki/Golden_angle
   final goldenAngle = 180 * (3 - sqrt(5));
-  // Generate next golden angle hue
   final double hue = randomSeed * goldenAngle;
-  // Map from HPLuv color space to RGB, use constant saturation=100, lightness=70
   final List<double> rgbValuesDbl = Hsluv.hpluvToRgb([hue, 100, 70]);
-  // Map RBG values from 0-1 to 0-255:
   final List<int> rgbValues = rgbValuesDbl
       .map((rgb) => (rgb * 255).toInt())
       .toList();
@@ -520,7 +516,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           }
           return Container();
         } else {
-          return Container(); // Some input types added in build
+          return Container();
         }
       }).toList();
     }).toList();

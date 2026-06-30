@@ -29,15 +29,7 @@ class Uptodown extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://([^\\.]+\\.){2,}${getSourceRegex(hosts)}',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return '${match.group(0)!}/android/download';
+    return '${standardizeUrlWithRegex(url, subdomainPrefix: r'([^\\.]+\.){2,}', pathPattern: '')}/android/download';
   }
 
   @override
