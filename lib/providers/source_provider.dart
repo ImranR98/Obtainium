@@ -1,7 +1,7 @@
 // Defines App sources and provides functions used to interact with them.
 //
 // AppSource is an abstract class with a concrete implementation for each source.
-// Legacy JSON migration logic lives in app_migrations.dart.
+// Legacy JSON migration logic lives at the bottom of this file.
 
 import 'dart:convert';
 import 'dart:io';
@@ -422,11 +422,6 @@ abstract class AppSource {
 
   AppSource() {
     name = runtimeType.toString();
-  }
-
-  Never rethrowOrWrapError(dynamic e) {
-    if (e is ObtainiumError) throw e;
-    throw ObtainiumError('$name Error: $e');
   }
 
   String standardizeUrl(String url) {
