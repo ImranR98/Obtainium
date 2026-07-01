@@ -115,7 +115,8 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     }
     cats[name] = _color.toARGB32();
     settingsProvider.setCategories(cats, appsProvider: appsProvider);
-    if (mounted) {
+    if (context.mounted) {
+      // ignore: use_build_context_synchronously
       Navigator.of(context).pop(CategoryEditResult(name: name, previous: prev));
     }
   }
@@ -132,10 +133,11 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final cats = Map<String, int>.from(settingsProvider.categories)
       ..remove(widget.existingName);
     settingsProvider.setCategories(cats, appsProvider: appsProvider);
-    if (mounted) {
-      Navigator.of(
-        context,
-      ).pop(CategoryEditResult(name: null, previous: widget.existingName));
+    if (context.mounted) {
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop(
+        CategoryEditResult(name: null, previous: widget.existingName),
+      );
     }
   }
 
@@ -166,7 +168,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       borderRadius: 24,
       enableShadesSelection: false,
     ).showPickerDialog(context);
-    if (ok && mounted) setState(() => _color = picked);
+    if (ok && context.mounted) setState(() => _color = picked);
   }
 
   Widget _swatch({
@@ -366,7 +368,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   Future<void> _create() async {
     final result = await showCategoryEditor(context);
     if (result?.name == null) return;
-    if (!mounted) return;
+    if (!context.mounted) return;
     setState(() {
       if (widget.singleSelect) {
         _selected = {result!.name!};
@@ -380,7 +382,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   Future<void> _edit(String name) async {
     final result = await showCategoryEditor(context, existingName: name);
     if (result == null) return;
-    if (!mounted) return;
+    if (!context.mounted) return;
     final wasSelected = _selected.contains(name);
     setState(() {
       _selected.remove(name);
@@ -404,7 +406,7 @@ class _CategorySelectorState extends State<CategorySelector> {
       // Notify the host of the pruned selection after this frame (can't emit
       // during build()).
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _emit();
+        if (context.mounted) _emit();
       });
     }
 

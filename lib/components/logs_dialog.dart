@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -93,11 +95,10 @@ class _LogsDialogState extends State<LogsDialog> {
         ),
         FilledButton.tonal(
           onPressed: () {
-            SharePlus.instance
+            unawaited(SharePlus.instance
                 .share(
                   ShareParams(text: logString ?? '', subject: tr('appLogs')),
-                )
-                .ignore();
+                ));
             Navigator.of(context).pop();
           },
           child: Text(tr('share')),

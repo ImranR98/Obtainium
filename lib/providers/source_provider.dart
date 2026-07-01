@@ -5,11 +5,11 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:http/http.dart' as http;
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -197,42 +197,50 @@ class App {
       json = originalJSON;
       json['compatVersion'] = currentAppJSONCompatVersion;
     }
-    return App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      (json['latestVersion'] ?? tr('unknown')) as String,
-      assumed2DlistToStringMapList(
-        jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
-      ),
-      (json['preferredApkIndex'] ?? -1) as int,
-      jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
-      json['lastUpdateCheck'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false,
-      categories: json['categories'] != null
-          ? (json['categories'] as List<dynamic>)
-                .map((e) => e.toString())
-                .toList()
-          : json['category'] != null
-          ? [json['category'] as String]
-          : [],
-      releaseDate: json['releaseDate'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
-      changeLog: json['changeLog'] == null ? null : json['changeLog'] as String,
-      overrideSource: json['overrideSource'],
-      allowIdChange: json['allowIdChange'] ?? false,
-      otherAssetUrls: assumed2DlistToStringMapList(
-        jsonDecode((json['otherAssetUrls'] ?? '[]')),
-      ),
-      pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
-    );
+    try {
+      return App(
+        json['id'] as String,
+        json['url'] as String,
+        json['author'] as String,
+        json['name'] as String,
+        json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        (json['latestVersion'] ?? tr('unknown')) as String,
+        assumed2DlistToStringMapList(
+          jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
+        ),
+        (json['preferredApkIndex'] ?? -1) as int,
+        jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
+        json['lastUpdateCheck'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        json['pinned'] ?? false,
+        categories: json['categories'] != null
+            ? (json['categories'] as List<dynamic>)
+                  .map((e) => e.toString())
+                  .toList()
+            : json['category'] != null
+            ? [json['category'] as String]
+            : [],
+        releaseDate: json['releaseDate'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+        changeLog: json['changeLog'] == null ? null : json['changeLog'] as String,
+        overrideSource: json['overrideSource'],
+        allowIdChange: json['allowIdChange'] ?? false,
+        otherAssetUrls: assumed2DlistToStringMapList(
+          jsonDecode((json['otherAssetUrls'] ?? '[]')),
+        ),
+        pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
+      );
+    } on TypeError catch (e) {
+      LogsProvider().add(
+        'Type mismatch in App.fromJson: ${e.toString()}',
+        level: LogLevel.error,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {

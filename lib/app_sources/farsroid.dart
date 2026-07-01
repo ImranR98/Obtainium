@@ -5,6 +5,7 @@ import 'package:html/parser.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Farsroid extends AppSource {
@@ -72,7 +73,8 @@ class Farsroid extends AppSource {
     Map<String, dynamic>? farsroidJson;
     try {
       farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;
-    } catch (_) {
+    } catch (e) {
+      LogsProvider().add('Failed to decode Farsroid JSON: $e', level: LogLevel.error);
       throw NoAPKError();
     }
     var html2 = farsroidJson?['data']?['content'] as String? ?? '';

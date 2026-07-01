@@ -650,7 +650,7 @@ class _AppPageState extends State<AppPage> {
     bool certs,
     bool hasAssets,
   ) {
-    return [
+    final widgets = <Widget>[
       _buildSection(
         true,
         certs || hasAssets ? false : true,
@@ -677,17 +677,18 @@ class _AppPageState extends State<AppPage> {
           ),
         ],
       ),
-      if (certs) ...[
+    ];
+    if (certs) {
+      final a = app!;
+      widgets.addAll([
         const SliverToBoxAdapter(child: SizedBox(height: 2)),
         _buildSection(
           false,
           !hasAssets,
           children: [
             Text(
-              // ignore: unnecessary_non_null_assertion
-              '${plural('certificateHash', app!.certificateHashes.length)}'
-              // ignore: unnecessary_non_null_assertion
-              '${app!.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
+              '${plural('certificateHash', a.certificateHashes.length)}'
+              '${a.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(
                     color: Theme.of(
@@ -695,8 +696,7 @@ class _AppPageState extends State<AppPage> {
                     ).colorScheme.onSurfaceVariant,
                   ),
             ),
-            // ignore: unnecessary_non_null_assertion
-            ...app!.certificateHashes.map(
+            ...a.certificateHashes.map(
               (h) => Tooltip(
                 message: tr('copyToClipboard'),
                 child: GestureDetector(
@@ -717,8 +717,10 @@ class _AppPageState extends State<AppPage> {
             ),
           ],
         ),
-      ],
-      if (hasAssets) ...[
+      ]);
+    }
+    if (hasAssets) {
+      widgets.addAll([
         const SliverToBoxAdapter(child: SizedBox(height: 2)),
         _buildSection(
           false,
@@ -751,8 +753,9 @@ class _AppPageState extends State<AppPage> {
             ),
           ],
         ),
-      ],
-    ];
+      ]);
+    }
+    return widgets;
   }
 
   Widget _buildCategorySection(

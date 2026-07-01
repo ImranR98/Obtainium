@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:hsluv/hsluv.dart';
@@ -399,10 +400,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ? IconButton(
                     icon: const Icon(Icons.open_in_new),
                     tooltip: tr('about'),
-                    onPressed: () => launchUrlString(
+                    onPressed: () =>                     unawaited(launchUrlString(
                       formItem.helpUrl!,
                       mode: LaunchMode.externalApplication,
-                    ).ignore(),
+                    )),
                   )
                 : formItem.belowWidgets.isNotEmpty
                 ? IconButton(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
@@ -56,13 +57,13 @@ void showChangeLogDialog(
                   data: changeLog,
                   onTapLink: (text, href, title) {
                     if (href != null) {
-                      launchUrlString(
+                      unawaited(launchUrlString(
                         href.startsWith('http://') ||
                                 href.startsWith('https://')
                             ? href
                             : '${Uri.parse(app.url).origin}/$href',
                         mode: LaunchMode.externalApplication,
-                      ).ignore();
+                      ));
                     }
                   },
                   extensionSet: md.ExtensionSet(
@@ -102,10 +103,10 @@ VoidCallback? getChangeLogFn(BuildContext context, App app) {
     if (changeLog != null) {
       showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
     } else if (changesUrl != null) {
-      launchUrlString(
+      unawaited(launchUrlString(
         changesUrl!,
         mode: LaunchMode.externalApplication,
-      ).ignore();
+      ));
     }
   };
 }

@@ -101,7 +101,7 @@ void backgroundFetchHeadlessTask(HeadlessEvent event) async {
   String taskId = event.taskId;
   bool isTimeout = event.timeout;
   if (isTimeout) {
-    debugPrint('BG update task timed out.');
+    LogsProvider().add('BG update task timed out.', level: LogLevel.error);
     BackgroundFetch.finish(taskId);
     return;
   }
@@ -117,7 +117,7 @@ void startCallback() {
 class BackgroundUpdateTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    debugPrint('onStart(starter: ${starter.name})');
+    LogsProvider().add('onStart(starter: ${starter.name})');
     await bgUpdateCheck('bg_check', null);
   }
 
@@ -128,7 +128,7 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
-    debugPrint('Foreground service onDestroy(isTimeout: $isTimeout)');
+    LogsProvider().add('Foreground service onDestroy(isTimeout: $isTimeout)');
   }
 
   @override
@@ -146,7 +146,7 @@ void main() async {
     );
   } catch (e) {
     // Already added, do nothing (see #375)
-    debugPrint('Failed to load custom CA certificate: $e');
+    LogsProvider().add('Failed to load custom CA certificate: $e', level: LogLevel.error);
   }
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
@@ -376,7 +376,7 @@ class _ObtainiumState extends State<Obtainium> {
         final settingsProvider = context.read<SettingsProvider>();
         settingsProvider.removeListener(_settingsListener!);
       } catch (e) {
-        debugPrint('Failed to remove settings listener: $e');
+        LogsProvider().add('Failed to remove settings listener: $e', level: LogLevel.error);
       }
     }
     LogsProvider.close();
@@ -405,7 +405,7 @@ class _ObtainiumState extends State<Obtainium> {
         BackgroundFetch.finish(taskId);
       },
     );
-    if (!mounted) return;
+    if (!context.mounted) return;
   }
 
   @override

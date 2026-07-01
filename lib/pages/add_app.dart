@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
@@ -122,7 +124,8 @@ class AddAppPageState extends State<AddAppPage> {
     SettingsProvider settingsProvider, {
     bool ignoreHideSetting = false,
   }) async {
-    var useTrackOnly = userPickedTrackOnly || pickedSource!.enforceTrackOnly;
+    final s = pickedSource!;
+    var useTrackOnly = userPickedTrackOnly || s.enforceTrackOnly;
     if (useTrackOnly &&
         (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
       if (!context.mounted) return false;
@@ -133,13 +136,13 @@ class AddAppPageState extends State<AddAppPage> {
             initValid: true,
             title: tr(
               'xIsTrackOnly',
-              args: [pickedSource!.enforceTrackOnly ? tr('source') : tr('app')],
+              args: [s.enforceTrackOnly ? tr('source') : tr('app')],
             ),
             items: [
               [GeneratedFormSwitch('hide', label: tr('dontShowAgain'))],
             ],
             message:
-                '${pickedSource!.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
+                '${s.enforceTrackOnly ? tr('appsFromSourceAreTrackOnly') : tr('youPickedTrackOnly')}\n\n${tr('trackOnlyAppDescription')}',
           );
         },
       );
@@ -195,9 +198,10 @@ class AddAppPageState extends State<AddAppPage> {
         );
       }
       if (confirmed) {
-        var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
+        final s = pickedSource!;
+        var trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
         app = await sourceProvider.getApp(
-          pickedSource!,
+          s,
           userInput.trim(),
           additionalSettings,
           trackOnlyOverride: trackOnly,
@@ -486,9 +490,10 @@ class AddAppPageState extends State<AddAppPage> {
                 onPressed:
                     doingSomething ||
                         pickedSource == null ||
-                        (pickedSource!
-                                .combinedAppSpecificSettingFormItems
-                                .isNotEmpty &&
+                        (pickedSource
+                                ?.combinedAppSpecificSettingFormItems
+                                .isNotEmpty ==
+                            true &&
                             !additionalSettingsValid)
                     ? null
                     : () {
@@ -620,7 +625,8 @@ class AddAppPageState extends State<AddAppPage> {
       ),
       const SizedBox(height: 16),
       () {
-        var formItems = pickedSource!.combinedAppSpecificSettingFormItems;
+        final s = pickedSource!;
+        var formItems = s.combinedAppSpecificSettingFormItems;
         if (settingsProvider.includePrereleasesByDefault ||
             settingsProvider.shizukuPretendToBeGooglePlay) {
           for (var row in formItems) {
@@ -639,12 +645,12 @@ class AddAppPageState extends State<AddAppPage> {
         return GeneratedForm(
           tileMode: true,
           key: Key(
-            '${pickedSource!.name}-${pickedSource!.hostChanged.toString()}-${pickedSource!.hostIdenticalDespiteAnyChange.toString()}',
+            '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
           ),
           items: [
             ...formItems,
             ...(pickedSourceOverride != null
-                ? pickedSource!.sourceConfigSettingFormItems.map((e) => [e])
+                ? s.sourceConfigSettingFormItems.map((e) => [e])
                 : []),
           ],
           onValueChanges: (values, valid, isBuilding) {
@@ -668,7 +674,7 @@ class AddAppPageState extends State<AddAppPage> {
           },
         ),
       ),
-      if (pickedSource != null && pickedSource!.appIdInferIsOptional) ...[
+      if (pickedSource?.appIdInferIsOptional == true) ...[
         const SizedBox(height: 12),
         GeneratedForm(
           tileMode: true,
@@ -691,12 +697,12 @@ class AddAppPageState extends State<AddAppPage> {
           },
         ),
       ],
-      if (pickedSource != null && pickedSource!.enforceTrackOnly) ...[
+      if (pickedSource?.enforceTrackOnly == true) ...[
         const SizedBox(height: 12),
         GeneratedForm(
           tileMode: true,
           key: Key(
-            '${pickedSource!.name}-${pickedSource!.hostChanged.toString()}-${pickedSource!.hostIdenticalDespiteAnyChange.toString()}-appId',
+            '${pickedSource?.name}-${pickedSource?.hostChanged.toString()}-${pickedSource?.hostIdenticalDespiteAnyChange.toString()}-appId',
           ),
           items: [
             [
@@ -760,10 +766,10 @@ class AddAppPageState extends State<AddAppPage> {
                           ),
                           onPressed: e.hosts.isNotEmpty
                               ? () {
-                                  launchUrlString(
+                                  unawaited(launchUrlString(
                                     'https://${e.hosts[0]}',
                                     mode: LaunchMode.externalApplication,
-                                  ).ignore();
+                                  ));
                                 }
                               : null,
                         );
@@ -788,10 +794,10 @@ class AddAppPageState extends State<AddAppPage> {
           avatar: const Icon(Icons.public, size: 18),
           label: Text(tr('crowdsourcedConfigsShort')),
           onPressed: () {
-            launchUrlString(
+            unawaited(launchUrlString(
               'https://apps.obtainium.page/',
               mode: LaunchMode.externalApplication,
-            ).ignore();
+            ));
           },
         ),
       ],

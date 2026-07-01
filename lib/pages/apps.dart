@@ -88,7 +88,7 @@ class AppsPageState extends State<AppsPage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
-  late final ScrollController scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
   final TextEditingController searchController = TextEditingController();
 
   @override
@@ -1111,73 +1111,21 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.share_outlined,
                   label: tr('shareSelectedAppURLs'),
-                  onTap: () {
-                    final buf = StringBuffer();
-                    for (var a in selectedApps) {
-                      buf.writeln(a.url);
-                    }
-                    final urls = buf.toString().trimRight();
-                    SharePlus.instance
-                        .share(
-                          ShareParams(
-                            text: urls,
-                            subject: 'Obtainium - ${tr('appsString')}',
-                          ),
-                        )
-                        .ignore();
-                  },
+                  onTap: () => _shareAppURLs(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.link_outlined,
                   label: tr('shareAppConfigLinks'),
                   onTap: !hasSelection
                       ? null
-                      : () {
-                          final buf = StringBuffer();
-                          for (var a in selectedApps) {
-                            buf.writeln(
-                              'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}',
-                            );
-                          }
-                          SharePlus.instance
-                              .share(
-                                ShareParams(
-                                  text: buf.toString(),
-                                  subject: 'Obtainium - ${tr('appsString')}',
-                                ),
-                              )
-                              .ignore();
-                        },
+                      : () => _shareConfigLinks(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.file_download_outlined,
                   label: '${tr('share')} - ${tr('obtainiumExport')}',
                   onTap: !hasSelection
                       ? null
-                      : () {
-                          var encoder = const JsonEncoder.withIndent("    ");
-                          var exportJSON = encoder.convert(
-                            appsProvider.generateExportJSON(
-                              appIds: selectedApps.map((e) => e.id).toList(),
-                              overrideExportSettings: 0,
-                            ),
-                          );
-                          String fn =
-                              '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-                          XFile f = XFile.fromData(
-                            Uint8List.fromList(utf8.encode(exportJSON)),
-                            mimeType: 'application/json',
-                            name: fn,
-                          );
-                          SharePlus.instance
-                              .share(
-                                ShareParams(
-                                  files: [f],
-                                  fileNameOverrides: ['$fn.json'],
-                                ),
-                              )
-                              .ignore();
-                        },
+                      : () => _shareExport(appsProvider, selectedApps),
                 ),
                 optionTile(
                   icon: Icons.download_outlined,
@@ -1191,14 +1139,13 @@ class AppsPageState extends State<AppsPage> {
                           selectedApps.map((e) => e.id).toList(),
                           globalNavigatorKey.currentContext ?? context,
                         )
-                        .catchError(
-                          // Context-safe guarded by if(mounted) in showError.
-                          // ignore: invalid_return_type_for_catch_error
-                          (e) => showError(
+                        .catchError((e) {
+                          showError(
                             e,
                             globalNavigatorKey.currentContext ?? context,
-                          ),
-                        );
+                          );
+                          return <String>[];
+                        });
                   },
                 ),
                 optionTile(
@@ -1219,6 +1166,61 @@ class AppsPageState extends State<AppsPage> {
         );
       },
     );
+  }
+
+  void _shareAppURLs(Set<App> selectedApps) {
+    final buf = StringBuffer();
+    for (var a in selectedApps) {
+      buf.writeln(a.url);
+    }
+    final urls = buf.toString().trimRight();
+    unawaited(SharePlus.instance
+        .share(
+          ShareParams(
+            text: urls,
+            subject: 'Obtainium - ${tr('appsString')}',
+          ),
+        ));
+  }
+
+  void _shareConfigLinks(Set<App> selectedApps) {
+    final buf = StringBuffer();
+    for (var a in selectedApps) {
+      buf.writeln(
+        'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}',
+      );
+    }
+    unawaited(SharePlus.instance
+        .share(
+          ShareParams(
+            text: buf.toString(),
+            subject: 'Obtainium - ${tr('appsString')}',
+          ),
+        ));
+  }
+
+  void _shareExport(AppsProvider appsProvider, Set<App> selectedApps) {
+    var encoder = const JsonEncoder.withIndent("    ");
+    var exportJSON = encoder.convert(
+      appsProvider.generateExportJSON(
+        appIds: selectedApps.map((e) => e.id).toList(),
+        overrideExportSettings: 0,
+      ),
+    );
+    String fn =
+        '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
+    XFile f = XFile.fromData(
+      Uint8List.fromList(utf8.encode(exportJSON)),
+      mimeType: 'application/json',
+      name: fn,
+    );
+    unawaited(SharePlus.instance
+        .share(
+          ShareParams(
+            files: [f],
+            fileNameOverrides: ['$fn.json'],
+          ),
+        ));
   }
 
   void openAppById(String appId) {

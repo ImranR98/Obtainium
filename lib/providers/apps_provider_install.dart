@@ -15,6 +15,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/components/app_dialogs.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -584,7 +585,7 @@ extension AppsProviderInstall on AppsProvider {
         try {
           file.file.deleteSync();
         } catch (e) {
-          debugPrint('Failed to delete downgraded APK file: $e');
+          logs.add('Failed to delete downgraded APK file: $e', level: LogLevel.error);
         }
         throw DowngradeError(oldVersionCode, newVersionCode);
       }
@@ -729,9 +730,8 @@ extension AppsProviderInstall on AppsProvider {
     List<String> archs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
     if ((urlsToSelectFrom.length > 1 || evenIfSingleChoice) &&
-        context != null) {
+        context != null && context.mounted) {
       appFileUrl = await showDialog(
-        // ignore: use_build_context_synchronously
         context: context,
         builder: (BuildContext ctx) {
           return AppFilePicker(
@@ -757,10 +757,9 @@ extension AppsProviderInstall on AppsProvider {
           getHost(app.url),
           'placeholder',
         ].contains(getHost(appFileUrl.value)) &&
-        context != null) {
+        context != null && context.mounted) {
       if (!(settingsProvider.hideAPKOriginWarning) &&
           await showDialog(
-                // ignore: use_build_context_synchronously
                 context: context,
                 builder: (BuildContext ctx) {
                   return APKOriginWarningDialog(
@@ -933,7 +932,6 @@ extension AppsProviderInstall on AppsProvider {
       }
       if (apps[id]!.app.apkUrls.isNotEmpty ||
           apps[id]!.app.otherAssetUrls.isNotEmpty) {
-        // ignore: use_build_context_synchronously
         MapEntry<String, String>? tempFileUrl = await confirmAppFileUrl(
           apps[id]!.app,
           // ignore: use_build_context_synchronously
@@ -1045,7 +1043,6 @@ extension AppsProviderInstall on AppsProvider {
               true;
       if (downloadedFile != null) {
         if (needBGWorkaround) {
-          // ignore: use_build_context_synchronously
           installApk(
             downloadedFile,
             contextIfNewInstall,
@@ -1053,7 +1050,6 @@ extension AppsProviderInstall on AppsProvider {
             shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
           );
         } else {
-          // ignore: use_build_context_synchronously
           sayInstalled = await installApk(
             downloadedFile,
             contextIfNewInstall,
@@ -1062,14 +1058,12 @@ extension AppsProviderInstall on AppsProvider {
         }
       } else {
         if (needBGWorkaround) {
-          // ignore: use_build_context_synchronously
           installApkDir(
             downloadedDir!,
             contextIfNewInstall,
             needsBGWorkaround: true,
           );
         } else {
-          // ignore: use_build_context_synchronously
           sayInstalled = await installApkDir(
             downloadedDir!,
             contextIfNewInstall,
@@ -1115,7 +1109,6 @@ extension AppsProviderInstall on AppsProvider {
     DownloadedDir? downloadedDir;
     try {
       var downloadedArtifact =
-          // ignore: use_build_context_synchronously
           await downloadApp(
             apps[id]!.app,
             context,
@@ -1152,8 +1145,7 @@ extension AppsProviderInstall on AppsProvider {
             throw ObtainiumError(tr('cancelled'));
         }
       }
-      if (!willBeSilent && context != null && !settingsProvider.useShizuku) {
-        // ignore: use_build_context_synchronously
+      if (!willBeSilent && context != null && context.mounted && !settingsProvider.useShizuku) {
         await waitForUserToReturnToForeground(context);
       }
     } catch (e) {

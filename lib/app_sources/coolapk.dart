@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:math';
+
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'dart:math';
 
 /// CoolApk app source.
 ///
@@ -55,7 +57,8 @@ class CoolApk extends AppSource {
     Map<String, dynamic> json;
     try {
       json = jsonDecode(res.body);
-    } catch (_) {
+    } catch (e) {
+      LogsProvider().add('Failed to decode JSON response: $e', level: LogLevel.error);
       throw NoReleasesError();
     }
     if (json['status'] == -2 || json['data'] == null) {

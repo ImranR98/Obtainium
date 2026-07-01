@@ -9,6 +9,7 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -55,7 +56,8 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
               try {
                 _sourceProvider.getSource(url);
                 return true;
-              } catch (_) {
+              } catch (e) {
+                LogsProvider().add('URL parse error in filter: $e', level: LogLevel.error);
                 return false;
               }
             })

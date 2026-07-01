@@ -10,6 +10,7 @@ import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
@@ -101,9 +102,10 @@ class _HomePageState extends State<HomePage> {
           },
         );
       }
-      if (!mounted) return;
+      if (!context.mounted) return;
       if (!sp.googleVerificationWarningShown) {
         await showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (BuildContext ctx) {
             return AlertDialog(
@@ -144,7 +146,7 @@ class _HomePageState extends State<HomePage> {
 
     goToAddApp(String data) async {
       await switchToPage(0);
-      if (mounted) pushAddApp(initialUrl: data);
+      if (context.mounted) pushAddApp(initialUrl: data);
     }
 
     goToExistingApp(String appId) async {
@@ -213,26 +215,29 @@ class _HomePageState extends State<HomePage> {
                 },
               ) !=
               null) {
-            if (!mounted) return;
+            if (!context.mounted) return;
+            // ignore: use_build_context_synchronously
             var appsProvider = context.read<AppsProvider>();
             // Parse dataStr as JSON and re-encode so injected content can't
             // break out of the JSON structure.
             dynamic parsedData;
             try {
               parsedData = jsonDecode(dataStr);
-            } catch (_) {
+            } catch (e) {
+              LogsProvider().add('Failed to decode deep-link JSON: $e', level: LogLevel.error);
               throw ObtainiumError(tr('invalidInput'));
             }
             final importPayload = jsonEncode(<String, dynamic>{
               'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
             });
             var result = await appsProvider.import(importPayload);
-            if (mounted) {
+            if (context.mounted) {
               showMessage(
                 tr(
                   'importedX',
                   args: [plural('apps', result.key.length).toLowerCase()],
                 ),
+                // ignore: use_build_context_synchronously
                 context,
               );
             }
@@ -241,7 +246,10 @@ class _HomePageState extends State<HomePage> {
           throw ObtainiumError(tr('unknown'));
         }
       } catch (e) {
-        if (mounted) showError(e, context);
+        if (context.mounted) {
+          // ignore: use_build_context_synchronously
+          showError(e, context);
+        }
       }
     }
 

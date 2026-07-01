@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
@@ -43,7 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (sp.prefs == null) sp.initializeSettings();
     });
     DeviceInfoPlugin().androidInfo.then((info) {
-      if (mounted) {
+      if (context.mounted) {
         setState(() {
           androidSdkInt = info.version.sdkInt;
         });
@@ -150,30 +152,30 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             IconButton(
               onPressed: () {
-                launchUrlString(
+                unawaited(launchUrlString(
                   context.read<SettingsProvider>().sourceUrl,
                   mode: LaunchMode.externalApplication,
-                ).ignore();
+                ));
               },
               icon: const Icon(Icons.code),
               tooltip: tr('appSource'),
             ),
             IconButton(
               onPressed: () {
-                launchUrlString(
+                unawaited(launchUrlString(
                   'https://wiki.obtainium.page/',
                   mode: LaunchMode.externalApplication,
-                ).ignore();
+                ));
               },
               icon: const Icon(Icons.help_outline_rounded),
               tooltip: tr('wiki'),
             ),
             IconButton(
               onPressed: () {
-                launchUrlString(
+                unawaited(launchUrlString(
                   'https://apps.obtainium.page/',
                   mode: LaunchMode.externalApplication,
-                ).ignore();
+                ));
               },
               icon: const Icon(Icons.apps_rounded),
               tooltip: tr('crowdsourcedConfigsLabel'),
@@ -593,12 +595,14 @@ class _SettingsPageState extends State<SettingsPage> {
           _ => null,
         };
         if (errorText != null) {
-          if (!mounted) return;
+          if (!context.mounted) return;
+          // ignore: use_build_context_synchronously
           showError(ObtainiumError(errorText), context);
         }
       }).catchError((e) {
         settingsProvider.useShizuku = false;
-        if (!mounted) return;
+        if (!context.mounted) return;
+        // ignore: use_build_context_synchronously
         showError(e, context);
       });
     } else {
@@ -643,7 +647,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   settingsProvider.useSystemFont = true;
                 }).catchError((e) {
                   settingsProvider.useSystemFont = false;
-                  if (!mounted) return;
+                  if (!context.mounted) return;
+                  // ignore: use_build_context_synchronously
                   showError(ObtainiumError('${tr('unexpectedError')}: $e'), context);
                 });
               } else {

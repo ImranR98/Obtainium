@@ -10,6 +10,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -342,7 +343,7 @@ class SettingsProvider with ChangeNotifier {
       _secureCache[settingId] = value;
       _secureStorage
           .write(key: settingId, value: value)
-          .catchError((e) => debugPrint('Failed to persist credential: $e'));
+          .catchError((e) => LogsProvider().add('Failed to persist credential: $e', level: LogLevel.error));
     } else {
       prefs?.setString(settingId, value);
     }
@@ -583,7 +584,8 @@ class SettingsProvider with ChangeNotifier {
     if (!remove) {
       try {
         newOneWayDataSyncDir = (await saf.openDocumentTree());
-      } catch (_) {
+      } catch (e) {
+        LogsProvider().add('Failed to open document tree: $e', level: LogLevel.error);
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
     }

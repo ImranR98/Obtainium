@@ -40,7 +40,7 @@ should follow when working in this codebase.
   service starts directly from `build()`.**
 - `bgUpdateCheck()` is the headless background entry point (see §6).
 
-There is also `main_fdroid.dart` for the F-Droid build flavour (sets `fdroid = true`).
+There is also `main_fdroid.dart` for the F-Droid build flavour (sets `isFdroidBuild = true`).
 
 ---
 
@@ -48,8 +48,9 @@ There is also `main_fdroid.dart` for the F-Droid build flavour (sets `fdroid = t
 
 ```
 lib/
-├─ main.dart                  App bootstrap, theme, FG/BG service control
+├─ main.dart                  App bootstrap, FG/BG service control
 ├─ main_fdroid.dart           F-Droid flavour entry point
+├─ theme.dart                 Material 3 Expressive ThemeData builder
 ├─ custom_errors.dart         ObtainiumError + typed errors (RateLimitError, etc.)
 ├─ pages/                     Full screens (route-level widgets)
 │  ├─ home.dart               Adaptive nav shell (rail/bottom bar, two-pane)
@@ -224,6 +225,7 @@ Prefer these over bespoke widgets:
   connected-tile radius constants. The Material 3 Expressive "split list" visual system.
 - **`ui_widgets.dart`** —
   - `AppIcon` (squircle icon with Obtainium glyph fallback, excluded from semantics),
+  - `ActionListTile` (icon + label ListTile with optional auto-pop),
   - `ConnectedCard` (single tonal card; `isFirst`/`isLast` round outer corners so runs
     read as one block),
   - `EmptyState` (centered icon + caption for empty/loading/no-results),
@@ -231,7 +233,11 @@ Prefer these over bespoke widgets:
   - `HighlightableButton` (FilledButton when "highlight touch targets" is on, else
     TextButton),
   - `copyToClipboard(context, text)`, `showConfirmDialog(...) -> Future<bool>`,
-    `showHelpDialog(context, title, content)`.
+    `showHelpDialog(context, title, content)`,
+  - `showMessage(dynamic e, BuildContext, {bool isError})` — logs via `LogsProvider`
+    and shows a snackbar (informational) or dialog (unexpected errors).
+  - `showError(dynamic e, BuildContext)` — convenience wrapper around `showMessage`
+    with `isError: true`.
 - **`settings_widgets.dart`** — `SettingsGroup`, `SettingsSectionHeader`, `SettingsTile`,
   `SettingsToggleRow`, and `shapeSettingsTiles()` which auto-connects consecutive tiles.
 - **`motion.dart`** — `ExpressiveMotion.{emphasized, short, medium}` motion tokens. Use
@@ -248,6 +254,7 @@ Prefer these over bespoke widgets:
 - **`category_editor.dart`** — `showCategoryEditor()`, `CategorySelector`,
   `CategoryManager`.
 - **`logs_dialog.dart`** — `LogsDialog` (view/filter/share/clear logs).
+- **`app_info_dialog.dart`** — `AppInfoDialog` (read-only app summary: icon, name, author, URL, version, last-check) + `appInstalledVersionText()` helper.
 - **`custom_app_bar.dart`** — `CustomAppBar` wrapping `SliverAppBar.large`.
 
 ### The form engine (`generated_form.dart`)
@@ -323,7 +330,7 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 - Side effects go in `initState`/post-frame callbacks/listeners, **never in `build()`**.
 - Prefer `context.select` over `context.watch` for large providers.
 - Guard every `setState`/`Navigator`/`ScaffoldMessenger` call after an `await` with
-  `if (!mounted) return;` / `if (!context.mounted) return;`.
+  `if (!context.mounted) return;` (preferred over bare `mounted` in Flutter ≥ 3.7).
 - Deep-copy an `App` before mutating; never mutate provider-owned objects in place.
 
 **Errors / robustness**
@@ -335,7 +342,10 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
   dialog) and `showMessage(...)` for informational messages (shows a snackbar).
 - `MultiAppMultiError` bundles multiple per-app errors for batch operations; use
   `errors.add(appId, error, appName:)` to collect them.
-- Never silently swallow exceptions. Either rethrow or `logs.add(...)`.
+- Never silently swallow exceptions. Log them via `LogsProvider().add(...)` (the
+  standard app-wide logging channel) rather than `print()` or `debugPrint()`.
+- `logs.add()` is available inside `AppsProvider`; elsewhere use `LogsProvider().add()`
+  (the singleton pattern).
 
 **Categories & colour coding**
 - Categories are stored as `Map<String, int>` (name → ARGB colour) in shared preferences.

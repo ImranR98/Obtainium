@@ -6,10 +6,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
+import 'dart:typed_data';
+
 import 'package:battery_plus/battery_plus.dart';
 import 'package:crypto/crypto.dart';
-import 'dart:typed_data';
 
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -347,7 +347,7 @@ Future<String?> checkETagHeader(
   StreamedResponse response = await client.send(req);
   var resHeaders = response.headers;
   await response.stream.drain<void>().catchError((err) {
-    debugPrint('Error draining response stream: $err');
+    LogsProvider().add('Error draining response stream: $err', level: LogLevel.error);
   });
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
@@ -431,7 +431,7 @@ Future<File> downloadFile(
   StreamedResponse headersResponse = await headersClient.send(req);
   var resHeaders = headersResponse.headers;
   await headersResponse.stream.drain<void>().catchError((err) {
-    debugPrint('Error draining header-probe stream: $err');
+    LogsProvider().add('Error draining header-probe stream: $err', level: LogLevel.error);
   });
 
   // Use the headers to decide what the file extension is, and
@@ -553,7 +553,7 @@ Future<File> downloadFile(
                   now.difference(lastProgressUpdate!) >=
                       downloadUIUpdateInterval)) {
             progress = fullContentLength != null
-                ? clampDouble((received / fullContentLength) * 100, 0, 100)
+                ? (received / fullContentLength * 100).clamp(0, 100)
                 : _obtainiumDownloadProgressFallback.toDouble();
             onProgress(progress);
             lastProgressUpdate = now;
@@ -621,7 +621,7 @@ Future<PackageInfo?> getInstalledInfo(
       );
     } catch (e) {
       if (printErr) {
-        debugPrint(e.toString());
+        LogsProvider().add(e.toString(), level: LogLevel.error);
       }
     }
   }
@@ -749,7 +749,7 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }().catchError((e) {
-      debugPrint('AppsProvider async init error: $e');
+      logs.add('AppsProvider async init error: $e', level: LogLevel.error);
     });
   }
 
@@ -845,12 +845,12 @@ Future<void> _runBGInstallMode(
 /// In "install mode" (toCheck is empty): downloads and silently installs all
 /// pending updates, placing Obtainium last in the install queue.
 Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
-  debugPrint('BG task started $taskId: ${params.toString()}');
+  LogsProvider logs = LogsProvider();
+  logs.add('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await loadTranslations();
 
-  LogsProvider logs = LogsProvider();
   NotificationsProvider notificationsProvider = NotificationsProvider();
   AppsProvider appsProvider = AppsProvider(isBg: true);
   await appsProvider.loadApps();
@@ -973,7 +973,7 @@ Future<void> _bgRunUpdateCheck(
           )
           .isBefore(DateTime.now());
   if (!enoughTimePassed) {
-    debugPrint(
+    logs.add(
       'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
     );
     return;

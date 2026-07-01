@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -270,7 +272,7 @@ class LinkText extends StatelessWidget {
       link: true,
       child: InkWell(
         onTap: () =>
-            launchUrlString(url, mode: LaunchMode.externalApplication).ignore(),
+            unawaited(launchUrlString(url, mode: LaunchMode.externalApplication)),
         child: Text(
           text,
           style: (style ?? const TextStyle()).copyWith(
@@ -316,10 +318,9 @@ class ActionListTile extends StatelessWidget {
 }
 
 void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  Provider.of<LogsProvider>(
-    context,
-    listen: false,
-  ).add(e.toString(), level: isError ? LogLevel.error : LogLevel.info);
+  context
+      .read<LogsProvider>()
+      .add(e.toString(), level: isError ? LogLevel.error : LogLevel.info);
   if (e is String || (e is ObtainiumError && !e.unexpected)) {
     ScaffoldMessenger.of(
       context,
