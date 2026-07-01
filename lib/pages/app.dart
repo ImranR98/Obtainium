@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form.dart';
@@ -115,7 +117,7 @@ class _AppPageState extends State<AppPage> {
       app.apkUrls.length,
       app.otherAssetUrls.length,
       app.preferredApkIndex,
-      app.additionalSettings.toString(),
+      jsonEncode(app.additionalSettings),
     ]);
   }
 
@@ -865,6 +867,8 @@ class _AppPageState extends State<AppPage> {
             overrideSource: app.app.overrideSource,
           )
         : null;
+    // prevApp acts as a one-shot gate: trigger the auto-update check only the
+    // first time an app is shown, not on every subsequent rebuild of this page.
     if (!areDownloadsRunning &&
         prevApp == null &&
         app != null &&

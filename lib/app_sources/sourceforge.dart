@@ -100,8 +100,6 @@ class SourceForge extends AppSource {
         } on RangeError {
           // URL structure had no extractable version segments.
           return null;
-        } on NoVersionError {
-          return null;
         }
       }
 

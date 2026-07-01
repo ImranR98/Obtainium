@@ -11,7 +11,6 @@ More info:
 - [apps.obtainium.page](https://apps.obtainium.page/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.page))
 - [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
 - [Website](https://obtainium.page) ([repository](https://github.com/ImranR98/obtainium.page))
-- [Source code](https://github.com/ImranR98/Obtainium)
 
 Currently supported App sources:
 - Open Source - General:

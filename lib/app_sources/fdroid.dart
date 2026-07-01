@@ -75,6 +75,9 @@ class FDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
+    if (appId == null) {
+      throw NoReleasesError();
+    }
     String host = Uri.parse(standardUrl).host;
     var details = getAPKUrlsFromFDroidPackagesAPIResponse(
       await sourceRequest(
@@ -240,10 +243,9 @@ class FDroid extends AppSource {
       if (filterVersionsByRegEx?.isNotEmpty == true) {
         version = null;
         releaseChoices = [];
+        final versionFilter = RegExp(filterVersionsByRegEx!);
         for (var i = 0; i < releases.length; i++) {
-          if (RegExp(
-            filterVersionsByRegEx!,
-          ).hasMatch(releases[i]['versionName'])) {
+          if (versionFilter.hasMatch(releases[i]['versionName'])) {
             version = releases[i]['versionName'];
             break;
           }

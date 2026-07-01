@@ -327,8 +327,10 @@ class AppListTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          hasUpdate ? _updateButton(context) : const SizedBox.shrink(),
-          hasUpdate ? const SizedBox(width: 5) : const SizedBox.shrink(),
+          if (hasUpdate) ...[
+            _updateButton(context),
+            const SizedBox(width: 5),
+          ],
           HighlightableButton(
             highlight: settingsProvider.highlightTouchTargets,
             onPressed: showChangesFn,
@@ -384,6 +386,8 @@ class AppListTile extends StatelessWidget {
     List<double> stops = [
       if (categories.length > 1)
         ...categories.asMap().entries.map(
+          // The -0.0001 offset prevents the last category colour from bleeding
+          // into the transparent final stop due to Flutter gradient rendering.
           (e) => ((e.key / (categories.length - 1)) - 0.0001),
         )
       else if (categories.length == 1)
@@ -601,6 +605,8 @@ class DownloadProgressTrailing extends StatelessWidget {
 /// A collapsible category header plus (when expanded) its app rows, shaped as a
 /// single connected, positionally-rounded block.
 class AppListCategorySection extends StatelessWidget {
+  String _capitalizeFirst(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
   final String? category;
   final bool expanded;
   final int appCount;
@@ -656,10 +662,7 @@ class AppListCategorySection extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        (() {
-                          final s = category ?? tr('noCategory');
-                          return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-                        })(),
+                        _capitalizeFirst(category ?? tr('noCategory')),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),

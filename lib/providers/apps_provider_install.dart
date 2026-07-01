@@ -32,6 +32,10 @@ const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
 const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
 
+// Android PackageInstaller status codes: 0 = success, 3 = already installed / pending
+const int _installSuccessCode = 0;
+const int _installAlreadyPendingCode = 3;
+
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
   Future<File> handleAPKIDChange(
@@ -596,14 +600,14 @@ extension AppsProviderInstall on AppsProvider {
       );
     }
     bool installed = false;
-    if (code != null && code != 0 && code != 3) {
+    if (code != null && code != _installSuccessCode && code != _installAlreadyPendingCode) {
       try {
         deleteFile(file.file);
       } catch (e) {
         logs.add('Failed to delete APK after failed install: ${e.toString()}');
       }
       throw InstallError(code);
-    } else if (code == 0) {
+    } else if (code == _installSuccessCode) {
       installed = true;
       apps[file.appId]!.app.installedVersion =
           apps[file.appId]!.app.latestVersion;

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # Convenience script
 
 CURR_DIR="$(pwd)"

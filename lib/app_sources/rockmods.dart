@@ -54,7 +54,10 @@ class RockMods extends AppSource {
       if (appJson != null) {
         appName = (appJson['name'] as String?)?.trim();
         appVersion = (appJson['softwareVersion'] as String?)?.trim();
-        appAuthor = (appJson['author'] as Map?)?['name'] as String?;
+        final tmpAuthor = appJson['author'];
+        if (tmpAuthor is Map) {
+          appAuthor = tmpAuthor['name'] as String?;
+        }
       }
 
       if (appName == null || appName.isEmpty) {

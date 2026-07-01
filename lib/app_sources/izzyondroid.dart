@@ -6,6 +6,7 @@ class IzzyOnDroid extends AppSource {
   late FDroid fd;
 
   IzzyOnDroid() {
+    name = 'IzzyOnDroid';
     hosts = ['izzysoft.de'];
     fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =

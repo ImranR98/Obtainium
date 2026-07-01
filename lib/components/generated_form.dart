@@ -527,6 +527,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (formItem is GeneratedFormSubForm) {
           _initSubForm(formItem);
           return Container();
+        } else if (formItem is GeneratedFormSwitch) {
+          return const SizedBox.shrink();
         } else {
           throw ObtainiumError('Unrecognized form item type: ${formItem.runtimeType}', unexpected: true);
         }

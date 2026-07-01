@@ -41,6 +41,9 @@ class RuStore extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     String? appId = await tryInferringAppId(standardUrl);
+    if (appId == null) {
+      throw NoReleasesError();
+    }
     Response res0 = await sourceRequest(
       'https://backapi.rustore.ru/applicationData/overallInfo/$appId',
       additionalSettings,
@@ -77,18 +80,17 @@ class RuStore extends AppSource {
     var downloadDetails = downloadDecoded is Map
         ? downloadDecoded['body']
         : null;
-    try {
-      if (res1.statusCode != 200 ||
-          downloadDetails['downloadUrls'][0]['url'] == null) {
-        throw NoAPKError();
-      }
-    } catch (e) {
+    if (res1.statusCode != 200 || downloadDetails == null) {
+      throw getObtainiumHttpError(res1);
+    }
+    var url = downloadDetails['downloadUrls']?[0]?['url'] as String?;
+    if (url == null) {
       throw NoAPKError();
     }
 
     return APKDetails(
       version,
-      getApkUrlsFromUrls([downloadDetails['downloadUrls'][0]['url'] as String]),
+      getApkUrlsFromUrls([url]),
       AppNames(author, appName),
       releaseDate: relDate,
       changeLog: changeLog,

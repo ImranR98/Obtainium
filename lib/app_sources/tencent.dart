@@ -44,14 +44,15 @@ class Tencent extends AppSource {
 
     if (res.statusCode == 200) {
       dynamic json;
+      const jsVar = 'window.systemData=';
       try {
         json = jsonDecode(
           res.body
               .split('\n')
               .map((line) => line.trim())
-              .where((line) => line.startsWith('window.systemData='))
+              .where((line) => line.startsWith(jsVar))
               .first
-              .substring(18),
+              .substring(jsVar.length),
         )['appDetail'];
       } catch (e) {
         throw NoReleasesError();

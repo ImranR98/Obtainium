@@ -96,8 +96,9 @@ class APKPure extends AppSource {
             return null;
           }
 
+          var archSuffix = architectureString.isNotEmpty ? '-$architectureString' : '';
           return MapEntry(
-            '$appId-$versionCode-$architectureString.${type.toLowerCase()}',
+            '$appId-$versionCode$archSuffix.${type.toLowerCase()}',
             downloadUri,
           );
         })
@@ -146,12 +147,16 @@ class APKPure extends AppSource {
     if (forAPKDownload) {
       return null;
     } else {
-      var androidInfo = await DeviceInfoPlugin().androidInfo;
-      return {
-        "Ual-Access-Businessid": "projecta",
-        "Ual-Access-ProjectA":
-            '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
-      };
+      try {
+        var androidInfo = await DeviceInfoPlugin().androidInfo;
+        return {
+          "Ual-Access-Businessid": "projecta",
+          "Ual-Access-ProjectA":
+              '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
+        };
+      } catch (_) {
+        return null;
+      }
     }
   }
 
@@ -165,8 +170,13 @@ class APKPure extends AppSource {
       throw NoReleasesError();
     }
 
-    List<String> supportedArchs =
-        (await DeviceInfoPlugin().androidInfo).supportedAbis;
+    List<String> supportedArchs;
+    try {
+      supportedArchs =
+          (await DeviceInfoPlugin().androidInfo).supportedAbis;
+    } catch (_) {
+      supportedArchs = [];
+    }
 
     var res = await sourceRequest(
       "https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en",

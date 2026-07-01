@@ -151,6 +151,9 @@ class CoolApk extends AppSource {
     ).join(':');
 
     // Token generation adapted from https://github.com/XiaoMengXinX/FuckCoolapkTokenV2 and https://github.com/Coolapk-UWP/Coolapk-UWP
+    // NOTE: the client version (X-App-Version) and device fingerprint below are
+    // version-locked to a specific CoolAPK client release. If the server enforces
+    // minimum-version requirements, these must be periodically updated.
     String aid = randHexString(16);
     String mac = randMacAddress();
     const manufactor = 'Google';

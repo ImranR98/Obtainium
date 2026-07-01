@@ -66,6 +66,7 @@ lib/
 │  ├─ apps_provider_install.dart    download + install (APK / xAPK / zip / tarball / OBB)
 │  ├─ apps_provider_import_export.dart  import/export JSON via SAF
 │  ├─ source_provider.dart          App / AppSource model + SourceProvider service
+│  ├─ app_migrations.dart           Legacy JSON compatibility & schema migrations
 │  ├─ settings_provider.dart        Typed getters/setters over SharedPreferences
 │  ├─ logs_provider.dart            sqflite-backed logs
 │  ├─ notifications_provider.dart   flutter_local_notifications wrappers
@@ -386,7 +387,7 @@ flutter build apk --flavor normal   # or use ./build.sh
 | --- | --- |
 | Add a new app source | New file in `app_sources/`, register in `SourceProvider._buildSources()` |
 | Add a per-app option | The source's `additionalSourceAppSpecificSettingFormItems` (or the base `_commonAppSettingFormItems` accessed via `combinedAppSpecificSettingFormItems`) |
-| Add a global setting | A typed getter/setter in `settings_provider.dart` + a corresponding widget in `settings.dart` (e.g. `SettingsToggleRow`, `GeneratedFormDropdown`) |
+| Add a global setting | A typed getter/setter in `settings_provider.dart` + a corresponding widget in `settings.dart` (e.g. `SettingsToggleRow`, `GeneratedFormDropdown`). Settings are organized into sections via `_buildUpdatesSection()` and `_buildAppearanceSection()` — add your control to the appropriate section. |
 | Change update logic | `apps_provider_updates.dart` (foreground) / `bgUpdateCheck` (background) |
 | Change install behaviour | `apps_provider_install.dart` |
 | Add a reusable widget/dialog | `components/ui_widgets.dart` (or a dedicated component file) |

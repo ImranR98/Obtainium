@@ -62,6 +62,7 @@ class Apk4Free extends AppSource {
       }
 
       var appVersion = html.querySelector('div.version')?.text.trim();
+      if (appVersion?.isNotEmpty != true) appVersion = null;
 
       if (appVersion == null) {
         var rawTitle = titleElement?.text.trim() ?? '';

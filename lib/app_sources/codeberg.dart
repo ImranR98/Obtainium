@@ -2,16 +2,16 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class Codeberg extends AppSource {
-  final GitHub gh = GitHub(hostChanged: true);
+  final GitHub _gh = GitHub(hostChanged: true);
   Codeberg() {
     name = 'Forgejo (Codeberg)';
     hosts = ['codeberg.org'];
 
     additionalSourceAppSpecificSettingFormItems =
-        gh.additionalSourceAppSpecificSettingFormItems;
+        _gh.additionalSourceAppSpecificSettingFormItems;
 
     canSearch = true;
-    searchQuerySettingFormItems = gh.searchQuerySettingFormItems;
+    searchQuerySettingFormItems = _gh.searchQuerySettingFormItems;
   }
 
   @override
@@ -32,7 +32,7 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await gh.fetchReleaseDetailsWithTagFallback(standardUrl, additionalSettings, (
+    return await _gh.fetchReleaseDetailsWithTagFallback(standardUrl, additionalSettings, (
       bool useTagUrl,
     ) async {
       final standardUri = Uri.parse(standardUrl);
@@ -49,7 +49,7 @@ class Codeberg extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    return gh.searchCommon(
+    return _gh.searchCommon(
       query,
       'https://${hosts[0]}/api/v1/repos/search?q=${Uri.encodeQueryComponent(query)}&limit=100',
       'data',

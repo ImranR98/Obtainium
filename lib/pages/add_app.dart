@@ -537,20 +537,14 @@ class AddAppPageState extends State<AddAppPage> {
                 ],
               ],
               onValueChanges: (values, valid, isBuilding) {
-                fn() {
-                  pickedSourceOverride =
-                      (values['overrideSource'] == null ||
-                          values['overrideSource'] == '')
-                      ? null
-                      : values['overrideSource'];
-                }
-
+                final newOverride = (values['overrideSource'] == null ||
+                        values['overrideSource'] == '')
+                    ? null
+                    : values['overrideSource'] as String?;
                 if (!isBuilding) {
-                  setState(() {
-                    fn();
-                  });
+                  setState(() => pickedSourceOverride = newOverride);
                 } else {
-                  fn();
+                  pickedSourceOverride = newOverride;
                 }
                 changeUserInput(userInput, valid, isBuilding);
               },

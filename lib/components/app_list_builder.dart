@@ -107,7 +107,7 @@ class AppListBuilder {
     SortColumnSettings sortColumn,
     SortOrderSettings sortOrder,
   ) {
-    if (sortColumn == SortColumnSettings.added) return apps;
+    if (sortColumn == SortColumnSettings.added) return List.from(apps);
 
     final isDesc = sortOrder == SortOrderSettings.descending;
     if (sortColumn == SortColumnSettings.releaseDate) {

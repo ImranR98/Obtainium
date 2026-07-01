@@ -35,9 +35,10 @@ extension AppsProviderLifecycle on AppsProvider {
 
   String? _getRealInstalledVersion(
       App app, PackageInfo? installedInfo) {
+    if (installedInfo == null) return null;
     return app.additionalSettings['useVersionCodeAsOSVersion'] == true
-        ? installedInfo?.versionCode.toString()
-        : installedInfo?.versionName;
+        ? installedInfo.versionCode?.toString()
+        : installedInfo.versionName;
   }
 
   Future<Directory> getAppsDir() async {

@@ -90,8 +90,6 @@ class AppsPageState extends State<AppsPage> {
   late final ScrollController scrollController = ScrollController();
   final TextEditingController searchController = TextEditingController();
 
-  var sourceProvider = SourceProvider();
-
   @override
   void dispose() {
     _searchDebounce?.cancel();
@@ -322,6 +320,7 @@ class AppsPageState extends State<AppsPage> {
           return <App>[];
         })
         .whenComplete(() {
+          if (!mounted) return;
           setState(() {
             refreshingSince = null;
           });
@@ -654,6 +653,8 @@ class AppsPageState extends State<AppsPage> {
 
     // Watch for changes that affect the pipeline result (app data changes,
     // loading state) without triggering rebuilds on every download tick.
+    // Rebuild when loading state changes (the value itself is unused; the
+    // subscription to loadingApps is what triggers builds on state transitions).
     context.select((AppsProvider p) => p.loadingApps);
     final pipelineSig = context.select(
       (AppsProvider p) =>
@@ -667,6 +668,7 @@ class AppsPageState extends State<AppsPage> {
         settingsProvider.checkJustStarted() &&
         settingsProvider.checkOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _refreshIndicatorKey.currentState?.show();
       });
     }
@@ -886,7 +888,7 @@ class AppsPageState extends State<AppsPage> {
                 defaultValue: filter.sourceFilter,
                 [
                   MapEntry('', tr('none')),
-                  ...sourceProvider.sources.map(
+                  ...SourceProvider().sources.map(
                     (e) => MapEntry(e.name, e.name),
                   ),
                 ],
@@ -1109,11 +1111,11 @@ class AppsPageState extends State<AppsPage> {
                   icon: Icons.share_outlined,
                   label: tr('shareSelectedAppURLs'),
                   onTap: () {
-                    String urls = '';
+                    final buf = StringBuffer();
                     for (var a in selectedApps) {
-                      urls += '${a.url}\n';
+                      buf.writeln(a.url);
                     }
-                    urls = urls.substring(0, urls.length - 1);
+                    final urls = buf.toString().trimRight();
                     SharePlus.instance
                         .share(
                           ShareParams(
@@ -1130,15 +1132,16 @@ class AppsPageState extends State<AppsPage> {
                   onTap: !hasSelection
                       ? null
                       : () {
-                          String urls = '';
+                          final buf = StringBuffer();
                           for (var a in selectedApps) {
-                            urls +=
-                                'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}\n\n';
+                            buf.writeln(
+                              'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}',
+                            );
                           }
                           SharePlus.instance
                               .share(
                                 ShareParams(
-                                  text: urls,
+                                  text: buf.toString(),
                                   subject: 'Obtainium - ${tr('appsString')}',
                                 ),
                               )

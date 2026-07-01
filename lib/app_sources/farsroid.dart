@@ -63,11 +63,12 @@ class Farsroid extends AppSource {
     }
 
     var res2 = await sourceRequest(
-      Uri.encodeFull(
-        'https://${hosts[0]}/api/download-box/?post_id=$postId&post_version=$version',
-      ),
+      'https://${hosts[0]}/api/download-box/?post_id=$postId&post_version=$version',
       additionalSettings,
     );
+    if (res2.statusCode != 200) {
+      throw getObtainiumHttpError(res2);
+    }
     Map<String, dynamic>? farsroidJson;
     try {
       farsroidJson = jsonDecode(res2.body) as Map<String, dynamic>?;

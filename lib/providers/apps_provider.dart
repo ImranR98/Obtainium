@@ -516,90 +516,93 @@ Future<File> downloadFile(
   );
   HttpClient responseClient = responseWithClient.value.key;
   HttpClientResponse response = responseWithClient.value.value;
-  // If we requested a byte range to resume a partial download but the server
-  // ignored it and returned the full file (200 instead of 206 Partial
-  // Content), appending would corrupt the file - discard the partial data and
-  // start the download over from the beginning.
-  if (sentRangeRequest && response.statusCode == HttpStatus.ok) {
-    await sink?.close();
-    sink = null;
-    rangeStart = 0;
-    if (tempDownloadedFile.existsSync()) {
-      deleteFile(tempDownloadedFile);
+  try {
+    // If we requested a byte range to resume a partial download but the server
+    // ignored it and returned the full file (200 instead of 206 Partial
+    // Content), appending would corrupt the file - discard the partial data and
+    // start the download over from the beginning.
+    if (sentRangeRequest && response.statusCode == HttpStatus.ok) {
+      await sink?.close();
+      sink = null;
+      rangeStart = 0;
+      if (tempDownloadedFile.existsSync()) {
+        deleteFile(tempDownloadedFile);
+      }
     }
-  }
-  sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
+    sink ??= tempDownloadedFile.openWrite(mode: FileMode.writeOnly);
 
-  var received = 0;
-  double? progress;
-  DateTime? lastProgressUpdate; // Track last progress update time
-  if (rangeStart > 0 && fullContentLength != null) {
-    received = rangeStart;
-  }
+    var received = 0;
+    double? progress;
+    DateTime? lastProgressUpdate; // Track last progress update time
+    if (rangeStart > 0 && fullContentLength != null) {
+      received = rangeStart;
+    }
 
-  const downloadUIUpdateInterval = Duration(
-    milliseconds: _obtainiumProgressUpdateIntervalMs,
-  );
-  const downloadBufferSizeLocal = _obtainiumDownloadBufferSize;
-
-  final downloadBuffer = BytesBuilder();
-  await response
-      .map((chunk) {
-        received += chunk.length;
-        final now = DateTime.now();
-        if (onProgress != null &&
-            (lastProgressUpdate == null ||
-                now.difference(lastProgressUpdate!) >=
-                    downloadUIUpdateInterval)) {
-          progress = fullContentLength != null
-              ? clampDouble((received / fullContentLength) * 100, 0, 100)
-              : _obtainiumDownloadProgressFallback.toDouble();
-          onProgress(progress);
-          lastProgressUpdate = now;
-        }
-        return chunk;
-      })
-      .transform(
-        StreamTransformer<List<int>, List<int>>.fromHandlers(
-          handleData: (List<int> data, EventSink<List<int>> s) {
-            downloadBuffer.add(data);
-            if (downloadBuffer.length >= downloadBufferSizeLocal) {
-              s.add(downloadBuffer.takeBytes());
-            }
-          },
-          handleDone: (EventSink<List<int>> s) {
-            if (downloadBuffer.isNotEmpty) {
-              s.add(downloadBuffer.takeBytes());
-            }
-            s.close();
-          },
-        ),
-      )
-      .pipe(sink);
-  await sink.close();
-  progress = null;
-  if (onProgress != null) {
-    onProgress(progress);
-  }
-  if (response.statusCode < 200 || response.statusCode > 299) {
-    deleteFile(tempDownloadedFile);
-    throw ObtainiumError(
-      response.reasonPhrase.isNotEmpty
-          ? response.reasonPhrase
-          : tr(
-              'errorWithHttpStatusCode',
-              args: [response.statusCode.toString()],
-            ),
+    const downloadUIUpdateInterval = Duration(
+      milliseconds: _obtainiumProgressUpdateIntervalMs,
     );
-  }
-  if (tempDownloadedFile.existsSync()) {
-    if (downloadedFile.existsSync()) {
-      downloadedFile.deleteSync();
+    const downloadBufferSizeLocal = _obtainiumDownloadBufferSize;
+
+    final downloadBuffer = BytesBuilder();
+    await response
+        .map((chunk) {
+          received += chunk.length;
+          final now = DateTime.now();
+          if (onProgress != null &&
+              (lastProgressUpdate == null ||
+                  now.difference(lastProgressUpdate!) >=
+                      downloadUIUpdateInterval)) {
+            progress = fullContentLength != null
+                ? clampDouble((received / fullContentLength) * 100, 0, 100)
+                : _obtainiumDownloadProgressFallback.toDouble();
+            onProgress(progress);
+            lastProgressUpdate = now;
+          }
+          return chunk;
+        })
+        .transform(
+          StreamTransformer<List<int>, List<int>>.fromHandlers(
+            handleData: (List<int> data, EventSink<List<int>> s) {
+              downloadBuffer.add(data);
+              if (downloadBuffer.length >= downloadBufferSizeLocal) {
+                s.add(downloadBuffer.takeBytes());
+              }
+            },
+            handleDone: (EventSink<List<int>> s) {
+              if (downloadBuffer.isNotEmpty) {
+                s.add(downloadBuffer.takeBytes());
+              }
+              s.close();
+            },
+          ),
+        )
+        .pipe(sink);
+    await sink.close();
+    progress = null;
+    if (onProgress != null) {
+      onProgress(progress);
     }
-    tempDownloadedFile.renameSync(downloadedFile.path);
+    if (response.statusCode < 200 || response.statusCode > 299) {
+      deleteFile(tempDownloadedFile);
+      throw ObtainiumError(
+        response.reasonPhrase.isNotEmpty
+            ? response.reasonPhrase
+            : tr(
+                'errorWithHttpStatusCode',
+                args: [response.statusCode.toString()],
+              ),
+      );
+    }
+    if (tempDownloadedFile.existsSync()) {
+      if (downloadedFile.existsSync()) {
+        downloadedFile.deleteSync();
+      }
+      tempDownloadedFile.renameSync(downloadedFile.path);
+    }
+    return downloadedFile;
+  } finally {
+    responseClient.close();
   }
-  responseClient.close();
-  return downloadedFile;
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {

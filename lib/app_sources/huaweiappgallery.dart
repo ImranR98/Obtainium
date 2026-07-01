@@ -21,8 +21,10 @@ class HuaweiAppGallery extends AppSource {
     pathPattern: r'(/#)?/(app|appdl)/[^/]+',
   );
 
-  String getDlUrl(String standardUrl) =>
-      'https://${hosts[1]}/appdl/${standardUrl.split('/').last}';
+  String getDlUrl(String standardUrl) {
+    assert(hosts.length > 1, 'HuaweiAppGallery expects at least 2 hosts');
+    return 'https://${hosts[1]}/appdl/${standardUrl.split('/').last}';
+  }
 
   Future<Response> requestAppdlRedirect(
     String dlUrl,
@@ -95,6 +97,8 @@ class HuaweiAppGallery extends AppSource {
     if (relDateStr == null || relDateStr.length != 10) {
       throw NoVersionError();
     }
+    // The date string is a 10-digit compact format (YYMMDDHHMM).
+    // Insert hyphens to produce YY-MM-DD-HH-MM for DateFormat parsing.
     var relDateStrAdj = relDateStr.split('');
     var tempLen = relDateStrAdj.length;
     var i = 2;

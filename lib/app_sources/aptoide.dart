@@ -41,10 +41,10 @@ class Aptoide extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var idMatch = RegExp('"app":{"id":[0-9]+').firstMatch(res.body);
+    var idMatch = RegExp(r'"app"\s*:\s*\{\s*"id"\s*:\s*([0-9]+)').firstMatch(res.body);
     String? id;
     if (idMatch != null) {
-      id = res.body.substring(idMatch.start + 12, idMatch.end);
+      id = idMatch.group(1)!;
     } else {
       throw NoReleasesError();
     }

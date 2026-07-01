@@ -13,6 +13,15 @@ import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+
+void _showImportError(dynamic e, BuildContext context) {
+  if (e is PlatformException || e is MissingPluginException) {
+    showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+  } else {
+    showError(e, context);
+  }
+}
+
 class ImportFromURLListPage extends StatefulWidget {
   const ImportFromURLListPage({super.key});
 
@@ -59,11 +68,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
       }
     } catch (e) {
       if (mounted) {
-        if (e is PlatformException || e is MissingPluginException) {
-          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-        } else {
-          showError(e, context);
-        }
+        _showImportError(e, context);
       }
     }
   }
@@ -243,11 +248,7 @@ class _ImportSectionState extends State<ImportSection> {
           })
           .catchError((e) {
             if (!context.mounted) return;
-            if (e is PlatformException || e is MissingPluginException) {
-              showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-            } else {
-              showError(e, context);
-            }
+            _showImportError(e, context);
           })
           .whenComplete(() {
             if (mounted) {
@@ -258,71 +259,69 @@ class _ImportSectionState extends State<ImportSection> {
           });
     }
 
-    runMassSourceImport(MassAppUrlSource source) {
-      () async {
-            var values = await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('importX', args: [source.name]),
-                  items: source.requiredArgs
-                      .map((e) => [GeneratedFormTextField(e, label: e)])
-                      .toList(),
-                );
-              },
+    runMassSourceImport(MassAppUrlSource source) async {
+      try {
+        var values = await showDialog<Map<String, dynamic>?>(
+          context: context,
+          builder: (BuildContext ctx) {
+            return GeneratedFormModal(
+              title: tr('importX', args: [source.name]),
+              items: source.requiredArgs
+                  .map((e) => [GeneratedFormTextField(e, label: e)])
+                  .toList(),
             );
-            if (values != null) {
-              if (mounted) {
-                setState(() {
-                  importInProgress = true;
-                });
-              }
-              var urlsWithDescriptions = await source.getUrlsWithDescriptions(
-                values.values.map((e) => e.toString()).toList(),
+          },
+        );
+        if (values != null) {
+          if (mounted) {
+            setState(() {
+              importInProgress = true;
+            });
+          }
+          var urlsWithDescriptions = await source.getUrlsWithDescriptions(
+            values.values.map((e) => e.toString()).toList(),
+          );
+          if (!context.mounted) return;
+          var selectedUrls = await showDialog<List<String>?>(
+            context: context,
+            builder: (BuildContext ctx) {
+              return SelectionModal(entries: urlsWithDescriptions);
+            },
+          );
+          if (selectedUrls != null) {
+            var errors = await appsProvider.addAppsByURL(selectedUrls);
+            if (!context.mounted) return;
+            if (errors.isEmpty) {
+              showMessage(
+                tr(
+                  'importedX',
+                  args: [plural('apps', selectedUrls.length).toLowerCase()],
+                ),
+                context,
               );
-              if (!context.mounted) return;
-              var selectedUrls = await showDialog<List<String>?>(
+            } else {
+              showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
-                  return SelectionModal(entries: urlsWithDescriptions);
+                  return ImportErrorDialog(
+                    urlsLength: selectedUrls.length,
+                    errors: errors,
+                  );
                 },
               );
-              if (selectedUrls != null) {
-                var errors = await appsProvider.addAppsByURL(selectedUrls);
-                if (!context.mounted) return;
-                if (errors.isEmpty) {
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', selectedUrls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: selectedUrls.length,
-                        errors: errors,
-                      );
-                    },
-                  );
-                }
-              }
             }
-          }()
-          .catchError((e) {
-            if (!context.mounted) return;
-            showError(e, context);
-          })
-          .whenComplete(() {
-            if (mounted) {
-              setState(() {
-                importInProgress = false;
-              });
-            }
+          }
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        showError(e, context);
+      } finally {
+        if (mounted) {
+          setState(() {
+            importInProgress = false;
           });
+        }
+      }
     }
 
     return Column(

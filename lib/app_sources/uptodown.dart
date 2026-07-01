@@ -4,7 +4,7 @@ import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-DateTime? parseDateTimeMMMddCommayyyy(String? dateString) {
+DateTime? parseUptodownDate(String? dateString) {
   DateTime? releaseDate;
   try {
     releaseDate = dateString != null
@@ -108,7 +108,7 @@ class Uptodown extends AppSource {
     String? dateStr = appDetails['dateStr'];
     DateTime? relDate;
     if (dateStr != null) {
-      relDate = parseDateTimeMMMddCommayyyy(dateStr);
+      relDate = parseUptodownDate(dateStr);
     }
     return APKDetails(
       version,

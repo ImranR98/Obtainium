@@ -12,13 +12,18 @@ const main = async () => {
     const templateTranslation = JSON.parse(fs.readFileSync(templateFile).toString())
 
     otherFiles.forEach(file => {
-        const thisTranslationOriginal = JSON.parse(fs.readFileSync((file).toString()))
+        const thisTranslationOriginal = JSON.parse(fs.readFileSync(file))
         const thisTranslationNew = {}
         Object.keys(templateTranslation).forEach(k => {
             thisTranslationNew[k] = thisTranslationOriginal[k] || templateTranslation[k]
         })
+        // Warn about keys present in the translation but missing from the template
+        const missingFromTemplate = Object.keys(thisTranslationOriginal).filter(k => !templateTranslation.hasOwnProperty(k))
+        if (missingFromTemplate.length > 0) {
+            console.error(`${file}: keys missing from template will be dropped: ${missingFromTemplate.join(', ')}`)
+        }
         fs.writeFileSync(file, `${JSON.stringify(thisTranslationNew, null, '    ')}\n`)
     })
 }
 
-main().catch(e => console.error)
+main().catch(e => console.error(e))

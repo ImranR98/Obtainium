@@ -10,8 +10,8 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class GitLab extends AppSource {
-  // Reused for the pure getAppNames string helper instead of allocating a new
-  // GitHub source instance on every getLatestAPKDetails call.
+  // Reused for getAppNames, API URL building, search, and getRequestHeaders
+  // so a single GitHub instance handles all delegated behaviour.
   final GitHub _gh = GitHub(hostChanged: true);
 
   GitLab({bool hostChanged = false}) {

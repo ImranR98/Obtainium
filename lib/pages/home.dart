@@ -323,6 +323,8 @@ class _HomePageState extends State<HomePage> {
       NavigationPageItem(
         tr('appsString'),
         Icons.apps_outlined,
+        // Apps page is rendered conditionally in the two-pane layout below
+        // rather than via this NavigationPageItem's widget slot.
         const SizedBox.shrink(),
         selectedIcon: Icons.apps,
       ),
@@ -363,7 +365,9 @@ class _HomePageState extends State<HomePage> {
 
     final detailPane =
         selectedAppId != null &&
-            context.read<AppsProvider>().apps.containsKey(selectedAppId)
+            context.select<AppsProvider, bool>(
+              (p) => p.apps.containsKey(selectedAppId),
+            )
         ? AppPage(
             key: ValueKey(selectedAppId),
             appId: selectedAppId!,

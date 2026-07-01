@@ -12,6 +12,8 @@ class TelegramApp extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
+    // Telegram has a single known APK download page — the user's exact URL
+    // does not affect which APK is found, so normalize to the homepage.
     return 'https://${hosts[0]}';
   }
 
