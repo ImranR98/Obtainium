@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 trap "cd \"$CURR_DIR\"" EXIT
 cd "$SCRIPT_DIR"
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ]; then
     git fetch && git merge origin/main && git push # Typically run after a PR to main, so bring dev up to date
 fi
 
