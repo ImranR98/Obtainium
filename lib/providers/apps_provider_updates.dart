@@ -120,30 +120,13 @@ extension AppsProviderUpdates on AppsProvider {
           chunk.map((appId) async {
             final currentApp = apps[appId]?.app;
             try {
-              final source = SourceProvider().getSource(
-                currentApp?.url ?? '',
-                overrideSource: currentApp?.overrideSource,
-              );
-              if (sourceHealthMonitor.shouldSkip(source.name)) {
-                return null;
-              }
               final newApp = await fetchUpdate(appId);
               if (newApp == null) return null;
-              sourceHealthMonitor.recordSuccess(source.name);
               final isUpdate =
                   currentApp != null &&
                   newApp.latestVersion != currentApp.latestVersion;
               return MapEntry(newApp, isUpdate);
             } catch (e) {
-              if (currentApp != null) {
-                try {
-                  final source = SourceProvider().getSource(
-                    currentApp.url,
-                    overrideSource: currentApp.overrideSource,
-                  );
-                  sourceHealthMonitor.recordFailure(source.name, e);
-                } catch (_) {}
-              }
               if ((e is RateLimitError || e is SocketException) &&
                   throwErrorsForRetry) {
                 rethrow;

@@ -72,7 +72,7 @@ lib/
 │  ├─ app_detail_widgets.dart     AppInfoDialog, AppFilePicker
 │  └─ category_editor.dart        Category management UI
 ├─ providers/                     State, business logic, services, models
-│  ├─ apps_provider.dart          Core AppsProvider + download primitives + TranslationLoader + NativeFeatures + SourceHealthMonitor
+│  ├─ apps_provider.dart          Core AppsProvider + download primitives + TranslationLoader + NativeFeatures
 │  ├─ apps_provider_*.dart        Lifecycle, updates, install, import/export extensions
 │  ├─ source_provider.dart        Immutable App model + TypedSettings + AppSource + SourceProvider + HttpService + VersionService + legacy JSON migrations
 │  ├─ settings_provider.dart      Typed getters/setters over SharedPreferences
@@ -298,7 +298,7 @@ Runs headless (no widget tree) via `background_fetch` or the foreground service.
    retries that actually `await` the retry delay** so rate-limited hosts aren't hammered.
 4. **Install mode** (`toCheck` empty): downloads + silently installs pending updates;
    Obtainium itself is always moved to install **last**.
-5. Publishes saves via a `StreamController<AppRepositoryEvent>` so the foreground
+5. Publishes saves via a broadcast `StreamController<void>` so the foreground
    instance can detect background writes and reload automatically. Errors during
    background tasks are caught and logged rather than crashing the headless process.
 
@@ -402,9 +402,8 @@ flutter build apk --flavor normal   # or use ./build.sh
   `android_system_font`) — keep them pinned; don't loosen to `ref: main`.
 - `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
   `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
-- Test files live in `test/`. The CI workflow (`.github/workflows/test.yml`) runs
-  `flutter analyze`, `dart format --set-exit-if-changed .`, and `flutter test` on every
-  PR against `main`.
+- Test files live in `test/`. Run `flutter analyze`, `dart format --set-exit-if-changed .`,
+  and `flutter test` locally before opening a PR.
 
 ---
 

@@ -131,15 +131,6 @@ class AppInMemory {
   }
 }
 
-enum AppRepositoryEventType { saved, deleted }
-
-class AppRepositoryEvent {
-  final AppRepositoryEventType type;
-  final List<String> appIds;
-
-  AppRepositoryEvent(this.type, this.appIds);
-}
-
 class DownloadedApk {
   String appId;
   File file;
@@ -615,14 +606,12 @@ Future<Directory> getAppStorageDir() async =>
     await getApplicationDocumentsDirectory();
 
 class AppsProvider with ChangeNotifier {
-  // Static, app-lifetime cross-instance event bus; intentionally never closed.
+  // Static, app-lifetime cross-instance save-notification bus; intentionally
+  // never closed. The foreground instance subscribes so it can detect saves
+  // made by background tasks and reload as needed.
   // ignore: close_sinks
-  static final StreamController<AppRepositoryEvent> _eventsController =
-      StreamController<AppRepositoryEvent>.broadcast();
-
-  /// Cross-instance event stream. The foreground instance subscribes to this
-  /// stream to detect saves made by background tasks and reload as needed.
-  Stream<AppRepositoryEvent> get events => _eventsController.stream;
+  static final StreamController<void> _eventsController =
+      StreamController<void>.broadcast();
 
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -631,8 +620,6 @@ class AppsProvider with ChangeNotifier {
   Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
   dynamic logger;
-
-  final SourceHealthMonitor sourceHealthMonitor = SourceHealthMonitor();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
@@ -645,7 +632,7 @@ class AppsProvider with ChangeNotifier {
 
   // Tracks whether a background save occurred since the last load.
   bool _needsBgReload = false;
-  StreamSubscription<AppRepositoryEvent>? _eventSubscription;
+  StreamSubscription<void>? _eventSubscription;
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
@@ -711,12 +698,8 @@ class AppsProvider with ChangeNotifier {
       }
     });
     if (!_isBg) {
-      _eventSubscription = _eventsController.stream.listen((
-        AppRepositoryEvent event,
-      ) {
-        if (event.type == AppRepositoryEventType.saved) {
-          _needsBgReload = true;
-        }
+      _eventSubscription = _eventsController.stream.listen((_) {
+        _needsBgReload = true;
       });
     }
     () async {
@@ -965,9 +948,7 @@ Future<void> bgUpdateCheck(
     );
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
-  AppsProvider._eventsController.add(
-    AppRepositoryEvent(AppRepositoryEventType.saved, []),
-  );
+  AppsProvider._eventsController.add(null);
 }
 
 Future<void> _bgRunUpdateCheck(
@@ -1148,59 +1129,6 @@ class CancellationToken {
 
   void throwIfCancelled() {
     if (_cancelled) throw CancellationException();
-  }
-}
-
-class _SourceHealth {
-  int consecutiveFailures = 0;
-  DateTime? lastFailure;
-  int totalFailures = 0;
-  int totalSuccesses = 0;
-}
-
-class SourceHealthMonitor {
-  final Map<String, _SourceHealth> _health = {};
-
-  bool shouldSkip(String sourceName) {
-    final h = _health[sourceName];
-    if (h == null) return false;
-    if (h.consecutiveFailures >= 3 &&
-        DateTime.now().difference(h.lastFailure!).inMinutes < 5) {
-      return true;
-    }
-    return false;
-  }
-
-  void recordSuccess(String sourceName) {
-    final h = _health.putIfAbsent(sourceName, () => _SourceHealth());
-    h.consecutiveFailures = 0;
-    h.totalSuccesses++;
-    LogsProvider().add(
-      'Source health: $sourceName recovered',
-      level: LogLevel.debug,
-    );
-  }
-
-  void recordFailure(String sourceName, Object error) {
-    final h = _health.putIfAbsent(sourceName, () => _SourceHealth());
-    h.consecutiveFailures++;
-    h.lastFailure = DateTime.now();
-    h.totalFailures++;
-    LogsProvider().add(
-      'Source health: $sourceName failure #${h.consecutiveFailures}: $error',
-      level: LogLevel.warning,
-    );
-  }
-
-  Map<String, Map<String, dynamic>> getHealthReport() {
-    return _health.map(
-      (key, value) => MapEntry(key, {
-        'consecutiveFailures': value.consecutiveFailures,
-        'totalFailures': value.totalFailures,
-        'totalSuccesses': value.totalSuccesses,
-        'isTripped': value.consecutiveFailures >= 3,
-      }),
-    );
   }
 }
 

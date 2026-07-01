@@ -32,7 +32,8 @@ class ObtainiumError {
       code == 'UNKNOWN' ||
           code == 'UNEXPECTED' ||
           code == 'CHECK_UPDATES_FAILED' ||
-          code == 'MULTI_ERROR'
+          code == 'MULTI_ERROR' ||
+          code == 'HTTP_ERROR'
       ? _message
       : localizeErrorCode(code, data);
 
