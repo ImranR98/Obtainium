@@ -20,11 +20,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.child});
-
-  /// When provided (e.g. by a [ShellRoute]), this widget is rendered as the
-  /// current page content instead of the internally-managed navigation pages.
-  final Widget? child;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -404,9 +400,7 @@ class _HomePageState extends State<HomePage> {
                   );
 
         final Widget content;
-        if (widget.child != null) {
-          content = widget.child!;
-        } else if (useTwoPane) {
+        if (useTwoPane) {
           content = Row(
             children: [
               Expanded(

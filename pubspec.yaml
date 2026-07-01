@@ -68,7 +68,6 @@ dependencies:
 
   flutter_foreground_task: ^9.2.2
   flutter_markdown_plus: ^1.0.7
-  go_router: ^14.0.0
 
 dev_dependencies:
   flutter_test:

@@ -123,6 +123,7 @@ extension AppsProviderInstall on AppsProvider {
         app = app.copyWith(preferredApkIndex: app.apkUrls.length - 1);
       }
       if (app.preferredApkIndex < 0) app = app.copyWith(preferredApkIndex: 0);
+      if (apps[app.id] != null) apps[app.id]!.app = app;
       AppSource source = SourceProvider().getSource(
         app.url,
         overrideSource: app.overrideSource,

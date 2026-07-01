@@ -211,7 +211,7 @@ class AppListTile extends StatelessWidget {
     return IconButton(
       visualDensity: VisualDensity.compact,
       color: Theme.of(context).colorScheme.primary,
-      tooltip: _app.additionalSettings['trackOnly'] == true
+      tooltip: _app.settings.getBool('trackOnly')
           ? tr('markUpdated')
           : tr('update'),
       onPressed: appsProvider.areDownloadsRunning()
@@ -238,7 +238,7 @@ class AppListTile extends StatelessWidget {
                   });
             },
       icon: Icon(
-        _app.additionalSettings['trackOnly'] == true
+        _app.settings.getBool('trackOnly')
             ? Icons.check_circle_outline
             : Icons.install_mobile,
       ),
@@ -383,7 +383,7 @@ class AppListTile extends StatelessWidget {
     final appId = _app.id;
     final installed = _app.installedVersion;
     final latest = _app.latestVersion;
-    final trackOnly = _app.additionalSettings['trackOnly'] == true;
+    final trackOnly = _app.settings.getBool('trackOnly');
     final canInstall = installed == null && !trackOnly;
     final canUpdate = installed != null && installed != latest && !trackOnly;
     final cs = Theme.of(context).colorScheme;

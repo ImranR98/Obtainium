@@ -9,7 +9,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/router.dart';
+import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
@@ -55,6 +55,10 @@ List<MapEntry<Locale, String>> supportedLocales = const [
 const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
 bool isFdroidBuild = false;
+
+/// Global navigator key, used to navigate from outside the widget tree
+/// (e.g. tapping a notification).
+final appNavigatorKey = GlobalKey<NavigatorState>();
 
 const minBackgroundFetchInterval = 15;
 
@@ -130,8 +134,8 @@ void main() async {
                 const Text('An unexpected error occurred.'),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () {},
-                  child: const Text('Restart'),
+                  onPressed: () => SystemNavigator.pop(),
+                  child: const Text('Close'),
                 ),
               ],
             ),
@@ -467,8 +471,9 @@ class _ObtainiumState extends State<Obtainium> {
 
           if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
 
-          return MaterialApp.router(
+          return MaterialApp(
             title: 'Obtainium',
+            navigatorKey: appNavigatorKey,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,
@@ -485,7 +490,7 @@ class _ObtainiumState extends State<Obtainium> {
                   : darkColorScheme,
               settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
-            routerConfig: appRouter,
+            home: const HomePage(),
             builder: (context, child) => Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):

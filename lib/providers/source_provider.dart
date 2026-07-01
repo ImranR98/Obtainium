@@ -1234,10 +1234,6 @@ class TypedSettings {
   /// For backwards compatibility with code that accesses [_raw] via index.
   dynamic operator [](String key) => _raw[key];
 
-  void operator []=(String key, dynamic value) {
-    _raw[key] = value;
-  }
-
   bool hasNonNullOrEmpty(String key) {
     final val = _raw[key];
     if (val == null) return false;
