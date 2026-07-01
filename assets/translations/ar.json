@@ -138,7 +138,9 @@
     "dontSortReleasesList": "حافظ على ترتيب الإصدارات من API",
     "downloadNotifDescription": "يخطر المستخدم بالتقدم في تنزيل التطبيق",
     "downloadX": "تنزيل {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "نُزَّل {}",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "جارِ تنزيل {}",
     "downloadingXNotifChannel": "جارِ تنزيل {}",
     "dropdownNoOptsError": "خطأ: يجب أن يحتوي القائمة المنسدلة على خيار واحد على الأقل",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "ونلاحظ أنه في الأجل القصير، قد يظل من الممكن تركيب عملية \" غير متوافقة \" من خلال عملية \" تدفق سريع \" وعد غوغل بتنفيذها بعد رد فعل واسع النطاق على إعلانهم، ولكنهم لم يفصلوا كيف سينجح ذلك حتى لا يتضح ما إذا كان سيحافظ حقا على حريات المستعملين بأي طريقة عملية.\n\nعلى أية حال، حركة (جوجل) خطوة هامة نحو نهاية الحوسبة المجانية ذات الأغراض العامة للأفراد\n\nوينبغي ألا يتأثر هذا النظام غير المصدق عليه، مثل غرافينيوس، طالما يسمح له باستمرار وجوده.",
     "groupByCategory": "التجميع حسب التصنيف",
     "highlightTouchTargets": "تمييز أهداف اللمس الأقل وضوحًا",
+    "import": "Import",
     "hour": {
         "one": "{} ساعة",
         "other": "{} ساعات"
@@ -250,6 +253,7 @@
     "noDescription": "لا يوجد وصف",
     "noFilePickerAvailable": "لا يتوفر منتقي الملفات. يُرجى تثبيت تطبيق لإدارة الملفات.",
     "noLogs": "لا توجد سجلات",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "لا توجد تحديثات جديدة.",
     "noReleaseFound": "تعذر العثور على إصدار مناسب",
     "noResults": "لا توجد نتائج",

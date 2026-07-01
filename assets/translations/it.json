@@ -138,7 +138,9 @@
     "dontSortReleasesList": "Conserva l'ordine di release da API",
     "downloadNotifDescription": "Notifica all'utente lo stato di avanzamento del download di un'app",
     "downloadX": "Scarica {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "Scaricato {}",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Scaricamento di {} in corso",
     "downloadingXNotifChannel": "Scaricamento di {} in corso",
     "dropdownNoOptsError": "ERRORE: LA TENDINA DEVE AVERE ALMENO UN'OPZIONE",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "Si noti che a breve termine, può continuare ad essere possibile installare applicazioni \"non verificate\" (non conformi) attraverso un processo di \"flusso avanzato\" che Google ha promesso di implementare dopo ampio backlash al loro annuncio, ma non hanno dettagliato come questo funzionerebbe in modo da non essere chiaro se veramente preservare le libertà degli utenti in qualsiasi modo pratico.\n\nIn ogni caso, la mossa di Google è un passo significativo verso la fine del free, general-purpose computing per gli individui.\n\nOS non certificati, come GrapheneOS, non dovrebbero essere influenzati da questo per tutto il tempo in cui sono autorizzati a continuare ad esistere.",
     "groupByCategory": "Raggruppa per categoria",
     "highlightTouchTargets": "Evidenzia elementi toccabili meno ovvi",
+    "import": "Import",
     "hour": {
         "one": "{} ora",
         "other": "{} ore"
@@ -250,6 +253,7 @@
     "noDescription": "Descrizione assente",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "Nessun log",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "Nessun nuovo aggiornamento.",
     "noReleaseFound": "Impossibile trovare una release adatta",
     "noResults": "Nessun risultato trovato",

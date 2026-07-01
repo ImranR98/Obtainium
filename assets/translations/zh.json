@@ -138,7 +138,9 @@
     "dontSortReleasesList": "保持来自 API 的发行顺序",
     "downloadNotifDescription": "提示应用的下载进度",
     "downloadX": "下载 {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "已下载 {}",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "正在下载 {}",
     "downloadingXNotifChannel": "正在下载“{}”",
     "dropdownNoOptsError": "错误：下拉菜单必须包含至少一个选项",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "请注意,在短期内,通过谷歌承诺在广泛反对其公告后实施的\"高级流程\"程序,可能继续安装\"未经验证\"(不符合要求)的应用软件,但他们没有详细说明这将如何运作,因此不清楚它是否会以任何实际方式真正维护用户自由.\n\n无论如何，谷歌的这一举动是朝向个人自由、通用计算结束的重要一步.\n\n未经认证的OS,如GrapheneOS,只要允许继续存在,就不应受到影响.",
     "groupByCategory": "按类别分组显示",
     "highlightTouchTargets": "突出展示不明显的可交互区域",
+    "import": "Import",
     "hour": {
         "one": "{} 小时",
         "other": "{} 小时"
@@ -250,6 +253,7 @@
     "noDescription": "无描述",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "无日志",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "全部应用已是最新。",
     "noReleaseFound": "找不到合适的发行版",
     "noResults": "无结果",

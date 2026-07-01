@@ -138,7 +138,9 @@
     "dontSortReleasesList": "API-യിൽ നിന്നുള്ള റിലീസ് ഓർഡർ നിലനിർത്തുക",
     "downloadNotifDescription": "ഒരു ആപ്പ് ഡൗൺലോഡ് ചെയ്യുന്നതിലെ പുരോഗതി ഉപയോക്താവിനെ അറിയിക്കുന്നു",
     "downloadX": "{} ഡൗൺലോഡ് ചെയ്യുക",
+    "downloadFailed": "Download failed",
     "downloadedX": "{} ഡൗൺലോഡ് ചെയ്തു",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} ഡൗൺലോഡ് ചെയ്യുന്നു",
     "downloadingXNotifChannel": "{} ഡൗൺലോഡ് ചെയ്യുന്നു",
     "dropdownNoOptsError": "തെറ്റ്: ഡ്രോപ്പ്ഡൗണിന് കുറഞ്ഞത് ഒരു ഓപ്ഷനെങ്കിലും ഉണ്ടായിരിക്കണം",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "Note that in the short term, it may continue to be possible to install \"unverified\" (non-compliant) apps through an \"advanced flow\" process that Google has promised to implement after broad backlash to their announcement, but they have not detailed how this would work so it is unclear whether it will truly preserve user freedoms in any practical way.\n\nIn any case, Google's move is a significant step towards the end of free, general-purpose computing for individuals.\n\nNon-certified OSes, like GrapheneOS, should be unaffected by this for as long as they are allowed to continue to exist.",
     "groupByCategory": "വിഭാഗം തിരിച്ച് ഗ്രൂപ്പ് ചെയ്യുക",
     "highlightTouchTargets": "കുറഞ്ഞ വ്യക്തതയുള്ള ടച്ച് ടാർഗെറ്റുകൾ ഹൈലൈറ്റ് ചെയ്യുക",
+    "import": "Import",
     "hour": {
         "one": "{} മണിക്കൂർ",
         "other": "{} മണിക്കൂർ"
@@ -250,6 +253,7 @@
     "noDescription": "വിവരണം ലഭ്യമല്ല",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "ലോഗുകളൊന്നുമില്ല",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "പുതിയ അപ്‌ഡേറ്റുകളൊന്നുമില്ല.",
     "noReleaseFound": "അനുയോജ്യമായ റിലീസ് കണ്ടെത്താനായില്ല",
     "noResults": "ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല",

@@ -138,7 +138,9 @@
     "dontSortReleasesList": "Manter ordem de lançamento da API",
     "downloadNotifDescription": "Notifica o usuário do progresso ao baixar um app",
     "downloadX": "Baixar {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "{} foi baixado",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Baixando {}",
     "downloadingXNotifChannel": "Baixando {}",
     "dropdownNoOptsError": "ERRO: O MENU DEVE TER PELO MENOS UMA OPÇÃO",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "Note que, a curto prazo, pode continuar a ser possível instalar aplicativos \"não verificados\" (não conformes) através de um processo de \"fluxo avançado\" que o Google prometeu implementar após uma ampla retrocesso ao seu anúncio, mas eles não detalharam como isso funcionaria então não é claro se ele realmente preservará as liberdades de usuário de alguma forma prática.\n\nEm qualquer caso, o movimento do Google é um passo significativo para o fim da computação gratuita, de propósito geral para os indivíduos.\n\nOS não certificados, como o GrapheneOS, não devem ser afetados por isso enquanto forem autorizados a continuar a existir.",
     "groupByCategory": "Agrupar por categoria",
     "highlightTouchTargets": "Acentuar alvos de toque menos óbvios",
+    "import": "Import",
     "hour": {
         "one": "{} hora",
         "other": "{} horas"
@@ -250,6 +253,7 @@
     "noDescription": "Sem descrição",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "Nenhum registro",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "Nenhuma atualização disponível.",
     "noReleaseFound": "Não foi possível encontrar um lançamento adequado",
     "noResults": "Nenhum resultado encontrado",

@@ -138,7 +138,9 @@
     "dontSortReleasesList": "Manter orde de publicación da API",
     "downloadNotifDescription": "Informa á usuaria do progreso da descarga da app",
     "downloadX": "Descargar {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "Descargado {}",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Descargando {}",
     "downloadingXNotifChannel": "Descargando {}",
     "dropdownNoOptsError": "ERRO: DESPREGABLE TEN QUE TER 1 OPCIÓN POLO MENOS",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "A curto prazo pode seguir dispoñible a instalación de aplicacións \"non verificadas\" (non-compliant) cun procedemento \"avanzado\" que Google prometeu implementar despois das críticas recibidas, pero aínda non publicaron detalles sobre isto e non está claro se realmente será posible levalo adiante de xeito práctico.\n\nEn todo caso, os movementos de Google son indicativos sobre o desexo de acabar coa liberdade, o propósito de uso xeral das computadoras por parte das persoas.\n\nOs sistemas operativos non certificados, como GrapheneOS, non se deberían ver afectados por isto mentras lles permitan existir.",
     "groupByCategory": "Agrupar por categoría",
     "highlightTouchTargets": "Obxectivos menos evidentes",
+    "import": "Import",
     "hour": {
         "one": "{} hora",
         "other": "{} horas"
@@ -250,6 +253,7 @@
     "noDescription": "Sen descrición",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "Sen rexistros",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "Sen actualizacións.",
     "noReleaseFound": "Non se atopou unha publicación axeitada",
     "noResults": "Sen resultados",

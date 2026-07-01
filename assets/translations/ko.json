@@ -138,7 +138,9 @@
     "dontSortReleasesList": "API에서 릴리스 순서 유지",
     "downloadNotifDescription": "앱 다운로드 진행 상황을 사용자에게 알립니다",
     "downloadX": "{} 다운로드",
+    "downloadFailed": "Download failed",
     "downloadedX": "{} 다운로드 완료",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} 다운로드 중",
     "downloadingXNotifChannel": "{} 다운로드 중",
     "dropdownNoOptsError": "오류: 드롭다운에는 최소 하나의 옵션이 있어야 합니다",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "단기적으로는 Google이 발표 이후 거센 반발에 부딪혀 도입하기로 약속한 \"고급 절차\"를 통해 \"인증되지 않은\" 앱을 계속 설치하는 것이 가능할 수도 있습니다. 하지만 Google은 이 방식이 구체적으로 어떻게 작동하는지 밝히지 않았으므로, 이것이 실질적으로 사용자의 자유를 보장할지는 불분명합니다. 결과적으로 Google의 이러한 행보는 개인을 위한 자유롭고 범용적인 컴퓨팅 환경의 종말을 향한 중대한 단계입니다. GrapheneOS와 같은 인증되지 않은 OS는 해당 프로젝트가 유지되는 한 이 조치의 영향을 받지 않습니다.",
     "groupByCategory": "카테고리별 그룹화",
     "highlightTouchTargets": "덜 명확한 터치 대상 강조",
+    "import": "Import",
     "hour": {
         "one": "{} 시간",
         "other": "{} 시간"
@@ -250,6 +253,7 @@
     "noDescription": "설명 없음",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "로그 없음",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "새로운 업데이트가 없습니다.",
     "noReleaseFound": "적절한 릴리스를 찾을 수 없습니다",
     "noResults": "결과가 없습니다",

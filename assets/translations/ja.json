@@ -138,7 +138,9 @@
     "dontSortReleasesList": "APIからのリリース順を保持する",
     "downloadNotifDescription": "アプリのダウンロード状況を通知する",
     "downloadX": "{} をダウンロード",
+    "downloadFailed": "Download failed",
     "downloadedX": "{} をダウンロードしました",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} をダウンロード中",
     "downloadingXNotifChannel": "{} をダウンロード中",
     "dropdownNoOptsError": "エラー: ドロップダウンには少なくとも1つのオプションが必要です",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "なお、短期的には、Googleが発表後に広範な反発を受けて実装を約束した「高度なフロー」プロセスを通じて、「未検証」（非準拠）のアプリをインストールし続けることが可能になるかもしれません。しかし、その具体的な仕組みは明らかにされておらず、ユーザーの自由が実質的に保たれるかどうかは不明です。\n\nいずれにせよ、Googleのこの動きは、個人向けの自由な汎用コンピューティングの終焉に向けた大きな一歩です。\n\nGrapheneOSのような非認定OSは、その存在が許される限り、この影響を受けないはずです。",
     "groupByCategory": "カテゴリ別にグループ化する",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
+    "import": "Import",
     "hour": {
         "one": "{} 時間",
         "other": "{} 時間"
@@ -250,6 +253,7 @@
     "noDescription": "説明はありません",
     "noFilePickerAvailable": "ファイルピッカーが利用できません。ファイルマネージャーアプリをインストールしてください。",
     "noLogs": "ログはありません",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "新しいアップデートはありません。",
     "noReleaseFound": "適切なリリースが見つかりませんでした",
     "noResults": "結果は見つかりませんでした",

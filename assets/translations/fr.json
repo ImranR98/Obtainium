@@ -138,7 +138,9 @@
     "dontSortReleasesList": "Conserver l'ordre des versions de l'API",
     "downloadNotifDescription": "Vous avertit de l'avancement du téléchargement d'une application",
     "downloadX": "Télécharger {}",
+    "downloadFailed": "Download failed",
     "downloadedX": "{} téléchargée",
+    "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Téléchargement de {}",
     "downloadingXNotifChannel": "Téléchargement de {}",
     "dropdownNoOptsError": "ERREUR : LE MENU DÉROULANT DOIT AVOIR AU MOINS UNE OPTION",
@@ -180,6 +182,7 @@
     "googleVerificationWarningP3": "Notez qu'à court terme, il pourrait rester possible d'installer des applications \"non vérifiées\" (non conformes) via un processus \"avancé\" que Google a promis de mettre en place suite à la vive réaction suscitée par leur annonce. Cependant, ils n'ont pas détaillé son fonctionnement, il n'est donc pas certain que cela préserve réellement les libertés des utilisateurs en pratique.\n\nDans tous les cas, cette décision de Google est une étape majeure vers la fin de l'informatique libre et généraliste pour les individus.\n\nLes OS non certifiés, comme GrapheneOS, ne devraient pas être affectés par cela tant qu'ils seront autorisés à exister.",
     "groupByCategory": "Regrouper par catégorie",
     "highlightTouchTargets": "Mettre en surbrillance les zones tactiles moins évidentes",
+    "import": "Import",
     "hour": {
         "one": "{} heure",
         "other": "{} heures"
@@ -250,6 +253,7 @@
     "noDescription": "Aucune description",
     "noFilePickerAvailable": "No file picker available. Please install a file manager app.",
     "noLogs": "Aucun journal",
+    "noMatchingReleaseFound": "No matching release found",
     "noNewUpdates": "Aucune nouvelle mise à jour.",
     "noReleaseFound": "Aucune release appropriée trouvée",
     "noResults": "Aucun résultat",
