@@ -297,6 +297,10 @@ class App {
   };
 }
 
+/// Sentinel value used by [App.copyWith] to distinguish "not provided" from
+/// an explicitly supplied `null` for nullable fields. Since [Object] uses
+/// identity-based equality, a `const` sentinel guarantees it never collides
+/// with any real value the caller could pass.
 const _sentinel = Object();
 
 /// Ensures the URL is well-formed and starts with HTTPS.

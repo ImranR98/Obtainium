@@ -619,7 +619,7 @@ class AppsProvider with ChangeNotifier {
   bool gettingUpdates = false;
   Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
-  dynamic logger;
+  Logger? logger;
 
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
