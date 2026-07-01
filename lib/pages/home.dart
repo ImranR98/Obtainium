@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       await showWelcomeDialogs();
       if (!mounted) return;
-      initDeepLinks();
+      unawaited(initDeepLinks());
     });
   }
 
@@ -82,7 +82,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void setIsReversing(int targetIndex) {
-    bool reversing = selectedIndexHistory.isNotEmpty &&
+    final bool reversing =
+        selectedIndexHistory.isNotEmpty &&
         selectedIndexHistory.last > targetIndex;
     isReversing = reversing;
     setState(() {});
@@ -112,7 +113,7 @@ class _HomePageState extends State<HomePage> {
       selectedIndexHistory.clear();
     } else if (selectedIndexHistory.isEmpty ||
         selectedIndexHistory.last != index) {
-      int existingInd = selectedIndexHistory.indexOf(index);
+      final int existingInd = selectedIndexHistory.indexOf(index);
       if (existingInd >= 0) {
         selectedIndexHistory.removeAt(existingInd);
       }
@@ -135,14 +136,12 @@ class _HomePageState extends State<HomePage> {
 
   void pushAddApp({String? initialUrl}) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AddAppPage(initialUrl: initialUrl),
-      ),
+      MaterialPageRoute(builder: (_) => AddAppPage(initialUrl: initialUrl)),
     );
   }
 
   Future<void> showWelcomeDialogs() async {
-    var sp = settingsProvider;
+    final sp = settingsProvider;
     if (!sp.welcomeShown) {
       await showDialog(
         context: context,
@@ -155,8 +154,10 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Text(tr('documentationLinksNote')),
                 const LinkText(
-                  text: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                  url: 'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                  text:
+                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                  url:
+                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -175,7 +176,7 @@ class _HomePageState extends State<HomePage> {
         },
       );
     }
-    if (!context.mounted) return;
+    if (!mounted) return;
     if (!sp.googleVerificationWarningShown) {
       await showDialog(
         context: context,
@@ -231,21 +232,22 @@ class _HomePageState extends State<HomePage> {
     }
 
     Future<void> interpretLink(Uri uri) async {
-      var action = uri.host;
-      var data = uri.path.length > 1 ? uri.path.substring(1) : "";
+      final action = uri.host;
+      final data = uri.path.length > 1 ? uri.path.substring(1) : '';
       try {
         if (action == 'add') {
-          AppsProvider ap = appsProvider;
+          final AppsProvider ap = appsProvider;
           await waitUntil(
             () => !ap.loadingApps,
             interval: const Duration(milliseconds: 10),
             maxAttempts: 500,
           );
 
-          String standardizedUrl =
-              sourceProvider.getSource(data).standardizeUrl(data);
+          final String standardizedUrl = sourceProvider
+              .getSource(data)
+              .standardizeUrl(data);
 
-          AppInMemory? existingApp = ap.apps.values
+          final AppInMemory? existingApp = ap.apps.values
               .where((AppInMemory a) => a.app.url == standardizedUrl)
               .firstOrNull;
 
@@ -255,7 +257,7 @@ class _HomePageState extends State<HomePage> {
             await goToAddApp(data);
           }
         } else if (action == 'app' || action == 'apps') {
-          var dataStr = Uri.decodeComponent(data);
+          final dataStr = Uri.decodeComponent(data);
           if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -284,21 +286,24 @@ class _HomePageState extends State<HomePage> {
               ) !=
               null) {
             if (!context.mounted) return;
-            var ap = appsProvider;
+            final ap = appsProvider;
             dynamic parsedData;
             try {
               parsedData = jsonDecode(dataStr);
             } catch (e) {
-              LogsProvider()
-                  .add('Failed to decode deep-link JSON: $e',
-                      level: LogLevel.error);
+              unawaited(
+                LogsProvider().add(
+                  'Failed to decode deep-link JSON: $e',
+                  level: LogLevel.error,
+                ),
+              );
               throw ObtainiumError(tr('invalidInput'));
             }
             final importPayload = jsonEncode(<String, dynamic>{
               'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
             });
-            var result = await ap.import(importPayload);
-            if (context.mounted) {
+            final result = await ap.import(importPayload);
+            if (mounted) {
               showMessage(
                 tr(
                   'importedX',
@@ -312,7 +317,7 @@ class _HomePageState extends State<HomePage> {
           throw ObtainiumError(tr('unknown'));
         }
       } catch (e) {
-        if (context.mounted) {
+        if (mounted) {
           showError(e, context);
         }
       }
@@ -346,207 +351,192 @@ class _HomePageState extends State<HomePage> {
     final settingsProvider = context.watch<SettingsProvider>();
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
-        final pages = <NavigationPageItem>[
-          NavigationPageItem(
-            tr('appsString'),
-            Icons.apps_outlined,
-            const SizedBox.shrink(),
-            selectedIcon: Icons.apps,
-          ),
-          NavigationPageItem(
-            tr('settings'),
-            Icons.settings_outlined,
-            const SettingsPage(),
-            selectedIcon: Icons.settings,
-          ),
-        ];
+    final pages = <NavigationPageItem>[
+      NavigationPageItem(
+        tr('appsString'),
+        Icons.apps_outlined,
+        const SizedBox.shrink(),
+        selectedIcon: Icons.apps,
+      ),
+      NavigationPageItem(
+        tr('settings'),
+        Icons.settings_outlined,
+        const SettingsPage(),
+        selectedIcon: Icons.settings,
+      ),
+    ];
 
-        final layoutWidth = MediaQuery.sizeOf(context).width;
-        final useRail = isTV || layoutWidth >= 600;
-        final updateCount = context.select<AppsProvider, int>(
-          (p) => p.findAppIdsWithPendingUpdates(installedOnly: true).length,
+    final layoutWidth = MediaQuery.sizeOf(context).width;
+    final useRail = isTV || layoutWidth >= 600;
+    final updateCount = context.select<AppsProvider, int>(
+      (p) => p.findAppIdsWithPendingUpdates(installedOnly: true).length,
+    );
+
+    Widget destIcon(NavigationPageItem e, {bool selected = false}) {
+      final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
+      if (identical(e, pages[0]) && updateCount > 0) {
+        return Semantics(
+          label: '$updateCount ${tr('updates')}',
+          child: Badge(label: Text('$updateCount'), child: icon),
         );
+      }
+      return icon;
+    }
 
-        Widget destIcon(NavigationPageItem e, {bool selected = false}) {
-          final icon =
-              Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
-          if (identical(e, pages[0]) && updateCount > 0) {
-            return Semantics(
-              label: '$updateCount ${tr('updates')}',
-              child: Badge(label: Text('$updateCount'), child: icon),
-            );
-          }
-          return icon;
-        }
+    final currentIndex = this.currentIndex;
 
-        final currentIndex = this.currentIndex;
+    final twoPane = isTV || layoutWidth >= 900;
+    final useTwoPane = twoPane && currentIndex == 0;
 
-        final twoPane = isTV || layoutWidth >= 900;
-        final useTwoPane = twoPane && currentIndex == 0;
-
-        final detailPane =
-            selectedAppId != null &&
-                    context.select<AppsProvider, bool>(
-                      (p) => p.apps.containsKey(selectedAppId),
-                    )
-                ? AppPage(
-                    key: ValueKey(selectedAppId),
-                    appId: selectedAppId!,
-                    onClose: () => clearSelectedApp(),
-                  )
-                : EmptyState(
-                    icon: Icons.touch_app_outlined,
-                    message: tr('selectAppForDetails'),
-                  );
-
-        final Widget content;
-        if (useTwoPane) {
-          content = Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: AppsPage(
-                  key: appsPageKey,
-                  onAppSelected: selectApp,
-                  selectedAppId: selectedAppId,
-                  onSelectionChanged: setAppsSelecting,
-                ),
-              ),
-              const VerticalDivider(width: 1),
-              Expanded(flex: 3, child: detailPane),
-            ],
+    final detailPane =
+        selectedAppId != null &&
+            context.select<AppsProvider, bool>(
+              (p) => p.apps.containsKey(selectedAppId),
+            )
+        ? AppPage(
+            key: ValueKey(selectedAppId),
+            appId: selectedAppId!,
+            onClose: () => clearSelectedApp(),
+          )
+        : EmptyState(
+            icon: Icons.touch_app_outlined,
+            message: tr('selectAppForDetails'),
           );
-        } else {
-          content = PageTransitionSwitcher(
-            duration: Duration(
-              milliseconds:
-                  settingsProvider.disablePageTransitions ? 0 : 300,
+
+    final Widget content;
+    if (useTwoPane) {
+      content = Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: AppsPage(
+              key: appsPageKey,
+              onAppSelected: selectApp,
+              selectedAppId: selectedAppId,
+              onSelectionChanged: setAppsSelecting,
             ),
-            reverse: settingsProvider.reversePageTransitions
-                ? !isReversing
-                : isReversing,
-            transitionBuilder: (child, animation, secondaryAnimation) {
-              return SharedAxisTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                transitionType: SharedAxisTransitionType.horizontal,
-                child: child,
-              );
-            },
-            child: currentIndex == 0
-                ? AppsPage(
-                    key: appsPageKey,
-                    onSelectionChanged: setAppsSelecting,
-                  )
-                : pages.elementAt(currentIndex).widget,
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(flex: 3, child: detailPane),
+        ],
+      );
+    } else {
+      content = PageTransitionSwitcher(
+        duration: Duration(
+          milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
+        ),
+        reverse: settingsProvider.reversePageTransitions
+            ? !isReversing
+            : isReversing,
+        transitionBuilder: (child, animation, secondaryAnimation) {
+          return SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
+            child: child,
           );
+        },
+        child: currentIndex == 0
+            ? AppsPage(key: appsPageKey, onSelectionChanged: setAppsSelecting)
+            : pages.elementAt(currentIndex).widget,
+      );
+    }
+
+    final createFab = FloatingActionButton(
+      onPressed: () => pushAddApp(),
+      tooltip: tr('addApp'),
+      child: const Icon(Icons.add),
+    );
+
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          handlePop(useTwoPane);
         }
-
-        final createFab = FloatingActionButton(
-          onPressed: () => pushAddApp(),
-          tooltip: tr('addApp'),
-          child: const Icon(Icons.add),
-        );
-
-        return PopScope(
-          canPop: currentIndex == 0,
-          onPopInvokedWithResult: (didPop, result) {
-            if (!didPop) {
-              handlePop(useTwoPane);
-            }
-          },
-          child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            body: useRail
-                ? Row(
-                    children: [
-                      FocusTraversalGroup(
-                        child: NavigationRail(
-                          leading: currentIndex == 0 &&
-                                  !appsSelecting
-                              ? Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 8),
-                                  child: createFab,
-                                )
-                              : null,
-                          destinations: pages
-                              .map(
-                                (e) => NavigationRailDestination(
-                                  icon: destIcon(e),
-                                  selectedIcon:
-                                      destIcon(e, selected: true),
-                                  label: Text(e.title),
-                                ),
-                              )
-                              .toList(),
-                          selectedIndex: currentIndex,
-                          onDestinationSelected: switchToPage,
-                          labelType: NavigationRailLabelType.all,
-                        ),
-                      ),
-                      const VerticalDivider(thickness: 1, width: 1),
-                      Expanded(
-                        child: useTwoPane
-                            ? content
-                            : Align(
-                                alignment: Alignment.topCenter,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                      maxWidth: 720),
-                                  child: content,
-                                ),
-                              ),
-                      ),
-                    ],
-                  )
-                : content,
-            floatingActionButton:
-                useRail || currentIndex != 0 || appsSelecting
-                    ? null
-                    : createFab,
-            bottomNavigationBar: useRail
-                ? null
-                : FocusTraversalGroup(
-                    child: Focus(
-                      onKeyEvent: (node, event) {
-                        if (event is! KeyDownEvent)
-                          return KeyEventResult.ignored;
-                        if (event.logicalKey ==
-                            LogicalKeyboardKey.arrowRight) {
-                          switchToPage(
-                              (currentIndex + 1) % pages.length);
-                          return KeyEventResult.handled;
-                        }
-                        if (event.logicalKey ==
-                            LogicalKeyboardKey.arrowLeft) {
-                          switchToPage(
-                              (currentIndex - 1 + pages.length) %
-                                  pages.length);
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      },
-                      child: NavigationBar(
-                        destinations: pages
-                            .map(
-                              (e) => NavigationDestination(
-                                icon: destIcon(e),
-                                selectedIcon:
-                                    destIcon(e, selected: true),
-                                label: e.title,
-                              ),
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: useRail
+            ? Row(
+                children: [
+                  FocusTraversalGroup(
+                    child: NavigationRail(
+                      leading: currentIndex == 0 && !appsSelecting
+                          ? Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: createFab,
                             )
-                            .toList(),
-                        onDestinationSelected: (int index) async {
-                          settingsProvider.selectionClick();
-                          switchToPage(index);
-                        },
-                        selectedIndex: currentIndex,
-                      ),
+                          : null,
+                      destinations: pages
+                          .map(
+                            (e) => NavigationRailDestination(
+                              icon: destIcon(e),
+                              selectedIcon: destIcon(e, selected: true),
+                              label: Text(e.title),
+                            ),
+                          )
+                          .toList(),
+                      selectedIndex: currentIndex,
+                      onDestinationSelected: switchToPage,
+                      labelType: NavigationRailLabelType.all,
                     ),
                   ),
-          ),
-        );
+                  const VerticalDivider(thickness: 1, width: 1),
+                  Expanded(
+                    child: useTwoPane
+                        ? content
+                        : Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 720),
+                              child: content,
+                            ),
+                          ),
+                  ),
+                ],
+              )
+            : content,
+        floatingActionButton: useRail || currentIndex != 0 || appsSelecting
+            ? null
+            : createFab,
+        bottomNavigationBar: useRail
+            ? null
+            : FocusTraversalGroup(
+                child: Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                      switchToPage((currentIndex + 1) % pages.length);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                      switchToPage(
+                        (currentIndex - 1 + pages.length) % pages.length,
+                      );
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: NavigationBar(
+                    destinations: pages
+                        .map(
+                          (e) => NavigationDestination(
+                            icon: destIcon(e),
+                            selectedIcon: destIcon(e, selected: true),
+                            label: e.title,
+                          ),
+                        )
+                        .toList(),
+                    onDestinationSelected: (int index) async {
+                      settingsProvider.selectionClick();
+                      unawaited(switchToPage(index));
+                    },
+                    selectedIndex: currentIndex,
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 }

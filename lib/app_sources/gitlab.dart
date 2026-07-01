@@ -38,16 +38,16 @@ class GitLab extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    var urlSegments = url.split('/');
-    var cutOffIndex = urlSegments.indexWhere((s) => s == '-');
+    final urlSegments = url.split('/');
+    final cutOffIndex = urlSegments.indexWhere((s) => s == '-');
     url = urlSegments
         .sublist(0, cutOffIndex <= 0 ? null : cutOffIndex)
         .join('/');
-    RegExp standardUrlRegEx = RegExp(
+    final RegExp standardUrlRegEx = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}/[^/]+(/[^/]+){1,20}',
       caseSensitive: false,
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
+    final RegExpMatch? match = standardUrlRegEx.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -55,13 +55,13 @@ class GitLab extends AppSource {
   }
 
   Future<String?> getPATIfAny(Map<String, dynamic> additionalSettings) async {
-    SettingsProvider settingsProvider = SettingsProvider();
+    final SettingsProvider settingsProvider = SettingsProvider();
     await settingsProvider.initializeSettings();
-    var sourceConfig = await getSourceConfigValues(
+    final sourceConfig = await getSourceConfigValues(
       additionalSettings,
       settingsProvider,
     );
-    String? creds = sourceConfig['gitlab-creds'];
+    final String? creds = sourceConfig['gitlab-creds'];
     return creds != null && creds.isNotEmpty ? creds : null;
   }
 
@@ -70,14 +70,14 @@ class GitLab extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    var url =
+    final url =
         'https://${hosts[0]}/api/v4/projects?search=${Uri.encodeQueryComponent(query)}';
-    var res = await sourceRequest(url, {});
+    final res = await sourceRequest(url, {});
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var json = jsonDecode(res.body) as List<dynamic>;
-    Map<String, List<String>> results = {};
+    final json = jsonDecode(res.body) as List<dynamic>;
+    final Map<String, List<String>> results = {};
     for (var element in json) {
       results['https://${hosts[0]}/${element['path_with_namespace']}'] = [
         element['name_with_namespace'],
@@ -98,7 +98,7 @@ class GitLab extends AppSource {
     bool forAPKDownload = false,
   }) async {
     // Provide headers acceptable to, e.g. Cloudflare protection
-    var headers = <String, String>{};
+    final headers = <String, String>{};
     headers[HttpHeaders.refererHeader] = 'https://${hosts[0]}';
     return headers;
   }
@@ -109,8 +109,10 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
+    final String? pat = await getPATIfAny(
+      hostChanged ? additionalSettings : {},
+    );
+    final String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
     return '$assetUrl${(Uri.parse(assetUrl).query.isEmpty ? '?' : '&')}$optionalAuth';
   }
 
@@ -120,142 +122,150 @@ class GitLab extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var names = _gh.getAppNames(standardUrl);
-    String projectUriComponent =
-        '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
-    String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
-    String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
-
-    bool trackOnly = additionalSettings['trackOnly'] == true;
-
-    // Get project ID
-    Response res0 = await sourceRequest(
-      'https://${hosts[0]}/api/v4/projects/$projectUriComponent?$optionalAuth',
-      additionalSettings,
-    );
-    if (res0.statusCode != 200) {
-      throw getObtainiumHttpError(res0);
-    }
-    int? projectId = jsonDecode(res0.body)['id'];
-    if (projectId == null) {
-      throw NoReleasesError();
-    }
-
-    // Request data from REST API
-    String releasesPath = trackOnly ? 'repository/tags' : 'releases';
-    String query = [
-      if (optionalAuth.isNotEmpty) optionalAuth,
-      'per_page=100',
-    ].join('&');
-    Response res = await sourceRequest(
-      'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
-      additionalSettings,
-    );
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
-
-    // Extract .apk details from received data
-    Iterable<APKDetails> apkDetailsList = [];
-    var decoded = jsonDecode(res.body);
-    if (decoded is! List) {
-      throw NoReleasesError();
-    }
-    var json = decoded;
-    apkDetailsList = json.map((e) {
-      var apkUrlsFromAssets = (e['assets']?['links'] as List<dynamic>? ?? [])
-          .map((e) {
-            var url = (e['direct_asset_url'] ?? e['url'] ?? '') as String;
-            var parsedUrl = url.isNotEmpty ? Uri.parse(url) : null;
-            return MapEntry(
-              (e['name'] ??
-                      (parsedUrl != null && parsedUrl.pathSegments.isNotEmpty
-                          ? parsedUrl.pathSegments.last
-                          : 'unknown'))
-                  as String,
-              (e['direct_asset_url'] ?? e['url'] ?? '') as String,
-            );
-          })
-          .where(
-            (s) =>
-                s.key.isNotEmpty &&
-                (AppSource.isApkOrContainerFile(s.key) ||
-                    AppSource.isApkOrContainerFile(s.value)),
-          )
-          .toList();
-      var uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
-          .split('](')
-          .join('\n')
-          .split('.apk)')
-          .join('.apk\n')
-          .split('.xapk)')
-          .join('.xapk\n')
-          .split('.apkm)')
-          .join('.apkm\n')
-          .split('.apks)')
-          .join('.apks\n')
-          .split('\n')
-          .where(
-            (s) =>
-                s.startsWith('/uploads/') && AppSource.isApkOrContainerFile(s),
-          )
-          .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
-          .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))
-          .toList();
-      Map<String, String> apkUrls = {};
-      for (var entry in apkUrlsFromAssets) {
-        apkUrls[entry.key] = entry.value;
-      }
-      for (var entry in uploadedAPKsFromDescription) {
-        apkUrls[entry.key] = entry.value;
-      }
-      var releaseDateString =
-          e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
-      DateTime? releaseDate = releaseDateString != null
-          ? DateTime.tryParse(releaseDateString.toString())
-          : null;
-      return APKDetails(
-        e['tag_name'] ?? e['name'],
-        apkUrls.entries.toList(),
-        AppNames(names.author, names.name.split('/').last),
-        releaseDate: releaseDate,
+      final names = _gh.getAppNames(standardUrl);
+      final String projectUriComponent =
+          '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
+      final String? pat = await getPATIfAny(
+        hostChanged ? additionalSettings : {},
       );
-    });
-    if (apkDetailsList.isEmpty) {
-      throw NoReleasesError();
-    }
-    var finalResult = apkDetailsList.first;
+      final String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
 
-    bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == true;
-    if (finalResult.apkUrls.isEmpty && fallbackToOlderReleases && !trackOnly) {
-      apkDetailsList = apkDetailsList
-          .where((e) => e.apkUrls.isNotEmpty)
-          .toList();
+      final bool trackOnly = additionalSettings['trackOnly'] == true;
+
+      // Get project ID
+      final Response res0 = await sourceRequest(
+        'https://${hosts[0]}/api/v4/projects/$projectUriComponent?$optionalAuth',
+        additionalSettings,
+      );
+      if (res0.statusCode != 200) {
+        throw getObtainiumHttpError(res0);
+      }
+      final int? projectId = jsonDecode(res0.body)['id'];
+      if (projectId == null) {
+        throw NoReleasesError();
+      }
+
+      // Request data from REST API
+      final String releasesPath = trackOnly ? 'repository/tags' : 'releases';
+      final String query = [
+        if (optionalAuth.isNotEmpty) optionalAuth,
+        'per_page=100',
+      ].join('&');
+      final Response res = await sourceRequest(
+        'https://${hosts[0]}/api/v4/projects/$projectUriComponent/$releasesPath?$query',
+        additionalSettings,
+      );
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
+      }
+
+      // Extract .apk details from received data
+      Iterable<APKDetails> apkDetailsList = [];
+      final decoded = jsonDecode(res.body);
+      if (decoded is! List) {
+        throw NoReleasesError();
+      }
+      final json = decoded;
+      apkDetailsList = json.map((e) {
+        final apkUrlsFromAssets =
+            (e['assets']?['links'] as List<dynamic>? ?? [])
+                .map((e) {
+                  final url =
+                      (e['direct_asset_url'] ?? e['url'] ?? '') as String;
+                  final parsedUrl = url.isNotEmpty ? Uri.parse(url) : null;
+                  return MapEntry(
+                    (e['name'] ??
+                            (parsedUrl != null &&
+                                    parsedUrl.pathSegments.isNotEmpty
+                                ? parsedUrl.pathSegments.last
+                                : 'unknown'))
+                        as String,
+                    (e['direct_asset_url'] ?? e['url'] ?? '') as String,
+                  );
+                })
+                .where(
+                  (s) =>
+                      s.key.isNotEmpty &&
+                      (AppSource.isApkOrContainerFile(s.key) ||
+                          AppSource.isApkOrContainerFile(s.value)),
+                )
+                .toList();
+        final uploadedAPKsFromDescription = ((e['description'] ?? '') as String)
+            .split('](')
+            .join('\n')
+            .split('.apk)')
+            .join('.apk\n')
+            .split('.xapk)')
+            .join('.xapk\n')
+            .split('.apkm)')
+            .join('.apkm\n')
+            .split('.apks)')
+            .join('.apks\n')
+            .split('\n')
+            .where(
+              (s) =>
+                  s.startsWith('/uploads/') &&
+                  AppSource.isApkOrContainerFile(s),
+            )
+            .map((s) => 'https://${hosts[0]}/-/project/$projectId$s')
+            .map((l) => MapEntry(Uri.parse(l).pathSegments.last, l))
+            .toList();
+        final Map<String, String> apkUrls = {};
+        for (var entry in apkUrlsFromAssets) {
+          apkUrls[entry.key] = entry.value;
+        }
+        for (var entry in uploadedAPKsFromDescription) {
+          apkUrls[entry.key] = entry.value;
+        }
+        final releaseDateString =
+            e['released_at'] ?? e['created_at'] ?? e['commit']?['created_at'];
+        final DateTime? releaseDate = releaseDateString != null
+            ? DateTime.tryParse(releaseDateString.toString())
+            : null;
+        return APKDetails(
+          e['tag_name'] ?? e['name'],
+          apkUrls.entries.toList(),
+          AppNames(names.author, names.name.split('/').last),
+          releaseDate: releaseDate,
+        );
+      });
       if (apkDetailsList.isEmpty) {
         throw NoReleasesError();
       }
-      finalResult = apkDetailsList.first;
-    }
+      var finalResult = apkDetailsList.first;
 
-    if (finalResult.apkUrls.isEmpty && !trackOnly) {
-      throw NoAPKError();
-    }
-
-    finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
-      if (RegExp(
-        '^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+',
-      ).hasMatch(apkUrl.value)) {
-        return MapEntry(
-          apkUrl.key,
-          apkUrl.value.replaceFirst('/file/', '/raw/'),
-        );
-      } else {
-        return apkUrl;
+      final bool fallbackToOlderReleases =
+          additionalSettings['fallbackToOlderReleases'] == true;
+      if (finalResult.apkUrls.isEmpty &&
+          fallbackToOlderReleases &&
+          !trackOnly) {
+        apkDetailsList = apkDetailsList
+            .where((e) => e.apkUrls.isNotEmpty)
+            .toList();
+        if (apkDetailsList.isEmpty) {
+          throw NoReleasesError();
+        }
+        finalResult = apkDetailsList.first;
       }
-    }).toList();
 
-    return finalResult;
+      if (finalResult.apkUrls.isEmpty && !trackOnly) {
+        throw NoAPKError();
+      }
+
+      finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
+        if (RegExp(
+          '^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+',
+        ).hasMatch(apkUrl.value)) {
+          return MapEntry(
+            apkUrl.key,
+            apkUrl.value.replaceFirst('/file/', '/raw/'),
+          );
+        } else {
+          return apkUrl;
+        }
+      }).toList();
+
+      return finalResult;
     } catch (e) {
       rethrowOrWrapError(e);
     }

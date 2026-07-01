@@ -25,12 +25,12 @@ class GitHubStars implements MassAppUrlSource {
     int page,
     SettingsProvider sp,
   ) async {
-    var resUrl =
+    final resUrl =
         'https://api.github.com/users/$username/starred?per_page=100&page=$page';
-    var sourceConfigSettings = await _gh.getSourceConfigValues({}, sp);
-    Response res = await _gh.sourceRequest(resUrl, sourceConfigSettings);
+    final sourceConfigSettings = await _gh.getSourceConfigValues({}, sp);
+    final Response res = await _gh.sourceRequest(resUrl, sourceConfigSettings);
     if (res.statusCode == 200) {
-      Map<String, List<String>> urlsWithDescriptions = {};
+      final Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body) as List<dynamic>)) {
         var htmlUrl = e['html_url'] as String;
         if ((sourceConfigSettings['GHReqPrefix'] ?? '').isNotEmpty) {
@@ -59,12 +59,12 @@ class GitHubStars implements MassAppUrlSource {
     if (args.length != requiredArgs.length) {
       throw ObtainiumError(tr('wrongArgNum'));
     }
-    var sp = SettingsProvider();
+    final sp = SettingsProvider();
     await sp.initializeSettings();
-    Map<String, List<String>> urlsWithDescriptions = {};
+    final Map<String, List<String>> urlsWithDescriptions = {};
     var page = 1;
     while (true) {
-      var pageUrls = await getOnePageOfUserStarredUrlsWithDescriptions(
+      final pageUrls = await getOnePageOfUserStarredUrlsWithDescriptions(
         args[0],
         page++,
         sp,

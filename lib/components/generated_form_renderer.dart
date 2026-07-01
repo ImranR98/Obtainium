@@ -175,7 +175,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   final List<TextEditingController> _textControllers = [];
 
   void notifyFormChange({bool isBuilding = false, bool forceInvalid = false}) {
-    Map<String, dynamic> returnValues = values;
+    final Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < formInputs.length; r++) {
       for (int i = 0; i < formInputs[r].length; i++) {
@@ -192,7 +192,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   Widget _initTextField(GeneratedFormTextField formItem) {
     final formFieldKey = GlobalKey<FormFieldState>();
-    var ctrl = TextEditingController(text: values[formItem.key]);
+    final ctrl = TextEditingController(text: values[formItem.key]);
     _textControllers.add(ctrl);
     return TypeAheadField<String>(
       controller: ctrl,
@@ -223,32 +223,33 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ? IconButton(
                     icon: const Icon(Icons.open_in_new),
                     tooltip: tr('about'),
-                    onPressed: () => unawaited(launchUrlString(
-                      formItem.helpUrl!,
-                      mode: LaunchMode.externalApplication,
-                    )),
+                    onPressed: () => unawaited(
+                      launchUrlString(
+                        formItem.helpUrl!,
+                        mode: LaunchMode.externalApplication,
+                      ),
+                    ),
                   )
                 : formItem.belowWidgets.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.help_outline),
-                        tooltip: tr('about'),
-                        onPressed: () => showHelpDialog(
-                          context,
-                          title: formItem.label,
-                          content: formItem.belowWidgets as List<Widget>,
-                        ),
-                      )
-                    : null,
+                ? IconButton(
+                    icon: const Icon(Icons.help_outline),
+                    tooltip: tr('about'),
+                    onPressed: () => showHelpDialog(
+                      context,
+                      title: formItem.label,
+                      content: formItem.belowWidgets as List<Widget>,
+                    ),
+                  )
+                : null,
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
           validator: (value) {
-            if (formItem.required &&
-                (value == null || value.trim().isEmpty)) {
+            if (formItem.required && (value == null || value.trim().isEmpty)) {
               return '${formItem.label} ${tr('requiredInBrackets')}';
             }
             for (var validator in formItem.additionalValidators) {
-              String? result = validator(value);
+              final String? result = validator(value);
               if (result != null) {
                 return result;
               }
@@ -257,10 +258,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           },
         );
         if (context.read<SettingsProvider>().isTV) {
-          return _TVTextFieldFocus(
-            textFocusNode: focusNode,
-            child: textField,
-          );
+          return _TVTextFieldFocus(textFocusNode: focusNode, child: textField);
         }
         return textField;
       },
@@ -297,14 +295,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
       ),
       initialValue: values[formItem.key],
       items: formItem.opts!.map((e2) {
-        var enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
+        final enabled = formItem.disabledOptKeys?.contains(e2.key) != true;
         return DropdownMenuItem(
           value: e2.key,
           enabled: enabled,
-          child: Opacity(
-            opacity: enabled ? 1 : 0.5,
-            child: Text(e2.value),
-          ),
+          child: Opacity(opacity: enabled ? 1 : 0.5, child: Text(e2.value)),
         );
       }).toList(),
       onChanged: (value) {
@@ -318,9 +313,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   void _initSubForm(GeneratedFormSubForm formItem) {
     values[formItem.key] = [];
-    for (Map<String, dynamic> v
-        in ((formItem.value ?? []) as List<dynamic>)) {
-      var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
+    for (Map<String, dynamic> v in ((formItem.value ?? []) as List<dynamic>)) {
+      final fullDefaults = getDefaultValuesFromFormItems(formItem.items);
       for (var element in v.entries) {
         fullDefaults[element.key] = element.value;
       }
@@ -343,7 +337,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
     formInputs = widget.items.asMap().entries.map((row) {
       return row.value.asMap().entries.map((e) {
-        var formItem = e.value;
+        final formItem = e.value;
         if (formItem is GeneratedFormTextField) {
           return _initTextField(formItem);
         } else if (formItem is GeneratedFormDropdown) {
@@ -354,7 +348,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
         } else if (formItem is GeneratedFormSwitch) {
           return const SizedBox.shrink();
         } else {
-          throw ObtainiumError('Unrecognized form item type: ${formItem.runtimeType}', unexpected: true);
+          throw ObtainiumError(
+            'Unrecognized form item type: ${formItem.runtimeType}',
+            unexpected: true,
+          );
         }
       }).toList();
     }).toList();
@@ -376,10 +373,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   Widget _buildSubForm(GeneratedFormSubForm item, String fieldKey) {
-    List<Widget> subformColumn = [];
-    var compact = item.items.length == 1 && item.items[0].length == 1;
+    final List<Widget> subformColumn = [];
+    final compact = item.items.length == 1 && item.items[0].length == 1;
     for (int i = 0; i < values[fieldKey].length; i++) {
-      var internalFormKey = ValueKey(
+      final internalFormKey = ValueKey(
         generateRandomNumber(
           values[fieldKey].length,
           seed2: i,
@@ -414,10 +411,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 if (valid) {
                   this.values[fieldKey]?[i] = values;
                 }
-                notifyFormChange(
-                  isBuilding: isBuilding,
-                  forceInvalid: !valid,
-                );
+                notifyFormChange(isBuilding: isBuilding, forceInvalid: !valid);
               },
             ),
             Row(
@@ -429,7 +423,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   ),
                   onPressed: (values[fieldKey].length > 0)
                       ? () {
-                          var temp = List.from(values[fieldKey]);
+                          final temp = List.from(values[fieldKey]);
                           temp.removeAt(i);
                           values[fieldKey] = List.from(temp);
                           _subFormGenerationCount++;
@@ -481,7 +475,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     for (var r = 0; r < renderedInputs.length; r++) {
       for (var e = 0; e < renderedInputs[r].length; e++) {
         final item = widget.items[r][e];
-        String fieldKey = item.key;
+        final String fieldKey = item.key;
         if (item is GeneratedFormSwitch) {
           renderedInputs[r][e] = _FormSwitchRow(
             item: item,
@@ -503,7 +497,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
     final List<Widget> inputRowWidgets = [];
     renderedInputs.asMap().entries.forEach((rowInputs) {
-      List<Widget> rowItems = [];
+      final List<Widget> rowItems = [];
       rowInputs.value.asMap().entries.forEach((rowInput) {
         if (rowInput.key > 0) {
           rowItems.add(const SizedBox(width: 20));
@@ -531,9 +525,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
             : (widget.items[r].isNotEmpty &&
-                    widget.items[r][0] is GeneratedFormSwitch)
-                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
-                : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+                  widget.items[r][0] is GeneratedFormSwitch)
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
         children.add(
           Material(
             color: isFieldRow(r)

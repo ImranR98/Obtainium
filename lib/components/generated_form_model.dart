@@ -95,7 +95,9 @@ class FormFieldDefinition {
         return GeneratedFormSubForm(
           key,
           subItems
-                  ?.map((row) => row.map((d) => d.toGeneratedFormItem()).toList())
+                  ?.map(
+                    (row) => row.map((d) => d.toGeneratedFormItem()).toList(),
+                  )
                   .toList() ??
               [],
           label: label,
@@ -301,9 +303,9 @@ class GeneratedFormSwitch extends GeneratedFormItem {
 List<List<GeneratedFormItem>> cloneFormItems(
   List<List<GeneratedFormItem>> items,
 ) {
-  List<List<GeneratedFormItem>> clonedItems = [];
+  final List<List<GeneratedFormItem>> clonedItems = [];
   for (var row in items) {
-    List<GeneratedFormItem> clonedRow = [];
+    final List<GeneratedFormItem> clonedRow = [];
     for (var it in row) {
       clonedRow.add(it.clone());
     }
@@ -324,7 +326,7 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   });
 
   @override
-  ensureType(val) {
+  dynamic ensureType(val) {
     return val;
   }
 
@@ -346,9 +348,9 @@ int generateRandomNumber(
   int seed3 = 0,
   max = 10000,
 }) {
-  int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
-  Random random = Random(combinedSeed);
-  int randomNumber = random.nextInt(max);
+  final int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
+  final Random random = Random(combinedSeed);
+  final int randomNumber = random.nextInt(max);
   return randomNumber;
 }
 

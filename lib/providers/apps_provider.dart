@@ -96,14 +96,13 @@ class AppInMemory {
     PackageInfo? installedInfo,
     Uint8List? icon,
     String? sourceType,
-  }) =>
-      AppInMemory(
-        app ?? this.app,
-        downloadProgress ?? this.downloadProgress,
-        installedInfo ?? this.installedInfo,
-        icon ?? this.icon,
-        sourceType: sourceType ?? this.sourceType,
-      );
+  }) => AppInMemory(
+    app ?? this.app,
+    downloadProgress ?? this.downloadProgress,
+    installedInfo ?? this.installedInfo,
+    icon ?? this.icon,
+    sourceType: sourceType ?? this.sourceType,
+  );
 
   String get name => app.overrideName ?? app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
@@ -185,8 +184,7 @@ List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
   List<MapEntry<String, int>> arr,
   MapEntry<String, int> str, {
   MapEntry<String, int>? strB,
-}) =>
-    _moveToEnd(arr, (e) => e.key == str.key || e.key == strB?.key);
+}) => _moveToEnd(arr, (e) => e.key == str.key || e.key == strB?.key);
 
 Future<File> downloadFileWithRetry(
   String url,
@@ -214,7 +212,9 @@ Future<File> downloadFileWithRetry(
     );
   } catch (e) {
     if (retries > 0 && e is ClientException) {
-      await Future.delayed(Duration(seconds: _obtainiumRetryDelaySeconds));
+      await Future.delayed(
+        const Duration(seconds: _obtainiumRetryDelaySeconds),
+      );
       return await downloadFileWithRetry(
         url,
         fileName,
@@ -234,7 +234,7 @@ Future<File> downloadFileWithRetry(
 }
 
 String hashListOfLists(List<List<int>> data) {
-  var bytes = utf8.encode(jsonEncode(data));
+  final bytes = utf8.encode(jsonEncode(data));
   return sha256.convert(bytes).toString().substring(0, 8);
 }
 
@@ -253,7 +253,7 @@ Future<String> checkPartialDownloadHashDynamic(
     // Both requests fetch the same byte range to confirm the hash is
     // stable. The loop decrements on mismatch; when two consecutive
     // requests agree, the hash is considered valid.
-    List<String> ab = await Future.wait([
+    final List<String> ab = await Future.wait([
       checkPartialDownloadHash(
         url,
         i,
@@ -280,18 +280,20 @@ Future<String> checkPartialDownloadHash(
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  var req = Request('GET', Uri.parse(url));
+  final req = Request('GET', Uri.parse(url));
   if (headers != null) {
     req.headers.addAll(headers);
   }
   req.headers[HttpHeaders.rangeHeader] = 'bytes=0-$bytesToGrab';
-  var client = IOClient(createHttpClient(allowInsecure));
+  final client = IOClient(createHttpClient(allowInsecure));
   try {
-    var response = await client.send(req);
+    final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
     }
-    List<List<int>> bytes = await response.stream.take(bytesToGrab).toList();
+    final List<List<int>> bytes = await response.stream
+        .take(bytesToGrab)
+        .toList();
     return hashListOfLists(bytes);
   } finally {
     client.close();
@@ -303,14 +305,17 @@ Future<String?> checkETagHeader(
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  var reqHeaders = headers ?? {};
-  var req = Request('GET', Uri.parse(url));
+  final reqHeaders = headers ?? {};
+  final req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  var client = IOClient(createHttpClient(allowInsecure));
-  StreamedResponse response = await client.send(req);
-  var resHeaders = response.headers;
+  final client = IOClient(createHttpClient(allowInsecure));
+  final StreamedResponse response = await client.send(req);
+  final resHeaders = response.headers;
   await response.stream.drain<void>().catchError((err) {
-    LogsProvider().add('Error draining response stream: $err', level: LogLevel.error);
+    LogsProvider().add(
+      'Error draining response stream: $err',
+      level: LogLevel.error,
+    );
   });
   client.close();
   return resHeaders[HttpHeaders.etagHeader]
@@ -336,26 +341,32 @@ Future<File?> _waitForConcurrentDownload(
   File downloadedFile,
   LogsProvider? logs,
 ) async {
-  logs?.add(
-    'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
+  unawaited(
+    logs?.add(
+      'Partial download exists - will wait: ${tempDownloadedFile.uri.pathSegments.last}',
+    ),
   );
   int currentTempFileSize = await tempDownloadedFile.length();
   int pollCount = 0;
   while (pollCount < _obtainiumMaxDownloadPolls) {
     pollCount++;
     await Future.delayed(
-      Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
+      const Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
     );
     if (tempDownloadedFile.existsSync()) {
-      int newTempFileSize = await tempDownloadedFile.length();
+      final int newTempFileSize = await tempDownloadedFile.length();
       if (newTempFileSize > currentTempFileSize) {
         currentTempFileSize = newTempFileSize;
-        logs?.add(
-          'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+        unawaited(
+          logs?.add(
+            'Existing partial download still in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+          ),
         );
       } else {
-        logs?.add(
-          'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
+        unawaited(
+          logs?.add(
+            'Ignoring existing partial download: ${tempDownloadedFile.uri.pathSegments.last}',
+          ),
         );
         break;
       }
@@ -364,13 +375,17 @@ Future<File?> _waitForConcurrentDownload(
     }
   }
   if (downloadedFile.existsSync()) {
-    logs?.add(
-      'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
+    unawaited(
+      logs?.add(
+        'Existing partial download completed - not repeating: ${tempDownloadedFile.uri.pathSegments.last}',
+      ),
     );
     return downloadedFile;
   }
-  logs?.add(
-    'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+  unawaited(
+    logs?.add(
+      'Existing partial download not in progress: ${tempDownloadedFile.uri.pathSegments.last}',
+    ),
   );
   return null;
 }
@@ -387,14 +402,17 @@ Future<File> downloadFile(
   bool allowInsecure = false,
   LogsProvider? logs,
 }) async {
-  var reqHeaders = headers ?? {};
-  var req = Request('GET', Uri.parse(url));
+  final reqHeaders = headers ?? {};
+  final req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
-  var headersClient = IOClient(createHttpClient(allowInsecure));
-  StreamedResponse headersResponse = await headersClient.send(req);
-  var resHeaders = headersResponse.headers;
+  final headersClient = IOClient(createHttpClient(allowInsecure));
+  final StreamedResponse headersResponse = await headersClient.send(req);
+  final resHeaders = headersResponse.headers;
   await headersResponse.stream.drain<void>().catchError((err) {
-    LogsProvider().add('Error draining header-probe stream: $err', level: LogLevel.error);
+    LogsProvider().add(
+      'Error draining header-probe stream: $err',
+      level: LogLevel.error,
+    );
   });
 
   // Use the headers to decide what the file extension is, and
@@ -427,9 +445,9 @@ Future<File> downloadFile(
 
   // If you have an existing file that is usable,
   // decide whether you can use it (either return full or resume partial)
-  var fullContentLength = headersResponse.contentLength;
+  final fullContentLength = headersResponse.contentLength;
   if (useExisting && downloadedFile.existsSync()) {
-    var length = downloadedFile.lengthSync();
+    final length = downloadedFile.lengthSync();
     if (fullContentLength == null || !rangeFeatureEnabled) {
       return downloadedFile;
     } else {
@@ -442,12 +460,12 @@ Future<File> downloadFile(
     }
   }
 
-  File tempDownloadedFile = File('${downloadedFile.path}.part');
+  final File tempDownloadedFile = File('${downloadedFile.path}.part');
 
   // If there is already a temp file, a download may already be in progress - account for this (see #2073)
-  bool tempFileExists = tempDownloadedFile.existsSync();
+  final bool tempFileExists = tempDownloadedFile.existsSync();
   if (tempFileExists && useExisting) {
-    var result = await _waitForConcurrentDownload(
+    final result = await _waitForConcurrentDownload(
       tempDownloadedFile,
       downloadedFile,
       logs,
@@ -458,7 +476,7 @@ Future<File> downloadFile(
   // If the range feature is not available (or you need to start a ranged req from 0),
   // complete the already-started request, else cancel it and start a ranged request,
   // and open the file for writing in the appropriate mode
-  var targetFileLength = useExisting && tempDownloadedFile.existsSync()
+  final targetFileLength = useExisting && tempDownloadedFile.existsSync()
       ? tempDownloadedFile.lengthSync()
       : null;
   int rangeStart = targetFileLength ?? 0;
@@ -471,14 +489,14 @@ Future<File> downloadFile(
   } else if (tempDownloadedFile.existsSync()) {
     deleteFile(tempDownloadedFile);
   }
-  var responseWithClient = await sourceRequestStreamResponse(
+  final responseWithClient = await sourceRequestStreamResponse(
     'GET',
     url,
     reqHeaders,
     {'allowInsecure': allowInsecure},
   );
-  HttpClient responseClient = responseWithClient.value.key;
-  HttpClientResponse response = responseWithClient.value.value;
+  final HttpClient responseClient = responseWithClient.value.key;
+  final HttpClientResponse response = responseWithClient.value.value;
   try {
     // If we requested a byte range to resume a partial download but the server
     // ignored it and returned the full file (200 instead of 206 Partial
@@ -569,7 +587,8 @@ Future<File> downloadFile(
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
-  return await packageManager.getInstalledPackages(flags: packageInfoFlags) ?? [];
+  return await packageManager.getInstalledPackages(flags: packageInfoFlags) ??
+      [];
 }
 
 Future<PackageInfo?> getInstalledInfo(
@@ -584,7 +603,7 @@ Future<PackageInfo?> getInstalledInfo(
       );
     } catch (e) {
       if (printErr) {
-        LogsProvider().add(e.toString(), level: LogLevel.error);
+        unawaited(LogsProvider().add(e.toString(), level: LogLevel.error));
       }
     }
   }
@@ -596,6 +615,8 @@ Future<Directory> getAppStorageDir() async =>
     await getApplicationDocumentsDirectory();
 
 class AppsProvider with ChangeNotifier {
+  // Static, app-lifetime cross-instance event bus; intentionally never closed.
+  // ignore: close_sinks
   static final StreamController<AppRepositoryEvent> _eventsController =
       StreamController<AppRepositoryEvent>.broadcast();
 
@@ -690,8 +711,9 @@ class AppsProvider with ChangeNotifier {
       }
     });
     if (!_isBg) {
-      _eventSubscription =
-          _eventsController.stream.listen((AppRepositoryEvent event) {
+      _eventSubscription = _eventsController.stream.listen((
+        AppRepositoryEvent event,
+      ) {
         if (event.type == AppRepositoryEventType.saved) {
           _needsBgReload = true;
         }
@@ -699,7 +721,7 @@ class AppsProvider with ChangeNotifier {
     }
     () async {
       await this.settingsProvider.initializeSettings();
-      var cacheDirs = await getExternalCacheDirectories();
+      final cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
         apkDir = cacheDirs!.first;
         iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
@@ -718,7 +740,7 @@ class AppsProvider with ChangeNotifier {
       }
       if (!isBg) {
         await loadApps();
-        var cutoff = DateTime.now().subtract(const Duration(days: 7));
+        final cutoff = DateTime.now().subtract(const Duration(days: 7));
         await for (var partialApk in apkDir.list()) {
           if ((await partialApk.stat()).modified.isBefore(cutoff)) {
             if (!areDownloadsRunning()) {
@@ -745,13 +767,13 @@ class AppsProvider with ChangeNotifier {
     List<String> urls, {
     AppSource? sourceOverride,
   }) async {
-    List<dynamic> results = await SourceProvider().getAppsByURLNaive(
+    final List<dynamic> results = await SourceProvider().getAppsByURLNaive(
       urls,
       alreadyAddedUrls: apps.values.map((e) => e.app.url).toSet(),
       sourceOverride: sourceOverride,
     );
-    List<App> pps = results[0];
-    Map<String, dynamic> errorsMap = results[1];
+    final List<App> pps = results[0];
+    final Map<String, dynamic> errorsMap = results[1];
     for (var app in pps) {
       if (apps.containsKey(app.id)) {
         errorsMap.addAll({app.id: tr('appAlreadyAdded')});
@@ -759,7 +781,7 @@ class AppsProvider with ChangeNotifier {
         await saveApps([app], onlyIfExists: false);
       }
     }
-    List<List<String>> errors = errorsMap.keys
+    final List<List<String>> errors = errorsMap.keys
         .map((e) => [e, errorsMap[e].toString()])
         .toList();
     return errors;
@@ -774,9 +796,9 @@ Future<void> _runBGInstallMode(
   NotificationsProvider notificationsProvider,
   LogsProvider logs,
 ) async {
-  logs.add('BG install task: Started (${toInstall.length}).');
+  unawaited(logs.add('BG install task: Started (${toInstall.length}).'));
   if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
-    var temp = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
+    final temp = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
     for (var i = 0; i < temp.length; i++) {
       if (await appsProvider.canInstallSilently(
         appsProvider.apps[temp[i]]!.app,
@@ -786,12 +808,12 @@ Future<void> _runBGInstallMode(
     }
   }
   if (toInstall.isNotEmpty) {
-    var obtainiumEntries = toInstall.where(
+    final obtainiumEntries = toInstall.where(
       (element) =>
           element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
     );
     if (obtainiumEntries.isNotEmpty) {
-      var obt = obtainiumEntries.first;
+      final obt = obtainiumEntries.first;
       toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
     }
     try {
@@ -809,11 +831,11 @@ Future<void> _runBGInstallMode(
           );
         });
       } else {
-        logs.add('Fatal error in BG install task: ${e.toString()}');
+        unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));
         rethrow;
       }
     }
-    logs.add('BG install task: Done installing updates.');
+    unawaited(logs.add('BG install task: Done installing updates.'));
   }
 }
 
@@ -832,33 +854,34 @@ Future<void> bgUpdateCheck(
   SettingsProvider? settings,
 }) async {
   final l = logs ?? LogsProvider();
-  l.add('BG task started $taskId: ${params.toString()}');
+  unawaited(l.add('BG task started $taskId: ${params.toString()}'));
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await TranslationLoader.load();
 
-  NotificationsProvider notificationsProvider = notifs ?? NotificationsProvider();
-  AppsProvider appsProvider = AppsProvider(
+  final NotificationsProvider notificationsProvider =
+      notifs ?? NotificationsProvider();
+  final AppsProvider appsProvider = AppsProvider(
     isBg: true,
     settingsProvider: settings,
     logsProvider: l,
   );
   await appsProvider.loadApps();
 
-  int maxAttempts = _obtainiumBgUpdateMaxAttempts;
-  int maxRetryWaitSeconds = _obtainiumBgUpdateMaxRetryWaitSeconds;
+  const int maxAttempts = _obtainiumBgUpdateMaxAttempts;
+  const int maxRetryWaitSeconds = _obtainiumBgUpdateMaxRetryWaitSeconds;
 
-  var netResult = await (Connectivity().checkConnectivity());
+  final netResult = await (Connectivity().checkConnectivity());
   if (netResult.contains(ConnectivityResult.none) ||
       netResult.isEmpty ||
       (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
-    l.add('BG update task: No network.');
+    unawaited(l.add('BG update task: No network.'));
     return;
   }
 
   params ??= {};
 
-  bool firstEverUpdateTask =
+  final bool firstEverUpdateTask =
       DateTime.fromMillisecondsSinceEpoch(
         0,
       ).compareTo(appsProvider.settingsProvider.lastCompletedBGCheckTime) ==
@@ -866,10 +889,12 @@ Future<void> bgUpdateCheck(
 
   DateTime? ignoreAfter;
   if (params['toCheck'] == null) {
-    ignoreAfter = firstEverUpdateTask ? null : appsProvider.settingsProvider.lastCompletedBGCheckTime;
+    ignoreAfter = firstEverUpdateTask
+        ? null
+        : appsProvider.settingsProvider.lastCompletedBGCheckTime;
   }
 
-  List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
+  final List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
     ...(params['toCheck']
             ?.map(
               (entry) => MapEntry<String, int>(
@@ -887,7 +912,7 @@ Future<void> bgUpdateCheck(
             )
             .map((e) => MapEntry(e, 0))),
   ];
-  List<MapEntry<String, int>> toInstall = <MapEntry<String, int>>[
+  final List<MapEntry<String, int>> toInstall = <MapEntry<String, int>>[
     ...(params['toInstall']
             ?.map(
               (entry) => MapEntry<String, int>(
@@ -899,21 +924,21 @@ Future<void> bgUpdateCheck(
         (<List<MapEntry<String, int>>>[])),
   ];
 
-  var networkRestricted =
+  final networkRestricted =
       appsProvider.settingsProvider.bgUpdatesOnWiFiOnly &&
       !netResult.contains(ConnectivityResult.wifi) &&
       !netResult.contains(ConnectivityResult.ethernet);
 
-  var chargingRestricted =
+  final chargingRestricted =
       appsProvider.settingsProvider.bgUpdatesWhileChargingOnly &&
       (await Battery().batteryState) != BatteryState.charging;
 
   if (networkRestricted) {
-    l.add('BG update task: Network restriction in effect.');
+    unawaited(l.add('BG update task: Network restriction in effect.'));
   }
 
   if (chargingRestricted) {
-    l.add('BG update task: Charging restriction in effect.');
+    unawaited(l.add('BG update task: Charging restriction in effect.'));
   }
 
   if (toCheck.isNotEmpty) {
@@ -940,10 +965,9 @@ Future<void> bgUpdateCheck(
     );
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
-  AppsProvider._eventsController.add(AppRepositoryEvent(
-    AppRepositoryEventType.saved,
-    [],
-  ));
+  AppsProvider._eventsController.add(
+    AppRepositoryEvent(AppRepositoryEventType.saved, []),
+  );
 }
 
 Future<void> _bgRunUpdateCheck(
@@ -958,34 +982,34 @@ Future<void> _bgRunUpdateCheck(
   NotificationsProvider notificationsProvider,
   LogsProvider logs,
 ) async {
-  var enoughTimePassed =
+  final enoughTimePassed =
       appsProvider.settingsProvider.updateInterval != 0 &&
       appsProvider.settingsProvider.lastCompletedBGCheckTime
-          .add(
-            Duration(minutes: appsProvider.settingsProvider.updateInterval),
-          )
+          .add(Duration(minutes: appsProvider.settingsProvider.updateInterval))
           .isBefore(DateTime.now());
   if (!enoughTimePassed) {
-    logs.add(
-      'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
+    unawaited(
+      logs.add(
+        'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
+      ),
     );
     return;
   }
 
-  logs.add('BG update task: Started (${toCheck.length}).');
+  unawaited(logs.add('BG update task: Started (${toCheck.length}).'));
 
   List<App> updates = [];
-  List<App> toNotify = [];
-  List<MapEntry<String, int>> toRetry = [];
+  final List<App> toNotify = [];
+  final List<MapEntry<String, int>> toRetry = [];
   var retryAfterXSeconds = 0;
   MultiAppMultiError? errors;
-  MultiAppMultiError toThrow = MultiAppMultiError();
-  CheckingUpdatesNotification notif = CheckingUpdatesNotification(
+  final MultiAppMultiError toThrow = MultiAppMultiError();
+  final CheckingUpdatesNotification notif = CheckingUpdatesNotification(
     plural('apps', toCheck.length),
   );
 
   try {
-    notificationsProvider.notify(notif, cancelExisting: true);
+    unawaited(notificationsProvider.notify(notif, cancelExisting: true));
     updates = await appsProvider.checkUpdates(
       specificIds: toCheck.map((e) => e.key).toList(),
       sp: appsProvider.settingsProvider,
@@ -999,7 +1023,10 @@ Future<void> _bgRunUpdateCheck(
           'BG update task: Got error on checking for $key \'${err.toString()}\'.',
         );
 
-        var toCheckApp = toCheck.firstWhere((element) => element.key == key, orElse: () => MapEntry(key, 0));
+        final toCheckApp = toCheck.firstWhere(
+          (element) => element.key == key,
+          orElse: () => MapEntry(key, 0),
+        );
         if (toCheckApp.value < maxAttempts) {
           toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
           int minRetryIntervalForThisApp = err is RateLimitError
@@ -1020,23 +1047,25 @@ Future<void> _bgRunUpdateCheck(
         }
       });
     } else {
-      logs.add('Fatal error in BG update task: ${e.toString()}');
+      unawaited(logs.add('Fatal error in BG update task: ${e.toString()}'));
       rethrow;
     }
   } finally {
-    notificationsProvider.cancel(notif.id);
+    unawaited(notificationsProvider.cancel(notif.id));
   }
 
-  List<App> trackOnlyToNotify = [];
-  List<App> exemptToNotify = [];
+  final List<App> trackOnlyToNotify = [];
+  final List<App> exemptToNotify = [];
   for (var i = 0; i < updates.length; i++) {
-    var canInstallSilently = await appsProvider.canInstallSilently(
+    final canInstallSilently = await appsProvider.canInstallSilently(
       updates[i],
     );
     if (networkRestricted || chargingRestricted || !canInstallSilently) {
       if (!updates[i].settings.getBool('skipUpdateNotifications')) {
-        logs.add(
-          'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
+        unawaited(
+          logs.add(
+            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
+          ),
         );
         if (updates[i].settings.getBool('trackOnly')) {
           trackOnlyToNotify.add(updates[i]);
@@ -1050,32 +1079,38 @@ Future<void> _bgRunUpdateCheck(
   }
 
   if (toNotify.isNotEmpty) {
-    notificationsProvider.notify(UpdateNotification(toNotify));
+    unawaited(notificationsProvider.notify(UpdateNotification(toNotify)));
   }
   if (trackOnlyToNotify.isNotEmpty) {
-    notificationsProvider.notify(
-      TrackOnlyUpdateNotification(trackOnlyToNotify),
+    unawaited(
+      notificationsProvider.notify(
+        TrackOnlyUpdateNotification(trackOnlyToNotify),
+      ),
     );
   }
   if (exemptToNotify.isNotEmpty) {
-      notificationsProvider.notify(UpdateNotification(exemptToNotify));
+    unawaited(notificationsProvider.notify(UpdateNotification(exemptToNotify)));
   }
 
   if (toThrow.rawErrors.isNotEmpty) {
     for (var element in toThrow.idsByErrorString.entries) {
-      notificationsProvider.notify(
-        ErrorCheckingUpdatesNotification(
-          (errors ?? toThrow).errorsAppsString(element.key, element.value),
-          id: Random().nextInt(10000),
+      unawaited(
+        notificationsProvider.notify(
+          ErrorCheckingUpdatesNotification(
+            (errors ?? toThrow).errorsAppsString(element.key, element.value),
+            id: Random().nextInt(10000),
+          ),
         ),
       );
     }
   }
 
-  logs.add('BG update task: Done checking for updates.');
+  unawaited(logs.add('BG update task: Done checking for updates.'));
   if (toRetry.isNotEmpty) {
-    logs.add(
-      'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
+    unawaited(
+      logs.add(
+        'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
+      ),
     );
     if (retryAfterXSeconds > 0) {
       await Future.delayed(Duration(seconds: retryAfterXSeconds));
@@ -1089,8 +1124,10 @@ Future<void> _bgRunUpdateCheck(
           .toList(),
     });
   } else {
-    logs.add(
-      'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
+    unawaited(
+      logs.add(
+        'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
+      ),
     );
     return await bgUpdateCheck(taskId, {
       'toCheck': [],
@@ -1138,8 +1175,10 @@ class SourceHealthMonitor {
     final h = _health.putIfAbsent(sourceName, () => _SourceHealth());
     h.consecutiveFailures = 0;
     h.totalSuccesses++;
-    LogsProvider().add('Source health: $sourceName recovered',
-        level: LogLevel.debug);
+    LogsProvider().add(
+      'Source health: $sourceName recovered',
+      level: LogLevel.debug,
+    );
   }
 
   void recordFailure(String sourceName, Object error) {
@@ -1148,17 +1187,20 @@ class SourceHealthMonitor {
     h.lastFailure = DateTime.now();
     h.totalFailures++;
     LogsProvider().add(
-        'Source health: $sourceName failure #${h.consecutiveFailures}: $error',
-        level: LogLevel.warning);
+      'Source health: $sourceName failure #${h.consecutiveFailures}: $error',
+      level: LogLevel.warning,
+    );
   }
 
   Map<String, Map<String, dynamic>> getHealthReport() {
-    return _health.map((key, value) => MapEntry(key, {
-          'consecutiveFailures': value.consecutiveFailures,
-          'totalFailures': value.totalFailures,
-          'totalSuccesses': value.totalSuccesses,
-          'isTripped': value.consecutiveFailures >= 3,
-        }));
+    return _health.map(
+      (key, value) => MapEntry(key, {
+        'consecutiveFailures': value.consecutiveFailures,
+        'totalFailures': value.totalFailures,
+        'totalSuccesses': value.totalSuccesses,
+        'isTripped': value.consecutiveFailures >= 3,
+      }),
+    );
   }
 }
 
@@ -1278,14 +1320,14 @@ class NativeFeatures {
   static bool _systemFontLoaded = false;
 
   static Future<ByteData> _readFileBytes(String path) async {
-    var bytes = await File(path).readAsBytes();
+    final bytes = await File(path).readAsBytes();
     return ByteData.view(bytes.buffer);
   }
 
   static Future<void> loadSystemFont() async {
     if (_systemFontLoaded) return;
-    var fontLoader = FontLoader('SystemFont');
-    var fontFilePath = await AndroidSystemFont().getFilePath();
+    final fontLoader = FontLoader('SystemFont');
+    final fontFilePath = await AndroidSystemFont().getFilePath();
     if (fontFilePath == null) return;
     fontLoader.addFont(_readFileBytes(fontFilePath));
     await fontLoader.load();

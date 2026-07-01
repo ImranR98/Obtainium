@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -10,7 +11,7 @@ import 'package:obtainium/providers/source_provider.dart';
 extension Unique<E, Id> on List<E> {
   List<E> unique([Id Function(E element)? id, bool inplace = true]) {
     final ids = <dynamic>{};
-    var list = inplace ? this : List<E>.from(this);
+    final list = inplace ? this : List<E>.from(this);
     list.retainWhere((x) => ids.add(id != null ? id(x) : x as Id));
     return list;
   }
@@ -44,16 +45,16 @@ class APKPure extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegExB = RegExp(
+    final RegExp standardUrlRegExB = RegExp(
       '^https?://m.${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
       caseSensitive: false,
     );
     RegExpMatch? match = standardUrlRegExB.firstMatch(url);
     if (match != null) {
-      var uri = Uri.parse(url);
+      final uri = Uri.parse(url);
       url = 'https://${uri.host.substring(2)}${uri.path}';
     }
-    RegExp standardUrlRegExA = RegExp(
+    final RegExp standardUrlRegExA = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}(/+[^/]{2})?/+[^/]+/+[^/]+',
       caseSensitive: false,
     );
@@ -71,17 +72,17 @@ class APKPure extends AppSource {
   ) async {
     var apkUrls = versionVariants
         .map((e) {
-          String? appId = e['package_name']?.toString();
-          String? versionCode = e['version_code']?.toString();
+          final String? appId = e['package_name']?.toString();
+          final String? versionCode = e['version_code']?.toString();
           if (appId == null || versionCode == null) {
             return null;
           }
 
           List<String> architectures =
               e['native_code']?.cast<String>() ?? <String>[];
-          String architectureString = architectures.join(',');
-          if (architectures.contains("universal") ||
-              architectures.contains("unlimited")) {
+          final String architectureString = architectures.join(',');
+          if (architectures.contains('universal') ||
+              architectures.contains('unlimited')) {
             architectures = [];
           }
           if (additionalSettings['autoApkFilterByArch'] == true &&
@@ -90,14 +91,18 @@ class APKPure extends AppSource {
             return null;
           }
 
-          var asset = e['asset'];
-          String? type = asset is Map ? asset['type']?.toString() : null;
-          String? downloadUri = asset is Map ? asset['url']?.toString() : null;
+          final asset = e['asset'];
+          final String? type = asset is Map ? asset['type']?.toString() : null;
+          final String? downloadUri = asset is Map
+              ? asset['url']?.toString()
+              : null;
           if (type == null || downloadUri == null) {
             return null;
           }
 
-          var archSuffix = architectureString.isNotEmpty ? '-$architectureString' : '';
+          final archSuffix = architectureString.isNotEmpty
+              ? '-$architectureString'
+              : '';
           return MapEntry(
             '$appId-$versionCode$archSuffix.${type.toLowerCase()}',
             downloadUri,
@@ -111,14 +116,14 @@ class APKPure extends AppSource {
       throw NoAPKError();
     }
 
-    var v = versionVariants.first;
-    String? version = v['version_name']?.toString();
+    final v = versionVariants.first;
+    final String? version = v['version_name']?.toString();
     if (version == null || version.isEmpty) {
       throw NoVersionError();
     }
-    String author = v['developer']?.toString() ?? name;
-    String appName = v['title']?.toString() ?? tr('app');
-    DateTime? releaseDate = v['update_date'] != null
+    final String author = v['developer']?.toString() ?? name;
+    final String appName = v['title']?.toString() ?? tr('app');
+    final DateTime? releaseDate = v['update_date'] != null
         ? DateTime.tryParse(v['update_date'].toString())
         : null;
     String? changeLog = v['whatsnew'];
@@ -149,14 +154,19 @@ class APKPure extends AppSource {
       return null;
     } else {
       try {
-        var androidInfo = await DeviceInfoPlugin().androidInfo;
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
         return {
-          "Ual-Access-Businessid": "projecta",
-          "Ual-Access-ProjectA":
+          'Ual-Access-Businessid': 'projecta',
+          'Ual-Access-ProjectA':
               '{"device_info":{"os_ver":"${androidInfo.version.sdkInt}"}}',
         };
       } catch (e) {
-        LogsProvider().add('Failed to get device info headers: $e', level: LogLevel.error);
+        unawaited(
+          LogsProvider().add(
+            'Failed to get device info headers: $e',
+            level: LogLevel.error,
+          ),
+        );
         return null;
       }
     }
@@ -168,78 +178,88 @@ class APKPure extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      String? appId = await tryInferringAppId(standardUrl);
-    if (appId == null) {
-      throw NoReleasesError();
-    }
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
+        throw NoReleasesError();
+      }
 
-    List<String> supportedArchs;
-    try {
-      supportedArchs =
-          (await DeviceInfoPlugin().androidInfo).supportedAbis;
-    } catch (e) {
-      LogsProvider().add('Failed to get supported ABIs: $e', level: LogLevel.error);
-      supportedArchs = [];
-    }
-
-    var res = await sourceRequest(
-      "https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en",
-      additionalSettings,
-    );
-    if (res.statusCode != 200) {
-      throw getObtainiumHttpError(res);
-    }
-    List<Map<String, dynamic>> apks;
-    try {
-      apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
-          .cast<Map<String, dynamic>>();
-    } catch (e) {
-      LogsProvider().add('Failed to parse version list: $e', level: LogLevel.error);
-      throw NoReleasesError();
-    }
-
-    // group by version
-    List<List<Map<String, dynamic>>> versions = apks
-        .fold<Map<String, List<Map<String, dynamic>>>>({}, (
-          Map<String, List<Map<String, dynamic>>> val,
-          Map<String, dynamic> element,
-        ) {
-          var v = element['version_name'] as String? ?? '';
-          if (!val.containsKey(v)) {
-            val[v] = [];
-          }
-          val[v]?.add(element);
-          return val;
-        })
-        .values
-        .toList();
-
-    if (versions.isEmpty) {
-      throw NoReleasesError();
-    }
-
-    for (var i = 0; i < versions.length; i++) {
-      var v = versions[i];
+      List<String> supportedArchs;
       try {
-        if (i == 0 && additionalSettings['stayOneVersionBehind'] == true) {
-          if (additionalSettings['fallbackToOlderReleases'] != true && versions.length < 2) {
-            throw NoReleasesError();
-          }
-          continue;
-        }
-        return await getDetailsForVersion(
-          v,
-          supportedArchs,
-          additionalSettings,
-        );
+        supportedArchs = (await DeviceInfoPlugin().androidInfo).supportedAbis;
       } catch (e) {
-        if (additionalSettings['fallbackToOlderReleases'] != true ||
-            i == versions.length - 1) {
-          rethrowOrWrapError(e);
+        unawaited(
+          LogsProvider().add(
+            'Failed to get supported ABIs: $e',
+            level: LogLevel.error,
+          ),
+        );
+        supportedArchs = [];
+      }
+
+      final res = await sourceRequest(
+        'https://tapi.pureapk.com/v3/get_app_his_version?package_name=$appId&hl=en',
+        additionalSettings,
+      );
+      if (res.statusCode != 200) {
+        throw getObtainiumHttpError(res);
+      }
+      List<Map<String, dynamic>> apks;
+      try {
+        apks = (jsonDecode(res.body)['version_list'] as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+      } catch (e) {
+        unawaited(
+          LogsProvider().add(
+            'Failed to parse version list: $e',
+            level: LogLevel.error,
+          ),
+        );
+        throw NoReleasesError();
+      }
+
+      // group by version
+      final List<List<Map<String, dynamic>>> versions = apks
+          .fold<Map<String, List<Map<String, dynamic>>>>({}, (
+            Map<String, List<Map<String, dynamic>>> val,
+            Map<String, dynamic> element,
+          ) {
+            final v = element['version_name'] as String? ?? '';
+            if (!val.containsKey(v)) {
+              val[v] = [];
+            }
+            val[v]?.add(element);
+            return val;
+          })
+          .values
+          .toList();
+
+      if (versions.isEmpty) {
+        throw NoReleasesError();
+      }
+
+      for (var i = 0; i < versions.length; i++) {
+        final v = versions[i];
+        try {
+          if (i == 0 && additionalSettings['stayOneVersionBehind'] == true) {
+            if (additionalSettings['fallbackToOlderReleases'] != true &&
+                versions.length < 2) {
+              throw NoReleasesError();
+            }
+            continue;
+          }
+          return await getDetailsForVersion(
+            v,
+            supportedArchs,
+            additionalSettings,
+          );
+        } catch (e) {
+          if (additionalSettings['fallbackToOlderReleases'] != true ||
+              i == versions.length - 1) {
+            rethrowOrWrapError(e);
+          }
         }
       }
-    }
-    throw NoAPKError();
+      throw NoAPKError();
     } catch (e) {
       rethrowOrWrapError(e);
     }

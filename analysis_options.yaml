@@ -22,7 +22,6 @@ linter:
   # producing the lint.
   rules:
     - always_declare_return_types
-    - avoid_catches_without_on_clauses
     - avoid_print
     - cancel_subscriptions
     - close_sinks

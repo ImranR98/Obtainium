@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -69,9 +70,7 @@ class _AppPageState extends State<AppPage> {
     // only react to widget updates once the WebView has finished its initial
     // load, avoiding predictive-back crashes from operating on a WebView that
     // is mid-transition.
-    if (_initialized &&
-        webViewReady &&
-        oldWidget.appId != widget.appId) {
+    if (_initialized && webViewReady && oldWidget.appId != widget.appId) {
       setState(() {});
     }
   }
@@ -111,10 +110,10 @@ class _AppPageState extends State<AppPage> {
               }
             },
             onNavigationRequest: (NavigationRequest request) =>
-                !(request.url.startsWith("http://") ||
-                    request.url.startsWith("https://") ||
-                    request.url.startsWith("ftp://") ||
-                    request.url.startsWith("ftps://"))
+                !(request.url.startsWith('http://') ||
+                    request.url.startsWith('https://') ||
+                    request.url.startsWith('ftp://') ||
+                    request.url.startsWith('ftps://'))
                 ? NavigationDecision.prevent
                 : NavigationDecision.navigate,
           ),
@@ -185,11 +184,12 @@ class _AppPageState extends State<AppPage> {
           )..['versionDetection'] = true,
         );
         if (appsProvider.apps[appId]?.app.installedVersion != null) {
-          appsProvider.apps[appId]?.app = appsProvider.apps[appId]!.app.copyWith(
-            installedVersion: appsProvider.apps[appId]?.app.latestVersion,
-          );
+          appsProvider.apps[appId]?.app = appsProvider.apps[appId]!.app
+              .copyWith(
+                installedVersion: appsProvider.apps[appId]?.app.latestVersion,
+              );
         }
-        appsProvider.saveApps([appsProvider.apps[appId]!.app]);
+        unawaited(appsProvider.saveApps([appsProvider.apps[appId]!.app]));
       }
     } catch (err) {
       if (err is RepositoryRenamedError && context.mounted) {
@@ -217,7 +217,7 @@ class _AppPageState extends State<AppPage> {
       updatedApp = updatedApp.copyWith(
         installedVersion: updatedApp.latestVersion,
       );
-      appsProvider.saveApps([updatedApp]);
+      unawaited(appsProvider.saveApps([updatedApp]));
     }
   }
 
@@ -226,7 +226,7 @@ class _AppPageState extends State<AppPage> {
     AppInMemory? app,
   ) async {
     final s = source;
-    var items = (s?.combinedAppSpecificSettingFormItems ?? []).map((row) {
+    final items = (s?.combinedAppSpecificSettingFormItems ?? []).map((row) {
       row = row.map((e) {
         if (app?.app.additionalSettings[e.key] != null) {
           e.value = app?.app.additionalSettings[e.key];
@@ -289,7 +289,7 @@ class _AppPageState extends State<AppPage> {
   ) {
     if (app != null && values != null) {
       final s = source;
-      Map<String, dynamic> originalSettings = app.app.additionalSettings;
+      final Map<String, dynamic> originalSettings = app.app.additionalSettings;
       app.app = app.app.copyWith(additionalSettings: values);
       if (s?.enforceTrackOnly == true) {
         app.app = app.app.copyWith(
@@ -301,26 +301,25 @@ class _AppPageState extends State<AppPage> {
           showMessage(tr('appsFromSourceAreTrackOnly'), context);
         }
       }
-      var versionDetectionEnabled =
+      final versionDetectionEnabled =
           app.app.settings.getBool('versionDetection', defaultValue: true) &&
-              originalSettings['versionDetection'] != true;
-      var releaseDateVersionEnabled =
+          originalSettings['versionDetection'] != true;
+      final releaseDateVersionEnabled =
           app.app.settings.getBool('releaseDateAsVersion') &&
-              originalSettings['releaseDateAsVersion'] != true;
-      var releaseDateVersionDisabled =
+          originalSettings['releaseDateAsVersion'] != true;
+      final releaseDateVersionDisabled =
           !app.app.settings.getBool('releaseDateAsVersion') &&
-              originalSettings['releaseDateAsVersion'] == true;
+          originalSettings['releaseDateAsVersion'] == true;
       if (releaseDateVersionEnabled) {
         if (app.app.releaseDate != null) {
-          bool isUpdated = app.app.installedVersion == app.app.latestVersion;
+          final bool isUpdated =
+              app.app.installedVersion == app.app.latestVersion;
           app.app = app.app.copyWith(
             latestVersion: app.app.releaseDate!.microsecondsSinceEpoch
                 .toString(),
           );
           if (isUpdated) {
-            app.app = app.app.copyWith(
-              installedVersion: app.app.latestVersion,
-            );
+            app.app = app.app.copyWith(installedVersion: app.app.latestVersion);
           }
         }
       } else if (releaseDateVersionDisabled) {
@@ -331,11 +330,10 @@ class _AppPageState extends State<AppPage> {
       }
       if (versionDetectionEnabled) {
         app.app = app.app.copyWith(
-          additionalSettings: Map<String, dynamic>.from(
-            app.app.additionalSettings,
-          )
-            ..['versionDetection'] = true
-            ..['releaseDateAsVersion'] = false,
+          additionalSettings:
+              Map<String, dynamic>.from(app.app.additionalSettings)
+                ..['versionDetection'] = true
+                ..['releaseDateAsVersion'] = false,
         );
       }
       appsProvider.saveApps([app.app]).then((_) {
@@ -352,21 +350,23 @@ class _AppPageState extends State<AppPage> {
   ) async {
     try {
       final trackOnly = app?.app.settings.getBool('trackOnly') == true;
-      var successMessage = app?.app.installedVersion == null
+      final successMessage = app?.app.installedVersion == null
           ? tr('installed')
           : tr('appsUpdated');
-      var np = Provider.of<NotificationsProvider>(context, listen: false);
+      final np = Provider.of<NotificationsProvider>(context, listen: false);
       settingsProvider.heavyImpact();
-      var res = await appsProvider.downloadAndInstallLatestApps([
+      final res = await appsProvider.downloadAndInstallLatestApps([
         appId,
       ], context);
       if (res.isNotEmpty && !trackOnly && context.mounted) {
         showMessage(successMessage, context);
       }
       if (res.isNotEmpty) {
-        np.cancel(UpdateNotification([]).id);
-        np.cancel(
-          SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+        unawaited(np.cancel(UpdateNotification([]).id));
+        unawaited(
+          np.cancel(
+            SilentUpdateAttemptNotification([], id: res[0].hashCode).id,
+          ),
         );
       }
       return res;
@@ -408,7 +408,7 @@ class _AppPageState extends State<AppPage> {
     BuildContext context,
     AppInMemory? app,
   ) async {
-    var res = await installOrUpdate(context, app);
+    final res = await installOrUpdate(context, app);
     if (res.isNotEmpty && mounted) {
       _closePage();
     }
@@ -450,9 +450,7 @@ class _AppPageState extends State<AppPage> {
         !areDownloadsRunning;
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
     return FilledButton.icon(
-      onPressed: hasAction
-          ? () => _handleInstallOrUpdate(context, app)
-          : null,
+      onPressed: hasAction ? () => _handleInstallOrUpdate(context, app) : null,
       icon: Icon(
         installed == null
             ? Icons.download_outlined
@@ -484,16 +482,12 @@ class _AppPageState extends State<AppPage> {
           onPressed: app?.downloadProgress != null || updating
               ? null
               : () async {
-                  var values = await showAdditionalOptionsDialog(
+                  final values = await showAdditionalOptionsDialog(
                     context,
                     app,
                   );
                   if (context.mounted) {
-                    handleAdditionalOptionChanges(
-                      values,
-                      context,
-                      app,
-                    );
+                    handleAdditionalOptionChanges(values, context, app);
                   }
                 },
           tooltip: tr('additionalOptions'),
@@ -512,10 +506,12 @@ class _AppPageState extends State<AppPage> {
           onPressed: () async {
             updateAppIcon();
             if (!context.mounted) return;
-            showDialog(
-              context: context,
-              builder: (BuildContext ctx) =>
-                  AppInfoDialog(app: app, appsProvider: appsProvider),
+            unawaited(
+              showDialog(
+                context: context,
+                builder: (BuildContext ctx) =>
+                    AppInfoDialog(app: app, appsProvider: appsProvider),
+              ),
             );
           },
           icon: const Icon(Icons.more_horiz),
@@ -545,16 +541,15 @@ class _AppPageState extends State<AppPage> {
           tooltip: tr('resetInstallStatus'),
         ),
       IconButton(
-        onPressed:
-            app == null || app.downloadProgress != null || updating
-                ? null
-                : () {
-                    removeApp(context, app).then((removed) {
-                      if (removed) {
-                        _closePage();
-                      }
-                    });
-                  },
+        onPressed: app == null || app.downloadProgress != null || updating
+            ? null
+            : () {
+                removeApp(context, app).then((removed) {
+                  if (removed) {
+                    _closePage();
+                  }
+                });
+              },
         tooltip: tr('remove'),
         icon: const Icon(Icons.delete_outline),
       ),
@@ -596,9 +591,7 @@ class _AppPageState extends State<AppPage> {
             IconButton(
               onPressed: _closePage,
               icon: Icon(
-                widget.onClose != null
-                    ? Icons.close_rounded
-                    : Icons.arrow_back,
+                widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
               ),
             ),
           ],
@@ -622,21 +615,16 @@ class _AppPageState extends State<AppPage> {
                 children: [
                   Text(
                     app?.name ?? tr('app'),
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    tr(
-                      'byX',
-                      args: [app?.author ?? tr('unknown')],
+                    tr('byX', args: [app?.author ?? tr('unknown')]),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant,
-                        ),
                   ),
                 ],
               ),
@@ -662,19 +650,16 @@ class _AppPageState extends State<AppPage> {
             }
             return Text(
               l,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             );
           }(),
           if (app?.app.releaseDate != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                app!.app.releaseDate!
-                    .toLocal()
-                    .toString()
-                    .split('.')
-                    .first,
+                app!.app.releaseDate!.toLocal().toString().split('.').first,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -750,12 +735,9 @@ class _AppPageState extends State<AppPage> {
             Text(
               '${plural('certificateHash', a.certificateHashes.length)}'
               '${a.hasMultipleSigners ? " (${tr('multipleSigners')})" : ""}',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant,
-                  ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             ...a.certificateHashes.map(
               (h) => Tooltip(
@@ -765,9 +747,7 @@ class _AppPageState extends State<AppPage> {
                     copyToClipboard(context, h);
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Text(
                       h,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -819,10 +799,7 @@ class _AppPageState extends State<AppPage> {
     return widgets;
   }
 
-  Widget _buildCategorySection(
-    AppInMemory? app,
-    AppsProvider appsProvider,
-  ) {
+  Widget _buildCategorySection(AppInMemory? app, AppsProvider appsProvider) {
     return _buildSection(
       true,
       true,
@@ -876,9 +853,7 @@ class _AppPageState extends State<AppPage> {
             label: app!.downloadProgress! >= 0
                 ? tr(
                     'percentProgress',
-                    args: [
-                      app.downloadProgress!.toInt().toString(),
-                    ],
+                    args: [app.downloadProgress!.toInt().toString()],
                   )
                 : tr('installing'),
             child: Padding(
@@ -896,26 +871,24 @@ class _AppPageState extends State<AppPage> {
 
   @override
   Widget build(BuildContext context) {
-    var appsProvider = context.read<AppsProvider>();
-    var settingsProvider = context.watch<SettingsProvider>();
-    var showAppWebpageFinal =
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
+    final showAppWebpageFinal =
         (settingsProvider.showAppWebpage &&
             !widget.showOppositeOfPreferredView) ||
         (!settingsProvider.showAppWebpage &&
             widget.showOppositeOfPreferredView);
-    bool areDownloadsRunning = context.select<AppsProvider, bool>(
+    final bool areDownloadsRunning = context.select<AppsProvider, bool>(
       (p) => p.areDownloadsRunning(),
     );
     context.select<AppsProvider, double?>(
       (p) => p.apps[widget.appId]?.downloadProgress,
     );
 
-    AppInMemory? app = cachedApp(
-      context.select<AppsProvider, AppInMemory?>(
-        (p) => p.apps[widget.appId],
-      ),
+    final AppInMemory? app = cachedApp(
+      context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
-    var source = this.source;
+    final source = this.source;
 
     if (!areDownloadsRunning &&
         prevApp == null &&
@@ -926,11 +899,11 @@ class _AppPageState extends State<AppPage> {
         if (mounted) getUpdate(context);
       });
     }
-    var trackOnly = app?.app.settings.getBool('trackOnly') == true;
+    final trackOnly = app?.app.settings.getBool('trackOnly') == true;
 
-    bool isVersionDetectionStandard =
+    final bool isVersionDetectionStandard =
         app?.app.settings.getBool('versionDetection', defaultValue: true) ==
-            true;
+        true;
 
     final certs = app != null && app.certificateHashes.isNotEmpty;
     final hasAssets =

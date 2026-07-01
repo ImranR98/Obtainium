@@ -25,14 +25,15 @@ class VersionComparison {
 
 extension AppsProviderLifecycle on AppsProvider {
   bool _getNaiveStandardVersionDetection(App app) {
-    var source = SourceProvider()
-        .getSource(app.url, overrideSource: app.overrideSource);
+    final source = SourceProvider().getSource(
+      app.url,
+      overrideSource: app.overrideSource,
+    );
     return app.settings.getBool('naiveStandardVersionDetection') ||
         source.naiveStandardVersionDetection;
   }
 
-  String? _getRealInstalledVersion(
-      App app, PackageInfo? installedInfo) {
+  String? _getRealInstalledVersion(App app, PackageInfo? installedInfo) {
     if (installedInfo == null) return null;
     return app.settings.getBool('useVersionCodeAsOSVersion')
         ? installedInfo.versionCode?.toString()
@@ -40,7 +41,7 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<Directory> getAppsDir() async {
-    Directory appsDir = Directory(
+    final Directory appsDir = Directory(
       '${(await getAppStorageDir()).path}/app_data',
     );
     if (!appsDir.existsSync()) {
@@ -53,17 +54,22 @@ extension AppsProviderLifecycle on AppsProvider {
     if (app?.app == null) {
       return false;
     }
-    var source = SourceProvider().getSource(
+    final source = SourceProvider().getSource(
       app!.app.url,
       overrideSource: app.app.overrideSource,
     );
-    var naiveStandardVersionDetection =
-        _getNaiveStandardVersionDetection(app.app);
-    String? realInstalledVersion =
-        _getRealInstalledVersion(app.app, app.installedInfo);
-    bool isHTMLWithNoVersionDetection =
+    final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
+      app.app,
+    );
+    final String? realInstalledVersion = _getRealInstalledVersion(
+      app.app,
+      app.installedInfo,
+    );
+    final bool isHTMLWithNoVersionDetection =
         (source is HTML &&
-        app.app.settings.getStringOrNull('versionExtractionRegEx')?.isNotEmpty !=
+        app.app.settings
+                .getStringOrNull('versionExtractionRegEx')
+                ?.isNotEmpty !=
             true);
     return !app.app.settings.getBool('trackOnly') &&
         !app.app.settings.getBool('releaseDateAsVersion') &&
@@ -86,13 +92,18 @@ extension AppsProviderLifecycle on AppsProvider {
     PackageInfo? installedInfo,
   ) {
     var modded = false;
-    var trackOnly = app.settings.getBool('trackOnly');
-    var versionDetectionIsStandard =
-        app.settings.getBool('versionDetection', defaultValue: true);
-    var naiveStandardVersionDetection =
-        _getNaiveStandardVersionDetection(app);
-    String? realInstalledVersion =
-        _getRealInstalledVersion(app, installedInfo);
+    final trackOnly = app.settings.getBool('trackOnly');
+    final versionDetectionIsStandard = app.settings.getBool(
+      'versionDetection',
+      defaultValue: true,
+    );
+    final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
+      app,
+    );
+    final String? realInstalledVersion = _getRealInstalledVersion(
+      app,
+      installedInfo,
+    );
     // 1. Compare reported vs. real installed versions where one is null.
     if (installedInfo == null && app.installedVersion != null && !trackOnly) {
       app = app.copyWith(installedVersion: null);
@@ -107,12 +118,14 @@ extension AppsProviderLifecycle on AppsProvider {
         versionDetectionIsStandard) {
       // App's reported version and real version don't match (and it uses standard version detection)
       // If they share a standard format (and are still different under it), update the reported version accordingly
-      var correctedInstalledVersion = reconcileVersionDifferences(
+      final correctedInstalledVersion = reconcileVersionDifferences(
         realInstalledVersion,
         app.installedVersion!,
       );
       if (correctedInstalledVersion?.areEqual == false) {
-        app = app.copyWith(installedVersion: correctedInstalledVersion!.version);
+        app = app.copyWith(
+          installedVersion: correctedInstalledVersion!.version,
+        );
         modded = true;
       } else if (naiveStandardVersionDetection) {
         app = app.copyWith(installedVersion: realInstalledVersion);
@@ -125,12 +138,14 @@ extension AppsProviderLifecycle on AppsProvider {
         versionDetectionIsStandard) {
       // App's reported installed and latest versions don't match (and it uses standard version detection)
       // If they share a standard format, make sure the App's reported installed version uses that format
-      var correctedInstalledVersion = reconcileVersionDifferences(
+      final correctedInstalledVersion = reconcileVersionDifferences(
         app.installedVersion!,
         app.latestVersion,
       );
       if (correctedInstalledVersion?.areEqual == true) {
-        app = app.copyWith(installedVersion: correctedInstalledVersion!.version);
+        app = app.copyWith(
+          installedVersion: correctedInstalledVersion!.version,
+        );
         modded = true;
       }
     }
@@ -141,7 +156,8 @@ extension AppsProviderLifecycle on AppsProvider {
           AppInMemory(app, null, installedInfo, null),
         )) {
       app = app.copyWith(
-        additionalSettings: Map<String, dynamic>.from(app.additionalSettings)..['versionDetection'] = false,
+        additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
+          ..['versionDetection'] = false,
         installedVersion: app.latestVersion,
       );
       logs.add('Could not reconcile version formats for: ${app.id}');
@@ -155,21 +171,17 @@ extension AppsProviderLifecycle on AppsProvider {
     String templateVersion,
     String comparisonVersion,
   ) {
-    var templateVersionFormats = VersionService().findStandardFormatsForVersion(
-      templateVersion,
-      true,
-    );
-    var comparisonVersionFormats = VersionService().findStandardFormatsForVersion(
-      comparisonVersion,
-      true,
-    );
+    final templateVersionFormats = VersionService()
+        .findStandardFormatsForVersion(templateVersion, true);
+    var comparisonVersionFormats = VersionService()
+        .findStandardFormatsForVersion(comparisonVersion, true);
     if (comparisonVersionFormats.isEmpty) {
       comparisonVersionFormats = VersionService().findStandardFormatsForVersion(
         comparisonVersion,
         false,
       );
     }
-    var commonStandardFormats = templateVersionFormats.intersection(
+    final commonStandardFormats = templateVersionFormats.intersection(
       comparisonVersionFormats,
     );
     if (commonStandardFormats.isEmpty) {
@@ -198,14 +210,14 @@ extension AppsProviderLifecycle on AppsProvider {
     loadingApps = true;
     notify();
     try {
-      var sp = SourceProvider();
-      List<List<String>> errors = [];
-      var installedAppsData = await getAllInstalledInfo();
-      Map<String, PackageInfo> installedAppsMap = {
+      final sp = SourceProvider();
+      final List<List<String>> errors = [];
+      final installedAppsData = await getAllInstalledInfo();
+      final Map<String, PackageInfo> installedAppsMap = {
         for (var i in installedAppsData)
           if (i.packageName != null) i.packageName!: i,
       };
-      List<String> removedAppIds = [];
+      final List<String> removedAppIds = [];
       await Future.wait(
         (await getAppsDir()) // Parse Apps from JSON
             .listSync()
@@ -220,11 +232,11 @@ extension AppsProviderLifecycle on AppsProvider {
                     jsonDecode(await File(item.path).readAsString()),
                   );
                 } catch (err) {
-                  logs.add(
-                    'Error when loading App (will be ignored): $err',
+                  unawaited(
+                    logs.add('Error when loading App (will be ignored): $err'),
                   );
                   if (err is FormatException) {
-                    item.rename('${item.path}$_corruptFileSuffix');
+                    unawaited(item.rename('${item.path}$_corruptFileSuffix'));
                   }
                 }
               }
@@ -236,15 +248,15 @@ extension AppsProviderLifecycle on AppsProvider {
                 );
                 try {
                   // Try getting the app's source to ensure no invalid apps get loaded
-                  var src = sp.getSource(
+                  final src = sp.getSource(
                     app.url,
                     overrideSource: app.overrideSource,
                   );
-                  var sourceType = src.name;
+                  final sourceType = src.name;
                   // If the app is installed, grab its OS data and reconcile install statuses
-                  PackageInfo? installedInfo = installedAppsMap[app.id];
+                  final PackageInfo? installedInfo = installedAppsMap[app.id];
                   // Reconcile differences between the installed and recorded install info
-                  var moddedApp = getCorrectedInstallStatusAppIfPossible(
+                  final moddedApp = getCorrectedInstallStatusAppIfPossible(
                     app,
                     installedInfo,
                   );
@@ -278,9 +290,11 @@ extension AppsProviderLifecycle on AppsProvider {
             }),
       );
       if (errors.isNotEmpty) {
-        removeApps(errors.map((e) => e[0]).toList());
-        NotificationsProvider().notify(
-          AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()),
+        unawaited(removeApps(errors.map((e) => e[0]).toList()));
+        unawaited(
+          NotificationsProvider().notify(
+            AppsRemovedNotification(errors.map((e) => [e[1], e[2]]).toList()),
+          ),
         );
       }
       // Delete externally uninstalled Apps if needed
@@ -298,13 +312,13 @@ extension AppsProviderLifecycle on AppsProvider {
 
   Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
     if (apps[appId]?.icon == null) {
-      var cachedIcon = File('${iconsCacheDir.path}/$appId.png');
-      var alreadyCached = cachedIcon.existsSync() && !ignoreCache;
-      var icon = alreadyCached
+      final cachedIcon = File('${iconsCacheDir.path}/$appId.png');
+      final alreadyCached = cachedIcon.existsSync() && !ignoreCache;
+      final icon = alreadyCached
           ? (await cachedIcon.readAsBytes())
           : (await apps[appId]?.installedInfo?.applicationInfo?.getAppIcon());
       if (icon != null && !alreadyCached) {
-        cachedIcon.writeAsBytes(icon.toList());
+        unawaited(cachedIcon.writeAsBytes(icon.toList()));
       }
       if (icon != null) {
         apps.update(
@@ -335,14 +349,16 @@ extension AppsProviderLifecycle on AppsProvider {
         if (attemptToCorrectInstallStatus) {
           info = await getInstalledInfo(app.id);
           icon = await info?.applicationInfo?.getAppIcon();
-          app = app.copyWith(name: await (info?.applicationInfo?.getAppLabel()) ?? app.name);
+          app = app.copyWith(
+            name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
+          );
           app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
         } else {
           info = null;
           icon = null;
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
-          String filePath = '${(await getAppsDir()).path}/${app.id}.json';
+          final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
           await File(
             '$filePath.tmp',
           ).writeAsString(jsonEncode(app.toJson())); // #2089
@@ -369,10 +385,10 @@ extension AppsProviderLifecycle on AppsProvider {
 
   /// Deletes app JSON files, cached APKs, and icons for the given app IDs, then updates state.
   Future<void> removeApps(List<String> appIds) async {
-    var apkFiles = apkDir.listSync();
+    final apkFiles = apkDir.listSync();
     await Future.wait(
       appIds.map((appId) async {
-        File file = File('${(await getAppsDir()).path}/$appId.json');
+        final File file = File('${(await getAppsDir()).path}/$appId.json');
         if (file.existsSync()) {
           deleteFile(file);
         }
@@ -397,14 +413,12 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<bool> removeAppsWithModal(BuildContext context, List<App> apps) async {
-    var showUninstallOption = apps
+    final showUninstallOption = apps
         .where(
-          (a) =>
-              a.installedVersion != null &&
-              !a.settings.getBool('trackOnly'),
+          (a) => a.installedVersion != null && !a.settings.getBool('trackOnly'),
         )
         .isNotEmpty;
-    var values = await showDialog(
+    final values = await showDialog(
       context: context,
       builder: (BuildContext ctx) {
         return GeneratedFormModal(
@@ -432,12 +446,13 @@ extension AppsProviderLifecycle on AppsProvider {
       },
     );
     if (values != null) {
-      bool uninstall = values['uninstallApp'] == true && showUninstallOption;
-      bool remove = values['rmAppEntry'] == true || !showUninstallOption;
+      final bool uninstall =
+          values['uninstallApp'] == true && showUninstallOption;
+      final bool remove = values['rmAppEntry'] == true || !showUninstallOption;
       if (uninstall) {
         for (var i = 0; i < apps.length; i++) {
           if (apps[i].installedVersion != null) {
-            uninstallApp(apps[i].id);
+            unawaited(uninstallApp(apps[i].id));
             apps[i] = apps[i].copyWith(installedVersion: null);
           }
         }
@@ -460,7 +475,7 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   void addMissingCategories(SettingsProvider settingsProvider) {
-    var cats = Map<String, int>.from(settingsProvider.categories);
+    final cats = Map<String, int>.from(settingsProvider.categories);
     apps.forEach((key, value) {
       for (var c in value.app.categories) {
         if (!cats.containsKey(c)) {

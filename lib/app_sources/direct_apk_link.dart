@@ -24,7 +24,7 @@ class DirectAPKLink extends AppSource {
           'defaultPseudoVersioningMethod',
           [
             MapEntry('partialAPKHash', tr('partialAPKHash')),
-            MapEntry('ETag', 'ETag'),
+            const MapEntry('ETag', 'ETag'),
           ],
           label: tr('defaultPseudoVersioningMethod'),
           value: 'partialAPKHash',
@@ -46,8 +46,8 @@ class DirectAPKLink extends AppSource {
     if (!forSelection) {
       return Uri.tryParse(url)?.toString() ?? url;
     }
-    RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
-    var match = standardUrlRegExA.firstMatch(url);
+    final RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
+    final match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -73,7 +73,7 @@ class DirectAPKLink extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var additionalSettingsNew = getDefaultValuesFromFormItems(
+      final additionalSettingsNew = getDefaultValuesFromFormItems(
         html.combinedAppSpecificSettingFormItems,
       );
       for (var s in additionalSettings.keys) {

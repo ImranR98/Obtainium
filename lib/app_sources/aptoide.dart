@@ -37,25 +37,27 @@ class Aptoide extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var res = await sourceRequest(standardUrl, additionalSettings);
+    final res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var idMatch = RegExp(r'"app"\s*:\s*\{\s*"id"\s*:\s*([0-9]+)').firstMatch(res.body);
+    final idMatch = RegExp(
+      r'"app"\s*:\s*\{\s*"id"\s*:\s*([0-9]+)',
+    ).firstMatch(res.body);
     String? id;
     if (idMatch != null) {
       id = idMatch.group(1)!;
     } else {
       throw NoReleasesError();
     }
-    var res2 = await sourceRequest(
+    final res2 = await sourceRequest(
       'https://ws2.aptoide.com/api/7/getApp/app_id/$id',
       additionalSettings,
     );
     if (res2.statusCode != 200) {
       throw getObtainiumHttpError(res2);
     }
-    var data = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
+    final data = jsonDecode(res2.body)?['nodes']?['meta']?['data'];
     if (data == null) {
       throw NoReleasesError();
     }
@@ -68,29 +70,32 @@ class Aptoide extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var appDetails = await getAppDetailsJSON(standardUrl, additionalSettings);
-    String appName = appDetails['name'] ?? tr('app');
-    String author = appDetails['developer']?['name'] ?? name;
-    String? dateStr = appDetails['updated'];
-    String? version = appDetails['file']?['vername'];
-    String? apkUrl = appDetails['file']?['path'];
-    if (version == null || version.isEmpty) {
-      throw NoVersionError();
-    }
-    if (apkUrl == null) {
-      throw NoAPKError();
-    }
-    DateTime? relDate;
-    if (dateStr != null) {
-      relDate = DateTime.tryParse(dateStr);
-    }
+      final appDetails = await getAppDetailsJSON(
+        standardUrl,
+        additionalSettings,
+      );
+      final String appName = appDetails['name'] ?? tr('app');
+      final String author = appDetails['developer']?['name'] ?? name;
+      final String? dateStr = appDetails['updated'];
+      final String? version = appDetails['file']?['vername'];
+      final String? apkUrl = appDetails['file']?['path'];
+      if (version == null || version.isEmpty) {
+        throw NoVersionError();
+      }
+      if (apkUrl == null) {
+        throw NoAPKError();
+      }
+      DateTime? relDate;
+      if (dateStr != null) {
+        relDate = DateTime.tryParse(dateStr);
+      }
 
-    return APKDetails(
-      version,
-      getApkUrlsFromUrls([apkUrl]),
-      AppNames(author, appName),
-      releaseDate: relDate,
-    );
+      return APKDetails(
+        version,
+        getApkUrlsFromUrls([apkUrl]),
+        AppNames(author, appName),
+        releaseDate: relDate,
+      );
     } catch (e) {
       rethrowOrWrapError(e);
     }

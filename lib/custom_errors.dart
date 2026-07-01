@@ -29,9 +29,12 @@ class ObtainiumError {
   }) : _message = message;
 
   String get message =>
-      code == 'UNKNOWN' || code == 'UNEXPECTED' || code == 'CHECK_UPDATES_FAILED' || code == 'MULTI_ERROR'
-          ? _message
-          : localizeErrorCode(code, data);
+      code == 'UNKNOWN' ||
+          code == 'UNEXPECTED' ||
+          code == 'CHECK_UPDATES_FAILED' ||
+          code == 'MULTI_ERROR'
+      ? _message
+      : localizeErrorCode(code, data);
 
   @override
   String toString() => message;
@@ -71,47 +74,29 @@ class RateLimitError extends ObtainiumError {
 
 class InvalidURLError extends ObtainiumError {
   InvalidURLError(String sourceName)
-    : super.withCode(
-        'INVALID_URL',
-        data: {'sourceName': sourceName},
-      );
+    : super.withCode('INVALID_URL', data: {'sourceName': sourceName});
 }
 
 class CredsNeededError extends ObtainiumError {
   CredsNeededError(String sourceName)
-    : super.withCode(
-        'CREDS_NEEDED',
-        data: {'sourceName': sourceName},
-      );
+    : super.withCode('CREDS_NEEDED', data: {'sourceName': sourceName});
 }
 
 class NoReleasesError extends ObtainiumError {
   NoReleasesError({String? note})
-    : super.withCode(
-        'NO_RELEASES',
-        data: {'note': note ?? ''},
-      );
+    : super.withCode('NO_RELEASES', data: {'note': note ?? ''});
 }
 
 class NoAPKError extends ObtainiumError {
-  NoAPKError()
-    : super.withCode(
-        'NO_APK',
-      );
+  NoAPKError() : super.withCode('NO_APK');
 }
 
 class NoVersionError extends ObtainiumError {
-  NoVersionError()
-    : super.withCode(
-        'NO_VERSION',
-      );
+  NoVersionError() : super.withCode('NO_VERSION');
 }
 
 class UnsupportedURLError extends ObtainiumError {
-  UnsupportedURLError()
-    : super.withCode(
-        'UNSUPPORTED_URL',
-      );
+  UnsupportedURLError() : super.withCode('UNSUPPORTED_URL');
 }
 
 class DowngradeError extends ObtainiumError {
@@ -138,10 +123,7 @@ class InstallError extends ObtainiumError {
 
 class IDChangedError extends ObtainiumError {
   IDChangedError(String newId)
-    : super.withCode(
-        'ID_CHANGED',
-        data: {'newId': newId},
-      );
+    : super.withCode('ID_CHANGED', data: {'newId': newId});
 }
 
 class RepositoryRenamedError extends ObtainiumError {
@@ -164,10 +146,7 @@ class CheckUpdatesException extends ObtainiumError {
 }
 
 class NotImplementedError extends ObtainiumError {
-  NotImplementedError()
-    : super.withCode(
-        'NOT_IMPLEMENTED',
-      );
+  NotImplementedError() : super.withCode('NOT_IMPLEMENTED');
 }
 
 class MultiAppMultiError extends ObtainiumError {
@@ -175,11 +154,7 @@ class MultiAppMultiError extends ObtainiumError {
   Map<String, List<String>> idsByErrorString = {};
   Map<String, String> appIdNames = {};
 
-  MultiAppMultiError()
-    : super.withCode(
-        'MULTI_ERROR',
-        unexpected: true,
-      );
+  MultiAppMultiError() : super.withCode('MULTI_ERROR', unexpected: true);
 
   void add(String appId, dynamic error, {String? appName}) {
     if (error is SocketException) {
@@ -216,16 +191,27 @@ class MultiAppMultiError extends ObtainiumError {
 
 String localizeErrorCode(String code, Map<String, dynamic>? data) {
   return switch (code) {
-    'NO_RELEASES' => data?['note'] != null && (data!['note'] as String).isNotEmpty
-        ? '${tr('noReleaseFound')}\n\n${data['note']}'
-        : tr('noReleaseFound'),
-    'RATE_LIMIT' => plural('tooManyRequestsTryAgainInMinutes', data?['remainingMinutes'] ?? 0),
-    'INVALID_URL' => tr('invalidURLForSource', args: [data?['sourceName'] ?? '']),
-    'CREDS_NEEDED' => tr('requiresCredentialsInSettings', args: [data?['sourceName'] ?? '']),
+    'NO_RELEASES' =>
+      data?['note'] != null && (data!['note'] as String).isNotEmpty
+          ? '${tr('noReleaseFound')}\n\n${data['note']}'
+          : tr('noReleaseFound'),
+    'RATE_LIMIT' => plural(
+      'tooManyRequestsTryAgainInMinutes',
+      data?['remainingMinutes'] ?? 0,
+    ),
+    'INVALID_URL' => tr(
+      'invalidURLForSource',
+      args: [data?['sourceName'] ?? ''],
+    ),
+    'CREDS_NEEDED' => tr(
+      'requiresCredentialsInSettings',
+      args: [data?['sourceName'] ?? ''],
+    ),
     'NO_APK' => tr('noAPKFound'),
     'NO_VERSION' => tr('noVersionFound'),
     'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),
-    'DOWNGRADE' => '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
+    'DOWNGRADE' =>
+      '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
     'INSTALL_FAILED' => data?['message']?.toString() ?? tr('installFailed'),
     'ID_CHANGED' => '${tr('appIdMismatch')} - ${data?['newId'] ?? ''}',
     'REPO_RENAMED' => tr('repoRenamed'),
@@ -239,7 +225,7 @@ bool isEnglish() => tr('and') == 'and';
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 
 String list2FriendlyString(List<String> list) {
-  var isUsingEnglish = isEnglish();
+  final isUsingEnglish = isEnglish();
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list

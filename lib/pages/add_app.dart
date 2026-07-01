@@ -102,16 +102,16 @@ class AddAppPageState extends State<AddAppPage> {
       if (overrideSource != null) {
         pickedSourceOverride = overrideSource;
       }
-      bool overrideChanged =
+      final bool overrideChanged =
           pickedSourceOverride != _previousPickedSourceOverride;
       _previousPickedSourceOverride = pickedSourceOverride;
       if (updateUrlInput) {
         urlInputKey++;
       }
-      var prevHost = pickedSource?.hosts.isNotEmpty == true
+      final prevHost = pickedSource?.hosts.isNotEmpty == true
           ? pickedSource?.hosts[0]
           : null;
-      var source = valid
+      final source = valid
           ? sourceProvider.getSource(
               userInput,
               overrideSource: pickedSourceOverride,
@@ -161,11 +161,11 @@ class AddAppPageState extends State<AddAppPage> {
     bool ignoreHideSetting = false,
   }) async {
     final s = pickedSource!;
-    var useTrackOnly = userPickedTrackOnly || s.enforceTrackOnly;
+    final useTrackOnly = userPickedTrackOnly || s.enforceTrackOnly;
     if (useTrackOnly &&
         (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
       if (!context.mounted) return false;
-      var values = await showDialog(
+      final values = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return GeneratedFormModal(
@@ -216,7 +216,7 @@ class AddAppPageState extends State<AddAppPage> {
     gettingAppInfo = true;
     setState(() {});
     try {
-      var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
+      final userPickedTrackOnly = additionalSettings['trackOnly'] == true;
       App? app;
       var confirmed = await getTrackOnlyConfirmationIfNeeded(
         userPickedTrackOnly,
@@ -228,7 +228,7 @@ class AddAppPageState extends State<AddAppPage> {
       }
       if (confirmed) {
         final s = pickedSource!;
-        var trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
+        final trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
         app = await sourceProvider.getApp(
           s,
           userInput.trim(),
@@ -239,7 +239,7 @@ class AddAppPageState extends State<AddAppPage> {
         );
         if (isTempId(app) && !app.settings.getBool('trackOnly')) {
           if (!context.mounted) return;
-          var apkUrl = await appsProvider.confirmAppFileUrl(
+          final apkUrl = await appsProvider.confirmAppFileUrl(
             app,
             context,
             false,
@@ -254,7 +254,7 @@ class AddAppPageState extends State<AddAppPage> {
                 .indexOf(apkUrl.value),
           );
           if (!context.mounted) return;
-          var downloadedArtifact = await appsProvider.downloadApp(
+          final downloadedArtifact = await appsProvider.downloadApp(
             app,
             context,
             notificationsProvider: notificationsProvider,
@@ -269,9 +269,7 @@ class AddAppPageState extends State<AddAppPage> {
           if (downloadedFile == null && downloadedDir == null) {
             throw ObtainiumError(tr('downloadFailed'));
           }
-          app = app.copyWith(
-            id: downloadedFile?.appId ?? downloadedDir!.appId,
-          );
+          app = app.copyWith(id: downloadedFile?.appId ?? downloadedDir!.appId);
         }
         if (appsProvider.apps.containsKey(app.id)) {
           throw ObtainiumError(tr('appAlreadyAdded'));
@@ -283,15 +281,15 @@ class AddAppPageState extends State<AddAppPage> {
         app = app.copyWith(categories: pickedCategories);
         await appsProvider.saveApps([app], onlyIfExists: false);
       }
-      if (app != null) {
-        var route = MaterialPageRoute<void>(
+      if (app != null && context.mounted) {
+        final route = MaterialPageRoute<void>(
           builder: (context) => AppPage(appId: app!.id),
         );
-        var nav = Navigator.of(context);
+        final nav = Navigator.of(context);
         if (resetUserInputAfter) {
-          nav.push(route);
+          unawaited(nav.push(route));
         } else {
-          nav.pushReplacement(route);
+          unawaited(nav.pushReplacement(route));
         }
       }
     } catch (e) {
@@ -305,25 +303,20 @@ class AddAppPageState extends State<AddAppPage> {
     }
   }
 
-  Future<void> runSearch(
-    BuildContext context,
-  ) async {
+  Future<void> runSearch(BuildContext context) async {
     searching = true;
     setState(() {});
-    var sourceStrings = <String, List<String>>{};
+    final sourceStrings = <String, List<String>>{};
     sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
       sourceStrings[s.name] = [s.name];
     });
     try {
-      var searchSources =
+      final searchSources =
           await showDialog<List<String>?>(
             context: context,
             builder: (BuildContext ctx) {
               return SelectionModal(
-                title: tr(
-                  'selectX',
-                  args: [plural('source', 2).toLowerCase()],
-                ),
+                title: tr('selectX', args: [plural('source', 2).toLowerCase()]),
                 entries: sourceStrings,
                 selectedByDefault: true,
                 onlyOneSelectionAllowed: false,
@@ -337,100 +330,90 @@ class AddAppPageState extends State<AddAppPage> {
         settingsProvider.searchDeselected = sourceStrings.keys
             .where((s) => !searchSources.contains(s))
             .toList();
-        List<MapEntry<String, Map<String, List<String>>>?> results =
-            (await Future.wait(
-              sourceProvider.sources
-                  .where((e) => searchSources.contains(e.name))
-                  .map((e) async {
-                    try {
-                      Map<String, dynamic>? querySettings = {};
-                      if (e.includeAdditionalOptsInMainSearch) {
-                        querySettings =
-                            await showDialog<Map<String, dynamic>?>(
-                          context: context,
-                          builder: (BuildContext ctx) {
-                            return GeneratedFormModal(
-                              title: tr('searchX', args: [e.name]),
-                              items: [
-                                ...e.searchQuerySettingFormItems
-                                    .map((e) => [e]),
-                                [
-                                  GeneratedFormTextField(
-                                    'url',
-                                    label: e.hosts.isNotEmpty
-                                        ? tr('overrideSource')
-                                        : plural('url', 1).substring(2),
-                                    autoCompleteOptions: [
-                                      ...(e.hosts.isNotEmpty
-                                          ? [e.hosts[0]]
-                                          : []),
-                                      ...appsProvider.apps.values
-                                          .where(
-                                            (a) =>
-                                                sourceProvider
-                                                    .getSource(
-                                                      a.app.url,
-                                                      overrideSource:
-                                                          a.app.overrideSource,
-                                                    )
-                                                    .runtimeType ==
-                                                e.runtimeType,
-                                          )
-                                          .map((a) {
-                                            var uri = Uri.parse(a.app.url);
-                                            return '${uri.origin}${uri.path}';
-                                          }),
-                                    ],
-                                    value:
-                                        e.hosts.isNotEmpty ? e.hosts[0] : '',
-                                    required: true,
-                                  ),
+        final List<MapEntry<String, Map<String, List<String>>>?>
+        results = (await Future.wait(
+          sourceProvider.sources
+              .where((e) => searchSources.contains(e.name))
+              .map((e) async {
+                try {
+                  Map<String, dynamic>? querySettings = {};
+                  if (e.includeAdditionalOptsInMainSearch) {
+                    querySettings = await showDialog<Map<String, dynamic>?>(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        return GeneratedFormModal(
+                          title: tr('searchX', args: [e.name]),
+                          items: [
+                            ...e.searchQuerySettingFormItems.map((e) => [e]),
+                            [
+                              GeneratedFormTextField(
+                                'url',
+                                label: e.hosts.isNotEmpty
+                                    ? tr('overrideSource')
+                                    : plural('url', 1).substring(2),
+                                autoCompleteOptions: [
+                                  ...(e.hosts.isNotEmpty ? [e.hosts[0]] : []),
+                                  ...appsProvider.apps.values
+                                      .where(
+                                        (a) =>
+                                            sourceProvider
+                                                .getSource(
+                                                  a.app.url,
+                                                  overrideSource:
+                                                      a.app.overrideSource,
+                                                )
+                                                .runtimeType ==
+                                            e.runtimeType,
+                                      )
+                                      .map((a) {
+                                        final uri = Uri.parse(a.app.url);
+                                        return '${uri.origin}${uri.path}';
+                                      }),
                                 ],
-                              ],
-                            );
-                          },
+                                value: e.hosts.isNotEmpty ? e.hosts[0] : '',
+                                required: true,
+                              ),
+                            ],
+                          ],
                         );
-                        if (querySettings == null) {
-                          return null;
-                        }
-                      }
-                      return MapEntry(
-                        e.name,
-                        await e.search(
-                          searchQuery,
-                          querySettings: querySettings,
-                        ),
-                      );
-                    } catch (err) {
-                      final errorToShow = err is ObtainiumError
-                          ? ObtainiumError(
-                              err.message,
-                              code: err.code,
-                              unexpected: true,
-                              stack: err.stack,
-                              data: err.data,
-                            )
-                          : err;
-                      if (context.mounted) showError(errorToShow, context);
+                      },
+                    );
+                    if (querySettings == null) {
                       return null;
                     }
-                  }),
-            ))
-                .where((a) => a != null)
-                .toList();
+                  }
+                  return MapEntry(
+                    e.name,
+                    await e.search(searchQuery, querySettings: querySettings),
+                  );
+                } catch (err) {
+                  final errorToShow = err is ObtainiumError
+                      ? ObtainiumError(
+                          err.message,
+                          code: err.code,
+                          unexpected: true,
+                          stack: err.stack,
+                          data: err.data,
+                        )
+                      : err;
+                  if (context.mounted) showError(errorToShow, context);
+                  return null;
+                }
+              }),
+        )).where((a) => a != null).toList();
 
         if (!context.mounted) return;
 
-        Map<String, MapEntry<String, List<String>>> res = {};
+        final Map<String, MapEntry<String, List<String>>> res = {};
         var si = 0;
         var done = false;
         while (!done) {
           done = true;
           for (var r in results) {
-            var sourceName = r!.key;
+            final sourceName = r!.key;
             if (r.value.length > si) {
               done = false;
-              var singleRes = r.value.entries.elementAt(si);
+              final singleRes = r.value.entries.elementAt(si);
               res[singleRes.key] = MapEntry(sourceName, singleRes.value);
             }
           }
@@ -440,7 +423,7 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('noResults'));
         }
         if (!context.mounted) return;
-        List<String>? selectedUrls = await showDialog<List<String>?>(
+        final List<String>? selectedUrls = await showDialog<List<String>?>(
           context: context,
           builder: (BuildContext ctx) {
             return SelectionModal(
@@ -451,7 +434,7 @@ class AddAppPageState extends State<AddAppPage> {
           },
         );
         if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          var sourceName = res[selectedUrls[0]]?.key;
+          final sourceName = res[selectedUrls[0]]?.key;
           changeUserInput(
             selectedUrls[0],
             true,
@@ -493,10 +476,12 @@ class AddAppPageState extends State<AddAppPage> {
                   ),
                   onPressed: e.hosts.isNotEmpty
                       ? () {
-                          unawaited(launchUrlString(
-                            'https://${e.hosts[0]}',
-                            mode: LaunchMode.externalApplication,
-                          ));
+                          unawaited(
+                            launchUrlString(
+                              'https://${e.hosts[0]}',
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          );
                         }
                       : null,
                 );
@@ -516,10 +501,12 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   void openCrowdsourcedConfigs() {
-    unawaited(launchUrlString(
-      'https://apps.obtainium.page/',
-      mode: LaunchMode.externalApplication,
-    ));
+    unawaited(
+      launchUrlString(
+        'https://apps.obtainium.page/',
+        mode: LaunchMode.externalApplication,
+      ),
+    );
   }
 
   Widget _getUrlInputRow(
@@ -561,11 +548,7 @@ class AddAppPageState extends State<AddAppPage> {
             ],
           ],
           onValueChanges: (values, valid, isBuilding) {
-            changeUserInput(
-              values['appSourceURL']!,
-              valid,
-              isBuilding,
-            );
+            changeUserInput(values['appSourceURL']!, valid, isBuilding);
           },
         ),
       ),
@@ -575,7 +558,8 @@ class AddAppPageState extends State<AddAppPage> {
         child: gettingAppInfo
             ? const Center(child: CircularProgressIndicator())
             : FilledButton(
-                onPressed: doingSomething ||
+                onPressed:
+                    doingSomething ||
                         pickedSource == null ||
                         (pickedSource
                                     ?.combinedAppSpecificSettingFormItems
@@ -611,19 +595,17 @@ class AddAppPageState extends State<AddAppPage> {
                             (s) =>
                                 s.allowOverride ||
                                 (pickedSource != null &&
-                                    pickedSource.runtimeType ==
-                                        s.runtimeType),
+                                    pickedSource.runtimeType == s.runtimeType),
                           )
-                          .map(
-                            (s) => MapEntry(s.name, s.name),
-                          ),
+                          .map((s) => MapEntry(s.name, s.name)),
                     ],
                     label: tr('overrideSource'),
                   ),
                 ],
               ],
               onValueChanges: (values, valid, isBuilding) {
-                final newOverride = (values['overrideSource'] == null ||
+                final newOverride =
+                    (values['overrideSource'] == null ||
                         values['overrideSource'] == '')
                     ? null
                     : values['overrideSource'] as String?;
@@ -687,10 +669,7 @@ class AddAppPageState extends State<AddAppPage> {
     children: [
       const SizedBox(height: 16),
       Text(
-        tr(
-          'additionalOptsFor',
-          args: [pickedSource?.name ?? tr('source')],
-        ),
+        tr('additionalOptsFor', args: [pickedSource?.name ?? tr('source')]),
         style: TextStyle(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
@@ -699,7 +678,7 @@ class AddAppPageState extends State<AddAppPage> {
       const SizedBox(height: 16),
       () {
         final s = pickedSource!;
-        var formItems = s.combinedAppSpecificSettingFormItems;
+        final formItems = s.combinedAppSpecificSettingFormItems;
         if (settingsProvider.includePrereleasesByDefault ||
             settingsProvider.shizukuPretendToBeGooglePlay) {
           for (var row in formItems) {
@@ -761,8 +740,7 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              inferAppIdIfOptional =
-                  values['inferAppIdIfOptional'];
+              inferAppIdIfOptional = values['inferAppIdIfOptional'];
             }
           },
         ),
@@ -834,9 +812,9 @@ class AddAppPageState extends State<AddAppPage> {
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    bool doingSomething = gettingAppInfo || searching;
+    final bool doingSomething = gettingAppInfo || searching;
 
     if (pickedSource != null) {
       final sourceKey = pickedSource!.name;
@@ -866,18 +844,11 @@ class AddAppPageState extends State<AddAppPage> {
                 children: [
                   _getUrlInputRow(context, settingsProvider, doingSomething),
                   const SizedBox(height: 16),
-                  if (pickedSource != null)
-                    _getHTMLSourceOverrideDropdown(),
+                  if (pickedSource != null) _getHTMLSourceOverrideDropdown(),
                   if (shouldShowSearchBar)
-                    _getSearchBarRow(
-                      context,
-                      settingsProvider,
-                      doingSomething,
-                    ),
-                  if (pickedSource == null &&
-                      userInput.isEmpty) ...[
-                    if (shouldShowSearchBar)
-                      const SizedBox(height: 16),
+                    _getSearchBarRow(context, settingsProvider, doingSomething),
+                  if (pickedSource == null && userInput.isEmpty) ...[
+                    if (shouldShowSearchBar) const SizedBox(height: 16),
                     const ImportSection(),
                   ],
                   if (pickedSource != null)
@@ -888,9 +859,9 @@ class AddAppPageState extends State<AddAppPage> {
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
                             child: Material(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerLow,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
                               shape: RoundedSuperellipseBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -906,20 +877,19 @@ class AddAppPageState extends State<AddAppPage> {
                                           .textTheme
                                           .titleMedium
                                           ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                     ),
                                     Padding(
-                                      padding:
-                                          const EdgeInsets.only(top: 4),
+                                      padding: const EdgeInsets.only(top: 4),
                                       child: Text(
                                         val.data!,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
                                       ),
                                     ),
                                   ],

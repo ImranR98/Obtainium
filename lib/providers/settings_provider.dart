@@ -1,5 +1,6 @@
 // Exposes functions used to save/load app settings
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -25,7 +26,7 @@ const Color obtainiumThemeColor = Color(0xFF6438B5);
 
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
-  var split = localeString.split('-');
+  final split = localeString.split('-');
   if (split.length == 3) {
     return Locale.fromSubtags(languageCode: split[0], countryCode: split[2]);
   }
@@ -77,7 +78,7 @@ class SettingsProvider with ChangeNotifier {
   /// to fetch (platform channel round-trips). Cached across all provider instances.
   static String? _cachedDefaultAppDir;
   static bool? _cachedIsTV;
-  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static final Map<String, String?> _secureCache = {};
 
   Future<void> initializeSettings() async {
@@ -99,7 +100,7 @@ class SettingsProvider with ChangeNotifier {
 
   void _migrateLegacyExportSetting() {
     if (_getInt('exportSettings') != null) return;
-    var legacyBool = _getBool('exportSettings');
+    final legacyBool = _getBool('exportSettings');
     if (legacyBool != null) {
       prefs?.setInt('exportSettings', legacyBool ? 1 : 0);
     }
@@ -110,11 +111,11 @@ class SettingsProvider with ChangeNotifier {
     for (var key in {'github-creds', 'gitlab-creds'}) {
       _secureCache[key] = await _secureStorage.read(key: key);
       if (_secureCache[key] == null && prefsInstance != null) {
-        var legacy = prefsInstance!.getString(key);
+        final legacy = prefsInstance!.getString(key);
         if (legacy != null && legacy.isNotEmpty) {
           await _secureStorage.write(key: key, value: legacy);
           _secureCache[key] = legacy;
-          prefsInstance!.remove(key);
+          unawaited(prefsInstance!.remove(key));
         }
       }
     }
@@ -141,8 +142,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeSettings get theme {
-    return ThemeSettings.values[_getInt('theme') ??
-        ThemeSettings.system.index];
+    return ThemeSettings.values[_getInt('theme') ?? ThemeSettings.system.index];
   }
 
   set theme(ThemeSettings t) {
@@ -151,7 +151,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Color get themeColor {
-    int? colorCode = _getInt('themeColor');
+    final int? colorCode = _getInt('themeColor');
     return (colorCode != null) ? Color(colorCode) : obtainiumThemeColor;
   }
 
@@ -174,8 +174,7 @@ class SettingsProvider with ChangeNotifier {
 
   set colourSchemeMode(ColourSchemeMode mode) {
     prefs?.setInt('colourSchemeMode', mode.index);
-    prefs?.setBool(
-        'useMaterialYou', mode == ColourSchemeMode.materialYou);
+    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
     notifyListeners();
   }
 
@@ -236,7 +235,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool checkAndFlipFirstRun() {
-    bool result = _getBool('firstRun') ?? true;
+    final bool result = _getBool('firstRun') ?? true;
     if (result) {
       prefs?.setBool('firstRun', false);
     }
@@ -276,9 +275,11 @@ class SettingsProvider with ChangeNotifier {
   /// granted (if [enforce] is true) or cancelled.
   Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
-      Fluttertoast.showToast(
-        msg: tr('pleaseAllowInstallPerm'),
-        toastLength: Toast.LENGTH_LONG,
+      unawaited(
+        Fluttertoast.showToast(
+          msg: tr('pleaseAllowInstallPerm'),
+          toastLength: Toast.LENGTH_LONG,
+        ),
       );
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
@@ -350,7 +351,7 @@ class SettingsProvider with ChangeNotifier {
     if ({'github-creds', 'gitlab-creds'}.contains(settingId)) {
       return _secureCache[settingId];
     }
-    String? str = _getString(settingId);
+    final String? str = _getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
@@ -359,7 +360,12 @@ class SettingsProvider with ChangeNotifier {
       _secureCache[settingId] = value;
       _secureStorage
           .write(key: settingId, value: value)
-          .catchError((e) => LogsProvider().add('Failed to persist credential: $e', level: LogLevel.error));
+          .catchError(
+            (e) => LogsProvider().add(
+              'Failed to persist credential: $e',
+              level: LogLevel.error,
+            ),
+          );
     } else {
       prefs?.setString(settingId, value);
     }
@@ -404,13 +410,13 @@ class SettingsProvider with ChangeNotifier {
 
   void setCategories(Map<String, int> cats, {AppsProvider? appsProvider}) {
     if (appsProvider != null) {
-      List<App> changedApps = appsProvider
+      final List<App> changedApps = appsProvider
           .getAppValues()
           .map((a) {
             if (!a.app.categories.any((c) => !cats.keys.contains(c))) {
               return null;
             }
-            var app = a.app.copyWith(
+            final app = a.app.copyWith(
               categories: List<String>.from(a.app.categories)
                 ..removeWhere((c) => !cats.keys.contains(c)),
             );
@@ -428,8 +434,9 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Locale? get forcedLocale {
-    var fl = tryParseLocale(_getString('forcedLocale'));
-    var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
+    final fl = tryParseLocale(_getString('forcedLocale'));
+    final set =
+        supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
     return set;
@@ -572,15 +579,14 @@ class SettingsProvider with ChangeNotifier {
   }
 
   DateTime get lastCompletedBGCheckTime {
-    int? temp = _getInt('lastCompletedBGCheckTime');
+    final int? temp = _getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   set lastCompletedBGCheckTime(DateTime val) {
-    prefs?.setInt(
-        'lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
+    prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
   }
 
@@ -594,7 +600,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<Uri?> getExportDir() async {
-    var uriString = _getString('exportDir');
+    final uriString = _getString('exportDir');
     if (uriString != null) {
       Uri? uri = Uri.parse(uriString);
       if (!(await saf.canRead(uri) ?? false) ||
@@ -610,14 +616,19 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> pickExportDir({bool remove = false}) async {
-    var existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
-    var currentOneWayDataSyncDir = await getExportDir();
+    final existingSAFPerms = (await saf.persistedUriPermissions()) ?? [];
+    final currentOneWayDataSyncDir = await getExportDir();
     Uri? newOneWayDataSyncDir;
     if (!remove) {
       try {
         newOneWayDataSyncDir = (await saf.openDocumentTree());
       } catch (e) {
-        LogsProvider().add('Failed to open document tree: $e', level: LogLevel.error);
+        unawaited(
+          LogsProvider().add(
+            'Failed to open document tree: $e',
+            level: LogLevel.error,
+          ),
+        );
         throw ObtainiumError(tr('noFilePickerAvailable'));
       }
     }
@@ -625,7 +636,9 @@ class SettingsProvider with ChangeNotifier {
       if (newOneWayDataSyncDir == null) {
         await prefs?.remove('exportDir');
       } else {
-        prefs?.setString('exportDir', newOneWayDataSyncDir.toString());
+        unawaited(
+          prefs?.setString('exportDir', newOneWayDataSyncDir.toString()),
+        );
       }
       notifyListeners();
     }
@@ -714,7 +727,7 @@ class SettingsProvider with ChangeNotifier {
 /// FlutterSecureStorage (credentials), and in-memory cache transparently.
 class ConfigProvider {
   SharedPreferences? _prefs;
-  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static final Map<String, String?> _cache = {};
 
   Future<void> initialize() async {

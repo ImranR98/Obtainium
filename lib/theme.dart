@@ -18,9 +18,9 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     borderRadius: BorderRadius.circular(16),
   );
 
-  final pillButtonStyle = ButtonStyle(
-    shape: const WidgetStatePropertyAll(buttonShape),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+  const pillButtonStyle = ButtonStyle(
+    shape: WidgetStatePropertyAll(buttonShape),
+    minimumSize: WidgetStatePropertyAll(Size(0, 48)),
   );
 
   return ThemeData(
@@ -61,11 +61,11 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     searchBarTheme: const SearchBarThemeData(
       elevation: WidgetStatePropertyAll(0),
     ),
-    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
-    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
-    textButtonTheme: TextButtonThemeData(
-      style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
+    filledButtonTheme: const FilledButtonThemeData(style: pillButtonStyle),
+    elevatedButtonTheme: const ElevatedButtonThemeData(style: pillButtonStyle),
+    outlinedButtonTheme: const OutlinedButtonThemeData(style: pillButtonStyle),
+    textButtonTheme: const TextButtonThemeData(
+      style: ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
@@ -111,6 +111,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     ),
   );
 }
+
 /// Corner radius for the outer corners of a connected tile run.
 const double connectedTileBigRadius = 24;
 

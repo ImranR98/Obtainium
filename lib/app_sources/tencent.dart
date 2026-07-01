@@ -29,59 +29,59 @@ class Tencent extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      String? appId = await tryInferringAppId(standardUrl);
-    if (appId == null) {
-      throw NoReleasesError();
-    }
-    String baseHost = Uri.parse(
-      standardUrl,
-    ).host.split('.').reversed.toList().sublist(0, 2).reversed.join('.');
-
-    var res = await sourceRequest(
-      'https://a.app.$baseHost/o/simple.jsp?pkgname=$appId',
-      additionalSettings,
-      followRedirects: false,
-    );
-
-    if (res.statusCode == 200) {
-      dynamic json;
-      const jsVar = 'window.systemData=';
-      try {
-        json = jsonDecode(
-          res.body
-              .split('\n')
-              .map((line) => line.trim())
-              .where((line) => line.startsWith(jsVar))
-              .first
-              .substring(jsVar.length),
-        )['appDetail'];
-      } catch (e) {
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
         throw NoReleasesError();
       }
-      if (json == null) {
-        throw NoReleasesError();
-      }
-      String? version = json['versionName']?.toString();
-      String? apkUrl = json['apkUrl64']?.toString();
-      apkUrl ??= json['apkUrl']?.toString();
-      if (apkUrl == null) {
-        throw NoAPKError();
-      }
-      if (version == null || version.isEmpty) {
-        throw NoVersionError();
-      }
-      String appName = json['appName']?.toString() ?? tr('app');
-      String author = json['author']?.toString() ?? name;
-      var apkName =
-          Uri.parse(apkUrl).queryParameters['fsname'] ??
-          '${appId}_$version.apk';
+      final String baseHost = Uri.parse(
+        standardUrl,
+      ).host.split('.').reversed.toList().sublist(0, 2).reversed.join('.');
 
-      return APKDetails(version, [
-        MapEntry(apkName, apkUrl),
-      ], AppNames(author, appName));
-    } else {
-      throw getObtainiumHttpError(res);
-    }
+      final res = await sourceRequest(
+        'https://a.app.$baseHost/o/simple.jsp?pkgname=$appId',
+        additionalSettings,
+        followRedirects: false,
+      );
+
+      if (res.statusCode == 200) {
+        dynamic json;
+        const jsVar = 'window.systemData=';
+        try {
+          json = jsonDecode(
+            res.body
+                .split('\n')
+                .map((line) => line.trim())
+                .where((line) => line.startsWith(jsVar))
+                .first
+                .substring(jsVar.length),
+          )['appDetail'];
+        } catch (e) {
+          throw NoReleasesError();
+        }
+        if (json == null) {
+          throw NoReleasesError();
+        }
+        final String? version = json['versionName']?.toString();
+        String? apkUrl = json['apkUrl64']?.toString();
+        apkUrl ??= json['apkUrl']?.toString();
+        if (apkUrl == null) {
+          throw NoAPKError();
+        }
+        if (version == null || version.isEmpty) {
+          throw NoVersionError();
+        }
+        final String appName = json['appName']?.toString() ?? tr('app');
+        final String author = json['author']?.toString() ?? name;
+        final apkName =
+            Uri.parse(apkUrl).queryParameters['fsname'] ??
+            '${appId}_$version.apk';
+
+        return APKDetails(version, [
+          MapEntry(apkName, apkUrl),
+        ], AppNames(author, appName));
+      } else {
+        throw getObtainiumHttpError(res);
+      }
     } catch (e) {
       rethrowOrWrapError(e);
     }

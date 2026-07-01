@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -27,7 +28,7 @@ extension AppsProviderImportExport on AppsProvider {
     }
     Map<String, dynamic>? settingsMap;
     if (shouldExportSettings > 0) {
-      var settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
+      final settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
       if (shouldExportSettings < 2) {
         settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
       }
@@ -54,7 +55,7 @@ extension AppsProviderImportExport on AppsProvider {
     isAuto = false,
     SettingsProvider? sp,
   }) async {
-    SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
       if (settingsProvider.autoExportOnChanges != true) {
@@ -63,13 +64,13 @@ extension AppsProviderImportExport on AppsProvider {
       if (exportDir == null) {
         return null;
       }
-      var files = await saf
+      final files = await saf
           .listFiles(exportDir, columns: [saf.DocumentFileColumn.id])
           .where((f) => f.uri.pathSegments.last.endsWith('-auto.json'))
           .toList();
       if (files.isNotEmpty) {
         for (var f in files) {
-          saf.delete(f.uri);
+          unawaited(saf.delete(f.uri));
         }
       }
     }
@@ -82,9 +83,9 @@ extension AppsProviderImportExport on AppsProvider {
     }
     String? returnPath;
     if (!pickOnly) {
-      var encoder = const JsonEncoder.withIndent("    ");
-      Map<String, dynamic> finalExport = generateExportJSON();
-      var result = await saf.createFile(
+      const encoder = JsonEncoder.withIndent('    ');
+      final Map<String, dynamic> finalExport = generateExportJSON();
+      final result = await saf.createFile(
         exportDir,
         displayName:
             '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
@@ -103,8 +104,9 @@ extension AppsProviderImportExport on AppsProvider {
 
   /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
   Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
-    var decodedJSON = jsonDecode(appsJSON);
-    final hasSchemaVersion = decodedJSON is Map && decodedJSON.containsKey('schemaVersion');
+    final decodedJSON = jsonDecode(appsJSON);
+    final hasSchemaVersion =
+        decodedJSON is Map && decodedJSON.containsKey('schemaVersion');
     List<App> importedApps;
     if (hasSchemaVersion) {
       final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
@@ -118,12 +120,11 @@ extension AppsProviderImportExport on AppsProvider {
     }
     await waitForAppsToLoad();
     for (App a in importedApps) {
-      var installedInfo = await getInstalledInfo(a.id, printErr: false);
+      final installedInfo = await getInstalledInfo(a.id, printErr: false);
       a = a.copyWith(
-        installedVersion:
-            a.settings.getBool('useVersionCodeAsOSVersion')
-                ? installedInfo?.versionCode.toString()
-                : installedInfo?.versionName,
+        installedVersion: a.settings.getBool('useVersionCodeAsOSVersion')
+            ? installedInfo?.versionCode.toString()
+            : installedInfo?.versionName,
       );
     }
     await saveApps(importedApps, onlyIfExists: false);
@@ -194,7 +195,8 @@ class ExportSchema {
       schemaVersion: schemaVersion,
       exportedAt: json['exportedAt'] as String? ?? '',
       appVersion: json['appVersion'] as String? ?? '',
-      apps: (json['apps'] as List<dynamic>?)
+      apps:
+          (json['apps'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],

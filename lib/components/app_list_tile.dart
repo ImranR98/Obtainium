@@ -8,7 +8,6 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/theme.dart';
-import 'package:obtainium/components/ui_widgets.dart' show showError;
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -58,13 +57,15 @@ void showChangeLogDialog(
                   data: changeLog,
                   onTapLink: (text, href, title) {
                     if (href != null) {
-                      unawaited(launchUrlString(
-                        href.startsWith('http://') ||
-                                href.startsWith('https://')
-                            ? href
-                            : '${Uri.parse(app.url).origin}/$href',
-                        mode: LaunchMode.externalApplication,
-                      ));
+                      unawaited(
+                        launchUrlString(
+                          href.startsWith('http://') ||
+                                  href.startsWith('https://')
+                              ? href
+                              : '${Uri.parse(app.url).origin}/$href',
+                          mode: LaunchMode.externalApplication,
+                        ),
+                      );
                     }
                   },
                   extensionSet: md.ExtensionSet(
@@ -96,7 +97,7 @@ VoidCallback? getChangeLogFn(BuildContext context, App app) {
   }
   if (changeLog == null && changesUrl == null) return null;
   return () {
-    var appSource = SourceProvider().getSource(
+    final appSource = SourceProvider().getSource(
       app.url,
       overrideSource: app.overrideSource,
     );
@@ -104,10 +105,9 @@ VoidCallback? getChangeLogFn(BuildContext context, App app) {
     if (changeLog != null) {
       showChangeLogDialog(context, app, changesUrl, appSource, changeLog);
     } else if (changesUrl != null) {
-      unawaited(launchUrlString(
-        changesUrl!,
-        mode: LaunchMode.externalApplication,
-      ));
+      unawaited(
+        launchUrlString(changesUrl!, mode: LaunchMode.externalApplication),
+      );
     }
   };
 }
@@ -143,7 +143,9 @@ class _AppIconWidgetState extends State<AppIconWidget> {
     return Semantics(
       label: name,
       button: true,
-      onTap: widget.installed ? () => packageManager.openApp(widget.appId) : null,
+      onTap: widget.installed
+          ? () => packageManager.openApp(widget.appId)
+          : null,
       onLongPress: () {
         Navigator.push(
           context,
@@ -218,12 +220,10 @@ class AppListTile extends StatelessWidget {
           ? null
           : () {
               appsProvider
-                  .downloadAndInstallLatestApps([
-                    _app.id,
-                  ], context)
+                  .downloadAndInstallLatestApps([_app.id], context)
                   .then((res) {
                     if (res.isNotEmpty && context.mounted) {
-                      var np = context.read<NotificationsProvider>();
+                      final np = context.read<NotificationsProvider>();
                       np.cancel(UpdateNotification([]).id);
                       np.cancel(
                         SilentUpdateAttemptNotification(
@@ -246,8 +246,8 @@ class AppListTile extends StatelessWidget {
   }
 
   String _versionText() {
-    var installed = _app.installedVersion;
-    var latest = _app.latestVersion;
+    final installed = _app.installedVersion;
+    final latest = _app.latestVersion;
     if (installed != null && installed != latest) {
       return '$installed → $latest';
     }
@@ -303,22 +303,19 @@ class AppListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var showChangesFn = getChangeLogFn(context, _app);
-    var hasUpdate =
+    final showChangesFn = getChangeLogFn(context, _app);
+    final hasUpdate =
         _app.installedVersion != null &&
         _app.installedVersion != _app.latestVersion;
     final updateColor = hasUpdate
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurfaceVariant;
-    Widget trailingRow = LayoutBuilder(
+    final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (hasUpdate) ...[
-            _updateButton(context),
-            const SizedBox(width: 5),
-          ],
+          if (hasUpdate) ...[_updateButton(context), const SizedBox(width: 5)],
           HighlightableButton(
             highlight: settingsProvider.highlightTouchTargets,
             onPressed: showChangesFn,
@@ -369,9 +366,9 @@ class AppListTile extends StatelessWidget {
       ),
     );
 
-    var transparent = Colors.transparent.toARGB32();
-    var categories = _app.categories;
-    List<double> stops = [
+    final transparent = Colors.transparent.toARGB32();
+    final categories = _app.categories;
+    final List<double> stops = [
       if (categories.length > 1)
         ...categories.asMap().entries.map(
           (e) => ((e.key / (categories.length - 1)) - 0.0001),
@@ -445,14 +442,14 @@ class AppListTile extends StatelessWidget {
           if (direction == DismissDirection.startToEnd) {
             if ((canInstall || canUpdate) &&
                 !appsProvider.areDownloadsRunning()) {
-              appsProvider
-                  .downloadAndInstallLatestApps([
-                    appId,
-                  ], context)
-                  .catchError((e) {
-                    if (context.mounted) showError(e, context);
-                    return <String>[];
-                  });
+              unawaited(
+                appsProvider
+                    .downloadAndInstallLatestApps([appId], context)
+                    .catchError((e) {
+                      if (context.mounted) showError(e, context);
+                      return <String>[];
+                    }),
+              );
             }
             return false;
           } else {
@@ -467,9 +464,7 @@ class AppListTile extends StatelessWidget {
                 label: canUpdate ? tr('update') : tr('install'),
               ): () {
                 if (!appsProvider.areDownloadsRunning()) {
-                  appsProvider.downloadAndInstallLatestApps([
-                    appId,
-                  ], context);
+                  appsProvider.downloadAndInstallLatestApps([appId], context);
                 }
               },
             CustomSemanticsAction(label: tr('remove')): () {
@@ -776,7 +771,7 @@ class AppListBuilder {
 
     final isDesc = sortOrder == SortOrderSettings.descending;
     if (sortColumn == SortColumnSettings.releaseDate) {
-      var entries = apps.map((a) => MapEntry(a.app.releaseDate, a)).toList()
+      final entries = apps.map((a) => MapEntry(a.app.releaseDate, a)).toList()
         ..sort((a, b) {
           final aDate = a.key;
           final bDate = b.key;
@@ -792,7 +787,7 @@ class AppListBuilder {
         SortColumnSettings.nameAuthor => (a.name + a.author).toLowerCase(),
         _ => '',
       };
-      var entries = apps.map((a) => MapEntry(keyFn(a), a)).toList()
+      final entries = apps.map((a) => MapEntry(keyFn(a), a)).toList()
         ..sort((a, b) => a.key.compareTo(b.key));
       apps = entries.map((e) => e.value).toList();
       if (isDesc) {
@@ -809,7 +804,7 @@ class AppListBuilder {
     Set<String> existingUpdates,
   ) {
     if (pinUpdates) {
-      var temp = <AppInMemory>[];
+      final temp = <AppInMemory>[];
       apps = apps.where((sa) {
         if (existingUpdates.contains(sa.app.id)) {
           temp.add(sa);
@@ -821,7 +816,7 @@ class AppListBuilder {
     }
 
     if (buryNonInstalled) {
-      var temp = <AppInMemory>[];
+      final temp = <AppInMemory>[];
       apps = apps.where((sa) {
         if (sa.app.installedVersion == null) {
           temp.add(sa);
@@ -832,9 +827,9 @@ class AppListBuilder {
       apps = [...apps, ...temp];
     }
 
-    var tempRenamed = <AppInMemory>[];
-    var tempPinned = <AppInMemory>[];
-    var tempNotPinned = <AppInMemory>[];
+    final tempRenamed = <AppInMemory>[];
+    final tempPinned = <AppInMemory>[];
+    final tempNotPinned = <AppInMemory>[];
     for (var a in apps) {
       if (a.app.hasPendingRepoRename) {
         tempRenamed.add(a);

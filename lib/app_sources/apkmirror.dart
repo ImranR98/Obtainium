@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -40,7 +41,7 @@ class APKMirror extends AppSource {
     bool forAPKDownload = false,
   }) async {
     return {
-      "User-Agent":
+      'User-Agent':
           "Obtainium/${(await getInstalledInfo(obtainiumId))?.versionName ?? '1.0.0'}",
     };
   }
@@ -64,88 +65,96 @@ class APKMirror extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      bool fallbackToOlderReleases =
-        additionalSettings['fallbackToOlderReleases'] == true;
-    String? regexFilter =
-        (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
-                ?.isNotEmpty ==
-            true
-        ? additionalSettings['filterReleaseTitlesByRegEx']
-        : null;
-    Response res = await sourceRequest(
-      '$standardUrl/feed/',
-      additionalSettings,
-    );
-    if (res.statusCode == 200) {
-      var items = parse(res.body).querySelectorAll('item');
-      dynamic targetRelease;
-      for (int i = 0; i < items.length; i++) {
-        if (!fallbackToOlderReleases && i > 0) break;
-        String? nameToFilter = items[i].querySelector('title')?.innerHtml;
-        if (regexFilter != null &&
-            nameToFilter != null &&
-            !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
-          continue;
+      final bool fallbackToOlderReleases =
+          additionalSettings['fallbackToOlderReleases'] == true;
+      final String? regexFilter =
+          (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
+                  ?.isNotEmpty ==
+              true
+          ? additionalSettings['filterReleaseTitlesByRegEx']
+          : null;
+      final Response res = await sourceRequest(
+        '$standardUrl/feed/',
+        additionalSettings,
+      );
+      if (res.statusCode == 200) {
+        final items = parse(res.body).querySelectorAll('item');
+        dynamic targetRelease;
+        for (int i = 0; i < items.length; i++) {
+          if (!fallbackToOlderReleases && i > 0) break;
+          final String? nameToFilter = items[i]
+              .querySelector('title')
+              ?.innerHtml;
+          if (regexFilter != null &&
+              nameToFilter != null &&
+              !RegExp(regexFilter).hasMatch(nameToFilter.trim())) {
+            continue;
+          }
+          targetRelease = items[i];
+          break;
         }
-        targetRelease = items[i];
-        break;
-      }
-      String? titleString = targetRelease?.querySelector('title')?.innerHtml;
-      if (targetRelease == null) {
-        throw NoReleasesError(
-          note: regexFilter != null ? tr('noMatchingReleaseFound') : null,
-        );
-      }
-      var pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
-      String? dateString = pubDateRaw?.split(' ').take(5).join(' ');
-      DateTime? releaseDate;
-      if (dateString != null) {
-        try {
-          releaseDate = HttpDate.parse('$dateString GMT');
-        } catch (e) {
-          LogsProvider().add(
-            'Failed to parse APKMirror release date: ${e.toString()}',
-            level: LogLevel.warning,
+        final String? titleString = targetRelease
+            ?.querySelector('title')
+            ?.innerHtml;
+        if (targetRelease == null) {
+          throw NoReleasesError(
+            note: regexFilter != null ? tr('noMatchingReleaseFound') : null,
           );
         }
+        final pubDateRaw = targetRelease?.querySelector('pubDate')?.innerHtml;
+        final String? dateString = pubDateRaw?.split(' ').take(5).join(' ');
+        DateTime? releaseDate;
+        if (dateString != null) {
+          try {
+            releaseDate = HttpDate.parse('$dateString GMT');
+          } catch (e) {
+            unawaited(
+              LogsProvider().add(
+                'Failed to parse APKMirror release date: ${e.toString()}',
+                level: LogLevel.warning,
+              ),
+            );
+          }
+        }
+        String? version;
+        if (titleString != null) {
+          final byMatches = RegExp(' by ').allMatches(titleString);
+          version = byMatches.isEmpty
+              ? titleString
+              : titleString
+                    .substring(
+                      RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
+                      byMatches.last.start,
+                    )
+                    .trim();
+        }
+        if (version == null || version.isEmpty) {
+          version = titleString;
+        }
+        if (version == null || version.isEmpty) {
+          throw NoVersionError();
+        }
+        return APKDetails(
+          version,
+          [],
+          getAppNames(standardUrl),
+          releaseDate: releaseDate,
+        );
+      } else {
+        throw getObtainiumHttpError(res);
       }
-      String? version;
-      if (titleString != null) {
-        final byMatches = RegExp(' by ').allMatches(titleString);
-        version = byMatches.isEmpty
-            ? titleString
-            : titleString
-                  .substring(
-                    RegExp('[0-9]').firstMatch(titleString)?.start ?? 0,
-                    byMatches.last.start,
-                  )
-                  .trim();
-      }
-      if (version == null || version.isEmpty) {
-        version = titleString;
-      }
-      if (version == null || version.isEmpty) {
-        throw NoVersionError();
-      }
-      return APKDetails(
-        version,
-        [],
-        getAppNames(standardUrl),
-        releaseDate: releaseDate,
-      );
-    } else {
-      throw getObtainiumHttpError(res);
-    }
     } catch (e) {
       rethrowOrWrapError(e);
     }
   }
 
   AppNames getAppNames(String standardUrl) {
-    String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    var pathStart = temp.indexOf('/');
-    if (pathStart < 0 || pathStart + 1 >= temp.length) throw InvalidURLError(name);
-    List<String> names = temp.substring(pathStart + 1).split('/');
+    final String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
+    final pathStart = temp.indexOf('/');
+    if (pathStart < 0 || pathStart + 1 >= temp.length) {
+      throw InvalidURLError(name);
+    }
+    final List<String> names = temp.substring(pathStart + 1).split('/');
     if (names.length < 3) throw InvalidURLError(name);
     return AppNames(names[1], names[2]);
   }

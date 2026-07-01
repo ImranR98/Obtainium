@@ -16,7 +16,7 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    var host = Uri.parse(url).host;
+    final host = Uri.parse(url).host;
     if (host.startsWith('android.')) {
       return standardizeUrlWithRegex(
         url,
@@ -45,7 +45,7 @@ class IzzyOnDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      String? appId = await tryInferringAppId(standardUrl);
+      final String? appId = await tryInferringAppId(standardUrl);
       if (appId == null) {
         throw NoReleasesError();
       }

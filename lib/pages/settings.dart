@@ -45,7 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> initAndroidSdk() async {
     try {
-      var info = await DeviceInfoPlugin().androidInfo;
+      final info = await DeviceInfoPlugin().androidInfo;
       androidSdkInt = info.version.sdkInt;
       if (mounted) setState(() {});
     } catch (_) {}
@@ -56,9 +56,7 @@ class _SettingsPageState extends State<SettingsPage> {
     ColorSwatch<Object> obtainiumSwatch,
   ) async {
     final Map<ColorSwatch<Object>, String> colorsNameMap =
-        <ColorSwatch<Object>, String>{
-      obtainiumSwatch: 'Obtainium',
-    };
+        <ColorSwatch<Object>, String>{obtainiumSwatch: 'Obtainium'};
     return ColorPicker(
       color: settingsProvider.themeColor,
       onColorChanged: (Color color) {
@@ -104,20 +102,21 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     ).showPickerDialog(
       context,
-      transitionBuilder: (
-        BuildContext context,
-        Animation<double> a1,
-        Animation<double> a2,
-        Widget widget,
-      ) {
-        final double curvedValue =
-            Curves.easeInOutCubicEmphasized.transform(a1.value);
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
-          child: Opacity(opacity: a1.value, child: widget),
-        );
-      },
+      transitionBuilder:
+          (
+            BuildContext context,
+            Animation<double> a1,
+            Animation<double> a2,
+            Widget widget,
+          ) {
+            final double curvedValue = Curves.easeInOutCubicEmphasized
+                .transform(a1.value);
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(curvedValue, curvedValue, 1),
+              child: Opacity(opacity: a1.value, child: widget),
+            );
+          },
       transitionDuration: const Duration(milliseconds: 250),
     );
   }
@@ -127,408 +126,398 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {});
   }
 
-  void handleShizukuToggle(
-    SettingsProvider settingsProvider,
-    bool useShizuku,
-  ) {
+  void handleShizukuToggle(SettingsProvider settingsProvider, bool useShizuku) {
     if (useShizuku) {
-      ShizukuApkInstaller().checkPermission().then((resCode) {
-        settingsProvider.useShizuku = resCode?.startsWith('granted') ?? false;
-        if (!context.mounted) return;
-        final errorText = switch (resCode) {
-          'services_not_found' => tr('shizukuBinderNotFound'),
-          'old_shizuku' => tr('shizukuOld'),
-          'old_android_with_adb' => tr('shizukuOldAndroidWithADB'),
-          'denied' => tr('cancelled'),
-          null => tr('unexpectedError'),
-          _ => null,
-        };
-        if (errorText != null) {
-          if (!context.mounted) return;
-          showError(ObtainiumError(errorText), context);
-        }
-      }).catchError((e) {
-        settingsProvider.useShizuku = false;
-        if (!context.mounted) return;
-        showError(e, context);
-      });
+      ShizukuApkInstaller()
+          .checkPermission()
+          .then((resCode) {
+            settingsProvider.useShizuku =
+                resCode?.startsWith('granted') ?? false;
+            if (!context.mounted) return;
+            final errorText = switch (resCode) {
+              'services_not_found' => tr('shizukuBinderNotFound'),
+              'old_shizuku' => tr('shizukuOld'),
+              'old_android_with_adb' => tr('shizukuOldAndroidWithADB'),
+              'denied' => tr('cancelled'),
+              null => tr('unexpectedError'),
+              _ => null,
+            };
+            if (errorText != null) {
+              if (!mounted) return;
+              showError(ObtainiumError(errorText), context);
+            }
+          })
+          .catchError((e) {
+            settingsProvider.useShizuku = false;
+            if (!mounted) return;
+            showError(e, context);
+          });
     } else {
       settingsProvider.useShizuku = false;
     }
   }
 
   Widget _caption(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-        child:
-            Text(text, style: Theme.of(context).textTheme.labelSmall),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+    child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+  );
 
   Widget _fieldTile(BuildContext context, Widget field) => SettingsTile(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        padding: EdgeInsets.zero,
-        child: DropdownMenuTheme(
-          data: DropdownMenuThemeData(
-            inputDecorationTheme: const InputDecorationThemeData(
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            ),
-            menuStyle: MenuStyle(
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-          ),
-          child: field,
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    padding: EdgeInsets.zero,
+    child: DropdownMenuTheme(
+      data: DropdownMenuThemeData(
+        inputDecorationTheme: const InputDecorationThemeData(
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
-      );
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+      ),
+      child: field,
+    ),
+  );
 
   Widget _buildFooter(BuildContext context) => SliverToBoxAdapter(
-        child: Column(
+    child: Column(
+      children: [
+        const Divider(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Divider(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    unawaited(launchUrlString(
-                      context.read<SettingsProvider>().sourceUrl,
-                      mode: LaunchMode.externalApplication,
-                    ));
-                  },
-                  icon: const Icon(Icons.code),
-                  tooltip: tr('appSource'),
-                ),
-                IconButton(
-                  onPressed: () {
-                    unawaited(launchUrlString(
-                      'https://wiki.obtainium.page/',
-                      mode: LaunchMode.externalApplication,
-                    ));
-                  },
-                  icon: const Icon(Icons.help_outline_rounded),
-                  tooltip: tr('wiki'),
-                ),
-                IconButton(
-                  onPressed: () {
-                    unawaited(launchUrlString(
-                      'https://apps.obtainium.page/',
-                      mode: LaunchMode.externalApplication,
-                    ));
-                  },
-                  icon: const Icon(Icons.apps_rounded),
-                  tooltip: tr('crowdsourcedConfigsLabel'),
-                ),
-                IconButton(
-                  onPressed: () {
-                    context.read<LogsProvider>().get().then((logs) {
-                      if (!context.mounted) return;
-                      if (logs.isEmpty) {
-                        showMessage(
-                            ObtainiumError(tr('noLogs')), context);
-                      } else {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext ctx) {
-                            return const LogsDialog();
-                          },
-                        );
-                      }
-                    });
-                  },
-                  icon: const Icon(Icons.bug_report_outlined),
-                  tooltip: tr('appLogs'),
-                ),
-              ],
+            IconButton(
+              onPressed: () {
+                unawaited(
+                  launchUrlString(
+                    context.read<SettingsProvider>().sourceUrl,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.code),
+              tooltip: tr('appSource'),
             ),
-            const SizedBox(height: 16),
+            IconButton(
+              onPressed: () {
+                unawaited(
+                  launchUrlString(
+                    'https://wiki.obtainium.page/',
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.help_outline_rounded),
+              tooltip: tr('wiki'),
+            ),
+            IconButton(
+              onPressed: () {
+                unawaited(
+                  launchUrlString(
+                    'https://apps.obtainium.page/',
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.apps_rounded),
+              tooltip: tr('crowdsourcedConfigsLabel'),
+            ),
+            IconButton(
+              onPressed: () {
+                context.read<LogsProvider>().get().then((logs) {
+                  if (!context.mounted) return;
+                  if (logs.isEmpty) {
+                    showMessage(ObtainiumError(tr('noLogs')), context);
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        return const LogsDialog();
+                      },
+                    );
+                  }
+                });
+              },
+              icon: const Icon(Icons.bug_report_outlined),
+              tooltip: tr('appLogs'),
+            ),
           ],
         ),
-      );
+        const SizedBox(height: 16),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
 
-        var colorPicker = SettingsTile(
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-                tr('selectX', args: [tr('colour').toLowerCase()])),
-            subtitle: Text(
-              "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
-              "(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})",
-            ),
-            trailing: ColorIndicator(
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              color: settingsProvider.themeColor,
-              onSelectFocus: false,
-              onSelect: () async {
-                final Color colorBeforeDialog =
-                    settingsProvider.themeColor;
-                if (!(await showColorPickerDialog(
-                  settingsProvider,
-                  obtainiumThemeColor.toSwatch(),
-                ))) {
-                  handleColorPickerCancel(
-                      colorBeforeDialog, settingsProvider);
-                }
-              },
-            ),
-          ),
-        );
+    final colorPicker = SettingsTile(
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
+        subtitle: Text(
+          '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
+          '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
+        ),
+        trailing: ColorIndicator(
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          color: settingsProvider.themeColor,
+          onSelectFocus: false,
+          onSelect: () async {
+            final Color colorBeforeDialog = settingsProvider.themeColor;
+            if (!(await showColorPickerDialog(
+              settingsProvider,
+              obtainiumThemeColor.toSwatch(),
+            ))) {
+              handleColorPickerCancel(colorBeforeDialog, settingsProvider);
+            }
+          },
+        ),
+      ),
+    );
 
-        var themeModeControl = SettingsTile(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(child: Text(tr('theme'))),
-              const SizedBox(width: 12),
-              SegmentedButton<ThemeSettings>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: ThemeSettings.system,
-                    icon: const Icon(Icons.brightness_auto_outlined),
-                    tooltip: tr('followSystem'),
-                  ),
-                  ButtonSegment(
-                    value: ThemeSettings.light,
-                    icon: const Icon(Icons.light_mode_outlined),
-                    tooltip: tr('light'),
-                  ),
-                  ButtonSegment(
-                    value: ThemeSettings.dark,
-                    icon: const Icon(Icons.dark_mode_outlined),
-                    tooltip: tr('dark'),
-                  ),
-                ],
-                selected: {settingsProvider.theme},
-                onSelectionChanged: (selection) {
-                  settingsProvider.theme = selection.first;
-                },
+    final themeModeControl = SettingsTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('theme'))),
+          const SizedBox(width: 12),
+          SegmentedButton<ThemeSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: ThemeSettings.system,
+                icon: const Icon(Icons.brightness_auto_outlined),
+                tooltip: tr('followSystem'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.light,
+                icon: const Icon(Icons.light_mode_outlined),
+                tooltip: tr('light'),
+              ),
+              ButtonSegment(
+                value: ThemeSettings.dark,
+                icon: const Icon(Icons.dark_mode_outlined),
+                tooltip: tr('dark'),
               ),
             ],
+            selected: {settingsProvider.theme},
+            onSelectionChanged: (selection) {
+              settingsProvider.theme = selection.first;
+            },
           ),
-        );
+        ],
+      ),
+    );
 
-        var sortDropdown = DropdownMenu<SortColumnSettings>(
-          expandedInsets: EdgeInsets.zero,
-          label: Text(tr('appSortBy')),
-          initialSelection: settingsProvider.sortColumn,
-          dropdownMenuEntries: [
-            DropdownMenuEntry(
-              value: SortColumnSettings.authorName,
-              label: tr('authorName'),
-            ),
-            DropdownMenuEntry(
-              value: SortColumnSettings.nameAuthor,
-              label: tr('nameAuthor'),
-            ),
-            DropdownMenuEntry(
-              value: SortColumnSettings.added,
-              label: tr('asAdded'),
-            ),
-            DropdownMenuEntry(
-              value: SortColumnSettings.releaseDate,
-              label: tr('releaseDate'),
-            ),
-          ],
-          onSelected: (value) {
-            if (value != null) {
-              settingsProvider.sortColumn = value;
-            }
-          },
-        );
-
-        var orderControl = SettingsTile(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(child: Text(tr('appSortOrder'))),
-              const SizedBox(width: 12),
-              SegmentedButton<SortOrderSettings>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: SortOrderSettings.ascending,
-                    icon: const Icon(Icons.arrow_upward_rounded),
-                    tooltip: tr('ascending'),
-                  ),
-                  ButtonSegment(
-                    value: SortOrderSettings.descending,
-                    icon: const Icon(Icons.arrow_downward_rounded),
-                    tooltip: tr('descending'),
-                  ),
-                ],
-                selected: {settingsProvider.sortOrder},
-                onSelectionChanged: (selection) {
-                  settingsProvider.sortOrder = selection.first;
-                },
-              ),
-            ],
-          ),
-        );
-
-        var localeDropdown = DropdownMenu<Locale?>(
-          expandedInsets: EdgeInsets.zero,
-          label: Text(tr('language')),
-          initialSelection: settingsProvider.forcedLocale,
-          dropdownMenuEntries: [
-            DropdownMenuEntry<Locale?>(
-                value: null, label: tr('followSystem')),
-            ...supportedLocales.map(
-              (e) => DropdownMenuEntry<Locale?>(
-                  value: e.key, label: e.value),
-            ),
-          ],
-          onSelected: (value) {
-            settingsProvider.forcedLocale = value;
-            if (value != null) {
-              context.setLocale(value);
-            } else {
-              settingsProvider.resetLocaleSafe(context);
-            }
-          },
-        );
-
-        var colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
-          expandedInsets: EdgeInsets.zero,
-          label: Text(tr('colourScheme')),
-          initialSelection: settingsProvider.colourSchemeMode,
-          dropdownMenuEntries: [
-            DropdownMenuEntry(
-              value: ColourSchemeMode.standard,
-              label: tr('standard'),
-            ),
-            DropdownMenuEntry(
-              value: ColourSchemeMode.vibrant,
-              label: tr('vibrant'),
-            ),
-            DropdownMenuEntry(
-              value: ColourSchemeMode.expressive,
-              label: tr('expressive'),
-            ),
-            if (sdk >= 31)
-              DropdownMenuEntry(
-                value: ColourSchemeMode.materialYou,
-                label: tr('useMaterialYou'),
-              ),
-          ],
-          onSelected: (value) {
-            if (value != null) {
-              settingsProvider.colourSchemeMode = value;
-            }
-          },
-        );
-
-        var allSourceConfigItems = sourceProvider.sources
-            .expand((e) => e.sourceConfigSettingFormItems)
-            .map((e) => e.clone())
-            .toList();
-        for (var item in allSourceConfigItems) {
-          if (item is GeneratedFormSwitch) {
-            item.value = settingsProvider.getSettingBool(item.key);
-          } else {
-            item.value =
-                settingsProvider.getSettingString(item.key);
-          }
+    final sortDropdown = DropdownMenu<SortColumnSettings>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('appSortBy')),
+      initialSelection: settingsProvider.sortColumn,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
+          value: SortColumnSettings.authorName,
+          label: tr('authorName'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.nameAuthor,
+          label: tr('nameAuthor'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.added,
+          label: tr('asAdded'),
+        ),
+        DropdownMenuEntry(
+          value: SortColumnSettings.releaseDate,
+          label: tr('releaseDate'),
+        ),
+      ],
+      onSelected: (value) {
+        if (value != null) {
+          settingsProvider.sortColumn = value;
         }
-        Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
-            ? null
-            : GeneratedForm(
-                tileMode: true,
-                items:
-                    allSourceConfigItems.map((e) => [e]).toList(),
-                onValueChanges: (values, valid, isBuilding) {
-                  if (valid && !isBuilding) {
-                    values.forEach((key, value) {
-                      var formItem = allSourceConfigItems
-                          .where((i) => i.key == key)
-                          .firstOrNull;
-                      if (formItem is GeneratedFormSwitch) {
-                        settingsProvider.setSettingBool(
-                            key, value == true);
-                      } else {
-                        settingsProvider.setSettingString(
-                            key, value ?? '');
-                      }
-                    });
+      },
+    );
+
+    final orderControl = SettingsTile(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(tr('appSortOrder'))),
+          const SizedBox(width: 12),
+          SegmentedButton<SortOrderSettings>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: SortOrderSettings.ascending,
+                icon: const Icon(Icons.arrow_upward_rounded),
+                tooltip: tr('ascending'),
+              ),
+              ButtonSegment(
+                value: SortOrderSettings.descending,
+                icon: const Icon(Icons.arrow_downward_rounded),
+                tooltip: tr('descending'),
+              ),
+            ],
+            selected: {settingsProvider.sortOrder},
+            onSelectionChanged: (selection) {
+              settingsProvider.sortOrder = selection.first;
+            },
+          ),
+        ],
+      ),
+    );
+
+    final localeDropdown = DropdownMenu<Locale?>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('language')),
+      initialSelection: settingsProvider.forcedLocale,
+      dropdownMenuEntries: [
+        DropdownMenuEntry<Locale?>(value: null, label: tr('followSystem')),
+        ...supportedLocales.map(
+          (e) => DropdownMenuEntry<Locale?>(value: e.key, label: e.value),
+        ),
+      ],
+      onSelected: (value) {
+        settingsProvider.forcedLocale = value;
+        if (value != null) {
+          context.setLocale(value);
+        } else {
+          settingsProvider.resetLocaleSafe(context);
+        }
+      },
+    );
+
+    final colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
+      expandedInsets: EdgeInsets.zero,
+      label: Text(tr('colourScheme')),
+      initialSelection: settingsProvider.colourSchemeMode,
+      dropdownMenuEntries: [
+        DropdownMenuEntry(
+          value: ColourSchemeMode.standard,
+          label: tr('standard'),
+        ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.vibrant,
+          label: tr('vibrant'),
+        ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.expressive,
+          label: tr('expressive'),
+        ),
+        if (sdk >= 31)
+          DropdownMenuEntry(
+            value: ColourSchemeMode.materialYou,
+            label: tr('useMaterialYou'),
+          ),
+      ],
+      onSelected: (value) {
+        if (value != null) {
+          settingsProvider.colourSchemeMode = value;
+        }
+      },
+    );
+
+    final allSourceConfigItems = sourceProvider.sources
+        .expand((e) => e.sourceConfigSettingFormItems)
+        .map((e) => e.clone())
+        .toList();
+    for (var item in allSourceConfigItems) {
+      if (item is GeneratedFormSwitch) {
+        item.value = settingsProvider.getSettingBool(item.key);
+      } else {
+        item.value = settingsProvider.getSettingString(item.key);
+      }
+    }
+    final Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
+        ? null
+        : GeneratedForm(
+            tileMode: true,
+            items: allSourceConfigItems.map((e) => [e]).toList(),
+            onValueChanges: (values, valid, isBuilding) {
+              if (valid && !isBuilding) {
+                values.forEach((key, value) {
+                  final formItem = allSourceConfigItems
+                      .where((i) => i.key == key)
+                      .firstOrNull;
+                  if (formItem is GeneratedFormSwitch) {
+                    settingsProvider.setSettingBool(key, value == true);
+                  } else {
+                    settingsProvider.setSettingString(key, value ?? '');
                   }
-                },
-              );
+                });
+              }
+            },
+          );
 
-        bool showBgSection = settingsProvider.updateInterval > 0 &&
-            (sdk >= 30 || settingsProvider.useShizuku);
+    final bool showBgSection =
+        settingsProvider.updateInterval > 0 &&
+        (sdk >= 30 || settingsProvider.useShizuku);
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: CustomScrollView(
-            slivers: <Widget>[
-              CustomAppBar(title: tr('settings')),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: settingsProvider.prefs == null
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 48),
-                          child: Center(
-                              child: CircularProgressIndicator()),
-                        )
-                      : Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
-                          spacing: 20,
-                          children: [
-                            SettingsGroup(
-                              title: tr('obtainiumExport'),
-                              children: const [ExportSection()],
-                            ),
-                            _buildUpdatesSection(
-                                context, showBgSection, sdk),
-                            if (sourceSpecificForm != null)
-                              SettingsGroup(
-                                title: tr('sourceSpecific'),
-                                children: [sourceSpecificForm],
-                              ),
-                            _buildAppearanceSection(
-                              context,
-                              colorPicker,
-                              themeModeControl,
-                              sortDropdown,
-                              orderControl,
-                              localeDropdown,
-                              colourSchemeDropdown,
-                            ),
-                            SettingsGroup(
-                              title: tr('categories'),
-                              children: const [
-                                SettingsTile(
-                                  padding: EdgeInsets.all(12),
-                                  child: CategoryManager(),
-                                ),
-                              ],
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: CustomScrollView(
+        slivers: <Widget>[
+          CustomAppBar(title: tr('settings')),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: settingsProvider.prefs == null
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 20,
+                      children: [
+                        SettingsGroup(
+                          title: tr('obtainiumExport'),
+                          children: const [ExportSection()],
+                        ),
+                        _buildUpdatesSection(context, showBgSection, sdk),
+                        if (sourceSpecificForm != null)
+                          SettingsGroup(
+                            title: tr('sourceSpecific'),
+                            children: [sourceSpecificForm],
+                          ),
+                        _buildAppearanceSection(
+                          context,
+                          colorPicker,
+                          themeModeControl,
+                          sortDropdown,
+                          orderControl,
+                          localeDropdown,
+                          colourSchemeDropdown,
+                        ),
+                        SettingsGroup(
+                          title: tr('categories'),
+                          children: const [
+                            SettingsTile(
+                              padding: EdgeInsets.all(12),
+                              child: CategoryManager(),
                             ),
                           ],
                         ),
-                ),
-              ),
-              _buildFooter(context),
-            ],
+                      ],
+                    ),
+            ),
           ),
-        );
+          _buildFooter(context),
+        ],
+      ),
+    );
   }
 
   Widget _buildUpdatesSection(
@@ -545,8 +534,7 @@ class _SettingsPageState extends State<SettingsPage> {
           SettingsToggleRow(
             label: tr('foregroundServiceExplanation'),
             value: settingsProvider.useFGService,
-            onChanged: (value) =>
-                settingsProvider.useFGService = value,
+            onChanged: (value) => settingsProvider.useFGService = value,
           ),
           SettingsToggleRow(
             label: tr('enableBackgroundUpdates'),
@@ -569,18 +557,15 @@ class _SettingsPageState extends State<SettingsPage> {
           if (settingsProvider.enableBackgroundUpdates)
             SettingsToggleRow(
               label: tr('bgUpdatesWhileChargingOnly'),
-              value:
-                  settingsProvider.bgUpdatesWhileChargingOnly,
+              value: settingsProvider.bgUpdatesWhileChargingOnly,
               onChanged: (value) =>
-                  settingsProvider.bgUpdatesWhileChargingOnly =
-                      value,
+                  settingsProvider.bgUpdatesWhileChargingOnly = value,
             ),
         ],
         SettingsToggleRow(
           label: tr('checkOnStart'),
           value: settingsProvider.checkOnStart,
-          onChanged: (value) =>
-              settingsProvider.checkOnStart = value,
+          onChanged: (value) => settingsProvider.checkOnStart = value,
         ),
         SettingsToggleRow(
           label: tr('checkUpdateOnDetailPage'),
@@ -590,56 +575,48 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         SettingsToggleRow(
           label: tr('onlyCheckInstalledOrTrackOnlyApps'),
-          value: settingsProvider
-              .onlyCheckInstalledOrTrackOnlyApps,
-          onChanged: (value) => settingsProvider
-              .onlyCheckInstalledOrTrackOnlyApps = value,
+          value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+          onChanged: (value) =>
+              settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
         ),
         SettingsToggleRow(
           label: tr('removeOnExternalUninstall'),
           value: settingsProvider.removeOnExternalUninstall,
-          onChanged: (value) => settingsProvider
-              .removeOnExternalUninstall = value,
+          onChanged: (value) =>
+              settingsProvider.removeOnExternalUninstall = value,
         ),
         SettingsToggleRow(
           label: tr('includePrereleasesByDefault'),
-          value:
-              settingsProvider.includePrereleasesByDefault,
-          onChanged: (value) => settingsProvider
-              .includePrereleasesByDefault = value,
+          value: settingsProvider.includePrereleasesByDefault,
+          onChanged: (value) =>
+              settingsProvider.includePrereleasesByDefault = value,
         ),
         SettingsToggleRow(
           label: tr('tactileFeedbackEnabled'),
           value: settingsProvider.tactileFeedbackEnabled,
-          onChanged: (value) =>
-              settingsProvider.tactileFeedbackEnabled = value,
+          onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
         ),
         SettingsToggleRow(
           label: tr('showBatteryOptimizationPrompt'),
-          value: settingsProvider
-              .showBatteryOptimizationPrompt,
-          onChanged: (value) => settingsProvider
-              .showBatteryOptimizationPrompt = value,
+          value: settingsProvider.showBatteryOptimizationPrompt,
+          onChanged: (value) =>
+              settingsProvider.showBatteryOptimizationPrompt = value,
         ),
         SettingsToggleRow(
           label: tr('showAppDowngradeError'),
           value: settingsProvider.showAppDowngradeError,
-          onChanged: (value) =>
-              settingsProvider.showAppDowngradeError = value,
+          onChanged: (value) => settingsProvider.showAppDowngradeError = value,
         ),
         SettingsToggleRow(
           label: tr('parallelDownloads'),
           value: settingsProvider.parallelDownloads,
-          onChanged: (value) =>
-              settingsProvider.parallelDownloads = value,
+          onChanged: (value) => settingsProvider.parallelDownloads = value,
         ),
         SettingsToggleRow(
-          label: tr(
-              'beforeNewInstallsShareToAppVerifier'),
-          value: settingsProvider
-              .beforeNewInstallsShareToAppVerifier,
-          onChanged: (value) => settingsProvider
-              .beforeNewInstallsShareToAppVerifier = value,
+          label: tr('beforeNewInstallsShareToAppVerifier'),
+          value: settingsProvider.beforeNewInstallsShareToAppVerifier,
+          onChanged: (value) =>
+              settingsProvider.beforeNewInstallsShareToAppVerifier = value,
           subtitle: LinkText(
             text: tr('about'),
             url: 'https://github.com/soupslurpr/AppVerifier',
@@ -654,10 +631,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         SettingsToggleRow(
           label: tr('shizukuPretendToBeGooglePlay'),
-          value: settingsProvider
-              .shizukuPretendToBeGooglePlay,
-          onChanged: (value) => settingsProvider
-              .shizukuPretendToBeGooglePlay = value,
+          value: settingsProvider.shizukuPretendToBeGooglePlay,
+          onChanged: (value) =>
+              settingsProvider.shizukuPretendToBeGooglePlay = value,
         ),
       ],
     );
@@ -685,12 +661,10 @@ class _SettingsPageState extends State<SettingsPage> {
           SettingsToggleRow(
             label: tr('useBlackTheme'),
             value: settingsProvider.useBlackTheme,
-            onChanged: (value) =>
-                settingsProvider.useBlackTheme = value,
+            onChanged: (value) => settingsProvider.useBlackTheme = value,
           ),
         _fieldTile(context, colourSchemeDropdown),
-        if (settingsProvider.colourSchemeMode !=
-            ColourSchemeMode.materialYou)
+        if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou)
           colorPicker,
         _fieldTile(context, sortDropdown),
         orderControl,
@@ -701,16 +675,18 @@ class _SettingsPageState extends State<SettingsPage> {
             value: settingsProvider.useSystemFont,
             onChanged: (useSystemFont) {
               if (useSystemFont) {
-                NativeFeatures.loadSystemFont().then((_) {
-                  settingsProvider.useSystemFont = true;
-                }).catchError((e) {
-                  settingsProvider.useSystemFont = false;
-                  if (!context.mounted) return;
-                  showError(
-                      ObtainiumError(
-                          '${tr('unexpectedError')}: $e'),
-                      context);
-                });
+                NativeFeatures.loadSystemFont()
+                    .then((_) {
+                      settingsProvider.useSystemFont = true;
+                    })
+                    .catchError((e) {
+                      settingsProvider.useSystemFont = false;
+                      if (!context.mounted) return;
+                      showError(
+                        ObtainiumError('${tr('unexpectedError')}: $e'),
+                        context,
+                      );
+                    });
               } else {
                 settingsProvider.useSystemFont = false;
               }
@@ -719,58 +695,49 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsToggleRow(
           label: tr('showWebInAppView'),
           value: settingsProvider.showAppWebpage,
-          onChanged: (value) =>
-              settingsProvider.showAppWebpage = value,
+          onChanged: (value) => settingsProvider.showAppWebpage = value,
         ),
         SettingsToggleRow(
           label: tr('pinUpdates'),
           value: settingsProvider.pinUpdates,
-          onChanged: (value) =>
-              settingsProvider.pinUpdates = value,
+          onChanged: (value) => settingsProvider.pinUpdates = value,
         ),
         SettingsToggleRow(
           label: tr('moveNonInstalledAppsToBottom'),
           value: settingsProvider.buryNonInstalled,
-          onChanged: (value) =>
-              settingsProvider.buryNonInstalled = value,
+          onChanged: (value) => settingsProvider.buryNonInstalled = value,
         ),
         SettingsToggleRow(
           label: tr('groupByCategory'),
           value: settingsProvider.groupByCategory,
-          onChanged: (value) =>
-              settingsProvider.groupByCategory = value,
+          onChanged: (value) => settingsProvider.groupByCategory = value,
         ),
         SettingsToggleRow(
           label: tr('dontShowTrackOnlyWarnings'),
           value: settingsProvider.hideTrackOnlyWarning,
-          onChanged: (value) =>
-              settingsProvider.hideTrackOnlyWarning = value,
+          onChanged: (value) => settingsProvider.hideTrackOnlyWarning = value,
         ),
         SettingsToggleRow(
           label: tr('dontShowAPKOriginWarnings'),
           value: settingsProvider.hideAPKOriginWarning,
-          onChanged: (value) =>
-              settingsProvider.hideAPKOriginWarning = value,
+          onChanged: (value) => settingsProvider.hideAPKOriginWarning = value,
         ),
         SettingsToggleRow(
           label: tr('disablePageTransitions'),
           value: settingsProvider.disablePageTransitions,
-          onChanged: (value) =>
-              settingsProvider.disablePageTransitions = value,
+          onChanged: (value) => settingsProvider.disablePageTransitions = value,
         ),
         SettingsToggleRow(
           label: tr('reversePageTransitions'),
           value: settingsProvider.reversePageTransitions,
           onChanged: settingsProvider.disablePageTransitions
               ? null
-              : (value) => settingsProvider.reversePageTransitions =
-                  value,
+              : (value) => settingsProvider.reversePageTransitions = value,
         ),
         SettingsToggleRow(
           label: tr('highlightTouchTargets'),
           value: settingsProvider.highlightTouchTargets,
-          onChanged: (value) =>
-              settingsProvider.highlightTouchTargets = value,
+          onChanged: (value) => settingsProvider.highlightTouchTargets = value,
         ),
       ],
     );
@@ -793,8 +760,7 @@ class _UpdateIntervalSliderTile extends StatefulWidget {
       _UpdateIntervalSliderTileState();
 }
 
-class _UpdateIntervalSliderTileState
-    extends State<_UpdateIntervalSliderTile> {
+class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   final List<int> updateIntervalNodes = [
     15,
     30,
@@ -824,15 +790,13 @@ class _UpdateIntervalSliderTileState
   }
 
   void initUpdateIntervalInterpolator() {
-    List<InterpolationNode> nodes = [];
+    final List<InterpolationNode> nodes = [];
     for (final (index, element) in updateIntervalNodes.indexed) {
       nodes.add(
-        InterpolationNode(
-            x: index.toDouble() + 1, y: element.toDouble()),
+        InterpolationNode(x: index.toDouble() + 1, y: element.toDouble()),
       );
     }
-    updateIntervalInterpolator =
-        SplineInterpolation(nodes: nodes);
+    updateIntervalInterpolator = SplineInterpolation(nodes: nodes);
   }
 
   void processIntervalSliderValue(double val) {
@@ -845,36 +809,29 @@ class _UpdateIntervalSliderTileState
     if (val < 1) {
       valInterpolated = 15;
     } else {
-      valInterpolated =
-          updateIntervalInterpolator.compute(val).round();
+      valInterpolated = updateIntervalInterpolator.compute(val).round();
     }
     if (valInterpolated < 60) {
       updateInterval = valInterpolated;
       updateIntervalLabel = plural('minute', valInterpolated);
     } else if (valInterpolated < 8 * 60) {
-      int valRounded = (valInterpolated / 15).floor() * 15;
+      final int valRounded = (valInterpolated / 15).floor() * 15;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded ~/ 60);
-      int mins = valRounded % 60;
-      if (mins != 0)
-        updateIntervalLabel +=
-            " ${plural('minute', mins)}";
+      final int mins = valRounded % 60;
+      if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
     } else if (valInterpolated < 24 * 60) {
-      int valRounded = (valInterpolated / 30).floor() * 30;
+      final int valRounded = (valInterpolated / 30).floor() * 30;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded ~/ 60);
     } else if (valInterpolated < 7 * 24 * 60) {
-      int valRounded =
-          (valInterpolated / (12 * 60)).floor() * 12 * 60;
+      final int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
       updateInterval = valRounded;
-      updateIntervalLabel =
-          plural('day', valRounded ~/ (24 * 60));
+      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
     } else {
-      int valRounded =
-          (valInterpolated / (24 * 60)).floor() * 24 * 60;
+      final int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
       updateInterval = valRounded;
-      updateIntervalLabel =
-          plural('day', valRounded ~/ (24 * 60));
+      updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
     }
   }
 
@@ -921,8 +878,7 @@ class _UpdateIntervalSliderTileState
                     : () {
                         final newVal = (sliderVal - 1).clamp(
                           0.0,
-                          updateIntervalNodes.length
-                              .toDouble(),
+                          updateIntervalNodes.length.toDouble(),
                         );
                         setState(() {
                           sliderVal = newVal;
@@ -932,19 +888,16 @@ class _UpdateIntervalSliderTileState
                       },
               ),
               Expanded(
-                child: Text(updateIntervalLabel,
-                    textAlign: TextAlign.center),
+                child: Text(updateIntervalLabel, textAlign: TextAlign.center),
               ),
               IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: sliderVal >=
-                        updateIntervalNodes.length.toDouble()
+                onPressed: sliderVal >= updateIntervalNodes.length.toDouble()
                     ? null
                     : () {
                         final newVal = (sliderVal + 1).clamp(
                           0.0,
-                          updateIntervalNodes.length
-                              .toDouble(),
+                          updateIntervalNodes.length.toDouble(),
                         );
                         setState(() {
                           sliderVal = newVal;
@@ -963,8 +916,7 @@ class _UpdateIntervalSliderTileState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           showIntervalLabel
-              ? Text(
-                  "${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
               : const SizedBox(height: 20),
           intervalSlider,
         ],
@@ -972,6 +924,7 @@ class _UpdateIntervalSliderTileState
     );
   }
 }
+
 class LogsDialog extends StatefulWidget {
   const LogsDialog({super.key});
 
@@ -996,7 +949,7 @@ class _LogsDialogState extends State<LogsDialog> {
         .then((value) {
           if (!mounted) return;
           setState(() {
-            String l = value.map((e) => e.toString()).join('\n\n');
+            final String l = value.map((e) => e.toString()).join('\n\n');
             logString = l.isNotEmpty ? l : tr('noLogs');
           });
         });
@@ -1032,7 +985,7 @@ class _LogsDialogState extends State<LogsDialog> {
           ),
           onPressed: () async {
             final logsProvider = context.read<LogsProvider>();
-            var cont =
+            final cont =
                 (await showDialog<Map<String, dynamic>?>(
                   context: context,
                   builder: (BuildContext ctx) {
@@ -1046,7 +999,7 @@ class _LogsDialogState extends State<LogsDialog> {
                 )) !=
                 null;
             if (cont) {
-              logsProvider.clear();
+              unawaited(logsProvider.clear());
               if (context.mounted) Navigator.of(context).pop();
             }
           },
@@ -1060,10 +1013,11 @@ class _LogsDialogState extends State<LogsDialog> {
         ),
         FilledButton.tonal(
           onPressed: () {
-            unawaited(SharePlus.instance
-                .share(
-                  ShareParams(text: logString ?? '', subject: tr('appLogs')),
-                ));
+            unawaited(
+              SharePlus.instance.share(
+                ShareParams(text: logString ?? '', subject: tr('appLogs')),
+              ),
+            );
             Navigator.of(context).pop();
           },
           child: Text(tr('share')),

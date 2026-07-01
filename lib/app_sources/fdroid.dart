@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -49,7 +50,7 @@ class FDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegExB = RegExp(
+    final RegExp standardUrlRegExB = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}/+[^/]+/+packages/+[^/]+',
       caseSensitive: false,
     );
@@ -58,7 +59,7 @@ class FDroid extends AppSource {
       url =
           'https://${Uri.parse(match.group(0)!).host}/packages/${Uri.parse(url).pathSegments.where((s) => s.trim().isNotEmpty).last}';
     }
-    RegExp standardUrlRegExA = RegExp(
+    final RegExp standardUrlRegExA = RegExp(
       '^https?://(www\\.)?${getSourceRegex(hosts)}/+packages/+[^/]+',
       caseSensitive: false,
     );
@@ -75,83 +76,85 @@ class FDroid extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      String? appId = await tryInferringAppId(standardUrl);
-    if (appId == null) {
-      throw NoReleasesError();
-    }
-    String host = Uri.parse(standardUrl).host;
-    var details = getAPKUrlsFromFDroidPackagesAPIResponse(
-      await sourceRequest(
-        'https://$host/api/v1/packages/$appId',
-        additionalSettings,
-      ),
-      'https://$host/repo/$appId',
-      standardUrl,
-      name,
-      additionalSettings: additionalSettings,
-    );
-    if (!hostChanged) {
-      try {
-        var res = await sourceRequest(
-          'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
+        throw NoReleasesError();
+      }
+      final String host = Uri.parse(standardUrl).host;
+      final details = getAPKUrlsFromFDroidPackagesAPIResponse(
+        await sourceRequest(
+          'https://$host/api/v1/packages/$appId',
           additionalSettings,
-        );
-        var lines = res.body.split('\n');
-        var authorLines = lines.where((l) => l.startsWith('AuthorName: '));
-        if (authorLines.isNotEmpty) {
-          details.names.author = authorLines.first
-              .split(': ')
-              .sublist(1)
-              .join(': ');
+        ),
+        'https://$host/repo/$appId',
+        standardUrl,
+        name,
+        additionalSettings: additionalSettings,
+      );
+      if (!hostChanged) {
+        try {
+          final res = await sourceRequest(
+            'https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/$appId.yml',
+            additionalSettings,
+          );
+          final lines = res.body.split('\n');
+          final authorLines = lines.where((l) => l.startsWith('AuthorName: '));
+          if (authorLines.isNotEmpty) {
+            details.names.author = authorLines.first
+                .split(': ')
+                .sublist(1)
+                .join(': ');
+          }
+          final changelogUrls = lines
+              .where((l) => l.startsWith('Changelog: '))
+              .map((e) => e.split(' ').sublist(1).join(' '));
+          if (changelogUrls.isNotEmpty) {
+            details.changeLog = changelogUrls.first;
+            bool isGitHub = false;
+            bool isGitLab = false;
+            try {
+              GitHub(
+                hostChanged: true,
+              ).sourceSpecificStandardizeURL(details.changeLog!);
+              isGitHub = true;
+            } on InvalidURLError {
+              // URL does not match GitHub format, silently skipped
+            }
+            try {
+              GitLab(
+                hostChanged: true,
+              ).sourceSpecificStandardizeURL(details.changeLog!);
+              isGitLab = true;
+            } on InvalidURLError {
+              // URL does not match GitLab format, silently skipped
+            }
+            if ((isGitHub || isGitLab) &&
+                (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
+              details.changeLog = (await sourceRequest(
+                details.changeLog!.replaceFirst('/blob/', '/raw/'),
+                additionalSettings,
+              )).body;
+            }
+          }
+        } catch (e) {
+          unawaited(
+            LogsProvider().add(
+              'Failed to process changelog for F-Droid app: ${e.toString()}',
+            ),
+          );
         }
-        var changelogUrls = lines
-            .where((l) => l.startsWith('Changelog: '))
-            .map((e) => e.split(' ').sublist(1).join(' '));
-        if (changelogUrls.isNotEmpty) {
-          details.changeLog = changelogUrls.first;
-          bool isGitHub = false;
-          bool isGitLab = false;
-          try {
-            GitHub(
-              hostChanged: true,
-            ).sourceSpecificStandardizeURL(details.changeLog!);
-            isGitHub = true;
-          } on InvalidURLError {
-            // URL does not match GitHub format, silently skipped
+        if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {
+          final cl = details.changeLog!;
+          var end = _maxChangeLogCodeUnits;
+          if (end > 0 &&
+              cl.codeUnitAt(end - 1) >= 0xD800 &&
+              cl.codeUnitAt(end - 1) <= 0xDBFF) {
+            end--;
           }
-          try {
-            GitLab(
-              hostChanged: true,
-            ).sourceSpecificStandardizeURL(details.changeLog!);
-            isGitLab = true;
-          } on InvalidURLError {
-            // URL does not match GitLab format, silently skipped
-          }
-          if ((isGitHub || isGitLab) &&
-              (details.changeLog?.indexOf('/blob/') ?? -1) >= 0) {
-            details.changeLog = (await sourceRequest(
-              details.changeLog!.replaceFirst('/blob/', '/raw/'),
-              additionalSettings,
-            )).body;
-          }
+          details.changeLog = '${cl.substring(0, end)}...';
         }
-      } catch (e) {
-        LogsProvider().add(
-          'Failed to process changelog for F-Droid app: ${e.toString()}',
-        );
       }
-      if ((details.changeLog?.length ?? 0) > _maxChangeLogCodeUnits) {
-        final cl = details.changeLog!;
-        var end = _maxChangeLogCodeUnits;
-        if (end > 0 &&
-            cl.codeUnitAt(end - 1) >= 0xD800 &&
-            cl.codeUnitAt(end - 1) <= 0xDBFF) {
-          end--;
-        }
-        details.changeLog = '${cl.substring(0, end)}...';
-      }
-    }
-    return details;
+      return details;
     } catch (e) {
       rethrowOrWrapError(e);
     }
@@ -162,12 +165,12 @@ class FDroid extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       'https://search.${hosts[0]}/?q=${Uri.encodeQueryComponent(query)}',
       {},
     );
     if (res.statusCode == 200) {
-      Map<String, List<String>> urlsWithDescriptions = {};
+      final Map<String, List<String>> urlsWithDescriptions = {};
       parse(res.body).querySelectorAll('.package-header').forEach((e) {
         String? url = e.attributes['href'];
         if (url != null) {
@@ -198,25 +201,25 @@ class FDroid extends AppSource {
     String sourceName, {
     Map<String, dynamic> additionalSettings = const {},
   }) {
-    var autoSelectHighestVersionCode =
+    final autoSelectHighestVersionCode =
         additionalSettings['autoSelectHighestVersionCode'] == true;
-    var trySelectingSuggestedVersionCode =
+    final trySelectingSuggestedVersionCode =
         additionalSettings['trySelectingSuggestedVersionCode'] == true;
-    var filterVersionsByRegEx =
+    final filterVersionsByRegEx =
         (additionalSettings['filterVersionsByRegEx'] as String?)?.isNotEmpty ==
             true
         ? additionalSettings['filterVersionsByRegEx']
         : null;
-    var apkFilterRegEx =
+    final apkFilterRegEx =
         (additionalSettings['apkFilterRegEx'] as String?)?.isNotEmpty == true
         ? additionalSettings['apkFilterRegEx']
         : null;
     if (res.statusCode == 200) {
-      var response = jsonDecode(res.body);
+      final response = jsonDecode(res.body);
       List<dynamic> releases = response['packages'] ?? [];
       if (apkFilterRegEx != null) {
         releases = releases.where((rel) {
-          String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';
+          final String apk = '${apkUrlPrefix}_${rel['versionCode']}.apk';
           return filterApks(
             [MapEntry(apk, apk)],
             apkFilterRegEx,
@@ -234,7 +237,7 @@ class FDroid extends AppSource {
       if (trySelectingSuggestedVersionCode &&
           response['suggestedVersionCode'] != null &&
           filterVersionsByRegEx == null) {
-        var suggestedReleases = releases.where(
+        final suggestedReleases = releases.where(
           (element) =>
               element['versionCode'] == response['suggestedVersionCode'],
         );
@@ -275,7 +278,7 @@ class FDroid extends AppSource {
           releaseChoices = [releaseChoices.first];
         } else if (trySelectingSuggestedVersionCode &&
             response['suggestedVersionCode'] != null) {
-          var suggestedReleases = releaseChoices.where(
+          final suggestedReleases = releaseChoices.where(
             (element) =>
                 element['versionCode'] == response['suggestedVersionCode'],
           );
@@ -287,7 +290,7 @@ class FDroid extends AppSource {
       if (releaseChoices.isEmpty) {
         throw NoReleasesError();
       }
-      List<String> apkUrls = releaseChoices
+      final List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
       return APKDetails(

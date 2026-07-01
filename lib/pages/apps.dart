@@ -191,7 +191,7 @@ class AppsPageState extends State<AppsPage> {
         ? null
         : () {
             settingsProvider.heavyImpact();
-            List<GeneratedFormItem> formItems = [];
+            final List<GeneratedFormItem> formItems = [];
             if (existingUpdateIdsAllOrSelected.isNotEmpty) {
               formItems.add(
                 GeneratedFormSwitch(
@@ -233,13 +233,11 @@ class AppsPageState extends State<AppsPage> {
                   label: tr(
                     'markXTrackOnlyAsUpdated',
                     args: [
-                      plural(
-                        'apps',
-                        trackOnlyUpdateIdsAllOrSelected.length,
-                      ),
+                      plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
                     ],
                   ),
-                  value: existingUpdateIdsAllOrSelected.isEmpty &&
+                  value:
+                      existingUpdateIdsAllOrSelected.isEmpty &&
                       newInstallIdsAllOrSelected.isEmpty,
                 ),
               );
@@ -247,7 +245,8 @@ class AppsPageState extends State<AppsPage> {
             showDialog<Map<String, dynamic>?>(
               context: context,
               builder: (BuildContext ctx) {
-                var totalApps = existingUpdateIdsAllOrSelected.length +
+                final totalApps =
+                    existingUpdateIdsAllOrSelected.length +
                     newInstallIdsAllOrSelected.length +
                     trackOnlyUpdateIdsAllOrSelected.length;
                 return GeneratedFormModal(
@@ -264,10 +263,11 @@ class AppsPageState extends State<AppsPage> {
                 if (values.isEmpty) {
                   values = getDefaultValuesFromFormItems([formItems]);
                 }
-                bool shouldInstallUpdates = values['updates'] == true;
-                bool shouldInstallNew = values['installs'] == true;
-                bool shouldMarkTrackOnlies = values['trackonlies'] == true;
-                List<String> toInstall = [];
+                final bool shouldInstallUpdates = values['updates'] == true;
+                final bool shouldInstallNew = values['installs'] == true;
+                final bool shouldMarkTrackOnlies =
+                    values['trackonlies'] == true;
+                final List<String> toInstall = [];
                 if (shouldInstallUpdates) {
                   toInstall.addAll(existingUpdateIdsAllOrSelected);
                 }
@@ -277,31 +277,31 @@ class AppsPageState extends State<AppsPage> {
                 if (shouldMarkTrackOnlies) {
                   toInstall.addAll(trackOnlyUpdateIdsAllOrSelected);
                 }
-                appsProvider
-                    .downloadAndInstallLatestApps(
-                      toInstall,
-                      context,
-                    )
-                    .then((value) {
-                      if (value.isNotEmpty) {
-                        if (context.mounted) {
-                          if (shouldInstallUpdates) {
-                            showMessage(tr('appsUpdated'), context);
+                if (!context.mounted) return;
+                unawaited(
+                  appsProvider
+                      .downloadAndInstallLatestApps(toInstall, context)
+                      .then((value) {
+                        if (value.isNotEmpty) {
+                          if (context.mounted) {
+                            if (shouldInstallUpdates) {
+                              showMessage(tr('appsUpdated'), context);
+                            }
+                            final np = context.read<NotificationsProvider>();
+                            np.cancel(UpdateNotification([]).id);
+                            np.cancel(
+                              SilentUpdateAttemptNotification(
+                                [],
+                                id: value[0].hashCode,
+                              ).id,
+                            );
                           }
-                          var np = context.read<NotificationsProvider>();
-                          np.cancel(UpdateNotification([]).id);
-                          np.cancel(
-                            SilentUpdateAttemptNotification(
-                              [],
-                              id: value[0].hashCode,
-                            ).id,
-                          );
                         }
-                      }
-                    })
-                    .catchError((e) {
-                      if (context.mounted) showError(e, context);
-                    });
+                      })
+                      .catchError((e) {
+                        if (context.mounted) showError(e, context);
+                      }),
+                );
               }
             });
           };
@@ -309,10 +309,10 @@ class AppsPageState extends State<AppsPage> {
 
   Future<void> showFilterDialog(BuildContext context) async {
     var pendingCategories = {...filter.categoryFilter};
-    var values = await showDialog<Map<String, dynamic>?>(
+    final values = await showDialog<Map<String, dynamic>?>(
       context: context,
       builder: (BuildContext ctx) {
-        var vals = filter.toFormValuesMap();
+        final vals = filter.toFormValuesMap();
         return GeneratedFormModal(
           tileMode: true,
           initValid: true,
@@ -421,7 +421,7 @@ class AppsPageState extends State<AppsPage> {
         Set<String>? preselected;
         var showPrompt = false;
         for (var element in selectedApps) {
-          var currentCats = element.categories.toSet();
+          final currentCats = element.categories.toSet();
           if (preselected == null) {
             preselected = currentCats;
           } else {
@@ -433,7 +433,8 @@ class AppsPageState extends State<AppsPage> {
         }
         var cont = true;
         if (showPrompt) {
-          cont = await showDialog<Map<String, dynamic>?>(
+          cont =
+              await showDialog<Map<String, dynamic>?>(
                 context: context,
                 builder: (BuildContext ctx) {
                   return GeneratedFormModal(
@@ -447,8 +448,9 @@ class AppsPageState extends State<AppsPage> {
               null;
         }
         if (cont && context.mounted) {
-          var pendingCategories =
-              !showPrompt ? (preselected ?? <String>{}) : <String>{};
+          var pendingCategories = !showPrompt
+              ? (preselected ?? <String>{})
+              : <String>{};
           var categoriesChanged = false;
           await showDialog<Map<String, dynamic>?>(
             context: context,
@@ -471,11 +473,13 @@ class AppsPageState extends State<AppsPage> {
             },
           );
           if (categoriesChanged) {
-            appsProvider.saveApps(
-              selectedApps.map((e) {
-                e = e.copyWith(categories: pendingCategories.toList());
-                return e;
-              }).toList(),
+            unawaited(
+              appsProvider.saveApps(
+                selectedApps.map((e) {
+                  e = e.copyWith(categories: pendingCategories.toList());
+                  return e;
+                }).toList(),
+              ),
             );
           }
         }
@@ -506,16 +510,18 @@ class AppsPageState extends State<AppsPage> {
       );
       if (!confirmed) return;
       settingsProvider.selectionClick();
-      appsProvider.saveApps(
-        selectedApps.map((a) {
-          if (a.installedVersion != null &&
-              !appsProvider.isVersionDetectionPossible(
-                appsProvider.apps[a.id],
-              )) {
-            a = a.copyWith(installedVersion: a.latestVersion);
-          }
-          return a;
-        }).toList(),
+      unawaited(
+        appsProvider.saveApps(
+          selectedApps.map((a) {
+            if (a.installedVersion != null &&
+                !appsProvider.isVersionDetectionPossible(
+                  appsProvider.apps[a.id],
+                )) {
+              a = a.copyWith(installedVersion: a.latestVersion);
+            }
+            return a;
+          }).toList(),
+        ),
       );
     } catch (e) {
       if (context.mounted) showError(e, context);
@@ -523,7 +529,7 @@ class AppsPageState extends State<AppsPage> {
   }
 
   void pinSelectedApps(Set<App> selectedApps) {
-    var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
+    final pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
     appsProvider.saveApps(
       selectedApps.map((e) {
         e = e.copyWith(pinned: pinStatus);
@@ -532,10 +538,7 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  void showMoreOptionsBottomSheet(
-    BuildContext context,
-    Set<App> selectedApps,
-  ) {
+  void showMoreOptionsBottomSheet(BuildContext context, Set<App> selectedApps) {
     final isPinned = selectedApps.where((e) => e.pinned).isNotEmpty;
     final hasSelection = selectedAppIds.isNotEmpty;
     showModalBottomSheet(
@@ -546,13 +549,12 @@ class AppsPageState extends State<AppsPage> {
           required IconData icon,
           required String label,
           required VoidCallback? onTap,
-        }) =>
-            ActionListTile(
-              icon: icon,
-              label: label,
-              onTap: onTap,
-              autoPop: true,
-            );
+        }) => ActionListTile(
+          icon: icon,
+          label: label,
+          onTap: onTap,
+          autoPop: true,
+        );
 
         return SafeArea(
           child: SingleChildScrollView(
@@ -575,10 +577,7 @@ class AppsPageState extends State<AppsPage> {
                   icon: Icons.category_outlined,
                   label: tr('categorize'),
                   onTap: hasSelection
-                      ? launchCategorizeDialogCallback(
-                          context,
-                          selectedApps,
-                        )
+                      ? launchCategorizeDialogCallback(context, selectedApps)
                       : null,
                 ),
                 optionTile(
@@ -601,9 +600,7 @@ class AppsPageState extends State<AppsPage> {
                 optionTile(
                   icon: Icons.file_download_outlined,
                   label: '${tr('share')} - ${tr('obtainiumExport')}',
-                  onTap: !hasSelection
-                      ? null
-                      : () => shareExport(selectedApps),
+                  onTap: !hasSelection ? null : () => shareExport(selectedApps),
                 ),
                 optionTile(
                   icon: Icons.download_outlined,
@@ -618,10 +615,7 @@ class AppsPageState extends State<AppsPage> {
                           context,
                         )
                         .catchError((e) {
-                          showError(
-                            e,
-                          context,
-                          );
+                          if (context.mounted) showError(e, context);
                           return <String>[];
                         });
                   },
@@ -631,10 +625,7 @@ class AppsPageState extends State<AppsPage> {
                   label: tr('markSelectedAppsUpdated'),
                   onTap: appsProvider.areDownloadsRunning()
                       ? null
-                      : () => showMassMarkDialog(
-                          context,
-                          selectedApps,
-                        ),
+                      : () => showMassMarkDialog(context, selectedApps),
                 ),
               ],
             ),
@@ -650,12 +641,11 @@ class AppsPageState extends State<AppsPage> {
       buf.writeln(a.url);
     }
     final urls = buf.toString().trimRight();
-    unawaited(SharePlus.instance.share(
-      ShareParams(
-        text: urls,
-        subject: 'Obtainium - ${tr('appsString')}',
+    unawaited(
+      SharePlus.instance.share(
+        ShareParams(text: urls, subject: 'Obtainium - ${tr('appsString')}'),
       ),
-    ));
+    );
   }
 
   void shareConfigLinks(Set<App> selectedApps) {
@@ -665,35 +655,36 @@ class AppsPageState extends State<AppsPage> {
         'https://apps.obtainium.page/redirect?r=obtainium://app/${Uri.encodeComponent(jsonEncode({'id': a.id, 'url': a.url, 'author': a.author, 'name': a.name, 'preferredApkIndex': a.preferredApkIndex, 'additionalSettings': jsonEncode(a.additionalSettings), 'overrideSource': a.overrideSource}))}',
       );
     }
-    unawaited(SharePlus.instance.share(
-      ShareParams(
-        text: buf.toString(),
-        subject: 'Obtainium - ${tr('appsString')}',
+    unawaited(
+      SharePlus.instance.share(
+        ShareParams(
+          text: buf.toString(),
+          subject: 'Obtainium - ${tr('appsString')}',
+        ),
       ),
-    ));
+    );
   }
 
   void shareExport(Set<App> selectedApps) {
-    var encoder = const JsonEncoder.withIndent("    ");
-    var exportJSON = encoder.convert(
+    const encoder = JsonEncoder.withIndent('    ');
+    final exportJSON = encoder.convert(
       appsProvider.generateExportJSON(
         appIds: selectedApps.map((e) => e.id).toList(),
         overrideExportSettings: 0,
       ),
     );
-    String fn =
+    final String fn =
         '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}-count-${selectedApps.length}';
-    XFile f = XFile.fromData(
+    final XFile f = XFile.fromData(
       Uint8List.fromList(utf8.encode(exportJSON)),
       mimeType: 'application/json',
       name: fn,
     );
-    unawaited(SharePlus.instance.share(
-      ShareParams(
-        files: [f],
-        fileNameOverrides: ['$fn.json'],
+    unawaited(
+      SharePlus.instance.share(
+        ShareParams(files: [f], fileNameOverrides: ['$fn.json']),
       ),
-    ));
+    );
   }
 
   void toggleCategoryCollapse(String? category) {
@@ -824,34 +815,36 @@ class AppsPageState extends State<AppsPage> {
             !(listedCategories.isEmpty ||
                 (listedCategories.length == 1 && listedCategories[0] == null))
         ? SliverList(
-            delegate: SliverChildBuilderDelegate((
-              BuildContext context,
-              int index,
-            ) {
-              return _getCategoryCollapsibleTile(
-                index,
-                context,
-                listedApps,
-                listedCategories,
-                groupedByCategory,
-                settingsProvider,
-                appsProvider,
-              );
-            }, childCount: listedCategories.length, addAutomaticKeepAlives: false),
+            delegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                return _getCategoryCollapsibleTile(
+                  index,
+                  context,
+                  listedApps,
+                  listedCategories,
+                  groupedByCategory,
+                  settingsProvider,
+                  appsProvider,
+                );
+              },
+              childCount: listedCategories.length,
+              addAutomaticKeepAlives: false,
+            ),
           )
         : SliverList(
-            delegate: SliverChildBuilderDelegate((
-              BuildContext context,
-              int index,
-            ) {
-              return _appTileCard(
-                index,
-                context,
-                listedApps,
-                settingsProvider,
-                appsProvider,
-              );
-            }, childCount: listedApps.length, addAutomaticKeepAlives: false),
+            delegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                return _appTileCard(
+                  index,
+                  context,
+                  listedApps,
+                  settingsProvider,
+                  appsProvider,
+                );
+              },
+              childCount: listedApps.length,
+              addAutomaticKeepAlives: false,
+            ),
           );
   }
 
@@ -860,8 +853,7 @@ class AppsPageState extends State<AppsPage> {
     SettingsProvider settingsProvider,
     List<AppInMemory> listedApps,
   ) {
-    var isFilterOff =
-        filter.isIdenticalTo(neutralFilter, settingsProvider);
+    final isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -902,7 +894,7 @@ class AppsPageState extends State<AppsPage> {
     List<String> newInstallIdsAllOrSelected,
     List<String> trackOnlyUpdateIdsAllOrSelected,
   ) {
-    var onObtain = massObtainCallback(
+    final onObtain = massObtainCallback(
       context,
       existingUpdateIdsAllOrSelected,
       newInstallIdsAllOrSelected,
@@ -967,13 +959,13 @@ class AppsPageState extends State<AppsPage> {
           child: EmptyState(
             icon: appsProvider.apps.isEmpty
                 ? (appsProvider.loadingApps
-                    ? Icons.hourglass_empty_rounded
-                    : Icons.apps_outlined)
+                      ? Icons.hourglass_empty_rounded
+                      : Icons.apps_outlined)
                 : Icons.search_off_rounded,
             message: appsProvider.apps.isEmpty
                 ? appsProvider.loadingApps
-                    ? tr('pleaseWait')
-                    : tr('noApps')
+                      ? tr('pleaseWait')
+                      : tr('noApps')
                 : tr('noAppsForFilter'),
           ),
         ),
@@ -1008,7 +1000,9 @@ class AppsPageState extends State<AppsPage> {
     final settingsProvider = context.watch<SettingsProvider>();
 
     context.select((AppsProvider p) => p.loadingApps);
-    context.select((AppsProvider p) => pipelineSignature(p.getAppValues().toList()));
+    context.select(
+      (AppsProvider p) => pipelineSignature(p.getAppValues().toList()),
+    );
 
     var listedApps = appsProvider.getAppValues().toList();
 
@@ -1022,28 +1016,27 @@ class AppsPageState extends State<AppsPage> {
       });
     }
 
-    var listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    final localSelected =
-        selectedAppIds.where(listedAppIdSet.contains).toSet();
+    final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
+    final localSelected = selectedAppIds.where(listedAppIdSet.contains).toSet();
     if (localSelected.length != selectedAppIds.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          final freshListedIds =
-              appsProvider.getAppValues().map((e) => e.app.id).toSet();
-          selectedAppIds =
-              selectedAppIds.where(freshListedIds.contains).toSet();
-          widget.onSelectionChanged
-              ?.call(selectedAppIds.isNotEmpty);
+          final freshListedIds = appsProvider
+              .getAppValues()
+              .map((e) => e.app.id)
+              .toSet();
+          selectedAppIds = selectedAppIds
+              .where(freshListedIds.contains)
+              .toSet();
+          widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
         }
       });
     }
 
-    var existingUpdates =
-        appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
-    listedApps = getFilteredAndSortedApps(
-      listedApps,
-      existingUpdates.toSet(),
+    final existingUpdates = appsProvider.findAppIdsWithPendingUpdates(
+      installedOnly: true,
     );
+    listedApps = getFilteredAndSortedApps(listedApps, existingUpdates.toSet());
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
@@ -1061,7 +1054,7 @@ class AppsPageState extends State<AppsPage> {
         )
         .toList();
 
-    List<String> trackOnlyUpdateIdsAllOrSelected = [];
+    final List<String> trackOnlyUpdateIdsAllOrSelected = [];
     for (var id in existingUpdateIdsAllOrSelected) {
       if (appsProvider.apps[id]!.app.settings.getBool('trackOnly')) {
         trackOnlyUpdateIdsAllOrSelected.add(id);
@@ -1091,7 +1084,7 @@ class AppsPageState extends State<AppsPage> {
         }
       }
     }
-    var listedCategories = groupedByCategory.keys.toList();
+    final listedCategories = groupedByCategory.keys.toList();
     listedCategories.sort((a, b) {
       if (a == null && b == null) return 0;
       if (a == null) return 1;
@@ -1099,7 +1092,7 @@ class AppsPageState extends State<AppsPage> {
       return a.toLowerCase().compareTo(b.toLowerCase());
     });
 
-    Set<App> selectedApps = listedApps
+    final Set<App> selectedApps = listedApps
         .map((e) => e.app)
         .where((a) => selectedAppIds.contains(a.id))
         .toSet();
@@ -1155,10 +1148,8 @@ class AppsPageState extends State<AppsPage> {
         ),
         floatingActionButton: selectedAppIds.isNotEmpty
             ? FloatingActionButton(
-                onPressed: () => showMoreOptionsBottomSheet(
-                  context,
-                  selectedApps,
-                ),
+                onPressed: () =>
+                    showMoreOptionsBottomSheet(context, selectedApps),
                 tooltip: tr('more'),
                 child: const Icon(Icons.more_vert),
               )
@@ -1168,7 +1159,7 @@ class AppsPageState extends State<AppsPage> {
   }
 
   void openAppById(String appId) {
-    AppInMemory? app = context.read<AppsProvider>().apps[appId];
+    final AppInMemory? app = context.read<AppsProvider>().apps[appId];
 
     if (app == null) {
       return;

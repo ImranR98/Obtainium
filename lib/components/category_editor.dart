@@ -135,11 +135,10 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final cats = Map<String, int>.from(settingsProvider.categories)
       ..remove(widget.existingName);
     settingsProvider.setCategories(cats, appsProvider: appsProvider);
-    if (context.mounted) {
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop(
-        CategoryEditResult(name: null, previous: widget.existingName),
-      );
+    if (mounted) {
+      Navigator.of(
+        context,
+      ).pop(CategoryEditResult(name: null, previous: widget.existingName));
     }
   }
 

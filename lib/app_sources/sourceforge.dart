@@ -16,8 +16,8 @@ class SourceForge extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    var sourceRegex = getSourceRegex(hosts);
-    RegExp standardUrlRegExC = RegExp(
+    final sourceRegex = getSourceRegex(hosts);
+    final RegExp standardUrlRegExC = RegExp(
       '^https?://(www\\.)?$sourceRegex/p/.+',
       caseSensitive: false,
     );
@@ -26,7 +26,7 @@ class SourceForge extends AppSource {
       url =
           'https://${Uri.parse(match.group(0)!).host}/projects/${url.substring(Uri.parse(match.group(0)!).host.length + '/projects/'.length + 1)}';
     }
-    RegExp standardUrlRegExB = RegExp(
+    final RegExp standardUrlRegExB = RegExp(
       '^https?://(www\\.)?$sourceRegex/projects/[^/]+',
       caseSensitive: false,
     );
@@ -34,7 +34,7 @@ class SourceForge extends AppSource {
     if (match != null && match.group(0) == url) {
       url = '$url/files';
     }
-    RegExp standardUrlRegExA = RegExp(
+    final RegExp standardUrlRegExA = RegExp(
       '^https?://(www\\.)?$sourceRegex/projects/[^/]+/files(/.+)?',
       caseSensitive: false,
     );
@@ -55,22 +55,22 @@ class SourceForge extends AppSource {
       standardUrl = '$standardUrl/files';
       standardUri = Uri.parse(standardUrl);
     }
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       '${standardUri.origin}/${standardUri.pathSegments.sublist(0, 2).join('/')}/rss?path=/',
       additionalSettings,
     );
     if (res.statusCode == 200) {
-      var parsedHtml = parse(res.body);
-      var allDownloadLinks = parsedHtml
+      final parsedHtml = parse(res.body);
+      final allDownloadLinks = parsedHtml
           .querySelectorAll('guid')
           .map((e) => e.innerHtml)
           .where((element) => element.startsWith(standardUrl))
           .toList();
-      getVersion(String url) {
+      String? getVersion(String url) {
         try {
           // Strips the last path segment (filename) and optionally another
           // (subdirectory) to extract the version from the remaining segments.
-          var segments = url
+          final segments = url
               .substring(standardUrl.length)
               .split('/')
               .where((element) => element.isNotEmpty)
@@ -80,7 +80,7 @@ class SourceForge extends AppSource {
           var version = segments.isNotEmpty ? segments.join('/') : null;
           if (version != null) {
             try {
-              var extractedVersion = extractVersion(
+              final extractedVersion = extractVersion(
                 additionalSettings['versionExtractionRegEx'] as String?,
                 additionalSettings['matchGroupToUse'] as String?,
                 version,
@@ -105,9 +105,9 @@ class SourceForge extends AppSource {
 
       // Compute each release's version exactly once (getVersion runs regex /
       // string work, so the previous repeated calls were wasteful).
-      var releasesWithVersions = allDownloadLinks
+      final releasesWithVersions = allDownloadLinks
           .where((element) {
-            var lower = element.toLowerCase();
+            final lower = element.toLowerCase();
             return lower.endsWith('/download') &&
                 AppSource.isApkOrContainerFile(
                   lower.substring(0, lower.length - '/download'.length),
@@ -119,16 +119,16 @@ class SourceForge extends AppSource {
       if (releasesWithVersions.isEmpty) {
         throw NoReleasesError();
       }
-      String? version = releasesWithVersions.first.value;
+      final String? version = releasesWithVersions.first.value;
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
 
-      var apkUrlList = releasesWithVersions
+      final apkUrlList = releasesWithVersions
           .where((entry) => entry.value == version)
           .map((entry) => entry.key)
           .toList();
-      var segments = standardUrl.split('/');
+      final segments = standardUrl.split('/');
       return APKDetails(
         version,
         getApkUrlsFromUrls(apkUrlList),
