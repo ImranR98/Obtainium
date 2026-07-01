@@ -16,19 +16,19 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    try {
+    var host = Uri.parse(url).host;
+    if (host.startsWith('android.')) {
       return standardizeUrlWithRegex(
         url,
         subdomainPrefix: r'android\.',
         pathPattern: r'/repo/apk/[^/]+',
       );
-    } catch (_) {
-      return standardizeUrlWithRegex(
-        url,
-        subdomainPrefix: r'apt\.',
-        pathPattern: r'/fdroid/index/apk/[^/]+',
-      );
     }
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'apt\.',
+      pathPattern: r'/fdroid/index/apk/[^/]+',
+    );
   }
 
   @override

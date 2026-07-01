@@ -368,7 +368,8 @@ class HTML extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     var currentUrl = standardUrl;
-    if (additionalSettings['intermediateLink']?.isNotEmpty != true) {
+    if (additionalSettings['intermediateLink'] == null ||
+        (additionalSettings['intermediateLink'] as List).isEmpty) {
       additionalSettings['intermediateLink'] = [];
     }
     additionalSettings['intermediateLink'] =

@@ -36,6 +36,19 @@ const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
 const int _installSuccessCode = 0;
 const int _installAlreadyPendingCode = 3;
 
+class _InstallResult {
+  final String id;
+  final bool willBeSilent;
+  final DownloadedApk? downloadedFile;
+  final DownloadedDir? downloadedDir;
+  const _InstallResult({
+    required this.id,
+    required this.willBeSilent,
+    this.downloadedFile,
+    this.downloadedDir,
+  });
+}
+
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
   Future<File> handleAPKIDChange(
@@ -841,7 +854,7 @@ extension AppsProviderInstall on AppsProvider {
     );
     appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
 
-    List<Map<Object?, Object?>> downloadResults = [];
+    List<_InstallResult> downloadResults = [];
     try {
       if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
         for (var id in appsToInstall) {
@@ -866,14 +879,13 @@ extension AppsProviderInstall on AppsProvider {
         );
       }
       for (var res in downloadResults) {
-        if (!errors.appIdNames.containsKey(res['id'])) {
+        if (!errors.appIdNames.containsKey(res.id)) {
           try {
-            // ignore: use_build_context_synchronously
             await _installDownloadedApp(
-              res['id'] as String,
-              res['willBeSilent'] as bool,
-              res['downloadedFile'] as DownloadedApk?,
-              res['downloadedDir'] as DownloadedDir?,
+              res.id,
+              res.willBeSilent,
+              res.downloadedFile,
+              res.downloadedDir,
               installedIds,
               errors,
               // ignore: use_build_context_synchronously
@@ -881,7 +893,7 @@ extension AppsProviderInstall on AppsProvider {
               notificationsProvider,
             );
           } catch (e) {
-            var id = res['id'] as String;
+            var id = res.id;
             errors.add(id, e, appName: apps[id]?.name);
           }
         }
@@ -1091,7 +1103,7 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
-  Future<Map<Object?, Object?>> _downloadAppForInstall(
+  Future<_InstallResult> _downloadAppForInstall(
     String id,
     BuildContext? context,
     NotificationsProvider? notificationsProvider,
@@ -1151,12 +1163,12 @@ extension AppsProviderInstall on AppsProvider {
         notify();
       }
     }
-    return {
-      'id': id,
-      'willBeSilent': willBeSilent,
-      'downloadedFile': downloadedFile,
-      'downloadedDir': downloadedDir,
-    };
+    return _InstallResult(
+      id: id,
+      willBeSilent: willBeSilent,
+      downloadedFile: downloadedFile,
+      downloadedDir: downloadedDir,
+    );
   }
 
   Future<void> _downloadAssetFile(

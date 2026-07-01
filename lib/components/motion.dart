@@ -1,3 +1,5 @@
+// Material 3 Expressive animation duration tokens.
+
 import 'package:flutter/material.dart';
 
 /// Material 3 Expressive motion tokens used across the app. Centralizing the

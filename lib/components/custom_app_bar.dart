@@ -7,7 +7,7 @@ class CustomAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // M3 Expressive large app bar that collapses on scroll.
+    // M3 Expressive large app bar (pinned, does not collapse on scroll).
     return SliverAppBar.large(
       pinned: true,
       automaticallyImplyLeading: true,

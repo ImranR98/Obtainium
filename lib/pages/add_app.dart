@@ -400,9 +400,7 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('noResults'));
         }
         if (!context.mounted) return;
-        List<String>? selectedUrls = res.isEmpty
-            ? []
-            : await showDialog<List<String>?>(
+        List<String>? selectedUrls = await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
                   return SelectionModal(

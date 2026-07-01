@@ -34,8 +34,7 @@ class LiteAPKs extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    // Generate a time-based token expected by the LiteAPKs CDN.
-    // The +10800 offset (3 hours) is a server-expected timestamp adjustment.
+    // Generate a time-based CDN token (server expects +3h offset).
     var token = base64
         .encode(
           utf8.encode(

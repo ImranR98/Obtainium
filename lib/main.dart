@@ -64,6 +64,11 @@ bool isFdroidBuild = false;
 
 final globalNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Loads translations in a context-free environment (e.g. background tasks).
+///
+/// Needed because background update checks run without a widget tree, so the
+/// normal EasyLocalization widget-based init path isn't available.
+/// Uses implementation-level APIs from easy_localization — see issues/210.
 Future<void> loadTranslations() async {
   // See easy_localization/issues/210
   await EasyLocalizationController.initEasyLocation();
@@ -113,7 +118,7 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     debugPrint('onStart(starter: ${starter.name})');
-    bgUpdateCheck('bg_check', null);
+    await bgUpdateCheck('bg_check', null);
   }
 
   @override
@@ -191,10 +196,11 @@ class Obtainium extends StatefulWidget {
 class _ObtainiumState extends State<Obtainium> {
   static const _foregroundServiceId = 666;
   static const _fgTaskRepeatMs = 900000;
-  var _lastUpdateInterval = -1;
-  var _lastUseFGService = false;
-  var _firstRunHandled = false;
-  var _launchByNotifChecked = false;
+  var _lastUpdateInterval = -1;    // cached to avoid redundant service restarts
+  var _lastUseFGService = false;   // cached to detect FG/BG service mode changes
+  var _firstRunHandled = false;    // guards the one-time first-run setup
+  var _launchByNotifChecked = false; // guards the notification-launch check
+  var _listenerRegistered = false; // guards against duplicate listener registration
   void Function()? _settingsListener;
 
   void _manageServices(SettingsProvider settings) {
@@ -284,11 +290,14 @@ class _ObtainiumState extends State<Obtainium> {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
       }
-      _settingsListener = () {
-        _manageServices(settingsProvider);
-        _handleFirstRun(settingsProvider, appsProvider, logs, context);
-      };
-      settingsProvider.addListener(_settingsListener!);
+      if (!_listenerRegistered) {
+        _listenerRegistered = true;
+        _settingsListener = () {
+          _manageServices(settingsProvider);
+          _handleFirstRun(settingsProvider, appsProvider, logs, context);
+        };
+        settingsProvider.addListener(_settingsListener!);
+      }
     });
   }
 

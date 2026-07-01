@@ -5,18 +5,16 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 DateTime? parseUptodownDate(String? dateString) {
-  DateTime? releaseDate;
+  if (dateString == null) return null;
   try {
-    releaseDate = dateString != null
-        ? DateFormat('MMM dd, yyyy').parse(dateString)
-        : null;
-    releaseDate = dateString != null && releaseDate == null
-        ? DateFormat('MMMM dd, yyyy').parse(dateString)
-        : releaseDate;
-  } catch (err) {
-    debugPrint('Failed to parse release date: $err');
+    return DateFormat('MMM dd, yyyy').parse(dateString);
+  } catch (_) {}
+  try {
+    return DateFormat('MMMM dd, yyyy').parse(dateString);
+  } catch (_) {
+    debugPrint('Failed to parse Uptodown release date: $dateString');
   }
-  return releaseDate;
+  return null;
 }
 
 class Uptodown extends AppSource {

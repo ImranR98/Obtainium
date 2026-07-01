@@ -874,6 +874,11 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       ).compareTo(appsProvider.settingsProvider.lastCompletedBGCheckTime) ==
       0;
 
+  DateTime? ignoreAfter;
+  if (params['toCheck'] == null) {
+    ignoreAfter = firstEverUpdateTask ? null : appsProvider.settingsProvider.lastCompletedBGCheckTime;
+  }
+
   List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
     ...(params['toCheck']
             ?.map(
@@ -885,11 +890,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
             .toList() ??
         appsProvider
             .getAppsSortedByUpdateCheckTime(
-              ignoreAppsCheckedAfter: params['toCheck'] == null
-                  ? firstEverUpdateTask
-                        ? null
-                        : appsProvider.settingsProvider.lastCompletedBGCheckTime
-                  : null,
+              ignoreAppsCheckedAfter: ignoreAfter,
               onlyCheckInstalledOrTrackOnlyApps: appsProvider
                   .settingsProvider
                   .onlyCheckInstalledOrTrackOnlyApps,
@@ -997,15 +998,15 @@ Future<void> _bgRunUpdateCheck(
       sp: appsProvider.settingsProvider,
     );
   } catch (e) {
-    if (e is Map) {
-      updates = e['updates'] ?? [];
-      errors = e['errors'];
-      errors?.rawErrors.forEach((key, err) {
+    if (e is CheckUpdatesException) {
+      updates = e.updates;
+      errors = e.errors;
+      errors.rawErrors.forEach((key, err) {
         logs.add(
           'BG update task: Got error on checking for $key \'${err.toString()}\'.',
         );
 
-        var toCheckApp = toCheck.where((element) => element.key == key).first;
+        var toCheckApp = toCheck.firstWhere((element) => element.key == key, orElse: () => MapEntry(key, 0));
         if (toCheckApp.value < maxAttempts) {
           toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
           int minRetryIntervalForThisApp = err is RateLimitError
@@ -1021,7 +1022,7 @@ Future<void> _bgRunUpdateCheck(
           }
         } else {
           if (err is! RateLimitError) {
-            toThrow.add(key, err, appName: errors?.appIdNames[key]);
+            toThrow.add(key, err, appName: errors!.appIdNames[key]);
           }
         }
       });
@@ -1066,7 +1067,7 @@ Future<void> _bgRunUpdateCheck(
     );
   }
   if (exemptToNotify.isNotEmpty) {
-    notificationsProvider.notify(TrackOnlyUpdateNotification(exemptToNotify));
+      notificationsProvider.notify(UpdateNotification(exemptToNotify));
   }
 
   if (toThrow.rawErrors.isNotEmpty) {

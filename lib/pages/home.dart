@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
         );
       }
       if (!mounted) return;
-      if (!sp.googleVerificationWarningShown && DateTime.now().year == 2026) {
+      if (!sp.googleVerificationWarningShown) {
         await showDialog(
           context: context,
           builder: (BuildContext ctx) {

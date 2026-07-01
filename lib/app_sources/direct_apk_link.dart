@@ -12,6 +12,7 @@ class DirectAPKLink extends AppSource {
 
   DirectAPKLink() {
     name = tr('directAPKLink');
+    versionDetectionDisallowed = true;
     additionalSourceAppSpecificSettingFormItems = [
       ...html.additionalSourceAppSpecificSettingFormItems.where(
         (element) => element

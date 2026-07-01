@@ -89,7 +89,7 @@ class APKMirror extends AppSource {
         break;
       }
       String? titleString = targetRelease?.querySelector('title')?.innerHtml;
-      if (titleString == null && targetRelease == null) {
+      if (targetRelease == null) {
         throw NoReleasesError(
           note: regexFilter != null ? tr('noMatchingReleaseFound') : null,
         );

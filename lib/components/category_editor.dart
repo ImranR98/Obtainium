@@ -339,6 +339,15 @@ class CategorySelector extends StatefulWidget {
 class _CategorySelectorState extends State<CategorySelector> {
   late Set<String> _selected = {...widget.selected};
 
+  @override
+  void didUpdateWidget(CategorySelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected.length != widget.selected.length ||
+        !oldWidget.selected.containsAll(widget.selected)) {
+      _selected = {...widget.selected};
+    }
+  }
+
   void _emit() => widget.onChanged({..._selected});
 
   void _toggle(String name, bool value) {

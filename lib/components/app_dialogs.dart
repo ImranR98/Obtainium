@@ -50,7 +50,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
               groupValue: fileUrl!.value,
               onChanged: (String? val) {
                 setState(() {
-                  fileUrl = urlsToSelectFrom.where((e) => e.value == val).first;
+                  fileUrl = urlsToSelectFrom.firstWhere((e) => e.value == val, orElse: () => urlsToSelectFrom.first);
                 });
               },
               child: Column(

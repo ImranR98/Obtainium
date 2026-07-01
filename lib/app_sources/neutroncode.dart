@@ -35,20 +35,15 @@ class NeutronCode extends AppSource {
     if (parts.length != 3) {
       return null;
     }
-    String result = '';
-    for (var s in parts.reversed) {
-      try {
-        try {
-          int.parse(s);
-          result += '$s-';
-        } catch (e) {
-          result += '${monthNameToNumberString(s)}-';
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-    return result.substring(0, result.length - 1);
+    var monthIdx = parts.indexWhere((s) => int.tryParse(s) == null);
+    if (monthIdx < 0) return null;
+    var month = monthNameToNumberString(parts[monthIdx]);
+    var numericParts = [for (var i = 0; i < 3; i++) if (i != monthIdx) int.tryParse(parts[i])];
+    if (numericParts.contains(null) || numericParts.length != 2) return null;
+    var a = numericParts[0]!, b = numericParts[1]!;
+    var year = a > 31 ? a : (b > 31 ? b : (a.toString().length == 4 ? a : b));
+    var day = a == year ? b : a;
+    return '$year-$month-${day.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -84,7 +79,7 @@ class NeutronCode extends AppSource {
         version,
         getApkUrlsFromUrls([apkUrl]),
         AppNames(sourceIdentifier, name ?? standardUrl.split('/').last),
-        releaseDate: dateString != null ? DateTime.parse(dateString) : null,
+        releaseDate: dateString != null ? DateTime.tryParse(dateString) : null,
         changeLog: changeLogElements.isNotEmpty
             ? changeLogElements.last.innerHtml
             : null,

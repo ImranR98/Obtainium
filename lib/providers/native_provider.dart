@@ -1,3 +1,5 @@
+// Platform channel helpers for native OS features (e.g. system font loading).
+
 import 'dart:io';
 import 'package:android_system_font/android_system_font.dart';
 import 'package:flutter/services.dart';

@@ -460,7 +460,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   Widget _initDropdown(GeneratedFormDropdown formItem) {
-    if (formItem.opts!.isEmpty) {
+    if (formItem.opts == null || formItem.opts!.isEmpty) {
       return Text(tr('dropdownNoOptsError'));
     }
     return DropdownButtonFormField(
@@ -651,11 +651,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (widget.key.toString() != initKey) {
       initForm();
     }
-    // Build a fresh render list each frame instead of mutating the
-    // state-held [formInputs] (mutating state during build() is a Flutter
-    // anti-pattern that can trigger rebuild loops). Persistent text/dropdown
-    // field widgets are reused by reference; switch/subform slots are
-    // (re)built here into the local copy only.
+    // Build a fresh render list each frame to avoid mutating state-held
+    // [formInputs] during build(). Text/dropdown widgets are reused by
+    // reference; switch and subform slots are rebuilt here.
     final List<List<Widget>> renderedInputs = [
       for (final row in formInputs) [...row],
     ];

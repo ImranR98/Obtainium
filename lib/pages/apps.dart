@@ -12,6 +12,7 @@ import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/components/motion.dart';
 import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -246,10 +247,6 @@ class AppsPageState extends State<AppsPage> {
                       toInstall,
                       globalNavigatorKey.currentContext,
                     )
-                    .catchError((e) {
-                      if (context.mounted) showError(e, context);
-                      return <String>[];
-                    })
                     .then((value) {
                       if (value.isNotEmpty) {
                         if (context.mounted) {
@@ -258,8 +255,12 @@ class AppsPageState extends State<AppsPage> {
                           }
                           var np = context.read<NotificationsProvider>();
                           np.cancel(UpdateNotification([]).id);
+                          np.cancel(SilentUpdateAttemptNotification([], id: value[0].hashCode).id);
                         }
                       }
+                    })
+                    .catchError((e) {
+                      if (context.mounted) showError(e, context);
                     });
               }
             });
@@ -316,7 +317,7 @@ class AppsPageState extends State<AppsPage> {
     return appsProvider
         .checkUpdates()
         .catchError((e) {
-          if (context.mounted) showError(e is Map ? e['errors'] : e, context);
+          if (context.mounted) showError(e is CheckUpdatesException ? e.errors : e, context);
           return <App>[];
         })
         .whenComplete(() {
@@ -818,11 +819,11 @@ class AppsPageState extends State<AppsPage> {
         ),
         floatingActionButton: selectedAppIds.isNotEmpty
             ? FloatingActionButton(
-                onPressed: () => _showMoreOptions(
+                onPressed: () => _showMoreOptionsBottomSheet(
                   context,
+                  selectedApps,
                   appsProvider,
                   settingsProvider,
-                  selectedApps,
                 ),
                 tooltip: tr('more'),
                 child: const Icon(Icons.more_vert),
@@ -1217,20 +1218,6 @@ class AppsPageState extends State<AppsPage> {
           ),
         );
       },
-    );
-  }
-
-  void _showMoreOptions(
-    BuildContext context,
-    AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
-    Set<App> selectedApps,
-  ) {
-    _showMoreOptionsBottomSheet(
-      context,
-      selectedApps,
-      appsProvider,
-      settingsProvider,
     );
   }
 

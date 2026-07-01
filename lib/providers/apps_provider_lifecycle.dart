@@ -7,7 +7,6 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:obtainium/app_sources/direct_apk_link.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form.dart';
 import 'package:obtainium/components/generated_form_modal.dart';
@@ -68,11 +67,10 @@ extension AppsProviderLifecycle on AppsProvider {
         (app.app.additionalSettings['versionExtractionRegEx'] as String?)
                 ?.isNotEmpty !=
             true);
-    bool isDirectAPKLink = source is DirectAPKLink;
     return app.app.additionalSettings['trackOnly'] != true &&
         app.app.additionalSettings['releaseDateAsVersion'] != true &&
         !isHTMLWithNoVersionDetection &&
-        !isDirectAPKLink &&
+        !source.versionDetectionDisallowed &&
         realInstalledVersion != null &&
         app.app.installedVersion != null &&
         (reconcileVersionDifferences(

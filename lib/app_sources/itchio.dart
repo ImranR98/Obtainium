@@ -54,12 +54,7 @@ class ItchIO extends AppSource {
     return match?.group(1);
   }
 
-  /// Extracts all app titles and download IDs (upload_id or /download/ link IDs) from the page.
-  ///
-  /// The format of the element is the following:
-  /// 1. Release name
-  /// 2. Upload ID
-  /// 3. Whether it is an Android download
+  /// Extracts release names and download IDs from the page.
   List<(String, String, bool)> _extractDownload(String body) {
     var parser = parse(body);
 
@@ -97,10 +92,8 @@ class ItchIO extends AppSource {
 
   /// Extracts the version string from the page body.
   ///
-  /// Prioritizes info table data, then upload names, then 'Updated' date.
-  ///
-  /// This method has room for improvement; however, there is no defined
-  /// standard on itch.io for declaring assets versions.
+  /// There is no standard on itch.io for declaring asset versions, so this
+  /// falls back through info table data, upload names, then 'Updated' date.
   String? _parseVersion(Document document) {
     // Limit our search to the main game info section.
     var pageWidget = document.querySelector("div.page_widget");

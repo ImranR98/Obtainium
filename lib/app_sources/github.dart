@@ -357,6 +357,8 @@ class GitHub extends AppSource {
   String? changeLogPageFromStandardUrl(String standardUrl) =>
       '$standardUrl/releases';
 
+  /// Fetches and parses GitHub releases, applying sort/filter/prelease settings,
+  /// then resolves the best matching release to an [APKDetails] result.
   Future<APKDetails> _fetchReleaseDetails(
     String requestUrl,
     String standardUrl,
@@ -542,7 +544,7 @@ class GitHub extends AppSource {
           releases.isNotEmpty &&
           (latestRelease['tag_name'] ?? latestRelease['name']) !=
               (releases[releases.length - 1]['tag_name'] ??
-                  releases[0]['name'])) {
+                  releases[releases.length - 1]['name'])) {
         var ind = releases.indexWhere(
           (element) =>
               (latestRelease['tag_name'] ?? latestRelease['name']) ==
@@ -554,11 +556,11 @@ class GitHub extends AppSource {
       }
       releases = releases.reversed.toList();
       dynamic targetRelease;
-      var prerrelsSkipped = 0;
+      var prereleaseSkipped = 0;
       for (int i = 0; i < releases.length; i++) {
-        if (!fallbackToOlderReleases && i > prerrelsSkipped) break;
+        if (!fallbackToOlderReleases && i > prereleaseSkipped) break;
         if (!includePrereleases && releases[i]['prerelease'] == true) {
-          prerrelsSkipped++;
+          prereleaseSkipped++;
           continue;
         }
         if (releases[i]['draft'] == true) {

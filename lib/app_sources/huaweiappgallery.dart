@@ -22,8 +22,8 @@ class HuaweiAppGallery extends AppSource {
   );
 
   String getDlUrl(String standardUrl) {
-    assert(hosts.length > 1, 'HuaweiAppGallery expects at least 2 hosts');
-    return 'https://${hosts[1]}/appdl/${standardUrl.split('/').last}';
+    var dlHost = hosts.length > 1 ? hosts[1] : hosts[0];
+    return 'https://$dlHost/appdl/${standardUrl.split('/').last}';
   }
 
   Future<Response> requestAppdlRedirect(

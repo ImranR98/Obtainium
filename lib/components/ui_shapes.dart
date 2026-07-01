@@ -1,3 +1,5 @@
+// Squircle border shapes and positional tile radius helpers.
+
 import 'package:flutter/material.dart';
 
 /// Corner radius for the outer corners of a connected tile run.

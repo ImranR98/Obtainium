@@ -72,7 +72,16 @@ class SettingsProvider with ChangeNotifier {
     }
     defaultAppDir = _cachedDefaultAppDir;
     isTV = _cachedIsTV!;
+    _migrateLegacyExportSetting();
     notifyListeners();
+  }
+
+  void _migrateLegacyExportSetting() {
+    if (prefs?.getInt('exportSettings') != null) return;
+    var legacyBool = prefs?.getBool('exportSettings');
+    if (legacyBool != null) {
+      prefs?.setInt('exportSettings', legacyBool ? 1 : 0);
+    }
   }
 
   static Future<void> _loadSecureCache() async {
@@ -612,14 +621,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get exportSettings {
-    try {
-      return prefs?.getInt('exportSettings') ??
-          1; // 0 for no, 1 for yes but no secrets, 2 for everything
-    } catch (e) {
-      var val = prefs?.getBool('exportSettings') == true ? 1 : 0;
-      prefs?.setInt('exportSettings', val);
-      return val;
-    }
+    return prefs?.getInt('exportSettings') ?? 1;
   }
 
   set exportSettings(int val) {

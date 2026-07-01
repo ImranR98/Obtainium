@@ -29,9 +29,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
-  bool _settingsInitStarted = false;
-  // Stateless and its source list is statically cached, so hold one instance
-  // rather than allocating a new SourceProvider on every build().
   final SourceProvider sourceProvider = SourceProvider();
   final Map<ColorSwatch<Object>, String> colorsNameMap =
       <ColorSwatch<Object>, String>{
@@ -41,6 +38,10 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final sp = context.read<SettingsProvider>();
+      if (sp.prefs == null) sp.initializeSettings();
+    });
     DeviceInfoPlugin().androidInfo.then((info) {
       if (mounted) {
         setState(() {
@@ -206,10 +207,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    if (settingsProvider.prefs == null && !_settingsInitStarted) {
-      _settingsInitStarted = true;
-      settingsProvider.initializeSettings();
-    }
     final sdk = androidSdkInt ?? 0;
 
     var colorPicker = SettingsTile(

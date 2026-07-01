@@ -159,12 +159,10 @@ extension AppsProviderUpdates on AppsProvider {
       gettingUpdates = false;
     }
     if (errors.idsByErrorString.isNotEmpty) {
-      var res = <String, dynamic>{};
-      res['errors'] = errors;
-      res['updates'] = updates;
-      updateCheckCompleter?.completeError(res);
+      var ex = CheckUpdatesException(updates, errors);
+      updateCheckCompleter?.completeError(ex);
       updateCheckCompleter = null;
-      throw res;
+      throw ex;
     }
     updateCheckCompleter?.complete(updates);
     updateCheckCompleter = null;

@@ -6,7 +6,13 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'dart:math';
 
-// Adapted from https://github.com/DUpdateSystem/UpgradeAll
+/// CoolApk app source.
+///
+/// The client version and device fingerprint are locked to a specific CoolAPK
+/// client release. If the server enforces minimum-version requirements, these
+/// must be periodically updated.
+/// Token generation adapted from https://github.com/XiaoMengXinX/FuckCoolapkTokenV2
+/// and https://github.com/Coolapk-UWP/Coolapk-UWP
 class CoolApk extends AppSource {
   CoolApk() {
     name = tr('coolApk');
@@ -150,10 +156,6 @@ class CoolApk extends AppSource {
       (_) => rand.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join(':');
 
-    // Token generation adapted from https://github.com/XiaoMengXinX/FuckCoolapkTokenV2 and https://github.com/Coolapk-UWP/Coolapk-UWP
-    // NOTE: the client version (X-App-Version) and device fingerprint below are
-    // version-locked to a specific CoolAPK client release. If the server enforces
-    // minimum-version requirements, these must be periodically updated.
     String aid = randHexString(16);
     String mac = randMacAddress();
     const manufactor = 'Google';

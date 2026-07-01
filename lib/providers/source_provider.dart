@@ -1153,17 +1153,19 @@ class SourceProvider {
     String standardUrl,
     bool inferAppIdIfOptional,
   ) async {
-    return currentApp?.id ??
-        (additionalSettings['appId'] as String?) ??
-        (!trackOnly &&
-                (!source.appIdInferIsOptional ||
-                    (source.appIdInferIsOptional && inferAppIdIfOptional))
-            ? await source.tryInferringAppId(
-                standardUrl,
-                additionalSettings: additionalSettings,
-              )
-            : null) ??
-        generateTempID(standardUrl, additionalSettings);
+    if (currentApp?.id != null) return currentApp!.id;
+    final explicitId = additionalSettings['appId'] as String?;
+    if (explicitId != null) return explicitId;
+    if (!trackOnly &&
+        (!source.appIdInferIsOptional ||
+            (source.appIdInferIsOptional && inferAppIdIfOptional))) {
+      final inferred = await source.tryInferringAppId(
+        standardUrl,
+        additionalSettings: additionalSettings,
+      );
+      if (inferred != null) return inferred;
+    }
+    return generateTempID(standardUrl, additionalSettings);
   }
 
   Future<App> getApp(
@@ -1175,6 +1177,7 @@ class SourceProvider {
     bool sourceIsOverriden = false,
     bool inferAppIdIfOptional = false,
   }) async {
+    additionalSettings = Map<String, dynamic>.from(additionalSettings);
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }

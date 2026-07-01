@@ -1,3 +1,5 @@
+// Builds the Material 3 Expressive theme for the app.
+
 import 'package:flutter/material.dart';
 
 /// Builds the app-wide Material 3 Expressive [ThemeData] for a given
@@ -88,7 +90,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     ),
     sliderTheme: SliderThemeData(
       // ignore: deprecated_member_use
-      year2023: false,
+      year2023: false, // TODO: remove when deprecated_member_use is resolved upstream
       activeTrackColor: colorScheme.primary,
       inactiveTrackColor: colorScheme.surfaceContainerHighest,
       thumbColor: colorScheme.primary,
@@ -96,7 +98,7 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       // ignore: deprecated_member_use
-      year2023: false,
+      year2023: false, // TODO: remove when deprecated_member_use is resolved upstream
     ),
   );
 }

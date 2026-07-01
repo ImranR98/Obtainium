@@ -40,11 +40,11 @@ class Jenkins extends AppSource {
     );
     if (res.statusCode == 200) {
       var json = jsonDecode(res.body);
-      var releaseDate = json['timestamp'] == null
-          ? null
-          : DateTime.fromMillisecondsSinceEpoch(
-              int.tryParse(json['timestamp'].toString()) ?? 0,
-            );
+      DateTime? releaseDate;
+      if (json['timestamp'] != null) {
+        var ts = int.tryParse(json['timestamp'].toString());
+        releaseDate = ts != null ? DateTime.fromMillisecondsSinceEpoch(ts) : null;
+      }
       var version = json['number'] == null
           ? null
           : (json['number'] as int).toString();

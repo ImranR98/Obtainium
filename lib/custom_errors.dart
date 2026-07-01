@@ -1,3 +1,5 @@
+// Obtainium-specific error classes used throughout the app.
+
 import 'dart:io';
 
 import 'package:android_package_installer/android_package_installer.dart';
@@ -68,7 +70,7 @@ class DowngradeError extends ObtainiumError {
 /// Thrown when the Android package installer returns a failure status code.
 class InstallError extends ObtainiumError {
   InstallError(int code)
-    : super(PackageInstallerStatus.byCode(code).name.substring(7));
+    : super(PackageInstallerStatus.byCode(code).name);
 }
 
 /// Thrown when a downloaded APK's package ID differs from the expected app ID.
@@ -81,6 +83,16 @@ class RepositoryRenamedError extends ObtainiumError {
   final String oldUrl;
   final String newUrl;
   RepositoryRenamedError(this.oldUrl, this.newUrl) : super(tr('repoRenamed'));
+}
+
+/// Carries the partial [updates] and [errors] results from a batch update check
+/// that encountered non-retryable failures.
+class CheckUpdatesException extends ObtainiumError {
+  final List<App> updates;
+  final MultiAppMultiError errors;
+  CheckUpdatesException(this.updates, this.errors) : super('', unexpected: true);
+  @override
+  String toString() => errors.toString();
 }
 
 /// Thrown when a source method that hasn't been implemented is called.

@@ -199,7 +199,7 @@ class APKPure extends AppSource {
           Map<String, List<Map<String, dynamic>>> val,
           Map<String, dynamic> element,
         ) {
-          String v = element['version_name'];
+          var v = element['version_name'] as String? ?? '';
           if (!val.containsKey(v)) {
             val[v] = [];
           }
@@ -217,7 +217,10 @@ class APKPure extends AppSource {
       var v = versions[i];
       try {
         if (i == 0 && additionalSettings['stayOneVersionBehind'] == true) {
-          throw NoReleasesError();
+          if (additionalSettings['fallbackToOlderReleases'] != true && versions.length < 2) {
+            throw NoReleasesError();
+          }
+          continue;
         }
         return await getDetailsForVersion(
           v,

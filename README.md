@@ -35,9 +35,11 @@ Currently supported App sources:
   - [CoolApk](https://coolapk.com/)
   - [LiteAPKs](https://liteapks.com/)
   - [APK4Free](https://apk4free.net/)
+  - [SourceForge](https://sourceforge.net/)
   - Jenkins Jobs
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
-  - [RockMods](https://rockmods.net/) (Track-Only)
+  - [APKMirror](https://apkmirror.com/) *(Track-Only)*
+  - [RockMods](https://rockmods.net/) *(Track-Only)*
+- *Track-Only sources cannot download APKs directly — they only monitor for new releases.*
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)
@@ -54,7 +56,7 @@ Or, contribute some configurations to the website by creating a PR at [this repo
 
 ## Installation
 
-[<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png"
+[<img src="https://img.shields.io/badge/Get_it_on-GitHub-24292e?logo=github"
     alt="Get it on GitHub"
     height="80">](https://github.com/ImranR98/Obtainium/releases)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
@@ -72,7 +74,7 @@ Verification info:
 | Signing cert SHA-256 | `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62` |
 | PGP Public Key | [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (verify APK hashes) |
 
-The signing certificate is also valid for the F-Droid flavour, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
+The signing certificate is also valid for the F-Droid flavour (a separate APK built from `lib/main_fdroid.dart`), thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.

@@ -95,8 +95,6 @@ class _AppPageState extends State<AppPage> {
   /// the cached [deepCopy] needs to be refreshed.
   int _appSignature(AppInMemory a) {
     final app = a.app;
-    // Structured hash so a field value containing the old separator character
-    // can't collide with a different combination of field values.
     return Object.hashAll([
       a.downloadProgress,
       identityHashCode(a.icon),
@@ -205,6 +203,7 @@ class _AppPageState extends State<AppPage> {
       confirmText: tr('yesMarkUpdated'),
     );
     if (!confirmed) return;
+    if (!mounted) return;
     settingsProvider.selectionClick();
     var updatedApp = app?.app;
     if (updatedApp != null) {
@@ -483,11 +482,11 @@ class _AppPageState extends State<AppPage> {
           tooltip: tr('resetInstallStatus'),
         ),
       IconButton(
-        onPressed: app?.downloadProgress != null || updating
+        onPressed: app == null || app.downloadProgress != null || updating
             ? null
             : () {
                 appsProvider
-                    .removeAppsWithModal(context, app != null ? [app.app] : [])
+                    .removeAppsWithModal(context, [app.app])
                     .then((value) {
                       if (value == true) {
                         _closePage();
