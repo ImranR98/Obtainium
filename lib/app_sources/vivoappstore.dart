@@ -36,7 +36,8 @@ class VivoAppStore extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var json = await getDetailJson(standardUrl, additionalSettings);
+    try {
+      var json = await getDetailJson(standardUrl, additionalSettings);
     var versionName = json['version_name']?.toString();
     var apkUrl = json['download_url']?.toString();
     if (versionName == null) {
@@ -57,6 +58,9 @@ class VivoAppStore extends AppSource {
       AppNames(developer, appName),
       releaseDate: uploadTime != null ? DateTime.tryParse(uploadTime) : null,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   @override

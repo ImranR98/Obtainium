@@ -33,7 +33,8 @@ class Jenkins extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    standardUrl = trimJobUrl(standardUrl);
+    try {
+      standardUrl = trimJobUrl(standardUrl);
     Response res = await sourceRequest(
       '$standardUrl/lastSuccessfulBuild/api/json',
       additionalSettings,
@@ -80,6 +81,9 @@ class Jenkins extends AppSource {
       );
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

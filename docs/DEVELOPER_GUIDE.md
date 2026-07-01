@@ -48,32 +48,49 @@ There is also `main_fdroid.dart` for the F-Droid build flavour (sets `isFdroidBu
 
 ```
 lib/
-├─ main.dart                  App bootstrap, FG/BG service control
-├─ main_fdroid.dart           F-Droid flavour entry point
-├─ theme.dart                 Material 3 Expressive ThemeData builder
-├─ custom_errors.dart         ObtainiumError + typed errors (RateLimitError, etc.)
-├─ pages/                     Full screens (route-level widgets)
-│  ├─ home.dart               Adaptive nav shell (rail/bottom bar, two-pane)
-│  ├─ apps.dart               App list (filter/sort/select/mass-actions)
-│  ├─ app.dart                Single-app detail page
-│  ├─ add_app.dart            Add-app form + source search + ImportSection
-│  ├─ settings.dart           Settings + ExportSection
-│  └─ import_export.dart      Import/Export *widgets* + SelectionModal (no longer a tab)
-├─ components/                Reusable widgets & dialogs (see §5)
-├─ providers/                 State + business logic (see §3, §4)
-│  ├─ apps_provider.dart            Core AppsProvider class + download primitives
-│  ├─ apps_provider_lifecycle.dart  load/save/remove apps, version reconciliation
-│  ├─ apps_provider_updates.dart    update checking (fetch vs save split)
-│  ├─ apps_provider_install.dart    download + install (APK / xAPK / zip / tarball / OBB)
-│  ├─ apps_provider_import_export.dart  import/export JSON via SAF
-│  ├─ source_provider.dart          App / AppSource model + SourceProvider service
-│  ├─ app_migrations.dart           Legacy JSON compatibility & schema migrations
-│  ├─ settings_provider.dart        Typed getters/setters over SharedPreferences
-│  ├─ logs_provider.dart            sqflite-backed logs
-│  ├─ notifications_provider.dart   flutter_local_notifications wrappers
-│  ├─ native_provider.dart          platform channel helpers (e.g. system font)
-├─ app_sources/              One file per supported source (see §4)
-└─ mass_app_sources/         Bulk URL providers (e.g. GitHubStars)
+├─ main.dart                      App bootstrap, FG/BG service control
+├─ main_fdroid.dart               F-Droid flavour entry point
+├─ router.dart                    GoRouter route definitions
+├─ theme.dart                     Material 3 Expressive ThemeData builder
+├─ custom_errors.dart             ObtainiumError + typed errors with codes/stacks/data
+├─ pages/                         Full screens + their controllers
+│  ├─ home.dart / home_controller.dart
+│  ├─ apps.dart / apps_controller.dart
+│  ├─ app.dart / app_controller.dart
+│  ├─ add_app.dart / add_app_controller.dart
+│  ├─ settings.dart / settings_controller.dart
+│  └─ import_export.dart / import_export_controller.dart
+├─ components/                    All UI: design tokens, form engine, feature widgets, dialogs
+│  ├─ generated_form_model.dart   Form data model (pure Dart)
+│  ├─ generated_form_renderer.dart Form widget rendering
+│  ├─ motion.dart / shapes.dart   Design tokens + shapes
+│  ├─ design_widgets.dart         AppIcon, EmptyState, ConnectedCard, etc.
+│  ├─ settings_widgets.dart       SettingsGroup, SettingsTile, etc.
+│  ├─ app_list_tile.dart          AppListTile, AppListBuilder, category sections
+│  ├─ app_detail_widgets.dart     AppInfoDialog, AppFilePicker
+│  ├─ error_boundary.dart         Feature-level error boundary with retry
+│  └─ category_editor.dart        Category management UI
+├─ providers/                     State, business logic, services, models
+│  ├─ apps_provider.dart          Core AppsProvider + download primitives
+│  ├─ apps_provider_*.dart        Lifecycle, updates, install, import/export extensions
+│  ├─ source_provider.dart        Immutable App model + AppSource + SourceProvider
+│  ├─ app_migrations.dart         Legacy JSON compatibility
+│  ├─ settings_provider.dart      Typed getters/setters over SharedPreferences
+│  ├─ logs_provider.dart          sqflite-backed logs
+│  ├─ notifications_provider.dart Local notifications
+│  ├─ native_provider.dart        Platform channel helpers
+│  ├─ di.dart / logger.dart       Dependency injection + logging
+│  ├─ http_service.dart           HTTP client creation, redirects, error mapping
+│  ├─ version_service.dart        Version extraction + standard format detection
+│  ├─ apk_filter_service.dart     APK filtering + arch filtering
+│  ├─ config_provider.dart        Unified settings facade
+│  ├─ export_schema.dart          Schema-versioned exports + AppRepository
+│  ├─ source_settings.dart        TypedSettings wrapper
+│  ├─ source_health_monitor.dart  Circuit breaker for failing sources
+│  ├─ cancellation_token.dart     Structured concurrency primitives
+│  └─ ...                         (lifecycle_guard, perf_trace, etc.)
+└─ app_sources/                  One file per supported source (28 sources + githubstars)
+```
 ```
 
 ---

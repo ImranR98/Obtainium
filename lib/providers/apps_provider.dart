@@ -8,16 +8,16 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:battery_plus/battery_plus.dart';
-import 'package:crypto/crypto.dart';
-
+import 'package:android_system_font/android_system_font.dart';
 import 'package:android_package_manager/android_package_manager.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/io_client.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -25,6 +25,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
+import 'package:obtainium/main.dart';
+// ignore: implementation_imports
+import 'package:easy_localization/src/easy_localization_controller.dart';
+// ignore: implementation_imports
+import 'package:easy_localization/src/localization.dart';
+// ignore: implementation_imports
+// ignore: implementation_imports
 
 import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/apps_provider_install.dart';
@@ -57,20 +64,26 @@ final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 /// Runtime wrapper for [App] holding download state and OS package info.
 class AppInMemory {
   late App app;
-  double? downloadProgress;
+  final ValueNotifier<double?> downloadProgressNotifier = ValueNotifier(null);
   PackageInfo? installedInfo;
   Uint8List? icon;
   String? sourceType;
 
+  double? get downloadProgress => downloadProgressNotifier.value;
+  set downloadProgress(double? value) => downloadProgressNotifier.value = value;
+
   AppInMemory(
     this.app,
-    this.downloadProgress,
+    double? downloadProgress,
     this.installedInfo,
     this.icon, {
     this.sourceType,
-  });
+  }) {
+    downloadProgressNotifier.value = downloadProgress;
+  }
+
   AppInMemory deepCopy() => AppInMemory(
-    app.deepCopy(),
+    app.copyWith(),
     downloadProgress,
     installedInfo,
     icon,
@@ -96,7 +109,7 @@ class AppInMemory {
   String get author => app.overrideAuthor ?? app.finalAuthor;
 
   bool get needsRefreshBeforeDownload =>
-      app.additionalSettings['refreshBeforeDownload'] == true ||
+      app.settings.getBool('refreshBeforeDownload') ||
       (app.apkUrls.isNotEmpty && app.apkUrls.first.value == 'placeholder');
 
   bool get hasMultipleSigners {
@@ -119,6 +132,15 @@ class AppInMemory {
   }
 }
 
+enum AppRepositoryEventType { saved, deleted }
+
+class AppRepositoryEvent {
+  final AppRepositoryEventType type;
+  final List<String> appIds;
+
+  AppRepositoryEvent(this.type, this.appIds);
+}
+
 class DownloadedApk {
   String appId;
   File file;
@@ -135,68 +157,9 @@ class DownloadedDir {
   DownloadedDir(this.appId, this.file, this.extracted, this.type);
 }
 
-List<String> _generateStandardVersionRegExStrings() {
-  var basics = [
-    '[0-9]+',
-    '[0-9]+\\.[0-9]+',
-    '[0-9]+\\.[0-9]+\\.[0-9]+',
-    '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+',
-  ];
-  var preSuffixes = ['-', '\\+'];
-  var suffixes = [
-    'alpha',
-    'beta',
-    'rc',
-    'pre',
-    'dev',
-    'snapshot',
-    'nightly',
-    'ose',
-    '[0-9]+',
-  ];
-  var finals = ['\\+[0-9]+', '[0-9]+'];
-  List<String> results = [];
-  for (var b in basics) {
-    results.add(b);
-    for (var p in preSuffixes) {
-      for (var s in suffixes) {
-        results.add('$b$s');
-        results.add('$b$p$s');
-        for (var f in finals) {
-          results.add('$b$s$f');
-          results.add('$b$p$s$f');
-        }
-      }
-    }
-  }
-  return results;
-}
-
-final _standardVersionRegExStrings = _generateStandardVersionRegExStrings();
-
-// Precompiled once (instead of rebuilding hundreds of RegExp objects on every
-// call) since findStandardFormatsForVersion runs inside hot paths like the
-// GitHub release sort comparator.
-final List<MapEntry<String, RegExp>> _strictStandardVersionRegExes =
-    _standardVersionRegExStrings
-        .map((p) => MapEntry(p, RegExp('^$p\$')))
-        .toList();
-final List<MapEntry<String, RegExp>> _looseStandardVersionRegExes =
-    _standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
-
-Set<String> findStandardFormatsForVersion(String version, bool strict) {
-  // If !strict, even a substring match is valid
-  Set<String> results = {};
-  final patterns = strict
-      ? _strictStandardVersionRegExes
-      : _looseStandardVersionRegExes;
-  for (var entry in patterns) {
-    if (entry.value.hasMatch(version)) {
-      results.add(entry.key);
-    }
-  }
-  return results;
-}
+/// Delegates to [VersionService.findStandardFormatsForVersion].
+Set<String> findStandardFormatsForVersion(String version, bool strict) =>
+    VersionService().findStandardFormatsForVersion(version, strict);
 
 /// Removes all matching elements and appends the last match to the end.
 /// This is intentionally deduplicating — only one instance is re-added.
@@ -633,10 +596,12 @@ Future<Directory> getAppStorageDir() async =>
     await getApplicationDocumentsDirectory();
 
 class AppsProvider with ChangeNotifier {
-  // Background tasks may update apps on disk while the foreground instance is
-  // alive.  The bg path sets this timestamp after saving; the fg instance
-  // checks it before returning cached data and reloads from disk as needed.
-  static DateTime? _lastBackgroundSave;
+  static final StreamController<AppRepositoryEvent> _eventsController =
+      StreamController<AppRepositoryEvent>.broadcast();
+
+  /// Cross-instance event stream. The foreground instance subscribes to this
+  /// stream to detect saves made by background tasks and reload as needed.
+  Stream<AppRepositoryEvent> get events => _eventsController.stream;
 
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
@@ -644,6 +609,9 @@ class AppsProvider with ChangeNotifier {
   bool gettingUpdates = false;
   Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
+  dynamic logger;
+
+  final SourceHealthMonitor sourceHealthMonitor = SourceHealthMonitor();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
@@ -653,6 +621,10 @@ class AppsProvider with ChangeNotifier {
 
   // Set in dispose() to guard against deferred callbacks running post-disposal.
   bool _disposed = false;
+
+  // Tracks whether a background save occurred since the last load.
+  bool _needsBgReload = false;
+  StreamSubscription<AppRepositoryEvent>? _eventSubscription;
 
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
@@ -669,18 +641,9 @@ class AppsProvider with ChangeNotifier {
   }
 
   void _reloadIfBgSaved() {
-    if (_lastBackgroundSave == null) return;
-    final lastSave = _lastBackgroundSave!;
-    if (!_isBg &&
-        lastSave.isAfter(
-          DateTime.now().subtract(const Duration(seconds: 30)),
-        )) {
-      loadApps().whenComplete(() {
-        _lastBackgroundSave = null;
-      });
-    } else {
-      _lastBackgroundSave = null;
-    }
+    if (!_needsBgReload) return;
+    _needsBgReload = false;
+    loadApps();
   }
 
   /// Public wrapper around the protected [notifyListeners] so the provider's
@@ -690,8 +653,10 @@ class AppsProvider with ChangeNotifier {
   /// Waits for any in-flight [loadApps] to finish, so concurrent callers
   /// serialize instead of busy-waiting on a polling loop.
   Future<void> waitForAppsToLoad() async {
-    while (appsLoadingCompleter != null) {
-      await appsLoadingCompleter!.future;
+    final completer = appsLoadingCompleter;
+    if (completer != null) {
+      await completer.future;
+      await waitForAppsToLoad();
     }
   }
 
@@ -707,9 +672,15 @@ class AppsProvider with ChangeNotifier {
     });
   }
 
-  AppsProvider({bool isBg = false, SettingsProvider? settingsProvider}) {
+  AppsProvider({
+    bool isBg = false,
+    SettingsProvider? settingsProvider,
+    LogsProvider? logsProvider,
+    this.logger,
+  }) {
     _isBg = isBg;
     this.settingsProvider = settingsProvider ?? SettingsProvider();
+    logs = logsProvider ?? LogsProvider();
     // Subscribe to changes in the app foreground status
     foregroundStream = FGBGEvents.instance.stream.asBroadcastStream();
     foregroundSubscription = foregroundStream?.listen((event) async {
@@ -718,6 +689,14 @@ class AppsProvider with ChangeNotifier {
         await loadApps();
       }
     });
+    if (!_isBg) {
+      _eventSubscription =
+          _eventsController.stream.listen((AppRepositoryEvent event) {
+        if (event.type == AppRepositoryEventType.saved) {
+          _needsBgReload = true;
+        }
+      });
+    }
     () async {
       await this.settingsProvider.initializeSettings();
       var cacheDirs = await getExternalCacheDirectories();
@@ -758,6 +737,7 @@ class AppsProvider with ChangeNotifier {
     _disposed = true;
     foregroundSubscription?.cancel();
     _autoExportDebounce?.cancel();
+    _eventSubscription?.cancel();
     super.dispose();
   }
 
@@ -844,15 +824,25 @@ Future<void> _runBGInstallMode(
 ///
 /// In "install mode" (toCheck is empty): downloads and silently installs all
 /// pending updates, placing Obtainium last in the install queue.
-Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
-  LogsProvider logs = LogsProvider();
-  logs.add('BG task started $taskId: ${params.toString()}');
+Future<void> bgUpdateCheck(
+  String taskId,
+  Map<String, dynamic>? params, {
+  LogsProvider? logs,
+  NotificationsProvider? notifs,
+  SettingsProvider? settings,
+}) async {
+  final l = logs ?? LogsProvider();
+  l.add('BG task started $taskId: ${params.toString()}');
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
-  await loadTranslations();
+  await TranslationLoader.load();
 
-  NotificationsProvider notificationsProvider = NotificationsProvider();
-  AppsProvider appsProvider = AppsProvider(isBg: true);
+  NotificationsProvider notificationsProvider = notifs ?? NotificationsProvider();
+  AppsProvider appsProvider = AppsProvider(
+    isBg: true,
+    settingsProvider: settings,
+    logsProvider: l,
+  );
   await appsProvider.loadApps();
 
   int maxAttempts = _obtainiumBgUpdateMaxAttempts;
@@ -862,7 +852,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
   if (netResult.contains(ConnectivityResult.none) ||
       netResult.isEmpty ||
       (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
-    logs.add('BG update task: No network.');
+    l.add('BG update task: No network.');
     return;
   }
 
@@ -919,11 +909,11 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       (await Battery().batteryState) != BatteryState.charging;
 
   if (networkRestricted) {
-    logs.add('BG update task: Network restriction in effect.');
+    l.add('BG update task: Network restriction in effect.');
   }
 
   if (chargingRestricted) {
-    logs.add('BG update task: Charging restriction in effect.');
+    l.add('BG update task: Charging restriction in effect.');
   }
 
   if (toCheck.isNotEmpty) {
@@ -937,7 +927,7 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       maxRetryWaitSeconds,
       appsProvider,
       notificationsProvider,
-      logs,
+      l,
     );
   } else {
     await _runBGInstallMode(
@@ -946,11 +936,14 @@ Future<void> bgUpdateCheck(String taskId, Map<String, dynamic>? params) async {
       chargingRestricted,
       appsProvider,
       notificationsProvider,
-      logs,
+      l,
     );
   }
   appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
-  AppsProvider._lastBackgroundSave = DateTime.now();
+  AppsProvider._eventsController.add(AppRepositoryEvent(
+    AppRepositoryEventType.saved,
+    [],
+  ));
 }
 
 Future<void> _bgRunUpdateCheck(
@@ -1041,15 +1034,13 @@ Future<void> _bgRunUpdateCheck(
       updates[i],
     );
     if (networkRestricted || chargingRestricted || !canInstallSilently) {
-      if (updates[i].additionalSettings['skipUpdateNotifications'] != true) {
+      if (!updates[i].settings.getBool('skipUpdateNotifications')) {
         logs.add(
           'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
         );
-        if (updates[i].additionalSettings['trackOnly'] == true) {
+        if (updates[i].settings.getBool('trackOnly')) {
           trackOnlyToNotify.add(updates[i]);
-        } else if (updates[i]
-                .additionalSettings['exemptFromBackgroundUpdates'] ==
-            true) {
+        } else if (updates[i].settings.getBool('exemptFromBackgroundUpdates')) {
           exemptToNotify.add(updates[i]);
         } else {
           toNotify.add(updates[i]);
@@ -1107,5 +1098,197 @@ Future<void> _bgRunUpdateCheck(
           .map((entry) => {'key': entry.key, 'value': entry.value})
           .toList(),
     });
+  }
+}
+
+class CancellationException implements Exception {}
+
+class CancellationToken {
+  bool _cancelled = false;
+  bool get isCancelled => _cancelled;
+
+  void cancel() => _cancelled = true;
+
+  void throwIfCancelled() {
+    if (_cancelled) throw CancellationException();
+  }
+}
+
+class _SourceHealth {
+  int consecutiveFailures = 0;
+  DateTime? lastFailure;
+  int totalFailures = 0;
+  int totalSuccesses = 0;
+}
+
+class SourceHealthMonitor {
+  final Map<String, _SourceHealth> _health = {};
+
+  bool shouldSkip(String sourceName) {
+    final h = _health[sourceName];
+    if (h == null) return false;
+    if (h.consecutiveFailures >= 3 &&
+        DateTime.now().difference(h.lastFailure!).inMinutes < 5) {
+      return true;
+    }
+    return false;
+  }
+
+  void recordSuccess(String sourceName) {
+    final h = _health.putIfAbsent(sourceName, () => _SourceHealth());
+    h.consecutiveFailures = 0;
+    h.totalSuccesses++;
+    LogsProvider().add('Source health: $sourceName recovered',
+        level: LogLevel.debug);
+  }
+
+  void recordFailure(String sourceName, Object error) {
+    final h = _health.putIfAbsent(sourceName, () => _SourceHealth());
+    h.consecutiveFailures++;
+    h.lastFailure = DateTime.now();
+    h.totalFailures++;
+    LogsProvider().add(
+        'Source health: $sourceName failure #${h.consecutiveFailures}: $error',
+        level: LogLevel.warning);
+  }
+
+  Map<String, Map<String, dynamic>> getHealthReport() {
+    return _health.map((key, value) => MapEntry(key, {
+          'consecutiveFailures': value.consecutiveFailures,
+          'totalFailures': value.totalFailures,
+          'totalSuccesses': value.totalSuccesses,
+          'isTripped': value.consecutiveFailures >= 3,
+        }));
+  }
+}
+
+/// Tracks device connectivity to support offline-aware behaviour.
+///
+/// Exposes the current [isOnline] state and an [onConnectivityChanged] stream
+/// that emits only when the online/offline state actually flips.
+class ConnectivityService {
+  final Connectivity _connectivity = Connectivity();
+  final _controller = StreamController<bool>.broadcast();
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
+
+  Stream<bool> get onConnectivityChanged => _controller.stream;
+  bool _isOnline = true;
+  bool get isOnline => _isOnline;
+
+  ConnectivityService() {
+    _subscription = _connectivity.onConnectivityChanged.listen((results) {
+      final wasOnline = _isOnline;
+      _isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (wasOnline != _isOnline) {
+        _controller.add(_isOnline);
+      }
+    });
+  }
+
+  void dispose() {
+    _subscription?.cancel();
+    _controller.close();
+  }
+}
+
+class InstallContextService {
+  Future<Directory> getApkDirectory() async {
+    final cacheDirs = await getExternalCacheDirectories();
+    if (cacheDirs?.isNotEmpty ?? false) {
+      return cacheDirs!.first;
+    }
+    final storageDir = Directory('${(await getAppStorageDir()).path}/apks');
+    if (!storageDir.existsSync()) {
+      storageDir.createSync(recursive: true);
+    }
+    return storageDir;
+  }
+
+  Future<Directory> getIconsCacheDir() async {
+    final cacheDirs = await getExternalCacheDirectories();
+    if (cacheDirs?.isNotEmpty ?? false) {
+      final dir = Directory('${cacheDirs!.first.path}/icons');
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+      return dir;
+    }
+    final dir = Directory('${(await getAppStorageDir()).path}/icons');
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    return dir;
+  }
+}
+
+class AppIdService {
+  Future<String?> tryInferAppId(
+    AppSource source,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    try {
+      return await source.tryInferringAppId(
+        standardUrl,
+        additionalSettings: additionalSettings,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String generateTempId(
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) => (standardUrl + additionalSettings.toString()).hashCode.toString();
+}
+
+/// Isolates the implementation-level `easy_localization/src/` imports to a
+/// single file so the rest of the codebase only depends on the public API.
+class TranslationLoader {
+  static Future<void> load() async {
+    await EasyLocalizationController.initEasyLocation();
+    final s = SettingsProvider();
+    await s.initializeSettings();
+    final forceLocale = s.forcedLocale;
+    final controller = EasyLocalizationController(
+      saveLocale: true,
+      forceLocale: forceLocale,
+      fallbackLocale: fallbackLocale,
+      supportedLocales: supportedLocales.map((e) => e.key).toList(),
+      assetLoader: const RootBundleAssetLoader(),
+      useOnlyLangCode: false,
+      useFallbackTranslations: true,
+      path: localeDir,
+      onLoadError: (FlutterError e) {
+        throw e;
+      },
+    );
+    await controller.loadTranslations();
+    Localization.load(
+      controller.locale,
+      translations: controller.translations,
+      fallbackTranslations: controller.fallbackTranslations,
+    );
+  }
+}
+// Platform channel helpers for native OS features (e.g. system font loading).
+
+class NativeFeatures {
+  static bool _systemFontLoaded = false;
+
+  static Future<ByteData> _readFileBytes(String path) async {
+    var bytes = await File(path).readAsBytes();
+    return ByteData.view(bytes.buffer);
+  }
+
+  static Future<void> loadSystemFont() async {
+    if (_systemFontLoaded) return;
+    var fontLoader = FontLoader('SystemFont');
+    var fontFilePath = await AndroidSystemFont().getFilePath();
+    if (fontFilePath == null) return;
+    fontLoader.addFont(_readFileBytes(fontFilePath));
+    await fontLoader.load();
+    _systemFontLoaded = true;
   }
 }

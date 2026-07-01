@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:obtainium/components/app_dialogs.dart';
+import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -24,6 +24,11 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+
+// NOTE: This provider extension is intentionally UX-coupled — it shows dialogs,
+// toasts, and interacts with BuildContext for install operations that inherently
+// require user interaction (APK file pickers, permission prompts, foreground
+// detection, etc.). Decoupling these would add indirection without real benefit.
 
 // Named constants for magic numbers and hardcoded values
 const int _androidApiLevelR = 30;
@@ -70,9 +75,9 @@ extension AppsProviderInstall on AppsProvider {
         throw IDChangedError(actualPackageName);
       }
       var idChangeWasAllowed = app.allowIdChange;
-      app.allowIdChange = false;
+      app = app.copyWith(allowIdChange: false);
       var originalAppId = app.id;
-      app.id = actualPackageName;
+      app = app.copyWith(id: actualPackageName);
       downloadedFile = downloadedFile.renameSync(
         '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}',
       );
@@ -88,15 +93,14 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<void> updatePendingRepoRename(String appId, String? newUrl) async {
     if (apps.containsKey(appId)) {
-      apps[appId]!.app.pendingRepoRenameUrl = newUrl;
+      apps[appId]!.app = apps[appId]!.app.copyWith(pendingRepoRenameUrl: newUrl);
       await saveApps([apps[appId]!.app]);
     }
   }
 
   Future<void> acceptRepoRename(String appId, String newUrl) async {
     if (apps.containsKey(appId)) {
-      apps[appId]!.app.url = newUrl;
-      apps[appId]!.app.pendingRepoRenameUrl = null;
+      apps[appId]!.app = apps[appId]!.app.copyWith(url: newUrl, pendingRepoRenameUrl: null);
       await saveApps([apps[appId]!.app]);
     }
   }
@@ -116,9 +120,9 @@ extension AppsProviderInstall on AppsProvider {
     try {
       if (app.apkUrls.isEmpty) throw NoAPKError();
       if (app.preferredApkIndex >= app.apkUrls.length) {
-        app.preferredApkIndex = app.apkUrls.length - 1;
+        app = app.copyWith(preferredApkIndex: app.apkUrls.length - 1);
       }
-      if (app.preferredApkIndex < 0) app.preferredApkIndex = 0;
+      if (app.preferredApkIndex < 0) app = app.copyWith(preferredApkIndex: 0);
       AppSource source = SourceProvider().getSource(
         app.url,
         overrideSource: app.overrideSource,
@@ -178,7 +182,7 @@ extension AppsProviderInstall on AppsProvider {
         },
         this.apkDir.path,
         useExisting: useExisting,
-        allowInsecure: app.additionalSettings['allowInsecure'] == true,
+        allowInsecure: app.settings.getBool('allowInsecure'),
         logs: logs,
       );
       if (apps[app.id] != null) {
@@ -219,13 +223,13 @@ extension AppsProviderInstall on AppsProvider {
 
         String? filterRegEx;
         if (isTarball &&
-            app.additionalSettings['tarballedApkFilterRegEx']?.isNotEmpty ==
+            app.settings.getStringOrNull('tarballedApkFilterRegEx')?.isNotEmpty ==
                 true) {
-          filterRegEx = app.additionalSettings['tarballedApkFilterRegEx'];
+          filterRegEx = app.settings.getStringOrNull('tarballedApkFilterRegEx');
         } else if (!isTarball &&
-            app.additionalSettings['zippedApkFilterRegEx']?.isNotEmpty ==
+            app.settings.getStringOrNull('zippedApkFilterRegEx')?.isNotEmpty ==
                 true) {
-          filterRegEx = app.additionalSettings['zippedApkFilterRegEx'];
+          filterRegEx = app.settings.getStringOrNull('zippedApkFilterRegEx');
         }
         if (filterRegEx != null) {
           var reg = RegExp(filterRegEx);
@@ -307,7 +311,7 @@ extension AppsProviderInstall on AppsProvider {
     if (!settingsProvider.enableBackgroundUpdates) {
       return false;
     }
-    if (app.additionalSettings['exemptFromBackgroundUpdates'] == true) {
+    if (app.settings.getBool('exemptFromBackgroundUpdates')) {
       logs.add('Exempted from BG updates: ${app.id}');
       return false;
     }
@@ -594,8 +598,9 @@ extension AppsProviderInstall on AppsProvider {
       // Background process workaround (#896): the `await installApk` below
       // will never return in BG, so pre-update the installed version.
       // TODO(#896): Remove this when platform install API supports BG completion.
-      apps[file.appId]!.app.installedVersion =
-          apps[file.appId]!.app.latestVersion;
+      apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
+        installedVersion: apps[file.appId]!.app.latestVersion,
+      );
       await saveApps([
         apps[file.appId]!.app,
       ], attemptToCorrectInstallStatus: false);
@@ -623,8 +628,9 @@ extension AppsProviderInstall on AppsProvider {
       throw InstallError(code);
     } else if (code == _installSuccessCode) {
       installed = true;
-      apps[file.appId]!.app.installedVersion =
-          apps[file.appId]!.app.latestVersion;
+      apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
+        installedVersion: apps[file.appId]!.app.latestVersion,
+      );
       file.file.delete(recursive: true);
     }
     await saveApps([apps[file.appId]!.app]);
@@ -716,12 +722,11 @@ extension AppsProviderInstall on AppsProvider {
     // When picking any asset, use the APK filter regex to pre-select the best matching
     // asset by default, without hiding other assets from the user.
     if (pickAnyAsset &&
-        app.additionalSettings['apkFilterRegEx'] is String &&
-        (app.additionalSettings['apkFilterRegEx'] as String).isNotEmpty) {
+        app.settings.getStringOrNull('apkFilterRegEx')?.isNotEmpty == true) {
       var matching = filterApks(
         urlsToSelectFrom,
-        app.additionalSettings['apkFilterRegEx'],
-        app.additionalSettings['invertAPKFilter'] == true,
+        app.settings.getStringOrNull('apkFilterRegEx'),
+        app.settings.getBool('invertAPKFilter'),
       );
       if (matching.isNotEmpty) {
         appFileUrl = matching.first;
@@ -788,7 +793,7 @@ extension AppsProviderInstall on AppsProvider {
         throw ObtainiumError(tr('appNotFound'));
       }
       MapEntry<String, String>? apkUrl;
-      var trackOnly = apps[id]!.app.additionalSettings['trackOnly'] == true;
+      var trackOnly = apps[id]!.app.settings.getBool('trackOnly');
       var refreshBeforeDownload = apps[id]!.needsRefreshBeforeDownload;
       if (refreshBeforeDownload) {
         await checkUpdate(apps[id]!.app.id);
@@ -801,7 +806,7 @@ extension AppsProviderInstall on AppsProvider {
         var url = apkUrl.value;
         int urlInd = apps[id]!.app.apkUrls.indexWhere((e) => e.value == url);
         if (urlInd >= 0 && urlInd != apps[id]!.app.preferredApkIndex) {
-          apps[id]!.app.preferredApkIndex = urlInd;
+          apps[id]!.app = apps[id]!.app.copyWith(preferredApkIndex: urlInd);
           await saveApps([apps[id]!.app]);
         }
         if (context != null || await canInstallSilently(apps[id]!.app)) {
@@ -837,7 +842,7 @@ extension AppsProviderInstall on AppsProvider {
     await saveApps(
       trackOnlyAppsToUpdate.map((e) {
         var a = apps[e]!.app;
-        a.installedVersion = a.latestVersion;
+        a = a.copyWith(installedVersion: a.latestVersion);
         return a;
       }).toList(),
     );
@@ -1039,8 +1044,7 @@ extension AppsProviderInstall on AppsProvider {
           willBeSilent && context == null && !settingsProvider.useShizuku;
       bool shizukuPretendToBeGooglePlay =
           settingsProvider.shizukuPretendToBeGooglePlay ||
-          appEntry.app.additionalSettings['shizukuPretendToBeGooglePlay'] ==
-              true;
+          appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
       if (downloadedFile != null) {
         if (needBGWorkaround) {
           installApk(
@@ -1190,7 +1194,7 @@ extension AppsProviderInstall on AppsProvider {
               forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
             ),
         useExisting: false,
-        allowInsecure: app.additionalSettings['allowInsecure'] == true,
+        allowInsecure: app.settings.getBool('allowInsecure'),
         logs: logs,
       );
       notificationsProvider.notify(

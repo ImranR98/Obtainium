@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 int compareAlphaNumeric(String a, String b) {
@@ -151,9 +152,13 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
               .join('\n'),
         );
       }
-    } catch (e) {
-      allLinks = getLinksInLines(rawBody);
-    }
+      } catch (e) {
+        LogsProvider().add(
+          'Failed to parse HTML links: ${e.toString()}',
+          level: LogLevel.warning,
+        );
+        allLinks = getLinksInLines(rawBody);
+      }
   }
   List<MapEntry<String, String>> links = [];
   bool skipSort = additionalSettings['skipSort'] == true;
@@ -166,7 +171,10 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        // Some links may not have valid encoding
+        LogsProvider().add(
+          'Failed to decode URI in HTML filter: ${e.toString()}',
+          level: LogLevel.debug,
+        );
       }
       return reg.hasMatch(filterLinkByText ? element.value : link);
     }).toList();
@@ -176,7 +184,10 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        // Some links may not have valid encoding
+        LogsProvider().add(
+          'Failed to decode URI in HTML APK filter: ${e.toString()}',
+          level: LogLevel.debug,
+        );
       }
       return AppSource.isApkOrContainerFile(
         Uri.parse((filterLinkByText ? element.value : link).trim()).path,
@@ -267,7 +278,7 @@ class HTML extends AppSource {
       GeneratedFormSwitch(
         'autoLinkFilterByArch',
         label: tr('autoLinkFilterByArch'),
-        defaultValue: false,
+        value: false,
       ),
     ],
   ];
@@ -309,7 +320,7 @@ class HTML extends AppSource {
             ],
           ],
           label: tr('requestHeader'),
-          defaultValue: [
+          value: [
             {
               'requestHeader':
                   'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
@@ -326,7 +337,7 @@ class HTML extends AppSource {
             MapEntry('ETag', 'ETag'),
           ],
           label: tr('defaultPseudoVersioningMethod'),
-          defaultValue: 'partialAPKHash',
+          value: 'partialAPKHash',
         ),
       ],
     ];
@@ -367,7 +378,8 @@ class HTML extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var currentUrl = standardUrl;
+    try {
+      var currentUrl = standardUrl;
     if (additionalSettings['intermediateLink'] == null ||
         (additionalSettings['intermediateLink'] as List).isEmpty) {
       additionalSettings['intermediateLink'] = [];
@@ -423,7 +435,10 @@ class HTML extends AppSource {
     try {
       relDecoded = Uri.decodeFull(rel);
     } catch (e) {
-      // Some links may not have valid encoding
+      LogsProvider().add(
+        'Failed to decode URI for version extraction: ${e.toString()}',
+        level: LogLevel.debug,
+      );
     }
     String? version;
     version = extractVersion(
@@ -468,5 +483,8 @@ class HTML extends AppSource {
       }).toList(),
       AppNames(uri.host, tr('app')),
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

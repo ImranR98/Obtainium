@@ -67,7 +67,8 @@ class Aptoide extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var appDetails = await getAppDetailsJSON(standardUrl, additionalSettings);
+    try {
+      var appDetails = await getAppDetailsJSON(standardUrl, additionalSettings);
     String appName = appDetails['name'] ?? tr('app');
     String author = appDetails['developer']?['name'] ?? name;
     String? dateStr = appDetails['updated'];
@@ -90,5 +91,8 @@ class Aptoide extends AppSource {
       AppNames(author, appName),
       releaseDate: relDate,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

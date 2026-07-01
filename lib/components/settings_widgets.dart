@@ -1,6 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:obtainium/components/ui_shapes.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 
 bool _isSettingsTile(Widget w) => w is SettingsTile || w is SettingsToggleRow;
@@ -29,10 +29,6 @@ Widget _withTileRadius(Widget w, BorderRadius radius) {
   return w;
 }
 
-/// Shapes consecutive runs of settings tiles so each run reads as a single
-/// connected block: large outer corners on the first/last tile of a run and
-/// small corners on the inner edges. Non-tile children (captions, dropdowns,
-/// spacers) pass through untouched and break a run.
 List<Widget> shapeSettingsTiles(List<Widget> children) {
   final result = <Widget>[];
   for (var i = 0; i < children.length; i++) {
@@ -54,8 +50,6 @@ List<Widget> shapeSettingsTiles(List<Widget> children) {
   return result;
 }
 
-/// A single rounded, tonal surface that visually separates one settings
-/// control from its neighbours — the Material 3 Expressive "split list" look.
 class SettingsTile extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -161,8 +155,6 @@ class SettingsSectionHeader extends StatelessWidget {
   }
 }
 
-/// A M3 Expressive settings section: a labelled header followed by its
-/// controls laid out as connected, rounded tiles with small gaps.
 class SettingsGroup extends StatelessWidget {
   final String title;
   final List<Widget> children;

@@ -1,6 +1,7 @@
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -30,7 +31,8 @@ class SourceHut extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    if (standardUrl.endsWith('/refs')) {
+    try {
+      if (standardUrl.endsWith('/refs')) {
       standardUrl = standardUrl
           .split('/')
           .reversed
@@ -78,7 +80,10 @@ class SourceHut extends AppSource {
                 ).parse(releaseDateString)
               : null;
         } catch (e) {
-          // ignore
+          LogsProvider().add(
+            'Failed to parse SourceHut release date: ${e.toString()}',
+            level: LogLevel.warning,
+          );
         }
         var res2 = await sourceRequest(releasePage, additionalSettings);
         List<MapEntry<String, String>> apkUrls = [];
@@ -120,6 +125,9 @@ class SourceHut extends AppSource {
       return apkDetailsList.first;
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

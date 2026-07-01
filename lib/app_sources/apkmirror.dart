@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -62,7 +63,8 @@ class APKMirror extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool fallbackToOlderReleases =
+    try {
+      bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
     String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
@@ -101,7 +103,10 @@ class APKMirror extends AppSource {
         try {
           releaseDate = HttpDate.parse('$dateString GMT');
         } catch (e) {
-          releaseDate = null;
+          LogsProvider().add(
+            'Failed to parse APKMirror release date: ${e.toString()}',
+            level: LogLevel.warning,
+          );
         }
       }
       String? version;
@@ -130,6 +135,9 @@ class APKMirror extends AppSource {
       );
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 

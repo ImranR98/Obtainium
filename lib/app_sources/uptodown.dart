@@ -85,7 +85,8 @@ class Uptodown extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var appDetails = await getAppDetailsFromPage(
+    try {
+      var appDetails = await getAppDetailsFromPage(
       standardUrl,
       additionalSettings,
     );
@@ -116,6 +117,9 @@ class Uptodown extends AppSource {
       AppNames(author, appName),
       releaseDate: relDate,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   @override

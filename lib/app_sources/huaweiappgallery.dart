@@ -77,7 +77,8 @@ class HuaweiAppGallery extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String dlUrl = getDlUrl(standardUrl);
+    try {
+      String dlUrl = getDlUrl(standardUrl);
     Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
     if (res.headers['location'] == null) {
       throw NoReleasesError();
@@ -116,5 +117,8 @@ class HuaweiAppGallery extends AppSource {
       AppNames(name, appId),
       releaseDate: relDate,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

@@ -68,9 +68,15 @@ dependencies:
 
   flutter_foreground_task: ^9.2.2
   flutter_markdown_plus: ^1.0.7
+  go_router: ^14.0.0
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.0
+  integration_test:
+    sdk: flutter
 
 flutter_launcher_icons:
   android: "ic_launcher"

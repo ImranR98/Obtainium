@@ -22,7 +22,8 @@ class TelegramApp extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest(
+    try {
+      Response res = await sourceRequest(
       'https://t.me/s/TAndroidAPK',
       additionalSettings,
     );
@@ -43,6 +44,9 @@ class TelegramApp extends AppSource {
       ], AppNames('Telegram', 'Telegram'));
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

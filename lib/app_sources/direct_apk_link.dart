@@ -1,6 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/app_sources/html.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -27,7 +27,7 @@ class DirectAPKLink extends AppSource {
             MapEntry('ETag', 'ETag'),
           ],
           label: tr('defaultPseudoVersioningMethod'),
-          defaultValue: 'partialAPKHash',
+          value: 'partialAPKHash',
         ),
       ],
     ];
@@ -72,16 +72,20 @@ class DirectAPKLink extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var additionalSettingsNew = getDefaultValuesFromFormItems(
-      html.combinedAppSpecificSettingFormItems,
-    );
-    for (var s in additionalSettings.keys) {
-      if (additionalSettingsNew.containsKey(s)) {
-        additionalSettingsNew[s] = additionalSettings[s];
+    try {
+      var additionalSettingsNew = getDefaultValuesFromFormItems(
+        html.combinedAppSpecificSettingFormItems,
+      );
+      for (var s in additionalSettings.keys) {
+        if (additionalSettingsNew.containsKey(s)) {
+          additionalSettingsNew[s] = additionalSettings[s];
+        }
       }
+      additionalSettingsNew['directAPKLink'] = true;
+      additionalSettingsNew['versionDetection'] = false;
+      return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    additionalSettingsNew['directAPKLink'] = true;
-    additionalSettingsNew['versionDetection'] = false;
-    return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
   }
 }

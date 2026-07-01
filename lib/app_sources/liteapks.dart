@@ -57,7 +57,8 @@ class LiteAPKs extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var standardUri = Uri.parse(standardUrl);
+    try {
+      var standardUri = Uri.parse(standardUrl);
     var slug = standardUri.path
         .split('.')
         .reversed
@@ -116,5 +117,8 @@ class LiteAPKs extends AppSource {
         appName ?? standardUrl.split('/').last,
       ),
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

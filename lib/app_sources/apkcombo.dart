@@ -112,7 +112,8 @@ class APKCombo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
+    try {
+      String? appId = await tryInferringAppId(standardUrl);
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -141,5 +142,8 @@ class APKCombo extends AppSource {
       AppNames(author, appName),
       releaseDate: releaseDate,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

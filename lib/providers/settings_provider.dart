@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
+
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -17,10 +18,10 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-String obtainiumTempId = 'imranr98_obtainium_github.com';
-String obtainiumId = 'dev.imranr.obtainium';
-String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
-Color obtainiumThemeColor = const Color(0xFF6438B5);
+const String obtainiumTempId = 'imranr98_obtainium_github.com';
+const String obtainiumId = 'dev.imranr.obtainium';
+const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
+const Color obtainiumThemeColor = Color(0xFF6438B5);
 
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
@@ -47,9 +48,28 @@ enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
+  final ConfigProvider? _configProvider;
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
+
+  SettingsProvider({ConfigProvider? configProvider})
+    : _configProvider = configProvider;
+
+  /// Reads a value preferring the injected [ConfigProvider] (unified config
+  /// layer). Falls back to direct [SharedPreferences] access for backward
+  /// compatibility when no [ConfigProvider] is injected.
+  T? _get<T>(String key) {
+    if (_configProvider != null) {
+      return _configProvider.get<T>(key);
+    }
+    return prefs?.get(key) as T?;
+  }
+
+  bool? _getBool(String key) => _get<bool>(key);
+  int? _getInt(String key) => _get<int>(key);
+  double? _getDouble(String key) => _get<double>(key);
+  String? _getString(String key) => _get<String>(key);
 
   String sourceUrl = 'https://github.com/ImranR98/Obtainium';
 
@@ -78,8 +98,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   void _migrateLegacyExportSetting() {
-    if (prefs?.getInt('exportSettings') != null) return;
-    var legacyBool = prefs?.getBool('exportSettings');
+    if (_getInt('exportSettings') != null) return;
+    var legacyBool = _getBool('exportSettings');
     if (legacyBool != null) {
       prefs?.setInt('exportSettings', legacyBool ? 1 : 0);
     }
@@ -87,7 +107,7 @@ class SettingsProvider with ChangeNotifier {
 
   static Future<void> _loadSecureCache() async {
     if (_secureCache.isNotEmpty) return;
-    for (var key in _credsKeys) {
+    for (var key in {'github-creds', 'gitlab-creds'}) {
       _secureCache[key] = await _secureStorage.read(key: key);
       if (_secureCache[key] == null && prefsInstance != null) {
         var legacy = prefsInstance!.getString(key);
@@ -100,11 +120,10 @@ class SettingsProvider with ChangeNotifier {
     }
   }
 
-  static final _credsKeys = {'github-creds', 'gitlab-creds'};
   static SharedPreferences? prefsInstance;
 
   bool get useSystemFont {
-    return prefs?.getBool('useSystemFont') ?? false;
+    return _getBool('useSystemFont') ?? false;
   }
 
   set useSystemFont(bool useSystemFont) {
@@ -113,7 +132,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get useShizuku {
-    return prefs?.getBool('useShizuku') ?? false;
+    return _getBool('useShizuku') ?? false;
   }
 
   set useShizuku(bool useShizuku) {
@@ -122,7 +141,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeSettings get theme {
-    return ThemeSettings.values[prefs?.getInt('theme') ??
+    return ThemeSettings.values[_getInt('theme') ??
         ThemeSettings.system.index];
   }
 
@@ -132,7 +151,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Color get themeColor {
-    int? colorCode = prefs?.getInt('themeColor');
+    int? colorCode = _getInt('themeColor');
     return (colorCode != null) ? Color(colorCode) : obtainiumThemeColor;
   }
 
@@ -142,26 +161,26 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ColourSchemeMode get colourSchemeMode {
-    final stored = prefs?.getInt('colourSchemeMode');
+    final stored = _getInt('colourSchemeMode');
     if (stored != null &&
         stored >= 0 &&
         stored < ColourSchemeMode.values.length) {
       return ColourSchemeMode.values[stored];
     }
-    // Migrate from the legacy useMaterialYou boolean.
-    return (prefs?.getBool('useMaterialYou') ?? false)
+    return (_getBool('useMaterialYou') ?? false)
         ? ColourSchemeMode.materialYou
         : ColourSchemeMode.standard;
   }
 
   set colourSchemeMode(ColourSchemeMode mode) {
     prefs?.setInt('colourSchemeMode', mode.index);
-    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
+    prefs?.setBool(
+        'useMaterialYou', mode == ColourSchemeMode.materialYou);
     notifyListeners();
   }
 
   bool get useBlackTheme {
-    return prefs?.getBool('useBlackTheme') ?? false;
+    return _getBool('useBlackTheme') ?? false;
   }
 
   set useBlackTheme(bool useBlackTheme) {
@@ -170,7 +189,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get updateInterval {
-    return prefs?.getInt('updateInterval') ?? 360;
+    return _getInt('updateInterval') ?? 360;
   }
 
   set updateInterval(int min) {
@@ -179,7 +198,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   double get updateIntervalSliderVal {
-    return prefs?.getDouble('updateIntervalSliderVal') ?? 6.0;
+    return _getDouble('updateIntervalSliderVal') ?? 6.0;
   }
 
   set updateIntervalSliderVal(double val) {
@@ -188,7 +207,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get checkOnStart {
-    return prefs?.getBool('checkOnStart') ?? false;
+    return _getBool('checkOnStart') ?? false;
   }
 
   set checkOnStart(bool checkOnStart) {
@@ -197,7 +216,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortColumnSettings get sortColumn {
-    return SortColumnSettings.values[prefs?.getInt('sortColumn') ??
+    return SortColumnSettings.values[_getInt('sortColumn') ??
         SortColumnSettings.nameAuthor.index];
   }
 
@@ -207,7 +226,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   SortOrderSettings get sortOrder {
-    return SortOrderSettings.values[prefs?.getInt('sortOrder') ??
+    return SortOrderSettings.values[_getInt('sortOrder') ??
         SortOrderSettings.ascending.index];
   }
 
@@ -217,7 +236,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool checkAndFlipFirstRun() {
-    bool result = prefs?.getBool('firstRun') ?? true;
+    bool result = _getBool('firstRun') ?? true;
     if (result) {
       prefs?.setBool('firstRun', false);
     }
@@ -225,7 +244,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get welcomeShown {
-    return prefs?.getBool('welcomeShown') ?? false;
+    return _getBool('welcomeShown') ?? false;
   }
 
   set welcomeShown(bool welcomeShown) {
@@ -234,7 +253,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get googleVerificationWarningShown {
-    return prefs?.getBool('googleVerificationWarningShown') ?? false;
+    return _getBool('googleVerificationWarningShown') ?? false;
   }
 
   set googleVerificationWarningShown(bool googleVerificationWarningShown) {
@@ -257,7 +276,6 @@ class SettingsProvider with ChangeNotifier {
   /// granted (if [enforce] is true) or cancelled.
   Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
-      // Explicit request as InstallPlugin request sometimes bugged
       Fluttertoast.showToast(
         msg: tr('pleaseAllowInstallPerm'),
         toastLength: Toast.LENGTH_LONG,
@@ -269,15 +287,13 @@ class SettingsProvider with ChangeNotifier {
       if (!enforce) {
         return false;
       }
-      // Avoid a tight re-prompt loop (and toast spam) if the permission
-      // request resolves immediately instead of waiting on user interaction.
       await Future.delayed(const Duration(seconds: 1));
     }
     return true;
   }
 
   bool get showAppWebpage {
-    return prefs?.getBool('showAppWebpage') ?? false;
+    return _getBool('showAppWebpage') ?? false;
   }
 
   set showAppWebpage(bool show) {
@@ -286,7 +302,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get pinUpdates {
-    return prefs?.getBool('pinUpdates') ?? true;
+    return _getBool('pinUpdates') ?? true;
   }
 
   set pinUpdates(bool show) {
@@ -295,7 +311,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get buryNonInstalled {
-    return prefs?.getBool('buryNonInstalled') ?? false;
+    return _getBool('buryNonInstalled') ?? false;
   }
 
   set buryNonInstalled(bool show) {
@@ -304,7 +320,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get groupByCategory {
-    return prefs?.getBool('groupByCategory') ?? false;
+    return _getBool('groupByCategory') ?? false;
   }
 
   set groupByCategory(bool show) {
@@ -313,7 +329,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get hideTrackOnlyWarning {
-    return prefs?.getBool('hideTrackOnlyWarning') ?? false;
+    return _getBool('hideTrackOnlyWarning') ?? false;
   }
 
   set hideTrackOnlyWarning(bool show) {
@@ -322,7 +338,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get hideAPKOriginWarning {
-    return prefs?.getBool('hideAPKOriginWarning') ?? false;
+    return _getBool('hideAPKOriginWarning') ?? false;
   }
 
   set hideAPKOriginWarning(bool show) {
@@ -331,15 +347,15 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    if (_credsKeys.contains(settingId)) {
+    if ({'github-creds', 'gitlab-creds'}.contains(settingId)) {
       return _secureCache[settingId];
     }
-    String? str = prefs?.getString(settingId);
+    String? str = _getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
-    if (_credsKeys.contains(settingId)) {
+    if ({'github-creds', 'gitlab-creds'}.contains(settingId)) {
       _secureCache[settingId] = value;
       _secureStorage
           .write(key: settingId, value: value)
@@ -350,8 +366,23 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Returns the health status for a given source's stored credentials.
+  /// [sourceName] is matched case-insensitively against the known credential
+  /// keys (e.g. "GitHub" -> "github-creds").
+  CredentialHealth? getCredentialHealth(String sourceName) {
+    final key = '${sourceName.toLowerCase()}-creds';
+    if (!{'github-creds', 'gitlab-creds'}.contains(key)) {
+      return null;
+    }
+    final value = getSettingString(key);
+    return CredentialHealth(
+      sourceName: sourceName,
+      isConfigured: value?.isNotEmpty == true,
+    );
+  }
+
   bool getSettingBool(String settingId) {
-    return prefs?.getBool(settingId) ?? false;
+    return _getBool(settingId) ?? false;
   }
 
   void setSettingBool(String settingId, bool value) {
@@ -362,10 +393,8 @@ class SettingsProvider with ChangeNotifier {
   String? _categoriesRaw;
   Map<String, int>? _categoriesCache;
 
-  /// Parsed and memoized category map. Invalidates automatically when the raw
-  /// JSON changes (including from imports), avoiding re-parse on every access.
   Map<String, int> get categories {
-    final raw = prefs?.getString('categories') ?? '{}';
+    final raw = _getString('categories') ?? '{}';
     if (raw != _categoriesRaw || _categoriesCache == null) {
       _categoriesRaw = raw;
       _categoriesCache = Map<String, int>.from(jsonDecode(raw));
@@ -381,8 +410,10 @@ class SettingsProvider with ChangeNotifier {
             if (!a.app.categories.any((c) => !cats.keys.contains(c))) {
               return null;
             }
-            var app = a.app.deepCopy();
-            app.categories.removeWhere((c) => !cats.keys.contains(c));
+            var app = a.app.copyWith(
+              categories: List<String>.from(a.app.categories)
+                ..removeWhere((c) => !cats.keys.contains(c)),
+            );
             return app;
           })
           .where((element) => element != null)
@@ -397,7 +428,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Locale? get forcedLocale {
-    var fl = tryParseLocale(prefs?.getString('forcedLocale'));
+    var fl = tryParseLocale(_getString('forcedLocale'));
     var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
@@ -430,7 +461,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get showAppDowngradeError {
-    return prefs?.getBool('showAppDowngradeError') ?? true;
+    return _getBool('showAppDowngradeError') ?? true;
   }
 
   set showAppDowngradeError(bool show) {
@@ -439,7 +470,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get showBatteryOptimizationPrompt {
-    return prefs?.getBool('showBatteryOptimizationPrompt') ?? true;
+    return _getBool('showBatteryOptimizationPrompt') ?? true;
   }
 
   set showBatteryOptimizationPrompt(bool show) {
@@ -448,7 +479,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get tactileFeedbackEnabled {
-    return prefs?.getBool('tactileFeedbackEnabled') ?? true;
+    return _getBool('tactileFeedbackEnabled') ?? true;
   }
 
   set tactileFeedbackEnabled(bool val) {
@@ -469,7 +500,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get includePrereleasesByDefault {
-    return prefs?.getBool('includePrereleasesByDefault') ?? false;
+    return _getBool('includePrereleasesByDefault') ?? false;
   }
 
   set includePrereleasesByDefault(bool val) {
@@ -478,7 +509,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get removeOnExternalUninstall {
-    return prefs?.getBool('removeOnExternalUninstall') ?? false;
+    return _getBool('removeOnExternalUninstall') ?? false;
   }
 
   set removeOnExternalUninstall(bool show) {
@@ -487,7 +518,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get checkUpdateOnDetailPage {
-    return prefs?.getBool('checkUpdateOnDetailPage') ?? false;
+    return _getBool('checkUpdateOnDetailPage') ?? false;
   }
 
   set checkUpdateOnDetailPage(bool show) {
@@ -496,7 +527,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get disablePageTransitions {
-    return prefs?.getBool('disablePageTransitions') ?? false;
+    return _getBool('disablePageTransitions') ?? false;
   }
 
   set disablePageTransitions(bool show) {
@@ -505,7 +536,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get reversePageTransitions {
-    return prefs?.getBool('reversePageTransitions') ?? false;
+    return _getBool('reversePageTransitions') ?? false;
   }
 
   set reversePageTransitions(bool show) {
@@ -514,7 +545,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get enableBackgroundUpdates {
-    return prefs?.getBool('enableBackgroundUpdates') ?? true;
+    return _getBool('enableBackgroundUpdates') ?? true;
   }
 
   set enableBackgroundUpdates(bool val) {
@@ -523,7 +554,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get bgUpdatesOnWiFiOnly {
-    return prefs?.getBool('bgUpdatesOnWiFiOnly') ?? false;
+    return _getBool('bgUpdatesOnWiFiOnly') ?? false;
   }
 
   set bgUpdatesOnWiFiOnly(bool val) {
@@ -532,7 +563,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get bgUpdatesWhileChargingOnly {
-    return prefs?.getBool('bgUpdatesWhileChargingOnly') ?? false;
+    return _getBool('bgUpdatesWhileChargingOnly') ?? false;
   }
 
   set bgUpdatesWhileChargingOnly(bool val) {
@@ -541,19 +572,20 @@ class SettingsProvider with ChangeNotifier {
   }
 
   DateTime get lastCompletedBGCheckTime {
-    int? temp = prefs?.getInt('lastCompletedBGCheckTime');
+    int? temp = _getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   set lastCompletedBGCheckTime(DateTime val) {
-    prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
+    prefs?.setInt(
+        'lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
     notifyListeners();
   }
 
   bool get highlightTouchTargets {
-    return prefs?.getBool('highlightTouchTargets') ?? false;
+    return _getBool('highlightTouchTargets') ?? false;
   }
 
   set highlightTouchTargets(bool val) {
@@ -562,7 +594,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<Uri?> getExportDir() async {
-    var uriString = prefs?.getString('exportDir');
+    var uriString = _getString('exportDir');
     if (uriString != null) {
       Uri? uri = Uri.parse(uriString);
       if (!(await saf.canRead(uri) ?? false) ||
@@ -605,7 +637,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get autoExportOnChanges {
-    return prefs?.getBool('autoExportOnChanges') ?? false;
+    return _getBool('autoExportOnChanges') ?? false;
   }
 
   set autoExportOnChanges(bool val) {
@@ -614,7 +646,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get onlyCheckInstalledOrTrackOnlyApps {
-    return prefs?.getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
+    return _getBool('onlyCheckInstalledOrTrackOnlyApps') ?? false;
   }
 
   set onlyCheckInstalledOrTrackOnlyApps(bool val) {
@@ -623,7 +655,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   int get exportSettings {
-    return prefs?.getInt('exportSettings') ?? 1;
+    return _getInt('exportSettings') ?? 1;
   }
 
   set exportSettings(int val) {
@@ -632,7 +664,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get parallelDownloads {
-    return prefs?.getBool('parallelDownloads') ?? false;
+    return _getBool('parallelDownloads') ?? false;
   }
 
   set parallelDownloads(bool val) {
@@ -651,7 +683,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get beforeNewInstallsShareToAppVerifier {
-    return prefs?.getBool('beforeNewInstallsShareToAppVerifier') ?? true;
+    return _getBool('beforeNewInstallsShareToAppVerifier') ?? true;
   }
 
   set beforeNewInstallsShareToAppVerifier(bool val) {
@@ -660,7 +692,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get shizukuPretendToBeGooglePlay {
-    return prefs?.getBool('shizukuPretendToBeGooglePlay') ?? false;
+    return _getBool('shizukuPretendToBeGooglePlay') ?? false;
   }
 
   set shizukuPretendToBeGooglePlay(bool val) {
@@ -669,11 +701,78 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get useFGService {
-    return prefs?.getBool('useFGService') ?? false;
+    return _getBool('useFGService') ?? false;
   }
 
   set useFGService(bool val) {
     prefs?.setBool('useFGService', val);
     notifyListeners();
   }
+}
+
+/// Unified config provider that delegates to SharedPreferences (general settings),
+/// FlutterSecureStorage (credentials), and in-memory cache transparently.
+class ConfigProvider {
+  SharedPreferences? _prefs;
+  static final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static final Map<String, String?> _cache = {};
+
+  Future<void> initialize() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  T? get<T>(String key) {
+    return _prefs?.get(key) as T?;
+  }
+
+  Future<void> set<T>(String key, T value) async {
+    if (value is String) {
+      await _prefs?.setString(key, value);
+    } else if (value is int) {
+      await _prefs?.setInt(key, value);
+    } else if (value is double) {
+      await _prefs?.setDouble(key, value);
+    } else if (value is bool) {
+      await _prefs?.setBool(key, value);
+    } else if (value is List<String>) {
+      await _prefs?.setStringList(key, value);
+    }
+  }
+
+  Future<void> remove(String key) async {
+    await _prefs?.remove(key);
+  }
+
+  Future<String?> getCredential(String key) async {
+    if (_cache.containsKey(key)) return _cache[key];
+    final value = await _secureStorage.read(key: key);
+    _cache[key] = value;
+    return value;
+  }
+
+  Future<void> setCredential(String key, String value) async {
+    await _secureStorage.write(key: key, value: value);
+    _cache[key] = value;
+  }
+
+  Future<void> removeCredential(String key) async {
+    await _secureStorage.delete(key: key);
+    _cache.remove(key);
+  }
+}
+
+class CredentialHealth {
+  final String sourceName;
+  final bool isConfigured;
+  final DateTime? expiresAt;
+  final int? remainingRateLimit;
+  final bool needsRotation;
+
+  const CredentialHealth({
+    required this.sourceName,
+    this.isConfigured = false,
+    this.expiresAt,
+    this.remainingRateLimit,
+    this.needsRotation = false,
+  });
 }

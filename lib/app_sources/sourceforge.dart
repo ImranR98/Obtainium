@@ -92,7 +92,7 @@ class SourceForge extends AppSource {
               if (e is NoVersionError) {
                 version = null;
               } else {
-                rethrow;
+                rethrowOrWrapError(e);
               }
             }
           }

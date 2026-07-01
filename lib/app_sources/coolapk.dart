@@ -40,7 +40,8 @@ class CoolApk extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
+    try {
+      String? appId = await tryInferringAppId(standardUrl);
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -102,6 +103,9 @@ class CoolApk extends AppSource {
           : null,
       changeLog: changelog,
     );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   Future<String> _getLatestApkUrl(

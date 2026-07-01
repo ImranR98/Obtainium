@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 
 import 'package:obtainium/custom_errors.dart';
+
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -16,8 +17,7 @@ extension AppsProviderImportExport on AppsProvider {
     List<String>? appIds,
     int? overrideExportSettings,
   }) {
-    Map<String, dynamic> finalExport = {};
-    finalExport['apps'] = apps.values
+    final appList = apps.values
         .where((e) => appIds == null || appIds.contains(e.app.id))
         .map((e) => e.app.toJson())
         .toList();
@@ -25,19 +25,27 @@ extension AppsProviderImportExport on AppsProvider {
     if (overrideExportSettings != null) {
       shouldExportSettings = overrideExportSettings;
     }
+    Map<String, dynamic>? settingsMap;
     if (shouldExportSettings > 0) {
       var settingsValueKeys = settingsProvider.prefs?.getKeys().toSet();
       if (shouldExportSettings < 2) {
         settingsValueKeys?.removeWhere((k) => k.endsWith('-creds'));
       }
-      finalExport['settings'] = Map<String, Object?>.fromEntries(
+      settingsMap = Map<String, Object?>.fromEntries(
         (settingsValueKeys
                 ?.map((key) => MapEntry(key, settingsProvider.prefs?.get(key)))
                 .toList()) ??
             [],
       );
     }
-    return finalExport;
+    final schema = ExportSchema(
+      schemaVersion: currentExportSchemaVersion,
+      exportedAt: DateTime.now().toIso8601String(),
+      appVersion: '1.6.0',
+      apps: appList,
+      settings: settingsMap,
+    );
+    return schema.toJson();
   }
 
   /// Exports all app data (and optionally settings) as a JSON file to the configured export directory.
@@ -96,43 +104,133 @@ extension AppsProviderImportExport on AppsProvider {
   /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
   Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
     var decodedJSON = jsonDecode(appsJSON);
-    var newFormat = decodedJSON is! List;
-    List<App> importedApps =
-        ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
-            .map((e) => App.fromJson(e))
-            .toList();
+    final hasSchemaVersion = decodedJSON is Map && decodedJSON.containsKey('schemaVersion');
+    List<App> importedApps;
+    if (hasSchemaVersion) {
+      final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
+      importedApps = schema.apps.map((e) => App.fromJson(e)).toList();
+    } else {
+      final newFormat = decodedJSON is! List;
+      importedApps =
+          ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
+              .map((e) => App.fromJson(e))
+              .toList();
+    }
     await waitForAppsToLoad();
     for (App a in importedApps) {
       var installedInfo = await getInstalledInfo(a.id, printErr: false);
-      a.installedVersion =
-          a.additionalSettings['useVersionCodeAsOSVersion'] == true
-          ? installedInfo?.versionCode.toString()
-          : installedInfo?.versionName;
+      a = a.copyWith(
+        installedVersion:
+            a.settings.getBool('useVersionCodeAsOSVersion')
+                ? installedInfo?.versionCode.toString()
+                : installedInfo?.versionName,
+      );
     }
     await saveApps(importedApps, onlyIfExists: false);
     notify();
-    if (newFormat && decodedJSON['settings'] != null) {
-      var settingsMap = decodedJSON['settings'] as Map<String, Object?>;
-      settingsMap.forEach((key, value) {
-        if (value is int) {
-          settingsProvider.prefs?.setInt(key, value);
-        } else if (value is double) {
-          settingsProvider.prefs?.setDouble(key, value);
-        } else if (value is bool) {
-          settingsProvider.prefs?.setBool(key, value);
-        } else if (value is List) {
-          settingsProvider.prefs?.setStringList(
-            key,
-            value.map((e) => e as String).toList(),
-          );
-        } else if (value is String) {
-          settingsProvider.setSettingString(key, value);
-        }
-      });
+    bool hasSettings = false;
+    if (hasSchemaVersion) {
+      final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
+      if (schema.settings != null) {
+        hasSettings = true;
+        _applyImportedSettings(schema.settings!);
+      }
+    } else if (decodedJSON is! List && decodedJSON['settings'] != null) {
+      hasSettings = true;
+      _applyImportedSettings(decodedJSON['settings'] as Map<String, Object?>);
     }
-    return MapEntry<List<App>, bool>(
-      importedApps,
-      newFormat && decodedJSON['settings'] != null,
+    return MapEntry<List<App>, bool>(importedApps, hasSettings);
+  }
+
+  void _applyImportedSettings(Map<String, dynamic> settingsMap) {
+    settingsMap.forEach((key, value) {
+      if (value is int) {
+        settingsProvider.prefs?.setInt(key, value);
+      } else if (value is double) {
+        settingsProvider.prefs?.setDouble(key, value);
+      } else if (value is bool) {
+        settingsProvider.prefs?.setBool(key, value);
+      } else if (value is List) {
+        settingsProvider.prefs?.setStringList(
+          key,
+          value.map((e) => e as String).toList(),
+        );
+      } else if (value is String) {
+        settingsProvider.setSettingString(key, value);
+      }
+    });
+  }
+}
+
+const int currentExportSchemaVersion = 2;
+
+class ExportSchema {
+  final int schemaVersion;
+  final String exportedAt;
+  final String appVersion;
+  final List<Map<String, dynamic>> apps;
+  final Map<String, dynamic>? settings;
+  final dynamic credentials;
+
+  ExportSchema({
+    required this.schemaVersion,
+    required this.exportedAt,
+    required this.appVersion,
+    required this.apps,
+    this.settings,
+    this.credentials,
+  });
+
+  factory ExportSchema.fromJson(Map<String, dynamic> json) {
+    final schemaVersion = json['schemaVersion'] as int? ?? 1;
+    if (schemaVersion > currentExportSchemaVersion) {
+      throw FormatException(
+        'Export was created by a newer version of Obtainium '
+        '(schema v$schemaVersion, current is v$currentExportSchemaVersion). '
+        'Please update Obtainium to import this file.',
+      );
+    }
+    return ExportSchema(
+      schemaVersion: schemaVersion,
+      exportedAt: json['exportedAt'] as String? ?? '',
+      appVersion: json['appVersion'] as String? ?? '',
+      apps: (json['apps'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
+      settings: json['settings'] as Map<String, dynamic>?,
+      credentials: json['credentials'],
     );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'schemaVersion': currentExportSchemaVersion,
+    'exportedAt': DateTime.now().toIso8601String(),
+    'appVersion': '1.6.0',
+    'apps': apps,
+    'settings': settings,
+    'credentials': credentials,
+  };
+}
+
+class AppRepository {
+  Future<List<Map<String, dynamic>>> loadAll() async {
+    throw UnimplementedError();
+  }
+
+  Future<Map<String, dynamic>?> loadById(String id) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> save(Map<String, dynamic> app) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> saveBatch(List<Map<String, dynamic>> apps) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> delete(String id) async {
+    throw UnimplementedError();
   }
 }

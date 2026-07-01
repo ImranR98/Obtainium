@@ -28,7 +28,8 @@ class Tencent extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
+    try {
+      String? appId = await tryInferringAppId(standardUrl);
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -80,6 +81,9 @@ class Tencent extends AppSource {
       ], AppNames(author, appName));
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

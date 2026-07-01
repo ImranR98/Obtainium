@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/app_sources/html.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -18,14 +18,14 @@ class Farsroid extends AppSource {
         GeneratedFormSwitch(
           'useFirstApkOfVersion',
           label: tr('useFirstApkOfVersion'),
-          defaultValue: true,
+          value: true,
         ),
       ],
       [
         GeneratedFormSwitch(
           'releaseTitleAsVersion',
           label: tr('releaseTitleAsVersion'),
-          defaultValue: false,
+          value: false,
         ),
       ],
     ];
@@ -45,7 +45,8 @@ class Farsroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appName = Uri.parse(standardUrl).pathSegments.last;
+    try {
+      String appName = Uri.parse(standardUrl).pathSegments.last;
 
     var res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) {
@@ -112,5 +113,8 @@ class Farsroid extends AppSource {
     }
 
     return APKDetails(version, apkLinks, AppNames(name, appName));
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

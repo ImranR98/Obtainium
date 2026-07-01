@@ -147,3 +147,53 @@ MapEntry<String?, List<int>?> getWhereDates({
       ? const MapEntry(null, null)
       : MapEntry(where.join(' and '), whereArgs);
 }
+
+abstract class Logger {
+  void debug(String message);
+  void info(String message);
+  void warn(String message, [Object? error, StackTrace? stack]);
+  void error(String message, [Object? error, StackTrace? stack]);
+}
+
+class AppLogger implements Logger {
+  final LogsProvider _logs;
+  final bool _isDebug;
+
+  AppLogger({LogsProvider? logs, bool? isDebug})
+    : _logs = logs ?? LogsProvider(),
+      _isDebug = isDebug ?? kDebugMode;
+
+  @override
+  void debug(String message) {
+    _logs.add(message, level: LogLevel.debug);
+    if (_isDebug) {
+      debugPrint('[DEBUG] $message');
+    }
+  }
+
+  @override
+  void info(String message) {
+    _logs.add(message, level: LogLevel.info);
+    if (_isDebug) {
+      debugPrint('[INFO] $message');
+    }
+  }
+
+  @override
+  void warn(String message, [Object? error, StackTrace? stack]) {
+    final full = error != null ? '$message\n$error\n$stack' : message;
+    _logs.add(full, level: LogLevel.warning);
+    if (_isDebug) {
+      debugPrint('[WARN] $full');
+    }
+  }
+
+  @override
+  void error(String message, [Object? error, StackTrace? stack]) {
+    final full = error != null ? '$message\n$error\n$stack' : message;
+    _logs.add(full, level: LogLevel.error);
+    if (_isDebug) {
+      debugPrint('[ERROR] $full');
+    }
+  }
+}

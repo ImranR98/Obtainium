@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/html.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
@@ -53,7 +53,7 @@ class GitHub extends AppSource {
       GeneratedFormSwitch(
         'checkRepoRename',
         label: tr('repoRenamedCheck'),
-        defaultValue: false,
+        value: false,
       ),
     ];
 
@@ -62,7 +62,7 @@ class GitHub extends AppSource {
         GeneratedFormSwitch(
           'includePrereleases',
           label: tr('includePrereleases'),
-          defaultValue: false,
+          value: false,
         ),
       ],
       AppSource.fallbackToOlderReleasesFormItem,
@@ -105,21 +105,21 @@ class GitHub extends AppSource {
             MapEntry('name', tr('name')),
           ],
           label: tr('sortMethod'),
-          defaultValue: 'date',
+          value: 'date',
         ),
       ],
       [
         GeneratedFormSwitch(
           'useLatestAssetDateAsReleaseDate',
           label: tr('useLatestAssetDateAsReleaseDate'),
-          defaultValue: false,
+          value: false,
         ),
       ],
       [
         GeneratedFormSwitch(
           'releaseTitleAsVersion',
           label: tr('releaseTitleAsVersion'),
-          defaultValue: false,
+          value: false,
         ),
       ],
     ];
@@ -129,7 +129,7 @@ class GitHub extends AppSource {
       GeneratedFormTextField(
         'minStarCount',
         label: tr('minStarCount'),
-        defaultValue: '0',
+        value: '0',
         additionalValidators: [
           (value) {
             try {
@@ -752,7 +752,7 @@ class GitHub extends AppSource {
           onHttpErrorCode: onHttpErrorCode,
         );
       } else {
-        rethrow;
+        rethrowOrWrapError(err);
       }
     }
   }
@@ -762,16 +762,20 @@ class GitHub extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await fetchReleaseDetailsWithTagFallback(
-      standardUrl,
-      additionalSettings,
-      (bool useTagUrl) async {
-        return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
-      },
-      (Response res) {
-        rateLimitErrorCheck(res);
-      },
-    );
+    try {
+      return await fetchReleaseDetailsWithTagFallback(
+        standardUrl,
+        additionalSettings,
+        (bool useTagUrl) async {
+          return '${await convertStandardUrlToAPIUrl(standardUrl, additionalSettings)}/${useTagUrl ? 'tags' : 'releases'}?per_page=100';
+        },
+        (Response res) {
+          rateLimitErrorCheck(res);
+        },
+      );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   AppNames getAppNames(String standardUrl) {

@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -28,14 +28,14 @@ class APKPure extends AppSource {
         GeneratedFormSwitch(
           'stayOneVersionBehind',
           label: tr('stayOneVersionBehind'),
-          defaultValue: false,
+          value: false,
         ),
       ],
       [
         GeneratedFormSwitch(
           'useFirstApkOfVersion',
           label: tr('useFirstApkOfVersion'),
-          defaultValue: true,
+          value: true,
         ),
       ],
     ];
@@ -167,7 +167,8 @@ class APKPure extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
+    try {
+      String? appId = await tryInferringAppId(standardUrl);
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -234,10 +235,13 @@ class APKPure extends AppSource {
       } catch (e) {
         if (additionalSettings['fallbackToOlderReleases'] != true ||
             i == versions.length - 1) {
-          rethrow;
+          rethrowOrWrapError(e);
         }
       }
     }
     throw NoAPKError();
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

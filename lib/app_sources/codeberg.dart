@@ -32,16 +32,20 @@ class Codeberg extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    return await _gh.fetchReleaseDetailsWithTagFallback(standardUrl, additionalSettings, (
-      bool useTagUrl,
-    ) async {
-      final standardUri = Uri.parse(standardUrl);
-      final apiPath =
-          '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
-      return standardUri
-          .replace(path: apiPath, queryParameters: {'per_page': '100'})
-          .toString();
-    }, null);
+    try {
+      return await _gh.fetchReleaseDetailsWithTagFallback(standardUrl, additionalSettings, (
+        bool useTagUrl,
+      ) async {
+        final standardUri = Uri.parse(standardUrl);
+        final apiPath =
+            '/api/v1/repos${standardUri.path}/${useTagUrl ? 'tags' : 'releases'}';
+        return standardUri
+            .replace(path: apiPath, queryParameters: {'per_page': '100'})
+            .toString();
+      }, null);
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   @override

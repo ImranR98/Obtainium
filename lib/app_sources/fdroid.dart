@@ -5,7 +5,7 @@ import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/app_sources/gitlab.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -35,7 +35,7 @@ class FDroid extends AppSource {
         GeneratedFormSwitch(
           'trySelectingSuggestedVersionCode',
           label: tr('trySelectingSuggestedVersionCode'),
-          defaultValue: true,
+          value: true,
         ),
       ],
       [
@@ -74,7 +74,8 @@ class FDroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
+    try {
+      String? appId = await tryInferringAppId(standardUrl);
     if (appId == null) {
       throw NoReleasesError();
     }
@@ -151,6 +152,9 @@ class FDroid extends AppSource {
       }
     }
     return details;
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:obtainium/components/generated_form.dart'
+import 'package:obtainium/components/generated_form_renderer.dart'
     show generateRandomLightColor;
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -105,9 +105,11 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       final changed = <App>[];
       for (final aim in appsProvider.apps.values) {
         if (aim.app.categories.contains(prev)) {
-          aim.app.categories = aim.app.categories
-              .map((c) => c == prev ? name : c)
-              .toList();
+          aim.app = aim.app.copyWith(
+            categories: aim.app.categories
+                .map((c) => c == prev ? name : c)
+                .toList(),
+          );
           changed.add(aim.app);
         }
       }

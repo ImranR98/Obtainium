@@ -31,7 +31,7 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp: currentApp,
     );
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
-      newApp.preferredApkIndex = currentApp.preferredApkIndex;
+      newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
     }
     return newApp;
   }
@@ -64,7 +64,7 @@ extension AppsProviderUpdates on AppsProvider {
             return true;
           } else {
             return app.app.installedVersion != null ||
-                app.app.additionalSettings['trackOnly'] == true;
+                app.app.settings.getBool('trackOnly');
           }
         })
         .map((e) => e.app.id)
@@ -91,7 +91,9 @@ extension AppsProviderUpdates on AppsProvider {
     List<App> updates = [];
     MultiAppMultiError errors = MultiAppMultiError();
     if (gettingUpdates) {
-      updateCheckCompleter ??= Completer<List<App>>();
+      if (updateCheckCompleter == null) {
+        updateCheckCompleter = Completer<List<App>>();
+      }
       return updateCheckCompleter!.future;
     }
     gettingUpdates = true;
@@ -120,13 +122,32 @@ extension AppsProviderUpdates on AppsProvider {
             chunk.map((appId) async {
               final currentApp = apps[appId]?.app;
               try {
+                final source =
+                    SourceProvider().getSource(
+                      currentApp?.url ?? '',
+                      overrideSource: currentApp?.overrideSource,
+                    );
+                if (sourceHealthMonitor.shouldSkip(source.name)) {
+                  return null;
+                }
                 final newApp = await fetchUpdate(appId);
                 if (newApp == null) return null;
+                sourceHealthMonitor.recordSuccess(source.name);
                 final isUpdate =
                     currentApp != null &&
                     newApp.latestVersion != currentApp.latestVersion;
                 return MapEntry(newApp, isUpdate);
               } catch (e) {
+                if (currentApp != null) {
+                  try {
+                    final source =
+                        SourceProvider().getSource(
+                          currentApp.url,
+                          overrideSource: currentApp.overrideSource,
+                        );
+                    sourceHealthMonitor.recordFailure(source.name, e);
+                  } catch (_) {}
+                }
                 if ((e is RateLimitError || e is SocketException) &&
                     throwErrorsForRetry) {
                   rethrow;

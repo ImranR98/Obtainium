@@ -6,212 +6,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/components/ui_shapes.dart';
+import 'package:obtainium/components/generated_form_model.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
-import 'package:obtainium/providers/source_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-abstract class GeneratedFormItem {
-  late String key;
-  late String label;
-  late List<Widget> belowWidgets;
-  late dynamic defaultValue;
-  List<dynamic> additionalValidators;
-  dynamic ensureType(dynamic val);
-  GeneratedFormItem clone();
+export 'generated_form_model.dart';
 
-  GeneratedFormItem(
-    this.key, {
-    this.label = 'Input',
-    this.belowWidgets = const [],
-    this.defaultValue,
-    this.additionalValidators = const [],
-  });
-}
-
-class GeneratedFormTextField extends GeneratedFormItem {
-  late bool required;
-  final int max;
-  final String? hint;
-  final bool password;
-  final TextInputType? textInputType;
-  final List<String>? autoCompleteOptions;
-  final String? helpUrl;
-
-  GeneratedFormTextField(
-    super.key, {
-    super.label,
-    super.belowWidgets,
-    String super.defaultValue = '',
-    List<String? Function(String? value)> super.additionalValidators = const [],
-    this.required = true,
-    this.max = 1,
-    this.hint,
-    this.password = false,
-    this.textInputType,
-    this.autoCompleteOptions,
-    this.helpUrl,
-  });
-
-  @override
-  String ensureType(val) {
-    return val.toString();
-  }
-
-  @override
-  GeneratedFormTextField clone() {
-    return GeneratedFormTextField(
-      key,
-      label: label,
-      belowWidgets: belowWidgets,
-      defaultValue: defaultValue,
-      additionalValidators: List.from(additionalValidators),
-      required: required,
-      max: max,
-      hint: hint,
-      password: password,
-      textInputType: textInputType,
-      autoCompleteOptions: autoCompleteOptions,
-      helpUrl: helpUrl,
-    );
-  }
-}
-
-class GeneratedFormDropdown extends GeneratedFormItem {
-  final List<MapEntry<String, String>>? opts;
-  List<String>? disabledOptKeys;
-
-  GeneratedFormDropdown(
-    super.key,
-    this.opts, {
-    super.label,
-    super.belowWidgets,
-    String super.defaultValue = '',
-    this.disabledOptKeys,
-    List<String? Function(String? value)> super.additionalValidators = const [],
-  });
-
-  @override
-  String ensureType(val) {
-    return val.toString();
-  }
-
-  @override
-  GeneratedFormDropdown clone() {
-    return GeneratedFormDropdown(
-      key,
-      opts?.map((e) => MapEntry(e.key, e.value)).toList(),
-      label: label,
-      belowWidgets: belowWidgets,
-      defaultValue: defaultValue,
-      disabledOptKeys: disabledOptKeys != null
-          ? List.from(disabledOptKeys!)
-          : null,
-      additionalValidators: List.from(additionalValidators),
-    );
-  }
-}
-
-class GeneratedFormSwitch extends GeneratedFormItem {
-  bool disabled;
-
-  GeneratedFormSwitch(
-    super.key, {
-    super.label,
-    super.belowWidgets,
-    bool super.defaultValue = false,
-    this.disabled = false,
-    List<String? Function(bool value)> super.additionalValidators = const [],
-  });
-
-  @override
-  bool ensureType(val) {
-    return val == true || val == 'true';
-  }
-
-  @override
-  GeneratedFormSwitch clone() {
-    return GeneratedFormSwitch(
-      key,
-      label: label,
-      belowWidgets: belowWidgets,
-      defaultValue: defaultValue,
-      disabled: disabled,
-      additionalValidators: List.from(additionalValidators),
-    );
-  }
-}
-
-typedef OnValueChanges =
-    void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
-
-class GeneratedForm extends StatefulWidget {
-  const GeneratedForm({
-    super.key,
-    required this.items,
-    required this.onValueChanges,
-    this.tileMode = false,
-  });
-
-  final List<List<GeneratedFormItem>> items;
-  final OnValueChanges onValueChanges;
-
-  /// When true, switch rows are rendered as connected, rounded "setting tiles"
-  /// (matching the settings page); other inputs render as their normal filled
-  /// fields.
-  final bool tileMode;
-
-  @override
-  State<GeneratedForm> createState() => _GeneratedFormState();
-}
-
-List<List<GeneratedFormItem>> cloneFormItems(
-  List<List<GeneratedFormItem>> items,
-) {
-  List<List<GeneratedFormItem>> clonedItems = [];
-  for (var row in items) {
-    List<GeneratedFormItem> clonedRow = [];
-    for (var it in row) {
-      clonedRow.add(it.clone());
-    }
-    clonedItems.add(clonedRow);
-  }
-  return clonedItems;
-}
-
-class GeneratedFormSubForm extends GeneratedFormItem {
-  final List<List<GeneratedFormItem>> items;
-
-  GeneratedFormSubForm(
-    super.key,
-    this.items, {
-    super.label,
-    super.belowWidgets,
-    super.defaultValue = const [],
-  });
-
-  @override
-  ensureType(val) {
-    return val; // Not easy to validate List<Map<String, dynamic>>
-  }
-
-  @override
-  GeneratedFormSubForm clone() {
-    return GeneratedFormSubForm(
-      key,
-      cloneFormItems(items),
-      label: label,
-      belowWidgets: belowWidgets,
-      defaultValue: defaultValue,
-    );
-  }
-}
-
-/// Generates a pastel color using the HSLuv color space with golden-angle hue
-/// distribution for consistent category coloring.
 Color generateRandomLightColor() {
   final randomSeed = Random().nextInt(120);
   final goldenAngle = 180 * (3 - sqrt(5));
@@ -223,20 +27,42 @@ Color generateRandomLightColor() {
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
-int generateRandomNumber(
-  int seed1, {
-  int seed2 = 0,
-  int seed3 = 0,
-  max = 10000,
-}) {
-  int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
-  Random random = Random(combinedSeed);
-  int randomNumber = random.nextInt(max);
-  return randomNumber;
-}
-
 bool validateTextField(TextFormField tf) =>
     (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
+
+typedef OnValueChanges =
+    void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
+
+class GeneratedForm extends StatefulWidget {
+  const GeneratedForm({
+    super.key,
+    required this.items,
+    required this.onValueChanges,
+    this.tileMode = false,
+    this.fieldDefinitions,
+    this.fieldStates,
+  });
+
+  GeneratedForm.fromDefinitions({
+    super.key,
+    required List<FormFieldDefinition> definitions,
+    required Map<String, GeneratedFormFieldState> states,
+    required this.onValueChanges,
+    this.tileMode = false,
+    this.fieldDefinitions,
+    this.fieldStates,
+  }) : items = [definitions.map((d) => d.toGeneratedFormItem()).toList()];
+
+  final List<List<GeneratedFormItem>> items;
+  final List<FormFieldDefinition>? fieldDefinitions;
+  final Map<String, GeneratedFormFieldState>? fieldStates;
+  final OnValueChanges onValueChanges;
+
+  final bool tileMode;
+
+  @override
+  State<GeneratedForm> createState() => _GeneratedFormState();
+}
 
 class _TVTextFieldFocus extends StatefulWidget {
   final Widget child;
@@ -346,11 +172,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
   late List<List<Widget>> formInputs;
   String? initKey;
   int _subFormGenerationCount = 0;
-  // Text controllers created by initForm(); disposed in dispose() to avoid
-  // leaking them when the form is removed.
   final List<TextEditingController> _textControllers = [];
 
-  // If any value changes, call this to update the parent with value and validity
   void notifyFormChange({bool isBuilding = false, bool forceInvalid = false}) {
     Map<String, dynamic> returnValues = values;
     var valid = true;
@@ -400,22 +223,22 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 ? IconButton(
                     icon: const Icon(Icons.open_in_new),
                     tooltip: tr('about'),
-                    onPressed: () =>                     unawaited(launchUrlString(
+                    onPressed: () => unawaited(launchUrlString(
                       formItem.helpUrl!,
                       mode: LaunchMode.externalApplication,
                     )),
                   )
                 : formItem.belowWidgets.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.help_outline),
-                    tooltip: tr('about'),
-                    onPressed: () => showHelpDialog(
-                      context,
-                      title: formItem.label,
-                      content: formItem.belowWidgets,
-                    ),
-                  )
-                : null,
+                    ? IconButton(
+                        icon: const Icon(Icons.help_outline),
+                        tooltip: tr('about'),
+                        onPressed: () => showHelpDialog(
+                          context,
+                          title: formItem.label,
+                          content: formItem.belowWidgets as List<Widget>,
+                        ),
+                      )
+                    : null,
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
@@ -496,7 +319,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void _initSubForm(GeneratedFormSubForm formItem) {
     values[formItem.key] = [];
     for (Map<String, dynamic> v
-        in ((formItem.defaultValue ?? []) as List<dynamic>)) {
+        in ((formItem.value ?? []) as List<dynamic>)) {
       var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
       for (var element in v.entries) {
         fullDefaults[element.key] = element.value;
@@ -514,7 +337,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     values.clear();
     for (var row in widget.items) {
       for (var e in row) {
-        values[e.key] = e.defaultValue;
+        values[e.key] = e.value;
       }
     }
 
@@ -578,7 +401,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
               items: cloneFormItems(item.items)
                   .map(
                     (x) => x.map((y) {
-                      y.defaultValue = values[fieldKey]?[i]?[y.key];
+                      y.value = values[fieldKey]?[i]?[y.key];
                       y.key = '${y.key.toString()},$internalFormKey';
                       return y;
                     }).toList(),
@@ -652,9 +475,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (widget.key.toString() != initKey) {
       initForm();
     }
-    // Build a fresh render list each frame to avoid mutating state-held
-    // [formInputs] during build(). Text/dropdown widgets are reused by
-    // reference; switch and subform slots are rebuilt here.
     final List<List<Widget>> renderedInputs = [
       for (final row in formInputs) [...row],
     ];
@@ -716,9 +536,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
         children.add(
           Material(
-            // Fields use a distinct, slightly more prominent tone so they
-            // stand out from the surrounding control tiles while still
-            // sharing the connected positional-radii system.
             color: isFieldRow(r)
                 ? colorScheme.surfaceContainerHighest
                 : colorScheme.surfaceContainerLow,
@@ -753,6 +570,104 @@ class _GeneratedFormState extends State<GeneratedForm> {
     return Form(
       key: _formKey,
       child: Column(children: children),
+    );
+  }
+}
+
+class GeneratedFormModal extends StatefulWidget {
+  const GeneratedFormModal({
+    super.key,
+    required this.title,
+    required this.items,
+    this.initValid = false,
+    this.message = '',
+    this.additionalWidgets = const [],
+    this.singleNullReturnButton,
+    this.primaryActionColour,
+    this.tileMode = false,
+  });
+
+  final String title;
+  final String message;
+  final List<List<GeneratedFormItem>> items;
+  final bool initValid;
+  final List<Widget> additionalWidgets;
+  final String? singleNullReturnButton;
+  final Color? primaryActionColour;
+  final bool tileMode;
+
+  @override
+  State<GeneratedFormModal> createState() => _GeneratedFormModalState();
+}
+
+class _GeneratedFormModalState extends State<GeneratedFormModal> {
+  Map<String, dynamic> values = {};
+  bool valid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    valid = widget.initValid || widget.items.isEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: Text(widget.title),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.message.isNotEmpty) Text(widget.message),
+          if (widget.message.isNotEmpty) const SizedBox(height: 16),
+          GeneratedForm(
+            tileMode: widget.tileMode,
+            items: widget.items,
+            onValueChanges: (values, valid, isBuilding) {
+              if (isBuilding) {
+                this.values = values;
+                this.valid = valid;
+              } else {
+                setState(() {
+                  this.values = values;
+                  this.valid = valid;
+                });
+              }
+            },
+          ),
+          if (widget.additionalWidgets.isNotEmpty) ...widget.additionalWidgets,
+        ],
+      ),
+      actions: [
+        TextButton(
+          autofocus: context.read<SettingsProvider>().isTV,
+          onPressed: () {
+            Navigator.of(context).pop(null);
+          },
+          child: Text(
+            widget.singleNullReturnButton == null
+                ? tr('cancel')
+                : widget.singleNullReturnButton!,
+          ),
+        ),
+        widget.singleNullReturnButton == null
+            ? FilledButton(
+                style: widget.primaryActionColour == null
+                    ? null
+                    : FilledButton.styleFrom(
+                        backgroundColor: widget.primaryActionColour,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
+                      ),
+                onPressed: !valid
+                    ? null
+                    : () {
+                        context.read<SettingsProvider>().selectionClick();
+                        Navigator.of(context).pop(values);
+                      },
+                child: Text(tr('continue')),
+              )
+            : const SizedBox.shrink(),
+      ],
     );
   }
 }

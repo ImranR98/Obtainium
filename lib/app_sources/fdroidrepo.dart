@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -27,14 +27,14 @@ class FDroidRepo extends AppSource {
         GeneratedFormSwitch(
           'pickHighestVersionCode',
           label: tr('pickHighestVersionCode'),
-          defaultValue: false,
+          value: false,
         ),
       ],
       [
         GeneratedFormSwitch(
           'trySelectingSuggestedVersionCode',
           label: tr('trySelectingSuggestedVersionCode'),
-          defaultValue: true,
+          value: true,
         ),
       ],
     ];
@@ -132,16 +132,22 @@ class FDroidRepo extends AppSource {
       appId = uri.queryParameters['appId'];
     }
     if (appId != null) {
-      app.url = uri
-          .replace(
-            queryParameters: Map.fromEntries([
-              ...uri.queryParameters.entries,
-              MapEntry('appId', appId),
-            ]),
-          )
-          .toString();
-      app.additionalSettings['appIdOrName'] = appId;
-      app.id = appId;
+      app = app.copyWith(
+        url: uri
+            .replace(
+              queryParameters: Map.fromEntries([
+                ...uri.queryParameters.entries,
+                MapEntry('appId', appId),
+              ]),
+            )
+            .toString(),
+      );
+      app = app.copyWith(
+        additionalSettings:
+            Map<String, dynamic>.from(app.additionalSettings)
+              ..['appIdOrName'] = appId,
+      );
+      app = app.copyWith(id: appId);
     }
     return app;
   }
@@ -174,7 +180,8 @@ class FDroidRepo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appIdOrName = additionalSettings['appIdOrName'];
+    try {
+      String? appIdOrName = additionalSettings['appIdOrName'];
     var standardUri = Uri.parse(standardUrl);
     if (standardUri.queryParameters['appId'] != null) {
       appIdOrName = standardUri.queryParameters['appId'];
@@ -299,6 +306,9 @@ class FDroidRepo extends AppSource {
       );
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

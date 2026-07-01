@@ -51,7 +51,8 @@ class NeutronCode extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest(standardUrl, additionalSettings);
+    try {
+      Response res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode == 200) {
       var http = parse(res.body);
       var name = http.querySelector('.pd-title')?.innerHtml;
@@ -86,6 +87,9 @@ class NeutronCode extends AppSource {
       );
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

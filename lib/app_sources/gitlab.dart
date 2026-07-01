@@ -6,7 +6,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class GitLab extends AppSource {
@@ -119,7 +119,8 @@ class GitLab extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var names = _gh.getAppNames(standardUrl);
+    try {
+      var names = _gh.getAppNames(standardUrl);
     String projectUriComponent =
         '${Uri.encodeComponent(names.author)}%2F${Uri.encodeComponent(names.name)}';
     String? pat = await getPATIfAny(hostChanged ? additionalSettings : {});
@@ -255,5 +256,8 @@ class GitLab extends AppSource {
     }).toList();
 
     return finalResult;
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }
