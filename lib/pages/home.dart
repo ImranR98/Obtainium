@@ -258,6 +258,7 @@ class _HomePageState extends State<HomePage> {
           }
         } else if (action == 'app' || action == 'apps') {
           final dataStr = Uri.decodeComponent(data);
+          if (!context.mounted) return;
           if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {

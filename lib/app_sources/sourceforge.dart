@@ -51,6 +51,7 @@ class SourceForge extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
+    try {
     var standardUri = Uri.parse(standardUrl);
     if (standardUri.pathSegments.length == 2) {
       standardUrl = '$standardUrl/files';
@@ -137,6 +138,9 @@ class SourceForge extends AppSource {
       );
     } else {
       throw getObtainiumHttpError(res);
+    }
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
   }
 }

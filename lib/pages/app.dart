@@ -189,18 +189,20 @@ class _AppPageState extends State<AppPage> {
       if (mounted) setState(() {});
       await appsProvider.checkUpdate(appId);
       if (resetVersion) {
-        appsProvider.apps[appId]?.app = appsProvider.apps[appId]!.app.copyWith(
-          additionalSettings: Map<String, dynamic>.from(
-            appsProvider.apps[appId]!.app.additionalSettings,
-          )..['versionDetection'] = true,
-        );
-        if (appsProvider.apps[appId]?.app.installedVersion != null) {
-          appsProvider.apps[appId]?.app = appsProvider.apps[appId]!.app
-              .copyWith(
-                installedVersion: appsProvider.apps[appId]?.app.latestVersion,
-              );
+        final currentAim = appsProvider.apps[appId];
+        if (currentAim != null) {
+          var updatedApp = currentAim.app.copyWith(
+            additionalSettings: Map<String, dynamic>.from(
+              currentAim.app.additionalSettings,
+            )..['versionDetection'] = true,
+          );
+          if (updatedApp.installedVersion != null) {
+            updatedApp = updatedApp.copyWith(
+              installedVersion: updatedApp.latestVersion,
+            );
+          }
+          await appsProvider.saveApps([updatedApp]);
         }
-        unawaited(appsProvider.saveApps([appsProvider.apps[appId]!.app]));
       }
     } catch (err) {
       if (err is RepositoryRenamedError && context.mounted) {

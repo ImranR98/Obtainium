@@ -412,7 +412,7 @@ class AppsPageState extends State<AppsPage> {
     setState(() {});
   }
 
-  VoidCallback launchCategorizeDialogCallback(
+  Future<void> Function() launchCategorizeDialogCallback(
     BuildContext context,
     Set<App> selectedApps,
   ) {

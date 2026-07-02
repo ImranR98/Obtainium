@@ -460,7 +460,9 @@ class GitHub extends AppSource {
           return dateA.compareTo(dateB);
         } else {
           if (sortMethod != 'name' && stdFormats.isNotEmpty) {
-            final reg = RegExp(stdFormats.last);
+            final sortedFormats = stdFormats.toList()
+              ..sort((a, b) => b.length.compareTo(a.length));
+            final reg = RegExp(sortedFormats.first);
             final matchA = reg.firstMatch(nameA);
             final matchB = reg.firstMatch(nameB);
             if (matchA == null || matchB == null) {

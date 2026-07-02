@@ -129,12 +129,23 @@ class AppIconWidget extends StatefulWidget {
 }
 
 class _AppIconWidgetState extends State<AppIconWidget> {
-  late final Future<void> _iconFuture;
+  late Future<void> _iconFuture;
+  String? _lastAppId;
 
   @override
   void initState() {
     super.initState();
+    _lastAppId = widget.appId;
     _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
+  }
+
+  @override
+  void didUpdateWidget(AppIconWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.appId != _lastAppId) {
+      _lastAppId = widget.appId;
+      _iconFuture = widget.appsProvider.updateAppIcon(widget.appId);
+    }
   }
 
   @override

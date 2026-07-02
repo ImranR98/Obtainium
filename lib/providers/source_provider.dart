@@ -8,10 +8,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -1046,7 +1046,9 @@ class SourceProvider {
   String generateTempID(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
-  ) => (standardUrl + additionalSettings.toString()).hashCode.toString();
+  ) => sha256.convert(
+        utf8.encode(standardUrl + additionalSettings.toString()),
+      ).toString().substring(0, 12);
 
   Future<String?> _resolveAppId(
     AppSource source,
@@ -1217,14 +1219,6 @@ class TypedSettings {
 
   const TypedSettings(Map<String, dynamic> raw) : _raw = raw;
 
-  factory TypedSettings.fromJson(Map<String, dynamic> json) =>
-      TypedSettings(Map<String, dynamic>.from(json));
-
-  Map<String, dynamic> toJson() => Map<String, dynamic>.from(_raw);
-
-  /// Returns the raw backing map. Prefer typed accessors when the key is known.
-  Map<String, dynamic> get raw => _raw;
-
   bool getBool(String key, {bool defaultValue = false}) {
     final val = _raw[key];
     if (val == null) return defaultValue;
@@ -1250,20 +1244,6 @@ class TypedSettings {
   String getString(String key, {String defaultValue = ''}) =>
       getStringOrNull(key) ?? defaultValue;
 
-  bool hasKey(String key) => _raw.containsKey(key);
-
-  T? get<T>(String key) => _raw[key] as T?;
-
-  /// For backwards compatibility with code that accesses [_raw] via index.
-  dynamic operator [](String key) => _raw[key];
-
-  bool hasNonNullOrEmpty(String key) {
-    final val = _raw[key];
-    if (val == null) return false;
-    if (val is String) return val.isNotEmpty;
-    return true;
-  }
-
   @override
   String toString() => _raw.toString();
 }
@@ -1271,15 +1251,6 @@ class TypedSettings {
 class HttpService {
   static const int maxRedirects = 10;
   static const Duration connectionTimeout = Duration(seconds: 30);
-
-  IOClient createClient({bool followRedirects = true, bool insecure = false}) {
-    final client = HttpClient()..connectionTimeout = connectionTimeout;
-    if (insecure) {
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-    }
-    return IOClient(client);
-  }
 
   HttpClient createHttpClient(bool insecure) {
     final client = HttpClient();

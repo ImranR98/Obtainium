@@ -302,18 +302,22 @@ Future<String?> checkETagHeader(
   try {
     final StreamedResponse response = await client.send(req);
     final resHeaders = response.headers;
-    await response.stream.drain<void>().catchError((err) {
+    try {
+      await response.stream.drain<void>();
+    } catch (err) {
       unawaited(
         LogsProvider().add(
-          'Error draining response stream: $err',
+          'Error draining response stream while checking ETag: $err',
           level: LogLevel.error,
         ),
       );
-    });
-    return resHeaders[HttpHeaders.etagHeader]
-        ?.replaceAll('"', '')
-        .hashCode
-        .toString();
+      return null;
+    }
+    final etag =
+        resHeaders[HttpHeaders.etagHeader]?.replaceAll('"', '');
+    return etag != null
+        ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
+        : null;
   } finally {
     client.close();
   }
@@ -410,6 +414,10 @@ Future<File> downloadFile(
     final getReq = Request('GET', Uri.parse(url));
     getReq.headers.addAll(reqHeaders);
     headersResponse = await headersClient.send(getReq);
+    if (headersResponse.statusCode >= 200 &&
+        headersResponse.statusCode < 300) {
+      await headersResponse.stream.drain<void>().catchError((_) {});
+    }
   }
 
   final resHeaders = headersResponse.headers;
@@ -708,7 +716,7 @@ class AppsProvider with ChangeNotifier {
     _autoExportDebounce?.cancel();
     _autoExportDebounce = Timer(const Duration(seconds: 2), () {
       if (!_disposed) {
-        export(isAuto: true);
+        export(isAuto: true).catchError((_) => null);
       }
     });
   }
@@ -1243,7 +1251,9 @@ class AppIdService {
   String generateTempId(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
-  ) => (standardUrl + additionalSettings.toString()).hashCode.toString();
+  ) => sha256.convert(
+        utf8.encode(standardUrl + additionalSettings.toString()),
+      ).toString().substring(0, 12);
 }
 
 /// Isolates the implementation-level `easy_localization/src/` imports to a

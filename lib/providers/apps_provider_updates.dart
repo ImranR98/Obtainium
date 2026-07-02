@@ -32,6 +32,8 @@ extension AppsProviderUpdates on AppsProvider {
     );
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
       newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
+    } else if (newApp.apkUrls.isNotEmpty) {
+      newApp = newApp.copyWith(preferredApkIndex: 0);
     }
     return newApp;
   }

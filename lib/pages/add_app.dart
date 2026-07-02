@@ -226,6 +226,7 @@ class AddAppPageState extends State<AddAppPage> {
       if (confirmed) {
         confirmed = await getReleaseDateAsVersionConfirmationIfNeeded(context);
       }
+      if (!context.mounted) return;
       if (confirmed) {
         final s = pickedSource!;
         final trackOnly = s.enforceTrackOnly || userPickedTrackOnly;

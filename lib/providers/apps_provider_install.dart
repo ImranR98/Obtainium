@@ -506,10 +506,14 @@ extension AppsProviderInstall on AppsProvider {
         }
       }
     } else {
-      // BZip2, XZ, or uncompressed: use the in-memory path.  These formats
-      // are rare for Android app bundles, and the threshold already ensures
-      // the file is ≤ 64 MB so the in-memory footprint is bounded.
-      await _extractTarballInMemory(tarballFile, destinationPath);
+      // BZip2, XZ, or uncompressed: these formats are rare for Android app
+      // bundles. Since this code path is only reached for files > 64 MB,
+      // falling back to in-memory extraction would risk OOM. Reject with a
+      // clear error instead.
+      throw ObtainiumError(
+        'Unsupported archive format (not gzip) for large tarball: file is '
+        '> 64 MB and would require in-memory extraction which is not safe.',
+      );
     }
   }
 
@@ -536,6 +540,10 @@ extension AppsProviderInstall on AppsProvider {
       }
 
       apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
+
+      if (apkFiles.isEmpty) {
+        throw NoAPKError();
+      }
 
       try {
         final wasInstalled = await installApk(

@@ -113,15 +113,20 @@ extension AppsProviderImportExport on AppsProvider {
     final hasSchemaVersion =
         decodedJSON is Map && decodedJSON.containsKey('schemaVersion');
     List<App> importedApps;
-    if (hasSchemaVersion) {
-      final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
-      importedApps = schema.apps.map((e) => App.fromJson(e)).toList();
-    } else {
-      final newFormat = decodedJSON is! List;
-      importedApps =
-          ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
-              .map((e) => App.fromJson(e))
-              .toList();
+    ExportSchema? schema;
+    try {
+      if (hasSchemaVersion) {
+        schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
+        importedApps = schema.apps.map((e) => App.fromJson(e)).toList();
+      } else {
+        final newFormat = decodedJSON is! List;
+        importedApps =
+            ((newFormat ? decodedJSON['apps'] : decodedJSON) as List<dynamic>)
+                .map((e) => App.fromJson(e))
+                .toList();
+      }
+    } catch (e) {
+      throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
     }
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
@@ -135,8 +140,7 @@ extension AppsProviderImportExport on AppsProvider {
     }
     await saveApps(importedApps, onlyIfExists: false);
     bool hasSettings = false;
-    if (hasSchemaVersion) {
-      final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
+    if (hasSchemaVersion && schema != null) {
       if (schema.settings != null) {
         hasSettings = true;
         _applyImportedSettings(schema.settings!);

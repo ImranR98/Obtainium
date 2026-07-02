@@ -235,9 +235,7 @@ extension AppsProviderLifecycle on AppsProvider {
                   unawaited(
                     logs.add('Error when loading App (will be ignored): $err'),
                   );
-                  if (err is FormatException) {
-                    unawaited(item.rename('${item.path}$_corruptFileSuffix'));
-                  }
+                  unawaited(item.rename('${item.path}$_corruptFileSuffix'));
                 }
               }
               if (app != null) {
@@ -312,6 +310,7 @@ extension AppsProviderLifecycle on AppsProvider {
       }
     } finally {
       loadingApps = false;
+      appsLoadingCompleter?.complete();
       appsLoadingCompleter = null;
       notify();
     }
