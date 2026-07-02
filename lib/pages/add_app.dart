@@ -364,8 +364,8 @@ class AddAppPageState extends State<AddAppPage> {
                                                   overrideSource:
                                                       a.app.overrideSource,
                                                 )
-                                                .runtimeType ==
-                                            e.runtimeType,
+                                                .sourceIdentifier ==
+                                            e.sourceIdentifier,
                                       )
                                       .map((a) {
                                         final uri = Uri.parse(a.app.url);
@@ -597,7 +597,7 @@ class AddAppPageState extends State<AddAppPage> {
                             (s) =>
                                 s.allowOverride ||
                                 (pickedSource != null &&
-                                    pickedSource.runtimeType == s.runtimeType),
+                                    pickedSource!.sourceIdentifier == s.sourceIdentifier),
                           )
                           .map((s) => MapEntry(s.name, s.name)),
                     ],

@@ -399,7 +399,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     final compact = item.items.length == 1 && item.items[0].length == 1;
     for (int i = 0; i < values[fieldKey].length; i++) {
       final internalFormKey = ValueKey(
-        generateRandomNumber(
+        generateDeterministicId(
           values[fieldKey].length,
           seed2: i,
           seed3: _subFormGenerationCount,

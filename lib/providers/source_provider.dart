@@ -1050,7 +1050,7 @@ class SourceProvider {
         utf8.encode(standardUrl + additionalSettings.toString()),
       ).toString().substring(0, 12);
 
-  Future<String?> _resolveAppId(
+  Future<String> _resolveAppId(
     AppSource source,
     App? currentApp,
     Map<String, dynamic> additionalSettings,
@@ -1125,16 +1125,14 @@ class SourceProvider {
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
     final App finalApp = App(
-      id:
-          await _resolveAppId(
+      id: await _resolveAppId(
             source,
             currentApp,
             additionalSettings,
             trackOnly,
             standardUrl,
             inferAppIdIfOptional,
-          ) ??
-          generateTempID(standardUrl, additionalSettings),
+          ),
       url: standardUrl,
       author: apk.names.author,
       name: name,

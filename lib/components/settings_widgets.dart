@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 
-bool _isSettingsTile(Widget w) => w is SettingsTile || w is SettingsToggleRow;
+bool _isKnownTileType(Widget w) =>
+    w is SettingsTile || w is SettingsToggleRow;
 
-Widget _withTileRadius(Widget w, BorderRadius radius) {
+Widget _wrapChildWithRadius(Widget w, BorderRadius radius) {
   if (w is SettingsTile) {
     return SettingsTile(
       key: w.key,
@@ -33,15 +34,15 @@ List<Widget> shapeSettingsTiles(List<Widget> children) {
   final result = <Widget>[];
   for (var i = 0; i < children.length; i++) {
     final w = children[i];
-    if (!_isSettingsTile(w)) {
+    if (!_isKnownTileType(w)) {
       result.add(w);
       continue;
     }
-    final prevIsTile = i > 0 && _isSettingsTile(children[i - 1]);
+    final prevIsTile = i > 0 && _isKnownTileType(children[i - 1]);
     final nextIsTile =
-        i < children.length - 1 && _isSettingsTile(children[i + 1]);
+        i < children.length - 1 && _isKnownTileType(children[i + 1]);
     result.add(
-      _withTileRadius(
+      _wrapChildWithRadius(
         w,
         positionalTileRadius(isFirst: !prevIsTile, isLast: !nextIsTile),
       ),

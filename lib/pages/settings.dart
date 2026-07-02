@@ -535,7 +535,10 @@ class _SettingsPageState extends State<SettingsPage> {
     return SettingsGroup(
       title: tr('updates'),
       children: [
-        const _UpdateIntervalSliderTile(),
+        const SettingsTile(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: _UpdateIntervalSliderTile(),
+        ),
         if (showBgSection) ...[
           SettingsToggleRow(
             label: tr('foregroundServiceExplanation'),
@@ -915,17 +918,14 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
           )
         : rawSlider;
 
-    return SettingsTile(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          showIntervalLabel
-              ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
-              : const SizedBox(height: 20),
-          intervalSlider,
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        showIntervalLabel
+            ? Text("${tr('bgUpdateCheckInterval')}: $updateIntervalLabel")
+            : const SizedBox(height: 20),
+        intervalSlider,
+      ],
     );
   }
 }

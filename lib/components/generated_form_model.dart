@@ -344,16 +344,15 @@ class GeneratedFormSubForm extends GeneratedFormItem {
   }
 }
 
-int generateRandomNumber(
+int generateDeterministicId(
   int seed1, {
   int seed2 = 0,
   int seed3 = 0,
-  max = 10000,
+  int max = 10000,
 }) {
   final int combinedSeed = seed1.hashCode ^ seed2.hashCode ^ seed3.hashCode;
   final Random random = Random(combinedSeed);
-  final int randomNumber = random.nextInt(max);
-  return randomNumber;
+  return random.nextInt(max);
 }
 
 Map<String, dynamic> getDefaultValuesFromFormItems(
