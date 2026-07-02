@@ -1,22 +1,24 @@
-// Defines App sources and provides functions used to interact with them
-// AppSource is an abstract class with a concrete implementation for each source
+// Defines App sources and provides functions used to interact with them.
+//
+// AppSource is an abstract class with a concrete implementation for each source.
+// Legacy JSON migration logic lives at the bottom of this file.
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:html/dom.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'package:obtainium/app_sources/apkcombo.dart';
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
 import 'package:obtainium/app_sources/aptoide.dart';
 import 'package:obtainium/app_sources/apk4free.dart';
 import 'package:obtainium/app_sources/codeberg.dart';
 import 'package:obtainium/app_sources/coolapk.dart';
-import 'package:obtainium/app_sources/directAPKLink.dart';
+import 'package:obtainium/app_sources/direct_apk_link.dart';
 import 'package:obtainium/app_sources/farsroid.dart';
 import 'package:obtainium/app_sources/fdroid.dart';
 import 'package:obtainium/app_sources/fdroidrepo.dart';
@@ -37,26 +39,26 @@ import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
 import 'package:obtainium/app_sources/uptodown.dart';
 import 'package:obtainium/app_sources/vivoappstore.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/mass_app_sources/githubstars.dart';
+import 'package:obtainium/app_sources/githubstars.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 
 class AppNames {
-  late String author;
-  late String name;
+  String author;
+  String name;
 
   AppNames(this.author, this.name);
 }
 
 class APKDetails {
-  late String version;
-  late List<MapEntry<String, String>> apkUrls;
-  late AppNames names;
-  late DateTime? releaseDate;
-  late String? changeLog;
-  late List<MapEntry<String, String>> allAssetUrls;
+  String version;
+  List<MapEntry<String, String>> apkUrls;
+  final AppNames names;
+  final DateTime? releaseDate;
+  String? changeLog;
+  final List<MapEntry<String, String>> allAssetUrls;
 
   APKDetails(
     this.version,
@@ -68,286 +70,63 @@ class APKDetails {
   });
 }
 
+/// Converts a list of [MapEntry] pairs into a 2D list of strings for JSON encoding.
 List<List<String>> stringMapListTo2DList(
   List<MapEntry<String, String>> mapList,
 ) => mapList.map((e) => [e.key, e.value]).toList();
 
+/// Converts a 2D list (decoded from JSON) back into a list of [MapEntry] pairs.
 List<MapEntry<String, String>> assumed2DlistToStringMapList(
   List<dynamic> arr,
 ) => arr.map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
 
-// App JSON schema has changed multiple times over the many versions of Obtainium
-// This function takes an App JSON and modifies it if needed to conform to the latest (current) version
-Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
-  var source = SourceProvider().getSource(
-    json['url'],
-    overrideSource: json['overrideSource'],
-  );
-  var formItems = source.combinedAppSpecificSettingFormItems.reduce(
-    (value, element) => [...value, ...element],
-  );
-  Map<String, dynamic> additionalSettings = getDefaultValuesFromFormItems([
-    formItems,
-  ]);
-  Map<String, dynamic> originalAdditionalSettings = {};
-  if (json['additionalSettings'] != null) {
-    originalAdditionalSettings = Map<String, dynamic>.from(
-      jsonDecode(json['additionalSettings']),
-    );
-    additionalSettings.addEntries(originalAdditionalSettings.entries);
-  }
-  // If needed, migrate old-style additionalData to newer-style additionalSettings (V1)
-  if (json['additionalData'] != null) {
-    List<String> temp = List<String>.from(jsonDecode(json['additionalData']));
-    temp.asMap().forEach((i, value) {
-      if (i < formItems.length) {
-        if (formItems[i] is GeneratedFormSwitch) {
-          additionalSettings[formItems[i].key] = value == 'true';
-        } else {
-          additionalSettings[formItems[i].key] = value;
-        }
-      }
-    });
-    additionalSettings['trackOnly'] =
-        json['trackOnly'] == 'true' || json['trackOnly'] == true;
-    additionalSettings['noVersionDetection'] =
-        json['noVersionDetection'] == 'true' || json['trackOnly'] == true;
-  }
-  // Convert bool style version detection options to dropdown style
-  if (additionalSettings['noVersionDetection'] == true) {
-    additionalSettings['versionDetection'] = 'noVersionDetection';
-    if (additionalSettings['releaseDateAsVersion'] == true) {
-      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
-      additionalSettings.remove('releaseDateAsVersion');
-    }
-    if (additionalSettings['noVersionDetection'] != null) {
-      additionalSettings.remove('noVersionDetection');
-    }
-    if (additionalSettings['releaseDateAsVersion'] != null) {
-      additionalSettings.remove('releaseDateAsVersion');
-    }
-  }
-  // Convert dropdown style version detection options back into bool style
-  if (additionalSettings['versionDetection'] == 'standardVersionDetection') {
-    additionalSettings['versionDetection'] = true;
-  } else if (additionalSettings['versionDetection'] == 'noVersionDetection') {
-    additionalSettings['versionDetection'] = false;
-  } else if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
-    additionalSettings['versionDetection'] = false;
-    additionalSettings['releaseDateAsVersion'] = true;
-  }
-  // Convert bool style pseudo version method to dropdown style
-  if (originalAdditionalSettings['supportFixedAPKURL'] == true) {
-    additionalSettings['defaultPseudoVersioningMethod'] = 'partialAPKHash';
-  } else if (originalAdditionalSettings['supportFixedAPKURL'] == false) {
-    additionalSettings['defaultPseudoVersioningMethod'] = 'APKLinkHash';
-  }
-  // Ensure additionalSettings are correctly typed
-  for (var item in formItems) {
-    if (additionalSettings[item.key] != null) {
-      additionalSettings[item.key] = item.ensureType(
-        additionalSettings[item.key],
-      );
-    }
-  }
-  int preferredApkIndex = json['preferredApkIndex'] == null
-      ? 0
-      : json['preferredApkIndex'] as int;
-  if (preferredApkIndex < 0) {
-    preferredApkIndex = 0;
-  }
-  json['preferredApkIndex'] = preferredApkIndex;
-  // apkUrls can either be old list or new named list apkUrls
-  List<MapEntry<String, String>> apkUrls = [];
-  if (json['apkUrls'] != null) {
-    var apkUrlJson = jsonDecode(json['apkUrls']);
-    try {
-      apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
-    } catch (e) {
-      apkUrls = assumed2DlistToStringMapList(List<dynamic>.from(apkUrlJson));
-      apkUrls = List<dynamic>.from(
-        apkUrlJson,
-      ).map((e) => MapEntry(e[0] as String, e[1] as String)).toList();
-    }
-    json['apkUrls'] = jsonEncode(stringMapListTo2DList(apkUrls));
-  }
-  // Arch based APK filter option should be disabled if it previously did not exist
-  if (additionalSettings['autoApkFilterByArch'] == null) {
-    additionalSettings['autoApkFilterByArch'] = false;
-  }
-  // GitHub "don't sort" option to new dropdown format
-  if (additionalSettings['dontSortReleasesList'] == true) {
-    additionalSettings['sortMethodChoice'] = 'none';
-  }
-  if (source.runtimeType == HTML().runtimeType) {
-    // HTML key rename
-    if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
-      additionalSettings['sortByLastLinkSegment'] =
-          originalAdditionalSettings['sortByFileNamesNotLinks'];
-    }
-    // HTML single 'intermediate link' should be converted to multi-support version
-    if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
-        additionalSettings['intermediateLinkRegex']?.isNotEmpty != true) {
-      additionalSettings['intermediateLink'] = [
-        {
-          'customLinkFilterRegex':
-              originalAdditionalSettings['intermediateLinkRegex'],
-          'filterByLinkText':
-              originalAdditionalSettings['intermediateLinkByText'],
-        },
-      ];
-    }
-    if ((additionalSettings['intermediateLink']?.length ?? 0) > 0) {
-      additionalSettings['intermediateLink'] =
-          additionalSettings['intermediateLink'].where((e) {
-            return e['customLinkFilterRegex']?.isNotEmpty == true;
-          }).toList();
-    }
-    // Steam source apps should be converted to HTML (#1244)
-    var legacySteamSourceApps = ['steam', 'steam-chat-app'];
-    if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
-      json['url'] = '${json['url']}/mobile';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
-      );
-      for (var s in replacementAdditionalSettings.keys) {
-        if (additionalSettings.containsKey(s)) {
-          replacementAdditionalSettings[s] = additionalSettings[s];
-        }
-      }
-      replacementAdditionalSettings['customLinkFilterRegex'] =
-          '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk';
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          replacementAdditionalSettings['customLinkFilterRegex'];
-      replacementAdditionalSettings['matchGroupToUse'] = '\$1';
-      additionalSettings = replacementAdditionalSettings;
-    }
-    // Signal apps from before it was removed should be converted to HTML (#1928)
-    if (json['url'] == 'https://signal.org' &&
-        json['id'] == 'org.thoughtcrime.securesms' &&
-        json['author'] == 'Signal' &&
-        json['name'] == 'Signal' &&
-        json['overrideSource'] == null &&
-        additionalSettings['trackOnly'] == false &&
-        additionalSettings['versionExtractionRegEx'] == '' &&
-        json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://updates.signal.org/android/latest.json';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
-      );
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          '\\d+.\\d+.\\d+';
-      additionalSettings = replacementAdditionalSettings;
-    }
-    // WhatsApp from before it was removed should be converted to HTML (#1943)
-    if (json['url'] == 'https://whatsapp.com' &&
-        json['id'] == 'com.whatsapp' &&
-        json['author'] == 'Meta' &&
-        json['name'] == 'WhatsApp' &&
-        json['overrideSource'] == null &&
-        additionalSettings['trackOnly'] == false &&
-        additionalSettings['versionExtractionRegEx'] == '' &&
-        json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://whatsapp.com/android';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
-      );
-      replacementAdditionalSettings['refreshBeforeDownload'] = true;
-      additionalSettings = replacementAdditionalSettings;
-    }
-    // VLC from before it was removed should be converted to HTML (#1943)
-    if (json['url'] == 'https://videolan.org' &&
-        json['id'] == 'org.videolan.vlc' &&
-        json['author'] == 'VideoLAN' &&
-        json['name'] == 'VLC' &&
-        json['overrideSource'] == null &&
-        additionalSettings['trackOnly'] == false &&
-        additionalSettings['versionExtractionRegEx'] == '' &&
-        json['lastUpdateCheck'] != null) {
-      json['url'] = 'https://www.videolan.org/vlc/download-android.html';
-      var replacementAdditionalSettings = getDefaultValuesFromFormItems(
-        HTML().combinedAppSpecificSettingFormItems,
-      );
-      replacementAdditionalSettings['refreshBeforeDownload'] = true;
-      replacementAdditionalSettings['intermediateLink'] =
-          <Map<String, dynamic>>[
-            {
-              'customLinkFilterRegex': 'APK',
-              'filterByLinkText': true,
-              'skipSort': false,
-              'reverseSort': false,
-              'sortByLastLinkSegment': false,
-            },
-            {
-              'customLinkFilterRegex': 'arm64-v8a\\.apk\$',
-              'filterByLinkText': false,
-              'skipSort': false,
-              'reverseSort': false,
-              'sortByLastLinkSegment': false,
-            },
-          ];
-      replacementAdditionalSettings['versionExtractionRegEx'] =
-          '/vlc-android/([^/]+)/';
-      replacementAdditionalSettings['matchGroupToUse'] = "1";
-      additionalSettings = replacementAdditionalSettings;
-    }
-  }
-  json['additionalSettings'] = jsonEncode(additionalSettings);
-  // F-Droid no longer needs cloudflare exception since override can be used - migrate apps appropriately
-  // This allows us to reverse the changes made for issue #418 (support cloudflare.f-droid)
-  // While not causing problems for existing apps from that source that were added in a previous version
-  var overrideSourceWasUndefined = !json.keys.contains('overrideSource');
-  if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
-    json['overrideSource'] = FDroid().runtimeType.toString();
-  } else if (overrideSourceWasUndefined) {
-    // Similar to above, but for third-party F-Droid repos
-    RegExpMatch? match = RegExp(
-      '^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)',
-    ).firstMatch(json['url'] as String);
-    if (match != null) {
-      json['overrideSource'] = FDroidRepo().runtimeType.toString();
-    }
-  }
-  return json;
-}
+/// Delegates to [HttpService.ensureAbsoluteUrl].
+String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) =>
+    HttpService().ensureAbsoluteUrl(ambiguousUrl, referenceAbsoluteUrl);
+
+/// Gating version for one-time legacy app-JSON migrations. Apps whose stored
+/// JSON carries this version skip the legacy conversions; default-settings
+/// reconciliation always runs regardless.
+const int currentAppJSONCompatVersion = 1;
 
 class App {
-  late String id;
-  late String url;
-  late String author;
-  late String name;
-  String? installedVersion;
-  late String latestVersion;
-  List<MapEntry<String, String>> apkUrls = []; // Key is name, value is URL
-  List<MapEntry<String, String>> otherAssetUrls = [];
-  late int preferredApkIndex;
-  late Map<String, dynamic> additionalSettings;
-  late DateTime? lastUpdateCheck;
-  bool pinned = false;
-  List<String> categories;
-  late DateTime? releaseDate;
-  late String? changeLog;
-  late String? overrideSource;
-  bool allowIdChange = false;
-  String? pendingRepoRenameUrl;
-  App(
-    this.id,
-    this.url,
-    this.author,
-    this.name,
+  final String id;
+  final String url;
+  final String author;
+  final String name;
+  final String? installedVersion;
+  final String latestVersion;
+  final List<MapEntry<String, String>> apkUrls;
+  final List<MapEntry<String, String>> otherAssetUrls;
+  final int preferredApkIndex;
+  final Map<String, dynamic> additionalSettings;
+  final DateTime? lastUpdateCheck;
+  final bool pinned;
+  final List<String> categories;
+  final DateTime? releaseDate;
+  final String? changeLog;
+  final String? overrideSource;
+  final bool allowIdChange;
+  final String? pendingRepoRenameUrl;
+
+  const App({
+    required this.id,
+    required this.url,
+    required this.author,
+    required this.name,
     this.installedVersion,
-    this.latestVersion,
-    this.apkUrls,
-    this.preferredApkIndex,
-    this.additionalSettings,
+    required this.latestVersion,
+    this.apkUrls = const [],
+    this.otherAssetUrls = const [],
+    required this.preferredApkIndex,
+    required this.additionalSettings,
     this.lastUpdateCheck,
-    this.pinned, {
+    this.pinned = false,
     this.categories = const [],
     this.releaseDate,
     this.changeLog,
     this.overrideSource,
     this.allowIdChange = false,
-    this.otherAssetUrls = const [],
     this.pendingRepoRenameUrl,
   });
 
@@ -359,91 +138,141 @@ class App {
   bool get hasPendingRepoRename =>
       pendingRepoRenameUrl != null && pendingRepoRenameUrl!.isNotEmpty;
 
-  String? get overrideName =>
-      additionalSettings['appName']?.toString().trim().isNotEmpty == true
-      ? additionalSettings['appName']
-      : null;
+  String? get overrideName {
+    final n = settings.getStringOrNull('appName');
+    return n != null && n.trim().isNotEmpty ? n : null;
+  }
 
   String get finalName {
     return overrideName ?? name;
   }
 
-  String? get overrideAuthor =>
-      additionalSettings['appAuthor']?.toString().trim().isNotEmpty == true
-      ? additionalSettings['appAuthor']
-      : null;
+  String? get overrideAuthor {
+    final a = settings.getStringOrNull('appAuthor');
+    return a != null && a.trim().isNotEmpty ? a : null;
+  }
 
   String get finalAuthor {
     return overrideAuthor ?? author;
   }
 
-  App deepCopy() => App(
-    id,
-    url,
-    author,
-    name,
-    installedVersion,
-    latestVersion,
-    apkUrls,
-    preferredApkIndex,
-    Map.from(additionalSettings),
-    lastUpdateCheck,
-    pinned,
-    categories: categories,
-    changeLog: changeLog,
-    releaseDate: releaseDate,
-    overrideSource: overrideSource,
-    allowIdChange: allowIdChange,
-    otherAssetUrls: otherAssetUrls,
-    pendingRepoRenameUrl: pendingRepoRenameUrl,
-  );
+  /// Type-safe accessor for [additionalSettings].
+  TypedSettings get settings => TypedSettings(additionalSettings);
+
+  App copyWith({
+    String? id,
+    String? url,
+    String? author,
+    String? name,
+    Object? installedVersion = _sentinel,
+    String? latestVersion,
+    List<MapEntry<String, String>>? apkUrls,
+    List<MapEntry<String, String>>? otherAssetUrls,
+    int? preferredApkIndex,
+    Map<String, dynamic>? additionalSettings,
+    Object? lastUpdateCheck = _sentinel,
+    bool? pinned,
+    List<String>? categories,
+    Object? releaseDate = _sentinel,
+    Object? changeLog = _sentinel,
+    Object? overrideSource = _sentinel,
+    bool? allowIdChange,
+    Object? pendingRepoRenameUrl = _sentinel,
+  }) {
+    return App(
+      id: id ?? this.id,
+      url: url ?? this.url,
+      author: author ?? this.author,
+      name: name ?? this.name,
+      installedVersion: installedVersion == _sentinel
+          ? this.installedVersion
+          : installedVersion as String?,
+      latestVersion: latestVersion ?? this.latestVersion,
+      apkUrls: apkUrls ?? List<MapEntry<String, String>>.from(this.apkUrls),
+      otherAssetUrls:
+          otherAssetUrls ??
+          List<MapEntry<String, String>>.from(this.otherAssetUrls),
+      preferredApkIndex: preferredApkIndex ?? this.preferredApkIndex,
+      additionalSettings:
+          additionalSettings ??
+          Map<String, dynamic>.from(this.additionalSettings),
+      lastUpdateCheck: lastUpdateCheck == _sentinel
+          ? this.lastUpdateCheck
+          : lastUpdateCheck as DateTime?,
+      pinned: pinned ?? this.pinned,
+      categories: categories ?? List<String>.from(this.categories),
+      releaseDate: releaseDate == _sentinel
+          ? this.releaseDate
+          : releaseDate as DateTime?,
+      changeLog: changeLog == _sentinel ? this.changeLog : changeLog as String?,
+      overrideSource: overrideSource == _sentinel
+          ? this.overrideSource
+          : overrideSource as String?,
+      allowIdChange: allowIdChange ?? this.allowIdChange,
+      pendingRepoRenameUrl: pendingRepoRenameUrl == _sentinel
+          ? this.pendingRepoRenameUrl
+          : pendingRepoRenameUrl as String?,
+    );
+  }
 
   factory App.fromJson(Map<String, dynamic> json) {
-    Map<String, dynamic> originalJSON = Map.from(json);
+    final Map<String, dynamic> originalJSON = Map.from(json);
     try {
       json = appJSONCompatibilityModifiers(json);
     } catch (e) {
-      json = originalJSON;
       LogsProvider().add(
         'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}',
       );
+      json = originalJSON;
+      json['compatVersion'] = currentAppJSONCompatVersion;
     }
-    return App(
-      json['id'] as String,
-      json['url'] as String,
-      json['author'] as String,
-      json['name'] as String,
-      json['installedVersion'] == null
-          ? null
-          : json['installedVersion'] as String,
-      (json['latestVersion'] ?? tr('unknown')) as String,
-      assumed2DlistToStringMapList(
-        jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
-      ),
-      (json['preferredApkIndex'] ?? -1) as int,
-      jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
-      json['lastUpdateCheck'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
-      json['pinned'] ?? false,
-      categories: json['categories'] != null
-          ? (json['categories'] as List<dynamic>)
-                .map((e) => e.toString())
-                .toList()
-          : json['category'] != null
-          ? [json['category'] as String]
-          : [],
-      releaseDate: json['releaseDate'] == null
-          ? null
-          : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
-      changeLog: json['changeLog'] == null ? null : json['changeLog'] as String,
-      overrideSource: json['overrideSource'],
-      allowIdChange: json['allowIdChange'] ?? false,
-      otherAssetUrls: assumed2DlistToStringMapList(
-        jsonDecode((json['otherAssetUrls'] ?? '[]')),
-      ),
-      pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
-    );
+    try {
+      return App(
+        id: json['id'] as String,
+        url: json['url'] as String,
+        author: json['author'] as String,
+        name: json['name'] as String,
+        installedVersion: json['installedVersion'] == null
+            ? null
+            : json['installedVersion'] as String,
+        latestVersion: (json['latestVersion'] ?? tr('unknown')) as String,
+        apkUrls: assumed2DlistToStringMapList(
+          jsonDecode((json['apkUrls'] ?? '[["placeholder", "placeholder"]]')),
+        ),
+        preferredApkIndex: (json['preferredApkIndex'] ?? -1) as int,
+        additionalSettings:
+            jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
+        lastUpdateCheck: json['lastUpdateCheck'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        pinned: json['pinned'] ?? false,
+        categories: json['categories'] != null
+            ? (json['categories'] as List<dynamic>)
+                  .map((e) => e.toString())
+                  .toList()
+            : json['category'] != null
+            ? [json['category'] as String]
+            : [],
+        releaseDate: json['releaseDate'] == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+        changeLog: json['changeLog'] == null
+            ? null
+            : json['changeLog'] as String,
+        overrideSource: json['overrideSource'],
+        allowIdChange: json['allowIdChange'] ?? false,
+        otherAssetUrls: assumed2DlistToStringMapList(
+          jsonDecode((json['otherAssetUrls'] ?? '[]')),
+        ),
+        pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
+      );
+    } on TypeError catch (e) {
+      LogsProvider().add(
+        'Type mismatch in App.fromJson: ${e.toString()}',
+        level: LogLevel.error,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -465,101 +294,78 @@ class App {
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
     'pendingRepoRenameUrl': pendingRepoRenameUrl,
+    'compatVersion': currentAppJSONCompatVersion,
   };
 }
 
-// Ensure the input is starts with HTTPS and has no WWW
+/// Sentinel value used by [App.copyWith] to distinguish "not provided" from
+/// an explicitly supplied `null` for nullable fields. Since [Object] uses
+/// identity-based equality, a `const` sentinel guarantees it never collides
+/// with any real value the caller could pass.
+const _sentinel = Object();
+
+/// Ensures the URL is well-formed and starts with HTTPS.
 String preStandardizeUrl(String url) {
-  var firstDotIndex = url.indexOf('.');
-  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1)) {
+  final firstDotIndex = url.indexOf('.');
+  if (!(firstDotIndex >= 0 && firstDotIndex != url.length - 1) &&
+      !url.contains('[')) {
     throw UnsupportedURLError();
   }
   if (url.toLowerCase().indexOf('http://') != 0 &&
       url.toLowerCase().indexOf('https://') != 0) {
     url = 'https://$url';
   }
-  var uri = Uri.tryParse(url);
-  var trailingSlash =
+  final uri = Uri.tryParse(url);
+  final trailingSlash =
       ((uri?.path.endsWith('/') ?? false) ||
           ((uri?.path.isEmpty ?? false) && url.endsWith('/'))) &&
       (uri?.queryParameters.isEmpty ?? false);
 
-  url =
-      url
-          .split('/')
-          .where((e) => e.isNotEmpty)
-          .join('/')
-          .replaceFirst(':/', '://') +
-      (trailingSlash ? '/' : '');
+  // Only normalize duplicate slashes in the scheme/host/path portion; leave the
+  // query string and fragment untouched so any slashes they contain (e.g. a URL
+  // passed as a query parameter) aren't mangled.
+  var splitIndex = url.length;
+  final queryStart = url.indexOf('?');
+  if (queryStart >= 0 && queryStart < splitIndex) {
+    splitIndex = queryStart;
+  }
+  final fragmentStart = url.indexOf('#');
+  if (fragmentStart >= 0 && fragmentStart < splitIndex) {
+    splitIndex = fragmentStart;
+  }
+  var mainPart = url.substring(0, splitIndex);
+  final rest = url.substring(splitIndex);
+  mainPart = mainPart
+      .split('/')
+      .where((e) => e.isNotEmpty)
+      .join('/')
+      .replaceFirst(':/', '://');
+  url = mainPart + (trailingSlash ? '/' : '') + rest;
   return url;
 }
 
-String noAPKFound = tr('noAPKFound');
-
-List<String> getLinksFromParsedHTML(
-  Document dom,
-  RegExp hrefPattern,
-  String prependToLinks,
-) => dom
-    .querySelectorAll('a')
-    .where((element) {
-      if (element.attributes['href'] == null) return false;
-      return hrefPattern.hasMatch(element.attributes['href']!);
-    })
-    .map((e) => '$prependToLinks${e.attributes['href']!}')
-    .toList();
-
-Map<String, dynamic> getDefaultValuesFromFormItems(
-  List<List<GeneratedFormItem>> items,
-) {
-  return Map.fromEntries(
-    items
-        .map((row) => row.map((el) => MapEntry(el.key, el.defaultValue ?? '')))
-        .reduce((value, element) => [...value, ...element]),
-  );
-}
-
+/// Delegates to [ApkFilterService.getApkUrlsFromUrls].
 List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
-    urls.map((e) {
-      var segments = e.split('/').where((el) => el.trim().isNotEmpty);
-      var apkSegs = segments.where((s) => s.toLowerCase().endsWith('.apk'));
-      return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
-    }).toList();
+    ApkFilterService().getApkUrlsFromUrls(urls);
 
+/// Delegates to [ApkFilterService.filterApksByArch].
 Future<List<MapEntry<String, String>>> filterApksByArch(
   List<MapEntry<String, String>> apkUrls,
 ) async {
-  if (apkUrls.length > 1) {
-    var abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
-    for (var abi in abis) {
-      var urls2 = apkUrls
-          .where(
-            (element) =>
-                RegExp('.*$abi.*', caseSensitive: false).hasMatch(element.key),
-          )
-          .toList();
-      if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
-        apkUrls = urls2;
-        break;
-      }
-    }
-  }
-  return apkUrls;
+  final abis = (await DeviceInfoPlugin().androidInfo).supportedAbis;
+  return ApkFilterService().filterApksByArch(apkUrls, abis);
 }
 
+/// Builds a regex alternation pattern from a list of hostname strings, escaping dots.
 String getSourceRegex(List<String> hosts) {
   return '(${hosts.join('|').replaceAll('.', '\\.')})';
 }
 
-HttpClient createHttpClient(bool insecure) {
-  final client = HttpClient();
-  if (insecure) {
-    client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
-  }
-  return client;
-}
+/// Delegates to [HttpService.createHttpClient].
+HttpClient createHttpClient(bool insecure) =>
+    HttpService().createHttpClient(insecure);
 
+/// Delegates to [HttpService.sourceRequestStreamResponse].
 Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
 sourceRequestStreamResponse(
   String method,
@@ -568,71 +374,27 @@ sourceRequestStreamResponse(
   Map<String, dynamic> additionalSettings, {
   bool followRedirects = true,
   Object? postBody,
-}) async {
-  var currentUrl = Uri.parse(url);
-  var redirectCount = 0;
-  const maxRedirects = 10;
-  List<Cookie> cookies = [];
-  while (redirectCount < maxRedirects) {
-    var httpClient = createHttpClient(
-      additionalSettings['allowInsecure'] == true,
-    );
-    var request = await httpClient.openUrl(method, currentUrl);
-    if (requestHeaders != null) {
-      requestHeaders.forEach((key, value) {
-        request.headers.set(key, value);
-      });
-    }
-    request.cookies.addAll(cookies);
-    request.followRedirects = false;
-    if (postBody != null) {
-      request.headers.contentType = ContentType.json;
-      request.write(jsonEncode(postBody));
-    }
-    final response = await request.close();
+}) => HttpService().sourceRequestStreamResponse(
+  method,
+  url,
+  requestHeaders,
+  additionalSettings,
+  followRedirects: followRedirects,
+  postBody: postBody,
+);
 
-    if (followRedirects &&
-        (response.statusCode >= 300 && response.statusCode <= 399)) {
-      final location = response.headers.value(HttpHeaders.locationHeader);
-      if (location != null) {
-        currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
-        redirectCount++;
-        cookies = response.cookies;
-        httpClient.close();
-        continue;
-      }
-    }
-
-    return MapEntry(currentUrl, MapEntry(httpClient, response));
-  }
-  throw ObtainiumError('Too many redirects ($maxRedirects)');
-}
-
-Future<Response> httpClientResponseStreamToFinalResponse(
+/// Delegates to [HttpService.httpClientResponseStreamToFinalResponse].
+Future<http.Response> httpClientResponseStreamToFinalResponse(
   HttpClient httpClient,
   String method,
   String url,
   HttpClientResponse response,
-) async {
-  final bytes = (await response.fold<BytesBuilder>(
-    BytesBuilder(),
-    (b, d) => b..add(d),
-  )).toBytes();
-
-  final headers = <String, String>{};
-  response.headers.forEach((name, values) {
-    headers[name] = values.join(', ');
-  });
-
-  httpClient.close();
-
-  return http.Response.bytes(
-    bytes,
-    response.statusCode,
-    headers: headers,
-    request: http.Request(method, Uri.parse(url)),
-  );
-}
+) => HttpService().httpClientResponseStreamToFinalResponse(
+  httpClient,
+  method,
+  url,
+  response,
+);
 
 abstract class AppSource {
   List<String> hosts = [];
@@ -641,17 +403,29 @@ abstract class AppSource {
   late String name;
   bool enforceTrackOnly = false;
   bool changeLogIfAnyIsMarkDown = true;
+  bool changeLogPageIsStandardUrl = false;
   bool appIdInferIsOptional = false;
+  bool inferAppIdFromUrlPath = false;
   bool allowSubDomains = false;
   bool naiveStandardVersionDetection = false;
   bool allowOverride = true;
   bool neverAutoSelect = false;
   bool showReleaseDateAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
+  bool suppressStandardVersionExtraction = false;
   List<String> excludeCommonSettingKeys = [];
   bool urlsAlwaysHaveExtension = false;
   bool allowIncludeZips = false;
   bool allowIncludeTarballs = false;
+  String get sourceIdentifier => runtimeType.toString();
+
+  Future<Map<String, String>?> getRequestHeaders(
+    Map<String, dynamic> additionalSettings,
+    String url, {
+    bool forAPKDownload = false,
+  }) async {
+    return null;
+  }
 
   AppSource() {
     name = runtimeType.toString();
@@ -665,41 +439,42 @@ abstract class AppSource {
     return url;
   }
 
-  Future<Map<String, String>?> getRequestHeaders(
-    Map<String, dynamic> additionalSettings,
-    String url, {
-    bool forAPKDownload = false,
-  }) async {
-    return null;
-  }
-
-  App endOfGetAppChanges(App app) {
+  App postProcessApp(App app) {
     return app;
   }
 
-  Future<Response> sourceRequest(
+  Future<Map<String, dynamic>> buildMergedSettings(
+    Map<String, dynamic> additionalSettings,
+    SettingsProvider settingsProvider,
+  ) async {
+    return {
+      ...additionalSettings,
+      ...(await getSourceConfigValues(additionalSettings, settingsProvider)),
+    };
+  }
+
+  Future<http.Response> sourceRequest(
     String url,
     Map<String, dynamic> additionalSettings, {
     bool followRedirects = true,
     Object? postBody,
   }) async {
-    var sp = SettingsProvider();
+    final sp = SettingsProvider();
     await sp.initializeSettings();
-    getSourceConfigValues(additionalSettings, sp);
-    var additionalSettingsPlusSourceConfig = {
-      ...additionalSettings,
-      ...(await getSourceConfigValues(additionalSettings, sp)),
-    };
+    final additionalSettingsPlusSourceConfig = await buildMergedSettings(
+      additionalSettings,
+      sp,
+    );
     url = await generalReqPrefetchModifier(
       url,
       additionalSettingsPlusSourceConfig,
     );
-    var method = postBody == null ? 'GET' : 'POST';
-    var requestHeaders = await getRequestHeaders(
+    final method = postBody == null ? 'GET' : 'POST';
+    final requestHeaders = await getRequestHeaders(
       additionalSettingsPlusSourceConfig,
       url,
     );
-    var streamedResponseUrlWithResponseAndClient =
+    final streamedResponseUrlWithResponseAndClient =
         await sourceRequestStreamResponse(
           method,
           url,
@@ -716,8 +491,48 @@ abstract class AppSource {
     );
   }
 
-  void runOnAddAppInputChange(String inputUrl) {
-    //
+  void runOnAddAppInputChange(String inputUrl) {}
+
+  /// Delegates to [ApkFilterService.apkContainerExtensions].
+  static List<String> get apkContainerExtensions =>
+      ApkFilterService.apkContainerExtensions;
+
+  /// Delegates to [ApkFilterService.archiveExtensions].
+  static List<String> get archiveExtensions =>
+      ApkFilterService.archiveExtensions;
+
+  /// Delegates to [ApkFilterService.tarballExtensions].
+  static List<String> get tarballExtensions =>
+      ApkFilterService.tarballExtensions;
+
+  /// Delegates to [ApkFilterService.isApkOrContainerFile].
+  static bool isApkOrContainerFile(
+    String name, {
+    bool includeArchives = false,
+    bool includeTarballs = false,
+  }) => ApkFilterService.isApkOrContainerFile(
+    name,
+    includeArchives: includeArchives,
+    includeTarballs: includeTarballs,
+  );
+
+  /// A convenience for the common standardize-by-regex pattern: build a regex
+  /// from the source's [hosts] plus the given subdomain prefix and path, match
+  /// against [url], and return the match or throw [InvalidURLError].  Many
+  /// sources (16+) repeat this block verbatim; subclasses can call this
+  /// helper instead.
+  String standardizeUrlWithRegex(
+    String url, {
+    required String subdomainPrefix,
+    required String pathPattern,
+  }) {
+    final re = RegExp(
+      '^https?://$subdomainPrefix${getSourceRegex(hosts)}$pathPattern',
+      caseSensitive: false,
+    );
+    final match = re.firstMatch(url);
+    if (match == null) throw InvalidURLError(name);
+    return match.group(0)!;
   }
 
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
@@ -731,13 +546,20 @@ abstract class AppSource {
     throw NotImplementedError();
   }
 
-  // Different Sources may need different kinds of additional data for Apps
+  /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
   List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
       [];
 
-  // Some additional data may be needed for Apps regardless of Source
-  List<List<GeneratedFormItem>>
-  additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly = [
+  static List<GeneratedFormItem> get fallbackToOlderReleasesFormItem => [
+    GeneratedFormSwitch(
+      'fallbackToOlderReleases',
+      label: tr('fallbackToOlderReleases'),
+      value: true,
+    ),
+  ];
+
+  /// Some additional data may be needed for Apps regardless of Source
+  final List<List<GeneratedFormItem>> _commonAppSettingFormItems = [
     [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
     [
       GeneratedFormTextField(
@@ -759,14 +581,14 @@ abstract class AppSource {
       GeneratedFormSwitch(
         'versionDetection',
         label: tr('versionDetectionExplanation'),
-        defaultValue: true,
+        value: true,
       ),
     ],
     [
       GeneratedFormSwitch(
         'useVersionCodeAsOSVersion',
         label: tr('useVersionCodeAsOSVersion'),
-        defaultValue: false,
+        value: false,
       ),
     ],
     [
@@ -785,14 +607,14 @@ abstract class AppSource {
       GeneratedFormSwitch(
         'invertAPKFilter',
         label: '${tr('invertRegEx')} (${tr('filterAPKsByRegEx')})',
-        defaultValue: false,
+        value: false,
       ),
     ],
     [
       GeneratedFormSwitch(
         'autoApkFilterByArch',
         label: tr('autoApkFilterByArch'),
-        defaultValue: true,
+        value: true,
       ),
     ],
     [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
@@ -801,14 +623,14 @@ abstract class AppSource {
       GeneratedFormSwitch(
         'shizukuPretendToBeGooglePlay',
         label: tr('shizukuPretendToBeGooglePlay'),
-        defaultValue: false,
+        value: false,
       ),
     ],
     [
       GeneratedFormSwitch(
         'allowInsecure',
         label: tr('allowInsecure'),
-        defaultValue: false,
+        value: false,
       ),
     ],
     [
@@ -832,11 +654,12 @@ abstract class AppSource {
     ],
   ];
 
-  // Previous 2 variables combined into one at runtime for convenient usage + additional processing
+  /// Combines per-source form items with the common app-setting form items,
+  /// interspersing conditional items (zip/tarball options, version toggles) and
+  /// filtering out excluded keys. Cloned so that callers cannot mutate the
+  /// shared (cached) source-owned form items.
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
-    var agnosticItems = cloneFormItems(
-      additionalAppSpecificSourceAgnosticSettingFormItemsNeverUseDirectly,
-    );
+    var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
 
     final versionDetectionIdx = agnosticItems.indexWhere(
       (row) => row.any((item) => item.key == 'versionDetection'),
@@ -850,7 +673,7 @@ abstract class AppSource {
         GeneratedFormSwitch(
           'releaseDateAsVersion',
           label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
-          defaultValue: false,
+          value: false,
         ),
       ]);
     }
@@ -864,14 +687,14 @@ abstract class AppSource {
         .where((e) => e.isNotEmpty)
         .toList();
 
-    var moreConditionalItems = <List<GeneratedFormItem>>[];
+    final moreConditionalItems = <List<GeneratedFormItem>>[];
     if (allowIncludeZips) {
       moreConditionalItems.addAll([
         [
           GeneratedFormSwitch(
             'includeZips',
             label: tr('includeZips'),
-            defaultValue: false,
+            value: false,
           ),
         ],
         [
@@ -895,7 +718,7 @@ abstract class AppSource {
           GeneratedFormSwitch(
             'includeTarballs',
             label: tr('includeTarballs'),
-            defaultValue: false,
+            value: false,
           ),
         ],
         [
@@ -918,35 +741,52 @@ abstract class AppSource {
         if (item.key == 'versionDetection' ||
             item.key == 'useVersionCodeAsOSVersion') {
           (item as GeneratedFormSwitch).disabled = true;
-          (item as GeneratedFormSwitch).defaultValue = false;
+          item.value = false;
         }
       }
     }
 
     return [
-      ...additionalSourceAppSpecificSettingFormItems,
+      // Clone so callers (e.g. the add-app form pre-filling default values)
+      // can't mutate the source-owned items. Sources are now cached/shared, so
+      // an in-place edit here would otherwise leak across apps.
+      ...cloneFormItems(additionalSourceAppSpecificSettingFormItems),
       ...agnosticItems,
       ...moreConditionalItems,
     ];
   }
 
-  // Some Sources may have additional settings at the Source level (not specific to Apps) - these use SettingsProvider
-  // If the source has been overridden, we expect the user to define one-time values as additional settings - don't use the stored values
+  /// Cached emptiness check for [combinedAppSpecificSettingFormItems], used to
+  /// avoid cloning the form-item tree just to test isNotEmpty.
+  bool? _hasAppSpecificSettingsCache;
+  bool get hasAppSpecificSettings => _hasAppSpecificSettingsCache ??=
+      combinedAppSpecificSettingFormItems.isNotEmpty;
+
+  /// Flattened, read-only view of [combinedAppSpecificSettingFormItems],
+  /// memoized for callers that only need to enumerate keys without cloning.
+  List<GeneratedFormItem>? _flatCombinedFormItemsCache;
+  List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
+      _flatCombinedFormItemsCache ??= combinedAppSpecificSettingFormItems
+          .expand((row) => row)
+          .toList();
+
+  /// Source-level additional settings (not specific to Apps) backed by [SettingsProvider].
+  /// If the source has been overridden, per-app additional settings take precedence.
   List<GeneratedFormItem> sourceConfigSettingFormItems = [];
   Future<Map<String, String>> getSourceConfigValues(
     Map<String, dynamic> additionalSettings,
     SettingsProvider settingsProvider,
   ) async {
-    Map<String, String> results = {};
+    final Map<String, String> results = {};
     for (var e in sourceConfigSettingFormItems) {
       var val = hostChanged && !hostIdenticalDespiteAnyChange
           ? additionalSettings[e.key]
           : additionalSettings[e.key] ??
-                (e.runtimeType == GeneratedFormSwitch
+                (e is GeneratedFormSwitch
                     ? settingsProvider.getSettingBool(e.key).toString()
                     : settingsProvider.getSettingString(e.key));
       if (val != null) {
-        if (e.runtimeType == GeneratedFormSwitch) {
+        if (e is GeneratedFormSwitch) {
           val = val.toString();
         }
         results[e.key] = val;
@@ -956,7 +796,7 @@ abstract class AppSource {
   }
 
   String? changeLogPageFromStandardUrl(String standardUrl) {
-    return null;
+    return changeLogPageIsStandardUrl ? standardUrl : null;
   }
 
   Future<String?> getSourceNote() async {
@@ -988,23 +828,41 @@ abstract class AppSource {
     throw NotImplementedError();
   }
 
+  static String stripLastPathSegment(String url) {
+    final uri = Uri.parse(url);
+    return uri
+        .replace(
+          pathSegments: uri.pathSegments.sublist(
+            0,
+            uri.pathSegments.length - 1,
+          ),
+        )
+        .toString();
+  }
+
+  static Future<String?> tryInferAppIdFromLastPathSegment(
+    String standardUrl, {
+    Map<String, dynamic> additionalSettings = const {},
+  }) async {
+    return Uri.parse(
+      standardUrl,
+    ).pathSegments.where((s) => s.isNotEmpty).lastOrNull;
+  }
+
   Future<String?> tryInferringAppId(
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
+    if (inferAppIdFromUrlPath) {
+      return tryInferAppIdFromLastPathSegment(standardUrl);
+    }
     return null;
   }
 }
 
-ObtainiumError getObtainiumHttpError(Response res) {
-  return ObtainiumError(
-    (res.reasonPhrase != null &&
-            res.reasonPhrase != null &&
-            res.reasonPhrase!.isNotEmpty)
-        ? res.reasonPhrase!
-        : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]),
-  );
-}
+/// Delegates to [HttpService.getHttpError].
+ObtainiumError getObtainiumHttpError(http.Response res) =>
+    HttpService().getHttpError(res);
 
 abstract class MassAppUrlSource {
   late String name;
@@ -1012,117 +870,53 @@ abstract class MassAppUrlSource {
   Future<Map<String, List<String>>> getUrlsWithDescriptions(List<String> args);
 }
 
-String? regExValidator(String? value) {
-  if (value == null || value.isEmpty) {
-    return null;
-  }
-  try {
-    RegExp(value);
-  } catch (e) {
-    return tr('invalidRegEx');
-  }
-  return null;
-}
+/// Delegates to [VersionService.regExValidator].
+String? regExValidator(String? value) => VersionService().regExValidator(value);
 
-String? intValidator(String? value, {bool positive = false}) {
-  if (value == null) {
-    return tr('invalidInput');
-  }
-  var num = int.tryParse(value);
-  if (num == null) {
-    return tr('invalidInput');
-  }
-  if (positive && num <= 0) {
-    return tr('invalidInput');
-  }
-  return null;
-}
-
+/// Returns true if the app's ID is a numeric placeholder (temporary ID) rather than a real package name.
 bool isTempId(App app) {
-  // return app.id == generateTempID(app.url, app.additionalSettings);
   return RegExp('^[0-9]+\$').hasMatch(app.id);
 }
 
-String? replaceMatchGroupsInString(RegExpMatch match, String matchGroupString) {
-  if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
-    matchGroupString = '\$$matchGroupString';
-  }
-  // Regular expression to match numbers in the input string
-  final numberRegex = RegExp(r'\$\d+');
-  // Extract all numbers from the input string
-  final numbers = numberRegex.allMatches(matchGroupString);
-  if (numbers.isEmpty) {
-    // If no numbers found, return the original string
-    return null;
-  }
-  // Replace numbers with corresponding match groups
-  var outputString = matchGroupString;
-  for (final numberMatch in numbers) {
-    final number = numberMatch.group(0)!;
-    final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
-    // Check if the number is preceded by a single backslash
-    final isEscaped = outputString.contains('\\$number');
-    // Replace the number with the corresponding match group
-    if (!isEscaped) {
-      outputString = outputString.replaceAll(number, matchGroup);
-    } else {
-      outputString = outputString.replaceAll('\\$number', number);
-    }
-  }
-  return outputString;
-}
+/// Delegates to [VersionService.replaceMatchGroupsInString].
+String? replaceMatchGroupsInString(
+  RegExpMatch match,
+  String matchGroupString,
+) => VersionService().replaceMatchGroupsInString(match, matchGroupString);
 
+/// Delegates to [VersionService.extractVersion].
 String? extractVersion(
   String? versionExtractionRegEx,
   String? matchGroupString,
   String stringToCheck,
-) {
-  if (versionExtractionRegEx?.isNotEmpty == true) {
-    String? version = stringToCheck;
-    var match = RegExp(versionExtractionRegEx!).allMatches(version);
-    if (match.isEmpty) {
-      throw NoVersionError();
-    }
-    matchGroupString = matchGroupString?.trim() ?? '';
-    if (matchGroupString.isEmpty) {
-      matchGroupString = "0";
-    }
-    version = replaceMatchGroupsInString(match.last, matchGroupString);
-    if (version?.isNotEmpty != true) {
-      throw NoVersionError();
-    }
-    return version!;
-  } else {
-    return null;
-  }
-}
+) => VersionService().extractVersion(
+  versionExtractionRegEx,
+  matchGroupString,
+  stringToCheck,
+);
 
+/// Delegates to [ApkFilterService.filterApks].
 List<MapEntry<String, String>> filterApks(
   List<MapEntry<String, String>> apkUrls,
   String? apkFilterRegEx,
   bool? invert,
-) {
-  if (apkFilterRegEx?.isNotEmpty == true) {
-    var reg = RegExp(apkFilterRegEx!);
-    apkUrls = apkUrls.where((element) {
-      var hasMatch = reg.hasMatch(element.key);
-      return invert == true ? !hasMatch : hasMatch;
-    }).toList();
-  }
-  return apkUrls;
-}
+) => ApkFilterService().filterApks(apkUrls, apkFilterRegEx, invert);
 
-bool isEnglish() => tr('and') == 'and'; // Quick hack, find a better way
-String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
-
+/// Returns true when the app uses pseudo-versioning (track-only or disabled version detection).
 bool isVersionPseudo(App app) =>
-    app.additionalSettings['trackOnly'] == true ||
+    app.settings.getBool('trackOnly') ||
     (app.installedVersion != null &&
-        app.additionalSettings['versionDetection'] != true);
+        !app.settings.getBool('versionDetection', defaultValue: true));
 
 class SourceProvider {
-  // Add more source classes here so they are available via the service
-  List<AppSource> get sources => [
+  static final SourceProvider _instance = SourceProvider._();
+  factory SourceProvider() => _instance;
+  SourceProvider._();
+
+  // Builds a fresh set of source instances. Adding a source here makes it
+  // available via the service. Kept private so callers go through [sources]
+  // (cached) or, when per-call mutation is needed, [_buildSources] directly.
+  static List<AppSource> _buildSources() => [
     GitHub(),
     GitLab(),
     Codeberg(),
@@ -1142,30 +936,39 @@ class SourceProvider {
     Farsroid(),
     CoolApk(),
     LiteAPKs(),
+    SourceForge(),
     Jenkins(),
     APKMirror(),
+    APKCombo(),
     RockMods(),
     TelegramApp(),
     NeutronCode(),
     DirectAPKLink(),
-    HTML(), // This should ALWAYS be the last option as they are tried in order
+    HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
   ];
 
-  // Add more mass url source classes here so they are available via the service
+  /// Cached, read-only source list built lazily by [_buildSources].
+  /// Because sources are immutable after construction, the cache is safe.
+  static List<AppSource>? _cachedSources;
+  List<AppSource> get sources => _cachedSources ??= _buildSources();
+
+  /// Add mass URL source classes here so they are available via the service.
   List<MassAppUrlSource> massUrlSources = [GitHubStars()];
 
   AppSource getSource(String url, {String? overrideSource}) {
     url = preStandardizeUrl(url);
     if (overrideSource != null) {
-      var srcs = sources.where(
-        (e) => e.runtimeType.toString() == overrideSource,
+      // The override path mutates the chosen source's host config, so build a
+      // throwaway instance here rather than touching the shared cache.
+      final srcs = _buildSources().where(
+        (e) => e.sourceIdentifier == overrideSource,
       );
       if (srcs.isEmpty) {
         throw UnsupportedURLError();
       }
-      var res = srcs.first;
-      var originalHosts = res.hosts;
-      var newHost = Uri.parse(url).host;
+      final res = srcs.first;
+      final originalHosts = res.hosts;
+      final newHost = Uri.parse(url).host;
       res.hosts = [newHost];
       res.hostChanged = true;
       if (originalHosts.contains(newHost)) {
@@ -1173,8 +976,10 @@ class SourceProvider {
       }
       return res;
     }
+    // The non-override path is read-only, so reuse the cached source set.
+    final allSources = sources;
     AppSource? source;
-    for (var s in sources.where((element) => element.hosts.isNotEmpty)) {
+    for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
       try {
         if (RegExp(
           '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
@@ -1183,11 +988,13 @@ class SourceProvider {
           break;
         }
       } catch (e) {
-        // Ignore
+        LogsProvider().add(
+          'Source host-match error for ${s.runtimeType}: ${e.toString()}',
+        );
       }
     }
     if (source == null) {
-      for (var s in sources.where(
+      for (var s in allSources.where(
         (element) => element.hosts.isEmpty && !element.neverAutoSelect,
       )) {
         try {
@@ -1195,7 +1002,9 @@ class SourceProvider {
           source = s;
           break;
         } catch (e) {
-          //
+          LogsProvider().add(
+            'Source standardize error for ${s.runtimeType}: ${e.toString()}',
+          );
         }
       }
     }
@@ -1221,6 +1030,29 @@ class SourceProvider {
     Map<String, dynamic> additionalSettings,
   ) => (standardUrl + additionalSettings.toString()).hashCode.toString();
 
+  Future<String?> _resolveAppId(
+    AppSource source,
+    App? currentApp,
+    Map<String, dynamic> additionalSettings,
+    bool trackOnly,
+    String standardUrl,
+    bool inferAppIdIfOptional,
+  ) async {
+    if (currentApp?.id != null) return currentApp!.id;
+    final explicitId = additionalSettings['appId'] as String?;
+    if (explicitId != null) return explicitId;
+    if (!trackOnly &&
+        (!source.appIdInferIsOptional ||
+            (source.appIdInferIsOptional && inferAppIdIfOptional))) {
+      final inferred = await source.tryInferringAppId(
+        standardUrl,
+        additionalSettings: additionalSettings,
+      );
+      if (inferred != null) return inferred;
+    }
+    return generateTempID(standardUrl, additionalSettings);
+  }
+
   Future<App> getApp(
     AppSource source,
     String url,
@@ -1230,20 +1062,19 @@ class SourceProvider {
     bool sourceIsOverriden = false,
     bool inferAppIdIfOptional = false,
   }) async {
+    additionalSettings = Map<String, dynamic>.from(additionalSettings);
     if (trackOnlyOverride || source.enforceTrackOnly) {
       additionalSettings['trackOnly'] = true;
     }
-    var trackOnly = additionalSettings['trackOnly'] == true;
-    String standardUrl = source.standardizeUrl(url);
-    APKDetails apk = await source.getLatestAPKDetails(
+    final trackOnly = additionalSettings['trackOnly'] == true;
+    final String standardUrl = source.standardizeUrl(url);
+    final APKDetails apk = await source.getLatestAPKDetails(
       standardUrl,
       additionalSettings,
     );
 
-    if (source.runtimeType !=
-            HTML().runtimeType && // Some sources do it separately
-        source.runtimeType != SourceForge().runtimeType) {
-      String? extractedVersion = extractVersion(
+    if (!source.suppressStandardVersionExtraction) {
+      final String? extractedVersion = extractVersion(
         additionalSettings['versionExtractionRegEx'] as String?,
         additionalSettings['matchGroupToUse'] as String?,
         apk.version,
@@ -1270,76 +1101,793 @@ class SourceProvider {
     }
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
-    App finalApp = App(
-      currentApp?.id ??
-          ((additionalSettings['appId'] != null)
-              ? additionalSettings['appId']
-              : null) ??
-          (!trackOnly &&
-                  (!source.appIdInferIsOptional ||
-                      (source.appIdInferIsOptional && inferAppIdIfOptional))
-              ? await source.tryInferringAppId(
-                  standardUrl,
-                  additionalSettings: additionalSettings,
-                )
-              : null) ??
+    final App finalApp = App(
+      id:
+          await _resolveAppId(
+            source,
+            currentApp,
+            additionalSettings,
+            trackOnly,
+            standardUrl,
+            inferAppIdIfOptional,
+          ) ??
           generateTempID(standardUrl, additionalSettings),
-      standardUrl,
-      apk.names.author,
-      name,
-      currentApp?.installedVersion,
-      apk.version,
-      apk.apkUrls,
-      apk.apkUrls.length - 1 >= 0 ? apk.apkUrls.length - 1 : 0,
-      additionalSettings,
-      DateTime.now(),
-      currentApp?.pinned ?? false,
+      url: standardUrl,
+      author: apk.names.author,
+      name: name,
+      installedVersion: currentApp?.installedVersion,
+      latestVersion: apk.version,
+      apkUrls: apk.apkUrls,
+      preferredApkIndex: apk.apkUrls.length - 1,
+      additionalSettings: additionalSettings,
+      lastUpdateCheck: DateTime.now(),
+      pinned: currentApp?.pinned ?? false,
       categories: currentApp?.categories ?? const [],
       releaseDate: apk.releaseDate,
       changeLog: apk.changeLog,
       overrideSource: sourceIsOverriden
-          ? source.runtimeType.toString()
+          ? source.sourceIdentifier
           : currentApp?.overrideSource,
       allowIdChange:
           currentApp?.allowIdChange ??
-          trackOnly ||
-              (source.appIdInferIsOptional &&
-                  inferAppIdIfOptional), // Optional ID inferring may be incorrect - allow correction on first install
+          trackOnly || (source.appIdInferIsOptional && inferAppIdIfOptional),
       otherAssetUrls: apk.allAssetUrls
           .where((a) => apk.apkUrls.indexWhere((p) => a.key == p.key) < 0)
           .toList(),
     );
-    return source.endOfGetAppChanges(finalApp);
+    return source.postProcessApp(finalApp);
   }
 
   // Returns errors in [results, errors] instead of throwing them
   Future<List<dynamic>> getAppsByURLNaive(
     List<String> urls, {
-    List<String> alreadyAddedUrls = const [],
+    Set<String> alreadyAddedUrls = const {},
     AppSource? sourceOverride,
   }) async {
-    List<App> apps = [];
-    Map<String, dynamic> errors = {};
-    for (var url in urls) {
-      try {
-        if (alreadyAddedUrls.contains(url)) {
-          throw ObtainiumError(tr('appAlreadyAdded'));
+    final List<App> apps = [];
+    final Map<String, dynamic> errors = {};
+    const concurrency = 4;
+    for (var i = 0; i < urls.length; i += concurrency) {
+      final end = i + concurrency > urls.length ? urls.length : i + concurrency;
+      final batch = urls.sublist(i, end);
+      final results = await Future.wait(
+        batch.map((url) async {
+          try {
+            if (alreadyAddedUrls.contains(url)) {
+              throw ObtainiumError(tr('appAlreadyAdded'));
+            }
+            final source = sourceOverride ?? getSource(url);
+            return await getApp(
+              source,
+              url,
+              sourceIsOverriden: sourceOverride != null,
+              getDefaultValuesFromFormItems(
+                source.combinedAppSpecificSettingFormItems,
+              ),
+            );
+          } catch (e) {
+            return e;
+          }
+        }),
+      );
+      for (var j = 0; j < batch.length; j++) {
+        final result = results[j];
+        if (result is App) {
+          apps.add(result);
+        } else {
+          errors[batch[j]] = result;
         }
-        var source = sourceOverride ?? getSource(url);
-        apps.add(
-          await getApp(
-            source,
-            url,
-            sourceIsOverriden: sourceOverride != null,
-            getDefaultValuesFromFormItems(
-              source.combinedAppSpecificSettingFormItems,
-            ),
-          ),
-        );
-      } catch (e) {
-        errors.addAll(<String, dynamic>{url: e});
       }
     }
     return [apps, errors];
   }
+}
+
+/// Type-safe wrapper around [App.additionalSettings] that eliminates
+/// manual casts and null checks when reading per-source configuration values.
+///
+/// Usage:
+/// ```dart
+/// if (app.settings.getBool('trackOnly')) { ... }
+/// String? regex = app.settings.getStringOrNull('apkFilterRegEx');
+/// ```
+class TypedSettings {
+  final Map<String, dynamic> _raw;
+
+  const TypedSettings(Map<String, dynamic> raw) : _raw = raw;
+
+  factory TypedSettings.fromJson(Map<String, dynamic> json) =>
+      TypedSettings(Map<String, dynamic>.from(json));
+
+  Map<String, dynamic> toJson() => Map<String, dynamic>.from(_raw);
+
+  /// Returns the raw backing map. Prefer typed accessors when the key is known.
+  Map<String, dynamic> get raw => _raw;
+
+  bool getBool(String key, {bool defaultValue = false}) {
+    final val = _raw[key];
+    if (val == null) return defaultValue;
+    if (val is bool) return val;
+    if (val is String) return val == 'true';
+    return defaultValue;
+  }
+
+  int? getIntOrNull(String key) {
+    final val = _raw[key];
+    if (val is int) return val;
+    if (val is String) return int.tryParse(val);
+    return null;
+  }
+
+  String? getStringOrNull(String key) {
+    final val = _raw[key];
+    if (val == null) return null;
+    if (val is String) return val.isNotEmpty ? val : null;
+    return val.toString();
+  }
+
+  String getString(String key, {String defaultValue = ''}) =>
+      getStringOrNull(key) ?? defaultValue;
+
+  bool hasKey(String key) => _raw.containsKey(key);
+
+  T? get<T>(String key) => _raw[key] as T?;
+
+  /// For backwards compatibility with code that accesses [_raw] via index.
+  dynamic operator [](String key) => _raw[key];
+
+  bool hasNonNullOrEmpty(String key) {
+    final val = _raw[key];
+    if (val == null) return false;
+    if (val is String) return val.isNotEmpty;
+    return true;
+  }
+
+  @override
+  String toString() => _raw.toString();
+}
+
+class HttpService {
+  static const int maxRedirects = 10;
+  static const Duration connectionTimeout = Duration(seconds: 30);
+
+  IOClient createClient({bool followRedirects = true, bool insecure = false}) {
+    final client = HttpClient()..connectionTimeout = connectionTimeout;
+    if (insecure) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+    }
+    return IOClient(client);
+  }
+
+  HttpClient createHttpClient(bool insecure) {
+    final client = HttpClient();
+    client.connectionTimeout = connectionTimeout;
+    if (insecure) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+    }
+    return client;
+  }
+
+  String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
+    try {
+      ambiguousUrl = ambiguousUrl.trim();
+      if (Uri.parse(ambiguousUrl).isAbsolute) {
+        return ambiguousUrl;
+      }
+    } on FormatException {
+      // Non-parsable URL, fall through to resolve logic below
+    }
+    return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
+  }
+
+  /// Performs an HTTP request with redirect following, returning the final URL, client, and streamed response.
+  Future<MapEntry<Uri, MapEntry<HttpClient, HttpClientResponse>>>
+  sourceRequestStreamResponse(
+    String method,
+    String url,
+    Map<String, String>? requestHeaders,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    var currentUrl = Uri.parse(url);
+    var redirectCount = 0;
+    List<Cookie> cookies = [];
+    HttpClient? httpClient;
+    while (redirectCount < maxRedirects) {
+      httpClient = createHttpClient(
+        additionalSettings['allowInsecure'] == true,
+      );
+      final request = await httpClient.openUrl(method, currentUrl);
+      if (requestHeaders != null) {
+        requestHeaders.forEach((key, value) {
+          request.headers.set(key, value);
+        });
+      }
+      request.cookies.addAll(cookies);
+      request.followRedirects = false;
+      if (postBody != null) {
+        request.headers.contentType = ContentType.json;
+        request.write(jsonEncode(postBody));
+      }
+      final response = await request.close();
+
+      if (followRedirects &&
+          (response.statusCode >= 301 &&
+              response.statusCode <= 308 &&
+              response.statusCode != 304)) {
+        final location = response.headers.value(HttpHeaders.locationHeader);
+        if (location != null) {
+          currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
+          redirectCount++;
+          cookies = response.cookies;
+          httpClient.close();
+          httpClient = null;
+          continue;
+        }
+      }
+
+      return MapEntry(currentUrl, MapEntry(httpClient, response));
+    }
+    httpClient?.close();
+    throw ObtainiumError(tr('tooManyRedirects'));
+  }
+
+  Future<http.Response> httpClientResponseStreamToFinalResponse(
+    HttpClient httpClient,
+    String method,
+    String url,
+    HttpClientResponse response,
+  ) async {
+    try {
+      final bytes = (await response.fold<BytesBuilder>(
+        BytesBuilder(),
+        (b, d) => b..add(d),
+      )).toBytes();
+
+      final headers = <String, String>{};
+      response.headers.forEach((name, values) {
+        headers[name] = values.join(', ');
+      });
+
+      return http.Response.bytes(
+        bytes,
+        response.statusCode,
+        headers: headers,
+        request: http.Request(method, Uri.parse(url)),
+      );
+    } finally {
+      httpClient.close();
+    }
+  }
+
+  ObtainiumError getHttpError(http.Response res) {
+    if (res.statusCode == 404) return NoReleasesError();
+    if (res.statusCode == 429 || res.statusCode == 403) {
+      final retryAfter = res.headers['retry-after'];
+      final secs = retryAfter != null ? int.tryParse(retryAfter) : null;
+      if (secs != null) return RateLimitError((secs / 60).ceil());
+      return RateLimitError(1);
+    }
+    return ObtainiumError(
+      (res.reasonPhrase != null && res.reasonPhrase!.isNotEmpty)
+          ? res.reasonPhrase!
+          : tr('errorWithHttpStatusCode', args: [res.statusCode.toString()]),
+      code: 'HTTP_ERROR',
+    );
+  }
+}
+
+class VersionService {
+  static const defaultMatchGroup = '0';
+
+  static final List<String> standardVersionRegExStrings =
+      _generateStandardVersionRegExStrings();
+
+  static final List<MapEntry<String, RegExp>> strictStandardVersionRegExes =
+      standardVersionRegExStrings
+          .map((p) => MapEntry(p, RegExp('^$p\$')))
+          .toList();
+
+  static final List<MapEntry<String, RegExp>> looseStandardVersionRegExes =
+      standardVersionRegExStrings.map((p) => MapEntry(p, RegExp(p))).toList();
+
+  static List<String> _generateStandardVersionRegExStrings() {
+    final basics = [
+      '[0-9]+',
+      '[0-9]+\\.[0-9]+',
+      '[0-9]+\\.[0-9]+\\.[0-9]+',
+      '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+',
+    ];
+    final preSuffixes = ['-', '\\+'];
+    final suffixes = [
+      'alpha',
+      'beta',
+      'rc',
+      'pre',
+      'dev',
+      'snapshot',
+      'nightly',
+      'ose',
+      '[0-9]+',
+    ];
+    final finals = ['\\+[0-9]+', '[0-9]+'];
+    final List<String> results = [];
+    for (var b in basics) {
+      results.add(b);
+      for (var p in preSuffixes) {
+        for (var s in suffixes) {
+          results.add('$b$s');
+          results.add('$b$p$s');
+          for (var f in finals) {
+            results.add('$b$s$f');
+            results.add('$b$p$s$f');
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  String? regExValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    try {
+      RegExp(value);
+    } catch (e) {
+      return tr('invalidRegEx');
+    }
+    return null;
+  }
+
+  /// Replaces `$N` references in a string with the corresponding regex match groups.
+  String? replaceMatchGroupsInString(
+    RegExpMatch match,
+    String matchGroupString,
+  ) {
+    if (RegExp('^\\d+\$').hasMatch(matchGroupString)) {
+      matchGroupString = '\$$matchGroupString';
+    }
+    final numberRegex = RegExp(r'\$\d+');
+    final numbers = numberRegex.allMatches(matchGroupString);
+    if (numbers.isEmpty) {
+      return null;
+    }
+    var outputString = matchGroupString;
+    for (final numberMatch in numbers) {
+      final number = numberMatch.group(0)!;
+      final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+      final isEscaped = outputString.contains('\\$number');
+      if (!isEscaped) {
+        outputString = outputString.replaceAll(number, matchGroup);
+      } else {
+        outputString = outputString.replaceAll('\\$number', number);
+      }
+    }
+    return outputString;
+  }
+
+  /// Applies a version extraction regex to a string and returns the captured match group.
+  String? extractVersion(
+    String? versionExtractionRegEx,
+    String? matchGroupString,
+    String stringToCheck,
+  ) {
+    if (versionExtractionRegEx?.isNotEmpty == true) {
+      String? version = stringToCheck;
+      final match = RegExp(versionExtractionRegEx!).allMatches(version);
+      if (match.isEmpty) {
+        throw NoVersionError();
+      }
+      matchGroupString = matchGroupString?.trim() ?? '';
+      if (matchGroupString.isEmpty) {
+        matchGroupString = defaultMatchGroup;
+      }
+      version = replaceMatchGroupsInString(match.last, matchGroupString);
+      if (version?.isNotEmpty != true) {
+        throw NoVersionError();
+      }
+      return version!;
+    } else {
+      return null;
+    }
+  }
+
+  Set<String> findStandardFormatsForVersion(String version, bool strict) {
+    final Set<String> results = {};
+    final patterns = strict
+        ? strictStandardVersionRegExes
+        : looseStandardVersionRegExes;
+    for (var entry in patterns) {
+      if (entry.value.hasMatch(version)) {
+        results.add(entry.key);
+      }
+    }
+    return results;
+  }
+
+  bool doStringsMatchUnderRegEx(String pattern, String value1, String value2) {
+    final r = RegExp(pattern);
+    final m1 = r.firstMatch(value1);
+    final m2 = r.firstMatch(value2);
+    return m1 != null && m2 != null
+        ? value1.substring(m1.start, m1.end) ==
+              value2.substring(m2.start, m2.end)
+        : false;
+  }
+}
+
+class ApkFilterService {
+  static const List<String> apkContainerExtensions = [
+    '.apk',
+    '.xapk',
+    '.apkm',
+    '.apks',
+  ];
+
+  static const List<String> archiveExtensions = ['.zip'];
+
+  static const List<String> tarballExtensions = [
+    '.tar.gz',
+    '.tgz',
+    '.tar.bz2',
+    '.tar.xz',
+  ];
+
+  static bool isApkOrContainerFile(
+    String name, {
+    bool includeArchives = false,
+    bool includeTarballs = false,
+  }) {
+    final lower = name.toLowerCase();
+    bool endsWithAny(List<String> exts) => exts.any(lower.endsWith);
+    return endsWithAny(apkContainerExtensions) ||
+        (includeArchives && endsWithAny(archiveExtensions)) ||
+        (includeTarballs && endsWithAny(tarballExtensions));
+  }
+
+  List<MapEntry<String, String>> getApkUrlsFromUrls(List<String> urls) =>
+      urls.map((e) {
+        final segments = e.split('/').where((el) => el.trim().isNotEmpty);
+        final apkSegs = segments.where((s) => isApkOrContainerFile(s));
+        return MapEntry(apkSegs.isNotEmpty ? apkSegs.last : segments.last, e);
+      }).toList();
+
+  List<MapEntry<String, String>> filterApks(
+    List<MapEntry<String, String>> apkUrls,
+    String? apkFilterRegEx,
+    bool? invert,
+  ) {
+    if (apkFilterRegEx?.isNotEmpty == true) {
+      final reg = RegExp(apkFilterRegEx!);
+      apkUrls = apkUrls.where((element) {
+        final hasMatch = reg.hasMatch(element.key);
+        return invert == true ? !hasMatch : hasMatch;
+      }).toList();
+    }
+    return apkUrls;
+  }
+
+  Future<List<MapEntry<String, String>>> filterApksByArch(
+    List<MapEntry<String, String>> apkUrls,
+    List<String> abis, {
+    bool preferSplits = true,
+  }) async {
+    if (apkUrls.length > 1) {
+      for (var abi in abis) {
+        final urls2 = apkUrls
+            .where(
+              (element) => RegExp(
+                '.*$abi.*',
+                caseSensitive: false,
+              ).hasMatch(element.key),
+            )
+            .toList();
+        if (urls2.isNotEmpty && urls2.length < apkUrls.length) {
+          apkUrls = urls2;
+          break;
+        }
+      }
+    }
+    return apkUrls;
+  }
+}
+
+Map<String, dynamic> _migrateAppToHTML(
+  Map<String, dynamic> json,
+  Map<String, dynamic> additionalSettings, {
+  required String newUrl,
+  Map<String, dynamic>? overrides,
+}) {
+  json['url'] = newUrl;
+  final replacement = getDefaultValuesFromFormItems(
+    HTML().combinedAppSpecificSettingFormItems,
+  );
+  for (var s in replacement.keys) {
+    if (additionalSettings.containsKey(s)) {
+      replacement[s] = additionalSettings[s];
+    }
+  }
+  if (overrides != null) replacement.addAll(overrides);
+  return replacement;
+}
+
+/// Migrates old-style `additionalData` array (list of strings) to the
+/// newer `additionalSettings` map, keyed by form-item key.
+void _migrateAdditionalDataToSettings(
+  Map<String, dynamic> json,
+  Map<String, dynamic> additionalSettings,
+  List<GeneratedFormItem> formItems,
+) {
+  if (json['additionalData'] == null) return;
+  final decoded = jsonDecode(json['additionalData']);
+  if (decoded is! List) return;
+  final List<String> temp = List<String>.from(decoded);
+  temp.asMap().forEach((i, value) {
+    if (i < formItems.length) {
+      if (formItems[i] is GeneratedFormSwitch) {
+        additionalSettings[formItems[i].key] = value == 'true';
+      } else {
+        additionalSettings[formItems[i].key] = value;
+      }
+    }
+  });
+  additionalSettings['trackOnly'] =
+      json['trackOnly'] == 'true' || json['trackOnly'] == true;
+  additionalSettings['noVersionDetection'] =
+      json['noVersionDetection'] == 'true' ||
+      json['noVersionDetection'] == true;
+}
+
+/// Converts legacy booleans `noVersionDetection` / `releaseDateAsVersion`
+/// to the current `versionDetection` string dropdown and back.
+void _migrateVersionDetectionFormat(Map<String, dynamic> additionalSettings) {
+  if (additionalSettings['noVersionDetection'] == true) {
+    additionalSettings['versionDetection'] = 'noVersionDetection';
+    if (additionalSettings['releaseDateAsVersion'] == true) {
+      additionalSettings['versionDetection'] = 'releaseDateAsVersion';
+    }
+    additionalSettings.remove('noVersionDetection');
+    additionalSettings.remove('releaseDateAsVersion');
+  }
+  if (additionalSettings['versionDetection'] == 'standardVersionDetection') {
+    additionalSettings['versionDetection'] = true;
+  } else if (additionalSettings['versionDetection'] == 'noVersionDetection') {
+    additionalSettings['versionDetection'] = false;
+  } else if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
+    additionalSettings['versionDetection'] = false;
+    additionalSettings['releaseDateAsVersion'] = true;
+  }
+}
+
+/// Converts legacy `supportFixedAPKURL` bool to `defaultPseudoVersioningMethod`.
+void _migratePseudoVersioningMethod(
+  Map<String, dynamic> originalAdditionalSettings,
+  Map<String, dynamic> additionalSettings,
+) {
+  if (originalAdditionalSettings['supportFixedAPKURL'] == true) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'partialAPKHash';
+  } else if (originalAdditionalSettings['supportFixedAPKURL'] == false) {
+    additionalSettings['defaultPseudoVersioningMethod'] = 'APKLinkHash';
+  }
+}
+
+/// Ensures every known form item's value is coerced to its declared type.
+void _coerceAdditionalSettingTypes(
+  Map<String, dynamic> additionalSettings,
+  List<GeneratedFormItem> formItems,
+) {
+  for (var item in formItems) {
+    if (additionalSettings[item.key] != null) {
+      additionalSettings[item.key] = item.ensureType(
+        additionalSettings[item.key],
+      );
+    }
+  }
+}
+
+/// Normalises `apkUrls` to the current 2D-list JSON format.
+void _migrateApkUrlsFormat(Map<String, dynamic> json) {
+  if (json['apkUrls'] == null) return;
+  final apkUrlJson = jsonDecode(json['apkUrls']);
+  List<MapEntry<String, String>> apkUrls;
+  try {
+    apkUrls = getApkUrlsFromUrls(List<String>.from(apkUrlJson));
+  } catch (e) {
+    apkUrls = assumed2DlistToStringMapList(List<dynamic>.from(apkUrlJson));
+  }
+  json['apkUrls'] = jsonEncode(stringMapListTo2DList(apkUrls));
+}
+
+/// Applies HTML-source-specific one-time migrations: key renames,
+/// intermediate-link format upgrade, and legacy-source → HTML conversions
+/// (Steam, Signal, WhatsApp, VLC).
+Map<String, dynamic> _migrateHtmlSpecificMigrations(
+  Map<String, dynamic> json,
+  Map<String, dynamic> originalAdditionalSettings,
+  Map<String, dynamic> additionalSettings,
+) {
+  if (originalAdditionalSettings['sortByFileNamesNotLinks'] != null) {
+    additionalSettings['sortByLastLinkSegment'] =
+        originalAdditionalSettings['sortByFileNamesNotLinks'];
+  }
+  if (originalAdditionalSettings['intermediateLinkRegex'] != null &&
+      additionalSettings['intermediateLinkRegex']?.isNotEmpty != true) {
+    additionalSettings['intermediateLink'] = [
+      {
+        'customLinkFilterRegex':
+            originalAdditionalSettings['intermediateLinkRegex'],
+        'filterByLinkText':
+            originalAdditionalSettings['intermediateLinkByText'],
+      },
+    ];
+  }
+  if ((additionalSettings['intermediateLink']?.length ?? 0) > 0) {
+    additionalSettings['intermediateLink'] =
+        additionalSettings['intermediateLink'].where((e) {
+          return e['customLinkFilterRegex']?.isNotEmpty == true;
+        }).toList();
+  }
+
+  final legacySteamSourceApps = ['steam', 'steam-chat-app'];
+  if (legacySteamSourceApps.contains(additionalSettings['app'] ?? '')) {
+    additionalSettings = _migrateAppToHTML(
+      json,
+      additionalSettings,
+      newUrl: '${json['url']}/mobile',
+      overrides: {
+        'customLinkFilterRegex':
+            '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk',
+        'versionExtractionRegEx':
+            '/${additionalSettings['app']}-(([0-9]+\\.?){1,})\\.apk',
+        'matchGroupToUse': '\$1',
+      },
+    );
+  }
+  if (json['url'] == 'https://signal.org' &&
+      json['id'] == 'org.thoughtcrime.securesms' &&
+      json['author'] == 'Signal' &&
+      json['name'] == 'Signal' &&
+      json['overrideSource'] == null &&
+      additionalSettings['trackOnly'] == false &&
+      additionalSettings['versionExtractionRegEx'] == '' &&
+      json['lastUpdateCheck'] != null) {
+    additionalSettings = _migrateAppToHTML(
+      json,
+      additionalSettings,
+      newUrl: 'https://updates.signal.org/android/latest.json',
+      overrides: {'versionExtractionRegEx': r'\d+.\d+.\d+'},
+    );
+  }
+  if (json['url'] == 'https://whatsapp.com' &&
+      json['id'] == 'com.whatsapp' &&
+      json['author'] == 'Meta' &&
+      json['name'] == 'WhatsApp' &&
+      json['overrideSource'] == null &&
+      additionalSettings['trackOnly'] == false &&
+      additionalSettings['versionExtractionRegEx'] == '' &&
+      json['lastUpdateCheck'] != null) {
+    additionalSettings = _migrateAppToHTML(
+      json,
+      additionalSettings,
+      newUrl: 'https://whatsapp.com/android',
+      overrides: {'refreshBeforeDownload': true},
+    );
+  }
+  if (json['url'] == 'https://videolan.org' &&
+      json['id'] == 'org.videolan.vlc' &&
+      json['author'] == 'VideoLAN' &&
+      json['name'] == 'VLC' &&
+      json['overrideSource'] == null &&
+      additionalSettings['trackOnly'] == false &&
+      additionalSettings['versionExtractionRegEx'] == '' &&
+      json['lastUpdateCheck'] != null) {
+    additionalSettings = _migrateAppToHTML(
+      json,
+      additionalSettings,
+      newUrl: 'https://www.videolan.org/vlc/download-android.html',
+      overrides: {
+        'refreshBeforeDownload': true,
+        'intermediateLink': <Map<String, dynamic>>[
+          {
+            'customLinkFilterRegex': 'APK',
+            'filterByLinkText': true,
+            'skipSort': false,
+            'reverseSort': false,
+            'sortByLastLinkSegment': false,
+          },
+          {
+            'customLinkFilterRegex': r'arm64-v8a\.apk$',
+            'filterByLinkText': false,
+            'skipSort': false,
+            'reverseSort': false,
+            'sortByLastLinkSegment': false,
+          },
+        ],
+        'versionExtractionRegEx': '/vlc-android/([^/]+)/',
+        'matchGroupToUse': '1',
+      },
+    );
+  }
+  return additionalSettings;
+}
+
+/// Migrates F-Droid cloudflare URLs to override-source and auto-detects
+/// third-party F-Droid repo URLs.
+void _migrateFdroidOverrides(Map<String, dynamic> json) {
+  final overrideSourceWasUndefined = !json.keys.contains('overrideSource');
+  if ((json['url'] as String).startsWith('https://cloudflare.f-droid.org')) {
+    json['overrideSource'] = FDroid().sourceIdentifier;
+  } else if (overrideSourceWasUndefined) {
+    final RegExpMatch? match = RegExp(
+      '^https?://.+/fdroid/([^/]+(/|\\?)|[^/]+\$)',
+    ).firstMatch(json['url'] as String);
+    if (match != null) {
+      json['overrideSource'] = FDroidRepo().sourceIdentifier;
+    }
+  }
+}
+
+/// Applies any legacy JSON transformations so the stored [json] matches the
+/// current schema. Default-setting reconciliation always runs; one-time
+/// migrations (URL rewrites, format conversions) are gated by compatVersion.
+Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
+  final isCurrentCompat = json['compatVersion'] == currentAppJSONCompatVersion;
+  final source = SourceProvider().getSource(
+    json['url'],
+    overrideSource: json['overrideSource'],
+  );
+  final formItems = source.flatCombinedFormItemsReadOnly;
+  Map<String, dynamic> additionalSettings = getDefaultValuesFromFormItems([
+    formItems,
+  ]);
+  Map<String, dynamic> originalAdditionalSettings = {};
+  if (json['additionalSettings'] != null) {
+    originalAdditionalSettings = Map<String, dynamic>.from(
+      jsonDecode(json['additionalSettings']),
+    );
+    additionalSettings.addEntries(originalAdditionalSettings.entries);
+  }
+
+  _migrateAdditionalDataToSettings(json, additionalSettings, formItems);
+  _migrateVersionDetectionFormat(additionalSettings);
+  _migratePseudoVersioningMethod(
+    originalAdditionalSettings,
+    additionalSettings,
+  );
+  _coerceAdditionalSettingTypes(additionalSettings, formItems);
+
+  int preferredApkIndex = json['preferredApkIndex'] == null
+      ? 0
+      : json['preferredApkIndex'] as int;
+  if (preferredApkIndex < 0) {
+    preferredApkIndex = 0;
+  }
+  json['preferredApkIndex'] = preferredApkIndex;
+  _migrateApkUrlsFormat(json);
+
+  if (additionalSettings['autoApkFilterByArch'] == null) {
+    additionalSettings['autoApkFilterByArch'] = false;
+  }
+  if (additionalSettings['dontSortReleasesList'] == true) {
+    additionalSettings['sortMethodChoice'] = 'none';
+  }
+
+  if (!isCurrentCompat && source is HTML) {
+    additionalSettings = _migrateHtmlSpecificMigrations(
+      json,
+      originalAdditionalSettings,
+      additionalSettings,
+    );
+  }
+
+  json['additionalSettings'] = jsonEncode(additionalSettings);
+  if (!isCurrentCompat) {
+    _migrateFdroidOverrides(json);
+  }
+  json['compatVersion'] = currentAppJSONCompatVersion;
+  return json;
 }

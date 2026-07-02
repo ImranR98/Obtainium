@@ -4,30 +4,40 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Bulk import source: fetches all starred repos of a GitHub user.
+///
+/// Paginates through the GitHub API (100 repos per page) and returns each
+/// repo's URL, full name, and description. Rate limits are checked per page.
 class GitHubStars implements MassAppUrlSource {
   @override
-  late String name = tr('githubStarredRepos');
+  String name = tr('githubStarredRepos');
 
   @override
-  late List<String> requiredArgs = [tr('uname')];
+  List<String> requiredArgs = [tr('uname')];
+
+  final GitHub _gh = GitHub();
 
   Future<Map<String, List<String>>> getOnePageOfUserStarredUrlsWithDescriptions(
     String username,
     int page,
+    SettingsProvider sp,
   ) async {
-    var resUrl =
+    final resUrl =
         'https://api.github.com/users/$username/starred?per_page=100&page=$page';
-    Response res = await get(
-      Uri.parse(resUrl),
-      headers: await GitHub().getRequestHeaders({}, resUrl),
-    );
+    final sourceConfigSettings = await _gh.getSourceConfigValues({}, sp);
+    final Response res = await _gh.sourceRequest(resUrl, sourceConfigSettings);
     if (res.statusCode == 200) {
-      Map<String, List<String>> urlsWithDescriptions = {};
+      final Map<String, List<String>> urlsWithDescriptions = {};
       for (var e in (jsonDecode(res.body) as List<dynamic>)) {
+        var htmlUrl = e['html_url'] as String;
+        if ((sourceConfigSettings['GHReqPrefix'] ?? '').isNotEmpty) {
+          htmlUrl = _gh.undoGHProxyMod(htmlUrl, sourceConfigSettings);
+        }
         urlsWithDescriptions.addAll({
-          e['html_url'] as String: [
+          htmlUrl: [
             e['full_name'] as String,
             e['description'] != null
                 ? e['description'] as String
@@ -37,8 +47,7 @@ class GitHubStars implements MassAppUrlSource {
       }
       return urlsWithDescriptions;
     } else {
-      var gh = GitHub();
-      gh.rateLimitErrorCheck(res);
+      _gh.rateLimitErrorCheck(res);
       throw getObtainiumHttpError(res);
     }
   }
@@ -50,12 +59,15 @@ class GitHubStars implements MassAppUrlSource {
     if (args.length != requiredArgs.length) {
       throw ObtainiumError(tr('wrongArgNum'));
     }
-    Map<String, List<String>> urlsWithDescriptions = {};
+    final sp = SettingsProvider();
+    await sp.initializeSettings();
+    final Map<String, List<String>> urlsWithDescriptions = {};
     var page = 1;
     while (true) {
-      var pageUrls = await getOnePageOfUserStarredUrlsWithDescriptions(
+      final pageUrls = await getOnePageOfUserStarredUrlsWithDescriptions(
         args[0],
         page++,
+        sp,
       );
       urlsWithDescriptions.addAll(pageUrls);
       if (pageUrls.length < 100) {

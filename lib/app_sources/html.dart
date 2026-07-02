@@ -1,45 +1,35 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) {
-  try {
-    ambiguousUrl = ambiguousUrl.trim();
-    if (Uri.parse(ambiguousUrl).isAbsolute) {
-      return ambiguousUrl; // #2315
-    }
-  } catch (e) {
-    //
-  }
-  return referenceAbsoluteUrl.resolve(ambiguousUrl).toString();
-}
-
 int compareAlphaNumeric(String a, String b) {
-  List<String> aParts = _splitAlphaNumeric(a);
-  List<String> bParts = _splitAlphaNumeric(b);
+  final List<String> aParts = _splitAlphaNumeric(a);
+  final List<String> bParts = _splitAlphaNumeric(b);
 
   for (int i = 0; i < aParts.length && i < bParts.length; i++) {
-    String aPart = aParts[i];
-    String bPart = bParts[i];
+    final String aPart = aParts[i];
+    final String bPart = bParts[i];
 
-    bool aIsNumber = _isNumeric(aPart);
-    bool bIsNumber = _isNumeric(bPart);
+    final bool aIsNumber = _isDigit(aPart);
+    final bool bIsNumber = _isDigit(bPart);
 
     if (aIsNumber && bIsNumber) {
-      int aNumber = int.parse(aPart);
-      int bNumber = int.parse(bPart);
-      int cmp = aNumber.compareTo(bNumber);
+      final int aNumber = int.parse(aPart);
+      final int bNumber = int.parse(bPart);
+      final int cmp = aNumber.compareTo(bNumber);
       if (cmp != 0) {
         return cmp;
       }
     } else if (!aIsNumber && !bIsNumber) {
-      int cmp = aPart.compareTo(bPart);
+      final int cmp = aPart.compareTo(bPart);
       if (cmp != 0) {
         return cmp;
       }
@@ -75,14 +65,14 @@ List<String> collectAllStringsFromJSONObject(dynamic obj) {
 
 List<String> _splitAlphaNumeric(String s) {
   if (s.isEmpty) return [];
-  List<String> parts = [];
-  StringBuffer sb = StringBuffer();
+  final List<String> parts = [];
+  final StringBuffer sb = StringBuffer();
 
-  bool isNumeric = _isNumeric(s[0]);
+  bool isNumeric = _isDigit(s[0]);
   sb.write(s[0]);
 
   for (int i = 1; i < s.length; i++) {
-    bool currentIsNumeric = _isNumeric(s[i]);
+    final bool currentIsNumeric = _isDigit(s[i]);
     if (currentIsNumeric == isNumeric) {
       sb.write(s[i]);
     } else {
@@ -98,7 +88,7 @@ List<String> _splitAlphaNumeric(String s) {
   return parts;
 }
 
-bool _isNumeric(String s) {
+bool _isDigit(String s) {
   if (s.isEmpty) return false;
   return s.codeUnitAt(0) >= 48 && s.codeUnitAt(0) <= 57;
 }
@@ -114,8 +104,8 @@ List<MapEntry<String, String>> getLinksInLines(String lines) =>
         )
         .toList();
 
-// Given an HTTP response, grab some links according to the common additional settings
-// (those that apply to intermediate and final steps)
+/// Given an HTTP response, grab some links according to the common additional settings
+/// (those that apply to intermediate and final steps)
 Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   Response res,
   Map<String, dynamic> additionalSettings,
@@ -123,18 +113,19 @@ Future<List<MapEntry<String, String>>> grabLinksCommonFromRes(
   if (res.statusCode != 200) {
     throw getObtainiumHttpError(res);
   }
-  return grabLinksCommon(res.body, res.request!.url, additionalSettings);
+  final reqUrl = res.request?.url ?? Uri.parse('');
+  return grabLinksCommon(res.body, reqUrl, additionalSettings);
 }
 
-// Note keys are URLs, values are filenames (opposite to the AppSource apkUrls)
+/// Note: keys are URLs, values are filenames (opposite to the AppSource apkUrls)
 Future<List<MapEntry<String, String>>> grabLinksCommon(
   String rawBody,
   Uri reqUrl,
   Map<String, dynamic> additionalSettings,
 ) async {
-  bool matchLinksOutsideATags =
+  final bool matchLinksOutsideATags =
       additionalSettings['matchLinksOutsideATags'] == true;
-  var html = parse(rawBody);
+  final html = parse(rawBody);
   List<MapEntry<String, String>> allLinks = html
       .querySelectorAll('a')
       .map(
@@ -151,7 +142,7 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
   if (allLinks.isEmpty || matchLinksOutsideATags) {
     // Decode the body if the response is a JSON
     try {
-      var jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
+      final jsonStrings = collectAllStringsFromJSONObject(jsonDecode(rawBody));
       allLinks = getLinksInLines(jsonStrings.join('\n'));
       if (allLinks.isEmpty) {
         allLinks = getLinksInLines(
@@ -163,21 +154,30 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
         );
       }
     } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'Failed to parse HTML links: ${e.toString()}',
+          level: LogLevel.warning,
+        ),
+      );
       allLinks = getLinksInLines(rawBody);
     }
   }
   List<MapEntry<String, String>> links = [];
-  bool skipSort = additionalSettings['skipSort'] == true;
-  bool filterLinkByText = additionalSettings['filterByLinkText'] == true;
+  final bool skipSort = additionalSettings['skipSort'] == true;
+  final bool filterLinkByText = additionalSettings['filterByLinkText'] == true;
   if ((additionalSettings['customLinkFilterRegex'] as String?)?.isNotEmpty ==
       true) {
-    var reg = RegExp(additionalSettings['customLinkFilterRegex']);
+    final reg = RegExp(additionalSettings['customLinkFilterRegex']);
     links = allLinks.where((element) {
       var link = element.key;
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        // Some links may not have valid encoding
+        LogsProvider().add(
+          'Failed to decode URI in HTML filter: ${e.toString()}',
+          level: LogLevel.debug,
+        );
       }
       return reg.hasMatch(filterLinkByText ? element.value : link);
     }).toList();
@@ -187,11 +187,14 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        // Some links may not have valid encoding
+        LogsProvider().add(
+          'Failed to decode URI in HTML APK filter: ${e.toString()}',
+          level: LogLevel.debug,
+        );
       }
-      return Uri.parse(
-        (filterLinkByText ? element.value : link).trim(),
-      ).path.toLowerCase().endsWith('.apk');
+      return AppSource.isApkOrContainerFile(
+        Uri.parse((filterLinkByText ? element.value : link).trim()).path,
+      );
     }).toList();
   }
   if (!skipSort) {
@@ -278,11 +281,12 @@ class HTML extends AppSource {
       GeneratedFormSwitch(
         'autoLinkFilterByArch',
         label: tr('autoLinkFilterByArch'),
-        defaultValue: false,
+        value: false,
       ),
     ],
   ];
   HTML() {
+    suppressStandardVersionExtraction = true;
     additionalSourceAppSpecificSettingFormItems = [
       [
         GeneratedFormSubForm('intermediateLink', [
@@ -319,7 +323,7 @@ class HTML extends AppSource {
             ],
           ],
           label: tr('requestHeader'),
-          defaultValue: [
+          value: [
             {
               'requestHeader':
                   'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
@@ -333,10 +337,10 @@ class HTML extends AppSource {
           [
             MapEntry('partialAPKHash', tr('partialAPKHash')),
             MapEntry('APKLinkHash', tr('APKLinkHash')),
-            MapEntry('ETag', 'ETag'),
+            const MapEntry('ETag', 'ETag'),
           ],
           label: tr('defaultPseudoVersioningMethod'),
-          defaultValue: 'partialAPKHash',
+          value: 'partialAPKHash',
         ),
       ],
     ];
@@ -355,9 +359,9 @@ class HTML extends AppSource {
       additionalSettings['requestHeader'] = additionalSettings['requestHeader']
           .where((l) => l['requestHeader'].isNotEmpty == true)
           .toList();
-      Map<String, String> requestHeaders = {};
+      final Map<String, String> requestHeaders = {};
       for (int i = 0; i < (additionalSettings['requestHeader'].length); i++) {
-        var temp =
+        final temp =
             (additionalSettings['requestHeader'][i]['requestHeader'] as String)
                 .split(':');
         requestHeaders[temp[0].trim()] = temp.sublist(1).join(':').trim();
@@ -377,100 +381,116 @@ class HTML extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var currentUrl = standardUrl;
-    if (additionalSettings['intermediateLink']?.isNotEmpty != true) {
-      additionalSettings['intermediateLink'] = [];
-    }
-    additionalSettings['intermediateLink'] =
-        additionalSettings['intermediateLink']
-            .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
-            .toList();
-    for (int i = 0; i < (additionalSettings['intermediateLink'].length); i++) {
-      var intLinks = await grabLinksCommonFromRes(
-        await sourceRequest(currentUrl, additionalSettings),
-        additionalSettings['intermediateLink'][i],
-      );
-      if (intLinks.isEmpty) {
-        throw NoReleasesError(note: currentUrl);
-      } else {
-        if (additionalSettings['intermediateLink'][i]['autoLinkFilterByArch'] ==
-            true) {
-          intLinks = await filterApksByArch(intLinks);
-        }
-        currentUrl = intLinks.last.key;
-      }
-    }
-    var uri = Uri.parse(currentUrl);
-    List<MapEntry<String, String>> links = [];
-    String versionExtractionWholePageString = currentUrl;
-    if (additionalSettings['directAPKLink'] != true) {
-      Response res = await sourceRequest(currentUrl, additionalSettings);
-      versionExtractionWholePageString = res.body
-          .split('\r\n')
-          .join('\n')
-          .split('\n')
-          .join('\\n');
-      links = await grabLinksCommonFromRes(res, additionalSettings);
-      links = filterApks(
-        links,
-        additionalSettings['apkFilterRegEx'],
-        additionalSettings['invertAPKFilter'],
-      );
-      if (links.isEmpty) {
-        throw NoReleasesError(note: currentUrl);
-      }
-    } else {
-      links = [MapEntry(currentUrl, currentUrl)];
-    }
-    var rel = links.last.key;
-    var relDecoded = rel;
     try {
-      relDecoded = Uri.decodeFull(rel);
-    } catch (e) {
-      // Some links may not have valid encoding
-    }
-    String? version;
-    version = extractVersion(
-      additionalSettings['versionExtractionRegEx'] as String?,
-      additionalSettings['matchGroupToUse'] as String?,
-      additionalSettings['versionExtractWholePage'] == true
-          ? versionExtractionWholePageString
-          : relDecoded,
-    );
-    var apkReqHeaders = await getRequestHeaders(
-      additionalSettings,
-      rel,
-      forAPKDownload: true,
-    );
-    if (version == null &&
-        additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
-      version = await checkETagHeader(
-        rel,
-        headers: apkReqHeaders,
-        allowInsecure: additionalSettings['allowInsecure'] == true,
-      );
-      if (version == null) {
-        throw NoVersionError();
+      var currentUrl = standardUrl;
+      if (additionalSettings['intermediateLink'] == null ||
+          (additionalSettings['intermediateLink'] as List).isEmpty) {
+        additionalSettings['intermediateLink'] = [];
       }
+      additionalSettings['intermediateLink'] =
+          additionalSettings['intermediateLink']
+              .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
+              .toList();
+      const int maxIntermediateLinkDepth = 10;
+      final int linkCount = (additionalSettings['intermediateLink'].length)
+          .clamp(0, maxIntermediateLinkDepth);
+      for (int i = 0; i < linkCount; i++) {
+        var intLinks = await grabLinksCommonFromRes(
+          await sourceRequest(currentUrl, additionalSettings),
+          additionalSettings['intermediateLink'][i],
+        );
+        if (intLinks.isEmpty) {
+          throw NoReleasesError(note: currentUrl);
+        } else {
+          if (additionalSettings['intermediateLink'][i]['autoLinkFilterByArch'] ==
+              true) {
+            intLinks = await filterApksByArch(intLinks);
+          }
+          currentUrl = intLinks.last.key;
+        }
+      }
+      final uri = Uri.parse(currentUrl);
+      List<MapEntry<String, String>> links = [];
+      String versionExtractionWholePageString = currentUrl;
+      if (additionalSettings['directAPKLink'] != true) {
+        final Response res = await sourceRequest(
+          currentUrl,
+          additionalSettings,
+        );
+        versionExtractionWholePageString = res.body
+            .split('\r\n')
+            .join('\n')
+            .split('\n')
+            .join('\\n');
+        links = await grabLinksCommonFromRes(res, additionalSettings);
+        links = filterApks(
+          links,
+          additionalSettings['apkFilterRegEx'],
+          additionalSettings['invertAPKFilter'],
+        );
+        if (links.isEmpty) {
+          throw NoReleasesError(note: currentUrl);
+        }
+      } else {
+        links = [MapEntry(currentUrl, currentUrl)];
+      }
+      final rel = links.last.key;
+      var relDecoded = rel;
+      try {
+        relDecoded = Uri.decodeFull(rel);
+      } catch (e) {
+        unawaited(
+          LogsProvider().add(
+            'Failed to decode URI for version extraction: ${e.toString()}',
+            level: LogLevel.debug,
+          ),
+        );
+      }
+      String? version;
+      version = extractVersion(
+        additionalSettings['versionExtractionRegEx'] as String?,
+        additionalSettings['matchGroupToUse'] as String?,
+        additionalSettings['versionExtractWholePage'] == true
+            ? versionExtractionWholePageString
+            : relDecoded,
+      );
+      final apkReqHeaders = await getRequestHeaders(
+        additionalSettings,
+        rel,
+        forAPKDownload: true,
+      );
+      if (version == null &&
+          additionalSettings['defaultPseudoVersioningMethod'] == 'ETag') {
+        version = await checkETagHeader(
+          rel,
+          headers: apkReqHeaders,
+          allowInsecure: additionalSettings['allowInsecure'] == true,
+        );
+        if (version == null || version.isEmpty) {
+          throw NoVersionError();
+        }
+      }
+      version ??=
+          additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
+          ? rel.hashCode.toString()
+          : (await checkPartialDownloadHashDynamic(
+              rel,
+              headers: apkReqHeaders,
+              allowInsecure: additionalSettings['allowInsecure'] == true,
+            )).toString();
+      return APKDetails(
+        version,
+        [rel].map((e) {
+          final uri = Uri.parse(e);
+          final fileName = uri.pathSegments.isNotEmpty
+              ? uri.pathSegments.last
+              : uri.origin;
+          return MapEntry('${e.hashCode}-$fileName', e);
+        }).toList(),
+        AppNames(uri.host, tr('app')),
+      );
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    version ??=
-        additionalSettings['defaultPseudoVersioningMethod'] == 'APKLinkHash'
-        ? rel.hashCode.toString()
-        : (await checkPartialDownloadHashDynamic(
-            rel,
-            headers: apkReqHeaders,
-            allowInsecure: additionalSettings['allowInsecure'] == true,
-          )).toString();
-    return APKDetails(
-      version,
-      [rel].map((e) {
-        var uri = Uri.parse(e);
-        var fileName = uri.pathSegments.isNotEmpty
-            ? uri.pathSegments.last
-            : uri.origin;
-        return MapEntry('${e.hashCode}-$fileName', e);
-      }).toList(),
-      AppNames(uri.host, tr('app')),
-    );
   }
 }

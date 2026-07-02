@@ -22,6 +22,7 @@
 			<li>APKPure</li>
 			<li>Aptoide</li>
 			<li>Uptodown</li>
+			<li>APKCombo</li>
 			<li>itch.io</li>
 			<li>Huawei AppGallery</li>
 			<li>Tencent App Store</li>

@@ -1,612 +1,456 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/app_sources/fdroidrepo.dart';
-import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
-class ImportExportPage extends StatefulWidget {
-  const ImportExportPage({super.key});
+class ImportFromURLListPage extends StatefulWidget {
+  const ImportFromURLListPage({super.key});
 
   @override
-  State<ImportExportPage> createState() => _ImportExportPageState();
+  State<ImportFromURLListPage> createState() => _ImportFromURLListPageState();
 }
 
-class _ImportExportPageState extends State<ImportExportPage> {
-  bool importInProgress = false;
+class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
+  late ImportFromURLListController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ImportFromURLListController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _import() {
+    final urls = _controller.getURLs();
+    if (urls.isEmpty) return;
+    final appsProvider = context.read<AppsProvider>();
+    _controller.setImporting(true);
+    appsProvider
+        .addAppsByURL(urls)
+        .then((errors) {
+          if (!mounted) return;
+          _controller.setImporting(false);
+          if (errors.isEmpty) {
+            showMessage(
+              tr(
+                'importedX',
+                args: [plural('apps', urls.length).toLowerCase()],
+              ),
+              context,
+            );
+            Navigator.of(context).pop();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext ctx) {
+                return ImportErrorDialog(
+                  urlsLength: urls.length,
+                  errors: errors,
+                );
+              },
+            );
+          }
+        })
+        .catchError((e) {
+          if (mounted) {
+            _controller.setImporting(false);
+            showError(e, context);
+          }
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
-    SourceProvider sourceProvider = SourceProvider();
-    var appsProvider = context.watch<AppsProvider>();
-    var settingsProvider = context.watch<SettingsProvider>();
-
-    var outlineButtonStyle = ButtonStyle(
-      shape: WidgetStateProperty.all(
-        StadiumBorder(
-          side: BorderSide(
-            width: 1,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ),
-    );
-
-    urlListImport({String? initValue, bool overrideInitValid = false}) {
-      showDialog<Map<String, dynamic>?>(
-        context: context,
-        builder: (BuildContext ctx) {
-          return GeneratedFormModal(
-            initValid: overrideInitValid,
-            title: tr('importFromURLList'),
-            items: [
-              [
-                GeneratedFormTextField(
-                  'appURLList',
-                  defaultValue: initValue ?? '',
-                  label: tr('appURLList'),
-                  max: 7,
-                  additionalValidators: [
-                    (dynamic value) {
-                      if (value != null && value.isNotEmpty) {
-                        var lines = value.trim().split('\n');
-                        for (int i = 0; i < lines.length; i++) {
-                          try {
-                            sourceProvider.getSource(lines[i]);
-                          } catch (e) {
-                            return '${tr('line')} ${i + 1}: $e';
-                          }
-                        }
-                      }
-                      return null;
-                    },
-                  ],
+    return ChangeNotifierProvider.value(
+      value: _controller,
+      child: Builder(
+        builder: (context) {
+          final controller = context.watch<ImportFromURLListController>();
+          return Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            appBar: AppBar(title: Text(tr('importFromURLList'))),
+            body: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 16,
+                      children: [
+                        TextFormField(
+                          controller: controller.urlController,
+                          maxLines: null,
+                          minLines: 8,
+                          decoration: InputDecoration(
+                            labelText: tr('appURLList'),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          validator: controller.validate,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: controller.isImporting
+                              ? null
+                              : () => controller.importFromFile(context),
+                          icon: const Icon(Icons.upload_file_outlined),
+                          label: Text(tr('importFromURLsInFile')),
+                        ),
+                        FilledButton(
+                          onPressed: controller.isImporting ? null : _import,
+                          child: controller.isImporting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(tr('import')),
+                        ),
+                        ConnectedCard(
+                          isFirst: true,
+                          isLast: true,
+                          child: Text(
+                            tr('importedAppsIdDisclaimer'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ],
+            ),
           );
         },
-      ).then((values) {
-        if (values != null) {
-          var urls = (values['appURLList'] as String).split('\n');
-          setState(() {
-            importInProgress = true;
-          });
-          appsProvider
-              .addAppsByURL(urls)
-              .then((errors) {
-                if (errors.isEmpty) {
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', urls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: urls.length,
-                        errors: errors,
-                      );
-                    },
-                  );
-                }
-              })
-              .catchError((e) {
-                showError(e, context);
-              })
-              .whenComplete(() {
-                setState(() {
-                  importInProgress = false;
-                });
-              });
-        }
-      });
-    }
+      ),
+    );
+  }
+}
 
-    runObtainiumExport({bool pickOnly = false}) async {
-      settingsProvider.selectionClick();
-      appsProvider
-          .export(
-            pickOnly:
-                pickOnly || (await settingsProvider.getExportDir()) == null,
-            sp: settingsProvider,
-          )
-          .then((String? result) {
-            if (result != null) {
-              showMessage(tr('exportedTo', args: [result]), context);
-            }
-          })
-          .catchError((e) {
-            showError(e, context);
-          });
-    }
+/// The app-import controls (file import, source search, URL-list import, mass
+/// sources). Embedded in the Add App page (shown while no URL is entered).
+class ImportSection extends StatefulWidget {
+  const ImportSection({super.key});
 
-    runObtainiumImport() {
+  @override
+  State<ImportSection> createState() => _ImportSectionState();
+}
+
+class _ImportSectionState extends State<ImportSection> {
+  bool importInProgress = false;
+  final SourceProvider sourceProvider = SourceProvider();
+
+  @override
+  Widget build(BuildContext context) {
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+
+    void runObtainiumImport() {
       settingsProvider.selectionClick();
       FilePicker.pickFiles()
-          .then((result) {
+          .then((result) async {
+            if (result == null) {
+              if (!context.mounted) return;
+              showMessage(tr('cancelled'), context);
+              return;
+            }
+            if (mounted) {
+              setState(() {
+                importInProgress = true;
+              });
+            }
+            final path = result.files.single.path;
+            if (path == null) {
+              throw ObtainiumError(tr('noFilePickerAvailable'));
+            }
+            final String data = await File(path).readAsString();
+            try {
+              jsonDecode(data);
+            } catch (e) {
+              throw ObtainiumError(tr('invalidInput'));
+            }
+            final value = await appsProvider.import(data);
+            appsProvider.addMissingCategories(settingsProvider);
+            if (!context.mounted) return;
+            showMessage(
+              '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
+              context,
+            );
+          })
+          .catchError((e) {
+            if (!context.mounted) return;
+            _showImportError(e, context);
+          })
+          .whenComplete(() {
+            if (mounted) {
+              setState(() {
+                importInProgress = false;
+              });
+            }
+          });
+    }
+
+    Future<void> runMassSourceImport(MassAppUrlSource source) async {
+      try {
+        final values = await showDialog<Map<String, dynamic>?>(
+          context: context,
+          builder: (BuildContext ctx) {
+            return GeneratedFormModal(
+              title: tr('importX', args: [source.name]),
+              items: source.requiredArgs
+                  .map((e) => [GeneratedFormTextField(e, label: e)])
+                  .toList(),
+            );
+          },
+        );
+        if (values != null) {
+          if (mounted) {
             setState(() {
               importInProgress = true;
             });
-            if (result != null) {
-              var path = result.files.single.path;
-              if (path == null) {
-                throw ObtainiumError(tr('noFilePickerAvailable'));
-              }
-              String data = File(path).readAsStringSync();
-              try {
-                jsonDecode(data);
-              } catch (e) {
-                throw ObtainiumError(tr('invalidInput'));
-              }
-              appsProvider.import(data).then((value) {
-                appsProvider.addMissingCategories(settingsProvider);
-                showMessage(
-                  '${tr('importedX', args: [plural('apps', value.key.length).toLowerCase()])}${value.value ? ' + ${tr('settings').toLowerCase()}' : ''}',
-                  context,
-                );
-              });
-            } else {
-              // User canceled the picker
-            }
-          })
-          .catchError((e) {
-            if (e is PlatformException || e is MissingPluginException) {
-              showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-            } else {
-              showError(e, context);
-            }
-          })
-          .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
-          });
-    }
-
-    runUrlImport() {
-      FilePicker.pickFiles().then((result) {
-        if (result != null) {
-          var path = result.files.single.path;
-          if (path == null) return;
-          urlListImport(
-            overrideInitValid: true,
-            initValue: RegExp('https?://[^"]+')
-                .allMatches(File(path).readAsStringSync())
-                .map((e) => e.input.substring(e.start, e.end))
-                .toSet()
-                .toList()
-                .where((url) {
-                  try {
-                    sourceProvider.getSource(url);
-                    return true;
-                  } catch (e) {
-                    return false;
-                  }
-                })
-                .join('\n'),
+          }
+          final urlsWithDescriptions = await source.getUrlsWithDescriptions(
+            values.values.map((e) => e.toString()).toList(),
           );
-        }
-      }).catchError((e) {
-        if (e is PlatformException || e is MissingPluginException) {
-          showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-        } else {
-          showError(e, context);
-        }
-      });
-    }
-
-    runSourceSearch(AppSource source) {
-      () async {
-            var values = await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('searchX', args: [source.name]),
-                  items: [
-                    [
-                      GeneratedFormTextField(
-                        'searchQuery',
-                        label: tr('searchQuery'),
-                        required: source.name != FDroidRepo().name,
-                      ),
-                    ],
-                    ...source.searchQuerySettingFormItems.map((e) => [e]),
-                    [
-                      GeneratedFormTextField(
-                        'url',
-                        label: source.hosts.isNotEmpty
-                            ? tr('overrideSource')
-                            : plural('url', 1).substring(2),
-                        defaultValue: source.hosts.isNotEmpty
-                            ? source.hosts[0]
-                            : '',
-                        required: true,
-                      ),
-                    ],
-                  ],
-                );
-              },
-            );
-            if (values != null) {
-              setState(() {
-                importInProgress = true;
-              });
-              if (source.hosts.isEmpty || values['url'] != source.hosts[0]) {
-                source = sourceProvider.getSource(
-                  values['url'],
-                  overrideSource: source.runtimeType.toString(),
-                );
-              }
-              var urlsWithDescriptions = await source.search(
-                values['searchQuery'] as String,
-                querySettings: values,
+          if (!context.mounted) return;
+          final selectedUrls = await showDialog<List<String>?>(
+            context: context,
+            builder: (BuildContext ctx) {
+              return SelectionModal(entries: urlsWithDescriptions);
+            },
+          );
+          if (selectedUrls != null) {
+            final errors = await appsProvider.addAppsByURL(selectedUrls);
+            if (!context.mounted) return;
+            if (errors.isEmpty) {
+              showMessage(
+                tr(
+                  'importedX',
+                  args: [plural('apps', selectedUrls.length).toLowerCase()],
+                ),
+                context,
               );
-              if (urlsWithDescriptions.isNotEmpty) {
-                var selectedUrls =
-                    // ignore: use_build_context_synchronously
-                    await showDialog<List<String>?>(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return SelectionModal(
-                          entries: urlsWithDescriptions,
-                          selectedByDefault: false,
-                        );
-                      },
+            } else {
+              unawaited(
+                showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return ImportErrorDialog(
+                      urlsLength: selectedUrls.length,
+                      errors: errors,
                     );
-                if (selectedUrls != null && selectedUrls.isNotEmpty) {
-                  var errors = await appsProvider.addAppsByURL(
-                    selectedUrls,
-                    sourceOverride: source,
-                  );
-                  if (errors.isEmpty) {
-                    // ignore: use_build_context_synchronously
-                    showMessage(
-                      tr(
-                        'importedX',
-                        args: [
-                          plural('apps', selectedUrls.length).toLowerCase(),
-                        ],
-                      ),
-                      context,
-                    );
-                  } else {
-                    // ignore: use_build_context_synchronously
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return ImportErrorDialog(
-                          urlsLength: selectedUrls.length,
-                          errors: errors,
-                        );
-                      },
-                    );
-                  }
-                }
-              } else {
-                throw ObtainiumError(tr('noResults'));
-              }
-            }
-          }()
-          .catchError((e) {
-            showError(e, context);
-          })
-          .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
-          });
-    }
-
-    runMassSourceImport(MassAppUrlSource source) {
-      () async {
-            var values = await showDialog<Map<String, dynamic>?>(
-              context: context,
-              builder: (BuildContext ctx) {
-                return GeneratedFormModal(
-                  title: tr('importX', args: [source.name]),
-                  items: source.requiredArgs
-                      .map((e) => [GeneratedFormTextField(e, label: e)])
-                      .toList(),
-                );
-              },
-            );
-            if (values != null) {
-              setState(() {
-                importInProgress = true;
-              });
-              var urlsWithDescriptions = await source.getUrlsWithDescriptions(
-                values.values.map((e) => e.toString()).toList(),
+                  },
+                ),
               );
-              var selectedUrls =
-                  // ignore: use_build_context_synchronously
-                  await showDialog<List<String>?>(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return SelectionModal(entries: urlsWithDescriptions);
-                    },
-                  );
-              if (selectedUrls != null) {
-                var errors = await appsProvider.addAppsByURL(selectedUrls);
-                if (errors.isEmpty) {
-                  // ignore: use_build_context_synchronously
-                  showMessage(
-                    tr(
-                      'importedX',
-                      args: [plural('apps', selectedUrls.length).toLowerCase()],
-                    ),
-                    context,
-                  );
-                } else {
-                  // ignore: use_build_context_synchronously
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: selectedUrls.length,
-                        errors: errors,
-                      );
-                    },
-                  );
-                }
-              }
             }
-          }()
-          .catchError((e) {
-            showError(e, context);
-          })
-          .whenComplete(() {
-            setState(() {
-              importInProgress = false;
-            });
+          }
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        showError(e, context);
+      } finally {
+        if (mounted) {
+          setState(() {
+            importInProgress = false;
           });
+        }
+      }
     }
 
-    var sourceStrings = <String, List<String>>{};
-    sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
-      sourceStrings[s.name] = [s.name];
-    });
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: CustomScrollView(
-        slivers: <Widget>[
-          CustomAppBar(title: tr('importExport')),
-          SliverFillRemaining(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FutureBuilder(
-                    future: settingsProvider.getExportDir(),
-                    builder: (context, snapshot) {
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : () {
-                                          runObtainiumExport(pickOnly: true);
-                                        },
-                                  child: Text(
-                                    tr('pickExportDir'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed:
-                                      importInProgress ||
-                                          snapshot.data == null
-                                      ? null
-                                      : runObtainiumExport,
-                                  child: Text(
-                                    tr('obtainiumExport'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextButton(
-                                  style: outlineButtonStyle,
-                                  onPressed: importInProgress
-                                      ? null
-                                      : runObtainiumImport,
-                                  child: Text(
-                                    tr('obtainiumImport'),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (snapshot.data != null)
-                            Column(
-                              children: [
-                                const SizedBox(height: 16),
-                                GeneratedForm(
-                                  items: [
-                                    [
-                                      GeneratedFormSwitch(
-                                        'autoExportOnChanges',
-                                        label: tr('autoExportOnChanges'),
-                                        defaultValue: settingsProvider
-                                            .autoExportOnChanges,
-                                      ),
-                                    ],
-                                    [
-                                      GeneratedFormDropdown(
-                                        'exportSettings',
-                                        [
-                                          MapEntry('0', tr('none')),
-                                          MapEntry('1', tr('excludeSecrets')),
-                                          MapEntry('2', tr('all')),
-                                        ],
-                                        label: tr('includeSettings'),
-                                        defaultValue: settingsProvider
-                                            .exportSettings
-                                            .toString(),
-                                      ),
-                                    ],
-                                  ],
-                                  onValueChanges: (value, valid, isBuilding) {
-                                    if (valid && !isBuilding) {
-                                      if (value['autoExportOnChanges'] !=
-                                          null) {
-                                        settingsProvider.autoExportOnChanges =
-                                            value['autoExportOnChanges'] ==
-                                            true;
-                                      }
-                                      if (value['exportSettings'] != null) {
-                                        settingsProvider.exportSettings =
-                                            int.parse(
-                                              value['exportSettings'],
-                                            );
-                                      }
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  if (importInProgress)
-                    const Column(
-                      children: [
-                        SizedBox(height: 14),
-                        LinearProgressIndicator(),
-                        SizedBox(height: 14),
-                      ],
-                    )
-                  else
-                    Column(
-                      children: [
-                        SizedBox(height: 32),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton(
-                                onPressed: importInProgress
-                                    ? null
-                                    : () async {
-                                        var searchSourceName =
-                                            await showDialog<List<String>?>(
-                                              context: context,
-                                              builder: (BuildContext ctx) {
-                                                return SelectionModal(
-                                                  title: tr(
-                                                    'selectX',
-                                                    args: [
-                                                      tr(
-                                                        'source',
-                                                      ).toLowerCase(),
-                                                    ],
-                                                  ),
-                                                  entries: sourceStrings,
-                                                  selectedByDefault: false,
-                                                  onlyOneSelectionAllowed: true,
-                                                  titlesAreLinks: false,
-                                                );
-                                              },
-                                            ) ??
-                                            [];
-                                        var searchSource = sourceProvider
-                                            .sources
-                                            .where(
-                                              (e) => searchSourceName.contains(
-                                                e.name,
-                                              ),
-                                            )
-                                            .toList();
-                                        if (searchSource.isNotEmpty) {
-                                          runSourceSearch(searchSource[0]);
-                                        }
-                                      },
-                                child: Text(
-                                  tr(
-                                    'searchX',
-                                    args: [lowerCaseIfEnglish(tr('source'))],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress ? null : urlListImport,
-                          child: Text(tr('importFromURLList')),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress ? null : runUrlImport,
-                          child: Text(tr('importFromURLsInFile')),
-                        ),
-                      ],
-                    ),
-                  ...sourceProvider.massUrlSources.map(
-                    (source) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: importInProgress
-                              ? null
-                              : () {
-                                  runMassSourceImport(source);
-                                },
-                          child: Text(tr('importX', args: [source.name])),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  const Divider(height: 32),
-                  Text(
-                    tr('importedAppsIdDisclaimer'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 12,
+      children: [
+        if (importInProgress) const LinearProgressIndicator(),
+        ConnectedCard(
+          isFirst: true,
+          isLast: true,
+          padding: null,
+          child: ActionListTile(
+            icon: Icons.download_outlined,
+            label: tr('obtainiumImport'),
+            onTap: importInProgress ? null : runObtainiumImport,
           ),
-        ],
-      ),
+        ),
+        Column(
+          spacing: 2,
+          children: () {
+            final tiles = <Widget>[
+              ActionListTile(
+                icon: Icons.format_list_bulleted_outlined,
+                label: tr('importFromURLList'),
+                onTap: importInProgress
+                    ? null
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ImportFromURLListPage(),
+                        ),
+                      ),
+              ),
+              ...sourceProvider.massUrlSources.map(
+                (source) => ActionListTile(
+                  icon: Icons.cloud_download_outlined,
+                  label: tr('importX', args: [source.name]),
+                  onTap: importInProgress
+                      ? null
+                      : () => runMassSourceImport(source),
+                ),
+              ),
+            ];
+            return <Widget>[
+              for (var i = 0; i < tiles.length; i++)
+                ConnectedCard(
+                  isFirst: i == 0,
+                  isLast: i == tiles.length - 1,
+                  padding: null,
+                  child: tiles[i],
+                ),
+            ];
+          }(),
+        ),
+      ],
+    );
+  }
+}
+
+/// The app-export controls (export dir picker, export action, auto-export and
+/// settings-inclusion options). Embedded in the Settings page.
+class ExportSection extends StatefulWidget {
+  const ExportSection({super.key});
+
+  @override
+  State<ExportSection> createState() => _ExportSectionState();
+}
+
+class _ExportSectionState extends State<ExportSection> {
+  Future<Uri?>? _exportDirFuture;
+  String? _lastExportDirKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
+
+    final exportDirKey = settingsProvider.prefs?.getString('exportDir');
+    if (_exportDirFuture == null || exportDirKey != _lastExportDirKey) {
+      _lastExportDirKey = exportDirKey;
+      _exportDirFuture = settingsProvider.getExportDir();
+    }
+
+    Future<void> runObtainiumExport({bool pickOnly = false}) async {
+      settingsProvider.selectionClick();
+      unawaited(
+        appsProvider
+            .export(
+              pickOnly:
+                  pickOnly || (await settingsProvider.getExportDir()) == null,
+              sp: settingsProvider,
+            )
+            .then((String? result) {
+              if (result != null) {
+                if (!context.mounted) return;
+                showMessage(tr('exportedTo', args: [result]), context);
+              }
+            })
+            .catchError((e) {
+              if (!context.mounted) return;
+              showError(e, context);
+            }),
+      );
+    }
+
+    return FutureBuilder(
+      future: _exportDirFuture,
+      builder: (context, snapshot) {
+        return Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ActionListTile(
+                icon: Icons.folder_open_outlined,
+                label: tr('pickExportDir'),
+                trailing: snapshot.data != null
+                    ? Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
+                onTap: () => runObtainiumExport(pickOnly: true),
+              ),
+              ActionListTile(
+                icon: Icons.upload_outlined,
+                label: tr('obtainiumExport'),
+                onTap: snapshot.data == null ? null : runObtainiumExport,
+              ),
+              if (snapshot.data != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: GeneratedForm(
+                    items: [
+                      [
+                        GeneratedFormSwitch(
+                          'autoExportOnChanges',
+                          label: tr('autoExportOnChanges'),
+                          value: settingsProvider.autoExportOnChanges,
+                        ),
+                      ],
+                      [
+                        GeneratedFormDropdown(
+                          'exportSettings',
+                          [
+                            MapEntry('0', tr('none')),
+                            MapEntry('1', tr('excludeSecrets')),
+                            MapEntry('2', tr('all')),
+                          ],
+                          label: tr('includeSettings'),
+                          value: settingsProvider.exportSettings.toString(),
+                        ),
+                      ],
+                    ],
+                    onValueChanges: (value, valid, isBuilding) {
+                      if (valid && !isBuilding) {
+                        if (value['autoExportOnChanges'] != null) {
+                          settingsProvider.autoExportOnChanges =
+                              value['autoExportOnChanges'] == true;
+                        }
+                        if (value['exportSettings'] != null) {
+                          settingsProvider.exportSettings =
+                              int.tryParse('${value['exportSettings']}') ?? 1;
+                        }
+                      }
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -662,7 +506,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        FilledButton.tonal(
           onPressed: () {
             Navigator.of(context).pop(null);
           },
@@ -673,9 +517,8 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
   }
 }
 
-// ignore: must_be_immutable
 class SelectionModal extends StatefulWidget {
-  SelectionModal({
+  const SelectionModal({
     super.key,
     required this.entries,
     this.selectedByDefault = true,
@@ -685,12 +528,12 @@ class SelectionModal extends StatefulWidget {
     this.deselectThese = const [],
   });
 
-  String? title;
-  Map<String, List<String>> entries;
-  bool selectedByDefault;
-  List<String> deselectThese;
-  bool onlyOneSelectionAllowed;
-  bool titlesAreLinks;
+  final String? title;
+  final Map<String, List<String>> entries;
+  final bool selectedByDefault;
+  final List<String> deselectThese;
+  final bool onlyOneSelectionAllowed;
+  final bool titlesAreLinks;
 
   @override
   State<SelectionModal> createState() => _SelectionModalState();
@@ -700,20 +543,19 @@ class _SelectionModalState extends State<SelectionModal> {
   Map<MapEntry<String, List<String>>, bool> entrySelections = {};
   String filterRegex = '';
   @override
+  void didUpdateWidget(SelectionModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.entries != oldWidget.entries ||
+        widget.selectedByDefault != oldWidget.selectedByDefault ||
+        widget.deselectThese != oldWidget.deselectThese) {
+      _resetEntrySelections();
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    for (var entry in widget.entries.entries) {
-      entrySelections.putIfAbsent(
-        entry,
-        () =>
-            widget.selectedByDefault &&
-            !widget.onlyOneSelectionAllowed &&
-            !widget.deselectThese.contains(entry.key),
-      );
-    }
-    if (widget.selectedByDefault && widget.onlyOneSelectionAllowed) {
-      selectOnlyOne(widget.entries.entries.first.key);
-    }
+    _resetEntrySelections();
   }
 
   void selectOnlyOne(String url) {
@@ -728,19 +570,215 @@ class _SelectionModalState extends State<SelectionModal> {
     }
   }
 
+  void _resetEntrySelections() {
+    entrySelections.clear();
+    for (var entry in widget.entries.entries) {
+      entrySelections.putIfAbsent(
+        entry,
+        () =>
+            widget.selectedByDefault &&
+            !widget.onlyOneSelectionAllowed &&
+            !widget.deselectThese.contains(entry.key),
+      );
+    }
+    if (widget.selectedByDefault &&
+        widget.onlyOneSelectionAllowed &&
+        widget.entries.entries.isNotEmpty) {
+      selectOnlyOne(widget.entries.entries.first.key);
+    }
+  }
+
+  Widget _buildSelectAllButton() {
+    if (widget.onlyOneSelectionAllowed) {
+      return const SizedBox.shrink();
+    }
+    final noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
+    return noneSelected
+        ? TextButton(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              setState(() {
+                selectAll();
+              });
+            },
+            child: Text(tr('selectAll')),
+          )
+        : TextButton(
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onPressed: () {
+              setState(() {
+                selectAll(deselect: true);
+              });
+            },
+            child: Text(tr('deselectX', args: [''])),
+          );
+  }
+
+  void _selectThis(MapEntry<String, List<String>> entry, bool? value) {
+    setState(() {
+      value ??= false;
+      if (value! && widget.onlyOneSelectionAllowed) {
+        selectOnlyOne(entry.key);
+      } else {
+        entrySelections[entry] = value!;
+      }
+    });
+  }
+
+  Widget _buildUrlLink(MapEntry<String, List<String>> entry) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.titlesAreLinks)
+          LinkText(
+            text: entry.value.isEmpty ? entry.key : entry.value[0],
+            url: entry.key,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          )
+        else
+          Text(
+            entry.value.isEmpty ? entry.key : entry.value[0],
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.start,
+          ),
+        if (widget.titlesAreLinks)
+          Text(
+            Uri.parse(entry.key).host,
+            style: const TextStyle(
+              decoration: TextDecoration.underline,
+              fontSize: 12,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDescriptionText(MapEntry<String, List<String>> entry) {
+    return entry.value.length <= 1
+        ? const SizedBox.shrink()
+        : Text(
+            entry.value[1].length > 128
+                ? '${entry.value[1].substring(0, 128)}...'
+                : entry.value[1],
+            style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+          );
+  }
+
+  Widget _buildSingleSelectTile(MapEntry<String, List<String>> entry) {
+    return ListTile(
+      title: InkWell(
+        onTap: widget.titlesAreLinks
+            ? null
+            : () {
+                _selectThis(entry, !(entrySelections[entry] ?? false));
+              },
+        child: _buildUrlLink(entry),
+      ),
+      subtitle: entry.value.length <= 1
+          ? null
+          : InkWell(
+              onTap: () {
+                setState(() {
+                  selectOnlyOne(entry.key);
+                });
+              },
+              child: _buildDescriptionText(entry),
+            ),
+      leading: Radio<String>(value: entry.key),
+    );
+  }
+
+  Widget _buildMultiSelectTile(MapEntry<String, List<String>> entry) {
+    return Row(
+      children: [
+        Checkbox(
+          value: entrySelections[entry],
+          onChanged: (value) {
+            _selectThis(entry, value);
+          },
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: widget.titlesAreLinks
+                    ? null
+                    : () {
+                        _selectThis(entry, !(entrySelections[entry] ?? false));
+                      },
+                child: _buildUrlLink(entry),
+              ),
+              entry.value.length <= 1
+                  ? const SizedBox.shrink()
+                  : InkWell(
+                      onTap: () {
+                        _selectThis(entry, !(entrySelections[entry] ?? false));
+                      },
+                      child: _buildDescriptionText(entry),
+                    ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildTVFooter() {
+    if (!context.read<SettingsProvider>().isTV ||
+        widget.onlyOneSelectionAllowed) {
+      return [];
+    }
+    return [
+      const SizedBox(height: 8),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(tr('cancel')),
+          ),
+          TextButton(
+            onPressed: entrySelections.values.where((b) => b).isEmpty
+                ? null
+                : () => Navigator.of(context).pop(
+                    entrySelections.entries
+                        .where((entry) => entry.value)
+                        .map((e) => e.key.key)
+                        .toList(),
+                  ),
+            child: Text(
+              tr(
+                'selectX',
+                args: [
+                  entrySelections.values.where((b) => b).length.toString(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isTV = context.read<SettingsProvider>().isTV;
-    Map<MapEntry<String, List<String>>, bool> filteredEntrySelections = {};
+    final Map<MapEntry<String, List<String>>, bool> filteredEntrySelections =
+        {};
     entrySelections.forEach((key, value) {
-      var searchableText = key.value.isEmpty ? key.key : key.value[0];
+      final searchableText = key.value.isEmpty ? key.key : key.value[0];
       if (filterRegex.isEmpty || RegExp(filterRegex).hasMatch(searchableText)) {
         filteredEntrySelections.putIfAbsent(key, () => value);
       }
     });
     if (filterRegex.isNotEmpty && filteredEntrySelections.isEmpty) {
       entrySelections.forEach((key, value) {
-        var searchableText = key.value.isEmpty ? key.key : key.value[0];
+        final searchableText = key.value.isEmpty ? key.key : key.value[0];
         if (filterRegex.isEmpty ||
             RegExp(
               filterRegex,
@@ -750,239 +788,66 @@ class _SelectionModalState extends State<SelectionModal> {
         }
       });
     }
-    getSelectAllButton() {
-      if (widget.onlyOneSelectionAllowed) {
-        return SizedBox.shrink();
+
+    final selectedRadioKey = entrySelections.entries
+        .where((e) => e.value)
+        .map((e) => e.key.key)
+        .firstOrNull;
+    void onRadioChanged(String? value) {
+      if (value == null) return;
+      if (isTV) {
+        Navigator.of(context).pop([value]);
+      } else {
+        setState(() {
+          selectOnlyOne(value);
+        });
       }
-      var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
-      return noneSelected
-          ? TextButton(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                setState(() {
-                  selectAll();
-                });
-              },
-              child: Text(tr('selectAll')),
-            )
-          : TextButton(
-              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              onPressed: () {
-                setState(() {
-                  selectAll(deselect: true);
-                });
-              },
-              child: Text(tr('deselectX', args: [''])),
-            );
     }
 
     return AlertDialog(
       scrollable: true,
       title: Text(widget.title ?? tr('pick')),
-      content: Column(
-        children: [
-          GeneratedForm(
-            items: [
-              [
-                GeneratedFormTextField(
-                  'filter',
-                  label: tr('filter'),
-                  required: false,
-                  additionalValidators: [
-                    (value) {
-                      return regExValidator(value);
-                    },
-                  ],
-                ),
-              ],
-            ],
-            onValueChanges: (value, valid, isBuilding) {
-              if (valid && !isBuilding) {
-                if (value['filter'] != null) {
-                  setState(() {
-                    filterRegex = value['filter'];
-                  });
-                }
-              }
-            },
-          ),
-          ...filteredEntrySelections.keys.map((entry) {
-            selectThis(bool? value) {
-              setState(() {
-                value ??= false;
-                if (value! && widget.onlyOneSelectionAllowed) {
-                  selectOnlyOne(entry.key);
-                } else {
-                  entrySelections[entry] = value!;
-                }
-              });
-            }
-
-            var urlLink = InkWell(
-              onTap: !widget.titlesAreLinks
-                  ? null
-                  : () {
-                      launchUrlString(
-                        entry.key,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.value.isEmpty ? entry.key : entry.value[0],
-                    style: TextStyle(
-                      decoration: widget.titlesAreLinks
-                          ? TextDecoration.underline
-                          : null,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.start,
-                  ),
-                  if (widget.titlesAreLinks)
-                    Text(
-                      Uri.parse(entry.key).host,
-                      style: const TextStyle(
-                        decoration: TextDecoration.underline,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
-              ),
-            );
-
-            var descriptionText = entry.value.length <= 1
-                ? const SizedBox.shrink()
-                : Text(
-                    entry.value[1].length > 128
-                        ? '${entry.value[1].substring(0, 128)}...'
-                        : entry.value[1],
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontSize: 12,
-                    ),
-                  );
-
-            var selectedEntries = entrySelections.entries
-                .where((e) => e.value)
-                .toList();
-
-            var singleSelectTile = ListTile(
-              title: InkWell(
-                onTap: widget.titlesAreLinks
-                    ? null
-                    : () {
-                        selectThis(!(entrySelections[entry] ?? false));
+      content: RadioGroup<String>(
+        groupValue: selectedRadioKey,
+        onChanged: onRadioChanged,
+        child: Column(
+          children: [
+            GeneratedForm(
+              items: [
+                [
+                  GeneratedFormTextField(
+                    'filter',
+                    label: tr('filter'),
+                    required: false,
+                    additionalValidators: [
+                      (value) {
+                        return regExValidator(value);
                       },
-                child: urlLink,
-              ),
-              subtitle: entry.value.length <= 1
-                  ? null
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectOnlyOne(entry.key);
-                        });
-                      },
-                      child: descriptionText,
-                    ),
-              leading: Radio<String>(
-                value: entry.key,
-                groupValue: selectedEntries.isEmpty
-                    ? null
-                    : selectedEntries.first.key.key,
-                onChanged: (value) {
-                  if (isTV) {
-                    Navigator.of(context).pop([entry.key]);
-                  } else {
-                    setState(() {
-                      selectOnlyOne(entry.key);
-                    });
-                  }
-                },
-              ),
-            );
-
-            var multiSelectTile = Row(
-              children: [
-                Checkbox(
-                  value: entrySelections[entry],
-                  onChanged: (value) {
-                    selectThis(value);
-                  },
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: widget.titlesAreLinks
-                            ? null
-                            : () {
-                                selectThis(!(entrySelections[entry] ?? false));
-                              },
-                        child: urlLink,
-                      ),
-                      entry.value.length <= 1
-                          ? const SizedBox.shrink()
-                          : InkWell(
-                              onTap: () {
-                                selectThis(!(entrySelections[entry] ?? false));
-                              },
-                              child: descriptionText,
-                            ),
-                      const SizedBox(height: 8),
                     ],
                   ),
-                ),
+                ],
               ],
-            );
-
-            return widget.onlyOneSelectionAllowed
-                ? singleSelectTile
-                : multiSelectTile;
-          }),
-          if (isTV && !widget.onlyOneSelectionAllowed) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(tr('cancel')),
-                ),
-                TextButton(
-                  onPressed: entrySelections.values.where((b) => b).isEmpty
-                      ? null
-                      : () => Navigator.of(context).pop(
-                          entrySelections.entries
-                              .where((entry) => entry.value)
-                              .map((e) => e.key.key)
-                              .toList(),
-                        ),
-                  child: Text(
-                    tr(
-                      'selectX',
-                      args: [
-                        entrySelections.values
-                            .where((b) => b)
-                            .length
-                            .toString(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              onValueChanges: (value, valid, isBuilding) {
+                if (valid && !isBuilding) {
+                  if (value['filter'] != null) {
+                    setState(() {
+                      filterRegex = value['filter'];
+                    });
+                  }
+                }
+              },
             ),
+            ...filteredEntrySelections.keys.map((entry) {
+              return widget.onlyOneSelectionAllowed
+                  ? _buildSingleSelectTile(entry)
+                  : _buildMultiSelectTile(entry);
+            }),
+            ..._buildTVFooter(),
           ],
-        ],
+        ),
       ),
       actions: [
-        getSelectAllButton(),
+        _buildSelectAllButton(),
         TextButton(
           autofocus: isTV,
           onPressed: () {
@@ -990,7 +855,7 @@ class _SelectionModalState extends State<SelectionModal> {
           },
           child: Text(tr('cancel')),
         ),
-        TextButton(
+        FilledButton(
           onPressed: entrySelections.values.where((b) => b).isEmpty
               ? null
               : () {
@@ -1014,5 +879,95 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       ],
     );
+  }
+}
+
+void _showImportError(dynamic e, BuildContext context) {
+  if (e is PlatformException || e is MissingPluginException) {
+    showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+  } else {
+    showError(e, context);
+  }
+}
+
+class ImportFromURLListController extends ChangeNotifier {
+  final TextEditingController urlController = TextEditingController();
+  bool isImporting = false;
+
+  final SourceProvider sourceProvider = SourceProvider();
+
+  void showImportError(dynamic e, BuildContext context) {
+    if (e is PlatformException || e is MissingPluginException) {
+      showError(ObtainiumError(tr('noFilePickerAvailable')), context);
+    } else {
+      showError(e, context);
+    }
+  }
+
+  Future<void> importFromFile(BuildContext context) async {
+    try {
+      final result = await FilePicker.pickFiles();
+      if (result != null) {
+        final path = result.files.single.path;
+        if (path == null) return;
+        final urls = RegExp('https?://[^"]+')
+            .allMatches(await File(path).readAsString())
+            .map((e) => e.input.substring(e.start, e.end))
+            .toSet()
+            .toList()
+            .where((url) {
+              try {
+                sourceProvider.getSource(url);
+                return true;
+              } catch (e) {
+                LogsProvider().add(
+                  'URL parse error in filter: $e',
+                  level: LogLevel.error,
+                );
+                return false;
+              }
+            })
+            .join('\n');
+        urlController.text = urls;
+        notifyListeners();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showImportError(e, context);
+      }
+    }
+  }
+
+  String? validate(String? value) {
+    if (value != null && value.isNotEmpty) {
+      final lines = value.trim().split('\n');
+      for (int i = 0; i < lines.length; i++) {
+        try {
+          sourceProvider.getSource(lines[i]);
+        } catch (e) {
+          return '${tr('line')} ${i + 1}: $e';
+        }
+      }
+    }
+    return null;
+  }
+
+  List<String> getURLs() {
+    return urlController.text
+        .trim()
+        .split('\n')
+        .where((l) => l.isNotEmpty)
+        .toList();
+  }
+
+  void setImporting(bool v) {
+    isImporting = v;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    urlController.dispose();
+    super.dispose();
   }
 }

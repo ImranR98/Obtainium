@@ -6,6 +6,7 @@ class IzzyOnDroid extends AppSource {
   late FDroid fd;
 
   IzzyOnDroid() {
+    name = 'IzzyOnDroid';
     hosts = ['izzysoft.de'];
     fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =
@@ -15,22 +16,19 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegExA = RegExp(
-      '^https?://android.${getSourceRegex(hosts)}/repo/apk/[^/]+',
-      caseSensitive: false,
-    );
-    RegExpMatch? match = standardUrlRegExA.firstMatch(url);
-    if (match == null) {
-      RegExp standardUrlRegExB = RegExp(
-        '^https?://apt.${getSourceRegex(hosts)}/fdroid/index/apk/[^/]+',
-        caseSensitive: false,
+    final host = Uri.parse(url).host;
+    if (host.startsWith('android.')) {
+      return standardizeUrlWithRegex(
+        url,
+        subdomainPrefix: r'android\.',
+        pathPattern: r'/repo/apk/[^/]+',
       );
-      match = standardUrlRegExB.firstMatch(url);
     }
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'apt\.',
+      pathPattern: r'/fdroid/index/apk/[^/]+',
+    );
   }
 
   @override
@@ -46,16 +44,23 @@ class IzzyOnDroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
-    return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
-      await sourceRequest(
-        'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
-        additionalSettings,
-      ),
-      'https://android.izzysoft.de/frepo/$appId',
-      standardUrl,
-      name,
-      additionalSettings: additionalSettings,
-    );
+    try {
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
+        throw NoReleasesError();
+      }
+      return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
+        await sourceRequest(
+          'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
+          additionalSettings,
+        ),
+        'https://android.izzysoft.de/frepo/$appId',
+        standardUrl,
+        name,
+        additionalSettings: additionalSettings,
+      );
+    } catch (e) {
+      rethrowOrWrapError(e);
+    }
   }
 }

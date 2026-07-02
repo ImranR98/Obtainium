@@ -1,0 +1,1273 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:android_package_installer/android_package_installer.dart';
+import 'package:android_package_manager/android_package_manager.dart';
+import 'package:archive/archive.dart' as archive;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_archive/flutter_archive.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:obtainium/components/app_detail_widgets.dart';
+import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+
+// NOTE: This provider extension is intentionally UX-coupled — it shows dialogs,
+// toasts, and interacts with BuildContext for install operations that inherently
+// require user interaction (APK file pickers, permission prompts, foreground
+// detection, etc.). Decoupling these would add indirection without real benefit.
+
+// Named constants for magic numbers and hardcoded values
+const int _androidApiLevelR = 30;
+const int _androidApiLevelS = 31;
+const double _installingProgressSentinel = -1;
+const int _downloadCompleteProgress = 100;
+const int _remainingStepsProgress = 90;
+const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
+
+// Android PackageInstaller status codes: 0 = success, 3 = already installed / pending
+const int _installSuccessCode = 0;
+const int _installAlreadyPendingCode = 3;
+
+class _InstallResult {
+  final String id;
+  final bool willBeSilent;
+  final DownloadedApk? downloadedFile;
+  final DownloadedDir? downloadedDir;
+  const _InstallResult({
+    required this.id,
+    required this.willBeSilent,
+    this.downloadedFile,
+    this.downloadedDir,
+  });
+}
+
+/// App download, install, and on-device package operations for [AppsProvider].
+extension AppsProviderInstall on AppsProvider {
+  Future<File> handleAPKIDChange(
+    App app,
+    PackageInfo newInfo,
+    File downloadedFile,
+    String downloadUrl,
+  ) async {
+    // If the APK package ID is different from the App ID, it is either new (using a placeholder ID) or the ID has changed
+    // The former case should be handled (give the App its real ID), the latter is a security issue
+    final isTempIdBool = isTempId(app);
+    final actualPackageName = newInfo.packageName;
+    if (app.id != actualPackageName) {
+      if (actualPackageName == null) {
+        throw ObtainiumError(tr('couldNotGetIdFromApk'));
+      }
+      if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
+        throw IDChangedError(actualPackageName);
+      }
+      final idChangeWasAllowed = app.allowIdChange;
+      app = app.copyWith(allowIdChange: false);
+      final originalAppId = app.id;
+      app = app.copyWith(id: actualPackageName);
+      downloadedFile = downloadedFile.renameSync(
+        '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}',
+      );
+      if (apps[originalAppId] != null) {
+        await removeApps([originalAppId]);
+        await saveApps([
+          app,
+        ], onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
+      }
+    }
+    return downloadedFile;
+  }
+
+  Future<void> updatePendingRepoRename(String appId, String? newUrl) async {
+    if (apps.containsKey(appId)) {
+      apps[appId]!.app = apps[appId]!.app.copyWith(
+        pendingRepoRenameUrl: newUrl,
+      );
+      await saveApps([apps[appId]!.app]);
+    }
+  }
+
+  Future<void> acceptRepoRename(String appId, String newUrl) async {
+    if (apps.containsKey(appId)) {
+      apps[appId]!.app = apps[appId]!.app.copyWith(
+        url: newUrl,
+        pendingRepoRenameUrl: null,
+      );
+      await saveApps([apps[appId]!.app]);
+    }
+  }
+
+  /// Downloads the preferred APK for [app], returning a [DownloadedApk] or [DownloadedDir].
+  Future<Object> downloadApp(
+    App app,
+    BuildContext? context, {
+    NotificationsProvider? notificationsProvider,
+    bool useExisting = true,
+  }) async {
+    final notifId = DownloadNotification(app.finalName, 0).id;
+    if (apps[app.id] != null) {
+      apps[app.id]!.downloadProgress = 0;
+      notify();
+    }
+    try {
+      if (app.apkUrls.isEmpty) throw NoAPKError();
+      if (app.preferredApkIndex >= app.apkUrls.length) {
+        app = app.copyWith(preferredApkIndex: app.apkUrls.length - 1);
+      }
+      if (app.preferredApkIndex < 0) app = app.copyWith(preferredApkIndex: 0);
+      if (apps[app.id] != null) apps[app.id]!.app = app;
+      final AppSource source = SourceProvider().getSource(
+        app.url,
+        overrideSource: app.overrideSource,
+      );
+      final additionalSettingsPlusSourceConfig = await source
+          .buildMergedSettings(app.additionalSettings, settingsProvider);
+      final String downloadUrl = await source.assetUrlPrefetchModifier(
+        await source.generalReqPrefetchModifier(
+          app.apkUrls[app.preferredApkIndex].value,
+          additionalSettingsPlusSourceConfig,
+        ),
+        app.url,
+        additionalSettingsPlusSourceConfig,
+      );
+      var notif = DownloadNotification(
+        app.finalName,
+        _downloadCompleteProgress,
+      );
+      unawaited(notificationsProvider?.cancel(notif.id));
+      int? prevProg;
+      var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
+      if (source.urlsAlwaysHaveExtension) {
+        fileNameNoExt =
+            '$fileNameNoExt.${app.apkUrls[app.preferredApkIndex].key.split('.').last}';
+      }
+      final headers = await source.getRequestHeaders(
+        app.additionalSettings,
+        downloadUrl,
+        forAPKDownload: true,
+      );
+      var downloadedFile = await downloadFileWithRetry(
+        downloadUrl,
+        fileNameNoExt,
+        source.urlsAlwaysHaveExtension,
+        headers: headers,
+        (double? progress) {
+          final int? prog = progress?.ceil();
+          if (apps[app.id] != null) {
+            apps[app.id]!.downloadProgress = progress;
+            // Only rebuild listeners when the displayed (integer) percent
+            // actually changes, to avoid redundant whole-page rebuilds on
+            // every sub-percent download tick.
+            if (prevProg != prog) {
+              notify();
+            }
+          }
+          notif = DownloadNotification(
+            app.finalName,
+            prog ?? _downloadCompleteProgress,
+          );
+          if (prog != null && prevProg != prog) {
+            notificationsProvider?.notify(notif);
+          }
+          prevProg = prog;
+        },
+        this.apkDir.path,
+        useExisting: useExisting,
+        allowInsecure: app.settings.getBool('allowInsecure'),
+        logs: logs,
+      );
+      if (apps[app.id] != null) {
+        apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
+        notify();
+        notif = DownloadNotification(app.finalName, _remainingStepsProgress);
+        unawaited(notificationsProvider?.notify(notif));
+      }
+      PackageInfo? newInfo;
+      final originalAssetName = app.apkUrls[app.preferredApkIndex].key
+          .toLowerCase();
+      final isAPK = downloadedFile.path.toLowerCase().endsWith('.apk');
+      final isXAPK = downloadedFile.path.toLowerCase().endsWith('.xapk');
+      final isTarball =
+          originalAssetName.endsWith('.tar.gz') ||
+          originalAssetName.endsWith('.tgz') ||
+          originalAssetName.endsWith('.tar.bz2') ||
+          originalAssetName.endsWith('.tar.xz');
+      Directory? apkDir;
+      if (isAPK) {
+        newInfo = await packageManager.getPackageArchiveInfo(
+          archiveFilePath: downloadedFile.path,
+        );
+      } else {
+        final String apkDirPath = '${downloadedFile.path}-dir';
+        if (isTarball) {
+          await extractTarballFile(downloadedFile.path, apkDirPath);
+        } else {
+          await unzipFile(downloadedFile.path, apkDirPath);
+        }
+        apkDir = Directory(apkDirPath);
+        var apks = apkDir
+            .listSync(recursive: true)
+            .where((e) => AppSource.isApkOrContainerFile(e.path))
+            .toList();
+
+        apks = _preferMatchingApk(apks, app.id);
+
+        String? filterRegEx;
+        if (isTarball &&
+            app.settings
+                    .getStringOrNull('tarballedApkFilterRegEx')
+                    ?.isNotEmpty ==
+                true) {
+          filterRegEx = app.settings.getStringOrNull('tarballedApkFilterRegEx');
+        } else if (!isTarball &&
+            app.settings.getStringOrNull('zippedApkFilterRegEx')?.isNotEmpty ==
+                true) {
+          filterRegEx = app.settings.getStringOrNull('zippedApkFilterRegEx');
+        }
+        if (filterRegEx != null) {
+          final reg = RegExp(filterRegEx);
+          apks.removeWhere((apk) {
+            final relativePath = apk.path.substring(apkDir!.path.length + 1);
+            final shouldDelete = !reg.hasMatch(relativePath);
+            if (shouldDelete) {
+              apk.delete();
+            }
+            return shouldDelete;
+          });
+        }
+
+        if (apks.isEmpty) {
+          throw NoAPKError();
+        }
+
+        for (var i = 0; i < apks.length; i++) {
+          try {
+            newInfo = await packageManager.getPackageArchiveInfo(
+              archiveFilePath: apks[i].path,
+            );
+            if (newInfo != null) {
+              break;
+            }
+          } catch (e) {
+            if (i == apks.length - 1) {
+              rethrow;
+            }
+          }
+        }
+      }
+      if (newInfo == null) {
+        unawaited(downloadedFile.delete());
+        throw ObtainiumError(tr('couldNotGetIdFromApk'));
+      }
+      downloadedFile = await handleAPKIDChange(
+        app,
+        newInfo,
+        downloadedFile,
+        downloadUrl,
+      );
+      // Delete older versions of the file if any
+      for (var file in downloadedFile.parent.listSync()) {
+        final fn = file.path.split('/').last;
+        if (fn.startsWith('${app.id}-') &&
+            FileSystemEntity.isFileSync(file.path) &&
+            file.path != downloadedFile.path) {
+          unawaited(file.delete(recursive: true));
+        }
+      }
+      if (isAPK) {
+        return DownloadedApk(app.id, downloadedFile);
+      } else {
+        DownloadedDirType dirType;
+        if (isXAPK) {
+          dirType = DownloadedDirType.xapk;
+        } else if (isTarball) {
+          dirType = DownloadedDirType.tarball;
+        } else {
+          dirType = DownloadedDirType.zip;
+        }
+        return DownloadedDir(app.id, downloadedFile, apkDir!, dirType);
+      }
+    } finally {
+      unawaited(notificationsProvider?.cancel(notifId));
+      if (apps[app.id] != null) {
+        apps[app.id]!.downloadProgress = null;
+        notify();
+      }
+    }
+  }
+
+  bool areDownloadsRunning() => apps.values
+      .where((element) => element.downloadProgress != null)
+      .isNotEmpty;
+
+  Future<bool> canInstallSilently(App app) async {
+    if (!settingsProvider.enableBackgroundUpdates) {
+      return false;
+    }
+    if (app.settings.getBool('exemptFromBackgroundUpdates')) {
+      unawaited(logs.add('Exempted from BG updates: ${app.id}'));
+      return false;
+    }
+    if (app.apkUrls.length > 1) {
+      unawaited(logs.add('Multiple APK URLs: ${app.id}'));
+      return false; // Manual API selection means silent install is not possible
+    }
+
+    final osInfo = await DeviceInfoPlugin().androidInfo;
+    String? installerPackageName;
+    try {
+      installerPackageName = osInfo.version.sdkInt >= _androidApiLevelR
+          ? (await packageManager.getInstallSourceInfo(
+              packageName: app.id,
+            ))?.installingPackageName
+          : (await packageManager.getInstallerPackageName(packageName: app.id));
+    } catch (e) {
+      unawaited(
+        logs.add(
+          'Failed to get installed package details: ${app.id} (${e.toString()})',
+        ),
+      );
+      return false;
+    }
+
+    final int? targetSDK = (await getInstalledInfo(
+      app.id,
+    ))?.applicationInfo?.targetSdkVersion;
+    final int requiredSDK = osInfo.version.sdkInt - 3;
+    // The APK should target a new enough API
+    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+      unawaited(
+        logs.add(
+          'App currently targets API $targetSDK which is too low for background updates (requires API $requiredSDK): ${app.id}',
+        ),
+      );
+      return false;
+    }
+
+    if (settingsProvider.useShizuku) {
+      return true;
+    }
+
+    if (app.id == obtainiumId) {
+      return false;
+    }
+    if (installerPackageName != obtainiumId) {
+      // If we did not install the app, silent install is not possible
+      return false;
+    }
+    if (osInfo.version.sdkInt < _androidApiLevelS) {
+      // The OS must also be new enough
+      unawaited(logs.add('Android SDK too old: ${osInfo.version.sdkInt}'));
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> waitForUserToReturnToForeground(BuildContext context) async {
+    final NotificationsProvider notificationsProvider = context
+        .read<NotificationsProvider>();
+    if (!isForeground) {
+      await notificationsProvider.notify(
+        completeInstallationNotification,
+        cancelExisting: true,
+      );
+      while (await FGBGEvents.instance.stream.first != FGBGType.foreground) {}
+      await notificationsProvider.cancel(completeInstallationNotification.id);
+    }
+  }
+
+  Future<bool> canDowngradeApps() async =>
+      (await getInstalledInfo('com.berdik.letmedowngrade')) != null;
+
+  Future<void> unzipFile(String filePath, String destinationPath) async {
+    await ZipFile.extractToDirectory(
+      zipFile: File(filePath),
+      destinationDir: Directory(destinationPath),
+    );
+  }
+
+  Future<void> extractTarballFile(
+    String filePath,
+    String destinationPath,
+  ) async {
+    final File tarballFile = File(filePath);
+    final int fileSize = await tarballFile.length();
+
+    // For files under a conservative threshold, use the in-memory path for
+    // speed. Above the threshold, stream through the file to avoid OOM on
+    // devices with limited RAM (large tarballs can exceed available memory
+    // once decompressed).
+    const int inMemoryThreshold = _inMemoryThreshold64MB; // 64 MB
+    if (fileSize <= inMemoryThreshold) {
+      await _extractTarballInMemory(tarballFile, destinationPath);
+    } else {
+      await _extractTarballStreamed(tarballFile, destinationPath);
+    }
+  }
+
+  Future<void> _extractTarballInMemory(
+    File tarballFile,
+    String destinationPath,
+  ) async {
+    final bytes = await tarballFile.readAsBytes();
+    List<int> decompressed;
+
+    if (bytes.length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b) {
+      decompressed = const archive.GZipDecoder().decodeBytes(bytes);
+    } else if (bytes.length >= 3 &&
+        bytes[0] == 0x42 &&
+        bytes[1] == 0x5a &&
+        bytes[2] == 0x68) {
+      decompressed = archive.BZip2Decoder().decodeBytes(bytes);
+    } else if (bytes.length >= 6 &&
+        bytes[0] == 0xfd &&
+        bytes[1] == 0x37 &&
+        bytes[2] == 0x7a &&
+        bytes[3] == 0x58 &&
+        bytes[4] == 0x5a &&
+        bytes[5] == 0x00) {
+      decompressed = archive.XZDecoder().decodeBytes(bytes);
+    } else {
+      decompressed = bytes;
+    }
+
+    final tarArchive = archive.TarDecoder().decodeBytes(decompressed);
+    final destDir = Directory(destinationPath);
+    if (!destDir.existsSync()) {
+      destDir.createSync(recursive: true);
+    }
+    for (final file in tarArchive.files) {
+      if (file.isFile) {
+        final content = file.content;
+        final outPath = '${destDir.path}/${file.name}';
+        final outFile = File(outPath);
+        outFile.createSync(recursive: true);
+        outFile.writeAsBytesSync(content);
+      }
+    }
+  }
+
+  Future<void> _extractTarballStreamed(
+    File tarballFile,
+    String destinationPath,
+  ) async {
+    final destDir = Directory(destinationPath);
+    if (!destDir.existsSync()) {
+      destDir.createSync(recursive: true);
+    }
+
+    final raf = await tarballFile.open(mode: FileMode.read);
+    final header = await raf.read(6);
+
+    final isGzip = header.length >= 2 && header[0] == 0x1f && header[1] == 0x8b;
+    // Close and re-open for streaming so the header bytes are included.
+    await raf.close();
+
+    if (isGzip) {
+      // Stream-decompress gzip to a temp file (avoids holding the full
+      // decompressed tar in memory), then read tar entries from disk.
+      final decompressedTemp = File('${tarballFile.path}.decompressed');
+      try {
+        final input = tarballFile.openRead();
+        final output = decompressedTemp.openWrite();
+        await input.cast<List<int>>().transform(gzip.decoder).pipe(output);
+        await output.close();
+        final decompressedBytes = await decompressedTemp.readAsBytes();
+        final tarArchive = archive.TarDecoder().decodeBytes(decompressedBytes);
+        for (final file in tarArchive.files) {
+          if (file.isFile) {
+            final outFile = File('${destDir.path}/${file.name}');
+            outFile.createSync(recursive: true);
+            outFile.writeAsBytesSync(file.content);
+          }
+        }
+      } finally {
+        if (decompressedTemp.existsSync()) {
+          decompressedTemp.deleteSync();
+        }
+      }
+    } else {
+      // BZip2, XZ, or uncompressed: use the in-memory path.  These formats
+      // are rare for Android app bundles, and the threshold already ensures
+      // the file is ≤ 64 MB so the in-memory footprint is bounded.
+      await _extractTarballInMemory(tarballFile, destinationPath);
+    }
+  }
+
+  Future<bool> installApkDir(
+    DownloadedDir dir,
+    BuildContext? firstTimeWithContext, {
+    bool needsBGWorkaround = false,
+    bool shizukuPretendToBeGooglePlay = false,
+  }) async {
+    // Try installing all APKs; succeed if at least one installed.
+    var somethingInstalled = false;
+    try {
+      final MultiAppMultiError errors = MultiAppMultiError();
+      List<File> apkFiles = [];
+      for (var file
+          in dir.extracted
+              .listSync(recursive: true, followLinks: false)
+              .whereType<File>()) {
+        if (AppSource.isApkOrContainerFile(file.path)) {
+          apkFiles.add(file);
+        } else if (file.path.toLowerCase().endsWith('.obb')) {
+          await moveObbFile(file, dir.appId);
+        }
+      }
+
+      apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
+
+      try {
+        final wasInstalled = await installApk(
+          DownloadedApk(dir.appId, apkFiles[0]),
+          // ignore: use_build_context_synchronously
+          firstTimeWithContext,
+          needsBGWorkaround: needsBGWorkaround,
+          shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          additionalAPKs: apkFiles
+              .sublist(1)
+              .map((a) => DownloadedApk(dir.appId, a))
+              .toList(),
+        );
+        somethingInstalled = somethingInstalled || wasInstalled;
+        unawaited(dir.file.delete(recursive: true));
+      } catch (e) {
+        unawaited(
+          logs.add('Could not install APKs from ${dir.type}: ${e.toString()}'),
+        );
+        errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
+      }
+      if (errors.idsByErrorString.isNotEmpty) {
+        throw errors;
+      }
+    } finally {
+      unawaited(dir.extracted.delete(recursive: true));
+    }
+    return somethingInstalled;
+  }
+
+  /// Installs a downloaded APK file, with optional auxiliary split APKs and Shizuku support.
+  Future<bool> installApk(
+    DownloadedApk file,
+    BuildContext? firstTimeWithContext, {
+    bool needsBGWorkaround = false,
+    bool shizukuPretendToBeGooglePlay = false,
+    List<DownloadedApk> additionalAPKs = const [],
+  }) async {
+    if (firstTimeWithContext != null) {
+      await _shareWithAppVerifier(file, firstTimeWithContext);
+    }
+    final newInfo = await packageManager.getPackageArchiveInfo(
+      archiveFilePath: file.file.path,
+    );
+    if (newInfo == null) {
+      try {
+        deleteFile(file.file);
+        for (var a in additionalAPKs) {
+          deleteFile(a.file);
+        }
+      } catch (e) {
+        unawaited(
+          logs.add('Failed to delete bad download files: ${e.toString()}'),
+        );
+      }
+      throw ObtainiumError(tr('badDownload'));
+    }
+    final PackageInfo? appInfo = await getInstalledInfo(
+      apps[file.appId]!.app.id,
+    );
+    unawaited(
+      logs.add(
+        'Installing "${newInfo.packageName}" version "${newInfo.versionName}" versionCode "${newInfo.versionCode}"${appInfo != null ? ' (from existing version "${appInfo.versionName}" versionCode "${appInfo.versionCode}")' : ''}',
+      ),
+    );
+    final newVersionCode = newInfo.versionCode;
+    final oldVersionCode = appInfo?.versionCode;
+    if (appInfo != null &&
+        newVersionCode != null &&
+        oldVersionCode != null &&
+        newVersionCode < oldVersionCode &&
+        !(await canDowngradeApps())) {
+      if (settingsProvider.showAppDowngradeError) {
+        try {
+          file.file.deleteSync();
+        } catch (e) {
+          unawaited(
+            logs.add(
+              'Failed to delete downgraded APK file: $e',
+              level: LogLevel.error,
+            ),
+          );
+        }
+        throw DowngradeError(oldVersionCode, newVersionCode);
+      }
+    }
+    if (needsBGWorkaround) {
+      // Background process workaround (#896): the `await installApk` below
+      // will never return in BG, so pre-update the installed version.
+      // TODO(#896): Remove this when platform install API supports BG completion.
+      apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
+        installedVersion: apps[file.appId]!.app.latestVersion,
+      );
+      await saveApps([
+        apps[file.appId]!.app,
+      ], attemptToCorrectInstallStatus: false);
+    }
+    int? code;
+    if (!settingsProvider.useShizuku) {
+      final allAPKs = [file.file.path];
+      allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
+      code = await AndroidPackageInstaller.installApk(
+        apkFilePath: allAPKs.join(','),
+      );
+    } else {
+      code = await ShizukuApkInstaller().installAPK(
+        file.file.uri.toString(),
+        shizukuPretendToBeGooglePlay ? 'com.android.vending' : '',
+      );
+    }
+    bool installed = false;
+    if (code != null &&
+        code != _installSuccessCode &&
+        code != _installAlreadyPendingCode) {
+      try {
+        deleteFile(file.file);
+      } catch (e) {
+        unawaited(
+          logs.add(
+            'Failed to delete APK after failed install: ${e.toString()}',
+          ),
+        );
+      }
+      throw InstallError(code);
+    } else if (code == _installSuccessCode) {
+      installed = true;
+      apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
+        installedVersion: apps[file.appId]!.app.latestVersion,
+      );
+      unawaited(file.file.delete(recursive: true));
+    }
+    await saveApps([apps[file.appId]!.app]);
+    return installed;
+  }
+
+  Future<void> _shareWithAppVerifier(
+    DownloadedApk file,
+    BuildContext context,
+  ) async {
+    if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
+    if (await getInstalledInfo('dev.soupslurpr.appverifier') == null) return;
+    final XFile f = XFile.fromData(
+      await file.file.readAsBytes(),
+      mimeType: 'application/vnd.android.package-archive',
+    );
+    unawaited(
+      Fluttertoast.showToast(
+        msg: tr('appVerifierInstructionToast'),
+        toastLength: Toast.LENGTH_LONG,
+      ),
+    );
+    await SharePlus.instance.share(ShareParams(files: [f]));
+  }
+
+  Future<String> getStorageRootPath() async {
+    return '/${(await getAppStorageDir()).uri.pathSegments.sublist(0, 3).join('/')}';
+  }
+
+  Future<void> moveObbFile(File file, String appId) async {
+    if (!file.path.toLowerCase().endsWith('.obb')) return;
+
+    final sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+    if (sdkInt >= _androidApiLevelR) {
+      try {
+        final obbDir = await saf.openDocumentTree(
+          initialUri: Uri.parse('${await getStorageRootPath()}/Android/obb'),
+        );
+        if (obbDir == null) return;
+        final appSpecificObbDoc = await saf.child(obbDir, appId);
+        if (appSpecificObbDoc == null) return;
+        final obbFileName = file.path.split('/').last;
+        final obbBytes = await file.readAsBytes();
+        await saf.createFile(
+          appSpecificObbDoc.uri,
+          displayName: obbFileName,
+          mimeType: 'application/octet-stream',
+          bytes: obbBytes,
+        );
+        unawaited(logs.add('Copied OBB file $obbFileName for $appId via SAF'));
+      } catch (e) {
+        unawaited(
+          logs.add('Failed to place OBB file for $appId: ${e.toString()}'),
+        );
+      }
+    } else {
+      await Permission.storage.request();
+      final String obbDirPath =
+          '${await getStorageRootPath()}/Android/obb/$appId';
+      Directory(obbDirPath).createSync(recursive: true);
+      final String obbFileName = file.path.split('/').last;
+      await file.copy('$obbDirPath/$obbFileName');
+      unawaited(
+        logs.add(
+          'Copied OBB file $obbFileName for $appId via direct file access',
+        ),
+      );
+    }
+  }
+
+  Future<void> uninstallApp(String appId) async {
+    final intent = AndroidIntent(
+      action: 'android.intent.action.DELETE',
+      data: 'package:$appId',
+      flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      package: 'vnd.android.package-archive',
+    );
+    await intent.launch();
+  }
+
+  Future<MapEntry<String, String>?> confirmAppFileUrl(
+    App app,
+    BuildContext? context,
+    bool pickAnyAsset, {
+    bool evenIfSingleChoice = false,
+  }) async {
+    var urlsToSelectFrom = app.apkUrls;
+    if (pickAnyAsset) {
+      urlsToSelectFrom = [...urlsToSelectFrom, ...app.otherAssetUrls];
+    }
+    // If the App has more than one APK, the user should pick one (if context provided)
+    MapEntry<String, String>? appFileUrl =
+        urlsToSelectFrom[app.preferredApkIndex >= 0
+            ? app.preferredApkIndex
+            : 0];
+    // When picking any asset, use the APK filter regex to pre-select the best matching
+    // asset by default, without hiding other assets from the user.
+    if (pickAnyAsset &&
+        app.settings.getStringOrNull('apkFilterRegEx')?.isNotEmpty == true) {
+      final matching = filterApks(
+        urlsToSelectFrom,
+        app.settings.getStringOrNull('apkFilterRegEx'),
+        app.settings.getBool('invertAPKFilter'),
+      );
+      if (matching.isNotEmpty) {
+        appFileUrl = matching.first;
+      }
+    }
+    final List<String> archs =
+        (await DeviceInfoPlugin().androidInfo).supportedAbis;
+
+    if ((urlsToSelectFrom.length > 1 || evenIfSingleChoice) &&
+        context != null &&
+        context.mounted) {
+      appFileUrl = await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return AppFilePicker(
+            app: app,
+            initVal: appFileUrl,
+            archs: archs,
+            pickAnyAsset: pickAnyAsset,
+          );
+        },
+      );
+    }
+    String? getHost(String url) {
+      if (url == 'placeholder') {
+        return null;
+      }
+      final temp = Uri.parse(url).host.split('.');
+      return temp.sublist(temp.length - 2).join('.');
+    }
+
+    // If the picked APK comes from an origin different from the source, get user confirmation (if context provided)
+    if (appFileUrl != null &&
+        ![
+          getHost(app.url),
+          'placeholder',
+        ].contains(getHost(appFileUrl.value)) &&
+        context != null &&
+        context.mounted) {
+      if (!(settingsProvider.hideAPKOriginWarning) &&
+          await showDialog(
+                context: context,
+                builder: (BuildContext ctx) {
+                  return APKOriginWarningDialog(
+                    sourceUrl: app.url,
+                    apkUrl: appFileUrl!.value,
+                  );
+                },
+              ) !=
+              true) {
+        appFileUrl = null;
+      }
+    }
+    return appFileUrl;
+  }
+
+  // Filters app IDs into those that can be installed and those that are track-only,
+  // refreshing stale data and confirming file URLs before returning.
+  Future<(List<String>, List<String>)> _resolveAppsToInstall(
+    List<String> appIds,
+    BuildContext? context,
+  ) async {
+    final List<String> appsToInstall = [];
+    final List<String> trackOnlyAppsToUpdate = [];
+    for (var id in appIds) {
+      if (apps[id] == null) {
+        throw ObtainiumError(tr('appNotFound'));
+      }
+      MapEntry<String, String>? apkUrl;
+      final trackOnly = apps[id]!.app.settings.getBool('trackOnly');
+      final refreshBeforeDownload = apps[id]!.needsRefreshBeforeDownload;
+      if (refreshBeforeDownload) {
+        await checkUpdate(apps[id]!.app.id);
+      }
+      if (!trackOnly) {
+        // ignore: use_build_context_synchronously
+        apkUrl = await confirmAppFileUrl(apps[id]!.app, context, false);
+      }
+      if (apkUrl != null) {
+        final url = apkUrl.value;
+        final int urlInd = apps[id]!.app.apkUrls.indexWhere(
+          (e) => e.value == url,
+        );
+        if (urlInd >= 0 && urlInd != apps[id]!.app.preferredApkIndex) {
+          apps[id]!.app = apps[id]!.app.copyWith(preferredApkIndex: urlInd);
+          await saveApps([apps[id]!.app]);
+        }
+        if (context != null || await canInstallSilently(apps[id]!.app)) {
+          appsToInstall.add(id);
+        }
+      }
+      if (trackOnly) {
+        trackOnlyAppsToUpdate.add(id);
+      }
+    }
+    return (appsToInstall, trackOnlyAppsToUpdate);
+  }
+
+  /// Downloads APKs for [appIds] and installs them, silently when possible.
+  /// Without a BuildContext, apps requiring user interaction are skipped
+  /// and a notification is sent instead. Returns IDs of successfully downloaded apps.
+  Future<List<String>> downloadAndInstallLatestApps(
+    List<String> appIds,
+    BuildContext? context, {
+    NotificationsProvider? notificationsProvider,
+    bool forceParallelDownloads = false,
+    bool useExisting = true,
+  }) async {
+    notificationsProvider =
+        notificationsProvider ?? context?.read<NotificationsProvider>();
+
+    var (appsToInstall, trackOnlyAppsToUpdate) = await _resolveAppsToInstall(
+      appIds,
+      context,
+    );
+
+    // Mark all specified track-only apps as latest
+    await saveApps(
+      trackOnlyAppsToUpdate.map((e) {
+        var a = apps[e]!.app;
+        a = a.copyWith(installedVersion: a.latestVersion);
+        return a;
+      }).toList(),
+    );
+
+    final MultiAppMultiError errors = MultiAppMultiError();
+    final List<String> installedIds = [];
+
+    // Move Obtainium to the end of the line (let all other apps update first)
+    appsToInstall = moveStrToEnd(
+      appsToInstall,
+      obtainiumId,
+      strB: obtainiumTempId,
+    );
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
+
+    List<_InstallResult> downloadResults = [];
+    try {
+      if (forceParallelDownloads || settingsProvider.parallelDownloads) {
+        downloadResults = await Future.wait(
+          appsToInstall.map(
+            (id) => _downloadAppForInstall(
+              id,
+              context,
+              notificationsProvider,
+              useExisting,
+              errors,
+            ),
+          ),
+        );
+      } else {
+        for (var id in appsToInstall) {
+          downloadResults.add(
+            await _downloadAppForInstall(
+              id,
+              // ignore: use_build_context_synchronously
+              context,
+              notificationsProvider,
+              useExisting,
+              errors,
+            ),
+          );
+        }
+      }
+      for (var res in downloadResults) {
+        if (!errors.appIdNames.containsKey(res.id)) {
+          try {
+            await _installDownloadedApp(
+              res.id,
+              res.willBeSilent,
+              res.downloadedFile,
+              res.downloadedDir,
+              installedIds,
+              errors,
+              // ignore: use_build_context_synchronously
+              context,
+              notificationsProvider,
+            );
+          } catch (e) {
+            final id = res.id;
+            errors.add(id, e, appName: apps[id]?.name);
+          }
+        }
+      }
+    } finally {
+      // Clear any remaining progress in case the flow was interrupted
+      // (e.g. unhandled error in a download, app backgrounded/killed, etc.)
+      for (var id in appsToInstall) {
+        apps[id]?.downloadProgress = null;
+      }
+      notify();
+    }
+
+    if (errors.idsByErrorString.isNotEmpty) {
+      throw errors;
+    }
+
+    return installedIds;
+  }
+
+  Future<List<String>> downloadAppAssets(
+    List<String> appIds,
+    BuildContext context, {
+    bool forceParallelDownloads = false,
+  }) async {
+    final NotificationsProvider notificationsProvider = context
+        .read<NotificationsProvider>();
+    final List<MapEntry<MapEntry<String, String>, App>> filesToDownload = [];
+    for (var id in appIds) {
+      if (apps[id] == null) {
+        throw ObtainiumError(tr('appNotFound'));
+      }
+      MapEntry<String, String>? fileUrl;
+      final refreshBeforeDownload = apps[id]!.needsRefreshBeforeDownload;
+      if (refreshBeforeDownload) {
+        await checkUpdate(apps[id]!.app.id);
+      }
+      if (apps[id]!.app.apkUrls.isNotEmpty ||
+          apps[id]!.app.otherAssetUrls.isNotEmpty) {
+        final MapEntry<String, String>? tempFileUrl = await confirmAppFileUrl(
+          apps[id]!.app,
+          // ignore: use_build_context_synchronously
+          context,
+          true,
+          evenIfSingleChoice: true,
+        );
+        if (tempFileUrl != null) {
+          final s = SourceProvider().getSource(
+            apps[id]!.app.url,
+            overrideSource: apps[id]!.app.overrideSource,
+          );
+          final additionalSettingsPlusSourceConfig = await s
+              .buildMergedSettings(
+                apps[id]!.app.additionalSettings,
+                settingsProvider,
+              );
+          fileUrl = MapEntry(
+            tempFileUrl.key,
+            await s.assetUrlPrefetchModifier(
+              await s.generalReqPrefetchModifier(
+                tempFileUrl.value,
+                additionalSettingsPlusSourceConfig,
+              ),
+              apps[id]!.app.url,
+              additionalSettingsPlusSourceConfig,
+            ),
+          );
+        }
+      }
+      if (fileUrl != null) {
+        filesToDownload.add(MapEntry(fileUrl, apps[id]!.app));
+      }
+    }
+
+    // Prepare to download+install Apps
+    final MultiAppMultiError errors = MultiAppMultiError();
+    final List<String> downloadedIds = [];
+
+    if (forceParallelDownloads || settingsProvider.parallelDownloads) {
+      await Future.wait(
+        filesToDownload.map(
+          (urlWithApp) => _downloadAssetFile(
+            urlWithApp.key,
+            urlWithApp.value,
+            errors,
+            downloadedIds,
+            notificationsProvider,
+          ),
+        ),
+      );
+    } else {
+      for (var urlWithApp in filesToDownload) {
+        await _downloadAssetFile(
+          urlWithApp.key,
+          urlWithApp.value,
+          errors,
+          downloadedIds,
+          notificationsProvider,
+        );
+      }
+    }
+    if (errors.idsByErrorString.isNotEmpty) {
+      throw errors;
+    }
+    return downloadedIds;
+  }
+
+  List<FileSystemEntity> _preferMatchingApk(
+    List<FileSystemEntity> apks,
+    String appId,
+  ) {
+    FileSystemEntity? temp;
+    apks.removeWhere((element) {
+      final bool res = element.uri.pathSegments.last.startsWith(appId);
+      if (res) {
+        temp = element;
+      }
+      return res;
+    });
+    if (temp != null) {
+      apks = [temp!, ...apks];
+    }
+    return apks;
+  }
+
+  Future<void> _installDownloadedApp(
+    String id,
+    bool willBeSilent,
+    DownloadedApk? downloadedFile,
+    DownloadedDir? downloadedDir,
+    List<String> installedIds,
+    MultiAppMultiError errors,
+    BuildContext? context,
+    NotificationsProvider? notificationsProvider,
+  ) async {
+    final appEntry = apps[id];
+    if (appEntry == null) return;
+    // Installation has actually begun: use -1 (installing) so the UI shows an
+    // indeterminate "Installing" indicator rather than a frozen percentage.
+    appEntry.downloadProgress = _installingProgressSentinel;
+    notify();
+    try {
+      bool sayInstalled = true;
+      final contextIfNewInstall = appEntry.installedInfo == null
+          ? context
+          : null;
+      final bool needBGWorkaround =
+          willBeSilent && context == null && !settingsProvider.useShizuku;
+      final bool shizukuPretendToBeGooglePlay =
+          settingsProvider.shizukuPretendToBeGooglePlay ||
+          appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
+      if (downloadedFile != null) {
+        if (needBGWorkaround) {
+          unawaited(
+            installApk(
+              downloadedFile,
+              contextIfNewInstall,
+              needsBGWorkaround: true,
+              shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+            ),
+          );
+        } else {
+          sayInstalled = await installApk(
+            downloadedFile,
+            contextIfNewInstall,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+        }
+      } else {
+        if (needBGWorkaround) {
+          unawaited(
+            installApkDir(
+              downloadedDir!,
+              contextIfNewInstall,
+              needsBGWorkaround: true,
+            ),
+          );
+        } else {
+          sayInstalled = await installApkDir(
+            downloadedDir!,
+            contextIfNewInstall,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+        }
+      }
+      if (willBeSilent && context == null) {
+        if (!settingsProvider.useShizuku) {
+          unawaited(
+            notificationsProvider?.notify(
+              SilentUpdateAttemptNotification([appEntry.app], id: id.hashCode),
+            ),
+          );
+        } else {
+          unawaited(
+            notificationsProvider?.notify(
+              SilentUpdateNotification(
+                [appEntry.app],
+                sayInstalled,
+                id: id.hashCode,
+              ),
+            ),
+          );
+        }
+      }
+      if (sayInstalled) {
+        installedIds.add(id);
+        // Dismiss the update notification since the app was successfully installed
+        unawaited(notificationsProvider?.cancel(UpdateNotification([]).id));
+      }
+    } finally {
+      appEntry.downloadProgress = null;
+      notify();
+    }
+  }
+
+  Future<_InstallResult> _downloadAppForInstall(
+    String id,
+    BuildContext? context,
+    NotificationsProvider? notificationsProvider,
+    bool useExisting,
+    MultiAppMultiError errors,
+  ) async {
+    bool willBeSilent = false;
+    DownloadedApk? downloadedFile;
+    DownloadedDir? downloadedDir;
+    try {
+      final downloadedArtifact = await downloadApp(
+        apps[id]!.app,
+        context,
+        notificationsProvider: notificationsProvider,
+        useExisting: useExisting,
+      );
+      if (downloadedArtifact is DownloadedApk) {
+        downloadedFile = downloadedArtifact;
+      } else if (downloadedArtifact is DownloadedDir) {
+        downloadedDir = downloadedArtifact;
+      } else {
+        throw ObtainiumError(tr('downloadFailed'));
+      }
+      id = downloadedFile?.appId ?? downloadedDir!.appId;
+      // Bridge download-to-install gap so the Dismissible stays disabled.
+      // Use 100 (download complete) rather than -1 (installing) so the UI
+      // doesn't report "Installing" before installation actually begins.
+      apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
+      notify();
+      willBeSilent = await canInstallSilently(apps[id]!.app);
+      if (!settingsProvider.useShizuku) {
+        if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+          throw ObtainiumError(tr('cancelled'));
+        }
+      } else {
+        switch ((await ShizukuApkInstaller().checkPermission())!) {
+          case 'services_not_found':
+            throw ObtainiumError(tr('shizukuBinderNotFound'));
+          case 'old_shizuku':
+            throw ObtainiumError(tr('shizukuOld'));
+          case 'old_android_with_adb':
+            throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
+          case 'denied':
+            throw ObtainiumError(tr('cancelled'));
+        }
+      }
+      if (!willBeSilent &&
+          context != null &&
+          context.mounted &&
+          !settingsProvider.useShizuku) {
+        await waitForUserToReturnToForeground(context);
+      }
+    } catch (e) {
+      errors.add(id, e, appName: apps[id]?.name);
+      if (apps[id] != null) {
+        apps[id]!.downloadProgress = null;
+        notify();
+      }
+    }
+    return _InstallResult(
+      id: id,
+      willBeSilent: willBeSilent,
+      downloadedFile: downloadedFile,
+      downloadedDir: downloadedDir,
+    );
+  }
+
+  Future<void> _downloadAssetFile(
+    MapEntry<String, String> fileUrl,
+    App app,
+    MultiAppMultiError errors,
+    List<String> downloadedIds,
+    NotificationsProvider notificationsProvider,
+  ) async {
+    try {
+      final String downloadPath = '${await getStorageRootPath()}/Download';
+      await downloadFile(
+        fileUrl.value,
+        fileUrl.key,
+        true,
+        (double? progress) {
+          notificationsProvider.notify(
+            DownloadNotification(fileUrl.key, progress?.ceil() ?? 0),
+          );
+        },
+        downloadPath,
+        headers: await SourceProvider()
+            .getSource(app.url, overrideSource: app.overrideSource)
+            .getRequestHeaders(
+              app.additionalSettings,
+              fileUrl.value,
+              forAPKDownload: AppSource.isApkOrContainerFile(fileUrl.key),
+            ),
+        useExisting: false,
+        allowInsecure: app.settings.getBool('allowInsecure'),
+        logs: logs,
+      );
+      unawaited(
+        notificationsProvider.notify(
+          DownloadedNotification(fileUrl.key, fileUrl.value),
+        ),
+      );
+      downloadedIds.add(fileUrl.key);
+    } catch (e) {
+      errors.add(fileUrl.key, e);
+    } finally {
+      unawaited(
+        notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id),
+      );
+    }
+  }
+}

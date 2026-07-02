@@ -13,7 +13,6 @@ More info:
 - [apps.obtainium.page](https://apps.obtainium.page/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.page))
 - [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
 - [Website](https://obtainium.page) ([repository](https://github.com/ImranR98/obtainium.page))
-- [Source code](https://github.com/ImranR98/Obtainium)
 
 Currently supported App sources:
 - Open Source - General:
@@ -28,6 +27,7 @@ Currently supported App sources:
   - [APKPure](https://apkpure.net/)
   - [Aptoide](https://aptoide.com/)
   - [Uptodown](https://uptodown.com/)
+  - [APKCombo](https://apkcombo.com/)
   - [itch.io](https://itch.io/)
   - [Huawei AppGallery](https://appgallery.huawei.com/)
   - [Tencent App Store](https://sj.qq.com/)
@@ -37,9 +37,11 @@ Currently supported App sources:
   - [CoolApk](https://coolapk.com/)
   - [LiteAPKs](https://liteapks.com/)
   - [APK4Free](https://apk4free.net/)
+  - [SourceForge](https://sourceforge.net/)
   - Jenkins Jobs
-  - [APKMirror](https://apkmirror.com/) (Track-Only)
-  - [RockMods](https://rockmods.net/) (Track-Only)
+  - [APKMirror](https://apkmirror.com/) *(Track-Only)*
+  - [RockMods](https://rockmods.net/) *(Track-Only)*
+- *Track-Only sources cannot download APKs directly — they only monitor for new releases.*
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)
@@ -56,7 +58,7 @@ Or, contribute some configurations to the website by creating a PR at [this repo
 
 ## Installation
 
-[<img src="https://github.com/machiav3lli/oandbackupx/blob/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png"
+[<img src="https://img.shields.io/badge/Get_it_on-GitHub-24292e?logo=github"
     alt="Get it on GitHub"
     height="80">](https://github.com/ImranR98/Obtainium/releases)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png"
@@ -67,36 +69,24 @@ Or, contribute some configurations to the website by creating a PR at [this repo
     height="80">](https://f-droid.org/packages/dev.imranr.obtainium.fdroid/)
      
 Verification info:
-- Package ID: `dev.imranr.obtainium`
-- SHA-256 hash of signing certificate: `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62`
-  - Note: The above signature is also valid for the F-Droid flavour of Obtainium, thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
-- [PGP Public Key](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (to verify APK hashes)
+
+| Item | Value |
+|------|-------|
+| Package ID | `dev.imranr.obtainium` |
+| Signing cert SHA-256 | `B3:53:60:1F:6A:1D:5F:D6:60:3A:E2:F5:0B:E8:0C:F3:01:36:7B:86:B6:AB:8B:1F:66:24:3D:A9:6C:D5:73:62` |
+| PGP Public Key | [keyserver.ubuntu.com](https://keyserver.ubuntu.com/pks/lookup?search=contact%40imranr.dev&fingerprint=on&op=index) (verify APK hashes) |
+
+The signing certificate is also valid for the F-Droid flavour (a separate APK built from `lib/main_fdroid.dart`), thanks to [reproducible builds](https://f-droid.org/docs/Reproducible_Builds/).
 
 ## Limitations
 - For some sources, data is gathered using Web scraping and can easily break due to changes in website design. In such cases, more reliable methods may be unavailable.
 
 ## Troubleshooting
 
-### App not updating even when a new version is available
-- **Check the source settings** — Some sources require additional configuration (e.g., GitHub releases need the correct repository URL format)
-- **Check if the source is supported** — Not all sources support version checking equally; some use HTML scraping which may be slower
-- **Check the update interval** — By default, apps update every 6 hours. You can change this in app settings
-- **Try force-refreshing** — Pull down on the apps list to force a refresh
-
-### Source additions failing with 403 Forbidden
-- Some sources block requests from unknown user agents or regions
-- GitHub-based sources may need a Personal Access Token if you're hitting rate limits
-- Some APK hosts (APKMirror, etc.) may require cookies or specific headers
-
-### Flutter-related issues
-- Obtainium is built with Flutter. If the app crashes on startup, try:
-  - Clearing app data and reinstalling
-  - Ensuring your Android version meets the minimum requirement
-  - Checking if you have the latest Google Play Services
-
-### APK verification failures
-- If you see "Signature verification failed", ensure you haven't modified the APK after download
-- The SHA-256 hash in the app settings should match the downloaded APK
+### App not updating
+- Verify the URL matches the source's expected format (e.g. GitHub requires `owner/repo`)
+- Pull down on the apps list to force a refresh
+- If using GitHub, rate limits may block updates without a Personal Access Token configured in settings
 
 ## Screenshots
 

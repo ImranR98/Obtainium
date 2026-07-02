@@ -1,14 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/app_sources/html.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
+/// Tracks an APK at a direct URL (e.g. `https://example.com/app.apk`).
+/// Delegates version detection and downloading to [HTML] with pseudo-versioning
+/// (partial APK hash or ETag).
 class DirectAPKLink extends AppSource {
-  HTML html = HTML();
+  final HTML html = HTML();
 
   DirectAPKLink() {
     name = tr('directAPKLink');
+    versionDetectionDisallowed = true;
     additionalSourceAppSpecificSettingFormItems = [
       ...html.additionalSourceAppSpecificSettingFormItems.where(
         (element) => element
@@ -20,10 +24,10 @@ class DirectAPKLink extends AppSource {
           'defaultPseudoVersioningMethod',
           [
             MapEntry('partialAPKHash', tr('partialAPKHash')),
-            MapEntry('ETag', 'ETag'),
+            const MapEntry('ETag', 'ETag'),
           ],
           label: tr('defaultPseudoVersioningMethod'),
-          defaultValue: 'partialAPKHash',
+          value: 'partialAPKHash',
         ),
       ],
     ];
@@ -40,10 +44,10 @@ class DirectAPKLink extends AppSource {
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
     if (!forSelection) {
-      return url;
+      return Uri.tryParse(url)?.toString() ?? url;
     }
-    RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
-    var match = standardUrlRegExA.firstMatch(url);
+    final RegExp standardUrlRegExA = RegExp('.+\\.apk\$', caseSensitive: false);
+    final match = standardUrlRegExA.firstMatch(url);
     if (match == null) {
       throw InvalidURLError(name);
     }
@@ -68,16 +72,20 @@ class DirectAPKLink extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    var additionalSettingsNew = getDefaultValuesFromFormItems(
-      html.combinedAppSpecificSettingFormItems,
-    );
-    for (var s in additionalSettings.keys) {
-      if (additionalSettingsNew.containsKey(s)) {
-        additionalSettingsNew[s] = additionalSettings[s];
+    try {
+      final additionalSettingsNew = getDefaultValuesFromFormItems(
+        html.combinedAppSpecificSettingFormItems,
+      );
+      for (var s in additionalSettings.keys) {
+        if (additionalSettingsNew.containsKey(s)) {
+          additionalSettingsNew[s] = additionalSettings[s];
+        }
       }
+      additionalSettingsNew['directAPKLink'] = true;
+      additionalSettingsNew['versionDetection'] = false;
+      return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    additionalSettingsNew['directAPKLink'] = true;
-    additionalSettingsNew['versionDetection'] = false;
-    return html.getLatestAPKDetails(standardUrl, additionalSettingsNew);
   }
 }

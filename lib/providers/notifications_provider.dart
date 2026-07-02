@@ -1,5 +1,6 @@
-// Exposes functions that can be used to send notifications to the user
-// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
+// Exposes functions that can be used to send notifications to the user.
+//
+// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app.
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,24 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+String _buildUpdateMessage(
+  List<App> updates, {
+  String? emptyKey,
+  required String singleKey,
+  required String pluralKey,
+  bool includeVersion = false,
+}) {
+  if (updates.isEmpty) return emptyKey != null ? tr(emptyKey) : '';
+  final name = updates[0].finalName;
+  final version = updates[0].latestVersion;
+  if (updates.length == 1) {
+    final args = includeVersion ? [name, version] : [name];
+    return tr(singleKey, args: args);
+  }
+  final count = updates.length - 1;
+  return plural(pluralKey, count, args: [name, count.toString()]);
+}
 
 class ObtainiumNotification {
   late int id;
@@ -39,22 +58,17 @@ class UpdateNotification extends ObtainiumNotification {
     : super(
         id ?? 2,
         tr('updatesAvailable'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          emptyKey: 'noNewUpdates',
+          singleKey: 'xHasAnUpdate',
+          pluralKey: 'xAndNMoreUpdatesAvailable',
+        ),
         'UPDATES_AVAILABLE',
         tr('updatesAvailableNotifChannel'),
         tr('updatesAvailableNotifDescription'),
         Importance.max,
-      ) {
-    message = updates.isEmpty
-        ? tr('noNewUpdates')
-        : updates.length == 1
-        ? tr('xHasAnUpdate', args: [updates[0].finalName])
-        : plural(
-            'xAndNMoreUpdatesAvailable',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class TrackOnlyUpdateNotification extends ObtainiumNotification {
@@ -62,22 +76,17 @@ class TrackOnlyUpdateNotification extends ObtainiumNotification {
     : super(
         id ?? 7,
         tr('trackOnlyUpdatesAvailable'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          emptyKey: 'noNewUpdates',
+          singleKey: 'xHasAnUpdate',
+          pluralKey: 'xAndNMoreUpdatesAvailable',
+        ),
         'UPDATES_AVAILABLE',
         tr('updatesAvailableNotifChannel'),
         tr('updatesAvailableNotifDescription'),
         Importance.max,
-      ) {
-    message = updates.isEmpty
-        ? tr('noNewUpdates')
-        : updates.length == 1
-        ? tr('xHasAnUpdate', args: [updates[0].finalName])
-        : plural(
-            'xAndNMoreUpdatesAvailable',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class SilentUpdateNotification extends ObtainiumNotification {
@@ -85,51 +94,37 @@ class SilentUpdateNotification extends ObtainiumNotification {
     : super(
         id ?? 3,
         succeeded ? tr('appsUpdated') : tr('appsNotUpdated'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          singleKey: succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
+          pluralKey: succeeded
+              ? 'xAndNMoreUpdatesInstalled'
+              : 'xAndNMoreUpdatesFailed',
+          includeVersion: true,
+        ),
         'APPS_UPDATED',
         tr('appsUpdatedNotifChannel'),
         tr('appsUpdatedNotifDescription'),
         Importance.defaultImportance,
-      ) {
-    message = updates.isEmpty
-        ? ''
-        : updates.length == 1
-        ? tr(
-            succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
-            args: [updates[0].finalName, updates[0].latestVersion],
-          )
-        : plural(
-            succeeded ? 'xAndNMoreUpdatesInstalled' : "xAndNMoreUpdatesFailed",
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class SilentUpdateAttemptNotification extends ObtainiumNotification {
   SilentUpdateAttemptNotification(List<App> updates, {int? id})
     : super(
-        id ?? 3,
+        id ?? 8,
         tr('appsPossiblyUpdated'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          singleKey: 'xWasPossiblyUpdatedToY',
+          pluralKey: 'xAndNMoreUpdatesPossiblyInstalled',
+          includeVersion: true,
+        ),
         'APPS_POSSIBLY_UPDATED',
         tr('appsPossiblyUpdatedNotifChannel'),
         tr('appsPossiblyUpdatedNotifDescription'),
         Importance.defaultImportance,
-      ) {
-    message = updates.isEmpty
-        ? ''
-        : updates.length == 1
-        ? tr(
-            'xWasPossiblyUpdatedToY',
-            args: [updates[0].finalName, updates[0].latestVersion],
-          )
-        : plural(
-            'xAndNMoreUpdatesPossiblyInstalled',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
@@ -157,7 +152,6 @@ class AppsRemovedNotification extends ObtainiumNotification {
         tr('appsRemovedNotifDescription'),
         Importance.max,
       ) {
-    message = '';
     for (var r in namedReasons) {
       message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
     }
@@ -168,7 +162,7 @@ class AppsRemovedNotification extends ObtainiumNotification {
 class DownloadNotification extends ObtainiumNotification {
   DownloadNotification(String appName, int progPercent)
     : super(
-        appName.hashCode,
+        appName.hashCode.abs(),
         tr('downloadingX', args: [appName]),
         '',
         'APP_DOWNLOADING',
@@ -183,7 +177,7 @@ class DownloadNotification extends ObtainiumNotification {
 class DownloadedNotification extends ObtainiumNotification {
   DownloadedNotification(String fileName, String downloadUrl)
     : super(
-        downloadUrl.hashCode,
+        downloadUrl.hashCode.abs(),
         tr('downloadedX', args: [fileName]),
         '',
         'FILE_DOWNLOADED',
@@ -233,6 +227,7 @@ class NotificationsProvider {
   };
 
   Future<void> initialize() async {
+    if (isInitialized) return;
     isInitialized =
         await notifications.initialize(
           settings: const InitializationSettings(
@@ -258,11 +253,11 @@ class NotificationsProvider {
 
   void _showNotificationPayload(String? payload, {bool doublePop = false}) {
     if (payload?.isNotEmpty == true) {
-      var title = (payload ?? '\n\n').split('\n').first;
-      var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
-      globalNavigatorKey.currentState?.push(
+      final title = (payload ?? '\n\n').split('\n').first;
+      final content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
+      appNavigatorKey.currentState?.push(
         PageRouteBuilder(
-          pageBuilder: (context, _, __) => AlertDialog(
+          pageBuilder: (context, _, _) => AlertDialog(
             title: Text(title),
             content: Text(content),
             actions: [

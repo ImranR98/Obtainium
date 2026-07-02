@@ -1,82 +1,153 @@
-import 'dart:io';
+import 'dart:ui' show Locale;
 
-import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:android_package_installer/android_package_installer.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:provider/provider.dart';
 
 class ObtainiumError {
-  late String message;
-  bool unexpected;
-  ObtainiumError(this.message, {this.unexpected = false});
+  final String code;
+  final String _message;
+  final StackTrace? stack;
+  final Map<String, dynamic> data;
+  final bool unexpected;
+
+  ObtainiumError(
+    this._message, {
+    this.code = 'UNKNOWN',
+    this.unexpected = false,
+    this.stack,
+    this.data = const {},
+  });
+
+  ObtainiumError.withCode(
+    this.code, {
+    String message = '',
+    this.unexpected = false,
+    this.stack,
+    this.data = const {},
+  }) : _message = message;
+
+  String get message =>
+      code == 'UNKNOWN' ||
+          code == 'UNEXPECTED' ||
+          code == 'CHECK_UPDATES_FAILED' ||
+          code == 'MULTI_ERROR' ||
+          code == 'HTTP_ERROR'
+      ? _message
+      : localizeErrorCode(code, data);
+
   @override
-  String toString() {
-    return message;
+  String toString() => message;
+}
+
+Never rethrowOrWrapError(Object error, {String? sourceName}) {
+  if (error is ObtainiumError) {
+    if (error.stack == null && error.unexpected) {
+      LogsProvider().add(
+        'Unexpected ObtainiumError (no stack): ${error.message}',
+        level: LogLevel.error,
+      );
+    }
+    throw error;
   }
+  final stack = StackTrace.current;
+  LogsProvider().add(
+    'Wrapping unexpected error: $error\n$stack',
+    level: LogLevel.error,
+  );
+  throw ObtainiumError(
+    sourceName != null ? '$sourceName: $error' : error.toString(),
+    code: 'UNEXPECTED',
+    unexpected: true,
+    stack: stack,
+  );
 }
 
 class RateLimitError extends ObtainiumError {
-  late int remainingMinutes;
+  final int remainingMinutes;
   RateLimitError(this.remainingMinutes)
-    : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
+    : super.withCode(
+        'RATE_LIMIT',
+        data: {'remainingMinutes': remainingMinutes},
+      );
 }
 
 class InvalidURLError extends ObtainiumError {
   InvalidURLError(String sourceName)
-    : super(tr('invalidURLForSource', args: [sourceName]));
+    : super.withCode('INVALID_URL', data: {'sourceName': sourceName});
 }
 
 class CredsNeededError extends ObtainiumError {
   CredsNeededError(String sourceName)
-    : super(tr('requiresCredentialsInSettings', args: [sourceName]));
+    : super.withCode('CREDS_NEEDED', data: {'sourceName': sourceName});
 }
 
 class NoReleasesError extends ObtainiumError {
   NoReleasesError({String? note})
-    : super(
-        '${tr('noReleaseFound')}${note?.isNotEmpty == true ? '\n\n$note' : ''}',
-      );
+    : super.withCode('NO_RELEASES', data: {'note': note ?? ''});
 }
 
 class NoAPKError extends ObtainiumError {
-  NoAPKError() : super(tr('noAPKFound'));
+  NoAPKError() : super.withCode('NO_APK');
 }
 
 class NoVersionError extends ObtainiumError {
-  NoVersionError() : super(tr('noVersionFound'));
+  NoVersionError() : super.withCode('NO_VERSION');
 }
 
 class UnsupportedURLError extends ObtainiumError {
-  UnsupportedURLError() : super(tr('urlMatchesNoSource'));
+  UnsupportedURLError() : super.withCode('UNSUPPORTED_URL');
 }
 
 class DowngradeError extends ObtainiumError {
   DowngradeError(int currentVersionCode, int newVersionCode)
-    : super(
-        '${tr('cantInstallOlderVersion')} (versionCode $currentVersionCode ➔ $newVersionCode)',
+    : super.withCode(
+        'DOWNGRADE',
+        data: {
+          'currentVersionCode': currentVersionCode,
+          'newVersionCode': newVersionCode,
+        },
       );
 }
 
 class InstallError extends ObtainiumError {
   InstallError(int code)
-    : super(PackageInstallerStatus.byCode(code).name.substring(7));
+    : super.withCode(
+        'INSTALL_FAILED',
+        data: {
+          'errorCode': code,
+          'message': PackageInstallerStatus.byCode(code).name,
+        },
+      );
 }
 
 class IDChangedError extends ObtainiumError {
-  IDChangedError(String newId) : super('${tr('appIdMismatch')} - $newId');
+  IDChangedError(String newId)
+    : super.withCode('ID_CHANGED', data: {'newId': newId});
 }
 
 class RepositoryRenamedError extends ObtainiumError {
   final String oldUrl;
   final String newUrl;
-  RepositoryRenamedError(this.oldUrl, this.newUrl) : super(tr('repoRenamed'));
+  RepositoryRenamedError(this.oldUrl, this.newUrl)
+    : super.withCode(
+        'REPO_RENAMED',
+        data: {'oldUrl': oldUrl, 'newUrl': newUrl},
+      );
+}
+
+class CheckUpdatesException extends ObtainiumError {
+  final List<App> updates;
+  final MultiAppMultiError errors;
+  CheckUpdatesException(this.updates, this.errors)
+    : super.withCode('CHECK_UPDATES_FAILED', unexpected: true);
+  @override
+  String toString() => errors.toString();
 }
 
 class NotImplementedError extends ObtainiumError {
-  NotImplementedError() : super(tr('functionNotImplemented'));
+  NotImplementedError() : super.withCode('NOT_IMPLEMENTED');
 }
 
 class MultiAppMultiError extends ObtainiumError {
@@ -84,18 +155,17 @@ class MultiAppMultiError extends ObtainiumError {
   Map<String, List<String>> idsByErrorString = {};
   Map<String, String> appIdNames = {};
 
-  MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
+  MultiAppMultiError() : super.withCode('MULTI_ERROR', unexpected: true);
 
   void add(String appId, dynamic error, {String? appName}) {
-    if (error is SocketException) {
-      error = error.message;
-    }
     rawErrors[appId] = error;
-    var string = error.toString();
+    final string = error.toString();
     var tempIds = idsByErrorString.remove(string);
-    tempIds ??= [];
+    if (tempIds == null) {
+      tempIds = [];
+      idsByErrorString[string] = tempIds;
+    }
     tempIds.add(appId);
-    idsByErrorString.putIfAbsent(string, () => tempIds!);
     if (appName != null) {
       appIdNames[appId] = appName;
     }
@@ -117,55 +187,50 @@ class MultiAppMultiError extends ObtainiumError {
       .join('\n\n');
 }
 
-void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  Provider.of<LogsProvider>(
-    context,
-    listen: false,
-  ).add(e.toString(), level: isError ? LogLevels.error : LogLevels.info);
-  if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(e.toString())));
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          scrollable: true,
-          title: Text(
-            e is MultiAppMultiError
-                ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown'),
-          ),
-          content: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Text(e.toString()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              child: Text(tr('ok')),
-            ),
-          ],
-        );
-      },
-    );
-  }
+String localizeErrorCode(String code, Map<String, dynamic>? data) {
+  return switch (code) {
+    'NO_RELEASES' =>
+      data?['note'] != null && (data!['note'] as String).isNotEmpty
+          ? '${tr('noReleaseFound')}\n\n${data['note']}'
+          : tr('noReleaseFound'),
+    'RATE_LIMIT' => plural(
+      'tooManyRequestsTryAgainInMinutes',
+      data?['remainingMinutes'] ?? 0,
+    ),
+    'INVALID_URL' => tr(
+      'invalidURLForSource',
+      args: [data?['sourceName'] ?? ''],
+    ),
+    'CREDS_NEEDED' => tr(
+      'requiresCredentialsInSettings',
+      args: [data?['sourceName'] ?? ''],
+    ),
+    'NO_APK' => tr('noAPKFound'),
+    'NO_VERSION' => tr('noVersionFound'),
+    'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),
+    'DOWNGRADE' =>
+      '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
+    'INSTALL_FAILED' => data?['message']?.toString() ?? tr('installFailed'),
+    'ID_CHANGED' => '${tr('appIdMismatch')} - ${data?['newId'] ?? ''}',
+    'REPO_RENAMED' => tr('repoRenamed'),
+    'NOT_IMPLEMENTED' => tr('functionNotImplemented'),
+    _ => data?['message']?.toString() ?? tr('unexpectedError'),
+  };
 }
 
-void showError(dynamic e, BuildContext context) {
-  showMessage(e, context, isError: true);
+Locale? _appCurrentLocale;
+
+void setAppLocale(Locale? locale) => _appCurrentLocale = locale;
+
+bool isEnglish() {
+  if (_appCurrentLocale != null) return _appCurrentLocale!.languageCode == 'en';
+  return tr('and') == 'and';
 }
+
+String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 
 String list2FriendlyString(List<String> list) {
-  var isUsingEnglish = isEnglish();
+  final isUsingEnglish = isEnglish();
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list
@@ -177,7 +242,7 @@ String list2FriendlyString(List<String> list) {
                   (e.key == list.length - 1
                       ? ''
                       : e.key == list.length - 2
-                      ? '${isUsingEnglish ? ',' : ''} and '
+                      ? '${isUsingEnglish ? ',' : ''} ${tr('and')} '
                       : ', '),
             )
             .join('');
