@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Underretter brugeren om status på hentning af en app",
     "downloadX": "Hent {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Hentede {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Henter {}",

@@ -252,6 +252,24 @@ class EmptyState extends StatelessWidget {
   }
 }
 
+/// Compact "X" button used to cancel an in-progress download.
+class DownloadCancelButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const DownloadCancelButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.close),
+      iconSize: 20,
+      visualDensity: VisualDensity.compact,
+      tooltip: tr('cancel'),
+      onPressed: onPressed,
+    );
+  }
+}
+
 class ConnectedCard extends StatelessWidget {
   final Widget child;
   final bool isFirst;

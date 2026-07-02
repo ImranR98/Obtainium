@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Sciigas al la uzanto pri la progreso de apo-elŝuton",
     "downloadX": "Elŝuti {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Elŝutita {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Elŝutante {}",

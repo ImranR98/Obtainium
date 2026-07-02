@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Uygulama indirilmesi ilerlemesini kullanıcıya bildirir",
     "downloadX": "{}'yi indir",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} indirildi",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} indiriliyor",

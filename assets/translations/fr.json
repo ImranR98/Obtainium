@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Vous avertit de l'avancement du téléchargement d'une application",
     "downloadX": "Télécharger {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} téléchargée",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Téléchargement de {}",

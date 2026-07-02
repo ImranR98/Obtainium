@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Memberi tahu pengguna perkembangan dalam mengunduh aplikasi",
     "downloadX": "Unduh {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} diunduh",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Mengunduh {}",

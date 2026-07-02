@@ -139,6 +139,7 @@
     "downloadNotifDescription": "يخطر المستخدم بالتقدم في تنزيل التطبيق",
     "downloadX": "تنزيل {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "نُزَّل {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "جارِ تنزيل {}",

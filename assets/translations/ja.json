@@ -139,6 +139,7 @@
     "downloadNotifDescription": "アプリのダウンロード状況を通知する",
     "downloadX": "{} をダウンロード",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} をダウンロードしました",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} をダウンロード中",

@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Notifica l'usuari del progrés de la descàrrega d'una aplicació",
     "downloadX": "Descarrega {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Descarregada {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Descarregant {}",

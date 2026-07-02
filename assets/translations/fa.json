@@ -139,6 +139,7 @@
     "downloadNotifDescription": "کاربر را از پیشرفت دانلود یک برنامه مطلع می کند",
     "downloadX": "دانلود {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "دانلود شده {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "در حال دانلود {}",

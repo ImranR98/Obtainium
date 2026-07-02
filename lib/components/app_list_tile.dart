@@ -542,7 +542,12 @@ class AppListTile extends StatelessWidget {
                     )
                   : _authorText(),
               trailing: downloadProgress != null
-                  ? DownloadProgressTrailing(progress: downloadProgress)
+                  ? DownloadProgressTrailing(
+                      progress: downloadProgress,
+                      receivedBytes: appInMemory.downloadReceivedBytes,
+                      totalBytes: appInMemory.downloadTotalBytes,
+                      onCancel: () => appsProvider.cancelDownload(appId),
+                    )
                   : trailingRow,
               onTap: onTap,
             ),
@@ -555,43 +560,67 @@ class AppListTile extends StatelessWidget {
 
 class DownloadProgressTrailing extends StatelessWidget {
   final double progress;
-  const DownloadProgressTrailing({super.key, required this.progress});
+  final int? receivedBytes;
+  final int? totalBytes;
+  final VoidCallback? onCancel;
+  const DownloadProgressTrailing({
+    super.key,
+    required this.progress,
+    this.receivedBytes,
+    this.totalBytes,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
     final installing = progress < 0;
-    final label = installing
-        ? tr('installing')
-        : '${progress.toInt()}%';
-    return SizedBox(
-      width: 64,
-      child: Semantics(
-        label: label,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: installing ? null : progress / 100,
-              ),
+    final label = installing ? tr('installing') : '${progress.toInt()}%';
+    final sizeLabel = installing
+        ? null
+        : formatDownloadSize(receivedBytes, totalBytes);
+    final labelStyle =
+        Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11) ??
+        const TextStyle(fontSize: 11);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 92,
+          child: Semantics(
+            label: sizeLabel == null ? label : '$label $sizeLabel',
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: installing ? null : progress / 100,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle,
+                ),
+                if (sizeLabel != null)
+                  Text(
+                    sizeLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: labelStyle,
+                  ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  Theme.of(
-                    context,
-                  ).textTheme.labelSmall?.copyWith(fontSize: 11) ??
-                  const TextStyle(fontSize: 11),
-            ),
-          ],
+          ),
         ),
-      ),
+        if (!installing && onCancel != null)
+          DownloadCancelButton(onPressed: onCancel!),
+      ],
     );
   }
 }

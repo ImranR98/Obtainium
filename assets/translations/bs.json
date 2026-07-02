@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Obavještava korisnika o napretku u preuzimanju aplikacije",
     "downloadX": "Preuzeti {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Preuzeto {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Preuzimanje {}",

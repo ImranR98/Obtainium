@@ -139,6 +139,7 @@
     "downloadNotifDescription": "앱 다운로드 진행 상황을 사용자에게 알립니다",
     "downloadX": "{} 다운로드",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} 다운로드 완료",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} 다운로드 중",

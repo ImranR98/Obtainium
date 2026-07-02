@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Értesíti a felhasználót az alkalmazás letöltésének előrehaladásáról",
     "downloadX": "{} letöltése",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} letöltve",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} letöltése",

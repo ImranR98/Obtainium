@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Fortschrittsanzeige beim Herunterladen einer App",
     "downloadX": "{} herunterladen",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} heruntergeladen",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} wird heruntergeladen",

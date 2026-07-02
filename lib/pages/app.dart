@@ -54,6 +54,48 @@ class _AppPageState extends State<AppPage> {
   int? _appCacheSig;
   AppInMemory? _appCache;
 
+  // Best-effort download-size probe for the currently-selected APK URL.
+  String? _sizeProbeKey;
+  int? _probedDownloadSize;
+
+  void _maybeProbeDownloadSize(AppInMemory app) {
+    if (app.app.apkUrls.isEmpty) return;
+    final idx =
+        (app.app.preferredApkIndex >= 0 &&
+            app.app.preferredApkIndex < app.app.apkUrls.length)
+        ? app.app.preferredApkIndex
+        : 0;
+    final url = app.app.apkUrls[idx].value;
+    if (url.isEmpty || url == 'placeholder') return;
+    final key = '${app.app.id}|$url';
+    if (key == _sizeProbeKey) return;
+    _sizeProbeKey = key;
+    _probedDownloadSize = null;
+    () async {
+      try {
+        final source = _sourceProvider.getSource(
+          app.app.url,
+          overrideSource: app.app.overrideSource,
+        );
+        final headers = await source.getRequestHeaders(
+          app.app.additionalSettings,
+          url,
+          forAPKDownload: true,
+        );
+        final size = await getDownloadSize(
+          url,
+          headers: headers,
+          allowInsecure: app.app.settings.getBool('allowInsecure'),
+        );
+        if (mounted && _sizeProbeKey == key && size != null) {
+          setState(() => _probedDownloadSize = size);
+        }
+      } catch (_) {
+        // Best-effort only: leave the size unknown when it can't be resolved.
+      }
+    }();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -882,21 +924,54 @@ class _AppPageState extends State<AppPage> {
             _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
           ],
         ),
+        if (app?.downloadProgress == null && _probedDownloadSize != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
         if (app?.downloadProgress != null)
-          Semantics(
-            label: app!.downloadProgress! >= 0
-                ? tr(
-                    'percentProgress',
-                    args: [app.downloadProgress!.toInt().toString()],
-                  )
-                : tr('installing'),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: LinearProgressIndicator(
-                value: app.downloadProgress! >= 0
-                    ? app.downloadProgress! / 100
-                    : null,
-              ),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    label: app!.downloadProgress! >= 0
+                        ? tr(
+                            'percentProgress',
+                            args: [app.downloadProgress!.toInt().toString()],
+                          )
+                        : tr('installing'),
+                    child: LinearProgressIndicator(
+                      value: app.downloadProgress! >= 0
+                          ? app.downloadProgress! / 100
+                          : null,
+                    ),
+                  ),
+                ),
+                if (app.downloadProgress! >= 0) ...[
+                  const SizedBox(width: 8),
+                  DownloadCancelButton(
+                    onPressed: () => appsProvider.cancelDownload(widget.appId),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        if (app?.downloadProgress != null &&
+            app!.downloadProgress! >= 0 &&
+            app.downloadReceivedBytes != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              formatDownloadSize(
+                app.downloadReceivedBytes,
+                app.downloadTotalBytes,
+              )!,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
       ],
@@ -922,6 +997,9 @@ class _AppPageState extends State<AppPage> {
     final AppInMemory? app = cachedApp(
       context.select<AppsProvider, AppInMemory?>((p) => p.apps[widget.appId]),
     );
+    if (app != null && app.downloadProgress == null) {
+      _maybeProbeDownloadSize(app);
+    }
     final source = this.source;
 
     if (!areDownloadsRunning &&

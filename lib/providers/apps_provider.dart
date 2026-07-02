@@ -60,16 +60,35 @@ const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
 
+/// Live download state for an app: the progress percent (listenable, with -1
+/// meaning "installing" and null meaning "idle") plus the bytes downloaded and
+/// total size when known. Held by reference and shared across [AppInMemory]
+/// copies so UI listeners bound to an earlier instance keep updating even after
+/// saveApps replaces the map entry with a copy.
+class DownloadState {
+  final ValueNotifier<double?> progress = ValueNotifier(null);
+  int? receivedBytes;
+  int? totalBytes;
+}
+
 /// Runtime wrapper for [App] holding download state and OS package info.
 class AppInMemory {
   late App app;
-  final ValueNotifier<double?> downloadProgressNotifier = ValueNotifier(null);
+  final DownloadState download;
   PackageInfo? installedInfo;
   Uint8List? icon;
   String? sourceType;
 
-  double? get downloadProgress => downloadProgressNotifier.value;
-  set downloadProgress(double? value) => downloadProgressNotifier.value = value;
+  ValueNotifier<double?> get downloadProgressNotifier => download.progress;
+
+  double? get downloadProgress => download.progress.value;
+  set downloadProgress(double? value) => download.progress.value = value;
+
+  int? get downloadReceivedBytes => download.receivedBytes;
+  set downloadReceivedBytes(int? value) => download.receivedBytes = value;
+
+  int? get downloadTotalBytes => download.totalBytes;
+  set downloadTotalBytes(int? value) => download.totalBytes = value;
 
   AppInMemory(
     this.app,
@@ -77,9 +96,8 @@ class AppInMemory {
     this.installedInfo,
     this.icon, {
     this.sourceType,
-  }) {
-    downloadProgressNotifier.value = downloadProgress;
-  }
+    DownloadState? download,
+  }) : download = download ?? (DownloadState()..progress.value = downloadProgress);
 
   AppInMemory deepCopy() => AppInMemory(
     app.copyWith(),
@@ -87,20 +105,21 @@ class AppInMemory {
     installedInfo,
     icon,
     sourceType: sourceType,
+    download: download,
   );
 
   AppInMemory copyWith({
     App? app,
-    double? downloadProgress,
     PackageInfo? installedInfo,
     Uint8List? icon,
     String? sourceType,
   }) => AppInMemory(
     app ?? this.app,
-    downloadProgress ?? this.downloadProgress,
+    downloadProgress,
     installedInfo ?? this.installedInfo,
     icon ?? this.icon,
     sourceType: sourceType ?? this.sourceType,
+    download: download,
   );
 
   String get name => app.overrideName ?? app.finalName;
@@ -187,6 +206,7 @@ Future<File> downloadFileWithRetry(
   int retries = _defaultRetries,
   bool allowInsecure = false,
   LogsProvider? logs,
+  CancellationToken? cancellationToken,
 }) async {
   try {
     return await downloadFile(
@@ -199,8 +219,11 @@ Future<File> downloadFileWithRetry(
       headers: headers,
       allowInsecure: allowInsecure,
       logs: logs,
+      cancellationToken: cancellationToken,
     );
   } catch (e) {
+    // A cancellation is not one of the retryable error types, so it naturally
+    // falls through to rethrow below.
     if (retries > 0 && (e is ClientException || e is SocketException || e is TimeoutException)) {
       await Future.delayed(
         const Duration(seconds: _retryDelaySeconds),
@@ -216,6 +239,7 @@ Future<File> downloadFileWithRetry(
         retries: (retries - 1),
         allowInsecure: allowInsecure,
         logs: logs,
+        cancellationToken: cancellationToken,
       );
     } else {
       rethrow;
@@ -400,6 +424,7 @@ Future<File> downloadFile(
   Map<String, String>? headers,
   bool allowInsecure = false,
   LogsProvider? logs,
+  CancellationToken? cancellationToken,
 }) async {
   final reqHeaders = headers ?? {};
   final headersClient = IOClient(createHttpClient(allowInsecure));
@@ -552,43 +577,60 @@ Future<File> downloadFile(
     }
 
     final downloadBuffer = BytesBuilder();
-    await response
-        .map((chunk) {
-          received += chunk.length;
-          final now = DateTime.now();
-          if (onProgress != null &&
-              (lastProgressUpdate == null ||
-                  now.difference(lastProgressUpdate!) >=
-                      downloadUIUpdateInterval)) {
-            progress = fullContentLength != null
-                ? (received / fullContentLength * 100).clamp(0, 100)
-                : _downloadProgressFallback.toDouble();
-            onProgress(progress);
-            lastProgressUpdate = now;
-          }
-          return chunk;
-        })
-        .transform(
-          StreamTransformer<List<int>, List<int>>.fromHandlers(
-            handleData: (List<int> data, EventSink<List<int>> s) {
-              downloadBuffer.add(data);
-              if (downloadBuffer.length >= downloadBufferSizeLocal) {
-                s.add(downloadBuffer.takeBytes());
-              }
-            },
-            handleDone: (EventSink<List<int>> s) {
-              if (downloadBuffer.isNotEmpty) {
-                s.add(downloadBuffer.takeBytes());
-              }
-              s.close();
-            },
-          ),
-        )
-        .pipe(sink);
+    try {
+      await response
+          .map((chunk) {
+            cancellationToken?.throwIfCancelled();
+            received += chunk.length;
+            final now = DateTime.now();
+            if (onProgress != null &&
+                (lastProgressUpdate == null ||
+                    now.difference(lastProgressUpdate!) >=
+                        downloadUIUpdateInterval)) {
+              progress = fullContentLength != null
+                  ? (received / fullContentLength * 100).clamp(0, 100)
+                  : _downloadProgressFallback.toDouble();
+              onProgress(progress, received, fullContentLength);
+              lastProgressUpdate = now;
+            }
+            return chunk;
+          })
+          .transform(
+            StreamTransformer<List<int>, List<int>>.fromHandlers(
+              handleData: (List<int> data, EventSink<List<int>> s) {
+                downloadBuffer.add(data);
+                if (downloadBuffer.length >= downloadBufferSizeLocal) {
+                  s.add(downloadBuffer.takeBytes());
+                }
+              },
+              handleDone: (EventSink<List<int>> s) {
+                if (downloadBuffer.isNotEmpty) {
+                  s.add(downloadBuffer.takeBytes());
+                }
+                s.close();
+              },
+            ),
+          )
+          .pipe(sink);
+    } catch (e) {
+      // Release the file handle, ignoring "file already closed" races that can
+      // happen when the stream is torn down mid-write. The .part file is kept so
+      // the download can be resumed later.
+      try {
+        await sink.close();
+      } catch (_) {}
+      // Surface a cancellation as such (even if the underlying stream error was
+      // a file/socket error caused by the abort) so callers handle it silently.
+      if (e is CancellationException ||
+          (cancellationToken?.isCancelled ?? false)) {
+        throw CancellationException();
+      }
+      rethrow;
+    }
     await sink.close();
     progress = null;
     if (onProgress != null) {
-      onProgress(progress);
+      onProgress(progress, null, null);
     }
     if (tempDownloadedFile.existsSync()) {
       if (downloadedFile.existsSync()) {
@@ -609,6 +651,62 @@ Future<File> downloadFile(
   } finally {
     responseClient.close();
   }
+}
+
+/// Best-effort probe of a download's size via its Content-Length header. Returns
+/// null when the server doesn't report it (or the request fails), so callers can
+/// treat the size as unknown ("when possible").
+Future<int?> getDownloadSize(
+  String url, {
+  Map<String, String>? headers,
+  bool allowInsecure = false,
+}) async {
+  final reqHeaders = headers ?? {};
+  final client = IOClient(createHttpClient(allowInsecure));
+  try {
+    final headReq = Request('HEAD', Uri.parse(url));
+    headReq.headers.addAll(reqHeaders);
+    var response = await client.send(headReq);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // Some servers reject HEAD; fall back to GET but read Content-Length from
+      // the headers only. The body is never consumed (client.close() aborts it)
+      // so this doesn't download the file.
+      final getReq = Request('GET', Uri.parse(url));
+      getReq.headers.addAll(reqHeaders);
+      response = await client.send(getReq);
+    }
+    final length = response.contentLength;
+    return (length != null && length > 0) ? length : null;
+  } catch (_) {
+    return null;
+  } finally {
+    client.close();
+  }
+}
+
+/// Formats a byte count as a short human-readable string (e.g. "5.0 MB").
+String formatBytes(int bytes) {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  var size = bytes.toDouble();
+  var unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit++;
+  }
+  final value = unit == 0 ? size.toStringAsFixed(0) : size.toStringAsFixed(1);
+  return '$value ${units[unit]}';
+}
+
+/// Formats download progress as "received / total" (e.g. "5.0 MB / 20.0 MB"),
+/// or just the received amount when the total is unknown. Returns null when no
+/// bytes have been received yet.
+String? formatDownloadSize(int? receivedBytes, int? totalBytes) {
+  if (receivedBytes == null) return null;
+  if (totalBytes != null && totalBytes > 0) {
+    return '${formatBytes(receivedBytes)} / ${formatBytes(totalBytes)}';
+  }
+  return formatBytes(receivedBytes);
 }
 
 Future<List<PackageInfo>> getAllInstalledInfo() async {
@@ -692,6 +790,9 @@ class AppsProvider with ChangeNotifier {
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
 
+  // Active per-app download cancellation tokens, keyed by app ID.
+  final Map<String, CancellationToken> _downloadCancellations = {};
+
   /// Non-null while a [checkUpdates] batch is in flight. Serves as both an
   /// atomic guard (preventing concurrent batches) and a deduplication
   /// mechanism: subsequent callers receive the existing completer's future.
@@ -714,6 +815,10 @@ class AppsProvider with ChangeNotifier {
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   bool _isBg = false;
+
+  /// Whether this provider runs in the background (WorkManager) isolate rather
+  /// than the main UI isolate.
+  bool get isBg => _isBg;
   Stream<FGBGType>? foregroundStream;
   StreamSubscription<FGBGType>? foregroundSubscription;
   late final Directory apkDir;
@@ -739,6 +844,28 @@ class AppsProvider with ChangeNotifier {
   /// Public wrapper around the protected [notifyListeners] so the provider's
   /// part-file extensions can request listeners to rebuild.
   void notify() => notifyListeners();
+
+  /// Registers a cancellation token for an in-flight download of [appId].
+  CancellationToken registerDownloadCancellation(String appId) {
+    final token = CancellationToken();
+    _downloadCancellations[appId] = token;
+    return token;
+  }
+
+  /// Clears the cancellation token once a download of [appId] finishes.
+  void clearDownloadCancellation(String appId) {
+    _downloadCancellations.remove(appId);
+  }
+
+  /// Requests cancellation of an ongoing download for [appId], if any.
+  void cancelDownload(String appId) {
+    _downloadCancellations[appId]?.cancel();
+    final entry = apps[appId];
+    if (entry != null && entry.downloadProgress != null) {
+      entry.downloadProgress = null;
+    }
+    notify();
+  }
 
   /// Waits for any in-flight [loadApps] to finish, so concurrent callers
   /// serialize instead of busy-waiting on a polling loop.
@@ -782,6 +909,10 @@ class AppsProvider with ChangeNotifier {
       _eventSubscription = _eventsController.stream.listen((_) {
         _needsBgReload = true;
       });
+      // Let the download notification's Cancel action reach this provider,
+      // including taps routed through the FLN background isolate.
+      NotificationsProvider.onDownloadCancelRequested = cancelDownload;
+      NotificationsProvider.listenForDownloadCancelFromMain();
     }
     () async {
       await this.settingsProvider.initializeSettings();

@@ -139,6 +139,7 @@
     "downloadNotifDescription": "ഒരു ആപ്പ് ഡൗൺലോഡ് ചെയ്യുന്നതിലെ പുരോഗതി ഉപയോക്താവിനെ അറിയിക്കുന്നു",
     "downloadX": "{} ഡൗൺലോഡ് ചെയ്യുക",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} ഡൗൺലോഡ് ചെയ്തു",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} ഡൗൺലോഡ് ചെയ്യുന്നു",

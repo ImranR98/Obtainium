@@ -133,8 +133,11 @@ extension AppsProviderInstall on AppsProvider {
     bool useExisting = true,
   }) async {
     final notifId = DownloadNotification(app.finalName, 0).id;
+    final cancellationToken = registerDownloadCancellation(app.id);
     if (apps[app.id] != null) {
       apps[app.id]!.downloadProgress = 0;
+      apps[app.id]!.downloadReceivedBytes = null;
+      apps[app.id]!.downloadTotalBytes = null;
       notify();
     }
     try {
@@ -179,9 +182,11 @@ extension AppsProviderInstall on AppsProvider {
         fileNameNoExt,
         source.urlsAlwaysHaveExtension,
         headers: headers,
-        (double? progress) {
+        (double? progress, [int? received, int? total]) {
           final int? prog = progress?.ceil();
           if (apps[app.id] != null) {
+            apps[app.id]!.downloadReceivedBytes = received;
+            apps[app.id]!.downloadTotalBytes = total;
             apps[app.id]!.downloadProgress = progress;
             // Only rebuild listeners when the displayed (integer) percent
             // actually changes, to avoid redundant whole-page rebuilds on
@@ -193,6 +198,12 @@ extension AppsProviderInstall on AppsProvider {
           notif = DownloadNotification(
             app.finalName,
             prog ?? _downloadCompleteProgress,
+            // Only foreground downloads are cancellable from the notification;
+            // the background isolate's token isn't reachable from the main
+            // isolate that handles the action tap.
+            appId: isBg ? null : app.id,
+            receivedBytes: received,
+            totalBytes: total,
           );
           if (prog != null && prevProg != prog) {
             notificationsProvider?.notify(notif);
@@ -203,6 +214,7 @@ extension AppsProviderInstall on AppsProvider {
         useExisting: useExisting,
         allowInsecure: app.settings.getBool('allowInsecure'),
         logs: logs,
+        cancellationToken: cancellationToken,
       );
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
@@ -319,9 +331,12 @@ extension AppsProviderInstall on AppsProvider {
         return DownloadedDir(app.id, downloadedFile, apkDir!, dirType);
       }
     } finally {
+      clearDownloadCancellation(app.id);
       unawaited(notificationsProvider?.cancel(notifId));
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = null;
+        apps[app.id]!.downloadReceivedBytes = null;
+        apps[app.id]!.downloadTotalBytes = null;
         notify();
       }
     }
@@ -1118,6 +1133,8 @@ extension AppsProviderInstall on AppsProvider {
   ) async {
     final appEntry = apps[id];
     if (appEntry == null) return;
+    // Nothing to install (e.g. the download was cancelled): skip silently.
+    if (downloadedFile == null && downloadedDir == null) return;
     // Installation has actually begun: use -1 (installing) so the UI shows an
     // indeterminate "Installing" indicator rather than a frozen percentage.
     appEntry.downloadProgress = _installingProgressSentinel;
@@ -1253,7 +1270,12 @@ extension AppsProviderInstall on AppsProvider {
         await waitForUserToReturnToForeground(context);
       }
     } catch (e) {
-      errors.add(id, e, appName: apps[id]?.name);
+      // A user-cancelled download is not an error; skip it silently.
+      if (e is! CancellationException) {
+        errors.add(id, e, appName: apps[id]?.name);
+      }
+      downloadedFile = null;
+      downloadedDir = null;
       if (apps[id] != null) {
         apps[id]!.downloadProgress = null;
         notify();
@@ -1280,9 +1302,14 @@ extension AppsProviderInstall on AppsProvider {
         fileUrl.value,
         fileUrl.key,
         true,
-        (double? progress) {
+        (double? progress, [int? received, int? total]) {
           notificationsProvider.notify(
-            DownloadNotification(fileUrl.key, progress?.ceil() ?? 0),
+            DownloadNotification(
+              fileUrl.key,
+              progress?.ceil() ?? 0,
+              receivedBytes: received,
+              totalBytes: total,
+            ),
           );
         },
         downloadPath,
@@ -1304,7 +1331,9 @@ extension AppsProviderInstall on AppsProvider {
       );
       downloadedIds.add(fileUrl.key);
     } catch (e) {
-      errors.add(fileUrl.key, e);
+      if (e is! CancellationException) {
+        errors.add(fileUrl.key, e);
+      }
     } finally {
       unawaited(
         notificationsProvider.cancel(DownloadNotification(fileUrl.key, 0).id),

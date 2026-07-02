@@ -2,12 +2,45 @@
 //
 // Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app.
 
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/providers/apps_provider.dart' show formatDownloadSize;
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+/// Prefix for the download-notification Cancel action id; the app ID is appended
+/// so the tap handler knows which download to stop.
+const String cancelDownloadActionPrefix = 'cancel_download::';
+
+/// Name under which the main isolate registers a port to receive download-cancel
+/// requests forwarded from the notification-action background isolate.
+const String _downloadCancelPortName = 'obtainium_download_cancel';
+
+/// The app ID targeted by a download-cancel notification action, or null if
+/// [actionId] isn't a download-cancel action.
+String? _cancelActionAppId(String? actionId) {
+  if (actionId == null || !actionId.startsWith(cancelDownloadActionPrefix)) {
+    return null;
+  }
+  final appId = actionId.substring(cancelDownloadActionPrefix.length);
+  return appId.isEmpty ? null : appId;
+}
+
+/// Runs in a separate isolate when a notification action button is tapped (FLN
+/// routes action taps here, not to the foreground handler). It can't touch app
+/// state, so it forwards the cancel request to the main isolate via a named port.
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) {
+  final appId = _cancelActionAppId(response.actionId);
+  if (appId != null) {
+    IsolateNameServer.lookupPortByName(_downloadCancelPortName)?.send(appId);
+  }
+}
 
 String _buildUpdateMessage(
   List<App> updates, {
@@ -38,6 +71,7 @@ class ObtainiumNotification {
   int? progPercent;
   bool onlyAlertOnce;
   String? payload;
+  List<AndroidNotificationAction>? androidActions;
 
   ObtainiumNotification(
     this.id,
@@ -50,6 +84,7 @@ class ObtainiumNotification {
     this.onlyAlertOnce = false,
     this.progPercent,
     this.payload,
+    this.androidActions,
   });
 }
 
@@ -162,17 +197,32 @@ class AppsRemovedNotification extends ObtainiumNotification {
 
 class DownloadNotification extends ObtainiumNotification {
   static const int _baseId = 100;
-  DownloadNotification(String appName, int progPercent)
-    : super(
+  DownloadNotification(
+    String appName,
+    int progPercent, {
+    String? appId,
+    int? receivedBytes,
+    int? totalBytes,
+  }) : super(
         _baseId + ((appName.hashCode.abs() % 9000).abs()),
         tr('downloadingX', args: [appName]),
-        '',
+        formatDownloadSize(receivedBytes, totalBytes) ?? '',
         'APP_DOWNLOADING',
         tr('downloadingXNotifChannel', args: [tr('app')]),
         tr('downloadNotifDescription'),
         Importance.low,
         onlyAlertOnce: true,
         progPercent: progPercent,
+        androidActions: appId != null
+            ? [
+                AndroidNotificationAction(
+                  '$cancelDownloadActionPrefix$appId',
+                  tr('cancel'),
+                  showsUserInterface: false,
+                  cancelNotification: true,
+                ),
+              ]
+            : null,
       );
 }
 
@@ -218,6 +268,9 @@ class NotificationsProvider {
 
   bool isInitialized = false;
 
+  /// Invoked when the user taps a download notification's Cancel action.
+  static void Function(String appId)? onDownloadCancelRequested;
+
   Map<Importance, Priority> importanceToPriority = {
     Importance.defaultImportance: Priority.defaultPriority,
     Importance.high: Priority.high,
@@ -236,10 +289,33 @@ class NotificationsProvider {
             android: AndroidInitializationSettings('ic_notification'),
           ),
           onDidReceiveNotificationResponse: (NotificationResponse response) {
+            final cancelAppId = _cancelActionAppId(response.actionId);
+            if (cancelAppId != null) {
+              onDownloadCancelRequested?.call(cancelAppId);
+              return;
+            }
             _showNotificationPayload(response.payload);
           },
+          onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
         ) ??
         false;
+  }
+
+  /// Called from the main isolate so that download-cancel requests forwarded by
+  /// [notificationTapBackground] are received and dispatched to
+  /// [onDownloadCancelRequested].
+  static void listenForDownloadCancelFromMain() {
+    IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
+    final port = ReceivePort();
+    IsolateNameServer.registerPortWithName(
+      port.sendPort,
+      _downloadCancelPortName,
+    );
+    port.listen((message) {
+      if (message is String && message.isNotEmpty) {
+        onDownloadCancelRequested?.call(message);
+      }
+    });
   }
 
   Future<void> checkLaunchByNotif() async {
@@ -299,6 +375,7 @@ class NotificationsProvider {
     int? progPercent,
     bool onlyAlertOnce = false,
     String? payload,
+    List<AndroidNotificationAction>? androidActions,
   }) async {
     if (cancelExisting) {
       await cancel(id);
@@ -323,6 +400,7 @@ class NotificationsProvider {
           showProgress: progPercent != null,
           onlyAlertOnce: onlyAlertOnce,
           indeterminate: progPercent != null && progPercent < 0,
+          actions: androidActions,
         ),
       ),
       payload: payload,
@@ -344,5 +422,6 @@ class NotificationsProvider {
     onlyAlertOnce: notif.onlyAlertOnce,
     progPercent: notif.progPercent,
     payload: notif.payload,
+    androidActions: notif.androidActions,
   );
 }

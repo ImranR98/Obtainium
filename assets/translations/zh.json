@@ -139,6 +139,7 @@
     "downloadNotifDescription": "提示应用的下载进度",
     "downloadX": "下载 {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "已下载 {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "正在下载 {}",

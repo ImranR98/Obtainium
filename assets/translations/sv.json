@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Meddelar användaren om framstegen med att ladda ner en app",
     "downloadX": "Ladda ner {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Nedladdad {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Laddar ner {}",

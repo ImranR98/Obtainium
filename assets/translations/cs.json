@@ -144,6 +144,7 @@
     "downloadNotifDescription": "Informuje uživatele o průběhu stahování aplikace",
     "downloadX": "Stáhnout {}",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "Staženo {}",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "Stáhnout {}",

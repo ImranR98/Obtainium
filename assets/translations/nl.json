@@ -139,6 +139,7 @@
     "downloadNotifDescription": "Stelt de gebruiker op de hoogte van de voortgang bij het downloaden van een app",
     "downloadX": "Downloaden",
     "downloadFailed": "Download failed",
+    "downloadSize": "Download size",
     "downloadedX": "{} gedownload",
     "downloadedXNotifChannel": "Downloaded {}",
     "downloadingX": "{} downloaden",
