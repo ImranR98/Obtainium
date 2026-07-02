@@ -6,15 +6,15 @@ import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/add_app.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/apps.dart';
 import 'package:obtainium/pages/settings.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +36,10 @@ class NavigationPageItem {
 }
 
 class _HomePageState extends State<HomePage> {
-  final SourceProvider _sourceProvider = SourceProvider();
+  late final SourceProvider sourceProvider;
+  late final SettingsProvider settingsProvider;
+  late final AppsProvider appsProvider;
+
   List<int> selectedIndexHistory = [];
   bool isReversing = false;
   late AppLinks _appLinks;
@@ -44,16 +47,91 @@ class _HomePageState extends State<HomePage> {
 
   final GlobalKey<AppsPageState> appsPageKey = GlobalKey<AppsPageState>();
   String? selectedAppId;
+  bool appsSelecting = false;
 
-  /// Whether the apps page currently has a multi-selection active. Reported by
-  /// [AppsPage] via its onSelectionChanged callback so the shell can morph the
-  /// FAB without reaching into the apps page's State during build.
-  bool _appsSelecting = false;
-
-  void _selectApp(String appId) {
-    setState(() {
-      selectedAppId = appId;
+  @override
+  void initState() {
+    super.initState();
+    sourceProvider = context.read<SourceProvider>();
+    settingsProvider = context.read<SettingsProvider>();
+    appsProvider = context.read<AppsProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await showWelcomeDialogs();
+      if (!mounted) return;
+      unawaited(initDeepLinks());
     });
+  }
+
+  int get currentIndex =>
+      selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last;
+
+  void selectApp(String appId) {
+    selectedAppId = appId;
+    setState(() {});
+  }
+
+  void clearSelectedApp() {
+    selectedAppId = null;
+    setState(() {});
+  }
+
+  void setAppsSelecting(bool has) {
+    appsSelecting = has;
+    setState(() {});
+  }
+
+  void setIsReversing(int targetIndex) {
+    final bool reversing =
+        selectedIndexHistory.isNotEmpty &&
+        selectedIndexHistory.last > targetIndex;
+    isReversing = reversing;
+    setState(() {});
+  }
+
+  Future<bool> waitUntil(
+    bool Function() condition, {
+    Duration interval = const Duration(milliseconds: 50),
+    int maxAttempts = 100,
+  }) async {
+    var attempts = 0;
+    while (!condition()) {
+      if (++attempts > maxAttempts) return false;
+      await Future.delayed(interval);
+    }
+    return true;
+  }
+
+  Future<void> switchToPage(int index) async {
+    setIsReversing(index);
+    if (index == 0) {
+      await waitUntil(
+        () => appsPageKey.currentState == null,
+        interval: const Duration(milliseconds: 16),
+        maxAttempts: 120,
+      );
+      selectedIndexHistory.clear();
+    } else if (selectedIndexHistory.isEmpty ||
+        selectedIndexHistory.last != index) {
+      final int existingInd = selectedIndexHistory.indexOf(index);
+      if (existingInd >= 0) {
+        selectedIndexHistory.removeAt(existingInd);
+      }
+      selectedIndexHistory.add(index);
+    }
+    if (mounted) setState(() {});
+  }
+
+  void handlePop(bool useTwoPane) {
+    if (useTwoPane && selectedAppId != null) {
+      clearSelectedApp();
+    } else {
+      setIsReversing(0);
+      if (selectedIndexHistory.isNotEmpty) {
+        selectedIndexHistory.removeLast();
+      }
+      setState(() {});
+    }
   }
 
   void pushAddApp({String? initialUrl}) {
@@ -62,96 +140,90 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    initDeepLinks();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      var sp = context.read<SettingsProvider>();
-      if (!sp.welcomeShown) {
-        await showDialog(
-          context: context,
-          builder: (BuildContext ctx) {
-            return AlertDialog(
-              title: Text(tr('welcome')),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 20,
-                children: [
-                  Text(tr('documentationLinksNote')),
-                  const LinkText(
-                    text:
-                        'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                    url:
-                        'https://github.com/ImranR98/Obtainium/blob/main/README.md',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              actions: [
-                FilledButton.tonal(
-                  autofocus: sp.isTV,
-                  onPressed: () {
-                    sp.welcomeShown = true;
-                    Navigator.of(context).pop(null);
-                  },
-                  child: Text(tr('ok')),
+  Future<void> showWelcomeDialogs() async {
+    final sp = settingsProvider;
+    if (!sp.welcomeShown) {
+      await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return AlertDialog(
+            title: Text(tr('welcome')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(tr('documentationLinksNote')),
+                const LinkText(
+                  text:
+                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                  url:
+                      'https://github.com/ImranR98/Obtainium/blob/main/README.md',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
-            );
-          },
-        );
-      }
-      if (!context.mounted) return;
-      if (!sp.googleVerificationWarningShown) {
-        await showDialog(
-          // ignore: use_build_context_synchronously
-          context: context,
-          builder: (BuildContext ctx) {
-            return AlertDialog(
-              title: Text(tr('note')),
-              scrollable: true,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 20,
-                children: [
-                  Text(tr('googleVerificationWarningP1')),
-                  LinkText(
-                    text: tr('googleVerificationWarningP2'),
-                    url: 'https://keepandroidopen.org/',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(tr('googleVerificationWarningP3')),
-                ],
+            ),
+            actions: [
+              FilledButton.tonal(
+                autofocus: sp.isTV,
+                onPressed: () {
+                  sp.welcomeShown = true;
+                  Navigator.of(context).pop(null);
+                },
+                child: Text(tr('ok')),
               ),
-              actions: [
-                FilledButton.tonal(
-                  autofocus: sp.isTV,
-                  onPressed: () {
-                    sp.googleVerificationWarningShown = true;
-                    Navigator.of(context).pop(null);
-                  },
-                  child: Text(tr('ok')),
+            ],
+          );
+        },
+      );
+    }
+    if (!mounted) return;
+    if (!sp.googleVerificationWarningShown) {
+      await showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return AlertDialog(
+            title: Text(tr('note')),
+            scrollable: true,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(tr('googleVerificationWarningP1')),
+                LinkText(
+                  text: tr('googleVerificationWarningP2'),
+                  url: 'https://keepandroidopen.org/',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
+                Text(tr('googleVerificationWarningP3')),
               ],
-            );
-          },
-        );
-      }
-    });
+            ),
+            actions: [
+              FilledButton.tonal(
+                autofocus: sp.isTV,
+                onPressed: () {
+                  sp.googleVerificationWarningShown = true;
+                  Navigator.of(context).pop(null);
+                },
+                child: Text(tr('ok')),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
 
-    goToAddApp(String data) async {
+    Future<void> goToAddApp(String data) async {
       await switchToPage(0);
       if (context.mounted) pushAddApp(initialUrl: data);
     }
 
-    goToExistingApp(String appId) async {
+    Future<void> goToExistingApp(String appId) async {
       await switchToPage(0);
-      await _waitUntil(
+      await waitUntil(
         () => appsPageKey.currentState != null,
         interval: const Duration(milliseconds: 100),
         maxAttempts: 50,
@@ -159,25 +231,23 @@ class _HomePageState extends State<HomePage> {
       appsPageKey.currentState?.openAppById(appId);
     }
 
-    interpretLink(Uri uri) async {
-      var action = uri.host;
-      var data = uri.path.length > 1 ? uri.path.substring(1) : "";
+    Future<void> interpretLink(Uri uri) async {
+      final action = uri.host;
+      final data = uri.path.length > 1 ? uri.path.substring(1) : '';
       try {
         if (action == 'add') {
-          // Ensure apps are loaded
-          AppsProvider appsProvider = context.read<AppsProvider>();
-          await _waitUntil(
-            () => !appsProvider.loadingApps,
+          final AppsProvider ap = appsProvider;
+          await waitUntil(
+            () => !ap.loadingApps,
             interval: const Duration(milliseconds: 10),
             maxAttempts: 500,
           );
 
-          // See if we already have this app
-          String standardizedUrl = _sourceProvider
+          final String standardizedUrl = sourceProvider
               .getSource(data)
               .standardizeUrl(data);
 
-          AppInMemory? existingApp = appsProvider.apps.values
+          final AppInMemory? existingApp = ap.apps.values
               .where((AppInMemory a) => a.app.url == standardizedUrl)
               .firstOrNull;
 
@@ -187,7 +257,7 @@ class _HomePageState extends State<HomePage> {
             await goToAddApp(data);
           }
         } else if (action == 'app' || action == 'apps') {
-          var dataStr = Uri.decodeComponent(data);
+          final dataStr = Uri.decodeComponent(data);
           if (await showDialog(
                 context: context,
                 builder: (BuildContext ctx) {
@@ -216,28 +286,29 @@ class _HomePageState extends State<HomePage> {
               ) !=
               null) {
             if (!context.mounted) return;
-            // ignore: use_build_context_synchronously
-            var appsProvider = context.read<AppsProvider>();
-            // Parse dataStr as JSON and re-encode so injected content can't
-            // break out of the JSON structure.
+            final ap = appsProvider;
             dynamic parsedData;
             try {
               parsedData = jsonDecode(dataStr);
             } catch (e) {
-              LogsProvider().add('Failed to decode deep-link JSON: $e', level: LogLevel.error);
+              unawaited(
+                LogsProvider().add(
+                  'Failed to decode deep-link JSON: $e',
+                  level: LogLevel.error,
+                ),
+              );
               throw ObtainiumError(tr('invalidInput'));
             }
             final importPayload = jsonEncode(<String, dynamic>{
               'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
             });
-            var result = await appsProvider.import(importPayload);
-            if (context.mounted) {
+            final result = await ap.import(importPayload);
+            if (mounted) {
               showMessage(
                 tr(
                   'importedX',
                   args: [plural('apps', result.key.length).toLowerCase()],
                 ),
-                // ignore: use_build_context_synchronously
                 context,
               );
             }
@@ -246,20 +317,17 @@ class _HomePageState extends State<HomePage> {
           throw ObtainiumError(tr('unknown'));
         }
       } catch (e) {
-        if (context.mounted) {
-          // ignore: use_build_context_synchronously
+        if (mounted) {
           showError(e, context);
         }
       }
     }
 
-    // Check initial link if app was in cold state (terminated)
     final initialLink = await _appLinks.getInitialLink();
     if (initialLink != null) {
       await interpretLink(initialLink);
     }
-    // Some platforms also replay the launch link on the stream; ignore only
-    // that exact duplicate (once) so a genuine new warm link is never dropped.
+
     var dedupeInitial = initialLink != null;
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) async {
       if (dedupeInitial) {
@@ -272,54 +340,10 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void setIsReversing(int targetIndex) {
-    bool reversing =
-        selectedIndexHistory.isNotEmpty &&
-        selectedIndexHistory.last > targetIndex;
-    setState(() {
-      isReversing = reversing;
-    });
-  }
-
-  /// Polls [condition] until it returns true, yielding to the event loop
-  /// between checks, up to [maxAttempts] times. Returns whether it became true.
-  /// Used to coordinate GlobalKey reparenting / app loading without hanging.
-  Future<bool> _waitUntil(
-    bool Function() condition, {
-    Duration interval = const Duration(milliseconds: 50),
-    int maxAttempts = 100,
-  }) async {
-    var attempts = 0;
-    while (!condition()) {
-      if (++attempts > maxAttempts) return false;
-      await Future.delayed(interval);
-    }
-    return true;
-  }
-
-  Future<void> switchToPage(int index) async {
-    setIsReversing(index);
-    if (index == 0) {
-      // Wait for any existing AppsPage to detach before reusing its GlobalKey.
-      await _waitUntil(
-        () => appsPageKey.currentState == null,
-        interval: const Duration(milliseconds: 16),
-        maxAttempts: 120,
-      );
-      setState(() {
-        selectedIndexHistory.clear();
-      });
-    } else if (selectedIndexHistory.isEmpty ||
-        (selectedIndexHistory.isNotEmpty &&
-            selectedIndexHistory.last != index)) {
-      setState(() {
-        int existingInd = selectedIndexHistory.indexOf(index);
-        if (existingInd >= 0) {
-          selectedIndexHistory.removeAt(existingInd);
-        }
-        selectedIndexHistory.add(index);
-      });
-    }
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -331,8 +355,6 @@ class _HomePageState extends State<HomePage> {
       NavigationPageItem(
         tr('appsString'),
         Icons.apps_outlined,
-        // Apps page is rendered conditionally in the two-pane layout below
-        // rather than via this NavigationPageItem's widget slot.
         const SizedBox.shrink(),
         selectedIcon: Icons.apps,
       ),
@@ -344,8 +366,6 @@ class _HomePageState extends State<HomePage> {
       ),
     ];
 
-    // Adaptive navigation: a rail on wide/landscape/TV layouts, a bottom bar on
-    // compact ones. A live badge shows the number of available updates.
     final layoutWidth = MediaQuery.sizeOf(context).width;
     final useRail = isTV || layoutWidth >= 600;
     final updateCount = context.select<AppsProvider, int>(
@@ -363,11 +383,8 @@ class _HomePageState extends State<HomePage> {
       return icon;
     }
 
-    final currentIndex = selectedIndexHistory.isEmpty
-        ? 0
-        : selectedIndexHistory.last;
+    final currentIndex = this.currentIndex;
 
-    // When on Apps and wide enough, split into a two-pane list + detail view.
     final twoPane = isTV || layoutWidth >= 900;
     final useTwoPane = twoPane && currentIndex == 0;
 
@@ -379,7 +396,7 @@ class _HomePageState extends State<HomePage> {
         ? AppPage(
             key: ValueKey(selectedAppId),
             appId: selectedAppId!,
-            onClose: () => setState(() => selectedAppId = null),
+            onClose: () => clearSelectedApp(),
           )
         : EmptyState(
             icon: Icons.touch_app_outlined,
@@ -394,9 +411,9 @@ class _HomePageState extends State<HomePage> {
             flex: 2,
             child: AppsPage(
               key: appsPageKey,
-              onAppSelected: _selectApp,
+              onAppSelected: selectApp,
               selectedAppId: selectedAppId,
-              onSelectionChanged: (has) => setState(() => _appsSelecting = has),
+              onSelectionChanged: setAppsSelecting,
             ),
           ),
           const VerticalDivider(width: 1),
@@ -420,17 +437,11 @@ class _HomePageState extends State<HomePage> {
           );
         },
         child: currentIndex == 0
-            ? AppsPage(
-                key: appsPageKey,
-                onSelectionChanged: (has) =>
-                    setState(() => _appsSelecting = has),
-              )
+            ? AppsPage(key: appsPageKey, onSelectionChanged: setAppsSelecting)
             : pages.elementAt(currentIndex).widget,
       );
     }
 
-    // Shows the "Add" FAB, or hides it entirely while the user is
-    // mass‑selecting apps (the apps page will show its own action FAB).
     final createFab = FloatingActionButton(
       onPressed: () => pushAddApp(),
       tooltip: tr('addApp'),
@@ -441,16 +452,7 @@ class _HomePageState extends State<HomePage> {
       canPop: currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          if (useTwoPane && selectedAppId != null) {
-            setState(() => selectedAppId = null);
-          } else {
-            setIsReversing(0);
-            setState(() {
-              if (selectedIndexHistory.isNotEmpty) {
-                selectedIndexHistory.removeLast();
-              }
-            });
-          }
+          handlePop(useTwoPane);
         }
       },
       child: Scaffold(
@@ -460,7 +462,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   FocusTraversalGroup(
                     child: NavigationRail(
-                      leading: currentIndex == 0 && !_appsSelecting
+                      leading: currentIndex == 0 && !appsSelecting
                           ? Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: createFab,
@@ -481,9 +483,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
-                  // In single-pane (rail) mode on wide screens, cap the content
-                  // width so list rows don't stretch edge-to-edge. (Two-pane
-                  // already constrains each pane via its flex.)
                   Expanded(
                     child: useTwoPane
                         ? content
@@ -498,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               )
             : content,
-        floatingActionButton: useRail || currentIndex != 0 || _appsSelecting
+        floatingActionButton: useRail || currentIndex != 0 || appsSelecting
             ? null
             : createFab,
         bottomNavigationBar: useRail
@@ -531,7 +530,7 @@ class _HomePageState extends State<HomePage> {
                         .toList(),
                     onDestinationSelected: (int index) async {
                       settingsProvider.selectionClick();
-                      switchToPage(index);
+                      unawaited(switchToPage(index));
                     },
                     selectedIndex: currentIndex,
                   ),
@@ -539,11 +538,5 @@ class _HomePageState extends State<HomePage> {
               ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
   }
 }

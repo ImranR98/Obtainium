@@ -16,7 +16,7 @@ class IzzyOnDroid extends AppSource {
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    var host = Uri.parse(url).host;
+    final host = Uri.parse(url).host;
     if (host.startsWith('android.')) {
       return standardizeUrlWithRegex(
         url,
@@ -44,19 +44,23 @@ class IzzyOnDroid extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String? appId = await tryInferringAppId(standardUrl);
-    if (appId == null) {
-      throw NoReleasesError();
+    try {
+      final String? appId = await tryInferringAppId(standardUrl);
+      if (appId == null) {
+        throw NoReleasesError();
+      }
+      return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
+        await sourceRequest(
+          'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
+          additionalSettings,
+        ),
+        'https://android.izzysoft.de/frepo/$appId',
+        standardUrl,
+        name,
+        additionalSettings: additionalSettings,
+      );
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    return fd.getAPKUrlsFromFDroidPackagesAPIResponse(
-      await sourceRequest(
-        'https://apt.izzysoft.de/fdroid/api/v1/packages/$appId',
-        additionalSettings,
-      ),
-      'https://android.izzysoft.de/frepo/$appId',
-      standardUrl,
-      name,
-      additionalSettings: additionalSettings,
-    );
   }
 }

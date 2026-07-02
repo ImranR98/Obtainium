@@ -1,119 +1,168 @@
-// Obtainium-specific error classes used throughout the app.
-
 import 'dart:io';
 
-import 'package:android_package_installer/android_package_installer.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:android_package_installer/android_package_installer.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
-/// Base class for all Obtainium-specific errors, wrapping a human-readable message.
 class ObtainiumError {
-  final String message;
-  bool unexpected;
-  ObtainiumError(this.message, {this.unexpected = false});
+  final String code;
+  final String _message;
+  final StackTrace? stack;
+  final Map<String, dynamic> data;
+  final bool unexpected;
+
+  ObtainiumError(
+    this._message, {
+    this.code = 'UNKNOWN',
+    this.unexpected = false,
+    this.stack,
+    this.data = const {},
+  });
+
+  ObtainiumError.withCode(
+    this.code, {
+    String message = '',
+    this.unexpected = false,
+    this.stack,
+    this.data = const {},
+  }) : _message = message;
+
+  String get message =>
+      code == 'UNKNOWN' ||
+          code == 'UNEXPECTED' ||
+          code == 'CHECK_UPDATES_FAILED' ||
+          code == 'MULTI_ERROR' ||
+          code == 'HTTP_ERROR'
+      ? _message
+      : localizeErrorCode(code, data);
+
   @override
-  String toString() {
-    return message;
-  }
+  String toString() => message;
 }
 
-/// Thrown when an HTTP response indicates a rate limit has been exceeded.
+Never rethrowOrWrapError(Object error, {String? sourceName}) {
+  if (error is ObtainiumError) {
+    if (error.stack == null && error.unexpected) {
+      LogsProvider().add(
+        'Unexpected ObtainiumError (no stack): ${error.message}',
+        level: LogLevel.error,
+      );
+    }
+    throw error;
+  }
+  final stack = StackTrace.current;
+  LogsProvider().add(
+    'Wrapping unexpected error: $error\n$stack',
+    level: LogLevel.error,
+  );
+  throw ObtainiumError(
+    sourceName != null ? '$sourceName: $error' : error.toString(),
+    code: 'UNEXPECTED',
+    unexpected: true,
+    stack: stack,
+  );
+}
+
 class RateLimitError extends ObtainiumError {
   final int remainingMinutes;
   RateLimitError(this.remainingMinutes)
-    : super(plural('tooManyRequestsTryAgainInMinutes', remainingMinutes));
+    : super.withCode(
+        'RATE_LIMIT',
+        data: {'remainingMinutes': remainingMinutes},
+      );
 }
 
-/// Thrown when a URL does not match the expected format for the given source.
 class InvalidURLError extends ObtainiumError {
   InvalidURLError(String sourceName)
-    : super(tr('invalidURLForSource', args: [sourceName]));
+    : super.withCode('INVALID_URL', data: {'sourceName': sourceName});
 }
 
-/// Thrown when a source requires credentials that have not been configured.
 class CredsNeededError extends ObtainiumError {
   CredsNeededError(String sourceName)
-    : super(tr('requiresCredentialsInSettings', args: [sourceName]));
+    : super.withCode('CREDS_NEEDED', data: {'sourceName': sourceName});
 }
 
-/// Thrown when a source returns no releases or assets for the requested app.
 class NoReleasesError extends ObtainiumError {
   NoReleasesError({String? note})
-    : super(
-        '${tr('noReleaseFound')}${note?.isNotEmpty == true ? '\n\n$note' : ''}',
-      );
+    : super.withCode('NO_RELEASES', data: {'note': note ?? ''});
 }
 
-/// Thrown when no installable APK files were found for the app.
 class NoAPKError extends ObtainiumError {
-  NoAPKError() : super(tr('noAPKFound'));
+  NoAPKError() : super.withCode('NO_APK');
 }
 
-/// Thrown when version information could not be extracted from the source data.
 class NoVersionError extends ObtainiumError {
-  NoVersionError() : super(tr('noVersionFound'));
+  NoVersionError() : super.withCode('NO_VERSION');
 }
 
-/// Thrown when a URL does not match any supported app source.
 class UnsupportedURLError extends ObtainiumError {
-  UnsupportedURLError() : super(tr('urlMatchesNoSource'));
+  UnsupportedURLError() : super.withCode('UNSUPPORTED_URL');
 }
 
-/// Thrown when attempting to install an older version of an app over a newer one.
 class DowngradeError extends ObtainiumError {
   DowngradeError(int currentVersionCode, int newVersionCode)
-    : super(
-        '${tr('cantInstallOlderVersion')} (versionCode $currentVersionCode ➔ $newVersionCode)',
+    : super.withCode(
+        'DOWNGRADE',
+        data: {
+          'currentVersionCode': currentVersionCode,
+          'newVersionCode': newVersionCode,
+        },
       );
 }
 
-/// Thrown when the Android package installer returns a failure status code.
 class InstallError extends ObtainiumError {
   InstallError(int code)
-    : super(PackageInstallerStatus.byCode(code).name);
+    : super.withCode(
+        'INSTALL_FAILED',
+        data: {
+          'errorCode': code,
+          'message': PackageInstallerStatus.byCode(code).name,
+        },
+      );
 }
 
-/// Thrown when a downloaded APK's package ID differs from the expected app ID.
 class IDChangedError extends ObtainiumError {
-  IDChangedError(String newId) : super('${tr('appIdMismatch')} - $newId');
+  IDChangedError(String newId)
+    : super.withCode('ID_CHANGED', data: {'newId': newId});
 }
 
-/// Thrown when a source repository has been renamed or moved, carrying the new URL.
 class RepositoryRenamedError extends ObtainiumError {
   final String oldUrl;
   final String newUrl;
-  RepositoryRenamedError(this.oldUrl, this.newUrl) : super(tr('repoRenamed'));
+  RepositoryRenamedError(this.oldUrl, this.newUrl)
+    : super.withCode(
+        'REPO_RENAMED',
+        data: {'oldUrl': oldUrl, 'newUrl': newUrl},
+      );
 }
 
-/// Carries the partial [updates] and [errors] results from a batch update check
-/// that encountered non-retryable failures.
 class CheckUpdatesException extends ObtainiumError {
   final List<App> updates;
   final MultiAppMultiError errors;
-  CheckUpdatesException(this.updates, this.errors) : super('', unexpected: true);
+  CheckUpdatesException(this.updates, this.errors)
+    : super.withCode('CHECK_UPDATES_FAILED', unexpected: true);
   @override
   String toString() => errors.toString();
 }
 
-/// Thrown when a source method that hasn't been implemented is called.
 class NotImplementedError extends ObtainiumError {
-  NotImplementedError() : super(tr('functionNotImplemented'));
+  NotImplementedError() : super.withCode('NOT_IMPLEMENTED');
 }
 
-/// Aggregates errors from multiple apps into a single error, grouped by error string.
 class MultiAppMultiError extends ObtainiumError {
   Map<String, dynamic> rawErrors = {};
   Map<String, List<String>> idsByErrorString = {};
   Map<String, String> appIdNames = {};
 
-  MultiAppMultiError() : super(tr('placeholder'), unexpected: true);
+  MultiAppMultiError() : super.withCode('MULTI_ERROR', unexpected: true);
 
   void add(String appId, dynamic error, {String? appName}) {
     if (error is SocketException) {
       error = error.message;
     }
     rawErrors[appId] = error;
-    var string = error.toString();
+    final string = error.toString();
     var tempIds = idsByErrorString.remove(string);
     if (tempIds == null) {
       tempIds = [];
@@ -141,8 +190,43 @@ class MultiAppMultiError extends ObtainiumError {
       .join('\n\n');
 }
 
+String localizeErrorCode(String code, Map<String, dynamic>? data) {
+  return switch (code) {
+    'NO_RELEASES' =>
+      data?['note'] != null && (data!['note'] as String).isNotEmpty
+          ? '${tr('noReleaseFound')}\n\n${data['note']}'
+          : tr('noReleaseFound'),
+    'RATE_LIMIT' => plural(
+      'tooManyRequestsTryAgainInMinutes',
+      data?['remainingMinutes'] ?? 0,
+    ),
+    'INVALID_URL' => tr(
+      'invalidURLForSource',
+      args: [data?['sourceName'] ?? ''],
+    ),
+    'CREDS_NEEDED' => tr(
+      'requiresCredentialsInSettings',
+      args: [data?['sourceName'] ?? ''],
+    ),
+    'NO_APK' => tr('noAPKFound'),
+    'NO_VERSION' => tr('noVersionFound'),
+    'UNSUPPORTED_URL' => tr('urlMatchesNoSource'),
+    'DOWNGRADE' =>
+      '${tr('cantInstallOlderVersion')} (versionCode ${data?['currentVersionCode'] ?? '?'} → ${data?['newVersionCode'] ?? '?'})',
+    'INSTALL_FAILED' => data?['message']?.toString() ?? tr('installFailed'),
+    'ID_CHANGED' => '${tr('appIdMismatch')} - ${data?['newId'] ?? ''}',
+    'REPO_RENAMED' => tr('repoRenamed'),
+    'NOT_IMPLEMENTED' => tr('functionNotImplemented'),
+    _ => data?['message']?.toString() ?? tr('unexpectedError'),
+  };
+}
+
+bool isEnglish() => tr('and') == 'and';
+
+String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
+
 String list2FriendlyString(List<String> list) {
-  var isUsingEnglish = isEnglish();
+  final isUsingEnglish = isEnglish();
   return list.length == 2
       ? '${list[0]} ${tr('and')} ${list[1]}'
       : list

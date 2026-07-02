@@ -22,7 +22,7 @@ class HuaweiAppGallery extends AppSource {
   );
 
   String getDlUrl(String standardUrl) {
-    var dlHost = hosts.length > 1 ? hosts[1] : hosts[0];
+    final dlHost = hosts.length > 1 ? hosts[1] : hosts[0];
     return 'https://$dlHost/appdl/${standardUrl.split('/').last}';
   }
 
@@ -30,7 +30,7 @@ class HuaweiAppGallery extends AppSource {
     String dlUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       dlUrl,
       additionalSettings,
       followRedirects: false,
@@ -45,7 +45,7 @@ class HuaweiAppGallery extends AppSource {
   }
 
   String appIdFromRedirectDlUrl(String redirectDlUrl) {
-    var parts = redirectDlUrl
+    final parts = redirectDlUrl
         .split('?')[0]
         .split('/')
         .last
@@ -65,8 +65,8 @@ class HuaweiAppGallery extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    String dlUrl = getDlUrl(standardUrl);
-    Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
+    final String dlUrl = getDlUrl(standardUrl);
+    final Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
     return res.headers['location'] != null
         ? appIdFromRedirectDlUrl(res.headers['location']!)
         : null;
@@ -77,44 +77,51 @@ class HuaweiAppGallery extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String dlUrl = getDlUrl(standardUrl);
-    Response res = await requestAppdlRedirect(dlUrl, additionalSettings);
-    if (res.headers['location'] == null) {
-      throw NoReleasesError();
+    try {
+      final String dlUrl = getDlUrl(standardUrl);
+      final Response res = await requestAppdlRedirect(
+        dlUrl,
+        additionalSettings,
+      );
+      if (res.headers['location'] == null) {
+        throw NoReleasesError();
+      }
+      final String appId = appIdFromRedirectDlUrl(res.headers['location']!);
+      if (appId.isEmpty) {
+        throw NoReleasesError();
+      }
+      // Drop the file extension, then the `appdl` segment, keeping the version
+      // segment (the 3rd-from-last reversed).  Guard against short lists.
+      final locSegments = res.headers['location']!
+          .split('?')[0]
+          .split('.')
+          .reversed
+          .toList();
+      final relDateStr = locSegments.length > 1 ? locSegments[1] : null;
+      if (relDateStr == null || relDateStr.length != 10) {
+        throw NoVersionError();
+      }
+      // The date string is a 10-digit compact format (YYMMDDHHMM).
+      // Insert hyphens to produce YY-MM-DD-HH-MM for DateFormat parsing.
+      final relDateStrAdj = relDateStr.split('');
+      final tempLen = relDateStrAdj.length;
+      var i = 2;
+      while (i < tempLen) {
+        relDateStrAdj.insert((i + i ~/ 2 - 1), '-');
+        i += 2;
+      }
+      final relDate = DateFormat(
+        'yy-MM-dd-HH-mm',
+        'en_US',
+      ).parse(relDateStrAdj.join(''));
+      return APKDetails(
+        relDateStr,
+        [MapEntry('$appId.apk', dlUrl)],
+        AppNames(name, appId),
+        releaseDate: relDate,
+      );
+    } catch (e) {
+      rethrowOrWrapError(e);
     }
-    String appId = appIdFromRedirectDlUrl(res.headers['location']!);
-    if (appId.isEmpty) {
-      throw NoReleasesError();
-    }
-    // Drop the file extension, then the `appdl` segment, keeping the version
-    // segment (the 3rd-from-last reversed).  Guard against short lists.
-    var locSegments = res.headers['location']!
-        .split('?')[0]
-        .split('.')
-        .reversed
-        .toList();
-    var relDateStr = locSegments.length > 1 ? locSegments[1] : null;
-    if (relDateStr == null || relDateStr.length != 10) {
-      throw NoVersionError();
-    }
-    // The date string is a 10-digit compact format (YYMMDDHHMM).
-    // Insert hyphens to produce YY-MM-DD-HH-MM for DateFormat parsing.
-    var relDateStrAdj = relDateStr.split('');
-    var tempLen = relDateStrAdj.length;
-    var i = 2;
-    while (i < tempLen) {
-      relDateStrAdj.insert((i + i ~/ 2 - 1), '-');
-      i += 2;
-    }
-    var relDate = DateFormat(
-      'yy-MM-dd-HH-mm',
-      'en_US',
-    ).parse(relDateStrAdj.join(''));
-    return APKDetails(
-      relDateStr,
-      [MapEntry('$appId.apk', dlUrl)],
-      AppNames(name, appId),
-      releaseDate: relDate,
-    );
   }
 }

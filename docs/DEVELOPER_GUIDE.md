@@ -24,10 +24,14 @@ should follow when working in this codebase.
 
 ### Entry point: `lib/main.dart`
 
-- `main()` bootstraps: trusted certs, date formatting, `EasyLocalization`, edge-to-edge
+- `main()` bootstraps: `PlatformDispatcher.onError` handler (catches unhandled platform
+  errors and logs them), trusted certs, date formatting, `EasyLocalization`, edge-to-edge
   system UI (SDK ≥ 29), notifications, then `runApp` inside a `MultiProvider`.
-- The four providers (`AppsProvider`, `SettingsProvider`, `NotificationsProvider`,
-  `LogsProvider`) are created here and read everywhere via `context.read/watch/select`.
+- A custom `ErrorWidget.builder` is installed so that rendering crashes show a
+  user-friendly "close" screen rather than the default Flutter red screen.
+- Providers are created in `main()` (not inside the widget tree) so background tasks
+  can use the same instances: `AppsProvider`, `SettingsProvider`, `NotificationsProvider`,
+  `LogsProvider`, `SourceProvider`. Read them everywhere via `context.read/watch/select`.
 - `buildObtainiumTheme()` builds the app-wide Material 3 Expressive `ThemeData` once;
   **all shape/motion character lives here** (squircle `RoundedSuperellipseBorder`
   cards/dialogs, `StadiumBorder` pill buttons, emphasized page transitions, Material 3
@@ -48,32 +52,34 @@ There is also `main_fdroid.dart` for the F-Droid build flavour (sets `isFdroidBu
 
 ```
 lib/
-├─ main.dart                  App bootstrap, FG/BG service control
-├─ main_fdroid.dart           F-Droid flavour entry point
-├─ theme.dart                 Material 3 Expressive ThemeData builder
-├─ custom_errors.dart         ObtainiumError + typed errors (RateLimitError, etc.)
-├─ pages/                     Full screens (route-level widgets)
-│  ├─ home.dart               Adaptive nav shell (rail/bottom bar, two-pane)
-│  ├─ apps.dart               App list (filter/sort/select/mass-actions)
-│  ├─ app.dart                Single-app detail page
-│  ├─ add_app.dart            Add-app form + source search + ImportSection
-│  ├─ settings.dart           Settings + ExportSection
-│  └─ import_export.dart      Import/Export *widgets* + SelectionModal (no longer a tab)
-├─ components/                Reusable widgets & dialogs (see §5)
-├─ providers/                 State + business logic (see §3, §4)
-│  ├─ apps_provider.dart            Core AppsProvider class + download primitives
-│  ├─ apps_provider_lifecycle.dart  load/save/remove apps, version reconciliation
-│  ├─ apps_provider_updates.dart    update checking (fetch vs save split)
-│  ├─ apps_provider_install.dart    download + install (APK / xAPK / zip / tarball / OBB)
-│  ├─ apps_provider_import_export.dart  import/export JSON via SAF
-│  ├─ source_provider.dart          App / AppSource model + SourceProvider service
-│  ├─ app_migrations.dart           Legacy JSON compatibility & schema migrations
-│  ├─ settings_provider.dart        Typed getters/setters over SharedPreferences
-│  ├─ logs_provider.dart            sqflite-backed logs
-│  ├─ notifications_provider.dart   flutter_local_notifications wrappers
-│  ├─ native_provider.dart          platform channel helpers (e.g. system font)
-├─ app_sources/              One file per supported source (see §4)
-└─ mass_app_sources/         Bulk URL providers (e.g. GitHubStars)
+├─ main.dart                      App bootstrap, FG/BG service control
+├─ main_fdroid.dart               F-Droid flavour entry point
+├─ theme.dart                     Material 3 Expressive ThemeData builder, shapes + motion tokens
+├─ custom_errors.dart             ObtainiumError + typed errors with codes/stacks/data
+├─ pages/                         Full screens (each is a StatefulWidget in a single file)
+│  ├─ home.dart
+│  ├─ apps.dart
+│  ├─ app.dart
+│  ├─ add_app.dart
+│  ├─ settings.dart
+│  └─ import_export.dart
+├─ components/                    All UI: design tokens, form engine, feature widgets, dialogs
+│  ├─ generated_form_model.dart   Form data model (pure Dart)
+│  ├─ generated_form_renderer.dart Form widget rendering (includes modal/dialog wrapper)
+│  ├─ ui_widgets.dart             AppIcon, EmptyState, ConnectedCard, LinkText, CustomAppBar, showMessage/showError, positional tile helpers
+│  ├─ settings_widgets.dart       SettingsGroup, SettingsTile, etc.
+│  ├─ app_list_tile.dart          AppListTile, AppListBuilder, category sections
+│  ├─ app_detail_widgets.dart     AppInfoDialog, AppFilePicker
+│  └─ category_editor.dart        Category management UI
+├─ providers/                     State, business logic, services, models
+│  ├─ apps_provider.dart          Core AppsProvider + download primitives + TranslationLoader + NativeFeatures
+│  ├─ apps_provider_*.dart        Lifecycle, updates, install, import/export extensions
+│  ├─ source_provider.dart        Immutable App model + TypedSettings + AppSource + SourceProvider + HttpService + VersionService + legacy JSON migrations
+│  ├─ settings_provider.dart      Typed getters/setters over SharedPreferences
+│  ├─ logs_provider.dart          sqflite-backed logs + Logger/AppLogger
+│  └─ notifications_provider.dart Local notifications
+└─ app_sources/                  One file per supported source (28 sources + githubstars)
+```
 ```
 
 ---
@@ -104,14 +110,15 @@ narrowly** to avoid rebuild amplification:
   migration can't brick loading. The `compatVersion` constant
   (`currentAppJSONCompatVersion`) gates the *one-time legacy* migrations so already-migrated
   apps skip them; default-setting reconciliation still always runs.
-- `App.deepCopy()` clones (including `Map.from(additionalSettings)`) — **always copy
-  before mutating** an `App` you got from the provider.
+- `App` is **immutable** — use `App.copyWith(...)` to create a modified copy instead of
+  mutating fields directly.
 
 ### `AppInMemory` (`apps_provider.dart`)
 
-Runtime wrapper around `App` that also holds `downloadProgress`, `installedInfo`
-(`PackageInfo` from the OS), and the cached `icon` bytes. `AppsProvider.apps` is a
-`Map<String, AppInMemory>` kept in sync with disk.
+Runtime wrapper around `App` that also holds `downloadProgress` (via a `ValueNotifier`
+for efficient per-tile updates), `installedInfo` (`PackageInfo` from the OS), and the
+cached `icon` bytes. `AppsProvider.apps` is a `Map<String, AppInMemory>` kept in sync
+with disk.
 
 ### Persistence rules (`apps_provider_lifecycle.dart`)
 
@@ -221,8 +228,9 @@ Override the contract methods you need:
 
 Prefer these over bespoke widgets:
 
-- **`ui_shapes.dart`** — `positionalTileRadius/Shape({isFirst, isLast})` and the
-  connected-tile radius constants. The Material 3 Expressive "split list" visual system.
+- **`theme.dart`** — `positionalTileShape({isFirst, isLast})`, `StadiumBorder`,
+  `ExpressiveMotion.{emphasized, short, medium}` motion tokens. All shape and motion
+  characters are defined here.
 - **`ui_widgets.dart`** —
   - `AppIcon` (squircle icon with Obtainium glyph fallback, excluded from semantics),
   - `ActionListTile` (icon + label ListTile with optional auto-pop),
@@ -232,6 +240,7 @@ Prefer these over bespoke widgets:
   - `LinkText` (tappable external link, `Semantics(link: true)`),
   - `HighlightableButton` (FilledButton when "highlight touch targets" is on, else
     TextButton),
+  - `CustomAppBar` (wrapping `SliverAppBar.large`),
   - `copyToClipboard(context, text)`, `showConfirmDialog(...) -> Future<bool>`,
     `showHelpDialog(context, title, content)`,
   - `showMessage(dynamic e, BuildContext, {bool isError})` — logs via `LogsProvider`
@@ -240,28 +249,28 @@ Prefer these over bespoke widgets:
     with `isError: true`.
 - **`settings_widgets.dart`** — `SettingsGroup`, `SettingsSectionHeader`, `SettingsTile`,
   `SettingsToggleRow`, and `shapeSettingsTiles()` which auto-connects consecutive tiles.
-- **`motion.dart`** — `ExpressiveMotion.{emphasized, short, medium}` motion tokens. Use
-  these for animation curves/durations rather than literals.
-- **`generated_form.dart`** — the dynamic form engine (see below).
-- **`generated_form_modal.dart`** — a `GeneratedForm` inside an `AlertDialog`; the
-  standard way to ask the user for structured input or confirmation.
+- **`generated_form_renderer.dart`** — `GeneratedForm` widget (renders form items) and
+  `showGeneratedFormModal()` (a `GeneratedForm` inside an `AlertDialog`; the standard way
+  to ask the user for structured input or confirmation).
 - **`app_list_tile.dart`** — `AppListTile` (the app row: swipe-to-install/remove,
   category gradient, pin/select states, download progress), `AppIconWidget`,
   `DownloadProgressTrailing`, `AppListCategorySection`, and changelog dialog helpers
   (`showChangeLogDialog`, `getChangeLogFn`).
-- **`app_dialogs.dart`** — `AppFilePicker` (choose among multiple APK/asset URLs),
+- **`app_detail_widgets.dart`** — `AppInfoDialog` (read-only app summary: icon, name,
+  author, URL, version, last-check), `AppFilePicker` (choose among multiple APK/asset URLs),
   `APKOriginWarningDialog` (with "don't show again").
 - **`category_editor.dart`** — `showCategoryEditor()`, `CategorySelector`,
   `CategoryManager`.
-- **`logs_dialog.dart`** — `LogsDialog` (view/filter/share/clear logs).
-- **`app_info_dialog.dart`** — `AppInfoDialog` (read-only app summary: icon, name, author, URL, version, last-check) + `appInstalledVersionText()` helper.
-- **`custom_app_bar.dart`** — `CustomAppBar` wrapping `SliverAppBar.large`.
 
-### The form engine (`generated_form.dart`)
+The `LogsDialog` widget lives in `pages/settings.dart` since it's only used from the
+settings page.
+
+### The form engine (`generated_form_model.dart`)
 
 Forms throughout the app (per-app settings, source config, search filters, confirm
 dialogs) are **data-driven**. You describe fields as `List<List<GeneratedFormItem>>`
-(rows of fields) and `GeneratedForm` renders + validates them:
+(rows of fields) and `GeneratedForm` (in `generated_form_renderer.dart`) renders + validates
+them:
 
 - `GeneratedFormTextField` (with optional autocomplete, password, multi-line,
   validators, help URL/dialog)
@@ -289,8 +298,9 @@ Runs headless (no widget tree) via `background_fetch` or the foreground service.
    retries that actually `await` the retry delay** so rate-limited hosts aren't hammered.
 4. **Install mode** (`toCheck` empty): downloads + silently installs pending updates;
    Obtainium itself is always moved to install **last**.
-5. Sets a static `_lastBackgroundSave` timestamp so the foreground instance knows to
-   reload from disk (FG/BG state sync).
+5. Publishes saves via a broadcast `StreamController<void>` so the foreground
+   instance can detect background writes and reload automatically. Errors during
+   background tasks are caught and logged rather than crashing the headless process.
 
 ### Update checking (`apps_provider_updates.dart`)
 
@@ -331,25 +341,31 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 - Prefer `context.select` over `context.watch` for large providers.
 - Guard every `setState`/`Navigator`/`ScaffoldMessenger` call after an `await` with
   `if (!context.mounted) return;` (preferred over bare `mounted` in Flutter ≥ 3.7).
-- Deep-copy an `App` before mutating; never mutate provider-owned objects in place.
+- Deep-copy an `App` before mutating (`App.copyWith(...)`); never mutate provider-owned
+  objects in place.
 
 **Errors / robustness**
 - Throw `ObtainiumError` (or a typed subclass in `custom_errors.dart`) rather than raw
   `String`s. Key types: `RateLimitError` (with remaining minutes), `InvalidURLError`,
   `NoReleasesError`, `NoAPKError`, `NoVersionError`, `DowngradeError`, `InstallError`,
   `IDChangedError`, `RepositoryRenamedError`.
+- Errors use **deferred localization**: the code is set at construction time (e.g.
+  `code: 'NO_RELEASES'`) but the user-facing message is resolved via
+  `localizeErrorCode()` only when `message` is read. This lets errors be created in
+  background tasks where no translation context is available.
+- Use `rethrowOrWrapError(e)` (from `custom_errors.dart`) in every source's
+  try/catch block to wrap unexpected errors as `ObtainiumError` with stack traces.
 - Use `showError(dynamic e, BuildContext)` for unexpected/error-level messages (shows a
   dialog) and `showMessage(...)` for informational messages (shows a snackbar).
 - `MultiAppMultiError` bundles multiple per-app errors for batch operations; use
   `errors.add(appId, error, appName:)` to collect them.
-- Never silently swallow exceptions. Log them via `LogsProvider().add(...)` (the
-  standard app-wide logging channel) rather than `print()` or `debugPrint()`.
-- `logs.add()` is available inside `AppsProvider`; elsewhere use `LogsProvider().add()`
-  (the singleton pattern).
+- Never silently swallow exceptions. Log them via `LogsProvider().add(...)` or the
+  `Logger`/`AppLogger` abstraction (preferred for structured logging: `logger.debug()`,
+  `logger.info()`, `logger.warn()`, `logger.error()`).
 
 **Categories & colour coding**
 - Categories are stored as `Map<String, int>` (name → ARGB colour) in shared preferences.
-- `generateRandomLightColor()` in `generated_form.dart` produces pastel colours using the
+- `generateRandomLightColor()` in `generated_form_renderer.dart` produces pastel colours using the
   HSLuv colour space with golden-angle hue distribution.
 - `addMissingCategories()` in `apps_provider_lifecycle.dart` reconciles any categories
   found in stored apps but missing from the settings map.
@@ -374,6 +390,7 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 flutter pub get
 flutter analyze        # must be clean
 dart format --set-exit-if-changed .
+flutter test           # run the test suite
 flutter run            # default flavour
 flutter build apk --flavor normal   # or use ./build.sh
 ```
@@ -385,9 +402,8 @@ flutter build apk --flavor normal   # or use ./build.sh
   `android_system_font`) — keep them pinned; don't loosen to `ref: main`.
 - `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
   `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
-- There is currently no widget/unit test suite (the placeholder `test/widget_test.dart`
-  was removed). When adding tests, note that the split provider files are independently
-  importable extensions, which makes them unit-testable in isolation.
+- Test files live in `test/`. Run `flutter analyze`, `dart format --set-exit-if-changed .`,
+  and `flutter test` locally before opening a PR.
 
 ---
 
@@ -401,4 +417,4 @@ flutter build apk --flavor normal   # or use ./build.sh
 | Change update logic | `apps_provider_updates.dart` (foreground) / `bgUpdateCheck` (background) |
 | Change install behaviour | `apps_provider_install.dart` |
 | Add a reusable widget/dialog | `components/ui_widgets.dart` (or a dedicated component file) |
-| Theme/shape/motion tweaks | `buildObtainiumTheme()` in `lib/theme.dart`, `ui_shapes.dart`, `motion.dart` |
+| Theme/shape/motion tweaks | `buildObtainiumTheme()` in `lib/theme.dart` (`positionalTileShape`, `StadiumBorder`, `ExpressiveMotion` tokens all live here) |

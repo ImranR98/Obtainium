@@ -28,7 +28,7 @@ class RockMods extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var res = await sourceRequest(standardUrl, additionalSettings);
+      final res = await sourceRequest(standardUrl, additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
@@ -37,14 +37,14 @@ class RockMods extends AppSource {
       String? appVersion;
       String? appAuthor;
 
-      var jsonLdMatches = RegExp(
+      final jsonLdMatches = RegExp(
         '<script type="application/ld\\+json">(.*?)</script>',
         dotAll: true,
       ).allMatches(res.body);
 
       Map<dynamic, dynamic>? appJson;
       for (var m in jsonLdMatches) {
-        var j = jsonDecode(m.group(1)!);
+        final j = jsonDecode(m.group(1)!);
         if (j is Map && j['@type'] == 'SoftwareApplication') {
           appJson = j;
           break;
@@ -61,8 +61,8 @@ class RockMods extends AppSource {
       }
 
       if (appName == null || appName.isEmpty) {
-        var html = parse(res.body);
-        var h1 = html.querySelector('h1');
+        final html = parse(res.body);
+        final h1 = html.querySelector('h1');
         appName = h1?.text.trim() ?? standardUrl.split('/').last;
       }
 

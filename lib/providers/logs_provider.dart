@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,7 +19,7 @@ class Log {
   DateTime timestamp = DateTime.now();
 
   Map<String, Object?> toMap() {
-    var map = <String, Object?>{
+    final map = <String, Object?>{
       idColumn: id,
       levelColumn: level.index,
       messageColumn: message,
@@ -86,7 +87,7 @@ create table if not exists $logTable (
   }
 
   Future<Log> add(String message, {LogLevel level = LogLevel.info}) async {
-    Log l = Log(message, level);
+    final Log l = Log(message, level);
     l.id = await (await getDB()).insert(logTable, l.toMap());
     if (kDebugMode) {
       debugPrint(l.toString());
@@ -95,7 +96,7 @@ create table if not exists $logTable (
   }
 
   Future<List<Log>> get({DateTime? before, DateTime? after}) async {
-    var where = getWhereDates(before: before, after: after);
+    final where = getWhereDates(before: before, after: after);
     return (await (await getDB()).query(
       logTable,
       where: where.key,
@@ -104,19 +105,21 @@ create table if not exists $logTable (
   }
 
   Future<int> clear({DateTime? before, DateTime? after}) async {
-    var where = getWhereDates(before: before, after: after);
-    var res = await (await getDB()).delete(
+    final where = getWhereDates(before: before, after: after);
+    final res = await (await getDB()).delete(
       logTable,
       where: where.key,
       whereArgs: where.value,
     );
     if (res > 0) {
-      add(
-        plural(
-          'clearedNLogsBeforeXAfterY',
-          res,
-          namedArgs: {'before': before.toString(), 'after': after.toString()},
-          name: 'n',
+      unawaited(
+        add(
+          plural(
+            'clearedNLogsBeforeXAfterY',
+            res,
+            namedArgs: {'before': before.toString(), 'after': after.toString()},
+            name: 'n',
+          ),
         ),
       );
     }
@@ -133,8 +136,8 @@ MapEntry<String?, List<int>?> getWhereDates({
   DateTime? before,
   DateTime? after,
 }) {
-  List<String> where = [];
-  List<int> whereArgs = [];
+  final List<String> where = [];
+  final List<int> whereArgs = [];
   if (before != null) {
     where.add('$timestampColumn < ?');
     whereArgs.add(before.millisecondsSinceEpoch);
@@ -146,4 +149,54 @@ MapEntry<String?, List<int>?> getWhereDates({
   return whereArgs.isEmpty
       ? const MapEntry(null, null)
       : MapEntry(where.join(' and '), whereArgs);
+}
+
+abstract class Logger {
+  void debug(String message);
+  void info(String message);
+  void warn(String message, [Object? error, StackTrace? stack]);
+  void error(String message, [Object? error, StackTrace? stack]);
+}
+
+class AppLogger implements Logger {
+  final LogsProvider _logs;
+  final bool _isDebug;
+
+  AppLogger({LogsProvider? logs, bool? isDebug})
+    : _logs = logs ?? LogsProvider(),
+      _isDebug = isDebug ?? kDebugMode;
+
+  @override
+  void debug(String message) {
+    _logs.add(message, level: LogLevel.debug);
+    if (_isDebug) {
+      debugPrint('[DEBUG] $message');
+    }
+  }
+
+  @override
+  void info(String message) {
+    _logs.add(message, level: LogLevel.info);
+    if (_isDebug) {
+      debugPrint('[INFO] $message');
+    }
+  }
+
+  @override
+  void warn(String message, [Object? error, StackTrace? stack]) {
+    final full = error != null ? '$message\n$error\n$stack' : message;
+    _logs.add(full, level: LogLevel.warning);
+    if (_isDebug) {
+      debugPrint('[WARN] $full');
+    }
+  }
+
+  @override
+  void error(String message, [Object? error, StackTrace? stack]) {
+    final full = error != null ? '$message\n$error\n$stack' : message;
+    _logs.add(full, level: LogLevel.error);
+    if (_isDebug) {
+      debugPrint('[ERROR] $full');
+    }
+  }
 }

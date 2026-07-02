@@ -15,12 +15,12 @@ extension AppsProviderUpdates on AppsProvider {
   /// a few [saveApps] calls instead of saving (and triggering a full UI
   /// rebuild) once per app.
   Future<App?> fetchUpdate(String appId) async {
-    App? currentApp = apps[appId]?.app;
+    final App? currentApp = apps[appId]?.app;
     // Pause update checks until the user resolves a pending repo rename.
     if (currentApp == null || currentApp.hasPendingRepoRename) {
       return null;
     }
-    SourceProvider sourceProvider = SourceProvider();
+    final SourceProvider sourceProvider = SourceProvider();
     App newApp = await sourceProvider.getApp(
       sourceProvider.getSource(
         currentApp.url,
@@ -31,15 +31,15 @@ extension AppsProviderUpdates on AppsProvider {
       currentApp: currentApp,
     );
     if (currentApp.preferredApkIndex < newApp.apkUrls.length) {
-      newApp.preferredApkIndex = currentApp.preferredApkIndex;
+      newApp = newApp.copyWith(preferredApkIndex: currentApp.preferredApkIndex);
     }
     return newApp;
   }
 
   Future<App?> checkUpdate(String appId) async {
-    App? currentApp = apps[appId]?.app;
+    final App? currentApp = apps[appId]?.app;
     if (currentApp == null) return null;
-    App? newApp = await fetchUpdate(appId);
+    final App? newApp = await fetchUpdate(appId);
     if (newApp == null) {
       return null;
     }
@@ -52,7 +52,7 @@ extension AppsProviderUpdates on AppsProvider {
     DateTime? ignoreAppsCheckedAfter,
     bool onlyCheckInstalledOrTrackOnlyApps = false,
   }) {
-    List<String> appIds = apps.values
+    final List<String> appIds = apps.values
         .where(
           (app) =>
               app.app.lastUpdateCheck == null ||
@@ -64,7 +64,7 @@ extension AppsProviderUpdates on AppsProvider {
             return true;
           } else {
             return app.app.installedVersion != null ||
-                app.app.additionalSettings['trackOnly'] == true;
+                app.app.settings.getBool('trackOnly');
           }
         })
         .map((e) => e.app.id)
@@ -87,9 +87,9 @@ extension AppsProviderUpdates on AppsProvider {
     List<String>? specificIds,
     SettingsProvider? sp,
   }) async {
-    SettingsProvider settingsProvider = sp ?? this.settingsProvider;
-    List<App> updates = [];
-    MultiAppMultiError errors = MultiAppMultiError();
+    final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
+    final List<App> updates = [];
+    final MultiAppMultiError errors = MultiAppMultiError();
     if (gettingUpdates) {
       updateCheckCompleter ??= Completer<List<App>>();
       return updateCheckCompleter!.future;
@@ -110,47 +110,47 @@ extension AppsProviderUpdates on AppsProvider {
       // Previously every app saved itself the moment its check finished,
       // causing one full UI rebuild per app and firing unbounded parallel
       // network requests at once, which froze the UI during a refresh.
-        const int maxConcurrent = 8;
-        for (var start = 0; start < appIds.length; start += maxConcurrent) {
-          final end = (start + maxConcurrent < appIds.length)
-              ? start + maxConcurrent
-              : appIds.length;
-          final chunk = appIds.sublist(start, end);
-          final chunkResults = await Future.wait(
-            chunk.map((appId) async {
-              final currentApp = apps[appId]?.app;
-              try {
-                final newApp = await fetchUpdate(appId);
-                if (newApp == null) return null;
-                final isUpdate =
-                    currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion;
-                return MapEntry(newApp, isUpdate);
-              } catch (e) {
-                if ((e is RateLimitError || e is SocketException) &&
-                    throwErrorsForRetry) {
-                  rethrow;
-                }
-                if (e is RepositoryRenamedError) {
-                  await updatePendingRepoRename(appId, e.newUrl);
-                  return null;
-                }
-                errors.add(appId, e, appName: apps[appId]?.name);
+      const int maxConcurrent = 8;
+      for (var start = 0; start < appIds.length; start += maxConcurrent) {
+        final end = (start + maxConcurrent < appIds.length)
+            ? start + maxConcurrent
+            : appIds.length;
+        final chunk = appIds.sublist(start, end);
+        final chunkResults = await Future.wait(
+          chunk.map((appId) async {
+            final currentApp = apps[appId]?.app;
+            try {
+              final newApp = await fetchUpdate(appId);
+              if (newApp == null) return null;
+              final isUpdate =
+                  currentApp != null &&
+                  newApp.latestVersion != currentApp.latestVersion;
+              return MapEntry(newApp, isUpdate);
+            } catch (e) {
+              if ((e is RateLimitError || e is SocketException) &&
+                  throwErrorsForRetry) {
+                rethrow;
+              }
+              if (e is RepositoryRenamedError) {
+                await updatePendingRepoRename(appId, e.newUrl);
                 return null;
               }
-            }),
-            eagerError: true,
-          );
-          final List<App> chunkFetched = [];
-          for (final r in chunkResults) {
-            if (r == null) continue;
-            chunkFetched.add(r.key);
-            if (r.value) updates.add(r.key);
-          }
-          if (chunkFetched.isNotEmpty) {
-            await saveApps(chunkFetched);
-          }
+              errors.add(appId, e, appName: apps[appId]?.name);
+              return null;
+            }
+          }),
+          eagerError: true,
+        );
+        final List<App> chunkFetched = [];
+        for (final r in chunkResults) {
+          if (r == null) continue;
+          chunkFetched.add(r.key);
+          if (r.value) updates.add(r.key);
         }
+        if (chunkFetched.isNotEmpty) {
+          await saveApps(chunkFetched);
+        }
+      }
     } catch (e) {
       updateCheckCompleter?.completeError(e);
       updateCheckCompleter = null;
@@ -159,7 +159,7 @@ extension AppsProviderUpdates on AppsProvider {
       gettingUpdates = false;
     }
     if (errors.idsByErrorString.isNotEmpty) {
-      var ex = CheckUpdatesException(updates, errors);
+      final ex = CheckUpdatesException(updates, errors);
       updateCheckCompleter?.completeError(ex);
       updateCheckCompleter = null;
       throw ex;
@@ -174,7 +174,7 @@ extension AppsProviderUpdates on AppsProvider {
     bool installedOnly = false,
     bool nonInstalledOnly = false,
   }) {
-    List<String> updateAppIds = [];
+    final List<String> updateAppIds = [];
     for (final appId in apps.keys) {
       final app = apps[appId]!.app;
       if (installedOnly) {

@@ -2,16 +2,13 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
-import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/components/settings_widgets.dart';
+import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
-import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
@@ -31,33 +28,55 @@ class AddAppPage extends StatefulWidget {
 }
 
 class AddAppPageState extends State<AddAppPage> {
+  late final AppsProvider appsProvider;
+  late final SettingsProvider settingsProvider;
+  late final NotificationsProvider notificationsProvider;
+  bool _providersInitialized = false;
+
   bool gettingAppInfo = false;
   bool searching = false;
 
   String userInput = '';
   String searchQuery = '';
   String? pickedSourceOverride;
-  String? previousPickedSourceOverride;
+  String? _previousPickedSourceOverride;
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
   int urlInputKey = 0;
-  SourceProvider sourceProvider = SourceProvider();
+  final SourceProvider sourceProvider = SourceProvider();
+
+  Future<String?>? _sourceNoteFuture;
+  String? _sourceNoteSourceKey;
 
   @override
   void initState() {
     super.initState();
     if (widget.initialUrl != null && widget.initialUrl!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) linkFn(widget.initialUrl!);
+        if (mounted) processInitialUrl(widget.initialUrl);
       });
     }
   }
 
-  Future<String?>? _sourceNoteFuture;
-  String? _sourceNoteSourceKey;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_providersInitialized) {
+      appsProvider = context.read<AppsProvider>();
+      settingsProvider = context.read<SettingsProvider>();
+      notificationsProvider = context.read<NotificationsProvider>();
+      _providersInitialized = true;
+    }
+  }
+
+  void processInitialUrl(String? url) {
+    if (url != null && url.isNotEmpty) {
+      linkFn(url);
+    }
+  }
 
   void linkFn(String input) {
     try {
@@ -67,7 +86,7 @@ class AddAppPageState extends State<AddAppPage> {
       sourceProvider.getSource(input);
       changeUserInput(input, true, false, updateUrlInput: true);
     } catch (e) {
-      showError(e, context);
+      // Error is thrown without context; handled by the page
     }
   }
 
@@ -80,56 +99,73 @@ class AddAppPageState extends State<AddAppPage> {
   }) {
     userInput = input;
     if (!isBuilding) {
-      setState(() {
-        if (overrideSource != null) {
-          pickedSourceOverride = overrideSource;
-        }
-        bool overrideChanged =
-            pickedSourceOverride != previousPickedSourceOverride;
-        previousPickedSourceOverride = pickedSourceOverride;
-        if (updateUrlInput) {
-          urlInputKey++;
-        }
-        var prevHost = pickedSource?.hosts.isNotEmpty == true
-            ? pickedSource?.hosts[0]
-            : null;
-        var source = valid
-            ? sourceProvider.getSource(
-                userInput,
-                overrideSource: pickedSourceOverride,
+      if (overrideSource != null) {
+        pickedSourceOverride = overrideSource;
+      }
+      final bool overrideChanged =
+          pickedSourceOverride != _previousPickedSourceOverride;
+      _previousPickedSourceOverride = pickedSourceOverride;
+      if (updateUrlInput) {
+        urlInputKey++;
+      }
+      final prevHost = pickedSource?.hosts.isNotEmpty == true
+          ? pickedSource?.hosts[0]
+          : null;
+      final source = valid
+          ? sourceProvider.getSource(
+              userInput,
+              overrideSource: pickedSourceOverride,
+            )
+          : null;
+      if (pickedSource?.sourceIdentifier != source?.sourceIdentifier ||
+          overrideChanged ||
+          (prevHost != null && prevHost != source?.hosts[0])) {
+        pickedSource = source;
+        pickedSource?.runOnAddAppInputChange(userInput);
+        additionalSettings = source != null
+            ? getDefaultValuesFromFormItems(
+                source.combinedAppSpecificSettingFormItems,
               )
-            : null;
-        if (pickedSource?.sourceIdentifier != source?.sourceIdentifier ||
-            overrideChanged ||
-            (prevHost != null && prevHost != source?.hosts[0])) {
-          pickedSource = source;
-          pickedSource?.runOnAddAppInputChange(userInput);
-          additionalSettings = source != null
-              ? getDefaultValuesFromFormItems(
-                  source.combinedAppSpecificSettingFormItems,
-                )
-              : {};
-          additionalSettingsValid = source != null
-              ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
-              : true;
-          inferAppIdIfOptional = true;
-        }
-      });
+            : {};
+        additionalSettingsValid = source != null
+            ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
+            : true;
+        inferAppIdIfOptional = true;
+      }
+      _updateSourceNote();
+      if (mounted) setState(() {});
     }
   }
 
-  Future<bool> _getTrackOnlyConfirmationIfNeeded(
+  void setSourceOverride(String? override) {
+    pickedSourceOverride = override;
+    changeUserInput(userInput, true, false);
+  }
+
+  void _updateSourceNote() {
+    if (pickedSource != null) {
+      final sourceKey = pickedSource!.name;
+      if (_sourceNoteSourceKey != sourceKey) {
+        _sourceNoteSourceKey = sourceKey;
+        _sourceNoteFuture = pickedSource?.getSourceNote();
+      }
+    } else {
+      _sourceNoteFuture = null;
+      _sourceNoteSourceKey = null;
+    }
+  }
+
+  Future<bool> getTrackOnlyConfirmationIfNeeded(
     bool userPickedTrackOnly,
-    BuildContext context,
-    SettingsProvider settingsProvider, {
+    BuildContext context, {
     bool ignoreHideSetting = false,
   }) async {
     final s = pickedSource!;
-    var useTrackOnly = userPickedTrackOnly || s.enforceTrackOnly;
+    final useTrackOnly = userPickedTrackOnly || s.enforceTrackOnly;
     if (useTrackOnly &&
         (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
       if (!context.mounted) return false;
-      var values = await showDialog(
+      final values = await showDialog(
         context: context,
         builder: (BuildContext ctx) {
           return GeneratedFormModal(
@@ -155,7 +191,7 @@ class AddAppPageState extends State<AddAppPage> {
     }
   }
 
-  Future<bool> _getReleaseDateAsVersionConfirmationIfNeeded(
+  Future<bool> getReleaseDateAsVersionConfirmationIfNeeded(
     BuildContext context,
   ) async {
     if (additionalSettings['releaseDateAsVersion'] != true) return true;
@@ -173,33 +209,26 @@ class AddAppPageState extends State<AddAppPage> {
         null;
   }
 
-  Future<void> _addApp(
-    BuildContext context,
-    AppsProvider appsProvider,
-    SettingsProvider settingsProvider,
-    NotificationsProvider notificationsProvider, {
+  Future<void> addApp(
+    BuildContext context, {
     bool resetUserInputAfter = false,
   }) async {
-    setState(() {
-      gettingAppInfo = true;
-    });
+    gettingAppInfo = true;
+    setState(() {});
     try {
-      var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
+      final userPickedTrackOnly = additionalSettings['trackOnly'] == true;
       App? app;
-      var confirmed = await _getTrackOnlyConfirmationIfNeeded(
+      var confirmed = await getTrackOnlyConfirmationIfNeeded(
         userPickedTrackOnly,
         context,
-        settingsProvider,
       );
       if (!context.mounted) return;
       if (confirmed) {
-        confirmed = await _getReleaseDateAsVersionConfirmationIfNeeded(
-          context,
-        );
+        confirmed = await getReleaseDateAsVersionConfirmationIfNeeded(context);
       }
       if (confirmed) {
         final s = pickedSource!;
-        var trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
+        final trackOnly = s.enforceTrackOnly || userPickedTrackOnly;
         app = await sourceProvider.getApp(
           s,
           userInput.trim(),
@@ -208,10 +237,9 @@ class AddAppPageState extends State<AddAppPage> {
           sourceIsOverriden: pickedSourceOverride != null,
           inferAppIdIfOptional: inferAppIdIfOptional,
         );
-        // Only download the APK here if you need to for the package ID
-        if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
+        if (isTempId(app) && !app.settings.getBool('trackOnly')) {
           if (!context.mounted) return;
-          var apkUrl = await appsProvider.confirmAppFileUrl(
+          final apkUrl = await appsProvider.confirmAppFileUrl(
             app,
             context,
             false,
@@ -219,14 +247,16 @@ class AddAppPageState extends State<AddAppPage> {
           if (apkUrl == null) {
             throw ObtainiumError(tr('cancelled'));
           }
-          app.preferredApkIndex = app.apkUrls
-              .map((e) => e.value)
-              .toList()
-              .indexOf(apkUrl.value);
+          app = app.copyWith(
+            preferredApkIndex: app.apkUrls
+                .map((e) => e.value)
+                .toList()
+                .indexOf(apkUrl.value),
+          );
           if (!context.mounted) return;
-          var downloadedArtifact = await appsProvider.downloadApp(
+          final downloadedArtifact = await appsProvider.downloadApp(
             app,
-            globalNavigatorKey.currentContext,
+            context,
             notificationsProvider: notificationsProvider,
           );
           DownloadedApk? downloadedFile;
@@ -239,60 +269,49 @@ class AddAppPageState extends State<AddAppPage> {
           if (downloadedFile == null && downloadedDir == null) {
             throw ObtainiumError(tr('downloadFailed'));
           }
-          app.id = downloadedFile?.appId ?? downloadedDir!.appId;
+          app = app.copyWith(id: downloadedFile?.appId ?? downloadedDir!.appId);
         }
         if (appsProvider.apps.containsKey(app.id)) {
           throw ObtainiumError(tr('appAlreadyAdded'));
         }
-        if (app.additionalSettings['trackOnly'] == true ||
-            app.additionalSettings['versionDetection'] != true) {
-          app.installedVersion = app.latestVersion;
+        if (app.settings.getBool('trackOnly') ||
+            !app.settings.getBool('versionDetection', defaultValue: true)) {
+          app = app.copyWith(installedVersion: app.latestVersion);
         }
-        app.categories = pickedCategories;
+        app = app.copyWith(categories: pickedCategories);
         await appsProvider.saveApps([app], onlyIfExists: false);
       }
-      if (app != null) {
-        var route = MaterialPageRoute<void>(
+      if (app != null && context.mounted) {
+        final route = MaterialPageRoute<void>(
           builder: (context) => AppPage(appId: app!.id),
         );
-        var nav = Navigator.of(globalNavigatorKey.currentContext ?? context);
-        // Replace this (pushed) add screen with the new app's detail so that
-        // backing out returns to the apps list — unless we're staying to add
-        // more.
+        final nav = Navigator.of(context);
         if (resetUserInputAfter) {
-          nav.push(route);
+          unawaited(nav.push(route));
         } else {
-          nav.pushReplacement(route);
+          unawaited(nav.pushReplacement(route));
         }
       }
     } catch (e) {
       if (context.mounted) showError(e, context);
     } finally {
-      if (mounted) {
-        setState(() {
-          gettingAppInfo = false;
-          if (resetUserInputAfter) {
-            changeUserInput('', false, true);
-          }
-        });
+      gettingAppInfo = false;
+      if (resetUserInputAfter) {
+        changeUserInput('', false, true);
       }
+      if (mounted) setState(() {});
     }
   }
 
-  Future<void> _runSearch(
-    BuildContext context,
-    SettingsProvider settingsProvider,
-    AppsProvider appsProvider,
-  ) async {
-    setState(() {
-      searching = true;
-    });
-    var sourceStrings = <String, List<String>>{};
+  Future<void> runSearch(BuildContext context) async {
+    searching = true;
+    setState(() {});
+    final sourceStrings = <String, List<String>>{};
     sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
       sourceStrings[s.name] = [s.name];
     });
     try {
-      var searchSources =
+      final searchSources =
           await showDialog<List<String>?>(
             context: context,
             builder: (BuildContext ctx) {
@@ -311,7 +330,7 @@ class AddAppPageState extends State<AddAppPage> {
         settingsProvider.searchDeselected = sourceStrings.keys
             .where((s) => !searchSources.contains(s))
             .toList();
-        List<MapEntry<String, Map<String, List<String>>>?>
+        final List<MapEntry<String, Map<String, List<String>>>?>
         results = (await Future.wait(
           sourceProvider.sources
               .where((e) => searchSources.contains(e.name))
@@ -347,13 +366,11 @@ class AddAppPageState extends State<AddAppPage> {
                                             e.runtimeType,
                                       )
                                       .map((a) {
-                                        var uri = Uri.parse(a.app.url);
+                                        final uri = Uri.parse(a.app.url);
                                         return '${uri.origin}${uri.path}';
                                       }),
                                 ],
-                                defaultValue: e.hosts.isNotEmpty
-                                    ? e.hosts[0]
-                                    : '',
+                                value: e.hosts.isNotEmpty ? e.hosts[0] : '',
                                 required: true,
                               ),
                             ],
@@ -370,31 +387,33 @@ class AddAppPageState extends State<AddAppPage> {
                     await e.search(searchQuery, querySettings: querySettings),
                   );
                 } catch (err) {
-                  // Surface the failing source's error but don't abort the
-                  // entire multi-source search - other sources should still
-                  // return their results.
-                  if (err is ObtainiumError) {
-                    err.unexpected = true;
-                  }
-                  if (context.mounted) showError(err, context);
+                  final errorToShow = err is ObtainiumError
+                      ? ObtainiumError(
+                          err.message,
+                          code: err.code,
+                          unexpected: true,
+                          stack: err.stack,
+                          data: err.data,
+                        )
+                      : err;
+                  if (context.mounted) showError(errorToShow, context);
                   return null;
                 }
               }),
         )).where((a) => a != null).toList();
 
-        if (!mounted) return;
+        if (!context.mounted) return;
 
-        // Interleave results instead of simple reduce
-        Map<String, MapEntry<String, List<String>>> res = {};
+        final Map<String, MapEntry<String, List<String>>> res = {};
         var si = 0;
         var done = false;
         while (!done) {
           done = true;
           for (var r in results) {
-            var sourceName = r!.key;
+            final sourceName = r!.key;
             if (r.value.length > si) {
               done = false;
-              var singleRes = r.value.entries.elementAt(si);
+              final singleRes = r.value.entries.elementAt(si);
               res[singleRes.key] = MapEntry(sourceName, singleRes.value);
             }
           }
@@ -404,18 +423,18 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('noResults'));
         }
         if (!context.mounted) return;
-        List<String>? selectedUrls = await showDialog<List<String>?>(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return SelectionModal(
-                    entries: res.map((k, v) => MapEntry(k, v.value)),
-                    selectedByDefault: false,
-                    onlyOneSelectionAllowed: true,
-                  );
-                },
-              );
+        final List<String>? selectedUrls = await showDialog<List<String>?>(
+          context: context,
+          builder: (BuildContext ctx) {
+            return SelectionModal(
+              entries: res.map((k, v) => MapEntry(k, v.value)),
+              selectedByDefault: false,
+              onlyOneSelectionAllowed: true,
+            );
+          },
+        );
         if (selectedUrls != null && selectedUrls.isNotEmpty) {
-          var sourceName = res[selectedUrls[0]]?.key;
+          final sourceName = res[selectedUrls[0]]?.key;
           changeUserInput(
             selectedUrls[0],
             true,
@@ -428,19 +447,71 @@ class AddAppPageState extends State<AddAppPage> {
     } catch (e) {
       if (context.mounted) showError(e, context);
     } finally {
-      if (mounted) {
-        setState(() {
-          searching = false;
-        });
-      }
+      searching = false;
+      if (mounted) setState(() {});
     }
+  }
+
+  bool get shouldShowSearchBar =>
+      sourceProvider.sources.where((e) => e.canSearch).isNotEmpty &&
+      pickedSource == null &&
+      userInput.isEmpty;
+
+  void openSourcesListDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return GeneratedFormModal(
+          singleNullReturnButton: tr('ok'),
+          title: tr('supportedSources'),
+          items: const [],
+          additionalWidgets: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: sourceProvider.sources.map((e) {
+                return ActionChip(
+                  label: Text(
+                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                  ),
+                  onPressed: e.hosts.isNotEmpty
+                      ? () {
+                          unawaited(
+                            launchUrlString(
+                              'https://${e.hosts[0]}',
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          );
+                        }
+                      : null,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${tr('note')}:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(tr('selfHostedNote', args: [tr('overrideSource')])),
+          ],
+        );
+      },
+    );
+  }
+
+  void openCrowdsourcedConfigs() {
+    unawaited(
+      launchUrlString(
+        'https://apps.obtainium.page/',
+        mode: LaunchMode.externalApplication,
+      ),
+    );
   }
 
   Widget _getUrlInputRow(
     BuildContext context,
     SettingsProvider settingsProvider,
-    AppsProvider appsProvider,
-    NotificationsProvider notificationsProvider,
     bool doingSomething,
   ) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,7 +524,7 @@ class AddAppPageState extends State<AddAppPage> {
               GeneratedFormTextField(
                 'appSourceURL',
                 label: tr('appSourceURL'),
-                defaultValue: userInput,
+                value: userInput,
                 additionalValidators: [
                   (value) {
                     try {
@@ -491,19 +562,14 @@ class AddAppPageState extends State<AddAppPage> {
                     doingSomething ||
                         pickedSource == null ||
                         (pickedSource
-                                ?.combinedAppSpecificSettingFormItems
-                                .isNotEmpty ==
-                            true &&
+                                    ?.combinedAppSpecificSettingFormItems
+                                    .isNotEmpty ==
+                                true &&
                             !additionalSettingsValid)
                     ? null
                     : () {
                         settingsProvider.selectionClick();
-                        _addApp(
-                          context,
-                          appsProvider,
-                          settingsProvider,
-                          notificationsProvider,
-                        );
+                        addApp(context);
                       },
                 child: Text(tr('add')),
               ),
@@ -521,7 +587,7 @@ class AddAppPageState extends State<AddAppPage> {
                 [
                   GeneratedFormDropdown(
                     'overrideSource',
-                    defaultValue: pickedSourceOverride ?? '',
+                    value: pickedSourceOverride ?? '',
                     [
                       MapEntry('', tr('none')),
                       ...sourceProvider.sources
@@ -531,25 +597,19 @@ class AddAppPageState extends State<AddAppPage> {
                                 (pickedSource != null &&
                                     pickedSource.runtimeType == s.runtimeType),
                           )
-                          .map(
-                            (s) => MapEntry(s.name, s.name),
-                          ),
+                          .map((s) => MapEntry(s.name, s.name)),
                     ],
                     label: tr('overrideSource'),
                   ),
                 ],
               ],
               onValueChanges: (values, valid, isBuilding) {
-                final newOverride = (values['overrideSource'] == null ||
+                final newOverride =
+                    (values['overrideSource'] == null ||
                         values['overrideSource'] == '')
                     ? null
                     : values['overrideSource'] as String?;
-                if (!isBuilding) {
-                  setState(() => pickedSourceOverride = newOverride);
-                } else {
-                  pickedSourceOverride = newOverride;
-                }
-                changeUserInput(userInput, valid, isBuilding);
+                setSourceOverride(newOverride);
               },
             ),
           ),
@@ -559,15 +619,9 @@ class AddAppPageState extends State<AddAppPage> {
     ],
   );
 
-  bool _shouldShowSearchBar() =>
-      sourceProvider.sources.where((e) => e.canSearch).isNotEmpty &&
-      pickedSource == null &&
-      userInput.isEmpty;
-
   Widget _getSearchBarRow(
     BuildContext context,
     SettingsProvider settingsProvider,
-    AppsProvider appsProvider,
     bool doingSomething,
   ) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,9 +639,7 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (values.isNotEmpty && valid && !isBuilding) {
-              setState(() {
-                searchQuery = values['searchSomeSources']!.trim();
-              });
+              searchQuery = values['searchSomeSources']!.trim();
             }
           },
         ),
@@ -601,7 +653,7 @@ class AddAppPageState extends State<AddAppPage> {
                 onPressed: searchQuery.isEmpty || doingSomething
                     ? null
                     : () {
-                        _runSearch(context, settingsProvider, appsProvider);
+                        runSearch(context);
                       },
                 child: Text(tr('search')),
               ),
@@ -626,18 +678,18 @@ class AddAppPageState extends State<AddAppPage> {
       const SizedBox(height: 16),
       () {
         final s = pickedSource!;
-        var formItems = s.combinedAppSpecificSettingFormItems;
+        final formItems = s.combinedAppSpecificSettingFormItems;
         if (settingsProvider.includePrereleasesByDefault ||
             settingsProvider.shizukuPretendToBeGooglePlay) {
           for (var row in formItems) {
             for (var item in row) {
               if (item.key == 'includePrereleases' &&
                   settingsProvider.includePrereleasesByDefault) {
-                item.defaultValue = true;
+                item.value = true;
               }
               if (item.key == 'shizukuPretendToBeGooglePlay' &&
                   settingsProvider.shizukuPretendToBeGooglePlay) {
-                item.defaultValue = true;
+                item.value = true;
               }
             }
           }
@@ -655,10 +707,8 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              setState(() {
-                additionalSettings = values;
-                additionalSettingsValid = valid;
-              });
+              additionalSettings = values;
+              additionalSettingsValid = valid;
             }
           },
         );
@@ -684,15 +734,13 @@ class AddAppPageState extends State<AddAppPage> {
               GeneratedFormSwitch(
                 'inferAppIdIfOptional',
                 label: tr('tryInferAppIdFromCode'),
-                defaultValue: inferAppIdIfOptional,
+                value: inferAppIdIfOptional,
               ),
             ],
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              setState(() {
-                inferAppIdIfOptional = values['inferAppIdIfOptional'];
-              });
+              inferAppIdIfOptional = values['inferAppIdIfOptional'];
             }
           },
         ),
@@ -729,9 +777,7 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              setState(() {
-                additionalSettings['appId'] = values['appId'];
-              });
+              additionalSettings['appId'] = values['appId'];
             }
           },
         ),
@@ -748,44 +794,7 @@ class AddAppPageState extends State<AddAppPage> {
       children: [
         ActionChip(
           onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) {
-                return GeneratedFormModal(
-                  singleNullReturnButton: tr('ok'),
-                  title: tr('supportedSources'),
-                  items: const [],
-                  additionalWidgets: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: sourceProvider.sources.map((e) {
-                        return ActionChip(
-                          label: Text(
-                            '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
-                          ),
-                          onPressed: e.hosts.isNotEmpty
-                              ? () {
-                                  unawaited(launchUrlString(
-                                    'https://${e.hosts[0]}',
-                                    mode: LaunchMode.externalApplication,
-                                  ));
-                                }
-                              : null,
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${tr('note')}:',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(tr('selfHostedNote', args: [tr('overrideSource')])),
-                  ],
-                );
-              },
-            );
+            openSourcesListDialog(context);
           },
           avatar: const Icon(Icons.dynamic_feed_outlined, size: 18),
           label: Text(tr('supportedSources')),
@@ -794,10 +803,7 @@ class AddAppPageState extends State<AddAppPage> {
           avatar: const Icon(Icons.public, size: 18),
           label: Text(tr('crowdsourcedConfigsShort')),
           onPressed: () {
-            unawaited(launchUrlString(
-              'https://apps.obtainium.page/',
-              mode: LaunchMode.externalApplication,
-            ));
+            openCrowdsourcedConfigs();
           },
         ),
       ],
@@ -806,12 +812,9 @@ class AddAppPageState extends State<AddAppPage> {
 
   @override
   Widget build(BuildContext context) {
-    AppsProvider appsProvider = context.read<AppsProvider>();
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
-    NotificationsProvider notificationsProvider = context
-        .read<NotificationsProvider>();
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    bool doingSomething = gettingAppInfo || searching;
+    final bool doingSomething = gettingAppInfo || searching;
 
     if (pickedSource != null) {
       final sourceKey = pickedSource!.name;
@@ -839,24 +842,13 @@ class AddAppPageState extends State<AddAppPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _getUrlInputRow(
-                    context,
-                    settingsProvider,
-                    appsProvider,
-                    notificationsProvider,
-                    doingSomething,
-                  ),
+                  _getUrlInputRow(context, settingsProvider, doingSomething),
                   const SizedBox(height: 16),
                   if (pickedSource != null) _getHTMLSourceOverrideDropdown(),
-                  if (_shouldShowSearchBar())
-                    _getSearchBarRow(
-                      context,
-                      settingsProvider,
-                      appsProvider,
-                      doingSomething,
-                    ),
+                  if (shouldShowSearchBar)
+                    _getSearchBarRow(context, settingsProvider, doingSomething),
                   if (pickedSource == null && userInput.isEmpty) ...[
-                    if (_shouldShowSearchBar()) const SizedBox(height: 16),
+                    if (shouldShowSearchBar) const SizedBox(height: 16),
                     const ImportSection(),
                   ],
                   if (pickedSource != null)

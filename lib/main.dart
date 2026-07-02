@@ -1,27 +1,22 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:background_fetch/background_fetch.dart';
-import 'package:easy_localization/easy_localization.dart';
-// Needed for background task translation loading (no widget tree available).
-// TODO: remove if easy_localization adds a context-free init API.
-// ignore: implementation_imports
-import 'package:easy_localization/src/easy_localization_controller.dart';
-// ignore: implementation_imports
-import 'package:easy_localization/src/localization.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
@@ -47,10 +42,7 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('tr'), 'Türkçe'),
   MapEntry(Locale('uk'), 'Українська'),
   MapEntry(Locale('da'), 'Dansk'),
-  MapEntry(
-    Locale('en', 'EO'),
-    'Esperanto',
-  ), // https://github.com/aissat/easy_localization/issues/220#issuecomment-846035493
+  MapEntry(Locale('en', 'EO'), 'Esperanto'),
   MapEntry(Locale('id'), 'Bahasa Indonesia'),
   MapEntry(Locale('ko'), '한국어'),
   MapEntry(Locale('ca'), 'Català'),
@@ -62,51 +54,34 @@ const fallbackLocale = Locale('en');
 const localeDir = 'assets/translations';
 bool isFdroidBuild = false;
 
-final globalNavigatorKey = GlobalKey<NavigatorState>();
+/// Global navigator key, used to navigate from outside the widget tree
+/// (e.g. tapping a notification).
+final appNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Loads translations in a context-free environment (e.g. background tasks).
-///
-/// Needed because background update checks run without a widget tree, so the
-/// normal EasyLocalization widget-based init path isn't available.
-/// Uses implementation-level APIs from easy_localization — see issues/210.
-Future<void> loadTranslations() async {
-  // See easy_localization/issues/210
-  await EasyLocalizationController.initEasyLocation();
-  var s = SettingsProvider();
-  await s.initializeSettings();
-  var forceLocale = s.forcedLocale;
-  final controller = EasyLocalizationController(
-    saveLocale: true,
-    forceLocale: forceLocale,
-    fallbackLocale: fallbackLocale,
-    supportedLocales: supportedLocales.map((e) => e.key).toList(),
-    assetLoader: const RootBundleAssetLoader(),
-    useOnlyLangCode: false,
-    useFallbackTranslations: true,
-    path: localeDir,
-    onLoadError: (FlutterError e) {
-      throw e;
-    },
-  );
-  await controller.loadTranslations();
-  Localization.load(
-    controller.locale,
-    translations: controller.translations,
-    fallbackTranslations: controller.fallbackTranslations,
-  );
-}
+const minBackgroundFetchInterval = 15;
 
 @pragma('vm:entry-point')
 void backgroundFetchHeadlessTask(HeadlessEvent event) async {
-  String taskId = event.taskId;
-  bool isTimeout = event.timeout;
-  if (isTimeout) {
-    LogsProvider().add('BG update task timed out.', level: LogLevel.error);
-    BackgroundFetch.finish(taskId);
-    return;
+  final String taskId = event.taskId;
+  final bool isTimeout = event.timeout;
+  try {
+    if (isTimeout) {
+      unawaited(
+        LogsProvider().add('BG update task timed out.', level: LogLevel.error),
+      );
+      return;
+    }
+    await bgUpdateCheck(taskId, null);
+  } catch (e, stack) {
+    unawaited(
+      LogsProvider().add(
+        'BG headless task crashed: $e\n$stack',
+        level: LogLevel.error,
+      ),
+    );
+  } finally {
+    unawaited(BackgroundFetch.finish(taskId));
   }
-  await bgUpdateCheck(taskId, null);
-  BackgroundFetch.finish(taskId);
 }
 
 @pragma('vm:entry-point')
@@ -117,18 +92,34 @@ void startCallback() {
 class BackgroundUpdateTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    LogsProvider().add('onStart(starter: ${starter.name})');
-    await bgUpdateCheck('bg_check', null);
+    try {
+      unawaited(LogsProvider().add('onStart(starter: ${starter.name})'));
+      await bgUpdateCheck('bg_check', null);
+    } catch (e, stack) {
+      unawaited(
+        LogsProvider().add(
+          'BG foreground service onStart crashed: $e\n$stack',
+          level: LogLevel.error,
+        ),
+      );
+    }
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) {
-    bgUpdateCheck('bg_check', null);
+    bgUpdateCheck('bg_check', null).catchError((e, stack) {
+      LogsProvider().add(
+        'BG foreground service onRepeatEvent crashed: $e\n$stack',
+        level: LogLevel.error,
+      );
+    });
   }
 
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
-    LogsProvider().add('Foreground service onDestroy(isTimeout: $isTimeout)');
+    unawaited(
+      LogsProvider().add('Foreground service onDestroy(isTimeout: $isTimeout)'),
+    );
   }
 
   @override
@@ -137,16 +128,62 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    LogsProvider().add(
+      'Uncaught platform error: $error\n$stack',
+      level: LogLevel.error,
+    );
+    return true;
+  };
+
+  ErrorWidget.builder = (details) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 64),
+                const SizedBox(height: 16),
+                const Text('An unexpected error occurred.'),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => SystemNavigator.pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
+  final logs = LogsProvider();
+  final logger = AppLogger(logs: logs);
+  final settingsProvider = SettingsProvider();
+  final sourceProvider = SourceProvider();
+  final appsProvider = AppsProvider(
+    settingsProvider: settingsProvider,
+    logsProvider: logs,
+    logger: logger,
+  );
+  final np = NotificationsProvider();
+  await np.initialize();
+
   try {
-    ByteData data = await PlatformAssetBundle().load(
+    final ByteData data = await PlatformAssetBundle().load(
       'assets/ca/lets-encrypt-r3.pem',
     );
     SecurityContext.defaultContext.setTrustedCertificatesBytes(
       data.buffer.asUint8List(),
     );
   } catch (e) {
-    // Already added, do nothing (see #375)
-    LogsProvider().add('Failed to load custom CA certificate: $e', level: LogLevel.error);
+    logger.error('Failed to load custom CA certificate', e);
   }
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
@@ -158,19 +195,18 @@ void main() async {
         systemStatusBarContrastEnforced: false,
       ),
     );
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
-  final settingsProvider = SettingsProvider();
-  final np = NotificationsProvider();
-  await np.initialize();
   FlutterForegroundTask.initCommunicationPort();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AppsProvider(settingsProvider: settingsProvider)),
+        ChangeNotifierProvider.value(value: appsProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
-        Provider(create: (context) => np),
-        Provider(create: (context) => LogsProvider()),
+        Provider.value(value: np),
+        Provider.value(value: logs),
+        Provider<Logger>.value(value: logger),
+        Provider<SourceProvider>.value(value: sourceProvider),
       ],
       child: EasyLocalization(
         supportedLocales: supportedLocales.map((e) => e.key).toList(),
@@ -182,9 +218,8 @@ void main() async {
       ),
     ),
   );
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+  unawaited(BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask));
 }
-
 
 class Obtainium extends StatefulWidget {
   const Obtainium({super.key});
@@ -196,16 +231,16 @@ class Obtainium extends StatefulWidget {
 class _ObtainiumState extends State<Obtainium> {
   static const _foregroundServiceId = 666;
   static const _fgTaskRepeatMs = 900000;
-  var _lastUpdateInterval = -1;    // cached to avoid redundant service restarts
-  var _lastUseFGService = false;   // cached to detect FG/BG service mode changes
-  var _firstRunHandled = false;    // guards the one-time first-run setup
-  var _launchByNotifChecked = false; // guards the notification-launch check
-  var _listenerRegistered = false; // guards against duplicate listener registration
+  var _lastUpdateInterval = -1;
+  var _lastUseFGService = false;
+  var _firstRunHandled = false;
+  var _launchByNotifChecked = false;
+  var _listenerRegistered = false;
   void Function()? _settingsListener;
 
   void _manageServices(SettingsProvider settings) {
-    var interval = settings.updateInterval;
-    var useFG = settings.useFGService;
+    final interval = settings.updateInterval;
+    final useFG = settings.useFGService;
     if (interval == _lastUpdateInterval && useFG == _lastUseFGService) return;
     _lastUpdateInterval = interval;
     _lastUseFGService = useFG;
@@ -224,7 +259,7 @@ class _ObtainiumState extends State<Obtainium> {
   void _handleFirstRun(
     SettingsProvider settings,
     AppsProvider apps,
-    LogsProvider logs,
+    Logger logger,
     BuildContext context,
   ) {
     if (settings.prefs == null) {
@@ -233,36 +268,36 @@ class _ObtainiumState extends State<Obtainium> {
     }
     if (_firstRunHandled) return;
     _firstRunHandled = true;
-    var isFirstRun = settings.checkAndFlipFirstRun();
+    final isFirstRun = settings.checkAndFlipFirstRun();
     if (isFirstRun) {
-      logs.add('This is the first ever run of Obtainium.');
+      logger.info('This is the first ever run of Obtainium.');
       if (!isFdroidBuild) {
         getInstalledInfo(obtainiumId)
             .then((value) {
               if (value?.versionName != null) {
                 apps.saveApps([
                   App(
-                    obtainiumId,
-                    obtainiumUrl,
-                    'ImranR98',
-                    'Obtainium',
-                    value!.versionName,
-                    value.versionName!,
-                    [],
-                    0,
-                    {
+                    id: obtainiumId,
+                    url: obtainiumUrl,
+                    author: 'ImranR98',
+                    name: 'Obtainium',
+                    installedVersion: value!.versionName,
+                    latestVersion: value.versionName!,
+                    apkUrls: [],
+                    preferredApkIndex: 0,
+                    additionalSettings: {
                       'versionDetection': true,
                       'apkFilterRegEx': 'fdroid',
                       'invertAPKFilter': true,
                     },
-                    null,
-                    false,
+                    lastUpdateCheck: null,
+                    pinned: false,
                   ),
                 ], onlyIfExists: false);
               }
             })
             .catchError((err) {
-              logs.add('Failed to add Obtainium on first run: $err');
+              logger.error('Failed to add Obtainium on first run', err);
             });
       }
     }
@@ -282,10 +317,10 @@ class _ObtainiumState extends State<Obtainium> {
       requestNonOptionalPermissions();
       final settingsProvider = context.read<SettingsProvider>();
       final appsProvider = context.read<AppsProvider>();
-      final logs = context.read<LogsProvider>();
+      final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
       _manageServices(settingsProvider);
-      _handleFirstRun(settingsProvider, appsProvider, logs, context);
+      _handleFirstRun(settingsProvider, appsProvider, logger, context);
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
@@ -294,7 +329,7 @@ class _ObtainiumState extends State<Obtainium> {
         _listenerRegistered = true;
         _settingsListener = () {
           _manageServices(settingsProvider);
-          _handleFirstRun(settingsProvider, appsProvider, logs, context);
+          _handleFirstRun(settingsProvider, appsProvider, logger, context);
         };
         settingsProvider.addListener(_settingsListener!);
       }
@@ -302,7 +337,7 @@ class _ObtainiumState extends State<Obtainium> {
   }
 
   Future<void> requestNonOptionalPermissions() async {
-    var settingsProvider = context.read<SettingsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
     final NotificationPermission notificationPermission =
         await FlutterForegroundTask.checkNotificationPermission();
     if (notificationPermission != NotificationPermission.granted) {
@@ -321,24 +356,24 @@ class _ObtainiumState extends State<Obtainium> {
     if (_fgServiceInitialized) return;
     _fgServiceInitialized = true;
     FlutterForegroundTask.init(
-        androidNotificationOptions: AndroidNotificationOptions(
-          channelId: 'bg_update',
-          channelName: tr('foregroundService'),
-          channelDescription: tr('foregroundService'),
-          onlyAlertOnce: true,
-        ),
-        iosNotificationOptions: const IOSNotificationOptions(
-          showNotification: false,
-          playSound: false,
-        ),
-        foregroundTaskOptions: ForegroundTaskOptions(
-          eventAction: ForegroundTaskEventAction.repeat(_fgTaskRepeatMs),
-          autoRunOnBoot: true,
-          autoRunOnMyPackageReplaced: true,
-          allowWakeLock: true,
-          allowWifiLock: true,
-        ),
-      );
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'bg_update',
+        channelName: tr('foregroundService'),
+        channelDescription: tr('foregroundService'),
+        onlyAlertOnce: true,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(_fgTaskRepeatMs),
+        autoRunOnBoot: true,
+        autoRunOnMyPackageReplaced: true,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+    );
   }
 
   Future<ServiceRequestResult?> startForegroundService(bool restart) async {
@@ -353,7 +388,7 @@ class _ObtainiumState extends State<Obtainium> {
         serviceId: _foregroundServiceId,
         notificationTitle: tr('foregroundService'),
         notificationText: tr('fgServiceNotice'),
-        notificationIcon: NotificationIcon(
+        notificationIcon: const NotificationIcon(
           metaDataName: 'dev.imranr.obtainium.service.NOTIFICATION_ICON',
         ),
         callback: startCallback,
@@ -376,7 +411,10 @@ class _ObtainiumState extends State<Obtainium> {
         final settingsProvider = context.read<SettingsProvider>();
         settingsProvider.removeListener(_settingsListener!);
       } catch (e) {
-        LogsProvider().add('Failed to remove settings listener: $e', level: LogLevel.error);
+        LogsProvider().add(
+          'Failed to remove settings listener: $e',
+          level: LogLevel.error,
+        );
       }
     }
     LogsProvider.close();
@@ -386,7 +424,7 @@ class _ObtainiumState extends State<Obtainium> {
   Future<void> initPlatformState() async {
     await BackgroundFetch.configure(
       BackgroundFetchConfig(
-        minimumFetchInterval: 15,
+        minimumFetchInterval: minBackgroundFetchInterval,
         stopOnTerminate: false,
         startOnBoot: true,
         enableHeadless: true,
@@ -397,12 +435,20 @@ class _ObtainiumState extends State<Obtainium> {
         requiredNetworkType: NetworkType.ANY,
       ),
       (String taskId) async {
-        await bgUpdateCheck(taskId, null);
-        BackgroundFetch.finish(taskId);
+        await bgUpdateCheck(
+          taskId,
+          null,
+          logs: context.read<LogsProvider>(),
+          notifs: context.read<NotificationsProvider>(),
+          settings: context.read<SettingsProvider>(),
+        );
+        unawaited(BackgroundFetch.finish(taskId));
       },
       (String taskId) async {
-        context.read<LogsProvider>().add('BG update task timed out.');
-        BackgroundFetch.finish(taskId);
+        unawaited(
+          context.read<LogsProvider>().add('BG update task timed out.'),
+        );
+        unawaited(BackgroundFetch.finish(taskId));
       },
     );
     if (!context.mounted) return;
@@ -410,12 +456,11 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
     return WithForegroundTask(
       child: DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          // Decide on a colour/brightness scheme based on OS and user settings
           ColorScheme lightColorScheme;
           ColorScheme darkColorScheme;
           final schemeMode = settingsProvider.colourSchemeMode;
@@ -441,7 +486,6 @@ class _ObtainiumState extends State<Obtainium> {
             );
           }
 
-          // set the background and surface colors to pure black in the amoled theme
           if (settingsProvider.useBlackTheme) {
             darkColorScheme = darkColorScheme
                 .copyWith(surface: Colors.black)
@@ -452,10 +496,10 @@ class _ObtainiumState extends State<Obtainium> {
 
           return MaterialApp(
             title: 'Obtainium',
+            navigatorKey: appNavigatorKey,
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,
-            navigatorKey: globalNavigatorKey,
             debugShowCheckedModeBanner: false,
             theme: buildObtainiumTheme(
               settingsProvider.theme == ThemeSettings.dark
@@ -469,12 +513,13 @@ class _ObtainiumState extends State<Obtainium> {
                   : darkColorScheme,
               settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
-            home: Shortcuts(
+            home: const HomePage(),
+            builder: (context, child) => Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):
                     const ActivateIntent(),
               },
-              child: const HomePage(),
+              child: child ?? const SizedBox.shrink(),
             ),
           );
         },

@@ -4,22 +4,21 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equations/equations.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 import 'package:obtainium/components/category_editor.dart';
 import 'package:flutter/material.dart';
-import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/logs_dialog.dart';
-import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -32,59 +31,38 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
   final SourceProvider sourceProvider = SourceProvider();
-  final Map<ColorSwatch<Object>, String> colorsNameMap =
-      <ColorSwatch<Object>, String>{
-        ColorTools.createPrimarySwatch(obtainiumThemeColor): 'Obtainium',
-      };
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final sp = context.read<SettingsProvider>();
       if (sp.prefs == null) sp.initializeSettings();
     });
-    DeviceInfoPlugin().androidInfo.then((info) {
-      if (context.mounted) {
-        setState(() {
-          androidSdkInt = info.version.sdkInt;
-        });
-      }
-    });
+    initAndroidSdk();
   }
 
-  Widget _caption(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-    child: Text(text, style: Theme.of(context).textTheme.labelSmall),
-  );
+  Future<void> initAndroidSdk() async {
+    try {
+      final info = await DeviceInfoPlugin().androidInfo;
+      androidSdkInt = info.version.sdkInt;
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
 
-  Widget _fieldTile(BuildContext context, Widget field) => SettingsTile(
-    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-    padding: EdgeInsets.zero,
-    child: DropdownMenuTheme(
-      data: DropdownMenuThemeData(
-        inputDecorationTheme: const InputDecorationThemeData(
-          filled: false,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        menuStyle: MenuStyle(
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        ),
-      ),
-      child: field,
-    ),
-  );
-
-  Future<bool> _colorPickerDialog(SettingsProvider settingsProvider) async {
+  Future<bool> showColorPickerDialog(
+    SettingsProvider settingsProvider,
+    ColorSwatch<Object> obtainiumSwatch,
+  ) async {
+    final Map<ColorSwatch<Object>, String> colorsNameMap =
+        <ColorSwatch<Object>, String>{obtainiumSwatch: 'Obtainium'};
     return ColorPicker(
       color: settingsProvider.themeColor,
-      onColorChanged: (Color color) =>
-          setState(() => settingsProvider.themeColor = color),
+      onColorChanged: (Color color) {
+        settingsProvider.themeColor = color;
+        setState(() {});
+      },
       actionButtons: const ColorPickerActionButtons(
         okButton: true,
         closeButton: true,
@@ -143,6 +121,69 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  void handleColorPickerCancel(Color previousColor, SettingsProvider sp) {
+    sp.themeColor = previousColor;
+    setState(() {});
+  }
+
+  void handleShizukuToggle(SettingsProvider settingsProvider, bool useShizuku) {
+    if (useShizuku) {
+      ShizukuApkInstaller()
+          .checkPermission()
+          .then((resCode) {
+            settingsProvider.useShizuku =
+                resCode?.startsWith('granted') ?? false;
+            if (!context.mounted) return;
+            final errorText = switch (resCode) {
+              'services_not_found' => tr('shizukuBinderNotFound'),
+              'old_shizuku' => tr('shizukuOld'),
+              'old_android_with_adb' => tr('shizukuOldAndroidWithADB'),
+              'denied' => tr('cancelled'),
+              null => tr('unexpectedError'),
+              _ => null,
+            };
+            if (errorText != null) {
+              if (!mounted) return;
+              showError(ObtainiumError(errorText), context);
+            }
+          })
+          .catchError((e) {
+            settingsProvider.useShizuku = false;
+            if (!mounted) return;
+            showError(e, context);
+          });
+    } else {
+      settingsProvider.useShizuku = false;
+    }
+  }
+
+  Widget _caption(BuildContext context, String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+    child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+  );
+
+  Widget _fieldTile(BuildContext context, Widget field) => SettingsTile(
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    padding: EdgeInsets.zero,
+    child: DropdownMenuTheme(
+      data: DropdownMenuThemeData(
+        inputDecorationTheme: const InputDecorationThemeData(
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+      ),
+      child: field,
+    ),
+  );
+
   Widget _buildFooter(BuildContext context) => SliverToBoxAdapter(
     child: Column(
       children: [
@@ -152,30 +193,36 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             IconButton(
               onPressed: () {
-                unawaited(launchUrlString(
-                  context.read<SettingsProvider>().sourceUrl,
-                  mode: LaunchMode.externalApplication,
-                ));
+                unawaited(
+                  launchUrlString(
+                    context.read<SettingsProvider>().sourceUrl,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
               },
               icon: const Icon(Icons.code),
               tooltip: tr('appSource'),
             ),
             IconButton(
               onPressed: () {
-                unawaited(launchUrlString(
-                  'https://wiki.obtainium.page/',
-                  mode: LaunchMode.externalApplication,
-                ));
+                unawaited(
+                  launchUrlString(
+                    'https://wiki.obtainium.page/',
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
               },
               icon: const Icon(Icons.help_outline_rounded),
               tooltip: tr('wiki'),
             ),
             IconButton(
               onPressed: () {
-                unawaited(launchUrlString(
-                  'https://apps.obtainium.page/',
-                  mode: LaunchMode.externalApplication,
-                ));
+                unawaited(
+                  launchUrlString(
+                    'https://apps.obtainium.page/',
+                    mode: LaunchMode.externalApplication,
+                  ),
+                );
               },
               icon: const Icon(Icons.apps_rounded),
               tooltip: tr('crowdsourcedConfigsLabel'),
@@ -208,16 +255,16 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
     final sdk = androidSdkInt ?? 0;
 
-    var colorPicker = SettingsTile(
+    final colorPicker = SettingsTile(
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
         subtitle: Text(
-          "${ColorTools.nameThatColor(settingsProvider.themeColor)} "
-          "(${ColorTools.materialNameAndCode(settingsProvider.themeColor, colorSwatchNameMap: colorsNameMap)})",
+          '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
+          '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
         ),
         trailing: ColorIndicator(
           width: 40,
@@ -227,18 +274,18 @@ class _SettingsPageState extends State<SettingsPage> {
           onSelectFocus: false,
           onSelect: () async {
             final Color colorBeforeDialog = settingsProvider.themeColor;
-            if (!(await _colorPickerDialog(settingsProvider))) {
-              setState(() {
-                settingsProvider.themeColor = colorBeforeDialog;
-              });
+            if (!(await showColorPickerDialog(
+              settingsProvider,
+              obtainiumThemeColor.toSwatch(),
+            ))) {
+              handleColorPickerCancel(colorBeforeDialog, settingsProvider);
             }
           },
         ),
       ),
     );
 
-    // Expressive segmented control for theme mode (icon-only with tooltips).
-    var themeModeControl = SettingsTile(
+    final themeModeControl = SettingsTile(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -273,7 +320,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    var sortDropdown = DropdownMenu<SortColumnSettings>(
+    final sortDropdown = DropdownMenu<SortColumnSettings>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('appSortBy')),
       initialSelection: settingsProvider.sortColumn,
@@ -302,7 +349,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    var orderControl = SettingsTile(
+    final orderControl = SettingsTile(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -332,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    var localeDropdown = DropdownMenu<Locale?>(
+    final localeDropdown = DropdownMenu<Locale?>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('language')),
       initialSelection: settingsProvider.forcedLocale,
@@ -352,7 +399,7 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    var colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
+    final colourSchemeDropdown = DropdownMenu<ColourSchemeMode>(
       expandedInsets: EdgeInsets.zero,
       label: Text(tr('colourScheme')),
       initialSelection: settingsProvider.colourSchemeMode,
@@ -382,22 +429,18 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
 
-    // Merge every source's config items into a single form so they read as one
-    // connected block (rather than one disjointed block per source).
-    // Clone the items so the per-build mutation of defaultValue below doesn't
-    // leak into the shared (cached) source instances' own form items.
-    var allSourceConfigItems = sourceProvider.sources
+    final allSourceConfigItems = sourceProvider.sources
         .expand((e) => e.sourceConfigSettingFormItems)
         .map((e) => e.clone())
         .toList();
     for (var item in allSourceConfigItems) {
       if (item is GeneratedFormSwitch) {
-        item.defaultValue = settingsProvider.getSettingBool(item.key);
+        item.value = settingsProvider.getSettingBool(item.key);
       } else {
-        item.defaultValue = settingsProvider.getSettingString(item.key);
+        item.value = settingsProvider.getSettingString(item.key);
       }
     }
-    Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
+    final Widget? sourceSpecificForm = allSourceConfigItems.isEmpty
         ? null
         : GeneratedForm(
             tileMode: true,
@@ -405,7 +448,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onValueChanges: (values, valid, isBuilding) {
               if (valid && !isBuilding) {
                 values.forEach((key, value) {
-                  var formItem = allSourceConfigItems
+                  final formItem = allSourceConfigItems
                       .where((i) => i.key == key)
                       .firstOrNull;
                   if (formItem is GeneratedFormSwitch) {
@@ -418,7 +461,7 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           );
 
-    bool showBgSection =
+    final bool showBgSection =
         settingsProvider.updateInterval > 0 &&
         (sdk >= 30 || settingsProvider.useShizuku);
 
@@ -443,13 +486,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           title: tr('obtainiumExport'),
                           children: const [ExportSection()],
                         ),
-                        _buildUpdatesSection(showBgSection, sdk),
+                        _buildUpdatesSection(context, showBgSection, sdk),
                         if (sourceSpecificForm != null)
                           SettingsGroup(
                             title: tr('sourceSpecific'),
                             children: [sourceSpecificForm],
                           ),
                         _buildAppearanceSection(
+                          context,
                           colorPicker,
                           themeModeControl,
                           sortDropdown,
@@ -476,7 +520,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildUpdatesSection(bool showBgSection, int sdk) {
+  Widget _buildUpdatesSection(
+    BuildContext context,
+    bool showBgSection,
+    int sdk,
+  ) {
     final settingsProvider = context.read<SettingsProvider>();
     return SettingsGroup(
       title: tr('updates'),
@@ -491,7 +539,8 @@ class _SettingsPageState extends State<SettingsPage> {
           SettingsToggleRow(
             label: tr('enableBackgroundUpdates'),
             value: settingsProvider.enableBackgroundUpdates,
-            onChanged: (value) => settingsProvider.enableBackgroundUpdates = value,
+            onChanged: (value) =>
+                settingsProvider.enableBackgroundUpdates = value,
             helpWidgets: [
               Text(tr('backgroundUpdateReqsExplanation')),
               const SizedBox(height: 8),
@@ -502,13 +551,15 @@ class _SettingsPageState extends State<SettingsPage> {
             SettingsToggleRow(
               label: tr('bgUpdatesOnWiFiOnly'),
               value: settingsProvider.bgUpdatesOnWiFiOnly,
-              onChanged: (value) => settingsProvider.bgUpdatesOnWiFiOnly = value,
+              onChanged: (value) =>
+                  settingsProvider.bgUpdatesOnWiFiOnly = value,
             ),
           if (settingsProvider.enableBackgroundUpdates)
             SettingsToggleRow(
               label: tr('bgUpdatesWhileChargingOnly'),
               value: settingsProvider.bgUpdatesWhileChargingOnly,
-              onChanged: (value) => settingsProvider.bgUpdatesWhileChargingOnly = value,
+              onChanged: (value) =>
+                  settingsProvider.bgUpdatesWhileChargingOnly = value,
             ),
         ],
         SettingsToggleRow(
@@ -519,22 +570,26 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsToggleRow(
           label: tr('checkUpdateOnDetailPage'),
           value: settingsProvider.checkUpdateOnDetailPage,
-          onChanged: (value) => settingsProvider.checkUpdateOnDetailPage = value,
+          onChanged: (value) =>
+              settingsProvider.checkUpdateOnDetailPage = value,
         ),
         SettingsToggleRow(
           label: tr('onlyCheckInstalledOrTrackOnlyApps'),
           value: settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
-          onChanged: (value) => settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
+          onChanged: (value) =>
+              settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
         ),
         SettingsToggleRow(
           label: tr('removeOnExternalUninstall'),
           value: settingsProvider.removeOnExternalUninstall,
-          onChanged: (value) => settingsProvider.removeOnExternalUninstall = value,
+          onChanged: (value) =>
+              settingsProvider.removeOnExternalUninstall = value,
         ),
         SettingsToggleRow(
           label: tr('includePrereleasesByDefault'),
           value: settingsProvider.includePrereleasesByDefault,
-          onChanged: (value) => settingsProvider.includePrereleasesByDefault = value,
+          onChanged: (value) =>
+              settingsProvider.includePrereleasesByDefault = value,
         ),
         SettingsToggleRow(
           label: tr('tactileFeedbackEnabled'),
@@ -544,7 +599,8 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsToggleRow(
           label: tr('showBatteryOptimizationPrompt'),
           value: settingsProvider.showBatteryOptimizationPrompt,
-          onChanged: (value) => settingsProvider.showBatteryOptimizationPrompt = value,
+          onChanged: (value) =>
+              settingsProvider.showBatteryOptimizationPrompt = value,
         ),
         SettingsToggleRow(
           label: tr('showAppDowngradeError'),
@@ -559,7 +615,8 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsToggleRow(
           label: tr('beforeNewInstallsShareToAppVerifier'),
           value: settingsProvider.beforeNewInstallsShareToAppVerifier,
-          onChanged: (value) => settingsProvider.beforeNewInstallsShareToAppVerifier = value,
+          onChanged: (value) =>
+              settingsProvider.beforeNewInstallsShareToAppVerifier = value,
           subtitle: LinkText(
             text: tr('about'),
             url: 'https://github.com/soupslurpr/AppVerifier',
@@ -569,48 +626,21 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsToggleRow(
           label: tr('useShizuku'),
           value: settingsProvider.useShizuku,
-          onChanged: (useShizuku) => _handleShizukuToggle(useShizuku),
+          onChanged: (useShizuku) =>
+              handleShizukuToggle(settingsProvider, useShizuku),
         ),
         SettingsToggleRow(
           label: tr('shizukuPretendToBeGooglePlay'),
           value: settingsProvider.shizukuPretendToBeGooglePlay,
-          onChanged: (value) => settingsProvider.shizukuPretendToBeGooglePlay = value,
+          onChanged: (value) =>
+              settingsProvider.shizukuPretendToBeGooglePlay = value,
         ),
       ],
     );
   }
 
-  void _handleShizukuToggle(bool useShizuku) {
-    final settingsProvider = context.read<SettingsProvider>();
-    if (useShizuku) {
-      ShizukuApkInstaller().checkPermission().then((resCode) {
-        settingsProvider.useShizuku = resCode?.startsWith('granted') ?? false;
-        if (!context.mounted) return;
-        final errorText = switch (resCode) {
-          'services_not_found' => tr('shizukuBinderNotFound'),
-          'old_shizuku' => tr('shizukuOld'),
-          'old_android_with_adb' => tr('shizukuOldAndroidWithADB'),
-          'denied' => tr('cancelled'),
-          null => tr('unexpectedError'),
-          _ => null,
-        };
-        if (errorText != null) {
-          if (!context.mounted) return;
-          // ignore: use_build_context_synchronously
-          showError(ObtainiumError(errorText), context);
-        }
-      }).catchError((e) {
-        settingsProvider.useShizuku = false;
-        if (!context.mounted) return;
-        // ignore: use_build_context_synchronously
-        showError(e, context);
-      });
-    } else {
-      settingsProvider.useShizuku = false;
-    }
-  }
-
   Widget _buildAppearanceSection(
+    BuildContext context,
     Widget colorPicker,
     Widget themeModeControl,
     Widget sortDropdown,
@@ -624,7 +654,8 @@ class _SettingsPageState extends State<SettingsPage> {
       title: tr('appearance'),
       children: [
         themeModeControl,
-        if (settingsProvider.theme == ThemeSettings.system && (androidSdkInt ?? 30) < 29)
+        if (settingsProvider.theme == ThemeSettings.system &&
+            (androidSdkInt ?? 30) < 29)
           _caption(context, tr('followSystemThemeExplanation')),
         if (settingsProvider.theme != ThemeSettings.light)
           SettingsToggleRow(
@@ -633,7 +664,8 @@ class _SettingsPageState extends State<SettingsPage> {
             onChanged: (value) => settingsProvider.useBlackTheme = value,
           ),
         _fieldTile(context, colourSchemeDropdown),
-        if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou) colorPicker,
+        if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou)
+          colorPicker,
         _fieldTile(context, sortDropdown),
         orderControl,
         _fieldTile(context, localeDropdown),
@@ -643,14 +675,18 @@ class _SettingsPageState extends State<SettingsPage> {
             value: settingsProvider.useSystemFont,
             onChanged: (useSystemFont) {
               if (useSystemFont) {
-                NativeFeatures.loadSystemFont().then((_) {
-                  settingsProvider.useSystemFont = true;
-                }).catchError((e) {
-                  settingsProvider.useSystemFont = false;
-                  if (!context.mounted) return;
-                  // ignore: use_build_context_synchronously
-                  showError(ObtainiumError('${tr('unexpectedError')}: $e'), context);
-                });
+                NativeFeatures.loadSystemFont()
+                    .then((_) {
+                      settingsProvider.useSystemFont = true;
+                    })
+                    .catchError((e) {
+                      settingsProvider.useSystemFont = false;
+                      if (!context.mounted) return;
+                      showError(
+                        ObtainiumError('${tr('unexpectedError')}: $e'),
+                        context,
+                      );
+                    });
               } else {
                 settingsProvider.useSystemFont = false;
               }
@@ -708,6 +744,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
+extension on Color {
+  ColorSwatch<Object> toSwatch() => ColorTools.createPrimarySwatch(this);
+}
+
 /// The background-update-interval slider tile. Kept as its own [StatefulWidget]
 /// so that dragging the slider only rebuilds this tile rather than the entire
 /// (large) settings page; the chosen value is only committed to the
@@ -744,15 +784,13 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   @override
   void initState() {
     super.initState();
-    // The interpolation nodes are constant, so build the spline once here
-    // rather than reconstructing it on every build().
     initUpdateIntervalInterpolator();
     sliderVal = context.read<SettingsProvider>().updateIntervalSliderVal;
     processIntervalSliderValue(sliderVal);
   }
 
   void initUpdateIntervalInterpolator() {
-    List<InterpolationNode> nodes = [];
+    final List<InterpolationNode> nodes = [];
     for (final (index, element) in updateIntervalNodes.indexed) {
       nodes.add(
         InterpolationNode(x: index.toDouble() + 1, y: element.toDouble()),
@@ -777,21 +815,21 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
       updateInterval = valInterpolated;
       updateIntervalLabel = plural('minute', valInterpolated);
     } else if (valInterpolated < 8 * 60) {
-      int valRounded = (valInterpolated / 15).floor() * 15;
+      final int valRounded = (valInterpolated / 15).floor() * 15;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded ~/ 60);
-      int mins = valRounded % 60;
+      final int mins = valRounded % 60;
       if (mins != 0) updateIntervalLabel += " ${plural('minute', mins)}";
     } else if (valInterpolated < 24 * 60) {
-      int valRounded = (valInterpolated / 30).floor() * 30;
+      final int valRounded = (valInterpolated / 30).floor() * 30;
       updateInterval = valRounded;
       updateIntervalLabel = plural('hour', valRounded ~/ 60);
     } else if (valInterpolated < 7 * 24 * 60) {
-      int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
+      final int valRounded = (valInterpolated / (12 * 60)).floor() * 12 * 60;
       updateInterval = valRounded;
       updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
     } else {
-      int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
+      final int valRounded = (valInterpolated / (24 * 60)).floor() * 24 * 60;
       updateInterval = valRounded;
       updateIntervalLabel = plural('day', valRounded ~/ (24 * 60));
     }
@@ -883,6 +921,108 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
           intervalSlider,
         ],
       ),
+    );
+  }
+}
+
+class LogsDialog extends StatefulWidget {
+  const LogsDialog({super.key});
+
+  @override
+  State<LogsDialog> createState() => _LogsDialogState();
+}
+
+class _LogsDialogState extends State<LogsDialog> {
+  String? logString;
+  List<int> days = [7, 5, 4, 3, 2, 1];
+
+  @override
+  void initState() {
+    super.initState();
+    filterLogs(days.first);
+  }
+
+  void filterLogs(int days) {
+    context
+        .read<LogsProvider>()
+        .get(after: DateTime.now().subtract(Duration(days: days)))
+        .then((value) {
+          if (!mounted) return;
+          setState(() {
+            final String l = value.map((e) => e.toString()).join('\n\n');
+            logString = l.isNotEmpty ? l : tr('noLogs');
+          });
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      title: Text(tr('appLogs')),
+      content: Column(
+        children: [
+          DropdownMenu(
+            initialSelection: days.first,
+            expandedInsets: EdgeInsets.zero,
+            dropdownMenuEntries: days
+                .map(
+                  (e) => DropdownMenuEntry(value: e, label: plural('day', e)),
+                )
+                .toList(),
+            onSelected: (d) {
+              filterLogs(d ?? 7);
+            },
+          ),
+          const SizedBox(height: 32),
+          Text(logString ?? ''),
+        ],
+      ),
+      actions: [
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.error,
+          ),
+          onPressed: () async {
+            final logsProvider = context.read<LogsProvider>();
+            final cont =
+                (await showDialog<Map<String, dynamic>?>(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return GeneratedFormModal(
+                      title: tr('appLogs'),
+                      items: const [],
+                      initValid: true,
+                      message: tr('removeFromObtainium'),
+                    );
+                  },
+                )) !=
+                null;
+            if (cont) {
+              unawaited(logsProvider.clear());
+              if (context.mounted) Navigator.of(context).pop();
+            }
+          },
+          child: Text(tr('remove')),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(tr('close')),
+        ),
+        FilledButton.tonal(
+          onPressed: () {
+            unawaited(
+              SharePlus.instance.share(
+                ShareParams(text: logString ?? '', subject: tr('appLogs')),
+              ),
+            );
+            Navigator.of(context).pop();
+          },
+          child: Text(tr('share')),
+        ),
+      ],
     );
   }
 }

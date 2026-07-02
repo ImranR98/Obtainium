@@ -18,9 +18,9 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     borderRadius: BorderRadius.circular(16),
   );
 
-  final pillButtonStyle = ButtonStyle(
-    shape: const WidgetStatePropertyAll(buttonShape),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+  const pillButtonStyle = ButtonStyle(
+    shape: WidgetStatePropertyAll(buttonShape),
+    minimumSize: WidgetStatePropertyAll(Size(0, 48)),
   );
 
   return ThemeData(
@@ -61,11 +61,11 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     searchBarTheme: const SearchBarThemeData(
       elevation: WidgetStatePropertyAll(0),
     ),
-    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
-    elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
-    textButtonTheme: TextButtonThemeData(
-      style: const ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
+    filledButtonTheme: const FilledButtonThemeData(style: pillButtonStyle),
+    elevatedButtonTheme: const ElevatedButtonThemeData(style: pillButtonStyle),
+    outlinedButtonTheme: const OutlinedButtonThemeData(style: pillButtonStyle),
+    textButtonTheme: const TextButtonThemeData(
+      style: ButtonStyle(shape: WidgetStatePropertyAll(buttonShape)),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
@@ -89,16 +89,59 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
       ),
     ),
     sliderTheme: SliderThemeData(
+      // `year2023: false` opts these components into the updated Material 3
+      // appearance. The flag is deprecated by Flutter and will be removed once
+      // the new look becomes the framework default, at which point these lines
+      // (and the `ignore` directives) can simply be deleted with no visual
+      // change. There is no replacement API to migrate to in the meantime.
+      // Tracking: https://github.com/flutter/flutter/issues/162186
       // ignore: deprecated_member_use
-      year2023: false, // TODO: remove when deprecated_member_use is resolved upstream
+      year2023: false,
       activeTrackColor: colorScheme.primary,
       inactiveTrackColor: colorScheme.surfaceContainerHighest,
       thumbColor: colorScheme.primary,
       overlayColor: colorScheme.primary.withValues(alpha: 0.12),
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
+      // See the note on `sliderTheme.year2023` above; no replacement API exists
+      // and this can be removed once the M3 look is the framework default.
+      // Tracking: https://github.com/flutter/flutter/issues/162186
       // ignore: deprecated_member_use
-      year2023: false, // TODO: remove when deprecated_member_use is resolved upstream
+      year2023: false,
     ),
   );
+}
+
+/// Corner radius for the outer corners of a connected tile run.
+const double connectedTileBigRadius = 24;
+
+/// Corner radius for the inner (joined) corners of a connected tile run.
+const double connectedTileSmallRadius = 6;
+
+BorderRadius positionalTileRadius({
+  required bool isFirst,
+  required bool isLast,
+}) {
+  return BorderRadius.vertical(
+    top: Radius.circular(
+      isFirst ? connectedTileBigRadius : connectedTileSmallRadius,
+    ),
+    bottom: Radius.circular(
+      isLast ? connectedTileBigRadius : connectedTileSmallRadius,
+    ),
+  );
+}
+
+RoundedSuperellipseBorder positionalTileShape({
+  required bool isFirst,
+  required bool isLast,
+}) => RoundedSuperellipseBorder(
+  borderRadius: positionalTileRadius(isFirst: isFirst, isLast: isLast),
+);
+
+abstract final class ExpressiveMotion {
+  static const Curve emphasized = Curves.easeInOutCubicEmphasized;
+
+  static const Duration short = Durations.short4;
+  static const Duration medium = Durations.medium2;
 }

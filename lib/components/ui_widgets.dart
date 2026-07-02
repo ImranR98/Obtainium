@@ -3,24 +3,104 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/components/ui_shapes.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-/// Renders an app's icon as a Material 3 Expressive squircle, falling back to
-/// the Obtainium glyph on a tonal surface when no icon is available. Centralizes
-/// the icon/placeholder rendering shared by the app list and the app detail page.
+Future<void> copyToClipboard(BuildContext context, String text) async {
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+  }
+}
+
+Future<bool> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  Widget? content,
+  String? confirmText,
+  String? cancelText,
+  bool autofocusConfirm = false,
+}) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: content,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(cancelText ?? tr('no')),
+        ),
+        FilledButton(
+          autofocus: autofocusConfirm,
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(confirmText ?? tr('yes')),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
+  context.read<LogsProvider>().add(
+    e.toString(),
+    level: isError ? LogLevel.error : LogLevel.info,
+  );
+  if (e is String || (e is ObtainiumError && !e.unexpected)) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(e.toString())));
+  } else {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          scrollable: true,
+          title: Text(
+            e is MultiAppMultiError
+                ? tr(isError ? 'someErrors' : 'updates')
+                : tr(isError ? 'unexpectedError' : 'unknown'),
+          ),
+          content: GestureDetector(
+            onLongPress: () {
+              Clipboard.setData(ClipboardData(text: e.toString()));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
+            },
+            child: Text(e.toString()),
+          ),
+          actions: [
+            FilledButton.tonal(
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              child: Text(tr('ok')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+void showError(dynamic e, BuildContext context) {
+  showMessage(e, context, isError: true);
+}
+
 class AppIcon extends StatelessWidget {
   final Uint8List? bytes;
   final double size;
   final double radius;
 
-  /// Size of the fallback glyph shown when [bytes] is null.
   final double glyphSize;
 
-  /// Dims the icon (e.g. to mark an app as not installed).
   final bool dimmed;
 
   const AppIcon({
@@ -73,10 +153,6 @@ class AppIcon extends StatelessWidget {
   }
 }
 
-/// A text-style action that becomes a visible tonal button when the user has
-/// enabled the "highlight touch targets" accessibility option, and a subtle
-/// text button otherwise. Replaces the app's hand-built `InkWell` + tinted
-/// `Container` link pattern with standard Material 3 buttons.
 class HighlightableButton extends StatelessWidget {
   final bool highlight;
   final VoidCallback? onPressed;
@@ -114,49 +190,6 @@ class HighlightableButton extends StatelessWidget {
   }
 }
 
-/// Copies [text] to the clipboard and shows a brief confirmation snackbar.
-Future<void> copyToClipboard(BuildContext context, String text) async {
-  await Clipboard.setData(ClipboardData(text: text));
-  if (context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-  }
-}
-
-/// Shows a simple confirm/cancel dialog, resolving to true only if the user
-/// confirmed.
-Future<bool> showConfirmDialog(
-  BuildContext context, {
-  required String title,
-  Widget? content,
-  String? confirmText,
-  String? cancelText,
-  bool autofocusConfirm = false,
-}) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: content,
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(cancelText ?? tr('no')),
-        ),
-        FilledButton(
-          autofocus: autofocusConfirm,
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(confirmText ?? tr('yes')),
-        ),
-      ],
-    ),
-  );
-  return confirmed ?? false;
-}
-
-/// Shows an informational "about/help" dialog with a title, scrollable content
-/// widgets, and a single dismiss button.
 Future<void> showHelpDialog(
   BuildContext context, {
   required String title,
@@ -181,8 +214,6 @@ Future<void> showHelpDialog(
   );
 }
 
-/// A centered placeholder for empty / loading / no-results states: a large
-/// tonal icon with an optional caption.
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String? message;
@@ -221,10 +252,6 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// A single rounded, tonal surface used for "connected" card runs (detail
-/// sections, category groups, banners). [isFirst]/[isLast] set the squircle
-/// corner radii so consecutive cards read as one block. Pass `padding: null`
-/// when the child already provides its own insets.
 class ConnectedCard extends StatelessWidget {
   final Widget child;
   final bool isFirst;
@@ -252,8 +279,6 @@ class ConnectedCard extends StatelessWidget {
   }
 }
 
-/// Tappable, underlined text that opens [url] in the external browser. Any
-/// extra [style] (e.g. bold/italic) is merged with the underline decoration.
 class LinkText extends StatelessWidget {
   final String text;
   final String url;
@@ -271,8 +296,9 @@ class LinkText extends StatelessWidget {
     return Semantics(
       link: true,
       child: InkWell(
-        onTap: () =>
-            unawaited(launchUrlString(url, mode: LaunchMode.externalApplication)),
+        onTap: () => unawaited(
+          launchUrlString(url, mode: LaunchMode.externalApplication),
+        ),
         child: Text(
           text,
           style: (style ?? const TextStyle()).copyWith(
@@ -317,48 +343,18 @@ class ActionListTile extends StatelessWidget {
   }
 }
 
-void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  context
-      .read<LogsProvider>()
-      .add(e.toString(), level: isError ? LogLevel.error : LogLevel.info);
-  if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(e.toString())));
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          scrollable: true,
-          title: Text(
-            e is MultiAppMultiError
-                ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown'),
-          ),
-          content: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Text(e.toString()),
-          ),
-          actions: [
-            FilledButton.tonal(
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              child: Text(tr('ok')),
-            ),
-          ],
-        );
-      },
+class CustomAppBar extends StatelessWidget {
+  const CustomAppBar({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    // M3 Expressive large app bar (pinned, does not collapse on scroll).
+    return SliverAppBar.large(
+      pinned: true,
+      automaticallyImplyLeading: true,
+      title: Text(title),
     );
   }
-}
-
-void showError(dynamic e, BuildContext context) {
-  showMessage(e, context, isError: true);
 }
