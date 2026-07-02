@@ -43,6 +43,8 @@ Locale? tryParseLocale(String? localeString) {
   return null;
 }
 
+enum InstallerMode { system, shizuku, external }
+
 enum ThemeSettings { system, light, dark }
 
 enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
@@ -94,6 +96,7 @@ class SettingsProvider with ChangeNotifier {
     defaultAppDir = _cachedDefaultAppDir;
     isTV = _cachedIsTV!;
     _migrateLegacyExportSetting();
+    _normalizeInstallPreference();
     notifyListeners();
   }
 
@@ -102,6 +105,18 @@ class SettingsProvider with ChangeNotifier {
     final legacyBool = _getBool('exportSettings');
     if (legacyBool != null) {
       prefs?.setInt('exportSettings', legacyBool ? 1 : 0);
+    }
+  }
+
+  void _normalizeInstallPreference() {
+    if (_getString('installMethod') != null) return;
+    final shizukuFlag = _getBool('useShizuku');
+    if (shizukuFlag != null) {
+      prefs?.setString(
+        'installMethod',
+        shizukuFlag ? InstallerMode.shizuku.name : InstallerMode.system.name,
+      );
+      unawaited(prefs?.remove('useShizuku') ?? Future.value());
     }
   }
 
@@ -131,12 +146,51 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get useShizuku {
-    return _getBool('useShizuku') ?? false;
+  String get installerMode {
+    final stored = _getString('installMethod');
+    if (stored != null && InstallerMode.values.any((m) => m.name == stored)) {
+      return stored;
+    }
+    return InstallerMode.system.name;
   }
 
+  set installerMode(String mode) {
+    final resolved = InstallerMode.values.any((m) => m.name == mode)
+        ? mode
+        : InstallerMode.system.name;
+    prefs?.setString('installMethod', resolved);
+    notifyListeners();
+  }
+
+  bool get useShizuku => installerMode == InstallerMode.shizuku.name;
+
   set useShizuku(bool useShizuku) {
-    prefs?.setBool('useShizuku', useShizuku);
+    installerMode = useShizuku
+        ? InstallerMode.shizuku.name
+        : InstallerMode.system.name;
+  }
+
+  String? get externalInstallerPackage =>
+      getSettingString('externalInstallerPackage');
+
+  set externalInstallerPackage(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerPackage');
+    } else {
+      prefs?.setString('externalInstallerPackage', val);
+    }
+    notifyListeners();
+  }
+
+  String? get externalInstallerComponent =>
+      getSettingString('externalInstallerComponent');
+
+  set externalInstallerComponent(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerComponent');
+    } else {
+      prefs?.setString('externalInstallerComponent', val);
+    }
     notifyListeners();
   }
 

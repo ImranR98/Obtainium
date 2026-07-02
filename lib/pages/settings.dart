@@ -15,6 +15,7 @@ import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/external_install_bridge.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
@@ -133,13 +134,18 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {});
   }
 
-  void handleShizukuToggle(SettingsProvider settingsProvider, bool useShizuku) {
-    if (useShizuku) {
+  void handleInstallerModeChange(
+    SettingsProvider settingsProvider,
+    String mode,
+  ) {
+    if (mode == InstallerMode.shizuku.name) {
       ShizukuApkInstaller()
           .checkPermission()
           .then((resCode) {
-            settingsProvider.useShizuku =
-                resCode?.startsWith('granted') ?? false;
+            settingsProvider.installerMode =
+                (resCode?.startsWith('granted') ?? false)
+                ? InstallerMode.shizuku.name
+                : InstallerMode.system.name;
             if (!context.mounted) return;
             final errorText = switch (resCode) {
               'services_not_found' => tr('shizukuBinderNotFound'),
@@ -155,12 +161,12 @@ class _SettingsPageState extends State<SettingsPage> {
             }
           })
           .catchError((e) {
-            settingsProvider.useShizuku = false;
+            settingsProvider.installerMode = InstallerMode.system.name;
             if (!mounted) return;
             showError(e, context);
           });
     } else {
-      settingsProvider.useShizuku = false;
+      settingsProvider.installerMode = mode;
     }
   }
 
@@ -632,18 +638,55 @@ class _SettingsPageState extends State<SettingsPage> {
             style: const TextStyle(fontSize: 12),
           ),
         ),
-        SettingsToggleRow(
-          label: tr('useShizuku'),
-          value: settingsProvider.useShizuku,
-          onChanged: (useShizuku) =>
-              handleShizukuToggle(settingsProvider, useShizuku),
+        SettingsTile(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(tr('installMethod')),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: InstallerMode.system.name,
+                      label: Text(tr('installMethodSystem')),
+                    ),
+                    ButtonSegment(
+                      value: InstallerMode.shizuku.name,
+                      label: Text(tr('installMethodShizuku')),
+                    ),
+                    ButtonSegment(
+                      value: InstallerMode.external.name,
+                      label: Text(tr('installMethodExternal')),
+                    ),
+                  ],
+                  selected: {settingsProvider.installerMode},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) => handleInstallerModeChange(
+                    settingsProvider,
+                    selection.first,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        SettingsToggleRow(
-          label: tr('shizukuPretendToBeGooglePlay'),
-          value: settingsProvider.shizukuPretendToBeGooglePlay,
-          onChanged: (value) =>
-              settingsProvider.shizukuPretendToBeGooglePlay = value,
-        ),
+        if (settingsProvider.installerMode == InstallerMode.shizuku.name)
+          SettingsToggleRow(
+            label: tr('shizukuPretendToBeGooglePlay'),
+            value: settingsProvider.shizukuPretendToBeGooglePlay,
+            onChanged: (value) =>
+                settingsProvider.shizukuPretendToBeGooglePlay = value,
+          ),
+        if (settingsProvider.installerMode == InstallerMode.external.name)
+          const SettingsTile(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: _ExternalInstallerTile(),
+          ),
       ],
     );
   }
@@ -1028,6 +1071,118 @@ class _LogsDialogState extends State<LogsDialog> {
           child: Text(tr('share')),
         ),
       ],
+    );
+  }
+}
+
+class _ExternalInstallerTile extends StatefulWidget {
+  const _ExternalInstallerTile();
+
+  @override
+  State<_ExternalInstallerTile> createState() => _ExternalInstallerTileState();
+}
+
+class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
+  Future<List<InstallerTarget>>? _targetsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetsFuture = ExternalInstallerBridge.instance.listTargets();
+  }
+
+  InstallerTarget? _current(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) {
+    final pkg = settingsProvider.externalInstallerPackage;
+    if (pkg == null) return null;
+    for (final target in targets) {
+      if (target.package == pkg) return target;
+    }
+    return null;
+  }
+
+  Widget _targetIcon(InstallerTarget? target, {double size = 40}) {
+    final icon = target?.icon;
+    if (icon != null && icon.isNotEmpty) {
+      return Image.memory(icon, width: size, height: size);
+    }
+    return Icon(Icons.extension_outlined, size: size);
+  }
+
+  Future<void> _choose(
+    List<InstallerTarget> targets,
+    SettingsProvider settingsProvider,
+  ) async {
+    if (targets.isEmpty) return;
+    final picked = await showDialog<InstallerTarget>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(tr('chooseExternalInstaller')),
+        children: [
+          for (final target in targets)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(target),
+              child: Row(
+                children: [
+                  _targetIcon(target, size: 32),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(target.label),
+                        Text(
+                          target.package,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    settingsProvider.externalInstallerPackage = picked.package;
+    settingsProvider.externalInstallerComponent = picked.activity;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    return FutureBuilder<List<InstallerTarget>>(
+      future: _targetsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+            leading: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            title: Text('…'),
+          );
+        }
+        final targets = snapshot.data ?? const <InstallerTarget>[];
+        final current = _current(targets, settingsProvider);
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          leading: _targetIcon(current),
+          title: Text(tr('chooseExternalInstaller')),
+          subtitle: Text(
+            current?.label ??
+                settingsProvider.externalInstallerPackage ??
+                tr('externalInstallerUnset'),
+          ),
+          trailing: const Icon(Icons.arrow_drop_down),
+          onTap: () => _choose(targets, settingsProvider),
+        );
+      },
     );
   }
 }

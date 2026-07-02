@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
-import 'package:android_package_installer/android_package_installer.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:archive/archive.dart' as archive;
 import 'package:device_info_plus/device_info_plus.dart';
@@ -14,6 +13,10 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/installers/installer.dart';
+import 'package:obtainium/installers/shizuku_installer.dart';
+import 'package:obtainium/installers/stock_installer.dart';
+import 'package:obtainium/installers/external_installer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -23,7 +26,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
-import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 // NOTE: This provider extension is intentionally UX-coupled — it shows dialogs,
 // toasts, and interacts with BuildContext for install operations that inherently
@@ -32,15 +34,10 @@ import 'package:shizuku_apk_installer/shizuku_apk_installer.dart';
 
 // Named constants for magic numbers and hardcoded values
 const int _androidApiLevelR = 30;
-const int _androidApiLevelS = 31;
 const double _installingProgressSentinel = -1;
 const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
 const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
-
-// Android PackageInstaller status codes: 0 = success, 3 = already installed / pending
-const int _installSuccessCode = 0;
-const int _installAlreadyPendingCode = 3;
 
 class _InstallResult {
   final String id;
@@ -57,6 +54,18 @@ class _InstallResult {
 
 /// App download, install, and on-device package operations for [AppsProvider].
 extension AppsProviderInstall on AppsProvider {
+  /// Returns the [Installer] strategy for the current installer mode setting.
+  Installer getInstaller() {
+    switch (settingsProvider.installerMode) {
+      case 'shizuku':
+        return ShizukuInstaller(settingsProvider);
+      case 'external':
+        return ExternalInstaller(settingsProvider);
+      default:
+        return StockInstaller(settingsProvider);
+    }
+  }
+
   Future<File> handleAPKIDChange(
     App app,
     PackageInfo newInfo,
@@ -330,22 +339,6 @@ extension AppsProviderInstall on AppsProvider {
     }
 
     final osInfo = await DeviceInfoPlugin().androidInfo;
-    String? installerPackageName;
-    try {
-      installerPackageName = osInfo.version.sdkInt >= _androidApiLevelR
-          ? (await packageManager.getInstallSourceInfo(
-              packageName: app.id,
-            ))?.installingPackageName
-          : (await packageManager.getInstallerPackageName(packageName: app.id));
-    } catch (e) {
-      unawaited(
-        logs.add(
-          'Failed to get installed package details: ${app.id} (${e.toString()})',
-        ),
-      );
-      return false;
-    }
-
     final int? targetSDK = (await getInstalledInfo(
       app.id,
     ))?.applicationInfo?.targetSdkVersion;
@@ -361,23 +354,9 @@ extension AppsProviderInstall on AppsProvider {
       return false;
     }
 
-    if (settingsProvider.useShizuku) {
-      return true;
-    }
-
-    if (app.id == obtainiumId) {
-      return false;
-    }
-    if (installerPackageName != obtainiumId) {
-      // If we did not install the app, silent install is not possible
-      return false;
-    }
-    if (osInfo.version.sdkInt < _androidApiLevelS) {
-      // The OS must also be new enough
-      unawaited(logs.add('Android SDK too old: ${osInfo.version.sdkInt}'));
-      return false;
-    }
-    return true;
+    // Installer-specific eligibility (Obtainium being the installer, OS version,
+    // Shizuku availability, etc.) is delegated to the active installer strategy.
+    return getInstaller().canInstallSilently(app);
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
@@ -525,6 +504,7 @@ extension AppsProviderInstall on AppsProvider {
   }) async {
     // Try installing all APKs; succeed if at least one installed.
     var somethingInstalled = false;
+    final installer = getInstaller();
     try {
       final MultiAppMultiError errors = MultiAppMultiError();
       List<File> apkFiles = [];
@@ -537,6 +517,40 @@ extension AppsProviderInstall on AppsProvider {
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
         }
+      }
+
+      if (installer.wantsContainerHandoff) {
+        // Hand off the original bundle file (XAPK/ZIP/tarball) to the
+        // third-party installer rather than the extracted split APKs.
+        try {
+          final result = await installer.installApk(
+            [dir.file.path],
+            appId: dir.appId,
+            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          );
+          if (result.isError) {
+            throw InstallError(result.errorCode!);
+          }
+          if (result.isSuccess) {
+            somethingInstalled = true;
+            apps[dir.appId]!.app = apps[dir.appId]!.app.copyWith(
+              installedVersion: apps[dir.appId]!.app.latestVersion,
+            );
+            await saveApps([apps[dir.appId]!.app]);
+          }
+          unawaited(dir.file.delete());
+        } catch (e) {
+          unawaited(
+            logs.add(
+              'Could not install container from ${dir.type}: ${e.toString()}',
+            ),
+          );
+          errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
+        }
+        if (errors.idsByErrorString.isNotEmpty) {
+          throw errors;
+        }
+        return somethingInstalled;
       }
 
       apkFiles = _preferMatchingApk(apkFiles, dir.appId).cast<File>().toList();
@@ -641,23 +655,15 @@ extension AppsProviderInstall on AppsProvider {
         apps[file.appId]!.app,
       ], attemptToCorrectInstallStatus: false);
     }
-    int? code;
-    if (!settingsProvider.useShizuku) {
-      final allAPKs = [file.file.path];
-      allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
-      code = await AndroidPackageInstaller.installApk(
-        apkFilePath: allAPKs.join(','),
-      );
-    } else {
-      code = await ShizukuApkInstaller().installAPK(
-        file.file.uri.toString(),
-        shizukuPretendToBeGooglePlay ? 'com.android.vending' : '',
-      );
-    }
+    final allAPKs = [file.file.path];
+    allAPKs.addAll(additionalAPKs.map((a) => a.file.path));
+    final InstallResult result = await getInstaller().installApk(
+      allAPKs,
+      appId: file.appId,
+      shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+    );
     bool installed = false;
-    if (code != null &&
-        code != _installSuccessCode &&
-        code != _installAlreadyPendingCode) {
+    if (result.isError) {
       try {
         deleteFile(file.file);
       } catch (e) {
@@ -667,8 +673,8 @@ extension AppsProviderInstall on AppsProvider {
           ),
         );
       }
-      throw InstallError(code);
-    } else if (code == _installSuccessCode) {
+      throw InstallError(result.errorCode!);
+    } else if (result.isSuccess) {
       installed = true;
       apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
         installedVersion: apps[file.appId]!.app.latestVersion,
@@ -1115,8 +1121,11 @@ extension AppsProviderInstall on AppsProvider {
       final contextIfNewInstall = appEntry.installedInfo == null
           ? context
           : null;
+      final String installerModeKey = getInstaller().modeKey;
+      // Only the stock session-based installer needs the background-completion
+      // workaround (its install await never returns in the background).
       final bool needBGWorkaround =
-          willBeSilent && context == null && !settingsProvider.useShizuku;
+          willBeSilent && context == null && installerModeKey == 'stock';
       final bool shizukuPretendToBeGooglePlay =
           settingsProvider.shizukuPretendToBeGooglePlay ||
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
@@ -1155,7 +1164,7 @@ extension AppsProviderInstall on AppsProvider {
         }
       }
       if (willBeSilent && context == null) {
-        if (!settingsProvider.useShizuku) {
+        if (installerModeKey == 'stock') {
           unawaited(
             notificationsProvider?.notify(
               SilentUpdateAttemptNotification([appEntry.app], id: id.hashCode),
@@ -1215,26 +1224,14 @@ extension AppsProviderInstall on AppsProvider {
       apps[id]?.downloadProgress = _downloadCompleteProgress.toDouble();
       notify();
       willBeSilent = await canInstallSilently(apps[id]!.app);
-      if (!settingsProvider.useShizuku) {
-        if (!(await settingsProvider.getInstallPermission(enforce: false))) {
-          throw ObtainiumError(tr('cancelled'));
-        }
-      } else {
-        switch ((await ShizukuApkInstaller().checkPermission())!) {
-          case 'services_not_found':
-            throw ObtainiumError(tr('shizukuBinderNotFound'));
-          case 'old_shizuku':
-            throw ObtainiumError(tr('shizukuOld'));
-          case 'old_android_with_adb':
-            throw ObtainiumError(tr('shizukuOldAndroidWithADB'));
-          case 'denied':
-            throw ObtainiumError(tr('cancelled'));
-        }
-      }
+      final installer = getInstaller();
+      await installer.ensurePermission();
+      // Only the stock installer surfaces a system install prompt that pulls the
+      // user away; wait for them to return before proceeding.
       if (!willBeSilent &&
           context != null &&
           context.mounted &&
-          !settingsProvider.useShizuku) {
+          installer.modeKey == 'stock') {
         await waitForUserToReturnToForeground(context);
       }
     } catch (e) {
