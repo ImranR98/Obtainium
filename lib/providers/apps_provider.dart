@@ -394,17 +394,21 @@ Future<File> downloadFile(
   LogsProvider? logs,
 }) async {
   final reqHeaders = headers ?? {};
-  final req = Request('GET', Uri.parse(url));
-  req.headers.addAll(reqHeaders);
   final headersClient = IOClient(createHttpClient(allowInsecure));
-  final StreamedResponse headersResponse = await headersClient.send(req);
+
+  final headReq = Request('HEAD', Uri.parse(url));
+  headReq.headers.addAll(reqHeaders);
+  var headersResponse = await headersClient.send(headReq);
+
+  final bool headSucceeded =
+      headersResponse.statusCode >= 200 && headersResponse.statusCode < 300;
+  if (!headSucceeded) {
+    final getReq = Request('GET', Uri.parse(url));
+    getReq.headers.addAll(reqHeaders);
+    headersResponse = await headersClient.send(getReq);
+  }
+
   final resHeaders = headersResponse.headers;
-  await headersResponse.stream.drain<void>().catchError((err) {
-    LogsProvider().add(
-      'Error draining header-probe stream: $err',
-      level: LogLevel.error,
-    );
-  });
 
   // Use the headers to decide what the file extension is, and
   // whether it supports partial downloads (range request), and
