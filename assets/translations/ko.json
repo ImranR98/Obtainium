@@ -31,7 +31,7 @@
     "appSource": "앱 소스",
     "appSourceURL": "앱 소스 URL",
     "appURLList": "앱 URL 목록",
-    "appVerifierInstructionToast": "AppVerifier에 공유한 후 준비가 되면 여기로 돌아오세요.",
+    "appVerifierInstructionToast": "\"Verified Apps\"에 공유한 후 준비가 되면 여기로 돌아오세요.",
     "appWithIdOrNameNotFound": "해당 ID 또는 이름의 앱을 찾을 수 없습니다",
     "appearance": "외관",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "모든 앱에 대해 백그라운드 업데이트가 가능하지 않을 수 있습니다.",
     "badDownload": "APK를 구문 분석할 수 없습니다 (호환되지 않거나 부분 다운로드)",
     "batteryOptimizationNote": "Obtainium의 OS 배터리 최적화를 비활성화하면 백그라운드 다운로드가 더 안정적으로 작동할 수 있습니다.",
-    "beforeNewInstallsShareToAppVerifier": "새 앱을 AppVerifier와 공유 (가능한 경우)",
+    "beforeNewInstallsShareToAppVerifier": "새 앱을 \"Verified Apps\"와 공유 (가능한 경우)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "BG 업데이트 확인에서 {}개의 업데이트를 발견했습니다 - 필요 시 사용자에게 알립니다",
         "other": "BG 업데이트 확인에서 {}개의 업데이트를 발견했습니다 - 필요 시 사용자에게 알립니다"

@@ -31,7 +31,7 @@
     "appSource": "Nguồn ứng dụng",
     "appSourceURL": "URL nguồn ứng dụng",
     "appURLList": "Danh sách URL ứng dụng",
-    "appVerifierInstructionToast": "Chia sẻ lên AppVerifier, sau đó quay lại đây khi sẵn sàng.",
+    "appVerifierInstructionToast": "Chia sẻ lên \"Verified Apps\", sau đó quay lại đây khi sẵn sàng.",
     "appWithIdOrNameNotFound": "Không tìm thấy ứng dụng nào có ID hoặc tên đó",
     "appearance": "Hiển thị",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Có thể không thực hiện được cập nhật trong nền cho tất cả ứng dụng.",
     "badDownload": "Không thể phân tích cú pháp APK (tải xuống một phần hoặc không tương thích)",
     "batteryOptimizationNote": "Lưu ý: tải xuống nền có thể hoạt động ổn định hơn nếu bạn tắt tối ưu pin của hệ điều hành cho Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Chia sẻ ứng dụng mới với AppVerifier (nếu có)",
+    "beforeNewInstallsShareToAppVerifier": "Chia sẻ ứng dụng mới với \"Verified Apps\" (nếu có)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần",
         "other": "Đang kiểm tra bản cập nhật BG tìm thấy {} bản cập nhật - sẽ thông báo cho người dùng nếu cần"

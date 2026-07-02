@@ -31,7 +31,7 @@
     "appSource": "Font de l'aplicació",
     "appSourceURL": "URL font de l'aplicació",
     "appURLList": "Llista d'URL d'aplicacions",
-    "appVerifierInstructionToast": "Comparteix amb AppVerifier i torna aquí quan estigui fet.",
+    "appVerifierInstructionToast": "Comparteix amb \"Verified Apps\" i torna aquí quan estigui fet.",
     "appWithIdOrNameNotFound": "No s'han trobat aplicacions amb aquest ID o nom",
     "appearance": "Aparença",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Les actualitzacions en segon pla és possible que no estiguin disponibles per a totes les aplicacions.",
     "badDownload": "L'APK no s'ha pogut analitzar (incompatible o descàrrega parcial)",
     "batteryOptimizationNote": "Tingues present que les descàrregues en segon pla funcionaran millor si inhabilites l'optimització de bateria per a Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Comparteix les aplicacions noves amb AppVerifier (si està instal·lat)",
+    "beforeNewInstallsShareToAppVerifier": "Comparteix les aplicacions noves amb \"Verified Apps\" (si està instal·lat)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "La comprovació d'actualitzacions en segon pla ha trobat {} actualització, t'ho notificarem si cal",
         "other": "La comprovació d'actualitzacions en segon pla ha trobat {} actualitzacions, t'ho notificarem si cal"

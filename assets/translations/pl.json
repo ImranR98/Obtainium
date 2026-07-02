@@ -33,7 +33,7 @@
     "appSource": "Źródło aplikacji",
     "appSourceURL": "Adres URL źródła aplikacji",
     "appURLList": "Lista adresów URL aplikacji",
-    "appVerifierInstructionToast": "Udostępnij do AppVerifiera, a następnie wróć tutaj.",
+    "appVerifierInstructionToast": "Udostępnij do \"Verified Apps\", a następnie wróć tutaj.",
     "appWithIdOrNameNotFound": "Nie znaleziono aplikacji o tej nazwie lub ID",
     "appearance": "Wygląd",
     "apps": {
@@ -66,7 +66,7 @@
     "backgroundUpdateReqsExplanation": "Aktualizacje w tle mogą nie być możliwe dla wszystkich aplikacji.",
     "badDownload": "Nie można przetworzyć pliku APK (niekompatybilny lub pobrany częściowo)",
     "batteryOptimizationNote": "Pobieranie w tle będzie działać stabilniej, jeśli włączysz usługę pierwszoplanową w ustawieniach Obtainium i/lub wyłączysz optymalizację baterii dla tej aplikacji w ustawieniach systemu.",
-    "beforeNewInstallsShareToAppVerifier": "Udostępniaj nowe aplikacje do AppVerifiera (jeśli dostępny)",
+    "beforeNewInstallsShareToAppVerifier": "Udostępniaj nowe aplikacje do \"Verified Apps\" (jeśli dostępny)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Sprawdzanie w tle znalazło {} aktualizację - powiadomię, jeśli to konieczne",
         "few": "Sprawdzanie w tle znalazło {} aktualizacje - powiadomię, jeśli to konieczne",

@@ -31,7 +31,7 @@
     "appSource": "Uygulama kaynağı",
     "appSourceURL": "Uygulama kaynak URL'si",
     "appURLList": "Uygulama URL listesi",
-    "appVerifierInstructionToast": "AppVerifier ile paylaşın, ve hazır olduğunuzda buraya dönün.",
+    "appVerifierInstructionToast": "\"Verified Apps\" ile paylaşın, ve hazır olduğunuzda buraya dönün.",
     "appWithIdOrNameNotFound": "Bu kimlikle veya isimle bir uygulama bulunamadı",
     "appearance": "Görünüm",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Arka plan güncellemeleri bütün uygulamalar için mümkün olmayabilir.",
     "badDownload": "APK ayrıştırılamadı (uyumsuz veya kısmi indirme)",
     "batteryOptimizationNote": "Obtainium ayarlarından \"ön plan hizmeti\"ne geçerseniz veya işletim sistemi ayarlarınızdan Obtainium için pil optimizasyonlarını devre dışı bırakırsanız arka plan indirmelerinin daha düzgün çalışabileceğini unutmayın.",
-    "beforeNewInstallsShareToAppVerifier": "Yeni uygulamaları AppVerifier ile paylaş (mümkünse)",
+    "beforeNewInstallsShareToAppVerifier": "Yeni uygulamaları \"Verified Apps\" ile paylaş (mümkünse)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Arka plan güncelleme denetlemesi {} güncelleme buldu - gerekirse kullanıcıya bildirilecek",
         "other": "Arka plan güncelleme denetlemesi {} güncelleme buldu - gerekirse kullanıcıya bildirilecek"

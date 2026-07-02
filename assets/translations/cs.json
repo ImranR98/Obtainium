@@ -31,7 +31,7 @@
     "appSource": "Zdroj aplikace",
     "appSourceURL": "Zdrojová adresa URL aplikace",
     "appURLList": "Seznam adres aplikací",
-    "appVerifierInstructionToast": "Sdílejte do aplikace AppVerifier a po dokončení se sem vraťte.",
+    "appVerifierInstructionToast": "Sdílejte do aplikace \"Verified Apps\" a po dokončení se sem vraťte.",
     "appWithIdOrNameNotFound": "Žádná aplikace s tímto ID nebo názvem nebyla nalezena",
     "appearance": "Vzhled",
     "apps": {
@@ -63,7 +63,7 @@
     "backgroundUpdateReqsExplanation": "Aktualizace na pozadí nemusí být možná pro všechny aplikace.",
     "badDownload": "APK nelze analyzovat (nekompatibilní nebo částečné stažení)",
     "batteryOptimizationNote": "Upozorňujeme, že stahování na pozadí může fungovat spolehlivěji, pokud v nastavení aplikace Obtainium přepnete na „službu v popředí“ a/nebo v nastavení operačního systému pro Obtainium vypnete optimalizaci baterie.",
-    "beforeNewInstallsShareToAppVerifier": "Sdílet nové aplikace s aplikací AppVerifier (pokud je k dispozici)",
+    "beforeNewInstallsShareToAppVerifier": "Sdílet nové aplikace s aplikací \"Verified Apps\" (pokud je k dispozici)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Při kontrole aktualizací na pozadí nalezena {} aktualizace – v případě potřeby bude upozorněn uživatel",
         "few": "Při kontrole aktualizací na pozadí nalezeny {} aktualizace – v případě potřeby bude upozorněn uživatel",

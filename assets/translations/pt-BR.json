@@ -31,7 +31,7 @@
     "appSource": "Fonte do app",
     "appSourceURL": "URL da fonte do app",
     "appURLList": "Lista de URLs dos apps",
-    "appVerifierInstructionToast": "Compartilhe com o AppVerifier, e volte aqui ao estar pronto.",
+    "appVerifierInstructionToast": "Compartilhe com o \"Verified Apps\", e volte aqui ao estar pronto.",
     "appWithIdOrNameNotFound": "Nenhum app foi encontrado com aquele ID ou nome",
     "appearance": "Aparência",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Atualizações em segundo plano podem não funcionar com todos os apps.",
     "badDownload": "O APK não pode ser interpretado (incompatível ou baixado parcialmente)",
     "batteryOptimizationNote": "Observe que os downloads em segundo plano podem funcionar de forma mais confiável se você desativar as otimizações de bateria do sistema operacional para o Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Compartilhar apps novos com o AppVerifier (se disponível)",
+    "beforeNewInstallsShareToAppVerifier": "Compartilhar apps novos com o \"Verified Apps\" (se disponível)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Verificação da atualização do BG encontrada {} atualização - notificará o usuário se necessário",
         "other": "Verificação de atualização do BG encontrou atualizações {} - notificará o usuário se necessário"

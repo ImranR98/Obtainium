@@ -31,7 +31,7 @@
     "appSource": "源代码",
     "appSourceURL": "来源 URL",
     "appURLList": "应用 URL 列表",
-    "appVerifierInstructionToast": "分享至 AppVerifier，完成后返回此处。",
+    "appVerifierInstructionToast": "分享至 \"Verified Apps\"，完成后返回此处。",
     "appWithIdOrNameNotFound": "未找到符合此 ID 或名称的应用",
     "appearance": "外观",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "后台更新未必适用于所有的应用。",
     "badDownload": "无法解析 APK 文件（不兼容或文件不完整）",
     "batteryOptimizationNote": "请注意，在设置中切换为“前台服务”，并/或关闭操作系统对 Obtainium 的电池优化，可能会让后台下载更稳定。",
-    "beforeNewInstallsShareToAppVerifier": "通过 AppVerifier 校验新应用（如果可用）",
+    "beforeNewInstallsShareToAppVerifier": "通过 \"Verified Apps\" 校验新应用（如果可用）",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "后台检查发现 {} 个应用更新 - 如有需要将发送通知",
         "other": "后台检查发现 {} 个应用更新 - 如有需要将发送通知"

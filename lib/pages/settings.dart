@@ -637,7 +637,7 @@ class _SettingsPageState extends State<SettingsPage> {
               settingsProvider.beforeNewInstallsShareToAppVerifier = value,
           subtitle: LinkText(
             text: tr('about'),
-            url: 'https://github.com/soupslurpr/AppVerifier',
+            url: 'https://github.com/privacyguides/verified-apps-android',
             style: const TextStyle(fontSize: 12),
           ),
         ),

@@ -31,7 +31,7 @@
     "appSource": "Джерело застосунку",
     "appSourceURL": "URL-адреса джерела застосунку",
     "appURLList": "Список URL-адрес застосунків",
-    "appVerifierInstructionToast": "Надішліть на AppVerifier, а потім поверніться сюди, коли будете готові.",
+    "appVerifierInstructionToast": "Надішліть на \"Verified Apps\", а потім поверніться сюди, коли будете готові.",
     "appWithIdOrNameNotFound": "Застосунок з таким ідентифікатором або назвою не знайдено",
     "appearance": "Вигляд",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Оновлення в фоновому режимі може бути неможливим для всіх застосунків.",
     "badDownload": "APK не вдалося розпарсити (несумісний або часткове завантаження)",
     "batteryOptimizationNote": "Зауважте, що фонові завантаження можуть працювати надійніше, якщо ви вимкнете оптимізацію батареї ОС для Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Діліться новими додатками з AppVerifier (якщо доступно)",
+    "beforeNewInstallsShareToAppVerifier": "Діліться новими додатками з \"Verified Apps\" (якщо доступно)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Фонова перевірка оновлень знайшла {} оновлення - сповістити користувача, якщо це необхідно",
         "other": "Фонова перевірка оновлень знайшла {} оновлень - сповістити користувача, якщо це необхідно"

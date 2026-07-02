@@ -31,7 +31,7 @@
     "appSource": "منبع برنامه",
     "appSourceURL": "آدرس اینترنتی منبع برنامه",
     "appURLList": "فهرست آدرس اینترنتی برنامه",
-    "appVerifierInstructionToast": "در AppVerifier به اشتراک بگذارید، سپس پس از آماده شدن به اینجا برگردید.",
+    "appVerifierInstructionToast": "در \"Verified Apps\" به اشتراک بگذارید، سپس پس از آماده شدن به اینجا برگردید.",
     "appWithIdOrNameNotFound": "هیچ برنامه ای با آن شناسه یا نام یافت نشد",
     "appearance": "ظاهر",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "به روز رسانی پس زمینه ممکن است برای همه برنامه ها امکان پذیر نباشد.",
     "badDownload": "APK قابل تجزیه نیست (دانلود ناسازگار یا جزئی)",
     "batteryOptimizationNote": "توجه داشته باشید که اگر بهینه‌سازی باتری سیستم عامل را برای Obtainium غیرفعال کنید، دانلودهای پس‌زمینه ممکن است با اطمینان بیشتری کار کنند.",
-    "beforeNewInstallsShareToAppVerifier": "اشتراک‌گذاری برنامه‌های جدید با AppVerifier (در صورت وجود)",
+    "beforeNewInstallsShareToAppVerifier": "اشتراک‌گذاری برنامه‌های جدید با \"Verified Apps\" (در صورت وجود)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "بررسی به‌روزرسانی BG پیدا شد {} به‌روزرسانی - در صورت نیاز به کاربر اطلاع می‌دهد",
         "other": "بررسی به‌روزرسانی BG {} به‌روزرسانی‌های یافت شده - در صورت نیاز به کاربر اطلاع می‌دهد"

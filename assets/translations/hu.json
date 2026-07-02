@@ -31,7 +31,7 @@
     "appSource": "Alkalmazás forrása",
     "appSourceURL": "Alkalmazás forrásának webcíme",
     "appURLList": "Alkalmazás-webcímlista",
-    "appVerifierInstructionToast": "Ossza meg az AppVerifierrel, majd térjen vissza ide, ha kész.",
+    "appVerifierInstructionToast": "Ossza meg az \"Verified Apps\", majd térjen vissza ide, ha kész.",
     "appWithIdOrNameNotFound": "Nem található alkalmazás ezzel az azonosítóval vagy névvel",
     "appearance": "Megjelenés",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Előfordulhat, hogy nem minden alkalmazásnál lehetséges a háttérbeli frissítés.",
     "badDownload": "Az APK-t nem lehetett elemezni (inkompatibilis vagy részleges letöltés)",
     "batteryOptimizationNote": "Megjegyzés: A háttérfrissítések megbízhatóbban működhetnek, ha kikapcsolja a rendszer akkumulátor-optimalizálását az Obtainium számára.",
-    "beforeNewInstallsShareToAppVerifier": "Új alkalmazások megosztása az AppVerifierrel (ha elérhető)",
+    "beforeNewInstallsShareToAppVerifier": "Új alkalmazások megosztása az \"Verified Apps\" (ha elérhető)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Frissítések ellenőrzése a háttérben {} frissítést talált - szükség esetén értesíti a felhasználót",
         "other": "Frissítések ellenőrzése a háttérben {} frissítést talált - szükség esetén értesíti a felhasználót"

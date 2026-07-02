@@ -31,7 +31,7 @@
     "appSource": "Apofonto",
     "appSourceURL": "URL de la apofonto",
     "appURLList": "Listo de URLj de la apo",
-    "appVerifierInstructionToast": "Diskonigu kun AppVerifier, poste revenu ĉi tie kiam preta.",
+    "appVerifierInstructionToast": "Diskonigu kun \"Verified Apps\", poste revenu ĉi tie kiam preta.",
     "appWithIdOrNameNotFound": "Neniu apo estas trovita kun tiu identigilo aŭ nomo",
     "appearance": "Aspekto",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Fonaj ĝisdatigoj ne eblas por ĉiuj apoj.",
     "badDownload": "La APK ne povis esti analizita (neakordigebla aŭ nekompleta elŝuto)",
     "batteryOptimizationNote": "Note that background downloads may work more reliably if you disable OS battery optimizations for Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Diskonigi novajn aplikaĵojn kun AppVerifier (se havebla)",
+    "beforeNewInstallsShareToAppVerifier": "Diskonigi novajn aplikaĵojn kun \"Verified Apps\" (se havebla)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "La serĉo de fonaj ĝisdatigoj trovis {} ĝisdatigon - la uzanto estas sciigota se necesa",
         "other": "La serĉo de fonaj ĝisdatigoj trovis {} ĝisdatigojn - la uzanto estas sciigota se necesa"

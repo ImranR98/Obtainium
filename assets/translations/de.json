@@ -31,7 +31,7 @@
     "appSource": "App-Quelle",
     "appSourceURL": "Quell-URL der App",
     "appURLList": "App-URL-Liste",
-    "appVerifierInstructionToast": "Teile die Daten mit AppVerifier und kehre im Anschluss hierher zurück.",
+    "appVerifierInstructionToast": "Teile die Daten mit \"Verified Apps\" und kehre im Anschluss hierher zurück.",
     "appWithIdOrNameNotFound": "Es wurde keine App mit dieser ID oder diesem Namen gefunden",
     "appearance": "Aussehen",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Die Hintergrundaktualisierung ist unter Umständen nicht für alle Apps möglich.",
     "badDownload": "Die APK konnte nicht gelesen werden (inkompatibler oder unfertiger Download)",
     "batteryOptimizationNote": "Beachten Sie, dass Downloads im Hintergrund möglicherweise zuverlässiger funktionieren, wenn Sie die Batterieoptimierung des Betriebssystems für Obtainium deaktivieren.",
-    "beforeNewInstallsShareToAppVerifier": "Neue Apps mit AppVerifier teilen (falls verfügbar)",
+    "beforeNewInstallsShareToAppVerifier": "Neue Apps mit \"Verified Apps\" teilen (falls verfügbar)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Die Aktualisierungsprüfung fand {} Aktualisierung – benachrichtigt, falls erforderlich",
         "other": "Die Aktualisierungsprüfung fand {} Aktualisierungen – benachrichtigt, falls erforderlich"

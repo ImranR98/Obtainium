@@ -31,7 +31,7 @@
     "appSource": "Orixe da app",
     "appSourceURL": "URL de orixe da app",
     "appURLList": "Lista de URL de apps",
-    "appVerifierInstructionToast": "Compartir con AppVerifier, e volver aquí ao finalizar.",
+    "appVerifierInstructionToast": "Compartir con \"Verified Apps\", e volver aquí ao finalizar.",
     "appWithIdOrNameNotFound": "Non se atopa ningunha app con ese ID ou nome",
     "appearance": "Aparencia",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Non todas as apps se poden actualizar en segundo plano.",
     "badDownload": "Non se puido procesar o APK (non compatible ou parcialmente descargado)",
     "batteryOptimizationNote": "Ten en conta que as descargas en segundo plano poderías realizarse de xeito máis fiable cambiando ao servizo en \"primeiro plano\" nos axustes de Obtainium e/ou desactivando a optimización da batería para Obtanium nos axustes do sistema.",
-    "beforeNewInstallsShareToAppVerifier": "Compartir novas apps con AppVerifier (se está dispoñible)",
+    "beforeNewInstallsShareToAppVerifier": "Compartir novas apps con \"Verified Apps\" (se está dispoñible)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "A actualización en segundo plano atopou {} actualización - avisará a usuaria se fose preciso",
         "other": "A actualización en segundo plano atopou {} actualizacións - avisará á usuaria se fose preciso"

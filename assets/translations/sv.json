@@ -31,7 +31,7 @@
     "appSource": "Appkälla",
     "appSourceURL": "URL till Appkälla",
     "appURLList": "App URL-lista",
-    "appVerifierInstructionToast": "Dela till AppVerifier och återvänd sedan hit när du är klar.",
+    "appVerifierInstructionToast": "Dela till \"Verified Apps\" och återvänd sedan hit när du är klar.",
     "appWithIdOrNameNotFound": "Ingen App funnen med det namnet eller ID",
     "appearance": "Utseende",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Bakgrundsuppdateringar är inte möjligt för alla appar.",
     "badDownload": "APK kunde inte analyseras (inkompatibel eller partiell nedladdning)",
     "batteryOptimizationNote": "Observera att nedladdningar i bakgrunden kan fungera mer tillförlitligt om du inaktiverar OS-batterioptimeringar för Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Dela nya appar med AppVerifier (om tillgängligt)",
+    "beforeNewInstallsShareToAppVerifier": "Dela nya appar med \"Verified Apps\" (om tillgängligt)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "BG-uppdateringskontroll hittades {} uppdatering - kommer att meddela användaren om det behövs",
         "other": "BG-uppdateringskontroll hittades {} uppdateringar - kommer att meddela användaren om det behövs"

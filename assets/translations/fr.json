@@ -31,7 +31,7 @@
     "appSource": "Source de l'application",
     "appSourceURL": "URL source de l'application",
     "appURLList": "Liste d'URL d'applications",
-    "appVerifierInstructionToast": "Partagez avec AppVerifier, puis revenez ici une fois terminé.",
+    "appVerifierInstructionToast": "Partagez avec \"Verified Apps\", puis revenez ici une fois terminé.",
     "appWithIdOrNameNotFound": "Aucune application trouvée avec cet identifiant ou ce nom",
     "appearance": "Apparence",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Les mises à jour en arrière-plan ne sont pas possibles pour toutes les applications.",
     "badDownload": "L'APK n'a pas pu être analysé (téléchargement incomplet ou incompatible)",
     "batteryOptimizationNote": "Notez que les téléchargements en arrière-plan peuvent être plus fiables si vous \"désactivez les optimisations de la batterie\" dans les paramètres d'Obtainium de votre système.",
-    "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec AppVerifier (si disponible)",
+    "beforeNewInstallsShareToAppVerifier": "Partager les nouvelles applications avec \"Verified Apps\" (si disponible)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "La recherche en arrière-plan a trouvé {} mise à jour - l'utilisateur sera averti si nécessaire",
         "other": "La recherche en arrière-plan a trouvé {} mises à jour - l'utilisateur sera averti si nécessaire"

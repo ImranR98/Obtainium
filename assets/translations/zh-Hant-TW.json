@@ -31,7 +31,7 @@
     "appSource": "應用程式來源",
     "appSourceURL": "應用程式來源網址",
     "appURLList": "應用程式網址清單",
-    "appVerifierInstructionToast": "分享至 AppVerifier，準備就緒後返回這裡。",
+    "appVerifierInstructionToast": "分享至 \"Verified Apps\"，準備就緒後返回這裡。",
     "appWithIdOrNameNotFound": "找不到符合該識別碼或名稱的應用程式",
     "appearance": "外觀",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "部分應用程式可能無法進行背景更新。",
     "badDownload": "無法剖析 APK（不相容或下載未完成）",
     "batteryOptimizationNote": "請注意，如果您在 Obtainium 設定中切換為「前景服務」，和／或在作業系統設定中停用 Obtainium 的電池最佳化，背景下載可能會更可靠地運作。",
-    "beforeNewInstallsShareToAppVerifier": "將新的應用程式分享給 AppVerifier（如果可用）",
+    "beforeNewInstallsShareToAppVerifier": "將新的應用程式分享給 \"Verified Apps\"（如果可用）",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "背景更新檢查找到 {} 個更新 - 必要時將通知使用者",
         "other": "背景更新檢查找到 {} 個更新 - 必要時將通知使用者"

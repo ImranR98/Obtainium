@@ -31,7 +31,7 @@
     "appSource": "Izvor aplikacije",
     "appSourceURL": "Izvorni URL aplikacije",
     "appURLList": "Lista URL adresa aplikacija",
-    "appVerifierInstructionToast": "Dijeli sa AppVerifier-om, zatim se vratite kada ste spremni.",
+    "appVerifierInstructionToast": "Dijeli sa \"Verified Apps\"-om, zatim se vratite kada ste spremni.",
     "appWithIdOrNameNotFound": "Nije pronađena aplikacija s tim ID-om ili imenom",
     "appearance": "Izgled",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Ažuriranja u pozadini možda neće raditi za sve aplikacije.",
     "badDownload": "APK ne može biti raščlanjen (nekomaptibilno ili delimično preuzimanje)",
     "batteryOptimizationNote": "Imajte na umu da pozadinska preuzimanja rade bolje ako se aplikacija izuzme iz optimizacije baterije.",
-    "beforeNewInstallsShareToAppVerifier": "Dijeli nove aplikacije sa AppVerifier-om (ako je dostupno)",
+    "beforeNewInstallsShareToAppVerifier": "Dijeli nove aplikacije sa \"Verified Apps\"-om (ako je dostupno)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Provjera ažuriranja u pozadini je pronašla {} ažuriranje - korisnik će biti obavješten ako je to potrebno",
         "other": "Provjera ažuriranja u pozadini je pronašla {} ažuriranja - korisnik će biti obavješten ako je to potrebno"

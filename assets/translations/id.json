@@ -31,7 +31,7 @@
     "appSource": "Sumber aplikasi",
     "appSourceURL": "Tambah sumber URL",
     "appURLList": "Daftar URL aplikasi",
-    "appVerifierInstructionToast": "Bagikan ke AppVerifier, lalu kembali ke sini jika sudah siap.",
+    "appVerifierInstructionToast": "Bagikan ke \"Verified Apps\", lalu kembali ke sini jika sudah siap.",
     "appWithIdOrNameNotFound": "Tidak ada aplikasi yang ditemukan dengan ID atau nama tersebut",
     "appearance": "Tampilan",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Pembaruan latar belakang mungkin tidak dapat dilakukan untuk semua aplikasi.",
     "badDownload": "APK tidak dapat diurai (tidak kompatibel atau diunduh sebagian)",
     "batteryOptimizationNote": "Perhatikan bahwa unduhan latar belakang dapat bekerja lebih andal jika Anda menonaktifkan optimasi baterai OS untuk Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Bagikan aplikasi baru dengan AppVerifier (jika tersedia)",
+    "beforeNewInstallsShareToAppVerifier": "Bagikan aplikasi baru dengan \"Verified Apps\" (jika tersedia)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Pemeriksaan pembaruan latar belakang menemukan {} pembaruan - akan memberi tahu pengguna jika diperlukan",
         "other": "Pemeriksaan pembaruan latar belakang menemukan {} pembaruan - akan memberi tahu pengguna jika diperlukan"

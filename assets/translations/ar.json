@@ -31,7 +31,7 @@
     "appSource": "مصدر التطبيق",
     "appSourceURL": "رابط مصدر التطبيق",
     "appURLList": "قائمة روابط التطبيقات",
-    "appVerifierInstructionToast": "شارك مع AppVerifier، ثم عُد هنا عندما تكون جاهزًا.",
+    "appVerifierInstructionToast": "شارك مع \"Verified Apps\"، ثم عُد هنا عندما تكون جاهزًا.",
     "appWithIdOrNameNotFound": "لم يُعثر على تطبيق بهذا المعرّف أو الاسم",
     "appearance": "المظهر",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "قد لا تكون التحديثات في الخلفية مفعّلة لجميع التطبيقات.",
     "badDownload": "تعذر تحليل ملف APK (تنزيل غير متوافق أو غير مكتمل)",
     "batteryOptimizationNote": "لاحظ أن التنزيلات في الخلفية قد تعمل بشكل أكثر موثوقية إذا قمت بتعطيل تحسينات بطارية النظام لـ Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "مشاركة التطبيقات الجديدة مع AppVerifier (إذا كان متاحًا)",
+    "beforeNewInstallsShareToAppVerifier": "مشاركة التطبيقات الجديدة مع \"Verified Apps\" (إذا كان متاحًا)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "وجد التحقق من التحديثات في الخلفية {} تحديث - سيتم إخطار المستخدم إذا لزم الأمر",
         "other": "وجد التحقق من التحديثات في الخلفية {} تحديثات - سيتم إخطار المستخدم إذا لزم الأمر"

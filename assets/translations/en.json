@@ -31,7 +31,7 @@
   "appSource": "App source",
   "appSourceURL": "App source URL",
   "appURLList": "App URL list",
-  "appVerifierInstructionToast": "Share to AppVerifier, then return here when ready.",
+  "appVerifierInstructionToast": "Share to \"Verified Apps\", then return here when ready.",
   "appWithIdOrNameNotFound": "No app was found with that ID or name",
   "appearance": "Appearance",
   "apps": {
@@ -62,7 +62,7 @@
   "backgroundUpdateReqsExplanation": "Background updates may not be possible for all apps.",
   "badDownload": "The APK could not be parsed (incompatible or partial download)",
   "batteryOptimizationNote": "Note that background downloads may work more reliably if you switch to the \"foreground service\" in the Obtainium settings and/or disable battery optimization for Obtainium in your OS settings.",
-  "beforeNewInstallsShareToAppVerifier": "Share new apps with AppVerifier (if available)",
+  "beforeNewInstallsShareToAppVerifier": "Share new apps with \"Verified Apps\" (if available)",
   "bgCheckFoundUpdatesWillNotifyIfNeeded": {
     "one": "BG update checking found {} update - will notify user if needed",
     "other": "BG update checking found {} updates - will notify user if needed"

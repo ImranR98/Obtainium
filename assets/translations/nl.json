@@ -31,7 +31,7 @@
     "appSource": "App-bron",
     "appSourceURL": "App-bron URL",
     "appURLList": "App URL-lijst",
-    "appVerifierInstructionToast": "Deel het met AppVerifier en keer daarna hier terug.",
+    "appVerifierInstructionToast": "Deel het met \"Verified Apps\" en keer daarna hier terug.",
     "appWithIdOrNameNotFound": "Er is geen app gevonden met die ID of die naam",
     "appearance": "Weergave",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Achtergrondupdates zijn niet voor alle apps mogelijk.",
     "badDownload": "De APK kon niet worden verwerkt (incompatibele of gedeeltelijke download)",
     "batteryOptimizationNote": "Merk op dat downloads op de achtergrond mogelijk betrouwbaarder werken als je de batterijoptimalisatie van het besturingssysteem voor Obtainium uitschakelt.",
-    "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met AppVerifier (indien beschikbaar)",
+    "beforeNewInstallsShareToAppVerifier": "Nieuwe Apps delen met \"Verified Apps\" (indien beschikbaar)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Achtergrond-updatecontrole heeft {} update gevonden - zal de gebruiker op de hoogte stellen indien nodig",
         "other": "Achtergrond-updatecontrole heeft {} updates gevonden - zal de gebruiker op de hoogte stellen indien nodig"

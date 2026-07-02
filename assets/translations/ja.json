@@ -31,7 +31,7 @@
     "appSource": "アプリのソース",
     "appSourceURL": "アプリのソースURL",
     "appURLList": "アプリのURLリスト",
-    "appVerifierInstructionToast": "AppVerifierに共有し、準備ができたらここに戻ってください。",
+    "appVerifierInstructionToast": "\"Verified Apps\"に共有し、準備ができたらここに戻ってください。",
     "appWithIdOrNameNotFound": "そのIDや名前を持つアプリは見つかりませんでした",
     "appearance": "外観",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "バックグラウンドアップデートは、すべてのアプリで利用できるとは限りません。",
     "badDownload": "APK を解析できませんでした（互換性がないか、部分的にダウンロードされています）。",
     "batteryOptimizationNote": "Obtainiumの設定で「フォアグラウンドサービス」に切り替えるか、OSの設定でバッテリー最適化を無効にすると、バックグラウンドダウンロードがより確実に動作するようになります。",
-    "beforeNewInstallsShareToAppVerifier": "AppVerifierで新しいアプリを共有する（利用可能な場合）",
+    "beforeNewInstallsShareToAppVerifier": "\"Verified Apps\"で新しいアプリを共有する（利用可能な場合）",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します",
         "other": "バックグラウンドでのアップデート確認で {} 個のアップデートを発見 - 必要に応じてユーザーに通知します"

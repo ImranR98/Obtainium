@@ -31,7 +31,7 @@
     "appSource": "App-kilde",
     "appSourceURL": "URL til app-kilde",
     "appURLList": "Liste over app-URL'er",
-    "appVerifierInstructionToast": "Del til AppVerifier, og vend tilbage, når du er klar.",
+    "appVerifierInstructionToast": "Del til \"Verified Apps\", og vend tilbage, når du er klar.",
     "appWithIdOrNameNotFound": "Ingen app med det ID eller navn blev fundet",
     "appearance": "Udseende",
     "apps": {
@@ -62,7 +62,7 @@
     "backgroundUpdateReqsExplanation": "Baggrundsopdateringer er måske ikke mulige for alle apps.",
     "badDownload": "APK'en kunne ikke analyseres (inkompatibel eller delvis hentning)",
     "batteryOptimizationNote": "Bemærk, at baggrundsdownloads kan fungere mere pålideligt, hvis du deaktiverer OS-batterioptimering for Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Del nye apps med AppVerifier (hvis tilgængelig)",
+    "beforeNewInstallsShareToAppVerifier": "Del nye apps med \"Verified Apps\" (hvis tilgængelig)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "Baggrundsopdateringstjek fandt {} opdatering. Underretter brugeren, hvis nødvendigt",
         "other": "Baggrundsopdateringstjek fandt {} opdateringer. Underretter brugeren, hvis nødvendigt"

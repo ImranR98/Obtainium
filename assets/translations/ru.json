@@ -32,7 +32,7 @@
     "appSource": "Источник",
     "appSourceURL": "URL-адрес источника приложения",
     "appURLList": "Список URL-адресов приложений",
-    "appVerifierInstructionToast": "Поделитесь с AppVerifier, а затем вернитесь сюда, когда будете готовы.",
+    "appVerifierInstructionToast": "Поделитесь с \"Verified Apps\", а затем вернитесь сюда, когда будете готовы.",
     "appWithIdOrNameNotFound": "Приложение с таким ID или названием не было найдено",
     "appearance": "Внешний вид",
     "apps": {
@@ -64,7 +64,7 @@
     "backgroundUpdateReqsExplanation": "Фоновые обновления могут быть возможны не для всех приложений",
     "badDownload": "Не удалось разобрать APK (несовместимая или неполная загрузка)",
     "batteryOptimizationNote": "Обратите внимание, что фоновая загрузка может работать более надёжно, если отключить оптимизацию батареи ОС для Obtainium.",
-    "beforeNewInstallsShareToAppVerifier": "Делиться новыми приложениями с AppVerifier (если доступно)",
+    "beforeNewInstallsShareToAppVerifier": "Делиться новыми приложениями с \"Verified Apps\" (если доступно)",
     "bgCheckFoundUpdatesWillNotifyIfNeeded": {
         "one": "При проверке в фоновом режиме было обнаружено {} обновления — пользователь будет уведомлен по необходимости",
         "other": "При проверке в фоновом режиме было обнаружено {} обновлений — пользователь будет уведомлен по необходимости"

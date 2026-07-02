@@ -39,6 +39,15 @@ const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
 const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
 
+// Package IDs of "Verified Apps" (formerly AppVerifier) and its known forks
+// that accept a shared APK for verification before installation.
+const List<String> _verifiedAppsPackageIds = [
+  'dev.soupslurpr.appverifier', // AppVerifier (original)
+  'com.roundsalmon4.appverifier', // AppVerifierBG fork
+  'org.privacyguides.verifiedapps', // Privacy Guides "Verified Apps"
+  'org.privacyguides.verifiedapps.play', // Privacy Guides "Verified Apps" (Play)
+];
+
 // A silent background install can't report completion synchronously — the
 // platform install API's result never arrives while backgrounded (#896). The
 // session still commits, so we poll (via waitForPackageInstall) for a short
@@ -618,7 +627,7 @@ extension AppsProviderInstall on AppsProvider {
     List<DownloadedApk> additionalAPKs = const [],
   }) async {
     if (firstTimeWithContext != null) {
-      await _shareWithAppVerifier(file, firstTimeWithContext);
+      await _shareWithVerifiedApps(file, firstTimeWithContext);
     }
     final newInfo = await packageManager.getPackageArchiveInfo(
       archiveFilePath: file.file.path,
@@ -716,12 +725,19 @@ extension AppsProviderInstall on AppsProvider {
     return installed;
   }
 
-  Future<void> _shareWithAppVerifier(
+  Future<void> _shareWithVerifiedApps(
     DownloadedApk file,
     BuildContext context,
   ) async {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
-    if (await getInstalledInfo('dev.soupslurpr.appverifier') == null) return;
+    var anyInstalled = false;
+    for (final id in _verifiedAppsPackageIds) {
+      if (await getInstalledInfo(id, printErr: false) != null) {
+        anyInstalled = true;
+        break;
+      }
+    }
+    if (!anyInstalled) return;
     final XFile f = XFile(
       file.file.path,
       mimeType: 'application/vnd.android.package-archive',
