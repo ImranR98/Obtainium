@@ -1,14 +1,19 @@
 #!/bin/bash
 set -euo pipefail
-# Convenience script
+# Convenience script — invoke with "build" to build only, or no args for sync+build.
 
 CURR_DIR="$(pwd)"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 trap "cd \"$CURR_DIR\"" EXIT
 cd "$SCRIPT_DIR"
 
-if [ -z "${1:-}" ]; then
-    git fetch && git merge origin/main && git push # Typically run after a PR to main, so bring dev up to date
+SYNC_MODE=false
+if [ "${1:-build}" != "build" ]; then
+    SYNC_MODE=true
+fi
+
+if $SYNC_MODE; then
+    git fetch && git merge origin/main && git push
 fi
 
 # Update local Flutter
@@ -32,25 +37,25 @@ if [ -z "$(which flutter)" ]; then
     export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
 fi
 
-# flutter pub upgrade --tighten --major-versions
-
 flutter clean
 flutter pub get
 APP_VERSION="$(grep '^version: ' pubspec.yaml | sed 's/version: //; s/+.*//' | head -1)"
 DART_DEFINE="--dart-define=APP_VERSION=$APP_VERSION"
 # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
-sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
+sed -i -E 's/^(-Wl,)(--build-id=none,)?/\1--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
 
-flutter build apk $DART_DEFINE --flavor normal && flutter build apk $DART_DEFINE --split-per-abi --flavor normal # Build (both split and combined APKs)
+flutter build apk $DART_DEFINE --flavor normal && flutter build apk $DART_DEFINE --split-per-abi --flavor normal
 for file in ./build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
-flutter build apk $DART_DEFINE --flavor fdroid -t lib/main_fdroid.dart && # Do the same for the F-Droid flavour
+# Do the same for the F-Droid flavour
+flutter build apk $DART_DEFINE --flavor fdroid -t lib/main_fdroid.dart && \
     flutter build apk $DART_DEFINE --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
-for file in ./build/app/outputs/flutter-apk/*.sha1; do gpg --sign --detach-sig "$file"; done # Generate PGP signatures
-rsync -r ./build/app/outputs/flutter-apk/ ~/Downloads/Obtainium-build/                       # Dropoff in Downloads to allow for drag-drop into Flatpak Firefox
-cd ~/Downloads/Obtainium-build/                                                              # Make zips just in case (for in-comment uploads)
+for file in ./build/app/outputs/flutter-apk/*.sha1; do gpg --sign --detach-sig "$file"; done
+rsync -r ./build/app/outputs/flutter-apk/ ~/Downloads/Obtainium-build/
+cd ~/Downloads/Obtainium-build/
 for apk in *.apk; do
     PREFIX="$(echo "$apk" | head -c -5)"
     zip "$PREFIX" "$PREFIX"*
 done
 mkdir -p zips
+shopt -s nullglob
 mv *.zip zips/

@@ -10,6 +10,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/pages/import_export.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -86,7 +87,7 @@ class AddAppPageState extends State<AddAppPage> {
       sourceProvider.getSource(input);
       changeUserInput(input, true, false, updateUrlInput: true);
     } catch (e) {
-      // Error is thrown without context; handled by the page
+      unawaited(LogsProvider().add('linkFn error: $e'));
     }
   }
 

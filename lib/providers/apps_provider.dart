@@ -201,7 +201,7 @@ Future<File> downloadFileWithRetry(
       logs: logs,
     );
   } catch (e) {
-    if (retries > 0 && e is ClientException) {
+    if (retries > 0 && (e is ClientException || e is SocketException || e is TimeoutException)) {
       await Future.delayed(
         const Duration(seconds: _retryDelaySeconds),
       );

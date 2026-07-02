@@ -780,7 +780,13 @@ class AppListBuilder {
     SortColumnSettings sortColumn,
     SortOrderSettings sortOrder,
   ) {
-    if (sortColumn == SortColumnSettings.added) return List.from(apps);
+    if (sortColumn == SortColumnSettings.added) {
+      final list = List<AppInMemory>.from(apps);
+      if (sortOrder == SortOrderSettings.descending) {
+        return list.reversed.toList();
+      }
+      return list;
+    }
 
     final isDesc = sortOrder == SortOrderSettings.descending;
     if (sortColumn == SortColumnSettings.releaseDate) {

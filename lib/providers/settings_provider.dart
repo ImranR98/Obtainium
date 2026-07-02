@@ -271,8 +271,12 @@ class SettingsProvider with ChangeNotifier {
   }
 
   /// Prompts the user for the Android install-permission grant. Loops until
-  /// granted (if [enforce] is true) or cancelled.
+  /// granted (if [enforce] is true) or cancelled. Has a maximum iteration limit
+  /// to prevent infinite loops on systems where the permission dialog never
+  /// appears.
   Future<bool> getInstallPermission({bool enforce = false}) async {
+    var attempts = 0;
+    const maxAttempts = 10;
     while (!(await Permission.requestInstallPackages.isGranted)) {
       unawaited(
         Fluttertoast.showToast(
@@ -284,7 +288,7 @@ class SettingsProvider with ChangeNotifier {
           PermissionStatus.granted) {
         return true;
       }
-      if (!enforce) {
+      if (!enforce || ++attempts >= maxAttempts) {
         return false;
       }
       await Future.delayed(const Duration(seconds: 1));

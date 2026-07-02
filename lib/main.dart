@@ -91,6 +91,8 @@ void startCallback() {
 }
 
 class BackgroundUpdateTaskHandler extends TaskHandler {
+  var _bgUpdateInProgress = false;
+
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     try {
@@ -108,7 +110,11 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
 
   @override
   void onRepeatEvent(DateTime timestamp) {
-    bgUpdateCheck('bg_check', null).catchError((e, stack) {
+    if (_bgUpdateInProgress) return;
+    _bgUpdateInProgress = true;
+    bgUpdateCheck('bg_check', null).whenComplete(() {
+      _bgUpdateInProgress = false;
+    }).catchError((e, stack) {
       unawaited(
         LogsProvider().add(
           'BG foreground service onRepeatEvent crashed: $e\n$stack',
@@ -240,24 +246,25 @@ class _ObtainiumState extends State<Obtainium> {
   var _firstRunHandled = false;
   var _launchByNotifChecked = false;
   var _listenerRegistered = false;
+  var _fontLoaded = false;
   void Function()? _settingsListener;
   SettingsProvider? _settingsProvider;
 
-  void _manageServices(SettingsProvider settings) {
+  Future<void> _manageServices(SettingsProvider settings) async {
     final interval = settings.updateInterval;
     final useFG = settings.useFGService;
     if (interval == _lastUpdateInterval && useFG == _lastUseFGService) return;
     _lastUpdateInterval = interval;
     _lastUseFGService = useFG;
     if (interval == 0) {
-      stopForegroundService();
-      BackgroundFetch.stop();
+      await stopForegroundService();
+      await BackgroundFetch.stop();
     } else if (useFG) {
-      BackgroundFetch.stop();
-      startForegroundService(false);
+      await BackgroundFetch.stop();
+      await startForegroundService(false);
     } else {
-      stopForegroundService();
-      BackgroundFetch.start();
+      await stopForegroundService();
+      await BackgroundFetch.start();
     }
   }
 
@@ -325,7 +332,7 @@ class _ObtainiumState extends State<Obtainium> {
       final appsProvider = context.read<AppsProvider>();
       final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
-      _manageServices(settingsProvider);
+      unawaited(_manageServices(settingsProvider));
       _handleFirstRun(settingsProvider, appsProvider, logger, context);
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
@@ -334,7 +341,7 @@ class _ObtainiumState extends State<Obtainium> {
       if (!_listenerRegistered) {
         _listenerRegistered = true;
         _settingsListener = () {
-          _manageServices(settingsProvider);
+          unawaited(_manageServices(settingsProvider));
           _handleFirstRun(settingsProvider, appsProvider, logger, context);
         };
         settingsProvider.addListener(_settingsListener!);
@@ -491,7 +498,10 @@ class _ObtainiumState extends State<Obtainium> {
                 .harmonized();
           }
 
-          if (settingsProvider.useSystemFont) NativeFeatures.loadSystemFont();
+          if (settingsProvider.useSystemFont && !_fontLoaded) {
+            _fontLoaded = true;
+            unawaited(NativeFeatures.loadSystemFont());
+          }
 
           return MaterialApp(
             title: 'Obtainium',

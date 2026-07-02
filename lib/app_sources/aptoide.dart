@@ -6,8 +6,8 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Aptoide extends AppSource {
   Aptoide() {
-    hosts = ['aptoide.com'];
     name = 'Aptoide';
+    hosts = ['aptoide.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;

@@ -423,11 +423,10 @@ class _SettingsPageState extends State<SettingsPage> {
           value: ColourSchemeMode.expressive,
           label: tr('expressive'),
         ),
-        if (sdk >= 31)
-          DropdownMenuEntry(
-            value: ColourSchemeMode.materialYou,
-            label: tr('useMaterialYou'),
-          ),
+        DropdownMenuEntry(
+          value: ColourSchemeMode.materialYou,
+          label: tr('useMaterialYou'),
+        ),
       ],
       onSelected: (value) {
         if (value != null) {

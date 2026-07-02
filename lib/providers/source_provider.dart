@@ -320,8 +320,8 @@ String preStandardizeUrl(String url) {
       !url.contains('[')) {
     throw UnsupportedURLError();
   }
-  if (url.toLowerCase().indexOf('http://') != 0 &&
-      url.toLowerCase().indexOf('https://') != 0) {
+  if (!url.toLowerCase().startsWith('http://') &&
+      !url.toLowerCase().startsWith('https://')) {
     url = 'https://$url';
   }
   final uri = Uri.tryParse(url);

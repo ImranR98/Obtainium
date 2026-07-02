@@ -13,7 +13,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
+      ref: c9e144fae63231b5d1d7b88af779c314afcb6e83
       resolved-ref: c9e144fae63231b5d1d7b88af779c314afcb6e83
       url: "https://github.com/ImranR98/android_package_installer"
     source: git
@@ -22,7 +22,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "18231a8a2343747440b0bfe90f7d56ef7f586099"
       resolved-ref: "18231a8a2343747440b0bfe90f7d56ef7f586099"
       url: "https://github.com/ImranR98/android_package_manager"
     source: git
@@ -31,7 +31,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
+      ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       resolved-ref: "077e15d7d0acb82283b89dfd82f4984b27b28f95"
       url: "https://github.com/re7gog/android_system_font"
     source: git
@@ -148,6 +148,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  checked_yaml:
+    dependency: transitive
+    description:
+      name: checked_yaml
+      sha256: "959525d3162f249993882720d52b7e0c833978df229be20702b33d48d91de70f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
+  cli_util:
+    dependency: transitive
+    description:
+      name: cli_util
+      sha256: ff6785f7e9e3c38ac98b2fb035701789de90154024a75b6cb926445e83197d1c
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   clock:
     dependency: transitive
     description:
@@ -409,6 +425,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.2.2"
+  flutter_launcher_icons:
+    dependency: "direct dev"
+    description:
+      name: flutter_launcher_icons
+      sha256: "10f13781741a2e3972126fae08393d3c4e01fa4cd7473326b94b72cf594195e7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.14.4"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -608,6 +632,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  image:
+    dependency: transitive
+    description:
+      name: image
+      sha256: f9881ff4998044947ec38d098bc7c8316ae1186fa786eddffdb867b9bc94dfce
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.8.0"
   intl:
     dependency: "direct main"
     description:
@@ -632,6 +664,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      sha256: "2a743920d81b7910627f68ee2c9ac1fc0bfee32b9fc3403587d7c6791ca12f80"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.12.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -980,7 +1020,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
+      ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
       resolved-ref: "6dbcdf2c2045e326f59c062f542724aedf73cb6e"
       url: "https://github.com/AlexBacich/shared-storage"
     source: git
@@ -989,7 +1029,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
+      ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
       resolved-ref: "3ef7f8fbf904848d144304556b0f80c91fee82a5"
       url: "https://github.com/re7gog/shizuku_apk_installer"
     source: git

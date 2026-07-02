@@ -175,10 +175,12 @@ class _AppFilePickerState extends State<AppFilePicker> {
           child: Text(tr('cancel')),
         ),
         FilledButton(
-          onPressed: () {
-            context.read<SettingsProvider>().selectionClick();
-            Navigator.of(context).pop(fileUrl);
-          },
+          onPressed: fileUrl != null
+              ? () {
+                  context.read<SettingsProvider>().selectionClick();
+                  Navigator.of(context).pop(fileUrl);
+                }
+              : null,
           child: Text(tr('continue')),
         ),
       ],

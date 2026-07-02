@@ -566,7 +566,7 @@ class _AppPageState extends State<AppPage> {
           app?.app.installedVersion != null &&
           app?.app.installedVersion == app?.app.latestVersion)
         IconButton(
-          onPressed: app?.app == null || updating
+          onPressed: updating
               ? null
               : () {
                   resetInstallStatus(app);

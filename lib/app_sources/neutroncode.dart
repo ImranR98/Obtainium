@@ -94,7 +94,7 @@ class NeutronCode extends AppSource {
         return APKDetails(
           version,
           getApkUrlsFromUrls([apkUrl]),
-          AppNames(sourceIdentifier, name ?? standardUrl.split('/').last),
+          AppNames(this.name, name ?? standardUrl.split('/').last),
           releaseDate: dateString != null
               ? DateTime.tryParse(dateString)
               : null,

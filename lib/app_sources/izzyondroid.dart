@@ -4,12 +4,11 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class IzzyOnDroid extends AppSource {
-  late FDroid fd;
+  final FDroid fd = FDroid();
 
   IzzyOnDroid() {
     name = 'IzzyOnDroid';
     hosts = ['izzysoft.de'];
-    fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =
         List<List<GeneratedFormItem>>.from(fd.additionalSourceAppSpecificSettingFormItems);
     allowSubDomains = true;

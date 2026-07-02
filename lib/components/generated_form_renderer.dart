@@ -175,7 +175,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
 
-  void notifyFormChange({bool isBuilding = false, bool forceInvalid = false}) {
+  void notifyFormChange({bool forceInvalid = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < formInputs.length; r++) {
@@ -188,7 +188,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (forceInvalid) {
       valid = false;
     }
-    widget.onValueChanges(returnValues, valid, isBuilding);
+    widget.onValueChanges(returnValues, valid, false);
   }
 
   Widget _initTextField(GeneratedFormTextField formItem) {
@@ -329,7 +329,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     );
   }
 
-  void initForm() {
+  void _initFormData() {
     initKey = widget.key;
     _itemsHash = _computeItemsHash(widget.items);
     for (final c in _textControllers) {
@@ -363,13 +363,27 @@ class _GeneratedFormState extends State<GeneratedForm> {
         }
       }).toList();
     }).toList();
-    notifyFormChange(isBuilding: true);
   }
 
   @override
   void initState() {
     super.initState();
-    initForm();
+    _initFormData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyFormChange();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant GeneratedForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.key != initKey ||
+        _computeItemsHash(widget.items) != _itemsHash) {
+      _initFormData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyFormChange();
+      });
+    }
   }
 
   @override
@@ -419,7 +433,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 if (valid) {
                   this.values[fieldKey]?[i] = values;
                 }
-                notifyFormChange(isBuilding: isBuilding, forceInvalid: !valid);
+                notifyFormChange(forceInvalid: !valid);
               },
             ),
             Row(
@@ -474,9 +488,6 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.key != initKey || _computeItemsHash(widget.items) != _itemsHash) {
-      initForm();
-    }
     final List<List<Widget>> renderedInputs = [
       for (final row in formInputs) [...row],
     ];

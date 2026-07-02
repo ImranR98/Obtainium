@@ -35,9 +35,7 @@ class HuaweiAppGallery extends AppSource {
       additionalSettings,
       followRedirects: false,
     );
-    if (res.statusCode == 200 ||
-        res.statusCode == 302 ||
-        res.statusCode == 304) {
+    if (res.statusCode == 200 || res.statusCode == 302) {
       return res;
     } else {
       throw getObtainiumHttpError(res);

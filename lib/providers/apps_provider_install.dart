@@ -695,8 +695,8 @@ extension AppsProviderInstall on AppsProvider {
   ) async {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
     if (await getInstalledInfo('dev.soupslurpr.appverifier') == null) return;
-    final XFile f = XFile.fromData(
-      await file.file.readAsBytes(),
+    final XFile f = XFile(
+      file.file.path,
       mimeType: 'application/vnd.android.package-archive',
     );
     unawaited(

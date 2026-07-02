@@ -151,12 +151,12 @@ class Uptodown extends AppSource {
       throw getObtainiumHttpError(res);
     }
     final html = parse(res.body);
-    final finalUrlKey = html
+    final urlDataKey = html
         .querySelector('#detail-download-button')
         ?.attributes['data-url'];
-    if (finalUrlKey == null) {
+    if (urlDataKey == null) {
       throw NoAPKError();
     }
-    return 'https://dw.${hosts[0]}/dwn/$finalUrlKey';
+    return 'https://dw.${hosts[0]}/dwn/$urlDataKey';
   }
 }

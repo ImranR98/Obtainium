@@ -52,6 +52,7 @@ class AppsPageState extends State<AppsPage> {
 
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
+  final SourceProvider sourceProvider = SourceProvider();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedCategories = {};
   DateTime? refreshingSince;
@@ -363,7 +364,7 @@ class AppsPageState extends State<AppsPage> {
                 value: filter.sourceFilter,
                 [
                   MapEntry('', tr('none')),
-                  ...SourceProvider().sources.map(
+                  ...sourceProvider.sources.map(
                     (e) => MapEntry(e.name, e.name),
                   ),
                 ],

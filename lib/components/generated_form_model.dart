@@ -284,7 +284,9 @@ class GeneratedFormSwitch extends GeneratedFormItem {
 
   @override
   bool ensureType(val) {
-    return val == true || val == 'true';
+    if (val is bool) return val;
+    if (val is String) return val.toLowerCase() == 'true';
+    return false;
   }
 
   @override

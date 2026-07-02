@@ -49,7 +49,6 @@ class CoolApk extends AppSource {
       const String apiUrl = 'https://api2.coolapk.com';
 
       final detailUrl = '$apiUrl/v6/apk/detail?id=$appId';
-      final headers = await getRequestHeaders(additionalSettings, detailUrl);
       final res = await sourceRequest(detailUrl, additionalSettings);
 
       if (res.statusCode != 200) {
@@ -92,7 +91,7 @@ class CoolApk extends AppSource {
         appId,
         aid,
         version,
-        headers,
+        await getRequestHeaders(additionalSettings, detailUrl),
       );
       if (apkUrl.isEmpty) {
         throw NoAPKError();

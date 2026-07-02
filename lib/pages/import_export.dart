@@ -179,6 +179,9 @@ class _ImportSectionState extends State<ImportSection> {
               showMessage(tr('cancelled'), context);
               return;
             }
+            if (result.files.isEmpty) {
+              return;
+            }
             if (mounted) {
               setState(() {
                 importInProgress = true;
@@ -904,7 +907,7 @@ class ImportFromURLListController extends ChangeNotifier {
   Future<void> importFromFile(BuildContext context) async {
     try {
       final result = await FilePicker.pickFiles();
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
         final path = result.files.single.path;
         if (path == null) return;
         final urls = RegExp(r'https?://[^\s"]+')
