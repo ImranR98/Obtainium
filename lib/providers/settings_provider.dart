@@ -45,6 +45,8 @@ Locale? tryParseLocale(String? localeString) {
 
 enum InstallerMode { system, shizuku, external }
 
+enum GroupByMode { none, category, source }
+
 enum ThemeSettings { system, light, dark }
 
 enum SortColumnSettings { added, nameAuthor, authorName, releaseDate }
@@ -97,6 +99,7 @@ class SettingsProvider with ChangeNotifier {
     isTV = _cachedIsTV!;
     _migrateLegacyExportSetting();
     _normalizeInstallPreference();
+    _migrateGroupBySetting();
     notifyListeners();
   }
 
@@ -105,6 +108,18 @@ class SettingsProvider with ChangeNotifier {
     final legacyBool = _getBool('exportSettings');
     if (legacyBool != null) {
       prefs?.setInt('exportSettings', legacyBool ? 1 : 0);
+    }
+  }
+
+  void _migrateGroupBySetting() {
+    if (_getString('groupBy') != null) return;
+    final legacy = _getBool('groupByCategory');
+    if (legacy != null) {
+      prefs?.setString(
+        'groupBy',
+        legacy ? GroupByMode.category.name : GroupByMode.none.name,
+      );
+      unawaited(prefs?.remove('groupByCategory') ?? Future.value());
     }
   }
 
@@ -377,12 +392,19 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get groupByCategory {
-    return _getBool('groupByCategory') ?? false;
+  String get groupBy {
+    final stored = _getString('groupBy');
+    if (stored != null && GroupByMode.values.any((m) => m.name == stored)) {
+      return stored;
+    }
+    return GroupByMode.none.name;
   }
 
-  set groupByCategory(bool value) {
-    prefs?.setBool('groupByCategory', value);
+  set groupBy(String mode) {
+    final resolved = GroupByMode.values.any((m) => m.name == mode)
+        ? mode
+        : GroupByMode.none.name;
+    prefs?.setString('groupBy', resolved);
     notifyListeners();
   }
 

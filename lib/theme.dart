@@ -69,6 +69,12 @@ ThemeData buildObtainiumTheme(ColorScheme colorScheme, String fontFamily) {
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(20)),
+      // FAB shadow depth. Tweak these to try different values (M3 default is 6).
+      // `elevation` is the resting shadow; the others apply on interaction.
+      elevation: 4,
+      focusElevation: 6,
+      hoverElevation: 8,
+      highlightElevation: 6,
     ),
     inputDecorationTheme: InputDecorationThemeData(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

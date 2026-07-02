@@ -54,7 +54,7 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   final SourceProvider sourceProvider = SourceProvider();
   Set<String> selectedAppIds = {};
-  Set<String?> collapsedCategories = {};
+  Set<String?> collapsedGroups = {};
   DateTime? refreshingSince;
 
   final TextEditingController searchController = TextEditingController();
@@ -688,11 +688,11 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  void toggleCategoryCollapse(String? category) {
-    if (collapsedCategories.contains(category)) {
-      collapsedCategories.remove(category);
+  void toggleGroupCollapse(String? group) {
+    if (collapsedGroups.contains(group)) {
+      collapsedGroups.remove(group);
     } else {
-      collapsedCategories.add(category);
+      collapsedGroups.add(group);
     }
     setState(() {});
   }
@@ -702,14 +702,16 @@ class AppsPageState extends State<AppsPage> {
     BuildContext context,
     List<AppInMemory> listedApps,
     SettingsProvider settingsProvider,
-    AppsProvider appsProvider,
-  ) {
+    AppsProvider appsProvider, {
+    BorderRadius? borderRadius,
+  }) {
     final aim = listedApps[index];
     final app = aim.app;
     return AppListTile(
       appInMemory: aim,
       settingsProvider: settingsProvider,
       appsProvider: appsProvider,
+      borderRadius: borderRadius,
       multiSelected: selectedAppIds.contains(app.id),
       detailSelected: widget.selectedAppId == app.id,
       autofocus: index == 0 && settingsProvider.isTV,
@@ -746,31 +748,48 @@ class AppsPageState extends State<AppsPage> {
           listedApps,
           settingsProvider,
           appsProvider,
+          borderRadius: BorderRadius.circular(connectedTileBigRadius),
         ),
       ),
     );
   }
 
-  Widget _getCategoryCollapsibleTile(
+  Widget _getGroupCollapsibleTile(
     int index,
     BuildContext context,
     List<AppInMemory> listedApps,
-    List<String?> listedCategories,
-    Map<String?, List<int>> groupedByCategory,
+    String groupBy,
+    List<String?> listedGroups,
+    Map<String?, List<int>> grouped,
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
-    final category = listedCategories[index];
-    final appIndices = groupedByCategory[category] ?? [];
-    final expanded = !collapsedCategories.contains(category);
-    return AppListCategorySection(
-      category: category,
+    final group = listedGroups[index];
+    final appIndices = grouped[group] ?? [];
+    final expanded = !collapsedGroups.contains(group);
+    final title = groupBy == GroupByMode.source.name
+        ? (group ?? tr('noSource'))
+        : capitalizeFirst(group ?? tr('noCategory'));
+    return AppListGroupSection(
+      title: title,
       expanded: expanded,
       appCount: appIndices.length,
-      onToggle: () => toggleCategoryCollapse(category),
+      onToggle: () => toggleGroupCollapse(group),
       buildTiles: () => [
-        for (final i in appIndices)
-          _buildTile(i, context, listedApps, settingsProvider, appsProvider),
+        for (var j = 0; j < appIndices.length; j++)
+          _buildTile(
+            appIndices[j],
+            context,
+            listedApps,
+            settingsProvider,
+            appsProvider,
+            // Header occupies the top slot, so tiles are never first; the last
+            // tile gets the group's rounded bottom.
+            borderRadius: positionalTileRadius(
+              isFirst: false,
+              isLast: j == appIndices.length - 1,
+            ),
+          ),
       ],
     );
   }
@@ -807,28 +826,30 @@ class AppsPageState extends State<AppsPage> {
   Widget _getDisplayedList(
     BuildContext context,
     List<AppInMemory> listedApps,
-    List<String?> listedCategories,
-    Map<String?, List<int>> groupedByCategory,
+    String groupBy,
+    List<String?> listedGroups,
+    Map<String?, List<int>> grouped,
     SettingsProvider settingsProvider,
     AppsProvider appsProvider,
   ) {
-    return settingsProvider.groupByCategory &&
-            !(listedCategories.isEmpty ||
-                (listedCategories.length == 1 && listedCategories[0] == null))
+    return groupBy != GroupByMode.none.name &&
+            !(listedGroups.isEmpty ||
+                (listedGroups.length == 1 && listedGroups[0] == null))
         ? SliverList(
             delegate: SliverChildBuilderDelegate(
               (BuildContext context, int index) {
-                return _getCategoryCollapsibleTile(
+                return _getGroupCollapsibleTile(
                   index,
                   context,
                   listedApps,
-                  listedCategories,
-                  groupedByCategory,
+                  groupBy,
+                  listedGroups,
+                  grouped,
                   settingsProvider,
                   appsProvider,
                 );
               },
-              childCount: listedCategories.length,
+              childCount: listedGroups.length,
               addAutomaticKeepAlives: false,
             ),
           )
@@ -1074,19 +1095,27 @@ class AppsPageState extends State<AppsPage> {
         .where((id) => !trackOnlyUpdateIdsAllOrSelected.contains(id))
         .toList();
 
-    final groupedByCategory = <String?, List<int>>{};
-    for (var i = 0; i < listedApps.length; i++) {
-      final app = listedApps[i];
-      if (app.app.categories.isEmpty) {
-        groupedByCategory.putIfAbsent(null, () => []).add(i);
-      } else {
-        for (final cat in app.app.categories) {
-          groupedByCategory.putIfAbsent(cat, () => []).add(i);
+    final groupBy = settingsProvider.groupBy;
+    final grouped = <String?, List<int>>{};
+    if (groupBy == GroupByMode.category.name) {
+      for (var i = 0; i < listedApps.length; i++) {
+        final app = listedApps[i];
+        if (app.app.categories.isEmpty) {
+          grouped.putIfAbsent(null, () => []).add(i);
+        } else {
+          for (final cat in app.app.categories) {
+            grouped.putIfAbsent(cat, () => []).add(i);
+          }
         }
       }
+    } else if (groupBy == GroupByMode.source.name) {
+      for (var i = 0; i < listedApps.length; i++) {
+        grouped.putIfAbsent(listedApps[i].sourceType, () => []).add(i);
+      }
     }
-    final listedCategories = groupedByCategory.keys.toList();
-    listedCategories.sort((a, b) {
+    // Groups are ordered alphabetically, with the "none" bucket (null) last.
+    final listedGroups = grouped.keys.toList();
+    listedGroups.sort((a, b) {
       if (a == null && b == null) return 0;
       if (a == null) return 1;
       if (b == null) return -1;
@@ -1136,8 +1165,9 @@ class AppsPageState extends State<AppsPage> {
                   _getDisplayedList(
                     context,
                     listedApps,
-                    listedCategories,
-                    groupedByCategory,
+                    groupBy,
+                    listedGroups,
+                    grouped,
                     settingsProvider,
                     appsProvider,
                   ),
@@ -1148,13 +1178,14 @@ class AppsPageState extends State<AppsPage> {
           ),
         ),
         floatingActionButton: selectedAppIds.isNotEmpty
-            ? FloatingActionButton(
+            ? FloatingActionButton.extended(
                 onPressed: () {
                   settingsProvider.selectionClick();
                   showMoreOptionsBottomSheet(context, selectedApps);
                 },
                 tooltip: tr('more'),
-                child: const Icon(Icons.more_vert),
+                icon: const Icon(Icons.more_vert),
+                label: Text(tr('more')),
               )
             : null,
       ),

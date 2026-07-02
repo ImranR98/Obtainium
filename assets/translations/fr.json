@@ -181,7 +181,7 @@
     "googleVerificationWarningP1": "Google a annoncé qu'à partir de 2026/2027, toutes les applications sur les appareils Android \"certifiés\" obligeront le développeur à soumettre ses données d'identité personnelles directement à Google.\n\nComme les développeurs de cette application ne sont pas d'accord avec cette exigence, Obtainium ne fonctionnera plus sur les appareils Android certifiés après cette date.",
     "googleVerificationWarningP2": "Rendez-vous sur https://keepandroidopen.org/ pour plus d'informations.",
     "googleVerificationWarningP3": "Notez qu'à court terme, il pourrait rester possible d'installer des applications \"non vérifiées\" (non conformes) via un processus \"avancé\" que Google a promis de mettre en place suite à la vive réaction suscitée par leur annonce. Cependant, ils n'ont pas détaillé son fonctionnement, il n'est donc pas certain que cela préserve réellement les libertés des utilisateurs en pratique.\n\nDans tous les cas, cette décision de Google est une étape majeure vers la fin de l'informatique libre et généraliste pour les individus.\n\nLes OS non certifiés, comme GrapheneOS, ne devraient pas être affectés par cela tant qu'ils seront autorisés à exister.",
-    "groupByCategory": "Regrouper par catégorie",
+    "groupBy": "Group by",
     "highlightTouchTargets": "Mettre en surbrillance les zones tactiles moins évidentes",
     "import": "Import",
     "hour": {
@@ -258,6 +258,7 @@
     "noNewUpdates": "Aucune nouvelle mise à jour.",
     "noReleaseFound": "Aucune release appropriée trouvée",
     "noResults": "Aucun résultat",
+    "noSource": "No source",
     "noVersionDetection": "Aucune détection de version",
     "noVersionDetectionExplanation": "Cette option ne doit être utilisée que pour les applications dont la détection de version ne fonctionne pas correctement.",
     "noVersionFound": "Impossible de déterminer la version de la release",

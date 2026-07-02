@@ -761,10 +761,42 @@ class _SettingsPageState extends State<SettingsPage> {
           value: settingsProvider.buryNonInstalled,
           onChanged: (value) => settingsProvider.buryNonInstalled = value,
         ),
-        SettingsToggleRow(
-          label: tr('groupByCategory'),
-          value: settingsProvider.groupByCategory,
-          onChanged: (value) => settingsProvider.groupByCategory = value,
+        SettingsTile(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(tr('groupBy')),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: GroupByMode.none.name,
+                      label: Text(tr('none')),
+                    ),
+                    ButtonSegment(
+                      value: GroupByMode.category.name,
+                      label: Text(tr('category')),
+                    ),
+                    ButtonSegment(
+                      value: GroupByMode.source.name,
+                      label: Text(tr('source')),
+                    ),
+                  ],
+                  selected: {settingsProvider.groupBy},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) {
+                    settingsProvider.selectionClick();
+                    settingsProvider.groupBy = selection.first;
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
         SettingsToggleRow(
           label: tr('dontShowTrackOnlyWarnings'),

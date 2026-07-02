@@ -208,6 +208,10 @@ class AppListTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onToggleSelected;
 
+  /// Shape for the tile's selection/pinned highlight, so it matches the
+  /// enclosing card's (or group segment's) corners. Falls back to the theme.
+  final BorderRadius? borderRadius;
+
   const AppListTile({
     super.key,
     required this.appInMemory,
@@ -218,6 +222,7 @@ class AppListTile extends StatelessWidget {
     required this.autofocus,
     required this.onTap,
     required this.onToggleSelected,
+    this.borderRadius,
   });
 
   App get _app => appInMemory.app;
@@ -507,6 +512,9 @@ class AppListTile extends StatelessWidget {
             ),
             child: ListTile(
               autofocus: autofocus,
+              shape: borderRadius != null
+                  ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
+                  : null,
               tileColor: _app.pinned
                   ? Theme.of(
                       context,
@@ -628,19 +636,21 @@ class DownloadProgressTrailing extends StatelessWidget {
   }
 }
 
-String _capitalizeFirst(String s) =>
+String capitalizeFirst(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-class AppListCategorySection extends StatelessWidget {
-  final String? category;
+/// A collapsible section header + its app tiles, used when the list is grouped
+/// (by category or source). [title] is the already-resolved display label.
+class AppListGroupSection extends StatelessWidget {
+  final String title;
   final bool expanded;
   final int appCount;
   final VoidCallback onToggle;
   final List<Widget> Function() buildTiles;
 
-  const AppListCategorySection({
+  const AppListGroupSection({
     super.key,
-    required this.category,
+    required this.title,
     required this.expanded,
     required this.appCount,
     required this.onToggle,
@@ -666,6 +676,9 @@ class AppListCategorySection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        // Small gaps so entries read as distinct positional tiles, matching the
+        // connected-tile look used for settings.
+        spacing: 3,
         children: [
           segment(
             0,
@@ -687,7 +700,7 @@ class AppListCategorySection extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        _capitalizeFirst(category ?? tr('noCategory')),
+                        title,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),

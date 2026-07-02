@@ -181,7 +181,7 @@
     "googleVerificationWarningP1": "Google har annonceret, at fra 2026 / 2027, alle apps på \"certificeret\" Android-enheder vil kræve, at udvikleren til at indsende personlige identitetsoplysninger direkte til Google.\n\nDa udviklerne af denne app ikke accepterer dette krav, Obtainium vil ikke længere arbejde på certificerede Android-enheder efter dette tidspunkt.",
     "googleVerificationWarningP2": "Gå til https: / / keepandroidopen.org / for mere information.",
     "googleVerificationWarningP3": "Bemærk, at på kort sigt, kan det fortsætte med at være muligt at installere \"uverificerbare\" (ikke-overensstemmende) apps gennem en \"avanceret flow\" proces, som Google har lovet at gennemføre efter bred backlash til deres meddelelse, men de har ikke detaljeret, hvordan dette ville arbejde, så det er uklart, om det virkelig vil bevare brugernes friheder i praksis.\n\nUnder alle omstændigheder er Googles bevægelse et væsentligt skridt i retning af afslutningen af fri, generel-formål computing for enkeltpersoner.\n\nIkke-certificerede OS, som GrapheneOS, bør være upåvirket af dette, så længe de har lov til at fortsætte med at eksistere.",
-    "groupByCategory": "Gruppér efter kategori",
+    "groupBy": "Group by",
     "highlightTouchTargets": "Fremhæv mindre åbenlyse berøringsmål",
     "import": "Import",
     "hour": {
@@ -258,6 +258,7 @@
     "noNewUpdates": "Ingen nye opdateringer.",
     "noReleaseFound": "Kunne ikke finde en passende udgivelse",
     "noResults": "Ingen resultater fundet",
+    "noSource": "No source",
     "noVersionDetection": "Ingen versionsregistrering",
     "noVersionDetectionExplanation": "Denne indstilling bør kun bruges til apps, hvor versionsregistrering ikke virker korrekt.",
     "noVersionFound": "Kunne ikke afgøre udgivelsesversion",
