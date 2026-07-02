@@ -360,9 +360,11 @@ class SettingsProvider with ChangeNotifier {
       _secureStorage
           .write(key: settingId, value: value)
           .catchError(
-            (e) => LogsProvider().add(
-              'Failed to persist credential: $e',
-              level: LogLevel.error,
+            (e) => unawaited(
+              LogsProvider().add(
+                'Failed to persist credential: $e',
+                level: LogLevel.error,
+              ),
             ),
           );
     } else {
@@ -390,9 +392,11 @@ class SettingsProvider with ChangeNotifier {
       try {
         _categoriesCache = Map<String, int>.from(jsonDecode(raw));
       } catch (e) {
-        LogsProvider().add(
-          'Corrupted categories data, resetting: $e',
-          level: LogLevel.error,
+        unawaited(
+          LogsProvider().add(
+            'Corrupted categories data, resetting: $e',
+            level: LogLevel.error,
+          ),
         );
         _categoriesCache = <String, int>{};
       }
@@ -419,9 +423,11 @@ class SettingsProvider with ChangeNotifier {
           .toList();
       if (changedApps.isNotEmpty) {
         appsProvider.saveApps(changedApps).catchError((e) {
-          LogsProvider().add(
-            'Failed to save apps during category update: $e',
-            level: LogLevel.error,
+          unawaited(
+            LogsProvider().add(
+              'Failed to save apps during category update: $e',
+              level: LogLevel.error,
+            ),
           );
         });
       }

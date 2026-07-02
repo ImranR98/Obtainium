@@ -917,9 +917,11 @@ class ImportFromURLListController extends ChangeNotifier {
                 sourceProvider.getSource(url);
                 return true;
               } catch (e) {
-                LogsProvider().add(
-                  'URL parse error in filter: $e',
-                  level: LogLevel.error,
+                unawaited(
+                  LogsProvider().add(
+                    'URL parse error in filter: $e',
+                    level: LogLevel.error,
+                  ),
                 );
                 return false;
               }

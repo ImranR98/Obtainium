@@ -88,15 +88,13 @@ extension AppsProviderUpdates on AppsProvider {
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
-    final List<App> updates = [];
-    final MultiAppMultiError errors = MultiAppMultiError();
-    if (gettingUpdates) {
-      updateCheckCompleter ??= Completer<List<App>>();
+    if (updateCheckCompleter != null) {
       return updateCheckCompleter!.future;
     }
-    gettingUpdates = true;
-    updateCheckCompleter = Completer<List<App>>();
+    final completer = updateCheckCompleter = Completer<List<App>>();
     try {
+      final List<App> updates = [];
+      final MultiAppMultiError errors = MultiAppMultiError();
       List<String> appIds = getAppsSortedByUpdateCheckTime(
         ignoreAppsCheckedAfter: ignoreAppsCheckedAfter,
         onlyCheckInstalledOrTrackOnlyApps:
@@ -148,23 +146,18 @@ extension AppsProviderUpdates on AppsProvider {
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
-        updateCheckCompleter?.completeError(ex);
-        updateCheckCompleter = null;
-        gettingUpdates = false;
+        completer.completeError(ex);
         throw ex;
       }
-      updateCheckCompleter?.complete(updates);
-      updateCheckCompleter = null;
-      gettingUpdates = false;
+      completer.complete(updates);
       return updates;
     } catch (e) {
-      updateCheckCompleter?.completeError(e);
-      updateCheckCompleter = null;
-      gettingUpdates = false;
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
       rethrow;
     } finally {
       updateCheckCompleter = null;
-      gettingUpdates = false;
     }
   }
 

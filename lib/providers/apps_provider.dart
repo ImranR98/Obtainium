@@ -303,9 +303,11 @@ Future<String?> checkETagHeader(
     final StreamedResponse response = await client.send(req);
     final resHeaders = response.headers;
     await response.stream.drain<void>().catchError((err) {
-      LogsProvider().add(
-        'Error draining response stream: $err',
-        level: LogLevel.error,
+      unawaited(
+        LogsProvider().add(
+          'Error draining response stream: $err',
+          level: LogLevel.error,
+        ),
       );
     });
     return resHeaders[HttpHeaders.etagHeader]
@@ -640,7 +642,10 @@ class AppsProvider with ChangeNotifier {
   // In memory App state (should always be kept in sync with local storage versions)
   Map<String, AppInMemory> apps = {};
   bool loadingApps = false;
-  bool gettingUpdates = false;
+
+  /// Non-null while a [checkUpdates] batch is in flight. Serves as both an
+  /// atomic guard (preventing concurrent batches) and a deduplication
+  /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
 

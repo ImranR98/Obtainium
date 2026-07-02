@@ -109,9 +109,11 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
   @override
   void onRepeatEvent(DateTime timestamp) {
     bgUpdateCheck('bg_check', null).catchError((e, stack) {
-      LogsProvider().add(
-        'BG foreground service onRepeatEvent crashed: $e\n$stack',
-        level: LogLevel.error,
+      unawaited(
+        LogsProvider().add(
+          'BG foreground service onRepeatEvent crashed: $e\n$stack',
+          level: LogLevel.error,
+        ),
       );
     });
   }
@@ -131,9 +133,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    LogsProvider().add(
-      'Uncaught platform error: $error\n$stack',
-      level: LogLevel.error,
+    unawaited(
+      LogsProvider().add(
+        'Uncaught platform error: $error\n$stack',
+        level: LogLevel.error,
+      ),
     );
     return true;
   };

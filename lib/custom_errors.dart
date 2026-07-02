@@ -42,7 +42,7 @@ class ObtainiumError {
   String toString() => message;
 }
 
-Never rethrowOrWrapError(Object error, {String? sourceName}) {
+Never rethrowOrWrapError(Object error, {String? sourceName, StackTrace? stack}) {
   if (error is ObtainiumError) {
     if (error.stack == null && error.unexpected) {
       unawaited(
@@ -54,10 +54,10 @@ Never rethrowOrWrapError(Object error, {String? sourceName}) {
     }
     throw error;
   }
-  final stack = StackTrace.current;
+  final capturedStack = stack ?? StackTrace.current;
   unawaited(
     LogsProvider().add(
-      'Wrapping unexpected error: $error\n$stack',
+      'Wrapping unexpected error: $error\n$capturedStack',
       level: LogLevel.error,
     ),
   );
@@ -65,7 +65,7 @@ Never rethrowOrWrapError(Object error, {String? sourceName}) {
     sourceName != null ? '$sourceName: $error' : error.toString(),
     code: 'UNEXPECTED',
     unexpected: true,
-    stack: stack,
+    stack: capturedStack,
   );
 }
 

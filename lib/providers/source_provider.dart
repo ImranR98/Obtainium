@@ -3,6 +3,7 @@
 // AppSource is an abstract class with a concrete implementation for each source.
 // Legacy JSON migration logic lives at the bottom of this file.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -216,17 +217,21 @@ class App {
   }
 
   factory App.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> originalJSON = Map.from(json);
     try {
-      json = appJSONCompatibilityModifiers(json);
+      json = appJSONCompatibilityModifiers(Map.from(json));
     } catch (e, stackTrace) {
-      LogsProvider().add(
-        'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}',
+      unawaited(
+        LogsProvider().add(
+          'Fatal error running JSON compat modifiers: ${e.toString()}',
+          level: LogLevel.error,
+        ),
       );
-      LogsProvider().add(
-        'JSON compat modifier stack trace: ${stackTrace.toString()}',
+      throw ObtainiumError(
+        'Failed to load app data: ${e.toString()}',
+        code: 'UNEXPECTED',
+        unexpected: true,
+        stack: stackTrace,
       );
-      json = originalJSON;
     }
     try {
       return App(
@@ -269,9 +274,11 @@ class App {
         pendingRepoRenameUrl: json['pendingRepoRenameUrl'] as String?,
       );
     } on TypeError catch (e) {
-      LogsProvider().add(
-        'Type mismatch in App.fromJson: ${e.toString()}',
-        level: LogLevel.error,
+      unawaited(
+        LogsProvider().add(
+          'Type mismatch in App.fromJson: ${e.toString()}',
+          level: LogLevel.error,
+        ),
       );
       rethrow;
     }
@@ -995,8 +1002,10 @@ class SourceProvider {
           break;
         }
       } catch (e) {
-        LogsProvider().add(
-          'Source host-match error for ${s.runtimeType}: ${e.toString()}',
+        unawaited(
+          LogsProvider().add(
+            'Source host-match error for ${s.runtimeType}: ${e.toString()}',
+          ),
         );
       }
     }
@@ -1009,8 +1018,10 @@ class SourceProvider {
           source = s;
           break;
         } catch (e) {
-          LogsProvider().add(
-            'Source standardize error for ${s.runtimeType}: ${e.toString()}',
+          unawaited(
+            LogsProvider().add(
+              'Source standardize error for ${s.runtimeType}: ${e.toString()}',
+            ),
           );
         }
       }

@@ -174,9 +174,11 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        LogsProvider().add(
-          'Failed to decode URI in HTML filter: ${e.toString()}',
-          level: LogLevel.debug,
+        unawaited(
+          LogsProvider().add(
+            'Failed to decode URI in HTML filter: ${e.toString()}',
+            level: LogLevel.debug,
+          ),
         );
       }
       return reg.hasMatch(filterLinkByText ? element.value : link);
@@ -187,9 +189,11 @@ Future<List<MapEntry<String, String>>> grabLinksCommon(
       try {
         link = Uri.decodeFull(element.key);
       } catch (e) {
-        LogsProvider().add(
-          'Failed to decode URI in HTML APK filter: ${e.toString()}',
-          level: LogLevel.debug,
+        unawaited(
+          LogsProvider().add(
+            'Failed to decode URI in HTML APK filter: ${e.toString()}',
+            level: LogLevel.debug,
+          ),
         );
       }
       return AppSource.isApkOrContainerFile(

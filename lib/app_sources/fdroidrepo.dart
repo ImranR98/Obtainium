@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
@@ -111,7 +113,9 @@ class FDroidRepo extends AppSource {
                   item.required = false;
                 }
               } catch (e) {
-                LogsProvider().add('Failed to parse appId from URL: $e');
+                unawaited(
+                  LogsProvider().add('Failed to parse appId from URL: $e'),
+                );
               }
             }
             return item;

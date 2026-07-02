@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:html/parser.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -9,17 +11,21 @@ DateTime? parseUptodownDate(String? dateString) {
   try {
     return DateFormat('MMM dd, yyyy').parse(dateString);
   } catch (_) {
-    LogsProvider().add(
-      'Failed to parse Uptodown release date (short format): $dateString',
-      level: LogLevel.error,
+    unawaited(
+      LogsProvider().add(
+        'Failed to parse Uptodown release date (short format): $dateString',
+        level: LogLevel.error,
+      ),
     );
   }
   try {
     return DateFormat('MMMM dd, yyyy').parse(dateString);
   } catch (_) {
-    LogsProvider().add(
-      'Failed to parse Uptodown release date: $dateString',
-      level: LogLevel.error,
+    unawaited(
+      LogsProvider().add(
+        'Failed to parse Uptodown release date: $dateString',
+        level: LogLevel.error,
+      ),
     );
   }
   return null;
