@@ -33,6 +33,7 @@ import 'package:obtainium/app_sources/liteapks.dart';
 import 'package:obtainium/app_sources/neutroncode.dart';
 import 'package:obtainium/app_sources/rockmods.dart';
 import 'package:obtainium/app_sources/rustore.dart';
+import 'package:obtainium/app_sources/sourceforge.dart';
 import 'package:obtainium/app_sources/sourcehut.dart';
 import 'package:obtainium/app_sources/telegramapp.dart';
 import 'package:obtainium/app_sources/tencent.dart';
@@ -935,6 +936,7 @@ class SourceProvider {
     Farsroid(),
     CoolApk(),
     LiteAPKs(),
+    SourceForge(),
     Jenkins(),
     APKMirror(),
     APKCombo(),

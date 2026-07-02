@@ -49,21 +49,11 @@ enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
 class SettingsProvider with ChangeNotifier {
   SharedPreferences? prefs;
-  final ConfigProvider? _configProvider;
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
 
-  SettingsProvider({ConfigProvider? configProvider})
-    : _configProvider = configProvider;
-
-  /// Reads a value preferring the injected [ConfigProvider] (unified config
-  /// layer). Falls back to direct [SharedPreferences] access for backward
-  /// compatibility when no [ConfigProvider] is injected.
   T? _get<T>(String key) {
-    if (_configProvider != null) {
-      return _configProvider.get<T>(key);
-    }
     return prefs?.get(key) as T?;
   }
 
@@ -370,21 +360,6 @@ class SettingsProvider with ChangeNotifier {
       prefs?.setString(settingId, value);
     }
     notifyListeners();
-  }
-
-  /// Returns the health status for a given source's stored credentials.
-  /// [sourceName] is matched case-insensitively against the known credential
-  /// keys (e.g. "GitHub" -> "github-creds").
-  CredentialHealth? getCredentialHealth(String sourceName) {
-    final key = '${sourceName.toLowerCase()}-creds';
-    if (!{'github-creds', 'gitlab-creds'}.contains(key)) {
-      return null;
-    }
-    final value = getSettingString(key);
-    return CredentialHealth(
-      sourceName: sourceName,
-      isConfigured: value?.isNotEmpty == true,
-    );
   }
 
   bool getSettingBool(String settingId) {
@@ -721,71 +696,4 @@ class SettingsProvider with ChangeNotifier {
     prefs?.setBool('useFGService', val);
     notifyListeners();
   }
-}
-
-/// Unified config provider that delegates to SharedPreferences (general settings),
-/// FlutterSecureStorage (credentials), and in-memory cache transparently.
-class ConfigProvider {
-  SharedPreferences? _prefs;
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-  static final Map<String, String?> _cache = {};
-
-  Future<void> initialize() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
-
-  T? get<T>(String key) {
-    return _prefs?.get(key) as T?;
-  }
-
-  Future<void> set<T>(String key, T value) async {
-    if (value is String) {
-      await _prefs?.setString(key, value);
-    } else if (value is int) {
-      await _prefs?.setInt(key, value);
-    } else if (value is double) {
-      await _prefs?.setDouble(key, value);
-    } else if (value is bool) {
-      await _prefs?.setBool(key, value);
-    } else if (value is List<String>) {
-      await _prefs?.setStringList(key, value);
-    }
-  }
-
-  Future<void> remove(String key) async {
-    await _prefs?.remove(key);
-  }
-
-  Future<String?> getCredential(String key) async {
-    if (_cache.containsKey(key)) return _cache[key];
-    final value = await _secureStorage.read(key: key);
-    _cache[key] = value;
-    return value;
-  }
-
-  Future<void> setCredential(String key, String value) async {
-    await _secureStorage.write(key: key, value: value);
-    _cache[key] = value;
-  }
-
-  Future<void> removeCredential(String key) async {
-    await _secureStorage.delete(key: key);
-    _cache.remove(key);
-  }
-}
-
-class CredentialHealth {
-  final String sourceName;
-  final bool isConfigured;
-  final DateTime? expiresAt;
-  final int? remainingRateLimit;
-  final bool needsRotation;
-
-  const CredentialHealth({
-    required this.sourceName,
-    this.isConfigured = false,
-    this.expiresAt,
-    this.remainingRateLimit,
-    this.needsRotation = false,
-  });
 }

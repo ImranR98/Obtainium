@@ -70,12 +70,7 @@ dependencies:
   flutter_markdown_plus: ^1.0.7
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   flutter_lints: ^6.0.0
-  mocktail: ^1.0.0
-  integration_test:
-    sdk: flutter
 
 flutter_launcher_icons:
   android: "ic_launcher"
