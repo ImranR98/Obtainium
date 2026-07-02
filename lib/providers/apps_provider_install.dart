@@ -39,6 +39,12 @@ const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
 const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
 
+// A silent background install can't report completion synchronously — the
+// platform install API's result never arrives while backgrounded (#896). The
+// session still commits, so we poll (via waitForPackageInstall) for a short
+// window to confirm the install actually landed.
+const int _bgInstallConfirmAttempts = 16;
+
 class _InstallResult {
   final String id;
   final bool willBeSilent;
@@ -1131,13 +1137,21 @@ extension AppsProviderInstall on AppsProvider {
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
       if (downloadedFile != null) {
         if (needBGWorkaround) {
+          // In the background-workaround path context is always null, so it is
+          // safe to pass null across the confirmation await below.
+          final baseline = await captureInstallBaseline(id);
           unawaited(
             installApk(
               downloadedFile,
-              contextIfNewInstall,
+              null,
               needsBGWorkaround: true,
               shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
             ),
+          );
+          sayInstalled = await waitForPackageInstall(
+            id,
+            baseline,
+            attempts: _bgInstallConfirmAttempts,
           );
         } else {
           sayInstalled = await installApk(
@@ -1148,12 +1162,14 @@ extension AppsProviderInstall on AppsProvider {
         }
       } else {
         if (needBGWorkaround) {
+          final baseline = await captureInstallBaseline(id);
           unawaited(
-            installApkDir(
-              downloadedDir!,
-              contextIfNewInstall,
-              needsBGWorkaround: true,
-            ),
+            installApkDir(downloadedDir!, null, needsBGWorkaround: true),
+          );
+          sayInstalled = await waitForPackageInstall(
+            id,
+            baseline,
+            attempts: _bgInstallConfirmAttempts,
           );
         } else {
           sayInstalled = await installApkDir(
@@ -1164,7 +1180,9 @@ extension AppsProviderInstall on AppsProvider {
         }
       }
       if (willBeSilent && context == null) {
-        if (installerModeKey == 'stock') {
+        if (installerModeKey == 'stock' && !sayInstalled) {
+          // Stock background install couldn't be confirmed within the polling
+          // window, so report it as a best-effort attempt rather than a result.
           unawaited(
             notificationsProvider?.notify(
               SilentUpdateAttemptNotification([appEntry.app], id: id.hashCode),

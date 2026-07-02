@@ -635,6 +635,47 @@ Future<PackageInfo?> getInstalledInfo(
   return null;
 }
 
+/// Snapshot of a package's install state, taken before an install so that
+/// [waitForPackageInstall] can later tell whether the install landed.
+class InstallBaseline {
+  final bool wasInstalled;
+  final int? updateTime;
+  const InstallBaseline(this.wasInstalled, this.updateTime);
+}
+
+/// Captures the current install state of [appId] to compare against later.
+Future<InstallBaseline> captureInstallBaseline(String appId) async {
+  final info = await getInstalledInfo(appId, printErr: false);
+  return InstallBaseline(info != null, info?.lastUpdateTime);
+}
+
+/// Polls for an install that can't report completion synchronously (a silent
+/// background install, or a hand-off to an external installer). Returns true as
+/// soon as the package appears (when it wasn't installed before) or its update
+/// timestamp changes relative to [baseline] — a version-agnostic signal that
+/// also works with pseudo-versions — or false if neither happens within
+/// [attempts] × [interval].
+Future<bool> waitForPackageInstall(
+  String appId,
+  InstallBaseline baseline, {
+  required int attempts,
+  Duration interval = const Duration(milliseconds: 500),
+}) async {
+  for (var attempt = 0; attempt < attempts; attempt++) {
+    final info = await getInstalledInfo(appId, printErr: false);
+    if (info != null) {
+      if (!baseline.wasInstalled) return true;
+      final updateTimeAfter = info.lastUpdateTime;
+      if (baseline.updateTime == null ||
+          (updateTimeAfter != null && updateTimeAfter != baseline.updateTime)) {
+        return true;
+      }
+    }
+    await Future.delayed(interval);
+  }
+  return false;
+}
+
 Future<Directory> getAppStorageDir() async =>
     await getExternalStorageDirectory() ??
     await getApplicationDocumentsDirectory();

@@ -18,8 +18,9 @@ const String _bundleMime = 'application/zip';
 /// case where a foreground event is never delivered.
 const Duration _foregroundReturnFallback = Duration(hours: 2);
 
-const int _verifyAttempts = 12;
-const Duration _verifyInterval = Duration(milliseconds: 500);
+/// After the user returns, re-check the package a few times to absorb any brief
+/// finalization lag before deciding the outcome.
+const int _confirmAttempts = 12;
 
 /// Installs by handing the downloaded file to a user-chosen installer app. All
 /// orchestration lives here in Dart; the native side only resolves a content
@@ -66,9 +67,7 @@ class ExternalInstaller extends Installer {
       throw ObtainiumError(tr('badDownload'));
     }
 
-    final beforeInfo = await getInstalledInfo(appId, printErr: false);
-    final bool wasInstalled = beforeInfo != null;
-    final int? updateTimeBefore = beforeInfo?.lastUpdateTime;
+    final baseline = await captureInstallBaseline(appId);
 
     // Begin listening for the return-to-foreground before firing the intent so
     // the event isn't missed if the installer opens instantly.
@@ -91,38 +90,9 @@ class ExternalInstaller extends Installer {
 
     await foregroundReturn;
 
-    return (await _confirmInstalled(appId, wasInstalled, updateTimeBefore))
+    return (await waitForPackageInstall(appId, baseline, attempts: _confirmAttempts))
         ? InstallResult.success()
         : InstallResult.cancelled();
-  }
-
-  /// After the user returns, re-checks the installed package a few times to
-  /// absorb any brief finalization lag before deciding the outcome.
-  ///
-  /// Detection relies on the package's update timestamp rather than its version,
-  /// so it works even when Obtainium tracks pseudo-versions (where the APK
-  /// versionCode/Name may be unchanged between "updates").
-  Future<bool> _confirmInstalled(
-    String appId,
-    bool wasInstalled,
-    int? updateTimeBefore,
-  ) async {
-    for (var attempt = 0; attempt < _verifyAttempts; attempt++) {
-      final info = await getInstalledInfo(appId, printErr: false);
-      if (info != null) {
-        if (!wasInstalled) {
-          // Not installed before: its presence now means the handoff succeeded.
-          return true;
-        }
-        final updateTimeAfter = info.lastUpdateTime;
-        if (updateTimeBefore == null ||
-            (updateTimeAfter != null && updateTimeAfter != updateTimeBefore)) {
-          return true;
-        }
-      }
-      await Future.delayed(_verifyInterval);
-    }
-    return false;
   }
 
   String _mimeForPath(String path) {
