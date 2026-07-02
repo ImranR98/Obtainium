@@ -901,7 +901,19 @@ extension AppsProviderInstall on AppsProvider {
 
     List<_InstallResult> downloadResults = [];
     try {
-      if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
+      if (forceParallelDownloads || settingsProvider.parallelDownloads) {
+        downloadResults = await Future.wait(
+          appsToInstall.map(
+            (id) => _downloadAppForInstall(
+              id,
+              context,
+              notificationsProvider,
+              useExisting,
+              errors,
+            ),
+          ),
+        );
+      } else {
         for (var id in appsToInstall) {
           downloadResults.add(
             await _downloadAppForInstall(
@@ -914,18 +926,6 @@ extension AppsProviderInstall on AppsProvider {
             ),
           );
         }
-      } else {
-        downloadResults = await Future.wait(
-          appsToInstall.map(
-            (id) => _downloadAppForInstall(
-              id,
-              context,
-              notificationsProvider,
-              useExisting,
-              errors,
-            ),
-          ),
-        );
       }
       for (var res in downloadResults) {
         if (!errors.appIdNames.containsKey(res.id)) {
@@ -1021,17 +1021,7 @@ extension AppsProviderInstall on AppsProvider {
     final MultiAppMultiError errors = MultiAppMultiError();
     final List<String> downloadedIds = [];
 
-    if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
-      for (var urlWithApp in filesToDownload) {
-        await _downloadAssetFile(
-          urlWithApp.key,
-          urlWithApp.value,
-          errors,
-          downloadedIds,
-          notificationsProvider,
-        );
-      }
-    } else {
+    if (forceParallelDownloads || settingsProvider.parallelDownloads) {
       await Future.wait(
         filesToDownload.map(
           (urlWithApp) => _downloadAssetFile(
@@ -1043,6 +1033,16 @@ extension AppsProviderInstall on AppsProvider {
           ),
         ),
       );
+    } else {
+      for (var urlWithApp in filesToDownload) {
+        await _downloadAssetFile(
+          urlWithApp.key,
+          urlWithApp.value,
+          errors,
+          downloadedIds,
+          notificationsProvider,
+        );
+      }
     }
     if (errors.idsByErrorString.isNotEmpty) {
       throw errors;

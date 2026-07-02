@@ -549,7 +549,7 @@ class DownloadProgressTrailing extends StatelessWidget {
     final installing = progress < 0;
     final label = installing
         ? tr('installing')
-        : tr('percentProgress', args: [progress.toInt().toString()]);
+        : '${progress.toInt()}%';
     return SizedBox(
       width: 64,
       child: Semantics(
