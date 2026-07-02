@@ -579,9 +579,18 @@ Future<File> downloadFile(
     }
     if (tempDownloadedFile.existsSync()) {
       if (downloadedFile.existsSync()) {
-        downloadedFile.deleteSync();
+        try {
+          tempDownloadedFile.renameSync(downloadedFile.path);
+        } catch (_) {
+          // Rename can fail if target is locked (e.g. file handle held open).
+          // Delete target first as fallback to avoid leaving a stale file behind.
+          // If rename fails, data is retained in the temp file which is the newer version.
+          downloadedFile.deleteSync();
+          tempDownloadedFile.renameSync(downloadedFile.path);
+        }
+      } else {
+        tempDownloadedFile.renameSync(downloadedFile.path);
       }
-      tempDownloadedFile.renameSync(downloadedFile.path);
     }
     return downloadedFile;
   } finally {
@@ -648,8 +657,8 @@ class AppsProvider with ChangeNotifier {
   // Variables to keep track of the app foreground status (installs can't run in the background)
   bool isForeground = true;
   bool _isBg = false;
-  late final Stream<FGBGType>? foregroundStream;
-  late final StreamSubscription<FGBGType>? foregroundSubscription;
+  Stream<FGBGType>? foregroundStream;
+  StreamSubscription<FGBGType>? foregroundSubscription;
   late final Directory apkDir;
   late final Directory iconsCacheDir;
   late final SettingsProvider settingsProvider;
@@ -849,10 +858,11 @@ Future<void> bgUpdateCheck(
   SettingsProvider? settings,
 }) async {
   final l = logs ?? LogsProvider();
-  unawaited(l.add('BG task started $taskId: ${params.toString()}'));
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await TranslationLoader.load();
+  params ??= {};
+  unawaited(l.add('BG task started $taskId: $params'));
 
   final NotificationsProvider notificationsProvider =
       notifs ?? NotificationsProvider();
@@ -873,8 +883,6 @@ Future<void> bgUpdateCheck(
     unawaited(l.add('BG update task: No network.'));
     return;
   }
-
-  params ??= {};
 
   final bool firstEverUpdateTask =
       DateTime.fromMillisecondsSinceEpoch(
@@ -976,7 +984,7 @@ Future<void> _bgRunUpdateCheck(
   LogsProvider logs,
 ) async {
   final enoughTimePassed =
-      appsProvider.settingsProvider.updateInterval != 0 &&
+      appsProvider.settingsProvider.updateInterval == 0 ||
       appsProvider.settingsProvider.lastCompletedBGCheckTime
           .add(Duration(minutes: appsProvider.settingsProvider.updateInterval))
           .isBefore(DateTime.now());

@@ -219,12 +219,14 @@ class App {
     final Map<String, dynamic> originalJSON = Map.from(json);
     try {
       json = appJSONCompatibilityModifiers(json);
-    } catch (e) {
+    } catch (e, stackTrace) {
       LogsProvider().add(
         'Error running JSON compat modifiers: ${e.toString()}: ${originalJSON.toString()}',
       );
+      LogsProvider().add(
+        'JSON compat modifier stack trace: ${stackTrace.toString()}',
+      );
       json = originalJSON;
-      json['compatVersion'] = currentAppJSONCompatVersion;
     }
     try {
       return App(
@@ -880,7 +882,7 @@ String? regExValidator(String? value) => VersionService().regExValidator(value);
 
 /// Returns true if the app's ID is a numeric placeholder (temporary ID) rather than a real package name.
 bool isTempId(App app) {
-  return RegExp('^[0-9]+\$').hasMatch(app.id);
+  return RegExp(r'^[0-9]+$').hasMatch(app.id);
 }
 
 /// Delegates to [VersionService.replaceMatchGroupsInString].
@@ -1126,7 +1128,7 @@ class SourceProvider {
       installedVersion: currentApp?.installedVersion,
       latestVersion: apk.version,
       apkUrls: apk.apkUrls,
-      preferredApkIndex: apk.apkUrls.isEmpty ? 0 : 0,
+      preferredApkIndex: currentApp?.preferredApkIndex ?? 0,
       additionalSettings: additionalSettings,
       lastUpdateCheck: DateTime.now(),
       pinned: currentApp?.pinned ?? false,

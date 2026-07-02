@@ -680,7 +680,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       settingsProvider.useSystemFont = true;
                     })
                     .catchError((e) {
-                      settingsProvider.useSystemFont = false;
                       if (!context.mounted) return;
                       showError(
                         ObtainiumError('${tr('unexpectedError')}: $e'),

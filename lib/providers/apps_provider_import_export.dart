@@ -104,7 +104,12 @@ extension AppsProviderImportExport on AppsProvider {
 
   /// Imports apps (and optionally settings) from a JSON string, returning the parsed apps and a settings-present flag.
   Future<MapEntry<List<App>, bool>> import(String appsJSON) async {
-    final decodedJSON = jsonDecode(appsJSON);
+    dynamic decodedJSON;
+    try {
+      decodedJSON = jsonDecode(appsJSON);
+    } catch (e) {
+      throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
+    }
     final hasSchemaVersion =
         decodedJSON is Map && decodedJSON.containsKey('schemaVersion');
     List<App> importedApps;
@@ -154,7 +159,7 @@ extension AppsProviderImportExport on AppsProvider {
       } else if (value is List) {
         settingsProvider.prefs?.setStringList(
           key,
-          value.map((e) => e as String).toList(),
+          value.whereType<String>().toList(),
         );
       } else if (value is String) {
         settingsProvider.setSettingString(key, value);

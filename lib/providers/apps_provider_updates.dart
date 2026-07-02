@@ -105,11 +105,6 @@ extension AppsProviderUpdates on AppsProvider {
       if (specificIds != null) {
         appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
       }
-      // Check updates with bounded concurrency and persist results in
-      // batches (one saveApps -> one notify -> one rebuild per chunk).
-      // Previously every app saved itself the moment its check finished,
-      // causing one full UI rebuild per app and firing unbounded parallel
-      // network requests at once, which froze the UI during a refresh.
       const int maxConcurrent = 8;
       for (var start = 0; start < appIds.length; start += maxConcurrent) {
         final end = (start + maxConcurrent < appIds.length)
@@ -151,22 +146,20 @@ extension AppsProviderUpdates on AppsProvider {
           await saveApps(chunkFetched);
         }
       }
+      if (errors.idsByErrorString.isNotEmpty) {
+        final ex = CheckUpdatesException(updates, errors);
+        updateCheckCompleter?.completeError(ex);
+        throw ex;
+      }
+      updateCheckCompleter?.complete(updates);
+      return updates;
     } catch (e) {
       updateCheckCompleter?.completeError(e);
-      updateCheckCompleter = null;
       rethrow;
     } finally {
+      updateCheckCompleter = null;
       gettingUpdates = false;
     }
-    if (errors.idsByErrorString.isNotEmpty) {
-      final ex = CheckUpdatesException(updates, errors);
-      updateCheckCompleter?.completeError(ex);
-      updateCheckCompleter = null;
-      throw ex;
-    }
-    updateCheckCompleter?.complete(updates);
-    updateCheckCompleter = null;
-    return updates;
   }
 
   /// Finds app IDs whose installed version differs from the latest version, with optional filtering.

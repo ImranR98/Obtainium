@@ -707,14 +707,16 @@ extension AppsProviderInstall on AppsProvider {
         final appSpecificObbDoc = await saf.child(obbDir, appId);
         if (appSpecificObbDoc == null) return;
         final obbFileName = file.path.split('/').last;
-        final obbBytes = await file.readAsBytes();
-        await saf.createFile(
-          appSpecificObbDoc.uri,
-          displayName: obbFileName,
-          mimeType: 'application/octet-stream',
-          bytes: obbBytes,
+        final obbDestPath =
+            '${await getStorageRootPath()}/Android/obb/$appId/$obbFileName';
+        await Directory('${await getStorageRootPath()}/Android/obb/$appId')
+            .create(recursive: true);
+        await file.copy(obbDestPath);
+        unawaited(
+          logs.add(
+            'Copied OBB file $obbFileName for $appId via direct file access',
+          ),
         );
-        unawaited(logs.add('Copied OBB file $obbFileName for $appId via SAF'));
       } catch (e) {
         unawaited(
           logs.add('Failed to place OBB file for $appId: ${e.toString()}'),
@@ -796,6 +798,7 @@ extension AppsProviderInstall on AppsProvider {
         return null;
       }
       final temp = Uri.parse(url).host.split('.');
+      if (temp.length < 2) return temp.first;
       return temp.sublist(temp.length - 2).join('.');
     }
 

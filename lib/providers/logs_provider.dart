@@ -62,7 +62,10 @@ class LogsProvider {
       _defaultClearScheduled = true;
       _instance
           .clear(before: DateTime.now().subtract(const Duration(days: 7)))
-          .catchError((_) => 0);
+          .catchError((e) {
+        debugPrint('Failed to clear old logs: $e');
+        return 0;
+      });
     }
     return _instance;
   }

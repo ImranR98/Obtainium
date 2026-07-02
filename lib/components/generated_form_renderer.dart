@@ -170,7 +170,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
-  String? initKey;
+  Key? initKey;
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
 
@@ -323,7 +323,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   }
 
   void initForm() {
-    initKey = widget.key.toString();
+    initKey = widget.key;
     for (final c in _textControllers) {
       c.dispose();
     }
@@ -466,7 +466,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.key.toString() != initKey) {
+    if (widget.key != initKey) {
       initForm();
     }
     final List<List<Widget>> renderedInputs = [

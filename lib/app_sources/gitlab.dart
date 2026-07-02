@@ -113,7 +113,9 @@ class GitLab extends AppSource {
       hostChanged ? additionalSettings : {},
     );
     final String optionalAuth = (pat != null) ? 'private_token=$pat' : '';
-    return '$assetUrl${(Uri.parse(assetUrl).query.isEmpty ? '?' : '&')}$optionalAuth';
+    return optionalAuth.isEmpty
+        ? assetUrl
+        : '$assetUrl${Uri.parse(assetUrl).query.isEmpty ? '?' : '&'}$optionalAuth';
   }
 
   @override
@@ -254,7 +256,7 @@ class GitLab extends AppSource {
 
       finalResult.apkUrls = finalResult.apkUrls.map((apkUrl) {
         if (RegExp(
-          '^$standardUrl/-/jobs/[0-9]+/artifacts/file/[^/]+',
+          '^${RegExp.escape(standardUrl)}/-/jobs/[0-9]+/artifacts/file/[^/]+',
         ).hasMatch(apkUrl.value)) {
           return MapEntry(
             apkUrl.key,

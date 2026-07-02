@@ -178,9 +178,12 @@ class GitHub extends AppSource {
                   l.startsWith('applicationId \''),
             );
             appIds = appIds.map(
-              (appId) => appId.split(
-                appId.startsWith('applicationId "') ? '"' : '\'',
-              )[1],
+              (appId) {
+                final parts = appId.split(
+                  appId.startsWith('applicationId "') ? '"' : '\'',
+                );
+                return parts.length > 1 ? parts[1] : '';
+              },
             );
             appIds = appIds
                 .map((appId) {
@@ -193,9 +196,10 @@ class GitHub extends AppSource {
                         )
                         .firstOrNull;
                     if (varLine == null) return '';
-                    appId = varLine.split(
+                    final parts = varLine.split(
                       varLine.contains('"') ? '"' : '\'',
-                    )[1];
+                    );
+                    appId = parts.length > 1 ? parts[1] : '';
                   }
                   return appId;
                 })
@@ -428,9 +432,7 @@ class GitHub extends AppSource {
   ) {
     if (sortMethod == 'none') return;
     releases.sort((a, b) {
-      if (a == b) {
-        return 0;
-      } else if (a == null) {
+      if (a == null) {
         return -1;
       } else if (b == null) {
         return 1;

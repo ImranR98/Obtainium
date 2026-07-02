@@ -392,13 +392,14 @@ extension AppsProviderLifecycle on AppsProvider {
         if (file.existsSync()) {
           deleteFile(file);
         }
-        apkFiles
-            .where(
-              (element) => element.path.split('/').last.startsWith('$appId-'),
-            )
-            .forEach((element) {
-              element.delete(recursive: true);
-            });
+        await Future.wait(
+          apkFiles
+              .where(
+                (element) =>
+                    element.path.split('/').last.startsWith('$appId-'),
+              )
+              .map((element) => element.delete(recursive: true)),
+        );
         final cachedIcon = File('${iconsCacheDir.path}/$appId.png');
         if (cachedIcon.existsSync()) cachedIcon.deleteSync();
         if (apps.containsKey(appId)) {

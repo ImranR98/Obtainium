@@ -416,6 +416,9 @@ class _ObtainiumState extends State<Obtainium> {
   }
 
   Future<void> initPlatformState() async {
+    final logs = context.read<LogsProvider>();
+    final notifs = context.read<NotificationsProvider>();
+    final settings = context.read<SettingsProvider>();
     await BackgroundFetch.configure(
       BackgroundFetchConfig(
         minimumFetchInterval: minBackgroundFetchInterval,
@@ -432,16 +435,14 @@ class _ObtainiumState extends State<Obtainium> {
         await bgUpdateCheck(
           taskId,
           null,
-          logs: context.read<LogsProvider>(),
-          notifs: context.read<NotificationsProvider>(),
-          settings: context.read<SettingsProvider>(),
+          logs: logs,
+          notifs: notifs,
+          settings: settings,
         );
         unawaited(BackgroundFetch.finish(taskId));
       },
       (String taskId) async {
-        unawaited(
-          context.read<LogsProvider>().add('BG update task timed out.'),
-        );
+        unawaited(logs.add('BG update task timed out.'));
         unawaited(BackgroundFetch.finish(taskId));
       },
     );

@@ -54,7 +54,9 @@ class SettingsProvider with ChangeNotifier {
   bool isTV = false;
 
   T? _get<T>(String key) {
-    return prefs?.get(key) as T?;
+    final value = prefs?.get(key);
+    if (value is T) return value;
+    return null;
   }
 
   bool? _getBool(String key) => _get<bool>(key);
@@ -582,11 +584,17 @@ class SettingsProvider with ChangeNotifier {
     final uriString = _getString('exportDir');
     if (uriString != null) {
       Uri? uri = Uri.parse(uriString);
-      if (!(await saf.canRead(uri) ?? false) ||
-          !(await saf.canWrite(uri) ?? false)) {
-        uri = null;
-        await prefs?.remove('exportDir');
-        notifyListeners();
+      try {
+        if (!(await saf.canRead(uri) ?? false) ||
+            !(await saf.canWrite(uri) ?? false)) {
+          uri = null;
+          await prefs?.remove('exportDir');
+          notifyListeners();
+        }
+      } catch (_) {
+        // Transient SAF error — keep the preference and return null for
+        // this call only so the caller can retry next time.
+        return null;
       }
       return uri;
     } else {

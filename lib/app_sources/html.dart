@@ -352,23 +352,22 @@ class HTML extends AppSource {
     String url, {
     bool forAPKDownload = false,
   }) async {
-    if (additionalSettings.isNotEmpty) {
-      if (additionalSettings['requestHeader']?.isNotEmpty != true) {
-        additionalSettings['requestHeader'] = [];
-      }
-      additionalSettings['requestHeader'] = additionalSettings['requestHeader']
-          .where((l) => l['requestHeader'].isNotEmpty == true)
-          .toList();
-      final Map<String, String> requestHeaders = {};
-      for (int i = 0; i < (additionalSettings['requestHeader'].length); i++) {
-        final temp =
-            (additionalSettings['requestHeader'][i]['requestHeader'] as String)
-                .split(':');
-        requestHeaders[temp[0].trim()] = temp.sublist(1).join(':').trim();
-      }
-      return requestHeaders;
+    if (additionalSettings.isEmpty) {
+      return null;
     }
-    return null;
+    final settings = Map<String, dynamic>.from(additionalSettings);
+    if (settings['requestHeader'] is! List || (settings['requestHeader'] as List).isEmpty) {
+      settings['requestHeader'] = [];
+    }
+    final headers = (settings['requestHeader'] as List)
+        .where((l) => (l['requestHeader'] as String?)?.isNotEmpty == true)
+        .toList();
+    final Map<String, String> requestHeaders = {};
+    for (int i = 0; i < headers.length; i++) {
+      final temp = (headers[i]['requestHeader'] as String).split(':');
+      requestHeaders[temp[0].trim()] = temp.sublist(1).join(':').trim();
+    }
+    return requestHeaders;
   }
 
   @override
@@ -383,26 +382,21 @@ class HTML extends AppSource {
   ) async {
     try {
       var currentUrl = standardUrl;
-      if (additionalSettings['intermediateLink'] == null ||
-          (additionalSettings['intermediateLink'] as List).isEmpty) {
-        additionalSettings['intermediateLink'] = [];
-      }
-      additionalSettings['intermediateLink'] =
-          additionalSettings['intermediateLink']
-              .where((l) => l['customLinkFilterRegex'].isNotEmpty == true)
+      final intermediateLinks =
+          ((additionalSettings['intermediateLink'] as List?) ?? <dynamic>[])
+              .where((l) => (l['customLinkFilterRegex'] as String?)?.isNotEmpty == true)
               .toList();
       const int maxIntermediateLinkDepth = 10;
-      final int linkCount = (additionalSettings['intermediateLink'].length)
-          .clamp(0, maxIntermediateLinkDepth);
+      final int linkCount = intermediateLinks.length.clamp(0, maxIntermediateLinkDepth);
       for (int i = 0; i < linkCount; i++) {
         var intLinks = await grabLinksCommonFromRes(
           await sourceRequest(currentUrl, additionalSettings),
-          additionalSettings['intermediateLink'][i],
+          intermediateLinks[i],
         );
         if (intLinks.isEmpty) {
           throw NoReleasesError(note: currentUrl);
         } else {
-          if (additionalSettings['intermediateLink'][i]['autoLinkFilterByArch'] ==
+          if (intermediateLinks[i]['autoLinkFilterByArch'] ==
               true) {
             intLinks = await filterApksByArch(intLinks);
           }

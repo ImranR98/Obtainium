@@ -397,9 +397,10 @@ class _AppPageState extends State<AppPage> {
   }
 
   void _closePage() {
+    if (!mounted) return;
     if (widget.onClose != null) {
       widget.onClose!();
-    } else if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) {
+    } else if (ModalRoute.of(context)?.isCurrent ?? false) {
       Navigator.of(context).pop();
     }
   }

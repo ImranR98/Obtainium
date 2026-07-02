@@ -152,17 +152,19 @@ class AppsRemovedNotification extends ObtainiumNotification {
         tr('appsRemovedNotifDescription'),
         Importance.max,
       ) {
+    final buffer = StringBuffer();
     for (var r in namedReasons) {
-      message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
+      buffer.writeln(tr('xWasRemovedDueToErrorY', args: [r[0], r[1]]));
     }
-    message = message.trim();
+    message = buffer.toString().trim();
   }
 }
 
 class DownloadNotification extends ObtainiumNotification {
+  static const int _baseId = 100;
   DownloadNotification(String appName, int progPercent)
     : super(
-        appName.hashCode.abs(),
+        _baseId + (appName.hashCode.abs() % 9000),
         tr('downloadingX', args: [appName]),
         '',
         'APP_DOWNLOADING',
@@ -253,8 +255,9 @@ class NotificationsProvider {
 
   void _showNotificationPayload(String? payload, {bool doublePop = false}) {
     if (payload?.isNotEmpty == true) {
-      final title = (payload ?? '\n\n').split('\n').first;
-      final content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
+      final lines = payload!.split('\n');
+      final title = lines.first;
+      final content = lines.sublist(1).join('\n');
       appNavigatorKey.currentState?.push(
         PageRouteBuilder(
           pageBuilder: (context, _, _) => AlertDialog(
@@ -313,7 +316,7 @@ class NotificationsProvider {
           channelName,
           channelDescription: channelDescription,
           importance: importance,
-          priority: importanceToPriority[importance]!,
+          priority: importanceToPriority[importance] ?? Priority.defaultPriority,
           groupKey: '$obtainiumId.$channelCode',
           progress: progPercent ?? 0,
           maxProgress: 100,
