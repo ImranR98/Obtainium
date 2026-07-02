@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:ui' show Locale;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:android_package_installer/android_package_installer.dart';
@@ -158,9 +158,6 @@ class MultiAppMultiError extends ObtainiumError {
   MultiAppMultiError() : super.withCode('MULTI_ERROR', unexpected: true);
 
   void add(String appId, dynamic error, {String? appName}) {
-    if (error is SocketException) {
-      error = error.message;
-    }
     rawErrors[appId] = error;
     final string = error.toString();
     var tempIds = idsByErrorString.remove(string);
@@ -221,7 +218,14 @@ String localizeErrorCode(String code, Map<String, dynamic>? data) {
   };
 }
 
-bool isEnglish() => tr('and') == 'and';
+Locale? _appCurrentLocale;
+
+void setAppLocale(Locale? locale) => _appCurrentLocale = locale;
+
+bool isEnglish() {
+  if (_appCurrentLocale != null) return _appCurrentLocale!.languageCode == 'en';
+  return tr('and') == 'and';
+}
 
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;
 

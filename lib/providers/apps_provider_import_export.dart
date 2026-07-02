@@ -42,7 +42,7 @@ extension AppsProviderImportExport on AppsProvider {
     final schema = ExportSchema(
       schemaVersion: currentExportSchemaVersion,
       exportedAt: DateTime.now().toIso8601String(),
-      appVersion: '1.6.0',
+      appVersion: kPackageVersion,
       apps: appList,
       settings: settingsMap,
     );
@@ -165,6 +165,7 @@ extension AppsProviderImportExport on AppsProvider {
 }
 
 const int currentExportSchemaVersion = 2;
+const String kPackageVersion = '1.6.0';
 
 class ExportSchema {
   final int schemaVersion;
@@ -208,32 +209,10 @@ class ExportSchema {
 
   Map<String, dynamic> toJson() => {
     'schemaVersion': currentExportSchemaVersion,
-    'exportedAt': DateTime.now().toIso8601String(),
-    'appVersion': '1.6.0',
+    'exportedAt': exportedAt,
+    'appVersion': appVersion,
     'apps': apps,
     'settings': settings,
     'credentials': credentials,
   };
-}
-
-class AppRepository {
-  Future<List<Map<String, dynamic>>> loadAll() async {
-    throw UnimplementedError();
-  }
-
-  Future<Map<String, dynamic>?> loadById(String id) async {
-    throw UnimplementedError();
-  }
-
-  Future<void> save(Map<String, dynamic> app) async {
-    throw UnimplementedError();
-  }
-
-  Future<void> saveBatch(List<Map<String, dynamic>> apps) async {
-    throw UnimplementedError();
-  }
-
-  Future<void> delete(String id) async {
-    throw UnimplementedError();
-  }
 }

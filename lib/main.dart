@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show PlatformDispatcher;
+import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -237,6 +238,7 @@ class _ObtainiumState extends State<Obtainium> {
   var _launchByNotifChecked = false;
   var _listenerRegistered = false;
   void Function()? _settingsListener;
+  SettingsProvider? _settingsProvider;
 
   void _manageServices(SettingsProvider settings) {
     final interval = settings.updateInterval;
@@ -316,6 +318,7 @@ class _ObtainiumState extends State<Obtainium> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
       final settingsProvider = context.read<SettingsProvider>();
+      _settingsProvider = settingsProvider;
       final appsProvider = context.read<AppsProvider>();
       final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
@@ -406,16 +409,8 @@ class _ObtainiumState extends State<Obtainium> {
 
   @override
   void dispose() {
-    if (_settingsListener != null) {
-      try {
-        final settingsProvider = context.read<SettingsProvider>();
-        settingsProvider.removeListener(_settingsListener!);
-      } catch (e) {
-        LogsProvider().add(
-          'Failed to remove settings listener: $e',
-          level: LogLevel.error,
-        );
-      }
+    if (_settingsListener != null && _settingsProvider != null) {
+      _settingsProvider!.removeListener(_settingsListener!);
     }
     LogsProvider.close();
     super.dispose();
@@ -514,13 +509,16 @@ class _ObtainiumState extends State<Obtainium> {
               settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
             ),
             home: const HomePage(),
-            builder: (context, child) => Shortcuts(
-              shortcuts: <LogicalKeySet, Intent>{
-                LogicalKeySet(LogicalKeyboardKey.select):
-                    const ActivateIntent(),
-              },
-              child: child ?? const SizedBox.shrink(),
-            ),
+            builder: (context, child) {
+              setAppLocale(context.locale);
+              return Shortcuts(
+                shortcuts: <LogicalKeySet, Intent>{
+                  LogicalKeySet(LogicalKeyboardKey.select):
+                      const ActivateIntent(),
+                },
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
           );
         },
       ),
