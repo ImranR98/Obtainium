@@ -19,6 +19,7 @@ extension Unique<E, Id> on List<E> {
 
 class APKPure extends AppSource {
   APKPure() {
+    name = 'APKPure';
     hosts = ['apkpure.net', 'apkpure.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;

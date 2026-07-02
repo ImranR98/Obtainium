@@ -815,13 +815,6 @@ class AddAppPageState extends State<AddAppPage> {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
     final bool doingSomething = gettingAppInfo || searching;
-
-    if (pickedSource != null) {
-      _updateSourceNote();
-    } else {
-      _sourceNoteFuture = null;
-      _sourceNoteSourceKey = null;
-    }
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       bottomNavigationBar: pickedSource == null

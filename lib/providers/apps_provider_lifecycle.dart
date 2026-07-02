@@ -7,6 +7,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_package_manager/android_package_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -205,8 +206,7 @@ extension AppsProviderLifecycle on AppsProvider {
 
   Future<void> loadApps({String? singleId}) async {
     await waitForAppsToLoad();
-    final loadingCompleter = Completer<void>();
-    appsLoadingCompleter = loadingCompleter;
+    appsLoadingCompleter = Completer<void>();
     loadingApps = true;
     notify();
     try {
@@ -284,7 +284,15 @@ extension AppsProviderLifecycle on AppsProvider {
                     ),
                   );
                 } catch (e) {
-                  errors.add([app!.id, app.finalName, e.toString()]);
+                  if (e is RateLimitError || e is SocketException) {
+                    unawaited(
+                      logs.add(
+                        'Transient error loading app ${app!.id}, will retry: $e',
+                      ),
+                    );
+                  } else {
+                    errors.add([app!.id, app.finalName, e.toString()]);
+                  }
                 }
               }
             }),
@@ -305,7 +313,6 @@ extension AppsProviderLifecycle on AppsProvider {
     } finally {
       loadingApps = false;
       appsLoadingCompleter = null;
-      loadingCompleter.complete();
       notify();
     }
   }

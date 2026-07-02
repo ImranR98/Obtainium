@@ -10,6 +10,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// Version is the build number; release date is the build timestamp.
 class Jenkins extends AppSource {
   Jenkins() {
+    name = 'Jenkins';
     versionDetectionDisallowed = true;
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;

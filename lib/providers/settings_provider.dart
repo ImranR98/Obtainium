@@ -305,8 +305,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('pinUpdates') ?? true;
   }
 
-  set pinUpdates(bool show) {
-    prefs?.setBool('pinUpdates', show);
+  set pinUpdates(bool value) {
+    prefs?.setBool('pinUpdates', value);
     notifyListeners();
   }
 
@@ -314,8 +314,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('buryNonInstalled') ?? false;
   }
 
-  set buryNonInstalled(bool show) {
-    prefs?.setBool('buryNonInstalled', show);
+  set buryNonInstalled(bool value) {
+    prefs?.setBool('buryNonInstalled', value);
     notifyListeners();
   }
 
@@ -323,8 +323,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('groupByCategory') ?? false;
   }
 
-  set groupByCategory(bool show) {
-    prefs?.setBool('groupByCategory', show);
+  set groupByCategory(bool value) {
+    prefs?.setBool('groupByCategory', value);
     notifyListeners();
   }
 
@@ -418,7 +418,12 @@ class SettingsProvider with ChangeNotifier {
           .map((e) => e as App)
           .toList();
       if (changedApps.isNotEmpty) {
-        appsProvider.saveApps(changedApps);
+        appsProvider.saveApps(changedApps).catchError((e) {
+          LogsProvider().add(
+            'Failed to save apps during category update: $e',
+            level: LogLevel.error,
+          );
+        });
       }
     }
     prefs?.setString('categories', jsonEncode(cats));
@@ -511,8 +516,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('removeOnExternalUninstall') ?? false;
   }
 
-  set removeOnExternalUninstall(bool show) {
-    prefs?.setBool('removeOnExternalUninstall', show);
+  set removeOnExternalUninstall(bool value) {
+    prefs?.setBool('removeOnExternalUninstall', value);
     notifyListeners();
   }
 
@@ -520,8 +525,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('checkUpdateOnDetailPage') ?? false;
   }
 
-  set checkUpdateOnDetailPage(bool show) {
-    prefs?.setBool('checkUpdateOnDetailPage', show);
+  set checkUpdateOnDetailPage(bool value) {
+    prefs?.setBool('checkUpdateOnDetailPage', value);
     notifyListeners();
   }
 
@@ -529,8 +534,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('disablePageTransitions') ?? false;
   }
 
-  set disablePageTransitions(bool show) {
-    prefs?.setBool('disablePageTransitions', show);
+  set disablePageTransitions(bool value) {
+    prefs?.setBool('disablePageTransitions', value);
     notifyListeners();
   }
 
@@ -538,8 +543,8 @@ class SettingsProvider with ChangeNotifier {
     return _getBool('reversePageTransitions') ?? false;
   }
 
-  set reversePageTransitions(bool show) {
-    prefs?.setBool('reversePageTransitions', show);
+  set reversePageTransitions(bool value) {
+    prefs?.setBool('reversePageTransitions', value);
     notifyListeners();
   }
 

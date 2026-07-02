@@ -1,4 +1,5 @@
 import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -9,7 +10,7 @@ class Codeberg extends AppSource {
     hosts = ['codeberg.org'];
 
     additionalSourceAppSpecificSettingFormItems =
-        _gh.additionalSourceAppSpecificSettingFormItems;
+        List<List<GeneratedFormItem>>.from(_gh.additionalSourceAppSpecificSettingFormItems);
 
     canSearch = true;
     searchQuerySettingFormItems = _gh.searchQuerySettingFormItems;

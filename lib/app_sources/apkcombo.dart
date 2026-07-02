@@ -5,6 +5,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class APKCombo extends AppSource {
   APKCombo() {
+    name = 'APKCombo';
     hosts = ['apkcombo.com'];
     showReleaseDateAsVersionToggle = true;
     inferAppIdFromUrlPath = true;
@@ -41,7 +42,7 @@ class APKCombo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    final res = await sourceRequest('$standardUrl/download/apk', {});
+    final res = await sourceRequest('$standardUrl/download/apk', additionalSettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }

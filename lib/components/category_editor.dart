@@ -403,9 +403,13 @@ class _CategorySelectorState extends State<CategorySelector> {
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     final prunedSelected = _selected.where(categories.containsKey).toSet();
     if (prunedSelected.length != _selected.length) {
-      _selected = prunedSelected;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) _emit();
+        if (context.mounted) {
+          setState(() {
+            _selected = prunedSelected;
+          });
+          _emit();
+        }
       });
     }
 

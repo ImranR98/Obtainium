@@ -286,6 +286,7 @@ class HTML extends AppSource {
     ],
   ];
   HTML() {
+    name = 'HTML';
     suppressStandardVersionExtraction = true;
     additionalSourceAppSpecificSettingFormItems = [
       [

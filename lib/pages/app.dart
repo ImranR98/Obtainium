@@ -46,6 +46,8 @@ class _AppPageState extends State<AppPage> {
   bool webViewLoaded = false;
   bool _webViewReady = false;
   bool get webViewReady => _webViewReady;
+  String? _webViewError;
+  bool _pendingAppIdChange = false;
   AppInMemory? prevApp;
   bool updating = false;
 
@@ -66,12 +68,15 @@ class _AppPageState extends State<AppPage> {
   @override
   void didUpdateWidget(covariant AppPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Guard WebView state transitions during the back-gesture lifecycle:
-    // only react to widget updates once the WebView has finished its initial
-    // load, avoiding predictive-back crashes from operating on a WebView that
-    // is mid-transition.
-    if (_initialized && webViewReady && oldWidget.appId != widget.appId) {
-      setState(() {});
+    // React to appId changes even before the WebView is ready, but defer
+    // UI updates until the WebView has finished loading to avoid
+    // predictive-back crashes.
+    if (_initialized && oldWidget.appId != widget.appId) {
+      _pendingAppIdChange = true;
+      if (webViewReady) {
+        _pendingAppIdChange = false;
+        setState(() {});
+      }
     }
   }
 
@@ -83,6 +88,10 @@ class _AppPageState extends State<AppPage> {
 
   void onWebViewLoaded() {
     _webViewReady = true;
+    if (_pendingAppIdChange) {
+      _pendingAppIdChange = false;
+      setState(() {});
+    }
   }
 
   AppSource? get source {
@@ -106,7 +115,9 @@ class _AppPageState extends State<AppPage> {
             },
             onWebResourceError: (WebResourceError error) {
               if (error.isForMainFrame == true) {
-                // Error will be shown via build callback
+                setState(() {
+                  _webViewError = error.description;
+                });
               }
             },
             onNavigationRequest: (NavigationRequest request) =>
@@ -418,6 +429,26 @@ class _AppPageState extends State<AppPage> {
   Widget _getAppWebView(BuildContext context, AppInMemory? app) {
     if (app == null) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (_webViewError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 16),
+              Text(tr('webviewLoadError')),
+              Text(
+                _webViewError!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      );
     }
     final webController = ensureWebViewController(app.app.url)
       ..setBackgroundColor(Theme.of(context).colorScheme.surface);

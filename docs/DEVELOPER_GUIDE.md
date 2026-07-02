@@ -402,8 +402,8 @@ flutter build apk --flavor normal   # or use ./build.sh
   `android_system_font`) — keep them pinned; don't loosen to `ref: main`.
 - `sign.sh` reads the keystore password from an env var and locates `apksigner` robustly;
   `build.sh` / `docker/Dockerfile` handle reproducible/CI builds.
-- Test files live in `test/`. Run `flutter analyze`, `dart format --set-exit-if-changed .`,
-  and `flutter test` locally before opening a PR.
+- **Note:** The project currently lacks automated tests. Run `flutter analyze` and
+  `dart format --set-exit-if-changed .` locally before opening a PR.
 
 ---
 

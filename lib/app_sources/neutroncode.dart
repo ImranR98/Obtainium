@@ -5,6 +5,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class NeutronCode extends AppSource {
   NeutronCode() {
+    name = 'NeutronCode';
     hosts = ['neutroncode.com'];
     showReleaseDateAsVersionToggle = true;
     changeLogPageIsStandardUrl = true;

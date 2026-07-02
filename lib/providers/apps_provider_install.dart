@@ -666,6 +666,16 @@ extension AppsProviderInstall on AppsProvider {
         installedVersion: apps[file.appId]!.app.latestVersion,
       );
       unawaited(file.file.delete(recursive: true));
+    } else {
+      try {
+        deleteFile(file.file);
+      } catch (e) {
+        unawaited(
+          logs.add(
+            'Failed to delete APK after pending install: ${e.toString()}',
+          ),
+        );
+      }
     }
     await saveApps([apps[file.appId]!.app]);
     return installed;

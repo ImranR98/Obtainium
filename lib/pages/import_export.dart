@@ -907,7 +907,7 @@ class ImportFromURLListController extends ChangeNotifier {
       if (result != null) {
         final path = result.files.single.path;
         if (path == null) return;
-        final urls = RegExp('https?://[^"]+')
+        final urls = RegExp(r'https?://[^\s"]+')
             .allMatches(await File(path).readAsString())
             .map((e) => e.input.substring(e.start, e.end))
             .toSet()

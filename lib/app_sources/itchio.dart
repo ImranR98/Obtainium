@@ -167,7 +167,7 @@ class ItchIO extends AppSource {
 
     final DateTime latest = abbrDates.reduce(dateTimeFilter);
 
-    return '${latest.year}${latest.month}${latest.day}';
+    return '${latest.year}${latest.month.toString().padLeft(2, '0')}${latest.day.toString().padLeft(2, '0')}';
   }
 
   /// Extracts the app title from the page title.

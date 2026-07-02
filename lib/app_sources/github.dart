@@ -13,6 +13,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class GitHub extends AppSource {
   GitHub({bool hostChanged = false}) {
+    name = 'GitHub';
     hosts = ['github.com'];
     appIdInferIsOptional = true;
     showReleaseDateAsVersionToggle = true;
@@ -684,6 +685,7 @@ class GitHub extends AppSource {
       }
 
       if (sortMethod == 'none') {
+        _positionLatestRelease(releases, latestRelease);
         releases = releases.reversed.toList();
       } else {
         _sortGitHubReleases(
@@ -691,9 +693,9 @@ class GitHub extends AppSource {
           sortMethod,
           useLatestAssetDateAsReleaseDate,
         );
+        _positionLatestRelease(releases, latestRelease);
+        releases = releases.reversed.toList();
       }
-      _positionLatestRelease(releases, latestRelease);
-      releases = releases.reversed.toList();
       final targetRelease = _selectGitHubTargetRelease(
         releases: releases,
         fallbackToOlderReleases: fallbackToOlderReleases,

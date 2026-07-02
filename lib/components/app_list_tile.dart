@@ -165,7 +165,9 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           ),
         ),
         onDoubleTap: () {
-          packageManager.openApp(widget.appId);
+          if (widget.installed) {
+            packageManager.openApp(widget.appId);
+          }
         },
         onLongPress: () {
           Navigator.push(
@@ -371,7 +373,7 @@ class AppListTile extends StatelessWidget {
     final List<double> stops = [
       if (categories.length > 1)
         ...categories.asMap().entries.map(
-          (e) => ((e.key / (categories.length - 1)) - 0.0001),
+          (e) => ((e.key / (categories.length - 1)).clamp(0.0, 1.0)),
         )
       else if (categories.length == 1)
         0.9999,

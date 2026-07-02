@@ -185,9 +185,9 @@ class FDroidRepo extends AppSource {
       }
       standardUrl = removeQueryParamsFromUrl(standardUrl);
       final bool pickHighestVersionCode =
-          additionalSettings['pickHighestVersionCode'];
+          additionalSettings['pickHighestVersionCode'] == true;
       final bool trySelectingSuggestedVersionCode =
-          additionalSettings['trySelectingSuggestedVersionCode'];
+          additionalSettings['trySelectingSuggestedVersionCode'] == true;
       if (appIdOrName == null) {
         throw NoReleasesError();
       }

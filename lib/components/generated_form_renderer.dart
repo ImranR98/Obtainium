@@ -171,6 +171,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   Key? initKey;
+  int? _itemsHash;
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
 
@@ -322,8 +323,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
   }
 
+  int _computeItemsHash(List<List<GeneratedFormItem>> items) {
+    return Object.hashAll(
+      items.expand((row) => row.map((e) => Object.hash(e.key, e.value))),
+    );
+  }
+
   void initForm() {
     initKey = widget.key;
+    _itemsHash = _computeItemsHash(widget.items);
     for (final c in _textControllers) {
       c.dispose();
     }
@@ -466,7 +474,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.key != initKey) {
+    if (widget.key != initKey || _computeItemsHash(widget.items) != _itemsHash) {
       initForm();
     }
     final List<List<Widget>> renderedInputs = [

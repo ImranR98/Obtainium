@@ -15,6 +15,7 @@ class GitLab extends AppSource {
   final GitHub _gh = GitHub(hostChanged: true);
 
   GitLab({bool hostChanged = false}) {
+    name = 'GitLab';
     hosts = ['gitlab.com'];
     canSearch = true;
     showReleaseDateAsVersionToggle = true;

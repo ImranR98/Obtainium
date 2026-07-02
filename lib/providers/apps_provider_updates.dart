@@ -149,12 +149,18 @@ extension AppsProviderUpdates on AppsProvider {
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
         updateCheckCompleter?.completeError(ex);
+        updateCheckCompleter = null;
+        gettingUpdates = false;
         throw ex;
       }
       updateCheckCompleter?.complete(updates);
+      updateCheckCompleter = null;
+      gettingUpdates = false;
       return updates;
     } catch (e) {
       updateCheckCompleter?.completeError(e);
+      updateCheckCompleter = null;
+      gettingUpdates = false;
       rethrow;
     } finally {
       updateCheckCompleter = null;

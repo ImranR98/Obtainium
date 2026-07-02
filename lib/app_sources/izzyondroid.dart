@@ -1,4 +1,5 @@
 import 'package:obtainium/app_sources/fdroid.dart';
+import 'package:obtainium/components/generated_form_model.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -10,7 +11,7 @@ class IzzyOnDroid extends AppSource {
     hosts = ['izzysoft.de'];
     fd = FDroid();
     additionalSourceAppSpecificSettingFormItems =
-        fd.additionalSourceAppSpecificSettingFormItems;
+        List<List<GeneratedFormItem>>.from(fd.additionalSourceAppSpecificSettingFormItems);
     allowSubDomains = true;
   }
 

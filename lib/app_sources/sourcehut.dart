@@ -9,6 +9,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 class SourceHut extends AppSource {
   SourceHut() {
+    name = 'SourceHut';
     hosts = ['git.sr.ht'];
     changeLogPageIsStandardUrl = true;
     showReleaseDateAsVersionToggle = true;

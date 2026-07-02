@@ -10,6 +10,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// (e.g. `https://sourceforge.net/projects/example`).
 class SourceForge extends AppSource {
   SourceForge() {
+    name = 'SourceForge';
     suppressStandardVersionExtraction = true;
     hosts = ['sourceforge.net'];
   }

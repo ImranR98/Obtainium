@@ -299,19 +299,22 @@ Future<String?> checkETagHeader(
   final req = Request('GET', Uri.parse(url));
   req.headers.addAll(reqHeaders);
   final client = IOClient(createHttpClient(allowInsecure));
-  final StreamedResponse response = await client.send(req);
-  final resHeaders = response.headers;
-  await response.stream.drain<void>().catchError((err) {
-    LogsProvider().add(
-      'Error draining response stream: $err',
-      level: LogLevel.error,
-    );
-  });
-  client.close();
-  return resHeaders[HttpHeaders.etagHeader]
-      ?.replaceAll('"', '')
-      .hashCode
-      .toString();
+  try {
+    final StreamedResponse response = await client.send(req);
+    final resHeaders = response.headers;
+    await response.stream.drain<void>().catchError((err) {
+      LogsProvider().add(
+        'Error draining response stream: $err',
+        level: LogLevel.error,
+      );
+    });
+    return resHeaders[HttpHeaders.etagHeader]
+        ?.replaceAll('"', '')
+        .hashCode
+        .toString();
+  } finally {
+    client.close();
+  }
 }
 
 void deleteFile(File file) {

@@ -13,6 +13,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class APKMirror extends AppSource {
   APKMirror() {
+    name = 'APKMirror';
     hosts = ['apkmirror.com'];
     enforceTrackOnly = true;
     showReleaseDateAsVersionToggle = true;

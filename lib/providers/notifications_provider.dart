@@ -164,7 +164,7 @@ class DownloadNotification extends ObtainiumNotification {
   static const int _baseId = 100;
   DownloadNotification(String appName, int progPercent)
     : super(
-        _baseId + (appName.hashCode.abs() % 9000),
+        _baseId + ((appName.hashCode.abs() % 9000).abs()),
         tr('downloadingX', args: [appName]),
         '',
         'APP_DOWNLOADING',
