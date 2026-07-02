@@ -1149,8 +1149,10 @@ class AppsPageState extends State<AppsPage> {
         ),
         floatingActionButton: selectedAppIds.isNotEmpty
             ? FloatingActionButton(
-                onPressed: () =>
-                    showMoreOptionsBottomSheet(context, selectedApps),
+                onPressed: () {
+                  settingsProvider.selectionClick();
+                  showMoreOptionsBottomSheet(context, selectedApps);
+                },
                 tooltip: tr('more'),
                 child: const Icon(Icons.more_vert),
               )

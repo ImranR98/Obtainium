@@ -1027,6 +1027,7 @@ class _AppPageState extends State<AppPage> {
       floatingActionButton: showAppWebpageFinal
           ? FloatingActionButton(
               onPressed: () {
+                settingsProvider.selectionClick();
                 Navigator.push(
                   context,
                   MaterialPageRoute(

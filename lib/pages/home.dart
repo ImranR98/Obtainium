@@ -443,10 +443,23 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
+    void onAddPressed() {
+      settingsProvider.selectionClick();
+      pushAddApp();
+    }
+
+    // Compact FAB for the rail leading (an extended FAB would overflow it);
+    // an expressive extended FAB for the bottom layout's primary action.
     final createFab = FloatingActionButton(
-      onPressed: () => pushAddApp(),
+      onPressed: onAddPressed,
       tooltip: tr('addApp'),
       child: const Icon(Icons.add),
+    );
+    final createFabExtended = FloatingActionButton.extended(
+      onPressed: onAddPressed,
+      tooltip: tr('addApp'),
+      icon: const Icon(Icons.add),
+      label: Text(tr('add')),
     );
 
     return PopScope(
@@ -500,7 +513,7 @@ class _HomePageState extends State<HomePage> {
             : content,
         floatingActionButton: useRail || currentIndex != 0 || appsSelecting
             ? null
-            : createFab,
+            : createFabExtended,
         bottomNavigationBar: useRail
             ? null
             : FocusTraversalGroup(

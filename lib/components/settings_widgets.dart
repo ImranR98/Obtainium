@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 bool _isKnownTileType(Widget w) =>
     w is SettingsTile || w is SettingsToggleRow;
@@ -99,19 +101,27 @@ class SettingsToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ValueChanged<bool>? hapticOnChanged = onChanged == null
+        ? null
+        : (v) {
+            context.read<SettingsProvider>().selectionClick();
+            onChanged!(v);
+          };
     final Widget tileChild = helpWidgets.isEmpty
         ? SwitchListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             title: Text(label),
             subtitle: subtitle,
             value: value,
-            onChanged: onChanged,
+            onChanged: hapticOnChanged,
           )
         : ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             title: Text(label),
             subtitle: subtitle,
-            onTap: onChanged == null ? null : () => onChanged!(!value),
+            onTap: hapticOnChanged == null
+                ? null
+                : () => hapticOnChanged(!value),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -124,7 +134,7 @@ class SettingsToggleRow extends StatelessWidget {
                     content: helpWidgets,
                   ),
                 ),
-                Switch(value: value, onChanged: onChanged),
+                Switch(value: value, onChanged: hapticOnChanged),
               ],
             ),
           );

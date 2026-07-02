@@ -138,6 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
     SettingsProvider settingsProvider,
     String mode,
   ) {
+    settingsProvider.selectionClick();
     if (mode == InstallerMode.shizuku.name) {
       ShizukuApkInstaller()
           .checkPermission()
@@ -326,6 +327,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
             selected: {settingsProvider.theme},
             onSelectionChanged: (selection) {
+              settingsProvider.selectionClick();
               settingsProvider.theme = selection.first;
             },
           ),
@@ -385,6 +387,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
             selected: {settingsProvider.sortOrder},
             onSelectionChanged: (selection) {
+              settingsProvider.selectionClick();
               settingsProvider.sortOrder = selection.first;
             },
           ),
@@ -1163,7 +1166,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
             leading: SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(),
             ),
             title: Text('…'),
           );

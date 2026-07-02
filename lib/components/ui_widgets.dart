@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -265,7 +266,10 @@ class DownloadCancelButton extends StatelessWidget {
       iconSize: 20,
       visualDensity: VisualDensity.compact,
       tooltip: tr('cancel'),
-      onPressed: onPressed,
+      onPressed: () {
+        context.read<SettingsProvider>().lightImpact();
+        onPressed();
+      },
     );
   }
 }

@@ -121,9 +121,7 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                                  child: CircularProgressIndicator(),
                                 )
                               : Text(tr('import')),
                         ),

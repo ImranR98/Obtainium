@@ -232,6 +232,7 @@ class AppListTile extends StatelessWidget {
       onPressed: appsProvider.areDownloadsRunning()
           ? null
           : () {
+              settingsProvider.heavyImpact();
               appsProvider
                   .downloadAndInstallLatestApps([_app.id], context)
                   .then((res) {
@@ -455,6 +456,7 @@ class AppListTile extends StatelessWidget {
           if (direction == DismissDirection.startToEnd) {
             if ((canInstall || canUpdate) &&
                 !appsProvider.areDownloadsRunning()) {
+              settingsProvider.heavyImpact();
               unawaited(
                 appsProvider
                     .downloadAndInstallLatestApps([appId], context)
@@ -466,6 +468,7 @@ class AppListTile extends StatelessWidget {
             }
             return false;
           } else {
+            settingsProvider.lightImpact();
             return appsProvider.removeAppsWithModal(context, [_app]);
           }
         },
