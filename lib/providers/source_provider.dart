@@ -658,7 +658,12 @@ abstract class AppSource {
   /// interspersing conditional items (zip/tarball options, version toggles) and
   /// filtering out excluded keys. Cloned so that callers cannot mutate the
   /// shared (cached) source-owned form items.
+  /// Memoized full result of [combinedAppSpecificSettingFormItems] to avoid
+  /// recomputing clones on every call (especially during rebuilds).
+  List<List<GeneratedFormItem>>? _combinedItemsCache;
+
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
+    if (_combinedItemsCache != null) return _combinedItemsCache!;
     var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
 
     final versionDetectionIdx = agnosticItems.indexWhere(
@@ -746,7 +751,7 @@ abstract class AppSource {
       }
     }
 
-    return [
+    return _combinedItemsCache = [
       // Clone so callers (e.g. the add-app form pre-filling default values)
       // can't mutate the source-owned items. Sources are now cached/shared, so
       // an in-place edit here would otherwise leak across apps.
@@ -1098,6 +1103,9 @@ class SourceProvider {
     }
     if (additionalSettings['autoApkFilterByArch'] == true) {
       apk.apkUrls = await filterApksByArch(apk.apkUrls);
+      if (apk.apkUrls.isEmpty && !trackOnly) {
+        throw NoAPKError();
+      }
     }
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
@@ -1118,7 +1126,7 @@ class SourceProvider {
       installedVersion: currentApp?.installedVersion,
       latestVersion: apk.version,
       apkUrls: apk.apkUrls,
-      preferredApkIndex: apk.apkUrls.length - 1,
+      preferredApkIndex: apk.apkUrls.isEmpty ? 0 : 0,
       additionalSettings: additionalSettings,
       lastUpdateCheck: DateTime.now(),
       pinned: currentApp?.pinned ?? false,

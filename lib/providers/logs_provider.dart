@@ -117,7 +117,10 @@ create table if not exists $logTable (
           plural(
             'clearedNLogsBeforeXAfterY',
             res,
-            namedArgs: {'before': before.toString(), 'after': after.toString()},
+            namedArgs: {
+            'before': before?.toIso8601String() ?? '...',
+            'after': after?.toIso8601String() ?? '...',
+          },
             name: 'n',
           ),
         ),

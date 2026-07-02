@@ -573,13 +573,10 @@ class _SelectionModalState extends State<SelectionModal> {
   void _resetEntrySelections() {
     entrySelections.clear();
     for (var entry in widget.entries.entries) {
-      entrySelections.putIfAbsent(
-        entry,
-        () =>
-            widget.selectedByDefault &&
-            !widget.onlyOneSelectionAllowed &&
-            !widget.deselectThese.contains(entry.key),
-      );
+      entrySelections[entry] =
+          widget.selectedByDefault &&
+          !widget.onlyOneSelectionAllowed &&
+          !widget.deselectThese.contains(entry.key);
     }
     if (widget.selectedByDefault &&
         widget.onlyOneSelectionAllowed &&

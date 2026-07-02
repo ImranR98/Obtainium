@@ -36,13 +36,15 @@ fi
 
 flutter clean
 flutter pub get
+APP_VERSION="$(grep '^version: ' pubspec.yaml | sed 's/version: //; s/+.*//' | head -1)"
+DART_DEFINE="--dart-define=APP_VERSION=$APP_VERSION"
 # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
 sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
 
-flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal # Build (both split and combined APKs)
+flutter build apk $DART_DEFINE --flavor normal && flutter build apk $DART_DEFINE --split-per-abi --flavor normal # Build (both split and combined APKs)
 for file in ./build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
-flutter build apk --flavor fdroid -t lib/main_fdroid.dart && # Do the same for the F-Droid flavour
-    flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
+flutter build apk $DART_DEFINE --flavor fdroid -t lib/main_fdroid.dart && # Do the same for the F-Droid flavour
+    flutter build apk $DART_DEFINE --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
 for file in ./build/app/outputs/flutter-apk/*.sha1; do gpg --sign --detach-sig "$file"; done # Generate PGP signatures
 rsync -r ./build/app/outputs/flutter-apk/ ~/Downloads/Obtainium-build/                       # Dropoff in Downloads to allow for drag-drop into Flatpak Firefox
 cd ~/Downloads/Obtainium-build/                                                              # Make zips just in case (for in-comment uploads)

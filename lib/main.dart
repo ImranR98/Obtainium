@@ -171,7 +171,6 @@ void main() async {
   final appsProvider = AppsProvider(
     settingsProvider: settingsProvider,
     logsProvider: logs,
-    logger: logger,
   );
   final np = NotificationsProvider();
   await np.initialize();

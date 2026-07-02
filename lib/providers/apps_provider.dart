@@ -31,7 +31,6 @@ import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 // ignore: implementation_imports
-// ignore: implementation_imports
 
 import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/apps_provider_install.dart';
@@ -44,19 +43,19 @@ export 'apps_provider_lifecycle.dart';
 export 'apps_provider_updates.dart';
 
 // Named constants for magic numbers and hardcoded values
-const int _obtainiumDefaultRetries = 3;
-const int _obtainiumRetryDelaySeconds = 5;
-const int _obtainiumPartialHashCheckStartingSize = 1024;
-const int _obtainiumPartialHashCheckLowerLimit = 128;
-const int _obtainiumPartialHashCheckDecrement = 256;
-const int _obtainiumMaxDownloadPolls = 43;
-const int _obtainiumDownloadPollIntervalSeconds = 7;
-const int _obtainiumProgressUpdateIntervalMs = 500;
-const int _obtainiumDownloadBufferSize = 32 * 1024;
-const int _obtainiumDownloadProgressFallback = 30;
-const int _obtainiumBgUpdateMaxAttempts = 4;
-const int _obtainiumBgUpdateMaxRetryWaitSeconds = 5;
-const int _obtainiumBgClientExceptionRetryWaitSeconds = 15 * 60;
+const int _defaultRetries = 3;
+const int _retryDelaySeconds = 5;
+const int _partialHashCheckStartingSize = 1024;
+const int _partialHashCheckLowerLimit = 128;
+const int _partialHashCheckDecrement = 256;
+const int _maxDownloadPolls = 43;
+const int _downloadPollIntervalSeconds = 7;
+const int _progressUpdateIntervalMs = 500;
+const int _downloadBufferSize = 32 * 1024;
+const int _downloadProgressFallback = 30;
+const int _bgUpdateMaxAttempts = 4;
+const int _bgUpdateMaxRetryWaitSeconds = 5;
+const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
 final packageManager = AndroidPackageManager();
 final packageInfoFlags = PackageInfoFlags({PMFlag.getSigningCertificates});
@@ -163,7 +162,7 @@ List<T> _moveToEnd<T extends Object>(List<T> arr, bool Function(T) match) {
     return false;
   });
   if (temp != null) {
-    arr = [...arr, temp as T];
+    arr.add(temp as T);
   }
   return arr;
 }
@@ -185,7 +184,7 @@ Future<File> downloadFileWithRetry(
   String destDir, {
   bool useExisting = true,
   Map<String, String>? headers,
-  int retries = _obtainiumDefaultRetries,
+  int retries = _defaultRetries,
   bool allowInsecure = false,
   LogsProvider? logs,
 }) async {
@@ -204,7 +203,7 @@ Future<File> downloadFileWithRetry(
   } catch (e) {
     if (retries > 0 && e is ClientException) {
       await Future.delayed(
-        const Duration(seconds: _obtainiumRetryDelaySeconds),
+        const Duration(seconds: _retryDelaySeconds),
       );
       return await downloadFileWithRetry(
         url,
@@ -231,15 +230,15 @@ String hashListOfLists(List<List<int>> data) {
 
 Future<String> checkPartialDownloadHashDynamic(
   String url, {
-  int startingSize = _obtainiumPartialHashCheckStartingSize,
-  int lowerLimit = _obtainiumPartialHashCheckLowerLimit,
+  int startingSize = _partialHashCheckStartingSize,
+  int lowerLimit = _partialHashCheckLowerLimit,
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
   for (
     int i = startingSize;
     i >= lowerLimit;
-    i -= _obtainiumPartialHashCheckDecrement
+    i -= _partialHashCheckDecrement
   ) {
     // Both requests fetch the same byte range to confirm the hash is
     // stable. The loop decrements on mismatch; when two consecutive
@@ -317,7 +316,7 @@ Future<String?> checkETagHeader(
 
 void deleteFile(File file) {
   try {
-    file.deleteSync(recursive: true);
+    file.deleteSync();
   } on PathAccessException catch (e) {
     throw ObtainiumError(
       tr('fileDeletionError', args: [e.path ?? tr('unknown')]),
@@ -339,10 +338,10 @@ Future<File?> _waitForConcurrentDownload(
   );
   int currentTempFileSize = await tempDownloadedFile.length();
   int pollCount = 0;
-  while (pollCount < _obtainiumMaxDownloadPolls) {
+  while (pollCount < _maxDownloadPolls) {
     pollCount++;
     await Future.delayed(
-      const Duration(seconds: _obtainiumDownloadPollIntervalSeconds),
+      const Duration(seconds: _downloadPollIntervalSeconds),
     );
     if (tempDownloadedFile.existsSync()) {
       final int newTempFileSize = await tempDownloadedFile.length();
@@ -515,9 +514,29 @@ Future<File> downloadFile(
     }
 
     const downloadUIUpdateInterval = Duration(
-      milliseconds: _obtainiumProgressUpdateIntervalMs,
+      milliseconds: _progressUpdateIntervalMs,
     );
-    const downloadBufferSizeLocal = _obtainiumDownloadBufferSize;
+    const downloadBufferSizeLocal = _downloadBufferSize;
+
+    // Check status code BEFORE finishing the download stream so we can
+    // abort early on errors and avoid wasting bandwidth reading a body
+    // the server already rejected.
+    if (response.statusCode < 200 || response.statusCode > 299) {
+      await sink.close();
+      sink = null;
+      await response.drain<void>().catchError((_) {});
+      if (tempDownloadedFile.existsSync()) {
+        deleteFile(tempDownloadedFile);
+      }
+      throw ObtainiumError(
+        response.reasonPhrase.isNotEmpty
+            ? response.reasonPhrase
+            : tr(
+                'errorWithHttpStatusCode',
+                args: [response.statusCode.toString()],
+              ),
+      );
+    }
 
     final downloadBuffer = BytesBuilder();
     await response
@@ -530,7 +549,7 @@ Future<File> downloadFile(
                       downloadUIUpdateInterval)) {
             progress = fullContentLength != null
                 ? (received / fullContentLength * 100).clamp(0, 100)
-                : _obtainiumDownloadProgressFallback.toDouble();
+                : _downloadProgressFallback.toDouble();
             onProgress(progress);
             lastProgressUpdate = now;
           }
@@ -557,17 +576,6 @@ Future<File> downloadFile(
     progress = null;
     if (onProgress != null) {
       onProgress(progress);
-    }
-    if (response.statusCode < 200 || response.statusCode > 299) {
-      deleteFile(tempDownloadedFile);
-      throw ObtainiumError(
-        response.reasonPhrase.isNotEmpty
-            ? response.reasonPhrase
-            : tr(
-                'errorWithHttpStatusCode',
-                args: [response.statusCode.toString()],
-              ),
-      );
     }
     if (tempDownloadedFile.existsSync()) {
       if (downloadedFile.existsSync()) {
@@ -623,7 +631,6 @@ class AppsProvider with ChangeNotifier {
   bool gettingUpdates = false;
   Completer<List<App>>? updateCheckCompleter;
   LogsProvider logs = LogsProvider();
-  Logger? logger;
 
   // Serializes concurrent loadApps() calls without busy-waiting.
   Completer<void>? appsLoadingCompleter;
@@ -688,7 +695,6 @@ class AppsProvider with ChangeNotifier {
     bool isBg = false,
     SettingsProvider? settingsProvider,
     LogsProvider? logsProvider,
-    this.logger,
   }) {
     _isBg = isBg;
     this.settingsProvider = settingsProvider ?? SettingsProvider();
@@ -728,10 +734,12 @@ class AppsProvider with ChangeNotifier {
       if (!isBg) {
         await loadApps();
         final cutoff = DateTime.now().subtract(const Duration(days: 7));
-        await for (var partialApk in apkDir.list()) {
-          if ((await partialApk.stat()).modified.isBefore(cutoff)) {
+        await for (var entity in apkDir.list()) {
+          if (entity is File &&
+              entity.path.endsWith('.part') &&
+              (await entity.stat()).modified.isBefore(cutoff)) {
             if (!areDownloadsRunning()) {
-              await partialApk.delete(recursive: true);
+              await entity.delete();
             }
           }
         }
@@ -855,8 +863,8 @@ Future<void> bgUpdateCheck(
   );
   await appsProvider.loadApps();
 
-  const int maxAttempts = _obtainiumBgUpdateMaxAttempts;
-  const int maxRetryWaitSeconds = _obtainiumBgUpdateMaxRetryWaitSeconds;
+  const int maxAttempts = _bgUpdateMaxAttempts;
+  const int maxRetryWaitSeconds = _bgUpdateMaxRetryWaitSeconds;
 
   final netResult = await (Connectivity().checkConnectivity());
   if (netResult.contains(ConnectivityResult.none) ||
@@ -1017,7 +1025,7 @@ Future<void> _bgRunUpdateCheck(
           int minRetryIntervalForThisApp = err is RateLimitError
               ? (err.remainingMinutes * 60)
               : err is ClientException
-              ? (_obtainiumBgClientExceptionRetryWaitSeconds)
+              ? (_bgClientExceptionRetryWaitSeconds)
               : (toCheckApp.value + 1);
           if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
             minRetryIntervalForThisApp = maxRetryWaitSeconds;

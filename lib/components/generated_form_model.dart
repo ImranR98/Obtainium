@@ -357,9 +357,11 @@ int generateRandomNumber(
 Map<String, dynamic> getDefaultValuesFromFormItems(
   List<List<GeneratedFormItem>> items,
 ) {
-  return Map.fromEntries(
-    items
-        .map((row) => row.map((el) => MapEntry(el.key, el.value ?? '')))
-        .reduce((value, element) => [...value, ...element]),
-  );
+  final entries = <MapEntry<String, dynamic>>[];
+  for (final row in items) {
+    for (final el in row) {
+      entries.add(MapEntry(el.key, el.value ?? ''));
+    }
+  }
+  return Map.fromEntries(entries);
 }

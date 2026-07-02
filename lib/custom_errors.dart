@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show Locale;
 
 import 'package:easy_localization/easy_localization.dart';
@@ -44,17 +45,21 @@ class ObtainiumError {
 Never rethrowOrWrapError(Object error, {String? sourceName}) {
   if (error is ObtainiumError) {
     if (error.stack == null && error.unexpected) {
-      LogsProvider().add(
-        'Unexpected ObtainiumError (no stack): ${error.message}',
-        level: LogLevel.error,
+      unawaited(
+        LogsProvider().add(
+          'Unexpected ObtainiumError (no stack): ${error.message}',
+          level: LogLevel.error,
+        ),
       );
     }
     throw error;
   }
   final stack = StackTrace.current;
-  LogsProvider().add(
-    'Wrapping unexpected error: $error\n$stack',
-    level: LogLevel.error,
+  unawaited(
+    LogsProvider().add(
+      'Wrapping unexpected error: $error\n$stack',
+      level: LogLevel.error,
+    ),
   );
   throw ObtainiumError(
     sourceName != null ? '$sourceName: $error' : error.toString(),
@@ -224,7 +229,7 @@ void setAppLocale(Locale? locale) => _appCurrentLocale = locale;
 
 bool isEnglish() {
   if (_appCurrentLocale != null) return _appCurrentLocale!.languageCode == 'en';
-  return tr('and') == 'and';
+  return false;
 }
 
 String lowerCaseIfEnglish(String str) => isEnglish() ? str.toLowerCase() : str;

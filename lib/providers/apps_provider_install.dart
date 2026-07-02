@@ -270,6 +270,9 @@ extension AppsProviderInstall on AppsProvider {
       }
       if (newInfo == null) {
         unawaited(downloadedFile.delete());
+        if (apkDir != null && apkDir.existsSync()) {
+          apkDir.deleteSync(recursive: true);
+        }
         throw ObtainiumError(tr('couldNotGetIdFromApk'));
       }
       downloadedFile = await handleAPKIDChange(
@@ -385,7 +388,9 @@ extension AppsProviderInstall on AppsProvider {
         completeInstallationNotification,
         cancelExisting: true,
       );
-      while (await FGBGEvents.instance.stream.first != FGBGType.foreground) {}
+      await FGBGEvents.instance.stream
+          .firstWhere((t) => t == FGBGType.foreground)
+          .timeout(const Duration(minutes: 5), onTimeout: () => FGBGType.foreground);
       await notificationsProvider.cancel(completeInstallationNotification.id);
     }
   }
@@ -545,7 +550,7 @@ extension AppsProviderInstall on AppsProvider {
               .toList(),
         );
         somethingInstalled = somethingInstalled || wasInstalled;
-        unawaited(dir.file.delete(recursive: true));
+        unawaited(dir.file.delete());
       } catch (e) {
         unawaited(
           logs.add('Could not install APKs from ${dir.type}: ${e.toString()}'),

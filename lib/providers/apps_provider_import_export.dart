@@ -129,7 +129,6 @@ extension AppsProviderImportExport on AppsProvider {
       );
     }
     await saveApps(importedApps, onlyIfExists: false);
-    notify();
     bool hasSettings = false;
     if (hasSchemaVersion) {
       final schema = ExportSchema.fromJson(decodedJSON as Map<String, dynamic>);
@@ -165,7 +164,10 @@ extension AppsProviderImportExport on AppsProvider {
 }
 
 const int currentExportSchemaVersion = 2;
-const String kPackageVersion = '1.6.0';
+const String kPackageVersion = String.fromEnvironment(
+  'APP_VERSION',
+  defaultValue: '0.0.0',
+);
 
 class ExportSchema {
   final int schemaVersion;

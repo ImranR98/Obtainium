@@ -109,7 +109,7 @@ class AddAppPageState extends State<AddAppPage> {
         urlInputKey++;
       }
       final prevHost = pickedSource?.hosts.isNotEmpty == true
-          ? pickedSource?.hosts[0]
+          ? pickedSource?.hosts.first
           : null;
       final source = valid
           ? sourceProvider.getSource(
@@ -119,7 +119,7 @@ class AddAppPageState extends State<AddAppPage> {
           : null;
       if (pickedSource?.sourceIdentifier != source?.sourceIdentifier ||
           overrideChanged ||
-          (prevHost != null && prevHost != source?.hosts[0])) {
+          (prevHost != null && prevHost != source?.hosts.firstOrNull)) {
         pickedSource = source;
         pickedSource?.runOnAddAppInputChange(userInput);
         additionalSettings = source != null
@@ -817,16 +817,11 @@ class AddAppPageState extends State<AddAppPage> {
     final bool doingSomething = gettingAppInfo || searching;
 
     if (pickedSource != null) {
-      final sourceKey = pickedSource!.name;
-      if (_sourceNoteSourceKey != sourceKey) {
-        _sourceNoteSourceKey = sourceKey;
-        _sourceNoteFuture = pickedSource?.getSourceNote();
-      }
+      _updateSourceNote();
     } else {
       _sourceNoteFuture = null;
       _sourceNoteSourceKey = null;
     }
-
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       bottomNavigationBar: pickedSource == null

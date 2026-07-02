@@ -62,7 +62,7 @@ class SettingsProvider with ChangeNotifier {
   double? _getDouble(String key) => _get<double>(key);
   String? _getString(String key) => _get<String>(key);
 
-  String sourceUrl = 'https://github.com/ImranR98/Obtainium';
+  final String sourceUrl = obtainiumUrl;
 
   /// Platform properties that are stable for the process lifetime but expensive
   /// to fetch (platform channel round-trips). Cached across all provider instances.
@@ -378,7 +378,11 @@ class SettingsProvider with ChangeNotifier {
     final raw = _getString('categories') ?? '{}';
     if (raw != _categoriesRaw || _categoriesCache == null) {
       _categoriesRaw = raw;
-      _categoriesCache = Map<String, int>.from(jsonDecode(raw));
+      try {
+        _categoriesCache = Map<String, int>.from(jsonDecode(raw));
+      } catch (_) {
+        _categoriesCache = <String, int>{};
+      }
     }
     return _categoriesCache!;
   }

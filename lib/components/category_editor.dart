@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:obtainium/components/generated_form_renderer.dart'
     show generateRandomLightColor;
@@ -346,7 +347,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   void didUpdateWidget(CategorySelector oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selected.length != widget.selected.length ||
-        !oldWidget.selected.containsAll(widget.selected)) {
+        !setEquals(oldWidget.selected, widget.selected)) {
       _selected = {...widget.selected};
     }
   }

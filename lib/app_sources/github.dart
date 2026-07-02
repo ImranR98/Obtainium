@@ -648,9 +648,10 @@ class GitHub extends AppSource {
     final bool includeTarballs = additionalSettings['includeTarballs'] == true;
     dynamic latestRelease;
     if (verifyLatestTag) {
-      final temp = requestUrl.split('?');
+      final uri = Uri.parse(requestUrl);
+      final latestUrl = uri.replace(query: null, path: '${uri.path}/latest');
       final Response res = await sourceRequest(
-        '${temp[0]}/latest${temp.length > 1 ? '?${temp.sublist(1).join('?')}' : ''}',
+        latestUrl.toString(),
         additionalSettings,
       );
       if (res.statusCode != 200) {
