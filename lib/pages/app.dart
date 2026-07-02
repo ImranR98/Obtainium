@@ -676,6 +676,23 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  Widget _buildAppIcon(AppInMemory? app) {
+    final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
+    if (app == null || app.installedInfo == null) return icon;
+    return Semantics(
+      button: true,
+      label: app.name,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          settingsProvider.lightImpact();
+          packageManager.openApp(app.app.id);
+        },
+        child: icon,
+      ),
+    );
+  }
+
   Widget _buildHeaderSection(AppInMemory? app) {
     return _buildSection(
       true,
@@ -683,7 +700,7 @@ class _AppPageState extends State<AppPage> {
       children: [
         Row(
           children: [
-            AppIcon(bytes: app?.icon, size: 56, radius: 14),
+            _buildAppIcon(app),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
