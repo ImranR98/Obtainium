@@ -671,7 +671,12 @@ class AppsProvider with ChangeNotifier {
   void _reloadIfBgSaved() {
     if (!_needsBgReload) return;
     _needsBgReload = false;
-    loadApps();
+    loadApps().catchError((e) {
+      logs.add(
+        'Reload after background save failed: $e',
+        level: LogLevel.error,
+      );
+    });
   }
 
   /// Public wrapper around the protected [notifyListeners] so the provider's

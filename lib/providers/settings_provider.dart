@@ -28,7 +28,11 @@ Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
   final split = localeString.split('-');
   if (split.length == 3) {
-    return Locale.fromSubtags(languageCode: split[0], countryCode: split[2]);
+    return Locale.fromSubtags(
+      languageCode: split[0],
+      scriptCode: split[1],
+      countryCode: split[2],
+    );
   }
   if (split.length == 2) {
     return Locale(split[0], split[1]);
@@ -52,6 +56,9 @@ class SettingsProvider with ChangeNotifier {
   String? defaultAppDir;
   bool justStarted = true;
   bool isTV = false;
+
+  int _safErrorCount = 0;
+  static const int _maxSafRetries = 5;
 
   T? _get<T>(String key) {
     final value = prefs?.get(key);
@@ -382,7 +389,11 @@ class SettingsProvider with ChangeNotifier {
       _categoriesRaw = raw;
       try {
         _categoriesCache = Map<String, int>.from(jsonDecode(raw));
-      } catch (_) {
+      } catch (e) {
+        LogsProvider().add(
+          'Corrupted categories data, resetting: $e',
+          level: LogLevel.error,
+        );
         _categoriesCache = <String, int>{};
       }
     }
@@ -591,9 +602,19 @@ class SettingsProvider with ChangeNotifier {
           await prefs?.remove('exportDir');
           notifyListeners();
         }
-      } catch (_) {
-        // Transient SAF error — keep the preference and return null for
-        // this call only so the caller can retry next time.
+      } catch (e) {
+        ++_safErrorCount;
+        unawaited(
+          LogsProvider().add(
+            'SAF access error on export dir (attempt $_safErrorCount): $e',
+            level: LogLevel.error,
+          ),
+        );
+        if (_safErrorCount >= _maxSafRetries) {
+          await prefs?.remove('exportDir');
+          _safErrorCount = 0;
+          notifyListeners();
+        }
         return null;
       }
       return uri;

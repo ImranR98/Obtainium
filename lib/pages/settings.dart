@@ -48,7 +48,14 @@ class _SettingsPageState extends State<SettingsPage> {
       final info = await DeviceInfoPlugin().androidInfo;
       androidSdkInt = info.version.sdkInt;
       if (mounted) setState(() {});
-    } catch (_) {}
+    } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'Failed to get Android SDK info: $e',
+          level: LogLevel.error,
+        ),
+      );
+    }
   }
 
   Future<bool> showColorPickerDialog(
