@@ -228,39 +228,44 @@ class AppListTile extends StatelessWidget {
   App get _app => appInMemory.app;
 
   Widget _updateButton(BuildContext context) {
-    return IconButton(
-      visualDensity: VisualDensity.compact,
-      color: Theme.of(context).colorScheme.primary,
-      tooltip: _app.settings.getBool('trackOnly')
-          ? tr('markUpdated')
-          : tr('update'),
-      onPressed: appsProvider.areDownloadsRunning()
-          ? null
-          : () {
-              settingsProvider.heavyImpact();
-              appsProvider
-                  .downloadAndInstallLatestApps([_app.id], context)
-                  .then((res) {
-                    if (res.isNotEmpty && context.mounted) {
-                      final np = context.read<NotificationsProvider>();
-                      np.cancel(updateNotificationId);
-                      np.cancel(
-                        SilentUpdateAttemptNotification(
-                          [],
-                          id: res[0].hashCode,
-                        ).id,
-                      );
-                    }
-                  })
-                  .catchError((e) {
-                    if (context.mounted) showError(e, context);
-                  });
-            },
-      icon: Icon(
-        _app.settings.getBool('trackOnly')
-            ? Icons.check_circle_outline
-            : Icons.install_mobile,
+    final trackOnly = _app.settings.getBool('trackOnly');
+    final cs = Theme.of(context).colorScheme;
+    final onPressed = appsProvider.areDownloadsRunning()
+        ? null
+        : () {
+            settingsProvider.heavyImpact();
+            appsProvider
+                .downloadAndInstallLatestApps([_app.id], context)
+                .then((res) {
+                  if (res.isNotEmpty && context.mounted) {
+                    final np = context.read<NotificationsProvider>();
+                    np.cancel(updateNotificationId);
+                    np.cancel(
+                      SilentUpdateAttemptNotification(
+                        [],
+                        id: res[0].hashCode,
+                      ).id,
+                    );
+                  }
+                })
+                .catchError((e) {
+                  if (context.mounted) showError(e, context);
+                });
+          };
+    return IconButton.filled(
+      onPressed: onPressed,
+      tooltip: trackOnly ? tr('markUpdated') : tr('update'),
+      style: IconButton.styleFrom(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        disabledBackgroundColor: cs.onSurface.withValues(alpha: 0.12),
+        disabledForegroundColor: cs.onSurface.withValues(alpha: 0.38),
+        visualDensity: VisualDensity.compact,
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
+      icon: Icon(trackOnly ? Icons.check_rounded : Icons.download_rounded),
     );
   }
 
@@ -332,9 +337,9 @@ class AppListTile extends StatelessWidget {
     final Widget trailingRow = LayoutBuilder(
       builder: (context, constraints) => Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (hasUpdate) ...[_updateButton(context), const SizedBox(width: 5)],
+          if (hasUpdate) ...[_updateButton(context), const SizedBox(width: 8)],
           HighlightableButton(
             highlight: settingsProvider.highlightTouchTargets,
             onPressed: showChangesFn,
@@ -347,7 +352,7 @@ class AppListTile extends StatelessWidget {
                   children: [
                     Container(
                       constraints: BoxConstraints(
-                        maxWidth: math.min(constraints.maxWidth / 4, 160),
+                        maxWidth: math.min(constraints.maxWidth / 3, 200),
                       ),
                       child: Text(
                         _versionText(),
@@ -557,7 +562,6 @@ class AppListTile extends StatelessWidget {
                       progress: downloadProgress,
                       receivedBytes: appInMemory.downloadReceivedBytes,
                       totalBytes: appInMemory.downloadTotalBytes,
-                      onCancel: () => appsProvider.cancelDownload(appId),
                     )
                   : trailingRow,
               onTap: onTap,
@@ -596,7 +600,7 @@ class DownloadProgressTrailing extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 92,
+          width: 112,
           child: Semantics(
             label: sizeLabel == null ? label : '$label $sizeLabel',
             child: Column(
