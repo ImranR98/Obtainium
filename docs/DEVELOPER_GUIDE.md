@@ -20,7 +20,7 @@ should follow when working in this codebase.
 | Persistence | One JSON file per app on disk + `SharedPreferences` for settings + `flutter_secure_storage` for credentials + `sqflite` for logs |
 | Localization | `easy_localization` (`assets/translations/*.json`, key-based `tr()` / `plural()`) |
 | Background work | `background_fetch` (headless) and `flutter_foreground_task` (FG service) |
-| Installation | `android_package_installer`, `shizuku_apk_installer`, `android_intent_plus` |
+| Installation | Installer abstraction (`StockInstaller` / `ShizukuInstaller` / `ExternalInstaller`) backed by `android_package_installer`, `shizuku_apk_installer`, `android_intent_plus` |
 
 ### Entry point: `lib/main.dart`
 
@@ -68,7 +68,7 @@ lib/
 │  ├─ generated_form_renderer.dart Form widget rendering (includes modal/dialog wrapper)
 │  ├─ ui_widgets.dart             AppIcon, EmptyState, ConnectedCard, LinkText, CustomAppBar, showMessage/showError, positional tile helpers
 │  ├─ settings_widgets.dart       SettingsGroup, SettingsTile, etc.
-│  ├─ app_list_tile.dart          AppListTile, AppListBuilder, category sections
+│  ├─ app_list_tile.dart          AppListTile, AppListBuilder, changelog helpers
 │  ├─ app_detail_widgets.dart     AppInfoDialog, AppFilePicker
 │  └─ category_editor.dart        Category management UI
 ├─ providers/                     State, business logic, services, models
@@ -77,9 +77,14 @@ lib/
 │  ├─ source_provider.dart        Immutable App model + TypedSettings + AppSource + SourceProvider + HttpService + VersionService + legacy JSON migrations
 │  ├─ settings_provider.dart      Typed getters/setters over SharedPreferences
 │  ├─ logs_provider.dart          sqflite-backed logs + Logger/AppLogger
-│  └─ notifications_provider.dart Local notifications
+│  ├─ notifications_provider.dart Local notifications
+│  └─ external_install_bridge.dart External installer discovery + content-URI conversion
+├─ installers/                    Install strategy abstraction
+│  ├─ installer.dart              Abstract Installer + InstallResult
+│  ├─ stock_installer.dart        AndroidPackageInstaller
+│  ├─ shizuku_installer.dart      Shizuku/Dhizuku/Sui
+│  └─ external_installer.dart     Third-party installer hand-off
 └─ app_sources/                  One file per supported source (28 sources + githubstars)
-```
 ```
 
 ---
@@ -250,11 +255,11 @@ Prefer these over bespoke widgets:
 - **`settings_widgets.dart`** — `SettingsGroup`, `SettingsSectionHeader`, `SettingsTile`,
   `SettingsToggleRow`, and `shapeSettingsTiles()` which auto-connects consecutive tiles.
 - **`generated_form_renderer.dart`** — `GeneratedForm` widget (renders form items) and
-  `showGeneratedFormModal()` (a `GeneratedForm` inside an `AlertDialog`; the standard way
+  `GeneratedFormModal` (a `GeneratedForm` inside an `AlertDialog`; the standard way
   to ask the user for structured input or confirmation).
 - **`app_list_tile.dart`** — `AppListTile` (the app row: swipe-to-install/remove,
   category gradient, pin/select states, download progress), `AppIconWidget`,
-  `DownloadProgressTrailing`, `AppListCategorySection`, and changelog dialog helpers
+  `DownloadProgressTrailing`, and changelog dialog helpers
   (`showChangeLogDialog`, `getChangeLogFn`).
 - **`app_detail_widgets.dart`** — `AppInfoDialog` (read-only app summary: icon, name,
   author, URL, version, last-check), `AppFilePicker` (choose among multiple APK/asset URLs),
@@ -315,10 +320,11 @@ Runs headless (no widget tree) via `background_fetch` or the foreground service.
 
 `AppsProviderInstall` extension handles the full pipeline:
 - `downloadApp(...)` → file or `DownloadedDir` (xAPK/zip/tarball get extracted).
-- Tarballs **> 64 MB are stream-decompressed to a temp file** rather than loaded into
-  memory (OOM defense).
-- `installApk` / `installApkDir` choose the installer: normal package installer, Shizuku
-  (with optional "pretend to be Google Play"), or split-APK session install.
+- Tarballs are extracted from supported compression formats (gzip, bzip2, xz) into
+  split APK directories.
+- `installApk` / `installApkDir` select the installer strategy (`StockInstaller`,
+  `ShizukuInstaller`, or `ExternalInstaller`) based on user settings. See
+  `lib/installers/`.
 - `canInstallSilently(app)` decides whether a background silent install is allowed.
 - `moveObbFile` uses **SAF (`shared_storage`) on Android 11+**, direct file access on
   older versions.

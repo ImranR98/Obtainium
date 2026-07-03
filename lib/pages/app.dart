@@ -9,6 +9,7 @@ import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/components/app_detail_widgets.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -90,8 +91,9 @@ class _AppPageState extends State<AppPage> {
         if (mounted && _sizeProbeKey == key && size != null) {
           setState(() => _probedDownloadSize = size);
         }
-      } catch (_) {
+      } catch (e) {
         // Best-effort only: leave the size unknown when it can't be resolved.
+        unawaited(LogsProvider().add('Size probe failed for $url: $e'));
       }
     }();
   }

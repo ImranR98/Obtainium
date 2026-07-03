@@ -51,7 +51,6 @@ const List<String> _verifiedAppsPackageIds = [
 // session still commits, so we poll (via waitForPackageInstall) for a short
 // window to confirm the install actually landed.
 const int _bgInstallConfirmAttempts = 16;
-const int _maxTarballSize = 500 * 1024 * 1024;
 
 class _InstallResult {
   final String id;
@@ -418,10 +417,6 @@ extension AppsProviderInstall on AppsProvider {
     String destinationPath,
   ) async {
     final File tarballFile = File(filePath);
-    final fileSize = await tarballFile.length();
-    if (fileSize > _maxTarballSize) {
-      throw ObtainiumError('${tr('unexpectedError')} (tarball too large)');
-    }
     final bytes = await tarballFile.readAsBytes();
     List<int> decompressed;
 

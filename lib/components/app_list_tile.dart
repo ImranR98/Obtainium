@@ -720,13 +720,13 @@ class AppListGroupSection extends StatelessWidget {
 }
 
 class AppsFilter {
-  late String nameFilter;
-  late String authorFilter;
-  late String idFilter;
-  late bool includeUptodate;
-  late bool includeNonInstalled;
-  late Set<String> categoryFilter;
-  late String sourceFilter;
+  String nameFilter;
+  String authorFilter;
+  String idFilter;
+  bool includeUptodate;
+  bool includeNonInstalled;
+  Set<String> categoryFilter;
+  String sourceFilter;
 
   AppsFilter({
     this.nameFilter = '',

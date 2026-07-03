@@ -29,11 +29,11 @@ dependencies:
   device_info_plus: ^13.2.0
   file_picker: ^12.0.0-beta.7
   animations: ^2.2.0
-  android_package_installer: # TODO: See if PR will be accepted (dev may not be active), else remove this comment
+  android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
       url: https://github.com/ImranR98/android_package_installer
       ref: c9e144fae63231b5d1d7b88af779c314afcb6e83
-  android_package_manager: # TODO: Make PR and switch to upstream
+  android_package_manager: # TODO: Submit PR to upstream and switch back when merged
     git:
       url: https://github.com/ImranR98/android_package_manager
       ref: 18231a8a2343747440b0bfe90f7d56ef7f586099
@@ -46,7 +46,7 @@ dependencies:
   archive: ^4.0.9
   hsluv: ^1.1.3
   connectivity_plus: ^7.2.0
-  shared_storage: # TODO: Is this maintained?
+  shared_storage: # TODO: Upstream maintenance uncertain; consider alternatives or fork to org
     git:
       url: https://github.com/AlexBacich/shared-storage
       ref: 6dbcdf2c2045e326f59c062f542724aedf73cb6e
@@ -56,11 +56,11 @@ dependencies:
   background_fetch: ^1.7.0
   equations: ^6.0.0
   flex_color_picker: ^3.8.0
-  android_system_font:
+  android_system_font: # TODO: Forked dependency; watch upstream for releases
     git:
       url: https://github.com/re7gog/android_system_font
       ref: 077e15d7d0acb82283b89dfd82f4984b27b28f95
-  shizuku_apk_installer:
+  shizuku_apk_installer: # TODO: Forked dependency; watch upstream for releases
     git:
       url: https://github.com/re7gog/shizuku_apk_installer
       ref: 3ef7f8fbf904848d144304556b0f80c91fee82a5
