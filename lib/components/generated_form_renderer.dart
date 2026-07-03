@@ -311,7 +311,19 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   int _computeItemsHash(List<List<GeneratedFormItem>> items) {
     return Object.hashAll(
-      items.expand((row) => row.map((e) => Object.hash(e.key, e.value))),
+      items.expand(
+        (row) => row.map(
+          // Text fields are driven by their own TextEditingController; folding
+          // their live value into this hash would reinitialize the form (and
+          // drop keyboard focus) on every keystroke, since the parent mirrors
+          // the typed value back into the item's `value`. Structural changes
+          // still reinitialize via a changed widget key. Other item types keep
+          // their value in the hash so external changes are reflected.
+          (e) => e is GeneratedFormTextField
+              ? Object.hash(e.key, e.runtimeType)
+              : Object.hash(e.key, e.value),
+        ),
+      ),
     );
   }
 
