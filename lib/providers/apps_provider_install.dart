@@ -343,23 +343,10 @@ extension AppsProviderInstall on AppsProvider {
       .where((element) => element.downloadProgress != null)
       .isNotEmpty;
 
+  /// Whether [app] can be installed without a user prompt, based only on
+  /// device/app capability (single APK plus the active installer's own rules).
+  /// Independent of the background-update setting.
   Future<bool> canInstallSilently(App app) async {
-    if (!settingsProvider.enableBackgroundUpdates) {
-      unawaited(
-        logs.add(
-          'App will not be installed silently: background updates are disabled: ${app.id}',
-        ),
-      );
-      return false;
-    }
-    if (app.settings.getBool('exemptFromBackgroundUpdates')) {
-      unawaited(
-        logs.add(
-          'App will not be installed silently: exempted from background updates: ${app.id}',
-        ),
-      );
-      return false;
-    }
     if (app.apkUrls.length > 1) {
       unawaited(
         logs.add(
@@ -368,27 +355,32 @@ extension AppsProviderInstall on AppsProvider {
       );
       return false; // Manual API selection means silent install is not possible
     }
+    // Installer-specific eligibility (target SDK, installer of record, OS
+    // version, Shizuku, etc.) is delegated to the active installer strategy.
+    return getInstaller().canInstallSilently(app);
+  }
 
-    final osInfo = await DeviceInfoPlugin().androidInfo;
-    final int? targetSDK = (await getInstalledInfo(
-      app.id,
-    ))?.applicationInfo?.targetSdkVersion;
-    final int requiredSDK = osInfo.version.sdkInt - 3;
-    // The APK should target a new enough API
-    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+  /// Whether [app] should be installed silently in the background: the
+  /// background-update policy (global toggle + per-app exemption) on top of
+  /// [canInstallSilently]. Foreground installs must not use this.
+  Future<bool> canInstallSilentlyInBackground(App app) async {
+    if (!settingsProvider.enableBackgroundUpdates) {
       unawaited(
         logs.add(
-          'App will not be installed silently: currently targets API $targetSDK which is too low for background updates (requires API $requiredSDK): ${app.id}',
+          'App will not be installed in the background: background updates are disabled: ${app.id}',
         ),
       );
       return false;
     }
-
-    // Installer-specific eligibility (Obtainium being the installer, OS version,
-    // Shizuku availability, etc.) is delegated to the active installer strategy,
-    // which logs its own specific reason when it returns false.
-    return getInstaller().canInstallSilently(app);
+    if (app.settings.getBool('exemptFromBackgroundUpdates')) {
+      unawaited(
+        logs.add(
+          'App will not be installed in the background: exempted from background updates: ${app.id}',
+        ),
+      );
+      return false;
+    }
+    return canInstallSilently(app);
   }
 
   Future<void> waitForUserToReturnToForeground(BuildContext context) async {
@@ -860,7 +852,8 @@ extension AppsProviderInstall on AppsProvider {
           apps[id]!.app = apps[id]!.app.copyWith(preferredApkIndex: urlInd);
           await saveApps([apps[id]!.app]);
         }
-        if (context != null || await canInstallSilently(apps[id]!.app)) {
+        if (context != null ||
+            await canInstallSilentlyInBackground(apps[id]!.app)) {
           appsToInstall.add(id);
         }
       }

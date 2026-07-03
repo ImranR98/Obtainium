@@ -1059,7 +1059,7 @@ Future<void> _runBGInstallMode(
   if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
     final temp = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
     for (var i = 0; i < temp.length; i++) {
-      if (await appsProvider.canInstallSilently(
+      if (await appsProvider.canInstallSilentlyInBackground(
         appsProvider.apps[temp[i]]!.app,
       )) {
         toInstall.add(MapEntry(temp[i], 0));
@@ -1317,14 +1317,13 @@ Future<void> _bgRunUpdateCheck(
   final List<App> trackOnlyToNotify = [];
   final List<App> exemptToNotify = [];
   for (var i = 0; i < updates.length; i++) {
-    final canInstallSilently = await appsProvider.canInstallSilently(
-      updates[i],
-    );
-    if (networkRestricted || chargingRestricted || !canInstallSilently) {
+    final willInstallInBackground = await appsProvider
+        .canInstallSilentlyInBackground(updates[i]);
+    if (networkRestricted || chargingRestricted || !willInstallInBackground) {
       if (!updates[i].settings.getBool('skipUpdateNotifications')) {
         unawaited(
           logs.add(
-            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilently: $canInstallSilently).',
+            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilentlyInBackground: $willInstallInBackground).',
           ),
         );
         if (updates[i].settings.getBool('trackOnly')) {

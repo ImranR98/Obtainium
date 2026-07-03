@@ -65,6 +65,21 @@ class StockInstaller extends Installer {
       );
       return false;
     }
+    // Session installer silent installs require a recent enough target SDK;
+    // this constraint is specific to the stock installer.
+    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+    final int? targetSDK = (await getInstalledInfo(
+      app.id,
+    ))?.applicationInfo?.targetSdkVersion;
+    final int requiredSDK = osInfo.version.sdkInt - 3;
+    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: currently targets API $targetSDK which is too low (requires API $requiredSDK): ${app.id}',
+        ),
+      );
+      return false;
+    }
     return true;
   }
 
