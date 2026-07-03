@@ -437,7 +437,7 @@ class _AppPageState extends State<AppPage> {
   void resetInstallStatus(AppInMemory? app) {
     if (app == null) return;
     app.app = app.app.copyWith(installedVersion: null);
-    appsProvider.saveApps([app.app]);
+    unawaited(appsProvider.saveApps([app.app]));
   }
 
   Future<bool> removeApp(BuildContext context, AppInMemory? app) async {
@@ -916,7 +916,7 @@ class _AppPageState extends State<AppPage> {
           onChanged: (categories) {
             if (app != null) {
               app.app = app.app.copyWith(categories: categories.toList());
-              appsProvider.saveApps([app.app]);
+              unawaited(appsProvider.saveApps([app.app]));
             }
           },
         ),

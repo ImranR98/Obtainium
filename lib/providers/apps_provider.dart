@@ -554,7 +554,9 @@ Future<File> downloadFile(
     if (response.statusCode < 200 || response.statusCode > 299) {
       await sink.close();
       sink = null;
-      await response.drain<void>().catchError((_) {});
+      await response.drain<void>().catchError((_) {
+        unawaited(logs?.add('Failed to drain response body', level: LogLevel.warning));
+      });
       if (tempDownloadedFile.existsSync()) {
         deleteFile(tempDownloadedFile);
       }
@@ -661,7 +663,9 @@ Future<File> downloadFile(
     return downloadedFile;
   } finally {
     responseClient.close();
-    unawaited(sink?.close().catchError((_) {}));
+    unawaited(sink?.close().catchError((_) {
+      logs?.add('Failed to close download sink', level: LogLevel.warning);
+    }));
   }
 }
 
@@ -923,7 +927,10 @@ class AppsProvider with ChangeNotifier {
     _autoExportDebounce?.cancel();
     _autoExportDebounce = Timer(const Duration(seconds: 2), () {
       if (!_disposed) {
-        export(isAuto: true).catchError((_) => null);
+        export(isAuto: true).catchError((e) {
+          unawaited(logs.add('Auto-export failed: $e', level: LogLevel.warning));
+          return null;
+        });
       }
     });
   }
@@ -1063,9 +1070,9 @@ Future<void> _runBGInstallMode(
     } catch (e) {
       if (e is MultiAppMultiError) {
         e.idsByErrorString.forEach((key, value) {
-          notificationsProvider.notify(
+          unawaited(notificationsProvider.notify(
             ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
-          );
+          ));
         });
       } else {
         unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));

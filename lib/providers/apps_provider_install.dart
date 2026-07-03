@@ -213,7 +213,7 @@ extension AppsProviderInstall on AppsProvider {
             totalBytes: total,
           );
           if (prog != null && prevProg != prog) {
-            notificationsProvider?.notify(notif);
+            unawaited(notificationsProvider?.notify(notif));
           }
           prevProg = prog;
         },
@@ -1260,14 +1260,14 @@ extension AppsProviderInstall on AppsProvider {
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
-          notificationsProvider.notify(
+          unawaited(notificationsProvider.notify(
             DownloadNotification(
               fileUrl.key,
               progress?.ceil() ?? 0,
               receivedBytes: received,
               totalBytes: total,
             ),
-          );
+          ));
         },
         downloadPath,
         headers: await SourceProvider()

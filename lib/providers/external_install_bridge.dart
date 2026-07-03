@@ -76,7 +76,8 @@ class ExternalInstallerBridge {
   Future<String?> _labelFor(String package) async {
     try {
       return await packageManager.getApplicationLabel(packageName: package);
-    } catch (_) {
+    } catch (e) {
+      unawaited(LogsProvider().add('Failed to get label for $package: $e', level: LogLevel.warning));
       return null;
     }
   }
@@ -84,7 +85,8 @@ class ExternalInstallerBridge {
   Future<Uint8List?> _iconFor(String package) async {
     try {
       return await packageManager.getApplicationIcon(packageName: package);
-    } catch (_) {
+    } catch (e) {
+      unawaited(LogsProvider().add('Failed to get icon for $package: $e', level: LogLevel.warning));
       return null;
     }
   }

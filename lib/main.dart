@@ -277,7 +277,7 @@ class _ObtainiumState extends State<Obtainium> {
         getInstalledInfo(obtainiumId)
             .then((value) {
               if (value?.versionName != null) {
-                apps.saveApps([
+                unawaited(apps.saveApps([
                   App(
                     id: obtainiumId,
                     url: obtainiumUrl,
@@ -295,7 +295,7 @@ class _ObtainiumState extends State<Obtainium> {
                     lastUpdateCheck: null,
                     pinned: false,
                   ),
-                ], onlyIfExists: false);
+                ], onlyIfExists: false));
               }
             })
             .catchError((err) {
