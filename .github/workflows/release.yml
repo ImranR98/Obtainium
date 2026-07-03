@@ -48,10 +48,9 @@ jobs:
           flutter pub get
           # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
           sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
-          # Strip signing configuration to build unsigned APKs (signing happens
-          # separately in the sign.sh script). Nulls out the signingConfig assignment
-          # so the release build produces unsigned APKs regardless of key.properties.
-          sed -i 's/^\(\s*\)signingConfig = if.*/\1signingConfig = null/' android/app/build.gradle.kts
+          # No key.properties exists in CI, so build.gradle.kts already sets
+          # signingConfig = null and produces unsigned APKs (signing happens
+          # separately in the sign.sh script).
           flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
           flutter build apk --flavor fdroid -t lib/main_fdroid.dart && flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
