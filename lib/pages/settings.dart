@@ -32,7 +32,6 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
   int _installerCheckSeq = 0;
-  late final SourceProvider sourceProvider;
 
   @override
   void initState() {
@@ -43,12 +42,6 @@ class _SettingsPageState extends State<SettingsPage> {
       if (sp.prefs == null) sp.initializeSettings();
       initAndroidSdk();
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    sourceProvider = context.read<SourceProvider>();
   }
 
   Future<void> initAndroidSdk() async {
@@ -284,6 +277,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
+    final sourceProvider = context.read<SourceProvider>();
     final sdk = androidSdkInt ?? 0;
 
     final colorPicker = SettingsTile(
