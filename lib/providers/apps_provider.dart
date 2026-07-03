@@ -326,20 +326,11 @@ Future<String?> checkETagHeader(
   final client = IOClient(createHttpClient(allowInsecure));
   try {
     final StreamedResponse response = await client.send(req);
-    final resHeaders = response.headers;
-    try {
-      await response.stream.drain<void>();
-    } catch (err) {
-      unawaited(
-        LogsProvider().add(
-          'Error draining response stream while checking ETag: $err',
-          level: LogLevel.error,
-        ),
-      );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
     final etag =
-        resHeaders[HttpHeaders.etagHeader]?.replaceAll('"', '');
+        response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
     return etag != null
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
@@ -435,21 +426,9 @@ Future<File> downloadFile(
   final reqHeaders = headers ?? {};
   final headersClient = IOClient(createHttpClient(allowInsecure));
 
-  final headReq = Request('HEAD', Uri.parse(url));
-  headReq.headers.addAll(reqHeaders);
-  var headersResponse = await headersClient.send(headReq);
-
-  final bool headSucceeded =
-      headersResponse.statusCode >= 200 && headersResponse.statusCode < 300;
-  if (!headSucceeded) {
-    final getReq = Request('GET', Uri.parse(url));
-    getReq.headers.addAll(reqHeaders);
-    headersResponse = await headersClient.send(getReq);
-    if (headersResponse.statusCode >= 200 &&
-        headersResponse.statusCode < 300) {
-      await headersResponse.stream.drain<void>().catchError((_) {});
-    }
-  }
+  final getReq = Request('GET', Uri.parse(url));
+  getReq.headers.addAll(reqHeaders);
+  final headersResponse = await headersClient.send(getReq);
 
   final resHeaders = headersResponse.headers;
 
@@ -698,16 +677,11 @@ Future<int?> getDownloadSize(
   final reqHeaders = headers ?? {};
   final client = IOClient(createHttpClient(allowInsecure));
   try {
-    final headReq = Request('HEAD', Uri.parse(url));
-    headReq.headers.addAll(reqHeaders);
-    var response = await client.send(headReq);
+    final getReq = Request('GET', Uri.parse(url));
+    getReq.headers.addAll(reqHeaders);
+    final response = await client.send(getReq);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      // Some servers reject HEAD; fall back to GET but read Content-Length from
-      // the headers only. The body is never consumed (client.close() aborts it)
-      // so this doesn't download the file.
-      final getReq = Request('GET', Uri.parse(url));
-      getReq.headers.addAll(reqHeaders);
-      response = await client.send(getReq);
+      return null;
     }
     final length = response.contentLength;
     return (length != null && length > 0) ? length : null;
