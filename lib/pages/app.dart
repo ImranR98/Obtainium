@@ -297,43 +297,37 @@ class _AppPageState extends State<AppPage> {
     Map<String, dynamic> values = {};
     return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
-        builder: (ctx) => Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          body: CustomScrollView(
-            slivers: [
-              SliverAppBar.large(
-                pinned: true,
-                title: Text(
-                  tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: GeneratedForm(
-                    tileMode: true,
-                    items: items,
-                    onValueChanges: (v, valid, isBuilding) {
-                      values = v;
-                    },
+        builder: (ctx) => PopScope<Map<String, dynamic>>(
+          // Leaving the page saves the settings, so there is no Continue button.
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            Navigator.of(ctx).pop(values);
+          },
+          child: Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar.large(
+                  pinned: true,
+                  title: Text(
+                    tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    20,
-                    20,
-                    MediaQuery.of(context).padding.bottom + 24,
-                  ),
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(ctx).pop(values),
-                    child: Text(tr('continue')),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    child: GeneratedForm(
+                      tileMode: true,
+                      items: items,
+                      onValueChanges: (v, valid, isBuilding) {
+                        values = v;
+                      },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
