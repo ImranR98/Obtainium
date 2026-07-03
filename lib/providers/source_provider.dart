@@ -994,6 +994,8 @@ class SourceProvider {
     final allSources = sources;
     AppSource? source;
     for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
+      // A non-match here is expected control flow during source auto-detection,
+      // so failures are intentionally not logged (they are just noise).
       try {
         if (RegExp(
           '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
@@ -1002,27 +1004,21 @@ class SourceProvider {
           break;
         }
       } catch (e) {
-        unawaited(
-          LogsProvider().add(
-            'Source host-match error for ${s.runtimeType} ($url): ${e.toString()}',
-          ),
-        );
+        // Ignore and try the next source.
       }
     }
     if (source == null) {
       for (var s in allSources.where(
         (element) => element.hosts.isEmpty && !element.neverAutoSelect,
       )) {
+        // As above, hostless sources are tried in order until one accepts the
+        // URL; a rejection is normal and must not be logged as an error.
         try {
           s.sourceSpecificStandardizeURL(url, forSelection: true);
           source = s;
           break;
         } catch (e) {
-          unawaited(
-            LogsProvider().add(
-              'Source standardize error for ${s.runtimeType} ($url): ${e.toString()}',
-            ),
-          );
+          // Ignore and try the next source.
         }
       }
     }
