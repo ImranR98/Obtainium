@@ -60,9 +60,6 @@ class ExternalInstaller extends Installer {
     }
 
     final baseline = await captureInstallBaseline(appId);
-    final foregroundReturn = FGBGEvents.instance.stream
-        .firstWhere((event) => event == FGBGType.foreground)
-        .timeout(_foregroundReturnFallback, onTimeout: () => FGBGType.foreground);
 
     for (final filePath in apkFilePaths) {
       final contentUri = await ExternalInstallerBridge.instance.contentUriForFile(
@@ -83,6 +80,12 @@ class ExternalInstaller extends Installer {
           Flag.FLAG_ACTIVITY_NEW_TASK,
         ],
       );
+      // Subscribe to the foreground-return event before launching so we don't
+      // miss it, and use a fresh future per launch (a single shared future
+      // would resolve instantly for every path after the first).
+      final foregroundReturn = FGBGEvents.instance.stream
+          .firstWhere((event) => event == FGBGType.foreground)
+          .timeout(_foregroundReturnFallback, onTimeout: () => FGBGType.foreground);
       await intent.launch();
 
       await foregroundReturn;

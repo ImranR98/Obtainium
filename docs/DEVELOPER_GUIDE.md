@@ -396,7 +396,6 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
 flutter pub get
 flutter analyze        # must be clean
 dart format --set-exit-if-changed .
-flutter test           # run the test suite
 flutter run            # default flavour
 flutter build apk --flavor normal   # or use ./build.sh
 ```
