@@ -189,6 +189,7 @@ List<T> _moveToEnd<T extends Object>(List<T> arr, bool Function(T) match) {
 List<String> moveStrToEnd(List<String> arr, String str, {String? strB}) =>
     _moveToEnd(arr, (e) => e == str || e == strB);
 
+/// See [_moveToEnd] for semantic details.
 List<MapEntry<String, int>> moveStrToEndMapEntryWithCount(
   List<MapEntry<String, int>> arr,
   MapEntry<String, int> str, {
@@ -508,9 +509,17 @@ Future<File> downloadFile(
   // If the range feature is not available (or you need to start a ranged req from 0),
   // complete the already-started request, else cancel it and start a ranged request,
   // and open the file for writing in the appropriate mode
-  final targetFileLength = useExisting && tempDownloadedFile.existsSync()
-      ? tempDownloadedFile.lengthSync()
-      : null;
+  final targetFileLength = () {
+    if (!useExisting) return null;
+    try {
+      if (tempDownloadedFile.existsSync()) {
+        return tempDownloadedFile.lengthSync();
+      }
+    } on FileSystemException {
+      // File disappeared between existsSync and lengthSync
+    }
+    return null;
+  }();
   int rangeStart = targetFileLength ?? 0;
   IOSink? sink;
   bool sentRangeRequest = false;
@@ -618,7 +627,9 @@ Future<File> downloadFile(
       // the download can be resumed later.
       try {
         await sink.close();
-      } catch (_) {}
+      } catch (_) {
+        sink = null;
+      }
       // Surface a cancellation as such (even if the underlying stream error was
       // a file/socket error caused by the abort) so callers handle it silently.
       if (e is CancellationException ||
@@ -628,28 +639,45 @@ Future<File> downloadFile(
       rethrow;
     }
     await sink.close();
+    sink = null;
     progress = null;
     if (onProgress != null) {
       onProgress(progress, null, null);
     }
-    if (tempDownloadedFile.existsSync()) {
-      if (downloadedFile.existsSync()) {
-        try {
-          tempDownloadedFile.renameSync(downloadedFile.path);
-        } catch (_) {
-          // Rename can fail if target is locked (e.g. file handle held open).
-          // Delete target first as fallback to avoid leaving a stale file behind.
-          // If rename fails, data is retained in the temp file which is the newer version.
-          downloadedFile.deleteSync();
+    try {
+      if (tempDownloadedFile.existsSync()) {
+        if (downloadedFile.existsSync()) {
+          try {
+            tempDownloadedFile.renameSync(downloadedFile.path);
+          } catch (_) {
+            // Rename can fail if target is locked (e.g. file handle held open).
+            // Delete target first as fallback to avoid leaving a stale file behind.
+            // If rename fails, data is retained in the temp file which is the newer version.
+            try {
+              downloadedFile.deleteSync();
+              tempDownloadedFile.renameSync(downloadedFile.path);
+            } catch (_) {
+              // Both rename attempts failed. The temp file is the newest data
+              // and is still intact; leave it in place for next time.
+            }
+          }
+        } else {
           tempDownloadedFile.renameSync(downloadedFile.path);
         }
-      } else {
-        tempDownloadedFile.renameSync(downloadedFile.path);
+      }
+    } on FileSystemException {
+      // File disappeared between existence check and operation.
+      // The temp file may have been cleaned up by another process.
+      // Return the downloaded file if it still exists; otherwise the
+      // caller will re-download.
+      if (!downloadedFile.existsSync() && !tempDownloadedFile.existsSync()) {
+        rethrow;
       }
     }
     return downloadedFile;
   } finally {
     responseClient.close();
+    unawaited(sink?.close().catchError((_) {}));
   }
 }
 
@@ -677,7 +705,21 @@ Future<int?> getDownloadSize(
     }
     final length = response.contentLength;
     return (length != null && length > 0) ? length : null;
-  } catch (_) {
+  } on SocketException {
+    return null;
+  } on TimeoutException {
+    return null;
+  } on ClientException {
+    return null;
+  } on HandshakeException {
+    return null;
+  } catch (e) {
+    unawaited(
+      LogsProvider().add(
+        'Unexpected error in getDownloadSize: $e',
+        level: LogLevel.error,
+      ),
+    );
     return null;
   } finally {
     client.close();
@@ -792,6 +834,10 @@ class AppsProvider with ChangeNotifier {
 
   // Active per-app download cancellation tokens, keyed by app ID.
   final Map<String, CancellationToken> _downloadCancellations = {};
+
+  /// Non-null when the provider failed to initialize. Callers can check this
+  /// before assuming the provider is in a usable state.
+  String? initError;
 
   /// Non-null while a [checkUpdates] batch is in flight. Serves as both an
   /// atomic guard (preventing concurrent batches) and a deduplication
@@ -947,6 +993,7 @@ class AppsProvider with ChangeNotifier {
         }
       }
     }().catchError((e) {
+      initError = e.toString();
       logs.add('AppsProvider async init error: $e', level: LogLevel.error);
     });
   }

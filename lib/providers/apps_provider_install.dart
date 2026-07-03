@@ -37,8 +37,6 @@ const int _androidApiLevelR = 30;
 const double _installingProgressSentinel = -1;
 const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
-const int _inMemoryThreshold64MB = 64 * 1024 * 1024;
-
 // Package IDs of "Verified Apps" (formerly AppVerifier) and its known forks
 // that accept a shared APK for verification before installation.
 const List<String> _verifiedAppsPackageIds = [
@@ -419,24 +417,6 @@ extension AppsProviderInstall on AppsProvider {
     String destinationPath,
   ) async {
     final File tarballFile = File(filePath);
-    final int fileSize = await tarballFile.length();
-
-    // For files under a conservative threshold, use the in-memory path for
-    // speed. Above the threshold, stream through the file to avoid OOM on
-    // devices with limited RAM (large tarballs can exceed available memory
-    // once decompressed).
-    const int inMemoryThreshold = _inMemoryThreshold64MB; // 64 MB
-    if (fileSize <= inMemoryThreshold) {
-      await _extractTarballInMemory(tarballFile, destinationPath);
-    } else {
-      await _extractTarballStreamed(tarballFile, destinationPath);
-    }
-  }
-
-  Future<void> _extractTarballInMemory(
-    File tarballFile,
-    String destinationPath,
-  ) async {
     final bytes = await tarballFile.readAsBytes();
     List<int> decompressed;
 
@@ -472,57 +452,6 @@ extension AppsProviderInstall on AppsProvider {
         outFile.createSync(recursive: true);
         outFile.writeAsBytesSync(content);
       }
-    }
-  }
-
-  Future<void> _extractTarballStreamed(
-    File tarballFile,
-    String destinationPath,
-  ) async {
-    final destDir = Directory(destinationPath);
-    if (!destDir.existsSync()) {
-      destDir.createSync(recursive: true);
-    }
-
-    final raf = await tarballFile.open(mode: FileMode.read);
-    final header = await raf.read(6);
-
-    final isGzip = header.length >= 2 && header[0] == 0x1f && header[1] == 0x8b;
-    // Close and re-open for streaming so the header bytes are included.
-    await raf.close();
-
-    if (isGzip) {
-      // Stream-decompress gzip to a temp file (avoids holding the full
-      // decompressed tar in memory), then read tar entries from disk.
-      final decompressedTemp = File('${tarballFile.path}.decompressed');
-      try {
-        final input = tarballFile.openRead();
-        final output = decompressedTemp.openWrite();
-        await input.cast<List<int>>().transform(gzip.decoder).pipe(output);
-        await output.close();
-        final decompressedBytes = await decompressedTemp.readAsBytes();
-        final tarArchive = archive.TarDecoder().decodeBytes(decompressedBytes);
-        for (final file in tarArchive.files) {
-          if (file.isFile) {
-            final outFile = File('${destDir.path}/${file.name}');
-            outFile.createSync(recursive: true);
-            outFile.writeAsBytesSync(file.content);
-          }
-        }
-      } finally {
-        if (decompressedTemp.existsSync()) {
-          decompressedTemp.deleteSync();
-        }
-      }
-    } else {
-      // BZip2, XZ, or uncompressed: these formats are rare for Android app
-      // bundles. Since this code path is only reached for files > 64 MB,
-      // falling back to in-memory extraction would risk OOM. Reject with a
-      // clear error instead.
-      throw ObtainiumError(
-        'Unsupported archive format (not gzip) for large tarball: file is '
-        '> 64 MB and would require in-memory extraction which is not safe.',
-      );
     }
   }
 
