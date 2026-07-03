@@ -122,16 +122,6 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
-  Future<void> acceptRepoRename(String appId, String newUrl) async {
-    if (apps.containsKey(appId)) {
-      apps[appId]!.app = apps[appId]!.app.copyWith(
-        url: newUrl,
-        pendingRepoRenameUrl: null,
-      );
-      await saveApps([apps[appId]!.app]);
-    }
-  }
-
   /// Downloads the preferred APK for [app], returning a [DownloadedApk] or [DownloadedDir].
   Future<Object> downloadApp(
     App app,

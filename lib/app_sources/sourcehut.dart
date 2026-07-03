@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class SourceHut extends AppSource {
   SourceHut() {
