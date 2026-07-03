@@ -35,8 +35,6 @@ class ObtainiumError {
           code == 'CHECK_UPDATES_FAILED' ||
           code == 'HTTP_ERROR'
       ? _message
-      : code == 'MULTI_ERROR'
-      ? localizeErrorCode(code, data)
       : localizeErrorCode(code, data);
 
   @override

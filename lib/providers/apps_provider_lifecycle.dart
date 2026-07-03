@@ -162,7 +162,7 @@ extension AppsProviderLifecycle on AppsProvider {
           ..['versionDetection'] = false,
         installedVersion: app.latestVersion,
       );
-      logs.add('Could not reconcile version formats for: ${app.id}');
+      unawaited(logs.add('Could not reconcile version formats for: ${app.id}'));
       modded = true;
     }
 
