@@ -30,7 +30,6 @@ import 'package:obtainium/main.dart';
 import 'package:easy_localization/src/easy_localization_controller.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
-// ignore: implementation_imports
 
 import 'package:obtainium/providers/apps_provider_import_export.dart';
 import 'package:obtainium/providers/apps_provider_install.dart';
@@ -874,10 +873,10 @@ class AppsProvider with ChangeNotifier {
     if (!_needsBgReload) return;
     _needsBgReload = false;
     loadApps().catchError((e) {
-      logs.add(
+      unawaited(logs.add(
         'Reload after background save failed: $e',
         level: LogLevel.error,
-      );
+      ));
     });
   }
 
@@ -988,7 +987,7 @@ class AppsProvider with ChangeNotifier {
       }
     }().catchError((e) {
       initError = e.toString();
-      logs.add('AppsProvider async init error: $e', level: LogLevel.error);
+      unawaited(logs.add('AppsProvider async init error: $e', level: LogLevel.error));
     });
   }
 
@@ -1254,9 +1253,9 @@ Future<void> _bgRunUpdateCheck(
       updates = e.updates;
       errors = e.errors;
       errors.rawErrors.forEach((key, err) {
-        logs.add(
+        unawaited(logs.add(
           'BG update task: Got error on checking for $key \'${err.toString()}\'.',
-        );
+        ));
 
         final toCheckApp = toCheck.firstWhere(
           (element) => element.key == key,
