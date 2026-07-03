@@ -39,23 +39,9 @@ class GeneratedForm extends StatefulWidget {
     required this.items,
     required this.onValueChanges,
     this.tileMode = false,
-    this.fieldDefinitions,
-    this.fieldStates,
   });
 
-  GeneratedForm.fromDefinitions({
-    super.key,
-    required List<FormFieldDefinition> definitions,
-    required Map<String, GeneratedFormFieldState> states,
-    required this.onValueChanges,
-    this.tileMode = false,
-    this.fieldDefinitions,
-    this.fieldStates,
-  }) : items = [definitions.map((d) => d.toGeneratedFormItem()).toList()];
-
   final List<List<GeneratedFormItem>> items;
-  final List<FormFieldDefinition>? fieldDefinitions;
-  final Map<String, GeneratedFormFieldState>? fieldStates;
   final OnValueChanges onValueChanges;
 
   final bool tileMode;

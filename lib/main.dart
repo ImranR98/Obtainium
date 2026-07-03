@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/material.dart';
@@ -185,16 +184,7 @@ void main() async {
   final np = NotificationsProvider();
   await np.initialize();
 
-  try {
-    final ByteData data = await PlatformAssetBundle().load(
-      'assets/ca/lets-encrypt-r3.pem',
-    );
-    SecurityContext.defaultContext.setTrustedCertificatesBytes(
-      data.buffer.asUint8List(),
-    );
-  } catch (e) {
-    logger.error('Failed to load custom CA certificate', e);
-  }
+
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {

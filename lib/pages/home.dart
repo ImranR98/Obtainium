@@ -375,7 +375,7 @@ class _HomePageState extends State<HomePage> {
 
     Widget destIcon(NavigationPageItem e, {bool selected = false}) {
       final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
-      if (identical(e, pages[0]) && updateCount > 0) {
+      if (e.title == tr('appsString') && updateCount > 0) {
         return Semantics(
           label: '$updateCount ${tr('updates')}',
           child: Badge(label: Text('$updateCount'), child: icon),

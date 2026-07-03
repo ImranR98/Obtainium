@@ -71,7 +71,7 @@ class StockInstaller extends Installer {
   Future<InstallResult> installApk(
     List<String> apkFilePaths, {
     required String appId,
-    bool shizukuPretendToBeGooglePlay = false,
+    Map<String, dynamic> installOptions = const {},
   }) async {
     final code = await AndroidPackageInstaller.installApk(
       apkFilePath: apkFilePaths.join(','),

@@ -8,6 +8,7 @@ import 'package:android_package_manager/android_package_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/app_sources/html.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -296,6 +297,14 @@ extension AppsProviderLifecycle on AppsProvider {
             }),
       );
       if (errors.isNotEmpty) {
+        for (var error in errors) {
+          unawaited(
+            logs.add(
+              'Removing app ${error[0]} (${error[1]}) due to load error: ${error[2]}',
+              level: LogLevel.error,
+            ),
+          );
+        }
         unawaited(removeApps(errors.map((e) => e[0]).toList()));
         unawaited(
           NotificationsProvider().notify(
@@ -459,7 +468,7 @@ extension AppsProviderLifecycle on AppsProvider {
       if (uninstall) {
         for (var i = 0; i < apps.length; i++) {
           if (apps[i].installedVersion != null) {
-            unawaited(uninstallApp(apps[i].id));
+            await uninstallApp(apps[i].id);
             apps[i] = apps[i].copyWith(installedVersion: null);
           }
         }

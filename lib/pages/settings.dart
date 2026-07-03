@@ -31,6 +31,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
+  int _installerCheckSeq = 0;
   late final SourceProvider sourceProvider;
 
   @override
@@ -144,12 +145,17 @@ class _SettingsPageState extends State<SettingsPage> {
   void handleInstallerModeChange(
     SettingsProvider settingsProvider,
     String mode,
+    int currentSeq,
   ) {
+    if (_installerCheckSeq != currentSeq) return;
     settingsProvider.selectionClick();
     if (mode == InstallerMode.shizuku.name) {
+      _installerCheckSeq++;
+      final seq = _installerCheckSeq;
       ShizukuApkInstaller()
           .checkPermission()
           .then((resCode) {
+            if (_installerCheckSeq != seq) return;
             settingsProvider.installerMode =
                 (resCode?.startsWith('granted') ?? false)
                 ? InstallerMode.shizuku.name
@@ -169,6 +175,7 @@ class _SettingsPageState extends State<SettingsPage> {
             }
           })
           .catchError((e) {
+            if (_installerCheckSeq != seq) return;
             settingsProvider.installerMode = InstallerMode.system.name;
             if (!mounted) return;
             showError(e, context);
@@ -679,6 +686,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   onSelectionChanged: (selection) => handleInstallerModeChange(
                     settingsProvider,
                     selection.first,
+                    _installerCheckSeq,
                   ),
                 ),
               ),

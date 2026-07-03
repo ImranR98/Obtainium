@@ -681,7 +681,7 @@ class AddAppPageState extends State<AddAppPage> {
       const SizedBox(height: 16),
       () {
         final s = pickedSource!;
-        final formItems = s.combinedAppSpecificSettingFormItems;
+        final formItems = cloneFormItems(s.combinedAppSpecificSettingFormItems);
         if (settingsProvider.includePrereleasesByDefault ||
             settingsProvider.shizukuPretendToBeGooglePlay) {
           for (var row in formItems) {

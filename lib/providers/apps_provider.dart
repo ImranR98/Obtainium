@@ -378,7 +378,12 @@ Future<File?> _waitForConcurrentDownload(
       const Duration(seconds: _downloadPollIntervalSeconds),
     );
     if (tempDownloadedFile.existsSync()) {
-      final int newTempFileSize = await tempDownloadedFile.length();
+      final int newTempFileSize;
+      try {
+        newTempFileSize = await tempDownloadedFile.length();
+      } on FileSystemException {
+        return downloadedFile.existsSync() ? downloadedFile : null;
+      }
       if (newTempFileSize > currentTempFileSize) {
         currentTempFileSize = newTempFileSize;
         unawaited(
@@ -649,16 +654,17 @@ Future<File> downloadFile(
         if (downloadedFile.existsSync()) {
           try {
             tempDownloadedFile.renameSync(downloadedFile.path);
-          } catch (_) {
-            // Rename can fail if target is locked (e.g. file handle held open).
-            // Delete target first as fallback to avoid leaving a stale file behind.
-            // If rename fails, data is retained in the temp file which is the newer version.
+          } catch (firstErr) {
             try {
               downloadedFile.deleteSync();
               tempDownloadedFile.renameSync(downloadedFile.path);
-            } catch (_) {
-              // Both rename attempts failed. The temp file is the newest data
-              // and is still intact; leave it in place for next time.
+            } catch (secondErr) {
+              unawaited(
+                logs?.add(
+                  'Rename of temp download failed: $firstErr / $secondErr. Temp file left at ${tempDownloadedFile.path}',
+                  level: LogLevel.warning,
+                ),
+              );
             }
           }
         } else {
@@ -867,9 +873,23 @@ class AppsProvider with ChangeNotifier {
   bool get isBg => _isBg;
   Stream<FGBGType>? foregroundStream;
   StreamSubscription<FGBGType>? foregroundSubscription;
-  late final Directory apkDir;
-  late final Directory iconsCacheDir;
   late final SettingsProvider settingsProvider;
+  Directory? _apkDir;
+  Directory? _iconsCacheDir;
+
+  Directory get apkDir {
+    if (_apkDir == null) {
+      throw StateError('apkDir not initialized - wait for async init to complete');
+    }
+    return _apkDir!;
+  }
+
+  Directory get iconsCacheDir {
+    if (_iconsCacheDir == null) {
+      throw StateError('iconsCacheDir not initialized - wait for async init to complete');
+    }
+    return _iconsCacheDir!;
+  }
 
   Iterable<AppInMemory> getAppValues() {
     _reloadIfBgSaved();
@@ -964,19 +984,19 @@ class AppsProvider with ChangeNotifier {
       await this.settingsProvider.initializeSettings();
       final cacheDirs = await getExternalCacheDirectories();
       if (cacheDirs?.isNotEmpty ?? false) {
-        apkDir = cacheDirs!.first;
-        iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
-        if (!iconsCacheDir.existsSync()) {
-          iconsCacheDir.createSync();
+        _apkDir = cacheDirs!.first;
+        _iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
+        if (!_iconsCacheDir!.existsSync()) {
+          _iconsCacheDir!.createSync();
         }
       } else {
-        apkDir = Directory('${(await getAppStorageDir()).path}/apks');
-        if (!apkDir.existsSync()) {
-          apkDir.createSync();
+        _apkDir = Directory('${(await getAppStorageDir()).path}/apks');
+        if (!_apkDir!.existsSync()) {
+          _apkDir!.createSync();
         }
-        iconsCacheDir = Directory('${(await getAppStorageDir()).path}/icons');
-        if (!iconsCacheDir.existsSync()) {
-          iconsCacheDir.createSync();
+        _iconsCacheDir = Directory('${(await getAppStorageDir()).path}/icons');
+        if (!_iconsCacheDir!.existsSync()) {
+          _iconsCacheDir!.createSync();
         }
       }
       if (!isBg) {

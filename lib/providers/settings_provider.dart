@@ -704,6 +704,12 @@ class SettingsProvider with ChangeNotifier {
         if (_safErrorCount >= _maxSafRetries) {
           await prefs?.remove('exportDir');
           _safErrorCount = 0;
+          unawaited(
+            LogsProvider().add(
+              'Export directory auto-disabled after $_maxSafRetries SAF errors', 
+              level: LogLevel.error,
+            ),
+          );
           notifyListeners();
         }
         return null;

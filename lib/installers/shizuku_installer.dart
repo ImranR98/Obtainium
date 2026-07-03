@@ -40,9 +40,9 @@ class ShizukuInstaller extends Installer {
   Future<InstallResult> installApk(
     List<String> apkFilePaths, {
     required String appId,
-    bool shizukuPretendToBeGooglePlay = false,
+    Map<String, dynamic> installOptions = const {},
   }) async {
-    final fakeInstallSource = shizukuPretendToBeGooglePlay
+    final fakeInstallSource = installOptions['shizukuPretendToBeGooglePlay'] == true
         ? 'com.android.vending'
         : '';
     final uris = apkFilePaths.map((p) => File(p).uri.toString()).toList();

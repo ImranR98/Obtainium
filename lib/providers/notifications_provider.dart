@@ -312,7 +312,10 @@ class NotificationsProvider {
   /// [notificationTapBackground] are received and dispatched to
   /// [onDownloadCancelRequested].
   static void listenForDownloadCancelFromMain() {
-    IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
+    final prevPort = IsolateNameServer.lookupPortByName(_downloadCancelPortName);
+    if (prevPort != null) {
+      IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
+    }
     final port = ReceivePort();
     IsolateNameServer.registerPortWithName(
       port.sendPort,

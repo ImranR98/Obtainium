@@ -84,9 +84,11 @@ abstract class Installer {
   Future<void> ensurePermission();
 
   /// Installs one or more APK file paths (a base APK plus optional splits).
+  /// [installOptions] carries installer-specific key-value flags (e.g. Shizuku's
+  /// `shizukuPretendToBeGooglePlay`).
   Future<InstallResult> installApk(
     List<String> apkFilePaths, {
     required String appId,
-    bool shizukuPretendToBeGooglePlay = false,
+    Map<String, dynamic> installOptions = const {},
   });
 }

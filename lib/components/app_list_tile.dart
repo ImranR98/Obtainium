@@ -750,12 +750,12 @@ class AppsFilter {
   }
 
   void setFormValuesFromMap(Map<String, dynamic> values) {
-    nameFilter = values['appName']!;
-    authorFilter = values['author']!;
-    idFilter = values['appId']!;
-    includeUptodate = values['upToDateApps'];
-    includeNonInstalled = values['nonInstalledApps'];
-    sourceFilter = values['sourceFilter'];
+    nameFilter = values['appName'] as String? ?? '';
+    authorFilter = values['author'] as String? ?? '';
+    idFilter = values['appId'] as String? ?? '';
+    includeUptodate = values['upToDateApps'] as bool? ?? false;
+    includeNonInstalled = values['nonInstalledApps'] as bool? ?? false;
+    sourceFilter = values['sourceFilter'] as String? ?? '';
   }
 
   bool isIdenticalTo(AppsFilter other, SettingsProvider settingsProvider) =>

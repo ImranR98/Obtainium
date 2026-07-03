@@ -36,7 +36,7 @@ class ObtainiumError {
           code == 'HTTP_ERROR'
       ? _message
       : code == 'MULTI_ERROR'
-      ? toString()
+      ? localizeErrorCode(code, data)
       : localizeErrorCode(code, data);
 
   @override

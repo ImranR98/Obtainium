@@ -51,6 +51,7 @@ const List<String> _verifiedAppsPackageIds = [
 // session still commits, so we poll (via waitForPackageInstall) for a short
 // window to confirm the install actually landed.
 const int _bgInstallConfirmAttempts = 16;
+const int _maxTarballSize = 500 * 1024 * 1024;
 
 class _InstallResult {
   final String id;
@@ -417,6 +418,10 @@ extension AppsProviderInstall on AppsProvider {
     String destinationPath,
   ) async {
     final File tarballFile = File(filePath);
+    final fileSize = await tarballFile.length();
+    if (fileSize > _maxTarballSize) {
+      throw ObtainiumError('${tr('unexpectedError')} (tarball too large)');
+    }
     final bytes = await tarballFile.readAsBytes();
     List<int> decompressed;
 
@@ -459,7 +464,7 @@ extension AppsProviderInstall on AppsProvider {
     DownloadedDir dir,
     BuildContext? firstTimeWithContext, {
     bool needsBGWorkaround = false,
-    bool shizukuPretendToBeGooglePlay = false,
+    Map<String, dynamic> installOptions = const {},
   }) async {
     // Try installing all APKs; succeed if at least one installed.
     var somethingInstalled = false;
@@ -485,10 +490,10 @@ extension AppsProviderInstall on AppsProvider {
           final result = await installer.installApk(
             [dir.file.path],
             appId: dir.appId,
-            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+            installOptions: installOptions,
           );
           if (result.isError) {
-            throw InstallError(result.errorCode!);
+            throw InstallError(result.errorCode ?? -1);
           }
           if (result.isSuccess) {
             somethingInstalled = true;
@@ -524,7 +529,7 @@ extension AppsProviderInstall on AppsProvider {
           // ignore: use_build_context_synchronously
           firstTimeWithContext,
           needsBGWorkaround: needsBGWorkaround,
-          shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+          installOptions: installOptions,
           additionalAPKs: apkFiles
               .sublist(1)
               .map((a) => DownloadedApk(dir.appId, a))
@@ -552,7 +557,7 @@ extension AppsProviderInstall on AppsProvider {
     DownloadedApk file,
     BuildContext? firstTimeWithContext, {
     bool needsBGWorkaround = false,
-    bool shizukuPretendToBeGooglePlay = false,
+    Map<String, dynamic> installOptions = const {},
     List<DownloadedApk> additionalAPKs = const [],
   }) async {
     if (firstTimeWithContext != null) {
@@ -619,7 +624,7 @@ extension AppsProviderInstall on AppsProvider {
     final InstallResult result = await getInstaller().installApk(
       allAPKs,
       appId: file.appId,
-      shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+      installOptions: installOptions,
     );
     bool installed = false;
     if (result.isError) {
@@ -1099,15 +1104,14 @@ extension AppsProviderInstall on AppsProvider {
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
       if (downloadedFile != null) {
         if (needBGWorkaround) {
-          // In the background-workaround path context is always null, so it is
-          // safe to pass null across the confirmation await below.
           final baseline = await captureInstallBaseline(id);
+          final prevInstalledVersion = appEntry.app.installedVersion;
           unawaited(
             installApk(
               downloadedFile,
               null,
               needsBGWorkaround: true,
-              shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+              installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
             ),
           );
           sayInstalled = await waitForPackageInstall(
@@ -1115,16 +1119,23 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
+          if (!sayInstalled && apps[id] != null) {
+            apps[id]!.app = apps[id]!.app.copyWith(
+              installedVersion: prevInstalledVersion,
+            );
+            notify();
+          }
         } else {
           sayInstalled = await installApk(
             downloadedFile,
             contextIfNewInstall,
-            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+            installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
           );
         }
       } else {
         if (needBGWorkaround) {
           final baseline = await captureInstallBaseline(id);
+          final prevInstalledVersion = appEntry.app.installedVersion;
           unawaited(
             installApkDir(downloadedDir!, null, needsBGWorkaround: true),
           );
@@ -1133,11 +1144,17 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
+          if (!sayInstalled && apps[id] != null) {
+            apps[id]!.app = apps[id]!.app.copyWith(
+              installedVersion: prevInstalledVersion,
+            );
+            notify();
+          }
         } else {
           sayInstalled = await installApkDir(
             downloadedDir!,
             contextIfNewInstall,
-            shizukuPretendToBeGooglePlay: shizukuPretendToBeGooglePlay,
+            installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
           );
         }
       }
@@ -1197,7 +1214,7 @@ extension AppsProviderInstall on AppsProvider {
       } else {
         throw ObtainiumError(tr('downloadFailed'));
       }
-      id = downloadedFile?.appId ?? downloadedDir!.appId;
+      id = downloadedFile?.appId ?? downloadedDir?.appId ?? id;
       // Bridge download-to-install gap so the Dismissible stays disabled.
       // Use 100 (download complete) rather than -1 (installing) so the UI
       // doesn't report "Installing" before installation actually begins.
