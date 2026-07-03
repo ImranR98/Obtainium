@@ -530,11 +530,13 @@ class AppsPageState extends State<AppsPage> {
 
   void pinSelectedApps(Set<App> selectedApps) {
     final pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
-    appsProvider.saveApps(
-      selectedApps.map((e) {
-        e = e.copyWith(pinned: pinStatus);
-        return e;
-      }).toList(),
+    unawaited(
+      appsProvider.saveApps(
+        selectedApps.map((e) {
+          e = e.copyWith(pinned: pinStatus);
+          return e;
+        }).toList(),
+      ),
     );
   }
 

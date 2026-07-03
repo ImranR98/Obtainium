@@ -492,6 +492,16 @@ class _AppPageState extends State<AppPage> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () {
+                  setState(() {
+                    _webViewError = null;
+                    webViewLoaded = false;
+                  });
+                },
+                child: Text(tr('retry')),
+              ),
             ],
           ),
         ),
