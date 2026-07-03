@@ -8,6 +8,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/installers/installer.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/external_install_bridge.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 const String _apkMime = 'application/vnd.android.package-archive';
@@ -35,7 +36,14 @@ class ExternalInstaller extends Installer {
   bool get wantsContainerHandoff => true;
 
   @override
-  Future<bool> canInstallSilently(App app) async => false;
+  Future<bool> canInstallSilently(App app) async {
+    unawaited(
+      LogsProvider().add(
+        'App will not be installed silently: the external installer always requires user interaction: ${app.id}',
+      ),
+    );
+    return false;
+  }
 
   @override
   Future<bool> checkPermission() async =>
@@ -62,9 +70,8 @@ class ExternalInstaller extends Installer {
     final baseline = await captureInstallBaseline(appId);
 
     for (final filePath in apkFilePaths) {
-      final contentUri = await ExternalInstallerBridge.instance.contentUriForFile(
-        filePath,
-      );
+      final contentUri = await ExternalInstallerBridge.instance
+          .contentUriForFile(filePath);
       if (contentUri == null) {
         throw ObtainiumError(tr('badDownload'));
       }
@@ -85,15 +92,34 @@ class ExternalInstaller extends Installer {
       // would resolve instantly for every path after the first).
       final foregroundReturn = FGBGEvents.instance.stream
           .firstWhere((event) => event == FGBGType.foreground)
-          .timeout(_foregroundReturnFallback, onTimeout: () => FGBGType.foreground);
+          .timeout(
+            _foregroundReturnFallback,
+            onTimeout: () => FGBGType.foreground,
+          );
       await intent.launch();
 
       await foregroundReturn;
     }
 
-    return (await waitForPackageInstall(appId, baseline, attempts: _confirmAttempts))
-        ? InstallResult.success()
-        : InstallResult.cancelled();
+    // The external installer app never reports a status code back to us, so
+    // install completion can only be detected by polling the package state
+    // rather than reading a return code from the installer.
+    unawaited(
+      LogsProvider().add(
+        'Detecting install completion for $appId via fallback polling (external installer returns no status code).',
+      ),
+    );
+    final installed = await waitForPackageInstall(
+      appId,
+      baseline,
+      attempts: _confirmAttempts,
+    );
+    unawaited(
+      LogsProvider().add(
+        'Fallback polling ${installed ? 'confirmed' : 'could not confirm'} install completion for $appId.',
+      ),
+    );
+    return installed ? InstallResult.success() : InstallResult.cancelled();
   }
 
   String _mimeForPath(String path) {

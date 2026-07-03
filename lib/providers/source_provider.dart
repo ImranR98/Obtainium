@@ -540,7 +540,7 @@ abstract class AppSource {
       caseSensitive: false,
     );
     final match = re.firstMatch(url);
-    if (match == null) throw InvalidURLError(name);
+    if (match == null) throw InvalidURLError(name)..url = url;
     return match.group(0)!;
   }
 
@@ -978,7 +978,7 @@ class SourceProvider {
         (e) => e.sourceIdentifier == overrideSource,
       );
       if (srcs.isEmpty) {
-        throw UnsupportedURLError();
+        throw UnsupportedURLError()..url = url;
       }
       final res = srcs.first;
       final originalHosts = res.hosts;
@@ -1004,7 +1004,7 @@ class SourceProvider {
       } catch (e) {
         unawaited(
           LogsProvider().add(
-            'Source host-match error for ${s.runtimeType}: ${e.toString()}',
+            'Source host-match error for ${s.runtimeType} ($url): ${e.toString()}',
           ),
         );
       }
@@ -1020,14 +1020,14 @@ class SourceProvider {
         } catch (e) {
           unawaited(
             LogsProvider().add(
-              'Source standardize error for ${s.runtimeType}: ${e.toString()}',
+              'Source standardize error for ${s.runtimeType} ($url): ${e.toString()}',
             ),
           );
         }
       }
     }
     if (source == null) {
-      throw UnsupportedURLError();
+      throw UnsupportedURLError()..url = url;
     }
     return source;
   }
@@ -1046,9 +1046,10 @@ class SourceProvider {
   String generateTempID(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
-  ) => sha256.convert(
-        utf8.encode(standardUrl + additionalSettings.toString()),
-      ).toString().substring(0, 12);
+  ) => sha256
+      .convert(utf8.encode(standardUrl + additionalSettings.toString()))
+      .toString()
+      .substring(0, 12);
 
   Future<String> _resolveAppId(
     AppSource source,
@@ -1087,11 +1088,18 @@ class SourceProvider {
       additionalSettings['trackOnly'] = true;
     }
     final trackOnly = additionalSettings['trackOnly'] == true;
-    final String standardUrl = source.standardizeUrl(url);
-    final APKDetails apk = await source.getLatestAPKDetails(
-      standardUrl,
-      additionalSettings,
-    );
+    final String standardUrl;
+    try {
+      standardUrl = source.standardizeUrl(url);
+    } on ObtainiumError catch (e) {
+      throw e..withUrlContext(url);
+    }
+    final APKDetails apk;
+    try {
+      apk = await source.getLatestAPKDetails(standardUrl, additionalSettings);
+    } on ObtainiumError catch (e) {
+      throw e..withUrlContext(standardUrl);
+    }
 
     if (!source.suppressStandardVersionExtraction) {
       final String? extractedVersion = extractVersion(
@@ -1114,25 +1122,25 @@ class SourceProvider {
       additionalSettings['invertAPKFilter'],
     );
     if (apk.apkUrls.isEmpty && !trackOnly) {
-      throw NoAPKError();
+      throw NoAPKError()..url = standardUrl;
     }
     if (additionalSettings['autoApkFilterByArch'] == true) {
       apk.apkUrls = await filterApksByArch(apk.apkUrls);
       if (apk.apkUrls.isEmpty && !trackOnly) {
-        throw NoAPKError();
+        throw NoAPKError()..url = standardUrl;
       }
     }
     var name = currentApp != null ? currentApp.name.trim() : '';
     name = name.isNotEmpty ? name : apk.names.name;
     final App finalApp = App(
       id: await _resolveAppId(
-            source,
-            currentApp,
-            additionalSettings,
-            trackOnly,
-            standardUrl,
-            inferAppIdIfOptional,
-          ),
+        source,
+        currentApp,
+        additionalSettings,
+        trackOnly,
+        standardUrl,
+        inferAppIdIfOptional,
+      ),
       url: standardUrl,
       author: apk.names.author,
       name: name,

@@ -96,7 +96,8 @@ class AppInMemory {
     this.icon, {
     this.sourceType,
     DownloadState? download,
-  }) : download = download ?? (DownloadState()..progress.value = downloadProgress);
+  }) : download =
+           download ?? (DownloadState()..progress.value = downloadProgress);
 
   AppInMemory deepCopy() => AppInMemory(
     app.copyWith(),
@@ -224,10 +225,11 @@ Future<File> downloadFileWithRetry(
   } catch (e) {
     // A cancellation is not one of the retryable error types, so it naturally
     // falls through to rethrow below.
-    if (retries > 0 && (e is ClientException || e is SocketException || e is TimeoutException)) {
-      await Future.delayed(
-        const Duration(seconds: _retryDelaySeconds),
-      );
+    if (retries > 0 &&
+        (e is ClientException ||
+            e is SocketException ||
+            e is TimeoutException)) {
+      await Future.delayed(const Duration(seconds: _retryDelaySeconds));
       return await downloadFileWithRetry(
         url,
         fileName,
@@ -259,11 +261,7 @@ Future<String> checkPartialDownloadHashDynamic(
   Map<String, String>? headers,
   bool allowInsecure = false,
 }) async {
-  for (
-    int i = startingSize;
-    i >= lowerLimit;
-    i -= _partialHashCheckDecrement
-  ) {
+  for (int i = startingSize; i >= lowerLimit; i -= _partialHashCheckDecrement) {
     // Both requests fetch the same byte range to confirm the hash is
     // stable. The loop decrements on mismatch; when two consecutive
     // requests agree, the hash is considered valid.
@@ -303,7 +301,8 @@ Future<String> checkPartialDownloadHash(
   try {
     final response = await client.send(req);
     if (response.statusCode < 200 || response.statusCode > 299) {
-      throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'));
+      throw ObtainiumError(response.reasonPhrase ?? tr('unexpectedError'))
+        ..url = url;
     }
     final List<List<int>> bytes = await response.stream
         .take(bytesToGrab)
@@ -328,8 +327,7 @@ Future<String?> checkETagHeader(
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
     }
-    final etag =
-        response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
+    final etag = response.headers[HttpHeaders.etagHeader]?.replaceAll('"', '');
     return etag != null
         ? sha256.convert(utf8.encode(etag)).toString().substring(0, 12)
         : null;
@@ -364,9 +362,7 @@ Future<File?> _waitForConcurrentDownload(
   int pollCount = 0;
   while (pollCount < _maxDownloadPolls) {
     pollCount++;
-    await Future.delayed(
-      const Duration(seconds: _downloadPollIntervalSeconds),
-    );
+    await Future.delayed(const Duration(seconds: _downloadPollIntervalSeconds));
     if (tempDownloadedFile.existsSync()) {
       final int newTempFileSize;
       try {
@@ -555,7 +551,9 @@ Future<File> downloadFile(
       await sink.close();
       sink = null;
       await response.drain<void>().catchError((_) {
-        unawaited(logs?.add('Failed to drain response body', level: LogLevel.warning));
+        unawaited(
+          logs?.add('Failed to drain response body', level: LogLevel.warning),
+        );
       });
       if (tempDownloadedFile.existsSync()) {
         deleteFile(tempDownloadedFile);
@@ -567,7 +565,7 @@ Future<File> downloadFile(
                 'errorWithHttpStatusCode',
                 args: [response.statusCode.toString()],
               ),
-      );
+      )..url = url;
     }
 
     final downloadBuffer = BytesBuilder();
@@ -663,9 +661,11 @@ Future<File> downloadFile(
     return downloadedFile;
   } finally {
     responseClient.close();
-    unawaited(sink?.close().catchError((_) {
-      logs?.add('Failed to close download sink', level: LogLevel.warning);
-    }));
+    unawaited(
+      sink?.close().catchError((_) {
+        logs?.add('Failed to close download sink', level: LogLevel.warning);
+      }),
+    );
   }
 }
 
@@ -751,7 +751,12 @@ Future<PackageInfo?> getInstalledInfo(
       );
     } catch (e) {
       if (printErr) {
-        unawaited(LogsProvider().add(e.toString(), level: LogLevel.error));
+        unawaited(
+          LogsProvider().add(
+            'Failed to get installed info for $packageName: ${e.toString()}',
+            level: LogLevel.error,
+          ),
+        );
       }
     }
   }
@@ -856,14 +861,18 @@ class AppsProvider with ChangeNotifier {
 
   Directory get apkDir {
     if (_apkDir == null) {
-      throw StateError('apkDir not initialized - wait for async init to complete');
+      throw StateError(
+        'apkDir not initialized - wait for async init to complete',
+      );
     }
     return _apkDir!;
   }
 
   Directory get iconsCacheDir {
     if (_iconsCacheDir == null) {
-      throw StateError('iconsCacheDir not initialized - wait for async init to complete');
+      throw StateError(
+        'iconsCacheDir not initialized - wait for async init to complete',
+      );
     }
     return _iconsCacheDir!;
   }
@@ -877,10 +886,12 @@ class AppsProvider with ChangeNotifier {
     if (!_needsBgReload) return;
     _needsBgReload = false;
     loadApps().catchError((e) {
-      unawaited(logs.add(
-        'Reload after background save failed: $e',
-        level: LogLevel.error,
-      ));
+      unawaited(
+        logs.add(
+          'Reload after background save failed: $e',
+          level: LogLevel.error,
+        ),
+      );
     });
   }
 
@@ -928,7 +939,9 @@ class AppsProvider with ChangeNotifier {
     _autoExportDebounce = Timer(const Duration(seconds: 2), () {
       if (!_disposed) {
         export(isAuto: true).catchError((e) {
-          unawaited(logs.add('Auto-export failed: $e', level: LogLevel.warning));
+          unawaited(
+            logs.add('Auto-export failed: $e', level: LogLevel.warning),
+          );
           return null;
         });
       }
@@ -994,7 +1007,9 @@ class AppsProvider with ChangeNotifier {
       }
     }().catchError((e) {
       initError = e.toString();
-      unawaited(logs.add('AppsProvider async init error: $e', level: LogLevel.error));
+      unawaited(
+        logs.add('AppsProvider async init error: $e', level: LogLevel.error),
+      );
     });
   }
 
@@ -1070,9 +1085,11 @@ Future<void> _runBGInstallMode(
     } catch (e) {
       if (e is MultiAppMultiError) {
         e.idsByErrorString.forEach((key, value) {
-          unawaited(notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
-          ));
+          unawaited(
+            notificationsProvider.notify(
+              ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+            ),
+          );
         });
       } else {
         unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));
@@ -1260,9 +1277,11 @@ Future<void> _bgRunUpdateCheck(
       updates = e.updates;
       errors = e.errors;
       errors.rawErrors.forEach((key, err) {
-        unawaited(logs.add(
-          'BG update task: Got error on checking for $key \'${err.toString()}\'.',
-        ));
+        unawaited(
+          logs.add(
+            'BG update task: Got error on checking for $key \'${err.toString()}\'.',
+          ),
+        );
 
         final toCheckApp = toCheck.firstWhere(
           (element) => element.key == key,

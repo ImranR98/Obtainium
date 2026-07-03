@@ -91,10 +91,10 @@ extension AppsProviderInstall on AppsProvider {
     final actualPackageName = newInfo.packageName;
     if (app.id != actualPackageName) {
       if (actualPackageName == null) {
-        throw ObtainiumError(tr('couldNotGetIdFromApk'));
+        throw ObtainiumError(tr('couldNotGetIdFromApk'))..url = app.url;
       }
       if (apps[app.id] != null && !isTempIdBool && !app.allowIdChange) {
-        throw IDChangedError(actualPackageName);
+        throw IDChangedError(actualPackageName)..url = app.url;
       }
       final idChangeWasAllowed = app.allowIdChange;
       app = app.copyWith(allowIdChange: false);
@@ -297,7 +297,7 @@ extension AppsProviderInstall on AppsProvider {
         if (apkDir != null && apkDir.existsSync()) {
           apkDir.deleteSync(recursive: true);
         }
-        throw ObtainiumError(tr('couldNotGetIdFromApk'));
+        throw ObtainiumError(tr('couldNotGetIdFromApk'))..url = app.url;
       }
       downloadedFile = await handleAPKIDChange(
         app,
@@ -345,14 +345,27 @@ extension AppsProviderInstall on AppsProvider {
 
   Future<bool> canInstallSilently(App app) async {
     if (!settingsProvider.enableBackgroundUpdates) {
+      unawaited(
+        logs.add(
+          'App will not be installed silently: background updates are disabled: ${app.id}',
+        ),
+      );
       return false;
     }
     if (app.settings.getBool('exemptFromBackgroundUpdates')) {
-      unawaited(logs.add('Exempted from BG updates: ${app.id}'));
+      unawaited(
+        logs.add(
+          'App will not be installed silently: exempted from background updates: ${app.id}',
+        ),
+      );
       return false;
     }
     if (app.apkUrls.length > 1) {
-      unawaited(logs.add('Multiple APK URLs: ${app.id}'));
+      unawaited(
+        logs.add(
+          'App will not be installed silently: multiple APK URLs require manual selection: ${app.id}',
+        ),
+      );
       return false; // Manual API selection means silent install is not possible
     }
 
@@ -366,14 +379,15 @@ extension AppsProviderInstall on AppsProvider {
     if (!(targetSDK != null && targetSDK >= requiredSDK)) {
       unawaited(
         logs.add(
-          'App currently targets API $targetSDK which is too low for background updates (requires API $requiredSDK): ${app.id}',
+          'App will not be installed silently: currently targets API $targetSDK which is too low for background updates (requires API $requiredSDK): ${app.id}',
         ),
       );
       return false;
     }
 
     // Installer-specific eligibility (Obtainium being the installer, OS version,
-    // Shizuku availability, etc.) is delegated to the active installer strategy.
+    // Shizuku availability, etc.) is delegated to the active installer strategy,
+    // which logs its own specific reason when it returns false.
     return getInstaller().canInstallSilently(app);
   }
 
@@ -387,7 +401,10 @@ extension AppsProviderInstall on AppsProvider {
       );
       await FGBGEvents.instance.stream
           .firstWhere((t) => t == FGBGType.foreground)
-          .timeout(const Duration(minutes: 5), onTimeout: () => FGBGType.foreground);
+          .timeout(
+            const Duration(minutes: 5),
+            onTimeout: () => FGBGType.foreground,
+          );
       await notificationsProvider.cancel(completeInstallationNotification.id);
     }
   }
@@ -524,7 +541,9 @@ extension AppsProviderInstall on AppsProvider {
         unawaited(dir.file.delete());
       } catch (e) {
         unawaited(
-          logs.add('Could not install APKs from ${dir.type}: ${e.toString()}'),
+          logs.add(
+            'Could not install APKs for ${dir.appId} from ${dir.type}: ${e.toString()}',
+          ),
         );
         errors.add(dir.appId, e, appName: apps[dir.appId]?.name);
       }
@@ -559,10 +578,12 @@ extension AppsProviderInstall on AppsProvider {
         }
       } catch (e) {
         unawaited(
-          logs.add('Failed to delete bad download files: ${e.toString()}'),
+          logs.add(
+            'Failed to delete bad download files for ${file.appId}: ${e.toString()}',
+          ),
         );
       }
-      throw ObtainiumError(tr('badDownload'));
+      throw ObtainiumError(tr('badDownload'))..url = apps[file.appId]?.app.url;
     }
     final PackageInfo? appInfo = await getInstalledInfo(
       apps[file.appId]!.app.id,
@@ -689,8 +710,9 @@ extension AppsProviderInstall on AppsProvider {
         final obbFileName = file.path.split('/').last;
         final obbDestPath =
             '${await getStorageRootPath()}/Android/obb/$appId/$obbFileName';
-        await Directory('${await getStorageRootPath()}/Android/obb/$appId')
-            .create(recursive: true);
+        await Directory(
+          '${await getStorageRootPath()}/Android/obb/$appId',
+        ).create(recursive: true);
         await file.copy(obbDestPath);
         unawaited(
           logs.add(
@@ -1096,7 +1118,9 @@ extension AppsProviderInstall on AppsProvider {
               downloadedFile,
               null,
               needsBGWorkaround: true,
-              installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
+              installOptions: {
+                'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
+              },
             ),
           );
           sayInstalled = await waitForPackageInstall(
@@ -1114,7 +1138,9 @@ extension AppsProviderInstall on AppsProvider {
           sayInstalled = await installApk(
             downloadedFile,
             contextIfNewInstall,
-            installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
+            installOptions: {
+              'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
+            },
           );
         }
       } else {
@@ -1139,7 +1165,9 @@ extension AppsProviderInstall on AppsProvider {
           sayInstalled = await installApkDir(
             downloadedDir!,
             contextIfNewInstall,
-            installOptions: {'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay},
+            installOptions: {
+              'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
+            },
           );
         }
       }
@@ -1197,7 +1225,7 @@ extension AppsProviderInstall on AppsProvider {
       } else if (downloadedArtifact is DownloadedDir) {
         downloadedDir = downloadedArtifact;
       } else {
-        throw ObtainiumError(tr('downloadFailed'));
+        throw ObtainiumError(tr('downloadFailed'))..url = apps[id]?.app.url;
       }
       id = downloadedFile?.appId ?? downloadedDir?.appId ?? id;
       // Bridge download-to-install gap so the Dismissible stays disabled.
@@ -1250,14 +1278,16 @@ extension AppsProviderInstall on AppsProvider {
         fileUrl.key,
         true,
         (double? progress, [int? received, int? total]) {
-          unawaited(notificationsProvider.notify(
-            DownloadNotification(
-              fileUrl.key,
-              progress?.ceil() ?? 0,
-              receivedBytes: received,
-              totalBytes: total,
+          unawaited(
+            notificationsProvider.notify(
+              DownloadNotification(
+                fileUrl.key,
+                progress?.ceil() ?? 0,
+                receivedBytes: received,
+                totalBytes: total,
+              ),
             ),
-          ));
+          );
         },
         downloadPath,
         headers: await SourceProvider()

@@ -13,12 +13,20 @@ class ObtainiumError {
   final Map<String, dynamic> data;
   final bool unexpected;
 
+  /// The app/source URL this error relates to, if known. Attached as context so
+  /// that logs and error messages can identify which app/URL an error came from
+  /// even when the error itself was thrown deep inside a source with no app
+  /// reference. Not part of the localized [message]; only surfaced via
+  /// [toString].
+  String? url;
+
   ObtainiumError(
     this._message, {
     this.code = 'UNKNOWN',
     this.unexpected = false,
     this.stack,
     this.data = const {},
+    this.url,
   });
 
   ObtainiumError.withCode(
@@ -27,6 +35,7 @@ class ObtainiumError {
     this.unexpected = false,
     this.stack,
     this.data = const {},
+    this.url,
   }) : _message = message;
 
   String get message =>
@@ -37,17 +46,33 @@ class ObtainiumError {
       ? _message
       : localizeErrorCode(code, data);
 
+  /// Attaches [contextUrl] as the offending URL if none is set yet, so logs and
+  /// messages can identify the app/URL involved. Returns this for chaining.
+  ObtainiumError withUrlContext(String? contextUrl) {
+    if ((url == null || url!.isEmpty) &&
+        contextUrl != null &&
+        contextUrl.isNotEmpty) {
+      url = contextUrl;
+    }
+    return this;
+  }
+
   @override
-  String toString() => message;
+  String toString() =>
+      url != null && url!.isNotEmpty ? '$message ($url)' : message;
 }
 
-Never rethrowOrWrapError(Object error, {String? sourceName, StackTrace? stack}) {
+Never rethrowOrWrapError(
+  Object error, {
+  String? sourceName,
+  StackTrace? stack,
+}) {
   if (error is ObtainiumError) {
     if (error.unexpected) {
       final resolvedStack = error.stack ?? StackTrace.current;
       unawaited(
         LogsProvider().add(
-          'Unexpected ObtainiumError: ${error.message}\n$resolvedStack',
+          'Unexpected ObtainiumError: ${error.toString()}\n$resolvedStack',
           level: LogLevel.error,
         ),
       );
@@ -57,6 +82,7 @@ Never rethrowOrWrapError(Object error, {String? sourceName, StackTrace? stack}) 
         unexpected: true,
         stack: resolvedStack,
         data: error.data,
+        url: error.url,
       );
     }
     throw error;

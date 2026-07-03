@@ -24,6 +24,11 @@ class StockInstaller extends Installer {
   @override
   Future<bool> canInstallSilently(App app) async {
     if (app.id == obtainiumId) {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: Obtainium cannot silently install itself: ${app.id}',
+        ),
+      );
       return false;
     }
     final osInfo = await DeviceInfoPlugin().androidInfo;
@@ -37,19 +42,26 @@ class StockInstaller extends Installer {
     } catch (e) {
       unawaited(
         LogsProvider().add(
-          'Failed to get installed package details: ${app.id} (${e.toString()})',
+          'App will not be installed silently: failed to get installed package details: ${app.id} (${e.toString()})',
         ),
       );
       return false;
     }
     if (installerPackageName != obtainiumId) {
       // If we did not install the app, silent install is not possible
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: Obtainium is not the installing package (current installer: ${installerPackageName ?? 'unknown'}): ${app.id}',
+        ),
+      );
       return false;
     }
     if (osInfo.version.sdkInt < _androidApiLevelS) {
       // The OS must also be new enough
       unawaited(
-        LogsProvider().add('Android SDK too old: ${osInfo.version.sdkInt}'),
+        LogsProvider().add(
+          'App will not be installed silently: Android SDK ${osInfo.version.sdkInt} is too old (requires $_androidApiLevelS+): ${app.id}',
+        ),
       );
       return false;
     }
