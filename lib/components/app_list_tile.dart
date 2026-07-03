@@ -243,7 +243,7 @@ class AppListTile extends StatelessWidget {
                   .then((res) {
                     if (res.isNotEmpty && context.mounted) {
                       final np = context.read<NotificationsProvider>();
-                      np.cancel(UpdateNotification([]).id);
+                      np.cancel(updateNotificationId);
                       np.cancel(
                         SilentUpdateAttemptNotification(
                           [],

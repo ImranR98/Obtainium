@@ -31,7 +31,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
-  final SourceProvider sourceProvider = SourceProvider();
+  late final SourceProvider sourceProvider;
 
   @override
   void initState() {
@@ -40,8 +40,14 @@ class _SettingsPageState extends State<SettingsPage> {
       if (!mounted) return;
       final sp = context.read<SettingsProvider>();
       if (sp.prefs == null) sp.initializeSettings();
+      initAndroidSdk();
     });
-    initAndroidSdk();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    sourceProvider = context.read<SourceProvider>();
   }
 
   Future<void> initAndroidSdk() async {
@@ -50,8 +56,9 @@ class _SettingsPageState extends State<SettingsPage> {
       androidSdkInt = info.version.sdkInt;
       if (mounted) setState(() {});
     } catch (e) {
+      if (!mounted) return;
       unawaited(
-        LogsProvider().add(
+        context.read<LogsProvider>().add(
           'Failed to get Android SDK info: $e',
           level: LogLevel.error,
         ),

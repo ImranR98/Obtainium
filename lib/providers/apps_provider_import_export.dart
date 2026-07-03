@@ -58,7 +58,7 @@ extension AppsProviderImportExport on AppsProvider {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     var exportDir = await settingsProvider.getExportDir();
     if (isAuto) {
-      if (settingsProvider.autoExportOnChanges != true) {
+      if (!settingsProvider.autoExportOnChanges) {
         return null;
       }
       if (exportDir == null) {
@@ -184,7 +184,6 @@ class ExportSchema {
   final String appVersion;
   final List<Map<String, dynamic>> apps;
   final Map<String, dynamic>? settings;
-  final dynamic credentials;
 
   ExportSchema({
     required this.schemaVersion,
@@ -192,7 +191,6 @@ class ExportSchema {
     required this.appVersion,
     required this.apps,
     this.settings,
-    this.credentials,
   });
 
   factory ExportSchema.fromJson(Map<String, dynamic> json) {
@@ -214,7 +212,6 @@ class ExportSchema {
               .toList() ??
           [],
       settings: json['settings'] as Map<String, dynamic>?,
-      credentials: json['credentials'],
     );
   }
 
@@ -224,6 +221,5 @@ class ExportSchema {
     'appVersion': appVersion,
     'apps': apps,
     'settings': settings,
-    'credentials': credentials,
   };
 }

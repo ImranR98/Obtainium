@@ -122,7 +122,7 @@ class AppInMemory {
     download: download,
   );
 
-  String get name => app.overrideName ?? app.finalName;
+  String get name => app.finalName;
   String get author => app.overrideAuthor ?? app.finalAuthor;
 
   bool get needsRefreshBeforeDownload =>
@@ -1510,8 +1510,9 @@ class NativeFeatures {
   static bool _systemFontLoaded = false;
 
   static Future<ByteData> _readFileBytes(String path) async {
-    final bytes = await File(path).readAsBytes();
-    return ByteData.view(bytes.buffer);
+    final file = File(path);
+    final bytes = await file.readAsBytes();
+    return ByteData.sublistView(bytes);
   }
 
   static Future<void> loadSystemFont() async {

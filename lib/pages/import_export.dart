@@ -28,7 +28,8 @@ class _ImportFromURLListPageState extends State<ImportFromURLListPage> {
   @override
   void initState() {
     super.initState();
-    _controller = ImportFromURLListController();
+    final sp = context.read<SourceProvider>();
+    _controller = ImportFromURLListController(sourceProvider: sp);
   }
 
   @override
@@ -161,7 +162,6 @@ class ImportSection extends StatefulWidget {
 
 class _ImportSectionState extends State<ImportSection> {
   bool importInProgress = false;
-  final SourceProvider sourceProvider = SourceProvider();
 
   @override
   Widget build(BuildContext context) {
@@ -314,7 +314,7 @@ class _ImportSectionState extends State<ImportSection> {
                         ),
                       ),
               ),
-              ...sourceProvider.massUrlSources.map(
+              ...context.read<SourceProvider>().massUrlSources.map(
                 (source) => ActionListTile(
                   icon: Icons.cloud_download_outlined,
                   label: tr('importX', args: [source.name]),
@@ -892,15 +892,13 @@ class ImportFromURLListController extends ChangeNotifier {
   final TextEditingController urlController = TextEditingController();
   bool isImporting = false;
 
-  final SourceProvider sourceProvider = SourceProvider();
+  final SourceProvider sourceProvider;
 
-  void showImportError(dynamic e, BuildContext context) {
-    if (e is PlatformException || e is MissingPluginException) {
-      showError(ObtainiumError(tr('noFilePickerAvailable')), context);
-    } else {
-      showError(e, context);
-    }
-  }
+  ImportFromURLListController({SourceProvider? sourceProvider})
+    : sourceProvider = sourceProvider ?? SourceProvider();
+
+  void showImportError(dynamic e, BuildContext context) =>
+      _showImportError(e, context);
 
   Future<void> importFromFile(BuildContext context) async {
     try {

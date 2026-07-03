@@ -33,9 +33,10 @@ class ObtainiumError {
       code == 'UNKNOWN' ||
           code == 'UNEXPECTED' ||
           code == 'CHECK_UPDATES_FAILED' ||
-          code == 'MULTI_ERROR' ||
           code == 'HTTP_ERROR'
       ? _message
+      : code == 'MULTI_ERROR'
+      ? toString()
       : localizeErrorCode(code, data);
 
   @override
@@ -44,12 +45,20 @@ class ObtainiumError {
 
 Never rethrowOrWrapError(Object error, {String? sourceName, StackTrace? stack}) {
   if (error is ObtainiumError) {
-    if (error.stack == null && error.unexpected) {
+    if (error.unexpected) {
+      final resolvedStack = error.stack ?? StackTrace.current;
       unawaited(
         LogsProvider().add(
-          'Unexpected ObtainiumError (no stack): ${error.message}',
+          'Unexpected ObtainiumError: ${error.message}\n$resolvedStack',
           level: LogLevel.error,
         ),
+      );
+      throw ObtainiumError(
+        error.message,
+        code: 'UNEXPECTED',
+        unexpected: true,
+        stack: resolvedStack,
+        data: error.data,
       );
     }
     throw error;

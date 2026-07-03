@@ -52,7 +52,6 @@ class AppsPageState extends State<AppsPage> {
 
   AppsFilter filter = AppsFilter();
   final AppsFilter neutralFilter = AppsFilter();
-  final SourceProvider sourceProvider = SourceProvider();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
   DateTime? refreshingSince;
@@ -289,7 +288,7 @@ class AppsPageState extends State<AppsPage> {
                               showMessage(tr('appsUpdated'), context);
                             }
                             final np = context.read<NotificationsProvider>();
-                            np.cancel(UpdateNotification([]).id);
+                            np.cancel(updateNotificationId);
                             np.cancel(
                               SilentUpdateAttemptNotification(
                                 [],
@@ -364,7 +363,7 @@ class AppsPageState extends State<AppsPage> {
                 value: filter.sourceFilter,
                 [
                   MapEntry('', tr('none')),
-                  ...sourceProvider.sources.map(
+                  ...ctx.read<SourceProvider>().sources.map(
                     (e) => MapEntry(e.name, e.name),
                   ),
                 ],
@@ -1047,9 +1046,11 @@ class AppsPageState extends State<AppsPage> {
               .getAppValues()
               .map((e) => e.app.id)
               .toSet();
-          selectedAppIds = selectedAppIds
-              .where(freshListedIds.contains)
-              .toSet();
+          setState(() {
+            selectedAppIds = selectedAppIds
+                .where(freshListedIds.contains)
+                .toSet();
+          });
           widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
         }
       });

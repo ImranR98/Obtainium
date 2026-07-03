@@ -2,7 +2,7 @@
 
 import 'main.dart' as m;
 
-void main() async {
+void main() {
   m.isFdroidBuild = true;
   m.main();
 }

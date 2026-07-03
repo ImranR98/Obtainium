@@ -1165,7 +1165,7 @@ extension AppsProviderInstall on AppsProvider {
       if (sayInstalled) {
         installedIds.add(id);
         // Dismiss the update notification since the app was successfully installed
-        unawaited(notificationsProvider?.cancel(UpdateNotification([]).id));
+        unawaited(notificationsProvider?.cancel(updateNotificationId));
       }
     } finally {
       appEntry.downloadProgress = null;

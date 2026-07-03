@@ -41,7 +41,7 @@ class _AppPageState extends State<AppPage> {
   late final String appId;
   bool _initialized = false;
 
-  final SourceProvider _sourceProvider = SourceProvider();
+  late final SourceProvider _sourceProvider;
   WebViewController? webViewController;
   bool webViewLoaded = false;
   bool _webViewReady = false;
@@ -103,6 +103,7 @@ class _AppPageState extends State<AppPage> {
       appId = widget.appId;
       appsProvider = context.read<AppsProvider>();
       settingsProvider = context.read<SettingsProvider>();
+      _sourceProvider = context.read<SourceProvider>();
       _initialized = true;
     }
   }
@@ -417,7 +418,7 @@ class _AppPageState extends State<AppPage> {
         showMessage(successMessage, context);
       }
       if (res.isNotEmpty) {
-        unawaited(np.cancel(UpdateNotification([]).id));
+        unawaited(np.cancel(updateNotificationId));
         unawaited(
           np.cancel(
             SilentUpdateAttemptNotification([], id: res[0].hashCode).id,

@@ -47,7 +47,7 @@ class AddAppPageState extends State<AddAppPage> {
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
   int urlInputKey = 0;
-  final SourceProvider sourceProvider = SourceProvider();
+  late final SourceProvider sourceProvider;
 
   Future<String?>? _sourceNoteFuture;
   String? _sourceNoteSourceKey;
@@ -69,6 +69,7 @@ class AddAppPageState extends State<AddAppPage> {
       appsProvider = context.read<AppsProvider>();
       settingsProvider = context.read<SettingsProvider>();
       notificationsProvider = context.read<NotificationsProvider>();
+      sourceProvider = context.read<SourceProvider>();
       _providersInitialized = true;
     }
   }

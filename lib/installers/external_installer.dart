@@ -59,36 +59,34 @@ class ExternalInstaller extends Installer {
       throw ObtainiumError(tr('externalInstallerRequired'));
     }
 
-    final filePath = apkFilePaths.first;
-    final contentUri = await ExternalInstallerBridge.instance.contentUriForFile(
-      filePath,
-    );
-    if (contentUri == null) {
-      throw ObtainiumError(tr('badDownload'));
-    }
-
     final baseline = await captureInstallBaseline(appId);
-
-    // Begin listening for the return-to-foreground before firing the intent so
-    // the event isn't missed if the installer opens instantly.
     final foregroundReturn = FGBGEvents.instance.stream
         .firstWhere((event) => event == FGBGType.foreground)
         .timeout(_foregroundReturnFallback, onTimeout: () => FGBGType.foreground);
 
-    final intent = AndroidIntent(
-      action: 'action_view',
-      data: contentUri,
-      type: _mimeForPath(filePath),
-      package: targetPackage,
-      componentName: settingsProvider.externalInstallerComponent,
-      flags: [
-        Flag.FLAG_GRANT_READ_URI_PERMISSION,
-        Flag.FLAG_ACTIVITY_NEW_TASK,
-      ],
-    );
-    await intent.launch();
+    for (final filePath in apkFilePaths) {
+      final contentUri = await ExternalInstallerBridge.instance.contentUriForFile(
+        filePath,
+      );
+      if (contentUri == null) {
+        throw ObtainiumError(tr('badDownload'));
+      }
 
-    await foregroundReturn;
+      final intent = AndroidIntent(
+        action: 'action_view',
+        data: contentUri,
+        type: _mimeForPath(filePath),
+        package: targetPackage,
+        componentName: settingsProvider.externalInstallerComponent,
+        flags: [
+          Flag.FLAG_GRANT_READ_URI_PERMISSION,
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+        ],
+      );
+      await intent.launch();
+
+      await foregroundReturn;
+    }
 
     return (await waitForPackageInstall(appId, baseline, attempts: _confirmAttempts))
         ? InstallResult.success()

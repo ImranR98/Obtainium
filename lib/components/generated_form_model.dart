@@ -329,7 +329,8 @@ class GeneratedFormSubForm extends GeneratedFormItem {
 
   @override
   dynamic ensureType(val) {
-    return val;
+    if (val is List) return val;
+    return [];
   }
 
   @override
@@ -361,7 +362,13 @@ Map<String, dynamic> getDefaultValuesFromFormItems(
   final entries = <MapEntry<String, dynamic>>[];
   for (final row in items) {
     for (final el in row) {
-      entries.add(MapEntry(el.key, el.value ?? ''));
+      if (el is GeneratedFormSwitch) {
+        entries.add(MapEntry(el.key, el.value ?? false));
+      } else if (el is GeneratedFormSubForm) {
+        entries.add(MapEntry(el.key, el.value ?? []));
+      } else {
+        entries.add(MapEntry(el.key, el.value ?? ''));
+      }
     }
   }
   return Map.fromEntries(entries);

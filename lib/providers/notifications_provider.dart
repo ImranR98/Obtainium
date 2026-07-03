@@ -17,6 +17,13 @@ import 'package:obtainium/providers/source_provider.dart';
 /// so the tap handler knows which download to stop.
 const String cancelDownloadActionPrefix = 'cancel_download::';
 
+const int updateNotificationId = 2;
+const int silentUpdateNotificationId = 3;
+const int errorCheckingUpdatesNotificationId = 5;
+const int trackOnlyUpdateNotificationId = 7;
+const int silentUpdateAttemptNotificationId = 8;
+const int downloadNotificationBaseId = 100;
+
 /// Name under which the main isolate registers a port to receive download-cancel
 /// requests forwarded from the notification-action background isolate.
 const String _downloadCancelPortName = 'obtainium_download_cancel';
@@ -91,7 +98,7 @@ class ObtainiumNotification {
 class UpdateNotification extends ObtainiumNotification {
   UpdateNotification(List<App> updates, {int? id})
     : super(
-        id ?? 2,
+        id ?? updateNotificationId,
         tr('updatesAvailable'),
         _buildUpdateMessage(
           updates,
@@ -109,7 +116,7 @@ class UpdateNotification extends ObtainiumNotification {
 class TrackOnlyUpdateNotification extends ObtainiumNotification {
   TrackOnlyUpdateNotification(List<App> updates, {int? id})
     : super(
-        id ?? 7,
+        id ?? trackOnlyUpdateNotificationId,
         tr('trackOnlyUpdatesAvailable'),
         _buildUpdateMessage(
           updates,
@@ -196,7 +203,7 @@ class AppsRemovedNotification extends ObtainiumNotification {
 }
 
 class DownloadNotification extends ObtainiumNotification {
-  static const int _baseId = 100;
+  static const int _baseId = downloadNotificationBaseId;
   DownloadNotification(
     String appName,
     int progPercent, {
@@ -204,7 +211,7 @@ class DownloadNotification extends ObtainiumNotification {
     int? receivedBytes,
     int? totalBytes,
   }) : super(
-        _baseId + ((appName.hashCode.abs() % 9000).abs()),
+        _baseId + (appName.hashCode.abs() % 9000),
         tr('downloadingX', args: [appName]),
         formatDownloadSize(receivedBytes, totalBytes) ?? '',
         'APP_DOWNLOADING',
