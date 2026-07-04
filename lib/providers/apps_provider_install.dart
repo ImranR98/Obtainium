@@ -79,7 +79,9 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
-  Future<File> handleAPKIDChange(
+  /// Returns the renamed file and the resolved app; callers must use the
+  /// returned app's ID since [App] is immutable.
+  Future<(File, App)> handleAPKIDChange(
     App app,
     PackageInfo newInfo,
     File downloadedFile,
@@ -97,9 +99,8 @@ extension AppsProviderInstall on AppsProvider {
         throw IDChangedError(actualPackageName)..url = app.url;
       }
       final idChangeWasAllowed = app.allowIdChange;
-      app = app.copyWith(allowIdChange: false);
       final originalAppId = app.id;
-      app = app.copyWith(id: actualPackageName);
+      app = app.copyWith(id: actualPackageName, allowIdChange: false);
       downloadedFile = downloadedFile.renameSync(
         '${downloadedFile.parent.path}/${app.id}-${downloadUrl.hashCode}.${downloadedFile.path.split('.').last}',
       );
@@ -110,7 +111,7 @@ extension AppsProviderInstall on AppsProvider {
         ], onlyIfExists: !isTempIdBool && !idChangeWasAllowed);
       }
     }
-    return downloadedFile;
+    return (downloadedFile, app);
   }
 
   Future<void> updatePendingRepoRename(String appId, String? newUrl) async {
@@ -299,12 +300,14 @@ extension AppsProviderInstall on AppsProvider {
         }
         throw ObtainiumError(tr('couldNotGetIdFromApk'))..url = app.url;
       }
-      downloadedFile = await handleAPKIDChange(
+      final (renamedFile, resolvedApp) = await handleAPKIDChange(
         app,
         newInfo,
         downloadedFile,
         downloadUrl,
       );
+      downloadedFile = renamedFile;
+      final String resolvedAppId = resolvedApp.id;
       // Delete older versions of the file if any
       for (var file in downloadedFile.parent.listSync()) {
         final fn = file.path.split('/').last;
@@ -315,7 +318,7 @@ extension AppsProviderInstall on AppsProvider {
         }
       }
       if (isAPK) {
-        return DownloadedApk(app.id, downloadedFile);
+        return DownloadedApk(resolvedAppId, downloadedFile);
       } else {
         DownloadedDirType dirType;
         if (isXAPK) {
@@ -325,7 +328,7 @@ extension AppsProviderInstall on AppsProvider {
         } else {
           dirType = DownloadedDirType.zip;
         }
-        return DownloadedDir(app.id, downloadedFile, apkDir!, dirType);
+        return DownloadedDir(resolvedAppId, downloadedFile, apkDir!, dirType);
       }
     } finally {
       clearDownloadCancellation(app.id);

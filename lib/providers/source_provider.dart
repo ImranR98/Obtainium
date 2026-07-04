@@ -887,9 +887,12 @@ abstract class MassAppUrlSource {
 /// Delegates to [VersionService.regExValidator].
 String? regExValidator(String? value) => VersionService().regExValidator(value);
 
-/// Returns true if the app's ID is a numeric placeholder (temporary ID) rather than a real package name.
+/// Returns true if the app's ID is a temporary placeholder rather than a real
+/// package name. Matches [generateTempID]'s sha256-hex prefix and legacy numeric
+/// IDs; real package names contain a dot and never match.
 bool isTempId(App app) {
-  return RegExp(r'^[0-9]+$').hasMatch(app.id);
+  return RegExp(r'^[0-9]+$').hasMatch(app.id) ||
+      RegExp(r'^[0-9a-f]{12}$').hasMatch(app.id);
 }
 
 /// Delegates to [VersionService.replaceMatchGroupsInString].
