@@ -24,6 +24,12 @@ const int trackOnlyUpdateNotificationId = 7;
 const int silentUpdateAttemptNotificationId = 8;
 const int downloadNotificationBaseId = 100;
 
+/// Size of the ID space for per-download notifications. Kept just under the
+/// 32-bit signed max (minus [downloadNotificationBaseId]) so download IDs stay
+/// positive and clear of the small fixed IDs above, while making collisions
+/// between concurrently downloading apps as unlikely as a raw hashCode.
+const int downloadNotificationIdRange = 2000000000;
+
 /// Name under which the main isolate registers a port to receive download-cancel
 /// requests forwarded from the notification-action background isolate.
 const String _downloadCancelPortName = 'obtainium_download_cancel';
@@ -211,26 +217,26 @@ class DownloadNotification extends ObtainiumNotification {
     int? receivedBytes,
     int? totalBytes,
   }) : super(
-        _baseId + (appName.hashCode.abs() % 9000),
-        tr('downloadingX', args: [appName]),
-        formatDownloadSize(receivedBytes, totalBytes) ?? '',
-        'APP_DOWNLOADING',
-        tr('downloadingXNotifChannel', args: [tr('app')]),
-        tr('downloadNotifDescription'),
-        Importance.low,
-        onlyAlertOnce: true,
-        progPercent: progPercent,
-        androidActions: appId != null
-            ? [
-                AndroidNotificationAction(
-                  '$cancelDownloadActionPrefix$appId',
-                  tr('cancel'),
-                  showsUserInterface: false,
-                  cancelNotification: true,
-                ),
-              ]
-            : null,
-      );
+         _baseId + (appName.hashCode.abs() % downloadNotificationIdRange),
+         tr('downloadingX', args: [appName]),
+         formatDownloadSize(receivedBytes, totalBytes) ?? '',
+         'APP_DOWNLOADING',
+         tr('downloadingXNotifChannel', args: [tr('app')]),
+         tr('downloadNotifDescription'),
+         Importance.low,
+         onlyAlertOnce: true,
+         progPercent: progPercent,
+         androidActions: appId != null
+             ? [
+                 AndroidNotificationAction(
+                   '$cancelDownloadActionPrefix$appId',
+                   tr('cancel'),
+                   showsUserInterface: false,
+                   cancelNotification: true,
+                 ),
+               ]
+             : null,
+       );
 }
 
 class DownloadedNotification extends ObtainiumNotification {
@@ -312,7 +318,9 @@ class NotificationsProvider {
   /// [notificationTapBackground] are received and dispatched to
   /// [onDownloadCancelRequested].
   static void listenForDownloadCancelFromMain() {
-    final prevPort = IsolateNameServer.lookupPortByName(_downloadCancelPortName);
+    final prevPort = IsolateNameServer.lookupPortByName(
+      _downloadCancelPortName,
+    );
     if (prevPort != null) {
       IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
     }
@@ -403,7 +411,8 @@ class NotificationsProvider {
           channelName,
           channelDescription: channelDescription,
           importance: importance,
-          priority: importanceToPriority[importance] ?? Priority.defaultPriority,
+          priority:
+              importanceToPriority[importance] ?? Priority.defaultPriority,
           groupKey: '$obtainiumId.$channelCode',
           progress: progPercent ?? 0,
           maxProgress: 100,
