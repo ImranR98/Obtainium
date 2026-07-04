@@ -10,6 +10,7 @@ import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
@@ -280,7 +281,10 @@ class AppsPageState extends State<AppsPage> {
                 if (!context.mounted) return;
                 unawaited(
                   appsProvider
-                      .downloadAndInstallLatestApps(toInstall, context)
+                      .downloadAndInstallLatestApps(
+                        toInstall,
+                        appNavigatorKey.currentContext,
+                      )
                       .then((value) {
                         if (value.isNotEmpty) {
                           if (context.mounted) {
@@ -393,6 +397,11 @@ class AppsPageState extends State<AppsPage> {
       _searchDebounce?.cancel();
       filter.setFormValuesFromMap(values);
       filter.categoryFilter = pendingCategories;
+      // Keep the search bar in sync with the name filter the dialog just set,
+      // otherwise it shows stale text and the next keystroke overwrites it.
+      if (searchController.text != filter.nameFilter) {
+        searchController.text = filter.nameFilter;
+      }
       if (mounted) setState(() {});
     }
   }
