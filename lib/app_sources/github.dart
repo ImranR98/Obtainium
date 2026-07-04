@@ -178,14 +178,12 @@ class GitHub extends AppSource {
                   l.startsWith('applicationId "') ||
                   l.startsWith('applicationId \''),
             );
-            appIds = appIds.map(
-              (appId) {
-                final parts = appId.split(
-                  appId.startsWith('applicationId "') ? '"' : '\'',
-                );
-                return parts.length > 1 ? parts[1] : '';
-              },
-            );
+            appIds = appIds.map((appId) {
+              final parts = appId.split(
+                appId.startsWith('applicationId "') ? '"' : '\'',
+              );
+              return parts.length > 1 ? parts[1] : '';
+            });
             appIds = appIds
                 .map((appId) {
                   if (appId.startsWith('\${') && appId.endsWith('}')) {
@@ -454,10 +452,9 @@ class GitHub extends AppSource {
             b,
             useLatestAssetDateAsReleaseDate,
           );
-          if (dateA == null && dateB == null) return 0;
-          if (dateA == null) return 1;
-          if (dateB == null) return -1;
-          return dateA.compareTo(dateB);
+          // Null dates sort as oldest (matches main); DateTime(1)/DateTime(0)
+          // keep the both-null case deterministic.
+          return (dateA ?? DateTime(1)).compareTo(dateB ?? DateTime(0));
         } else {
           if (sortMethod != 'name' && stdFormats.isNotEmpty) {
             final sortedFormats = stdFormats.toList()
@@ -687,7 +684,6 @@ class GitHub extends AppSource {
       }
 
       if (sortMethod == 'none') {
-        _positionLatestRelease(releases, latestRelease);
         releases = releases.reversed.toList();
       } else {
         _sortGitHubReleases(
@@ -695,9 +691,9 @@ class GitHub extends AppSource {
           sortMethod,
           useLatestAssetDateAsReleaseDate,
         );
-        _positionLatestRelease(releases, latestRelease);
-        releases = releases.reversed.toList();
       }
+      _positionLatestRelease(releases, latestRelease);
+      releases = releases.reversed.toList();
       final targetRelease = _selectGitHubTargetRelease(
         releases: releases,
         fallbackToOlderReleases: fallbackToOlderReleases,
