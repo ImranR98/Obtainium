@@ -144,13 +144,13 @@ extension AppsProviderInstall on AppsProvider {
   }) async {
     final notifId = DownloadNotification(app.finalName, 0).id;
     final cancellationToken = registerDownloadCancellation(app.id);
-    if (apps[app.id] != null) {
-      apps[app.id]!.downloadProgress = 0;
-      apps[app.id]!.downloadReceivedBytes = null;
-      apps[app.id]!.downloadTotalBytes = null;
-      notify();
-    }
     try {
+      if (apps[app.id] != null) {
+        apps[app.id]!.downloadProgress = 0;
+        apps[app.id]!.downloadReceivedBytes = null;
+        apps[app.id]!.downloadTotalBytes = null;
+        notify();
+      }
       if (app.apkUrls.isEmpty) throw NoAPKError();
       if (app.preferredApkIndex >= app.apkUrls.length) {
         app = app.copyWith(preferredApkIndex: app.apkUrls.length - 1);
