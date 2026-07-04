@@ -152,27 +152,8 @@ extension AppsProviderImportExport on AppsProvider {
     return MapEntry<List<App>, bool>(importedApps, hasSettings);
   }
 
-  static const _importableKeys = {
-    'theme',
-    'colourSchemeMode',
-    'updateInterval',
-    'useFGService',
-    'parallelDownloads',
-    'includePrereleasesByDefault',
-    'tryInferAppID',
-    'tryInferAppIDFromLink',
-    'removeOnExternalUninstall',
-    'exportAppSettings',
-    'showAppDowngradeError',
-    'installerMode',
-    'interceptBundleDownloads',
-    'fallbackToStaticCache',
-    'shizukuPretendToBeGooglePlay',
-  };
-
   void _applyImportedSettings(Map<String, dynamic> settingsMap) {
     settingsMap.forEach((key, value) {
-      if (!_importableKeys.contains(key)) return;
       if (value is int) {
         settingsProvider.prefs?.setInt(key, value);
       } else if (value is double) {
