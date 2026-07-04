@@ -91,7 +91,8 @@ class RuStore extends AppSource {
 
       return APKDetails(
         version,
-        getApkUrlsFromUrls([url]),
+        // RuStore returns a .zip URL for what is actually an APK.
+        getApkUrlsFromUrls([url.replaceAll(RegExp(r'\.zip$'), '.apk')]),
         AppNames(author, appName),
         releaseDate: relDate,
         changeLog: changeLog,

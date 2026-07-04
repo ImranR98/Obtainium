@@ -243,7 +243,7 @@ class ItchIO extends AppSource {
           ...additionalSettings,
           'extraHeaders': {
             'X-Requested-With': 'XMLHttpRequest',
-            'Cookie': cookies,
+            'Cookie': ?cookies,
           },
         },
         postBody: {'csrf_token': csrfToken},
@@ -254,7 +254,7 @@ class ItchIO extends AppSource {
         if (tokenizedUrl != null) {
           final downloadPageRes = await sourceRequest(tokenizedUrl, {
             ...additionalSettings,
-            'extraHeaders': {'Cookie': cookies},
+            'extraHeaders': {'Cookie': ?cookies},
           });
           if (downloadPageRes.statusCode == 200) {
             currentBody = downloadPageRes.body;
