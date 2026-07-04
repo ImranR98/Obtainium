@@ -61,9 +61,6 @@ class SettingsProvider with ChangeNotifier {
   bool justStarted = true;
   bool isTV = false;
 
-  int _safErrorCount = 0;
-  static const int _maxSafRetries = 5;
-
   T? _get<T>(String key) {
     final value = prefs?.get(key);
     if (value is T) return value;
@@ -138,14 +135,27 @@ class SettingsProvider with ChangeNotifier {
   static Future<void> _loadSecureCache() async {
     if (_secureCache.isNotEmpty) return;
     for (var key in {'github-creds', 'gitlab-creds'}) {
-      _secureCache[key] = await _secureStorage.read(key: key);
-      if (_secureCache[key] == null && prefsInstance != null) {
-        final legacy = prefsInstance!.getString(key);
-        if (legacy != null && legacy.isNotEmpty) {
-          await _secureStorage.write(key: key, value: legacy);
-          _secureCache[key] = legacy;
-          unawaited(prefsInstance!.remove(key));
+      try {
+        _secureCache[key] = await _secureStorage.read(key: key);
+        if (_secureCache[key] == null && prefsInstance != null) {
+          final legacy = prefsInstance!.getString(key);
+          if (legacy != null && legacy.isNotEmpty) {
+            await _secureStorage.write(key: key, value: legacy);
+            _secureCache[key] = legacy;
+            unawaited(prefsInstance!.remove(key));
+          }
         }
+      } catch (e) {
+        // Secure storage can be unavailable (locked/absent Keystore or
+        // Keychain); fall back to any legacy prefs value so settings init
+        // never fails because of it.
+        unawaited(
+          LogsProvider().add(
+            'Secure storage unavailable for $key, falling back to prefs: $e',
+            level: LogLevel.warning,
+          ),
+        );
+        _secureCache[key] = prefsInstance?.getString(key);
       }
     }
   }
@@ -686,33 +696,11 @@ class SettingsProvider with ChangeNotifier {
     final uriString = _getString('exportDir');
     if (uriString != null) {
       Uri? uri = Uri.parse(uriString);
-      try {
-        if (!(await saf.canRead(uri) ?? false) ||
-            !(await saf.canWrite(uri) ?? false)) {
-          uri = null;
-          await prefs?.remove('exportDir');
-          notifyListeners();
-        }
-      } catch (e) {
-        ++_safErrorCount;
-        unawaited(
-          LogsProvider().add(
-            'SAF access error on export dir (attempt $_safErrorCount): $e',
-            level: LogLevel.error,
-          ),
-        );
-        if (_safErrorCount >= _maxSafRetries) {
-          await prefs?.remove('exportDir');
-          _safErrorCount = 0;
-          unawaited(
-            LogsProvider().add(
-              'Export directory auto-disabled after $_maxSafRetries SAF errors', 
-              level: LogLevel.error,
-            ),
-          );
-          notifyListeners();
-        }
-        return null;
+      if (!(await saf.canRead(uri) ?? false) ||
+          !(await saf.canWrite(uri) ?? false)) {
+        uri = null;
+        await prefs?.remove('exportDir');
+        notifyListeners();
       }
       return uri;
     } else {
