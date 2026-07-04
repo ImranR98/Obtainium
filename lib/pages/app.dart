@@ -660,6 +660,108 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
+  Widget _repoRenameInfoRow(IconData icon, String title, String subtitle) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Row(
+      spacing: 12,
+      children: [
+        Icon(icon, size: 24, color: cs.onSurfaceVariant),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: tt.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Banner shown when a repository rename was detected, letting the user adopt
+  /// the new URL (which resumes update checks) or dismiss it. Returns no slivers
+  /// when there is no pending rename.
+  List<Widget> _buildRepoRenameSection(
+    AppInMemory? app,
+    AppsProvider appsProvider,
+  ) {
+    if (app?.app.hasPendingRepoRename != true) return const [];
+    final appId = app!.app.id;
+    final pendingUrl = app.app.pendingRepoRenameUrl!;
+    return [
+      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 3,
+            children: [
+              ConnectedCard(
+                isFirst: true,
+                isLast: false,
+                child: _repoRenameInfoRow(
+                  Icons.info_outline_rounded,
+                  tr('repoRenamed'),
+                  tr('repoRenamedExplanation'),
+                ),
+              ),
+              ConnectedCard(
+                isFirst: false,
+                isLast: false,
+                child: _repoRenameInfoRow(
+                  Icons.link_rounded,
+                  tr('newUrl'),
+                  pendingUrl,
+                ),
+              ),
+              ConnectedCard(
+                isFirst: false,
+                isLast: true,
+                child: Row(
+                  spacing: 12,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            appsProvider.updatePendingRepoRename(appId, null),
+                        child: Text(tr('dismiss')),
+                      ),
+                    ),
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: () async {
+                          await appsProvider.acceptRepoRename(
+                            appId,
+                            pendingUrl,
+                          );
+                          if (mounted) unawaited(getUpdate(context));
+                        },
+                        child: Text(tr('updateUrl')),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+
   Widget _buildBackButton() {
     return SliverToBoxAdapter(
       child: Padding(
@@ -1080,6 +1182,7 @@ class _AppPageState extends State<AppPage> {
                 slivers: [
                   _buildBackButton(),
                   _buildHeaderSection(app),
+                  ..._buildRepoRenameSection(app, appsProvider),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   ..._buildVersionInfoSections(app),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),

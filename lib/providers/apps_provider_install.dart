@@ -123,6 +123,18 @@ extension AppsProviderInstall on AppsProvider {
     }
   }
 
+  /// Applies a detected repository rename: adopts [newUrl] and clears the
+  /// pending-rename flag so update checks resume.
+  Future<void> acceptRepoRename(String appId, String newUrl) async {
+    if (apps.containsKey(appId)) {
+      apps[appId]!.app = apps[appId]!.app.copyWith(
+        url: newUrl,
+        pendingRepoRenameUrl: null,
+      );
+      await saveApps([apps[appId]!.app]);
+    }
+  }
+
   /// Downloads the preferred APK for [app], returning a [DownloadedApk] or [DownloadedDir].
   Future<Object> downloadApp(
     App app,
