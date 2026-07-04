@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show SocketException;
 import 'dart:ui' show Locale;
 
 import 'package:easy_localization/easy_localization.dart';
@@ -196,6 +197,10 @@ class MultiAppMultiError extends ObtainiumError {
   MultiAppMultiError() : super.withCode('MULTI_ERROR', unexpected: true);
 
   void add(String appId, dynamic error, {String? appName}) {
+    if (error is SocketException) {
+      // Use the concise message rather than the verbose OS-level toString.
+      error = error.message;
+    }
     rawErrors[appId] = error;
     final string = error.toString();
     var tempIds = idsByErrorString.remove(string);
