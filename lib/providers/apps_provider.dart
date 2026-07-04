@@ -434,9 +434,13 @@ Future<File> downloadFile(
   if (ext.endsWith('"')) {
     ext = ext.substring(0, ext.length - 1);
   }
-  if ((AppSource.isApkOrContainerFile(Uri.tryParse(url)?.path ?? url) ||
-          ext == 'attachment') &&
-      ext != 'apk') {
+  final urlPath = Uri.tryParse(url)?.path ?? url;
+  if (AppSource.isApkOrContainerFile(urlPath)) {
+    // Preserve the real extension (.apk/.xapk/.apkm/.apks) so XAPK/APKS
+    // bundles are still detected and extracted downstream rather than forced
+    // to .apk and handed to the APK parser.
+    ext = urlPath.split('.').last.toLowerCase();
+  } else if (ext == 'attachment') {
     ext = 'apk';
   }
   fileName = fileNameHasExt
