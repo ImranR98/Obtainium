@@ -95,10 +95,7 @@ extension AppsProviderLifecycle on AppsProvider {
   ) {
     var modded = false;
     final trackOnly = app.settings.getBool('trackOnly');
-    final versionDetectionIsStandard = app.settings.getBool(
-      'versionDetection',
-      defaultValue: true,
-    );
+    final versionDetectionIsStandard = app.settings.getBool('versionDetection');
     final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
       app,
     );

@@ -922,8 +922,7 @@ List<MapEntry<String, String>> filterApks(
 /// Returns true when the app uses pseudo-versioning (track-only or disabled version detection).
 bool isVersionPseudo(App app) =>
     app.settings.getBool('trackOnly') ||
-    (app.installedVersion != null &&
-        !app.settings.getBool('versionDetection', defaultValue: true));
+    (app.installedVersion != null && !app.settings.getBool('versionDetection'));
 
 class SourceProvider {
   static final SourceProvider _instance = SourceProvider._();

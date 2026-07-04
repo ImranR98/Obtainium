@@ -278,7 +278,7 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('appAlreadyAdded'));
         }
         if (app.settings.getBool('trackOnly') ||
-            !app.settings.getBool('versionDetection', defaultValue: true)) {
+            !app.settings.getBool('versionDetection')) {
           app = app.copyWith(installedVersion: app.latestVersion);
         }
         app = app.copyWith(categories: pickedCategories);
