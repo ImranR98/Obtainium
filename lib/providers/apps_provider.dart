@@ -1245,7 +1245,7 @@ Future<void> _bgRunUpdateCheck(
   LogsProvider logs,
 ) async {
   final enoughTimePassed =
-      appsProvider.settingsProvider.updateInterval == 0 ||
+      appsProvider.settingsProvider.updateInterval != 0 &&
       appsProvider.settingsProvider.lastCompletedBGCheckTime
           .add(Duration(minutes: appsProvider.settingsProvider.updateInterval))
           .isBefore(DateTime.now());
