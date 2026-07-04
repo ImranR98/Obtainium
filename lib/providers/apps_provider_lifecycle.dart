@@ -230,10 +230,25 @@ extension AppsProviderLifecycle on AppsProvider {
                     jsonDecode(await File(item.path).readAsString()),
                   );
                 } catch (err) {
-                  unawaited(
-                    logs.add('Error when loading App (will be ignored): $err'),
-                  );
-                  unawaited(item.rename('${item.path}$_corruptFileSuffix'));
+                  if (err is FormatException) {
+                    // Genuinely corrupt JSON: set it aside so it stops failing.
+                    unawaited(
+                      logs.add(
+                        'Corrupt JSON, renaming ${item.path}: $err',
+                        level: LogLevel.error,
+                      ),
+                    );
+                    unawaited(item.rename('${item.path}$_corruptFileSuffix'));
+                  } else {
+                    // Other errors (e.g. a temporarily unresolvable source):
+                    // skip but keep the file so it can load once resolved.
+                    unawaited(
+                      logs.add(
+                        'Error loading app ${item.path} (skipped, file kept): $err',
+                        level: LogLevel.warning,
+                      ),
+                    );
+                  }
                 }
               }
               if (app != null) {

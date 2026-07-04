@@ -85,11 +85,6 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) =>
     HttpService().ensureAbsoluteUrl(ambiguousUrl, referenceAbsoluteUrl);
 
-/// Gating version for one-time legacy app-JSON migrations. Apps whose stored
-/// JSON carries this version skip the legacy conversions; default-settings
-/// reconciliation always runs regardless.
-const int currentAppJSONCompatVersion = 1;
-
 class App {
   final String id;
   final String url;
@@ -217,20 +212,18 @@ class App {
   }
 
   factory App.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> originalJson = Map.from(json);
     try {
       json = appJSONCompatibilityModifiers(Map.from(json));
-    } catch (e, stackTrace) {
+    } catch (e) {
+      // Fall back to the unmigrated JSON so the app still loads rather than
+      // being lost (e.g. when its saved URL no longer matches any source).
+      json = originalJson;
       unawaited(
         LogsProvider().add(
-          'Fatal error running JSON compat modifiers: ${e.toString()}',
-          level: LogLevel.error,
+          'Error running JSON compat modifiers (using original JSON): ${e.toString()}',
+          level: LogLevel.warning,
         ),
-      );
-      throw ObtainiumError(
-        'Failed to load app data: ${e.toString()}',
-        code: 'UNEXPECTED',
-        unexpected: true,
-        stack: stackTrace,
       );
     }
     try {
@@ -303,7 +296,6 @@ class App {
     'overrideSource': overrideSource,
     'allowIdChange': allowIdChange,
     'pendingRepoRenameUrl': pendingRepoRenameUrl,
-    'compatVersion': currentAppJSONCompatVersion,
   };
 }
 
@@ -1830,10 +1822,9 @@ void _migrateFdroidOverrides(Map<String, dynamic> json) {
 }
 
 /// Applies any legacy JSON transformations so the stored [json] matches the
-/// current schema. Default-setting reconciliation always runs; one-time
-/// migrations (URL rewrites, format conversions) are gated by compatVersion.
+/// current schema. All transformations are idempotent, so they run on every
+/// load.
 Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
-  final isCurrentCompat = json['compatVersion'] == currentAppJSONCompatVersion;
   final source = SourceProvider().getSource(
     json['url'],
     overrideSource: json['overrideSource'],
@@ -1874,7 +1865,7 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
     additionalSettings['sortMethodChoice'] = 'none';
   }
 
-  if (!isCurrentCompat && source is HTML) {
+  if (source is HTML) {
     additionalSettings = _migrateHtmlSpecificMigrations(
       json,
       originalAdditionalSettings,
@@ -1883,9 +1874,6 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
   }
 
   json['additionalSettings'] = jsonEncode(additionalSettings);
-  if (!isCurrentCompat) {
-    _migrateFdroidOverrides(json);
-  }
-  json['compatVersion'] = currentAppJSONCompatVersion;
+  _migrateFdroidOverrides(json);
   return json;
 }
