@@ -359,18 +359,13 @@ extension AppsProviderLifecycle on AppsProvider {
     await Future.wait(
       apps.map((a) async {
         var app = a.copyWith();
-        PackageInfo? info;
-        Uint8List? icon;
+        final PackageInfo? info = await getInstalledInfo(app.id);
+        final Uint8List? icon = await info?.applicationInfo?.getAppIcon();
+        app = app.copyWith(
+          name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
+        );
         if (attemptToCorrectInstallStatus) {
-          info = await getInstalledInfo(app.id);
-          icon = await info?.applicationInfo?.getAppIcon();
-          app = app.copyWith(
-            name: await (info?.applicationInfo?.getAppLabel()) ?? app.name,
-          );
           app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
-        } else {
-          info = null;
-          icon = null;
         }
         if (!onlyIfExists || this.apps.containsKey(app.id)) {
           final String filePath = '${(await getAppsDir()).path}/${app.id}.json';
@@ -410,8 +405,7 @@ extension AppsProviderLifecycle on AppsProvider {
         await Future.wait(
           apkFiles
               .where(
-                (element) =>
-                    element.path.split('/').last.startsWith('$appId-'),
+                (element) => element.path.split('/').last.startsWith('$appId-'),
               )
               .map((element) => element.delete(recursive: true)),
         );
