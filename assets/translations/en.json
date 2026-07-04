@@ -82,6 +82,7 @@
   "categories": "Categories",
   "categorize": "Categorize",
   "category": "Category",
+  "categoryAlreadyExists": "A category with this name already exists",
   "categoryDeleteWarning": "All apps in deleted categories will be set to uncategorized.",
   "categoryName": "Category name",
   "certificateHash": {

@@ -100,6 +100,14 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
     final appsProvider = context.read<AppsProvider>();
     final cats = Map<String, int>.from(settingsProvider.categories);
     final prev = widget.existingName;
+    // Creating a category whose name already exists must not overwrite the
+    // existing one's color (matches main, which no-ops on duplicates).
+    if (prev == null && cats.containsKey(name)) {
+      if (context.mounted) {
+        showMessage(tr('categoryAlreadyExists'), context);
+      }
+      return;
+    }
     if (prev != null && prev != name) {
       cats.remove(prev);
       // Migrate apps that referenced the old name so the rename is preserved.
