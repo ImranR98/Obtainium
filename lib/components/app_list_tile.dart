@@ -7,6 +7,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:obtainium/components/generated_form_renderer.dart';
+import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/theme.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -235,7 +236,9 @@ class AppListTile extends StatelessWidget {
         : () {
             settingsProvider.heavyImpact();
             appsProvider
-                .downloadAndInstallLatestApps([_app.id], context)
+                .downloadAndInstallLatestApps([
+                  _app.id,
+                ], appNavigatorKey.currentContext)
                 .then((res) {
                   if (res.isNotEmpty && context.mounted) {
                     final np = context.read<NotificationsProvider>();
@@ -469,7 +472,9 @@ class AppListTile extends StatelessWidget {
               settingsProvider.heavyImpact();
               unawaited(
                 appsProvider
-                    .downloadAndInstallLatestApps([appId], context)
+                    .downloadAndInstallLatestApps([
+                      appId,
+                    ], appNavigatorKey.currentContext)
                     .catchError((e) {
                       if (context.mounted) showError(e, context);
                       return <String>[];
@@ -490,7 +495,9 @@ class AppListTile extends StatelessWidget {
                 label: canUpdate ? tr('update') : tr('install'),
               ): () {
                 if (!appsProvider.areDownloadsRunning()) {
-                  appsProvider.downloadAndInstallLatestApps([appId], context);
+                  appsProvider.downloadAndInstallLatestApps([
+                    appId,
+                  ], appNavigatorKey.currentContext);
                 }
               },
             CustomSemanticsAction(label: tr('remove')): () {

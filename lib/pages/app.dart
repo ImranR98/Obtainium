@@ -16,6 +16,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/main.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -413,7 +414,7 @@ class _AppPageState extends State<AppPage> {
       settingsProvider.heavyImpact();
       final res = await appsProvider.downloadAndInstallLatestApps([
         appId,
-      ], context);
+      ], appNavigatorKey.currentContext);
       if (res.isNotEmpty && !trackOnly && context.mounted) {
         showMessage(successMessage, context);
       }
