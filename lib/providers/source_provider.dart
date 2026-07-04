@@ -1146,7 +1146,9 @@ class SourceProvider {
       installedVersion: currentApp?.installedVersion,
       latestVersion: apk.version,
       apkUrls: apk.apkUrls,
-      preferredApkIndex: currentApp?.preferredApkIndex ?? 0,
+      preferredApkIndex:
+          currentApp?.preferredApkIndex ??
+          (apk.apkUrls.isNotEmpty ? apk.apkUrls.length - 1 : 0),
       additionalSettings: additionalSettings,
       lastUpdateCheck: DateTime.now(),
       pinned: currentApp?.pinned ?? false,
