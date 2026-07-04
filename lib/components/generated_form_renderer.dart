@@ -161,7 +161,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
 
-  void notifyFormChange({bool forceInvalid = false}) {
+  void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
     for (int r = 0; r < formInputs.length; r++) {
@@ -174,7 +174,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     if (forceInvalid) {
       valid = false;
     }
-    widget.onValueChanges(returnValues, valid, false);
+    widget.onValueChanges(returnValues, valid, isBuilding);
   }
 
   Widget _initTextField(GeneratedFormTextField formItem) {
@@ -368,7 +368,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     super.initState();
     _initFormData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifyFormChange();
+      notifyFormChange(isBuilding: true);
     });
   }
 
@@ -379,7 +379,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         _computeItemsHash(widget.items) != _itemsHash) {
       _initFormData();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifyFormChange();
+        notifyFormChange(isBuilding: true);
       });
     }
   }
@@ -431,7 +431,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 if (valid) {
                   this.values[fieldKey]?[i] = values;
                 }
-                notifyFormChange(forceInvalid: !valid);
+                notifyFormChange(forceInvalid: !valid, isBuilding: isBuilding);
               },
             ),
             Row(
@@ -635,15 +635,15 @@ class _GeneratedFormModalState extends State<GeneratedFormModal> {
             tileMode: widget.tileMode,
             items: widget.items,
             onValueChanges: (values, valid, isBuilding) {
-              if (isBuilding) {
+              // The callback fires from a post-frame callback (not during
+              // build), so setState is always safe here - including for the
+              // initial isBuilding pass, which keeps the OK button's validity
+              // correct on first render.
+              if (!mounted) return;
+              setState(() {
                 this.values = values;
                 this.valid = valid;
-              } else {
-                setState(() {
-                  this.values = values;
-                  this.valid = valid;
-                });
-              }
+              });
             },
           ),
           if (widget.additionalWidgets.isNotEmpty) ...widget.additionalWidgets,
