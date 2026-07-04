@@ -598,7 +598,8 @@ class AddAppPageState extends State<AddAppPage> {
                             (s) =>
                                 s.allowOverride ||
                                 (pickedSource != null &&
-                                    pickedSource!.sourceIdentifier == s.sourceIdentifier),
+                                    pickedSource!.sourceIdentifier ==
+                                        s.sourceIdentifier),
                           )
                           .map((s) => MapEntry(s.name, s.name)),
                     ],
@@ -642,7 +643,9 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (values.isNotEmpty && valid && !isBuilding) {
-              searchQuery = values['searchSomeSources']!.trim();
+              setState(() {
+                searchQuery = values['searchSomeSources']!.trim();
+              });
             }
           },
         ),
@@ -710,8 +713,10 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              additionalSettings = values;
-              additionalSettingsValid = valid;
+              setState(() {
+                additionalSettings = values;
+                additionalSettingsValid = valid;
+              });
             }
           },
         );
@@ -743,7 +748,9 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              inferAppIdIfOptional = values['inferAppIdIfOptional'];
+              setState(() {
+                inferAppIdIfOptional = values['inferAppIdIfOptional'];
+              });
             }
           },
         ),
@@ -780,7 +787,9 @@ class AddAppPageState extends State<AddAppPage> {
           ],
           onValueChanges: (values, valid, isBuilding) {
             if (!isBuilding) {
-              additionalSettings['appId'] = values['appId'];
+              setState(() {
+                additionalSettings['appId'] = values['appId'];
+              });
             }
           },
         ),
