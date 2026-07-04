@@ -3,6 +3,9 @@ import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:obtainium/components/app_list_tile.dart';
 import 'package:obtainium/components/category_editor.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
@@ -15,6 +18,7 @@ import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class AppPage extends StatefulWidget {
   const AppPage({
@@ -354,7 +358,7 @@ class _AppPageState extends State<AppPage> {
         }
       }
       final versionDetectionEnabled =
-          app.app.settings.getBool('versionDetection', defaultValue: true) &&
+          app.app.settings.getBool('versionDetection') &&
           originalSettings['versionDetection'] != true;
       final releaseDateVersionEnabled =
           app.app.settings.getBool('releaseDateAsVersion') &&
@@ -838,11 +842,25 @@ class _AppPageState extends State<AppPage> {
   }
 
   List<Widget> _buildVersionInfoSections(AppInMemory? app) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final trackOnly = app?.app.settings.getBool('trackOnly') == true;
+    final pseudo = app?.app != null && isVersionPseudo(app!.app);
+    final realVersion = app?.installedInfo?.versionName;
+    final apkCount = app?.app.apkUrls.length ?? 0;
+    final changeLogFn = app != null ? getChangeLogFn(context, app.app) : null;
     return [
       _buildSection(
         true,
         false,
         children: [
+          if (trackOnly) _detailNote(tr('xIsTrackOnly', args: [tr('app')])),
+          if (pseudo)
+            _detailNote(
+              realVersion != null
+                  ? '${tr('pseudoVersionInUse')} (OS installed $realVersion)'
+                  : tr('pseudoVersionInUse'),
+            ),
           () {
             String l = appInstalledVersionText(app?.app);
             final upToDate =
@@ -852,17 +870,37 @@ class _AppPageState extends State<AppPage> {
             }
             return Text(
               l,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             );
           }(),
-          if (app?.app.releaseDate != null)
+          if (apkCount > 0)
+            _detailNote(
+              apkCount == 1 ? app!.app.apkUrls[0].key : plural('apk', apkCount),
+            ),
+          if (changeLogFn != null || app?.app.releaseDate != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                app!.app.releaseDate!.toLocal().toString().split('.').first,
-                style: Theme.of(context).textTheme.bodyMedium,
+              child: InkWell(
+                onTap: changeLogFn,
+                borderRadius: BorderRadius.circular(4),
+                child: Text(
+                  app?.app.releaseDate == null
+                      ? tr('changes')
+                      : app!.app.releaseDate!
+                            .toLocal()
+                            .toString()
+                            .split('.')
+                            .first,
+                  style: tt.bodyMedium?.copyWith(
+                    color: changeLogFn != null
+                        ? cs.primary
+                        : cs.onSurfaceVariant,
+                    fontStyle: changeLogFn != null ? FontStyle.italic : null,
+                    decoration: changeLogFn != null
+                        ? TextDecoration.underline
+                        : null,
+                  ),
+                ),
               ),
             ),
         ],
@@ -884,7 +922,58 @@ class _AppPageState extends State<AppPage> {
                     tr('never'),
               ],
             ),
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: tt.bodyMedium,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  Widget _detailNote(String text) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+      ),
+    );
+  }
+
+  /// Renders the source-provided "about" markdown, when present, as its own
+  /// section so it fits the sectioned detail layout.
+  List<Widget> _buildAboutSection(AppInMemory? app) {
+    final about = app?.app.additionalSettings['about'];
+    if (about is! String || about.isEmpty) return const [];
+    return [
+      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      _buildSection(
+        true,
+        true,
+        children: [
+          MarkdownBody(
+            data: about,
+            styleSheet: MarkdownStyleSheet(
+              blockquoteDecoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+              ),
+            ),
+            onTapLink: (text, href, title) {
+              if (href != null) {
+                unawaited(
+                  launchUrlString(href, mode: LaunchMode.externalApplication),
+                );
+              }
+            },
+            extensionSet: md.ExtensionSet(
+              md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+              [
+                md.EmojiSyntax(),
+                ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
+              ],
+            ),
           ),
         ],
       ),
@@ -1140,8 +1229,7 @@ class _AppPageState extends State<AppPage> {
     final trackOnly = app?.app.settings.getBool('trackOnly') == true;
 
     final bool isVersionDetectionStandard =
-        app?.app.settings.getBool('versionDetection', defaultValue: true) ==
-        true;
+        app?.app.settings.getBool('versionDetection') == true;
 
     final certs = app != null && app.certificateHashes.isNotEmpty;
     final hasAssets =
@@ -1195,6 +1283,7 @@ class _AppPageState extends State<AppPage> {
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   _buildCategorySection(app, appsProvider),
+                  ..._buildAboutSection(app),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                   _buildActionsSection(
                     app,
