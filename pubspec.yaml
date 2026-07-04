@@ -90,7 +90,6 @@ flutter:
   assets:
     - assets/translations/
     - assets/graphics/
-    - assets/ca/
 
   fonts:
       - family: Montserrat
