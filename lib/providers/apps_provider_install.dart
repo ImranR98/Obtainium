@@ -320,10 +320,11 @@ extension AppsProviderInstall on AppsProvider {
       );
       downloadedFile = renamedFile;
       final String resolvedAppId = resolvedApp.id;
-      // Delete older versions of the file if any
+      // Delete older versions of the file if any (keyed to the resolved id,
+      // since the id may have changed from a placeholder to the real package).
       for (var file in downloadedFile.parent.listSync()) {
         final fn = file.path.split('/').last;
-        if (fn.startsWith('${app.id}-') &&
+        if (fn.startsWith('$resolvedAppId-') &&
             FileSystemEntity.isFileSync(file.path) &&
             file.path != downloadedFile.path) {
           unawaited(file.delete(recursive: true));
@@ -485,7 +486,7 @@ extension AppsProviderInstall on AppsProvider {
           in dir.extracted
               .listSync(recursive: true, followLinks: false)
               .whereType<File>()) {
-        if (AppSource.isApkOrContainerFile(file.path)) {
+        if (file.path.toLowerCase().endsWith('.apk')) {
           apkFiles.add(file);
         } else if (file.path.toLowerCase().endsWith('.obb')) {
           await moveObbFile(file, dir.appId);
