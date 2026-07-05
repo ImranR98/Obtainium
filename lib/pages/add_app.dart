@@ -506,7 +506,7 @@ class AddAppPageState extends State<AddAppPage> {
   void openCrowdsourcedConfigs() {
     unawaited(
       launchUrlString(
-        'https://apps.obtainium.page/',
+        'https://apps.obtainium.imranr.dev/',
         mode: LaunchMode.externalApplication,
       ),
     );

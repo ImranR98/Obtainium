@@ -229,7 +229,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: () {
                 unawaited(
                   launchUrlString(
-                    'https://wiki.obtainium.page/',
+                    'https://wiki.obtainium.imranr.dev/',
                     mode: LaunchMode.externalApplication,
                   ),
                 );
@@ -241,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: () {
                 unawaited(
                   launchUrlString(
-                    'https://apps.obtainium.page/',
+                    'https://apps.obtainium.imranr.dev/',
                     mode: LaunchMode.externalApplication,
                   ),
                 );

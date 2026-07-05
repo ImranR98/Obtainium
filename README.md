@@ -7,12 +7,12 @@ Get Android app updates straight from the source.
 Obtainium allows you to install and update apps directly from their releases pages, and receive notifications when new releases are made available.
 
 More info:
-- [Obtainium Wiki](https://wiki.obtainium.page/) ([repository](https://github.com/ImranR98/Obtainium-Wiki))
+- [Obtainium Wiki](https://wiki.obtainium.imranr.dev/) ([repository](https://github.com/ImranR98/Obtainium-Wiki))
 - [Obtainium 101](https://www.youtube.com/watch?v=0MF_v2OBncw) - Tutorial video
 - ["Verified Apps"](https://github.com/privacyguides/verified-apps-android) - App verification tool (recommended, integrates with Obtainium)
-- [apps.obtainium.page](https://apps.obtainium.page/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.page))
+- [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev/) - Crowdsourced app configurations ([repository](https://github.com/ImranR98/apps.obtainium.imranr.dev))
 - [Side Of Burritos - You should use this instead of F-Droid | How to use app RSS feed](https://youtu.be/FFz57zNR_M0) - Original motivation for this app
-- [Website](https://obtainium.page) ([repository](https://github.com/ImranR98/obtainium.page))
+- [Website](https://obtainium.imranr.dev) ([repository](https://github.com/ImranR98/obtainium.imranr.dev))
 
 Currently supported App sources:
 - Open Source - General:
@@ -50,11 +50,11 @@ Currently supported App sources:
 
 ## Finding App Configurations
 
-You can find crowdsourced app configurations at [apps.obtainium.page](https://apps.obtainium.page).
+You can find crowdsourced app configurations at [apps.obtainium.imranr.dev](https://apps.obtainium.imranr.dev).
 
-If you can't find the configuration for an app you want, feel free to leave a request on the [discussions page](https://github.com/ImranR98/apps.obtainium.page/discussions/new?category=app-requests).
+If you can't find the configuration for an app you want, feel free to leave a request on the [discussions page](https://github.com/ImranR98/apps.obtainium.imranr.dev/discussions/new?category=app-requests).
 
-Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/ImranR98/apps.obtainium.page).
+Or, contribute some configurations to the website by creating a PR at [this repo](https://github.com/ImranR98/apps.obtainium.imranr.dev).
 
 ## Installation
 
