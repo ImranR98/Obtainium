@@ -1206,6 +1206,25 @@ Future<void> bgUpdateCheck(
   }
 
   if (toCheck.isNotEmpty) {
+    // Skip (and leave lastCompletedBGCheckTime untouched) if the update
+    // interval hasn't elapsed since the last completed check. This must gate
+    // the timestamp update below, otherwise every fire resets the clock and
+    // the interval never elapses. Install mode (toCheck empty) is not gated.
+    final enoughTimePassed =
+        appsProvider.settingsProvider.updateInterval != 0 &&
+        appsProvider.settingsProvider.lastCompletedBGCheckTime
+            .add(
+              Duration(minutes: appsProvider.settingsProvider.updateInterval),
+            )
+            .isBefore(DateTime.now());
+    if (!enoughTimePassed) {
+      unawaited(
+        l.add(
+          'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
+        ),
+      );
+      return;
+    }
     await _bgRunUpdateCheck(
       taskId,
       toCheck,
@@ -1244,20 +1263,6 @@ Future<void> _bgRunUpdateCheck(
   NotificationsProvider notificationsProvider,
   LogsProvider logs,
 ) async {
-  final enoughTimePassed =
-      appsProvider.settingsProvider.updateInterval != 0 &&
-      appsProvider.settingsProvider.lastCompletedBGCheckTime
-          .add(Duration(minutes: appsProvider.settingsProvider.updateInterval))
-          .isBefore(DateTime.now());
-  if (!enoughTimePassed) {
-    unawaited(
-      logs.add(
-        'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
-      ),
-    );
-    return;
-  }
-
   unawaited(logs.add('BG update task: Started (${toCheck.length}).'));
 
   List<App> updates = [];
