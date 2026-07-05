@@ -4,8 +4,9 @@ import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:obtainium/app_sources/github.dart';
+import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -14,10 +15,25 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_storage/shared_storage.dart' as saf;
 
-String obtainiumTempId = 'imranr98_obtainium_${GitHub().hosts[0]}';
+String obtainiumTempId = 'imranr98_obtainium_github.com';
 String obtainiumId = 'dev.imranr.obtainium';
 String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 Color obtainiumThemeColor = const Color(0xFF6438B5);
+
+Locale? tryParseLocale(String? localeString) {
+  if (localeString == null) return null;
+  var split = localeString.split('-');
+  if (split.length == 3) {
+    return Locale.fromSubtags(languageCode: split[0], countryCode: split[2]);
+  }
+  if (split.length == 2) {
+    return Locale(split[0], split[1]);
+  }
+  if (split.isNotEmpty) {
+    return Locale(split[0]);
+  }
+  return null;
+}
 
 enum ThemeSettings { system, light, dark }
 
@@ -282,9 +298,12 @@ class SettingsProvider with ChangeNotifier {
       List<App> changedApps = appsProvider
           .getAppValues()
           .map((a) {
-            var n1 = a.app.categories.length;
-            a.app.categories.removeWhere((c) => !cats.keys.contains(c));
-            return n1 > a.app.categories.length ? a.app : null;
+            if (!a.app.categories.any((c) => !cats.keys.contains(c))) {
+              return null;
+            }
+            var app = a.app.deepCopy();
+            app.categories.removeWhere((c) => !cats.keys.contains(c));
+            return app;
           })
           .where((element) => element != null)
           .map((e) => e as App)
@@ -298,10 +317,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Locale? get forcedLocale {
-    var flSegs = prefs?.getString('forcedLocale')?.split('-');
-    var fl = flSegs != null && flSegs.isNotEmpty
-        ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
-        : null;
+    var fl = tryParseLocale(prefs?.getString('forcedLocale'));
     var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
@@ -329,6 +345,54 @@ class SettingsProvider with ChangeNotifier {
       context.setLocale(context.fallbackLocale!);
       context.deleteSaveLocale();
     }
+  }
+
+  bool get showAppDowngradeError {
+    return prefs?.getBool('showAppDowngradeError') ?? true;
+  }
+
+  set showAppDowngradeError(bool show) {
+    prefs?.setBool('showAppDowngradeError', show);
+    notifyListeners();
+  }
+
+  bool get showBatteryOptimizationPrompt {
+    return prefs?.getBool('showBatteryOptimizationPrompt') ?? true;
+  }
+
+  set showBatteryOptimizationPrompt(bool show) {
+    prefs?.setBool('showBatteryOptimizationPrompt', show);
+    notifyListeners();
+  }
+
+  bool get tactileFeedbackEnabled {
+    return prefs?.getBool('tactileFeedbackEnabled') ?? true;
+  }
+
+  set tactileFeedbackEnabled(bool val) {
+    prefs?.setBool('tactileFeedbackEnabled', val);
+    notifyListeners();
+  }
+
+  void lightImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.lightImpact();
+  }
+
+  void heavyImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.heavyImpact();
+  }
+
+  void selectionClick() {
+    if (tactileFeedbackEnabled) HapticFeedback.selectionClick();
+  }
+
+  bool get includePrereleasesByDefault {
+    return prefs?.getBool('includePrereleasesByDefault') ?? false;
+  }
+
+  set includePrereleasesByDefault(bool val) {
+    prefs?.setBool('includePrereleasesByDefault', val);
+    notifyListeners();
   }
 
   bool get removeOnExternalUninstall {
@@ -406,15 +470,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get showDebugOpts {
-    return prefs?.getBool('showDebugOpts') ?? false;
-  }
-
-  set showDebugOpts(bool val) {
-    prefs?.setBool('showDebugOpts', val);
-    notifyListeners();
-  }
-
   bool get highlightTouchTargets {
     return prefs?.getBool('highlightTouchTargets') ?? false;
   }
@@ -445,7 +500,11 @@ class SettingsProvider with ChangeNotifier {
     var currentOneWayDataSyncDir = await getExportDir();
     Uri? newOneWayDataSyncDir;
     if (!remove) {
-      newOneWayDataSyncDir = (await saf.openDocumentTree());
+      try {
+        newOneWayDataSyncDir = (await saf.openDocumentTree());
+      } catch (_) {
+        throw ObtainiumError(tr('noFilePickerAvailable'));
+      }
     }
     if (currentOneWayDataSyncDir?.path != newOneWayDataSyncDir?.path) {
       if (newOneWayDataSyncDir == null) {

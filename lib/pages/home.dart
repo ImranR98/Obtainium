@@ -160,21 +160,24 @@ class _HomePageState extends State<HomePage> {
 
     goToAddApp(String data) async {
       switchToPage(1);
+      var attempts = 0;
       while ((pages[1].widget.key as GlobalKey<AddAppPageState>?)
               ?.currentState ==
           null) {
-        await Future.delayed(const Duration(microseconds: 1));
+        if (++attempts > 50) return;
+        await Future.delayed(const Duration(milliseconds: 100));
       }
       (pages[1].widget.key as GlobalKey<AddAppPageState>?)?.currentState
           ?.linkFn(data);
     }
 
     goToExistingApp(String appId) async {
-      // Go to Apps page
       switchToPage(0);
+      var attempts = 0;
       while ((pages[0].widget.key as GlobalKey<AppsPageState>?)?.currentState ==
           null) {
-        await Future.delayed(const Duration(microseconds: 1));
+        if (++attempts > 50) return;
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
       // Navigate to the app
@@ -327,8 +330,9 @@ class _HomePageState extends State<HomePage> {
     prevAppCount = appsProvider.apps.length;
     prevIsLoading = appsProvider.loadingApps;
 
-    final currentIndex =
-        selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last;
+    final currentIndex = selectedIndexHistory.isEmpty
+        ? 0
+        : selectedIndexHistory.last;
 
     final pageBody = PageTransitionSwitcher(
       duration: Duration(
@@ -337,22 +341,43 @@ class _HomePageState extends State<HomePage> {
       reverse: settingsProvider.reversePageTransitions
           ? !isReversing
           : isReversing,
-      transitionBuilder: (
-        Widget child,
-        Animation<double> animation,
-        Animation<double> secondaryAnimation,
-      ) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          transitionType: SharedAxisTransitionType.horizontal,
-          child: child,
-        );
-      },
+      transitionBuilder:
+          (
+            Widget child,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: SharedAxisTransitionType.horizontal,
+              child: child,
+            );
+          },
       child: pages.elementAt(currentIndex).widget,
     );
 
-    return WillPopScope(
+    return PopScope(
+      canPop:
+          selectedIndexHistory.isEmpty ||
+          (isLinkActivity &&
+              selectedIndexHistory.length == 1 &&
+              selectedIndexHistory.last == 1),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          setIsReversing(
+            selectedIndexHistory.length >= 2
+                ? selectedIndexHistory.reversed.toList()[1]
+                : 0,
+          );
+
+          if (selectedIndexHistory.isNotEmpty) {
+            setState(() {
+              selectedIndexHistory.removeLast();
+            });
+          }
+        }
+      },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: settingsProvider.isTV
@@ -406,7 +431,7 @@ class _HomePageState extends State<HomePage> {
                         )
                         .toList(),
                     onDestinationSelected: (int index) async {
-                      HapticFeedback.selectionClick();
+                      settingsProvider.selectionClick();
                       switchToPage(index);
                     },
                     selectedIndex: currentIndex,
@@ -414,26 +439,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
       ),
-      onWillPop: () async {
-        if (isLinkActivity &&
-            selectedIndexHistory.length == 1 &&
-            selectedIndexHistory.last == 1) {
-          return true;
-        }
-        setIsReversing(
-          selectedIndexHistory.length >= 2
-              ? selectedIndexHistory.reversed.toList()[1]
-              : 0,
-        );
-        if (selectedIndexHistory.isNotEmpty) {
-          setState(() {
-            selectedIndexHistory.removeLast();
-          });
-          return false;
-        }
-        return !(pages[0].widget.key as GlobalKey<AppsPageState>).currentState!
-            .clearSelected();
-      },
     );
   }
 

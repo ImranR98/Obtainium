@@ -198,9 +198,13 @@ class GitLab extends AppSource {
                 s.key.isNotEmpty &&
                 (s.key.toLowerCase().endsWith('.apk') ||
                     s.key.toLowerCase().endsWith('.xapk') ||
+                    s.key.toLowerCase().endsWith('.apkm') ||
+                    s.key.toLowerCase().endsWith('.apks') ||
                     s.value.toLowerCase().endsWith('.apk') ||
+                    s.value.toLowerCase().endsWith('.xapk') ||
+                    s.value.toLowerCase().endsWith('.apkm') ||
                     s.value.toLowerCase().endsWith(
-                      '.xapk',
+                      '.apks',
                     )), // TODO: Supported file types should be centralized somewhere and shared between sources
           )
           .toList();
@@ -211,6 +215,10 @@ class GitLab extends AppSource {
           .join('.apk\n')
           .split('.xapk)')
           .join('.xapk\n')
+          .split('.apkm)')
+          .join('.apkm\n')
+          .split('.apks)')
+          .join('.apks\n')
           .split('\n')
           .where(
             (s) =>
