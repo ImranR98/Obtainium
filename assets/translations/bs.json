@@ -82,6 +82,7 @@
     "categories": "Kategorije",
     "categorize": "Kategoriziraj",
     "category": "Kategorija",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Sve aplikacije u izbrisanim kategorijama će biti postavljene kao nekategorisane.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} i još jedna aplikacija je vjerovatno ažurirana.",
         "other": "{} i još {} aplikacija su vjerovatno ažurirane."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} ima ažuriranje.",
     "xIsTrackOnly": "{} je samo za praćenje",

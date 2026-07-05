@@ -82,6 +82,7 @@
     "categories": "دسته بندی ها",
     "categorize": "دسته بندی کردن",
     "category": "دسته بندی",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "همه برنامه‌ها در دسته‌های حذف شده روی دسته‌بندی نشده تنظیم می‌شوند.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} و 1 برنامه دیگر ممکن است به روز شده باشند.",
         "other": "ممکن است {} و {} برنامه های دیگر به روز شده باشند."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} یک به روز رسانی دارد.",
     "xIsTrackOnly": "{} فقط ردیابی",

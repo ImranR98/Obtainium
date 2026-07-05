@@ -82,6 +82,7 @@
     "categories": "Categorieën",
     "categorize": "Categoriseren",
     "category": "Categorie",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Alle apps in verwijderde categorieën worden teruggezet naar 'ongecategoriseerd'.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} en nog 1 app zijn mogelijk bijgewerkt.",
         "other": "{} en nog {} apps zijn mogelijk bijgwerkt."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} heeft een update.",
     "xIsTrackOnly": "{} is 'Alleen volgen'",

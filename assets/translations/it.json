@@ -82,6 +82,7 @@
     "categories": "Categorie",
     "categorize": "Aggiungi a categoria",
     "category": "Categoria",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Tutte le app nelle categorie eliminate saranno impostate come non categorizzate.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} e un'altra app potrebbero essere state aggiornate.",
         "other": "{} e altre {} app potrebbero essere state aggiornate."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "Aggiornamento disponibile per {}",
     "xIsTrackOnly": "{} è in modalità Solo-Monitoraggio",

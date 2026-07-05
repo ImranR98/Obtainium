@@ -82,6 +82,7 @@
     "categories": "Categorias",
     "categorize": "Categorizar",
     "category": "Categoria",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Todas as aplicações em categorias removidas serão descategorizadas.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} e uma outra aplicação podem ter sido atualizadas.",
         "other": "{} e {} outras aplicações podem ter sido atualizadas."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} tem uma atualização.",
     "xIsTrackOnly": "{} é 'Apenas monitorar'",

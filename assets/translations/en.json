@@ -438,6 +438,10 @@
     "one": "{} and 1 more app may have been updated.",
     "other": "{} and {} more apps may have been updated."
   },
+  "action": {
+    "one": "Action",
+    "other": "Actions"
+  },
   "xHasAnUpdate": "{} has an update.",
   "xIsTrackOnly": "{} is track-only",
   "xWasNotUpdatedToY": "Failed to update {} to {}.",

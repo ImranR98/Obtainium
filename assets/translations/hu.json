@@ -82,6 +82,7 @@
     "categories": "Kategóriák",
     "categorize": "Kategorizálás",
     "category": "Kategória",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "A törölt kategóriákban lévő összes alkalmazás kategorizálatlanná válik.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "A(z) {}, valamint 1 további alkalmazás sikeresen frissítve.",
         "other": "A(z) {}, valamint {} további alkalmazás sikeresen frissítve."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "A(z) {} frissítést kapott.",
     "xIsTrackOnly": "A(z) {} csak nyomon követhető",

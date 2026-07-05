@@ -82,6 +82,7 @@
     "categories": "വിഭാഗങ്ങൾ",
     "categorize": "വിഭാഗീകരിക്കുക",
     "category": "വിഭാഗം",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "ഇല്ലാതാക്കിയ വിഭാഗങ്ങളിലെ എല്ലാ ആപ്പുകളും വിഭാഗരഹിതമായി ക്രമീകരിക്കും.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} കൂടാതെ 1 ആപ്പ് കൂടി അപ്‌ഡേറ്റ് ചെയ്തിരിക്കാം.",
         "other": "{} കൂടാതെ {} ആപ്പുകൾ കൂടി അപ്‌ഡേറ്റ് ചെയ്തിരിക്കാം."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{}-ന് ഒരു അപ്‌ഡേറ്റ് ഉണ്ട്.",
     "xIsTrackOnly": "{} ട്രാക്ക്-മാത്രം ആണ്",

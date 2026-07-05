@@ -82,6 +82,7 @@
     "categories": "類別",
     "categorize": "分類",
     "category": "類別",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "已刪除類別中的所有應用程式將被設定為未分類。",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} 以及 1 個應用程式可能已更新。",
         "other": "{} 以及 {} 個應用程式可能已更新。"
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} 有更新。",
     "xIsTrackOnly": "{} 僅用於追蹤",

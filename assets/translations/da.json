@@ -82,6 +82,7 @@
     "categories": "Kategorier",
     "categorize": "Kategoriser",
     "category": "Kategori",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Alle apps i slettede kategorier indstilles til ukategoriseret.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} og 1 anden app blev muligvis opdateret.",
         "other": "{} og {} andre apps blev muligvis opdateret."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} har en opdatering.",
     "xIsTrackOnly": "{} er 'Følg Kun'",

@@ -85,6 +85,7 @@
     "categories": "Категории",
     "categorize": "Категоризировать",
     "category": "Категория",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Все приложения в удалённых категориях будут помечены как «без категории»",
     "categoryName": "Category name",
     "certificateHash": {
@@ -448,6 +449,10 @@
         "one": "{} и ещё 1 приложение могли быть обновлены",
         "few": "{} и ещё {} приложения могли быть обновлены",
         "other": "{} и ещё {} приложений могли быть обновлены"
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "Для {} есть обновление",
     "xIsTrackOnly": "{} только для отслеживания",

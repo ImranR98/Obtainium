@@ -82,6 +82,7 @@
     "categories": "Danh mục",
     "categorize": "Phân loại",
     "category": "Danh mục",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Tất cả ứng dụng trong danh mục đã xóa sẽ được đặt thành chưa được phân loại.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} và 1 ứng dụng khác có thể đã được cập nhật.",
         "other": "{} và {} ứng dụng khác có thể đã được cập nhật."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} có bản cập nhật.",
     "xIsTrackOnly": "{} là Chỉ theo dõi",

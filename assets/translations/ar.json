@@ -82,6 +82,7 @@
     "categories": "التصنيفات",
     "categorize": "تصنيف",
     "category": "تصنيف",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "سيتم تعيين جميع التطبيقات في التصنيفات المحذوفة كغير مصنفة.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} وتطبيق واحد آخر قد حُدث.",
         "other": "{} و{} تطبيقات أخرى قد حُدثت."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} لديه تحديث.",
     "xIsTrackOnly": "{} للتعقب فقط",

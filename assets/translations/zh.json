@@ -82,6 +82,7 @@
     "categories": "类别",
     "categorize": "归类",
     "category": "类别",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "被删除类别下的应用将恢复为未分类状态。",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "已尝试更新“{}”和另外 1 个应用。",
         "other": "已尝试更新“{}”和另外 {} 个应用。"
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "“{}”可以更新了。",
     "xIsTrackOnly": "“{}”为“仅追踪”模式",

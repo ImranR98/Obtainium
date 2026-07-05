@@ -82,6 +82,7 @@
     "categories": "Категорії",
     "categorize": "Категоризувати",
     "category": "Категорія",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Усі застосунки у видалених категоріях будуть переведені у некатегоризовані.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} та ще 1 застосунок можливо було оновлено.",
         "other": "{} та ще {} застосунків можливо було оновлено."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} має оновлення.",
     "xIsTrackOnly": "{} - тільки відстежування",

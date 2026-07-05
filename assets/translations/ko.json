@@ -82,6 +82,7 @@
     "categories": "카테고리",
     "categorize": "분류",
     "category": "카테고리",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "삭제된 카테고리의 모든 앱은 미분류로 설정됩니다.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} 및 1개의 앱이 업데이트되었을 수 있습니다.",
         "other": "{} 및 {}개의 앱이 업데이트되었을 수 있습니다."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{}에 업데이트가 있습니다.",
     "xIsTrackOnly": "{}는 추적 전용입니다",

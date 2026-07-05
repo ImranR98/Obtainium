@@ -82,6 +82,7 @@
     "categories": "Kategori",
     "categorize": "Kategorikan",
     "category": "Kategori",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Semua aplikasi dalam kategori yang dihapus akan diatur sebagai tidak terkategori.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} dan 1 aplikasi lainnya mungkin telah diperbarui.",
         "other": "{} dan {} aplikasi lainnya mungkin telah diperbarui."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} memiliki pembaruan.",
     "xIsTrackOnly": "{} adalah Pelacakan Saja",

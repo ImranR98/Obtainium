@@ -82,6 +82,7 @@
     "categories": "Kategorier",
     "categorize": "Kategorisera",
     "category": "Kategori",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Alla Appar i de borttagna kategorierna kommer att märkas som okategoriserade.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} och 1 till app kan ha uppdaterats.",
         "other": "{} och {} appar till kan ha uppdaterats."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} har en uppdatering.",
     "xIsTrackOnly": "{} är 'Följ-Endast'",

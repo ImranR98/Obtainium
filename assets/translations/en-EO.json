@@ -82,6 +82,7 @@
     "categories": "Kategorioj",
     "categorize": "Kategorii",
     "category": "Kategorio",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Ĉiuj apoj el forigitaj kategorioj iĝos nekategoriitaj.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} kaj 1 alia apo eble ĝisdatiĝis.",
         "other": "{} kaj {} aliaj apoj eble ĝisdatiĝis."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} havas ĝisdatigon.",
     "xIsTrackOnly": "{} estas nur sekvitaj",

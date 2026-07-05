@@ -90,6 +90,7 @@
     "categories": "Kategorie",
     "categorize": "Kategoryzuj",
     "category": "Kategoria",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Wszystkie aplikacje w usuniętych kategoriach zostaną ustawione jako nieskategoryzowane.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -468,6 +469,10 @@
         "few": "Prawdopodobnie zaktualizowano {} i {} inne aplikacje.",
         "many": "Prawdopodobnie zaktualizowano {} i {} innych aplikacji.",
         "other": "Prawdopodobnie zaktualizowano {} i {} innych aplikacji."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} ma aktualizację.",
     "xIsTrackOnly": "{} - tylko do obserwacji",

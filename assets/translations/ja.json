@@ -82,6 +82,7 @@
     "categories": "カテゴリ",
     "categorize": "カテゴライズ",
     "category": "カテゴリ",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "削除されたカテゴリ内のアプリは未分類に設定されます。",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} とさらに 1 個のアプリがアップデートされた可能性があります。",
         "other": "{} とさらに {} 個のアプリがアップデートされた可能性があります。"
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} のアップデートが利用可能です。",
     "xIsTrackOnly": "{} は「追跡のみ」です",

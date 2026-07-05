@@ -82,6 +82,7 @@
     "categories": "Categories",
     "categorize": "Categoritza",
     "category": "Categoria",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Totes les aplicacions de les categories suprimides es marcaran com a no categoritzades.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} i 1 aplicació més podrien haver estat actualizades.",
         "other": "{} i {} aplicacions més podrien haver estat actualitzades."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} té una actualització.",
     "xIsTrackOnly": "{} és només per a seguiment",

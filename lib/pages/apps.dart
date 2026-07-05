@@ -574,7 +574,7 @@ class AppsPageState extends State<AppsPage> {
               children: [
                 optionTile(
                   icon: Icons.delete_outline,
-                  label: tr('removeSelectedApps'),
+                  label: tr('remove'),
                   onTap: hasSelection
                       ? () {
                           appsProvider.removeAppsWithModal(
@@ -1195,9 +1195,9 @@ class AppsPageState extends State<AppsPage> {
                   settingsProvider.selectionClick();
                   showMoreOptionsBottomSheet(context, selectedApps);
                 },
-                tooltip: tr('more'),
+                tooltip: plural('action', 2),
                 icon: const Icon(Icons.more_vert),
-                label: Text(tr('more')),
+                label: Text(plural('action', 2)),
               )
             : null,
       ),

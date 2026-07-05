@@ -85,6 +85,7 @@
     "categories": "Kategorie",
     "categorize": "Kategorizovat",
     "category": "Kategorie",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Všechny aplikace v odstraněných kategoriích budou nastaveny na nekategorizované.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -449,6 +450,10 @@
         "one": "{} a 1 další aplikace možná byly aktualizovány.",
         "few": "{} a {} další aplikace možná byly aktualizovány.",
         "other": "{} a {} dalších aplikací možná bylo aktualizováno."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} má aktualizaci.",
     "xIsTrackOnly": "{} je určeno pouze pro sledování",

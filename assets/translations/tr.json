@@ -82,6 +82,7 @@
     "categories": "Kategoriler",
     "categorize": "Kategorize et",
     "category": "Kategori",
+    "categoryAlreadyExists": "A category with this name already exists",
     "categoryDeleteWarning": "Silinen kategorilerdeki bütün uygulamalar kategorilendirilmemiş olarak ayarlanacaktır.",
     "categoryName": "Category name",
     "certificateHash": {
@@ -436,6 +437,10 @@
     "xAndNMoreUpdatesPossiblyInstalled": {
         "one": "{} ve 1 diğer uygulama güncellenmiş olabilir.",
         "other": "{} ve {} diğer uygulama güncellenmiş olabilir."
+    },
+    "action": {
+        "one": "Action",
+        "other": "Actions"
     },
     "xHasAnUpdate": "{} güncellemesi var.",
     "xIsTrackOnly": "{} sadece takip edilir",
