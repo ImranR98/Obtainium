@@ -1380,9 +1380,6 @@ Future<void> _bgRunUpdateCheck(
         'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
       ),
     );
-    if (retryAfterXSeconds > 0) {
-      await Future.delayed(Duration(seconds: retryAfterXSeconds));
-    }
     return await bgUpdateCheck(taskId, {
       'toCheck': toRetry
           .map((entry) => {'key': entry.key, 'value': entry.value})
