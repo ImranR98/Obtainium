@@ -745,25 +745,15 @@ Future<List<PackageInfo>> getAllInstalledInfo() async {
 }
 
 Future<PackageInfo?> getInstalledInfo(
-  String? packageName, {
-  bool printErr = true,
-}) async {
+  String? packageName,
+) async {
   if (packageName != null) {
     try {
       return await packageManager.getPackageInfo(
         packageName: packageName,
         flags: packageInfoFlags,
       );
-    } catch (e) {
-      if (printErr) {
-        unawaited(
-          LogsProvider().add(
-            'Failed to get installed info for $packageName: ${e.toString()}',
-            level: LogLevel.error,
-          ),
-        );
-      }
-    }
+    } catch (_) {}
   }
   return null;
 }
@@ -778,7 +768,7 @@ class InstallBaseline {
 
 /// Captures the current install state of [appId] to compare against later.
 Future<InstallBaseline> captureInstallBaseline(String appId) async {
-  final info = await getInstalledInfo(appId, printErr: false);
+  final info = await getInstalledInfo(appId);
   return InstallBaseline(info != null, info?.lastUpdateTime);
 }
 
@@ -795,7 +785,7 @@ Future<bool> waitForPackageInstall(
   Duration interval = const Duration(milliseconds: 500),
 }) async {
   for (var attempt = 0; attempt < attempts; attempt++) {
-    final info = await getInstalledInfo(appId, printErr: false);
+  final info = await getInstalledInfo(appId);
     if (info != null) {
       if (!baseline.wasInstalled) return true;
       final updateTimeAfter = info.lastUpdateTime;

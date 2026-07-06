@@ -131,7 +131,7 @@ extension AppsProviderImportExport on AppsProvider {
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
       final a = importedApps[i];
-      final installedInfo = await getInstalledInfo(a.id, printErr: false);
+      final installedInfo = await getInstalledInfo(a.id);
       importedApps[i] = a.copyWith(
         installedVersion: a.settings.getBool('useVersionCodeAsOSVersion')
             ? installedInfo?.versionCode.toString()

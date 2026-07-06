@@ -13,7 +13,6 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -162,37 +161,18 @@ class AppsPageState extends State<AppsPage> {
   }
 
   Future<List<App>> refresh() {
-    unawaited(LogsProvider().add(
-      'APPS REFRESH: refresh() called, checkUpdates starting',
-      level: LogLevel.info,
-    ));
     settingsProvider.lightImpact();
     setState(() {});
     final ctx = context;
     return appsProvider
         .checkUpdates(forceAll: true)
-        .then((updates) {
-          unawaited(LogsProvider().add(
-            'APPS REFRESH: checkUpdates returned ${updates.length} updates',
-            level: LogLevel.info,
-          ));
-          return updates;
-        })
         .catchError((e) {
-          unawaited(LogsProvider().add(
-            'APPS REFRESH: checkUpdates error: ${e.toString()}',
-            level: LogLevel.error,
-          ));
           if (ctx.mounted) {
             showError(e is CheckUpdatesException ? e.errors : e, ctx);
           }
           return <App>[];
         })
         .whenComplete(() {
-          unawaited(LogsProvider().add(
-            'APPS REFRESH: whenComplete firing',
-            level: LogLevel.info,
-          ));
           setState(() {});
         });
   }
@@ -1040,10 +1020,6 @@ class AppsPageState extends State<AppsPage> {
         settingsProvider.checkOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(LogsProvider().add(
-          'APPS REFRESH: calling refreshIndicatorKey.currentState?.show()',
-          level: LogLevel.info,
-        ));
         refreshIndicatorKey.currentState?.show();
       });
     }

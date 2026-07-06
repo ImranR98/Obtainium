@@ -672,7 +672,7 @@ extension AppsProviderInstall on AppsProvider {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
     var anyInstalled = false;
     for (final id in _verifiedAppsPackageIds) {
-      if (await getInstalledInfo(id, printErr: false) != null) {
+      if (await getInstalledInfo(id) != null) {
         anyInstalled = true;
         break;
       }
