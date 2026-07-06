@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -82,9 +81,6 @@ class SettingsProvider with ChangeNotifier {
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     prefsInstance ??= prefs;
-    // Fire-and-forget migration of any creds previously stored in the secure
-    // Keystore back into plain SharedPreferences — must not block init.
-    unawaited(_migrateSecureCreds());
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
@@ -133,34 +129,6 @@ class SettingsProvider with ChangeNotifier {
   }
 
   static SharedPreferences? prefsInstance;
-
-  /// Migrate any credentials previously stored in FlutterSecureStorage back
-  /// into SharedPreferences, so they are readable without Keystore access
-  /// (which can block the background isolate, preventing DNS resolution).
-  /// Runs at most once per process lifetime.
-  static Future<void> _migrateSecureCreds() async {
-    if (_credsMigrationDone) return;
-    _credsMigrationDone = true;
-    try {
-      final ss = FlutterSecureStorage();
-      for (var key in {'github-creds', 'gitlab-creds'}) {
-        final val = await ss.read(key: key);
-        if (val != null && val.isNotEmpty && prefsInstance != null) {
-          prefsInstance!.setString(key, val);
-          unawaited(ss.delete(key: key));
-        }
-      }
-    } catch (e) {
-      unawaited(
-        LogsProvider().add(
-          'Credential migration from secure storage failed (benign): $e',
-          level: LogLevel.debug,
-        ),
-      );
-    }
-  }
-
-  static bool _credsMigrationDone = false;
 
   bool get useSystemFont {
     return _getBool('useSystemFont') ?? false;

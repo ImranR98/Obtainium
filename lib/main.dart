@@ -58,8 +58,6 @@ bool isFdroidBuild = false;
 /// (e.g. tapping a notification).
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
-const minBackgroundFetchInterval = 15;
-
 @pragma('vm:entry-point')
 void backgroundFetchHeadlessTask(HeadlessEvent event) async {
   final String taskId = event.taskId;
@@ -86,10 +84,10 @@ void backgroundFetchHeadlessTask(HeadlessEvent event) async {
 
 @pragma('vm:entry-point')
 void startCallback() {
-  FlutterForegroundTask.setTaskHandler(BackgroundUpdateTaskHandler());
+  FlutterForegroundTask.setTaskHandler(MyTaskHandler());
 }
 
-class BackgroundUpdateTaskHandler extends TaskHandler {
+class MyTaskHandler extends TaskHandler {
   var _bgUpdateInProgress = false;
 
   @override
@@ -422,7 +420,7 @@ class _ObtainiumState extends State<Obtainium> {
     final settings = context.read<SettingsProvider>();
     await BackgroundFetch.configure(
       BackgroundFetchConfig(
-        minimumFetchInterval: minBackgroundFetchInterval,
+        minimumFetchInterval: 15,
         stopOnTerminate: false,
         startOnBoot: true,
         enableHeadless: true,
