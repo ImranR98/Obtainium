@@ -1303,9 +1303,7 @@ class HttpService {
       final response = await request.close();
 
       if (followRedirects &&
-          (response.statusCode >= 301 &&
-              response.statusCode <= 308 &&
-              response.statusCode != 304)) {
+          (response.statusCode >= 300 && response.statusCode <= 399)) {
         final location = response.headers.value(HttpHeaders.locationHeader);
         if (location != null) {
           currentUrl = Uri.parse(ensureAbsoluteUrl(location, currentUrl));
