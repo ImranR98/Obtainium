@@ -78,13 +78,13 @@ class SettingsProvider with ChangeNotifier {
   /// to fetch (platform channel round-trips). Cached across all provider instances.
   static String? _cachedDefaultAppDir;
   static bool? _cachedIsTV;
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
-  static final Map<String, String?> _secureCache = {};
 
   Future<void> initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     prefsInstance ??= prefs;
-    await _loadSecureCache();
+    // Fire-and-forget migration of any creds previously stored in the secure
+    // Keystore back into plain SharedPreferences — must not block init.
+    unawaited(_migrateSecureCreds());
     _cachedDefaultAppDir ??= (await getAppStorageDir()).path;
     if (_cachedIsTV == null) {
       final info = await DeviceInfoPlugin().androidInfo;
@@ -132,35 +132,35 @@ class SettingsProvider with ChangeNotifier {
     }
   }
 
-  static Future<void> _loadSecureCache() async {
-    if (_secureCache.isNotEmpty) return;
-    for (var key in {'github-creds', 'gitlab-creds'}) {
-      try {
-        _secureCache[key] = await _secureStorage.read(key: key);
-        if (_secureCache[key] == null && prefsInstance != null) {
-          final legacy = prefsInstance!.getString(key);
-          if (legacy != null && legacy.isNotEmpty) {
-            await _secureStorage.write(key: key, value: legacy);
-            _secureCache[key] = legacy;
-            unawaited(prefsInstance!.remove(key));
-          }
+  static SharedPreferences? prefsInstance;
+
+  /// Migrate any credentials previously stored in FlutterSecureStorage back
+  /// into SharedPreferences, so they are readable without Keystore access
+  /// (which can block the background isolate, preventing DNS resolution).
+  /// Runs at most once per process lifetime.
+  static Future<void> _migrateSecureCreds() async {
+    if (_credsMigrationDone) return;
+    _credsMigrationDone = true;
+    try {
+      final ss = FlutterSecureStorage();
+      for (var key in {'github-creds', 'gitlab-creds'}) {
+        final val = await ss.read(key: key);
+        if (val != null && val.isNotEmpty && prefsInstance != null) {
+          prefsInstance!.setString(key, val);
+          unawaited(ss.delete(key: key));
         }
-      } catch (e) {
-        // Secure storage can be unavailable (locked/absent Keystore or
-        // Keychain); fall back to any legacy prefs value so settings init
-        // never fails because of it.
-        unawaited(
-          LogsProvider().add(
-            'Secure storage unavailable for $key, falling back to prefs: $e',
-            level: LogLevel.warning,
-          ),
-        );
-        _secureCache[key] = prefsInstance?.getString(key);
       }
+    } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'Credential migration from secure storage failed (benign): $e',
+          level: LogLevel.debug,
+        ),
+      );
     }
   }
 
-  static SharedPreferences? prefsInstance;
+  static bool _credsMigrationDone = false;
 
   bool get useSystemFont {
     return _getBool('useSystemFont') ?? false;
@@ -437,29 +437,12 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    if ({'github-creds', 'gitlab-creds'}.contains(settingId)) {
-      return _secureCache[settingId];
-    }
     final String? str = _getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
   void setSettingString(String settingId, String value) {
-    if ({'github-creds', 'gitlab-creds'}.contains(settingId)) {
-      _secureCache[settingId] = value;
-      _secureStorage
-          .write(key: settingId, value: value)
-          .catchError(
-            (e) => unawaited(
-              LogsProvider().add(
-                'Failed to persist credential: $e',
-                level: LogLevel.error,
-              ),
-            ),
-          );
-    } else {
-      prefs?.setString(settingId, value);
-    }
+    prefs?.setString(settingId, value);
     notifyListeners();
   }
 
