@@ -70,7 +70,7 @@ void callbackDispatcher() {
         level: LogLevel.info,
       );
       final taskId = 'wm_${DateTime.now().millisecondsSinceEpoch}';
-      await bgUpdateCheck(taskId, null);
+      await bgUpdateCheck(taskId, inputData);
       await logs.add(
         'WorkManager callback completed successfully',
         level: LogLevel.info,
@@ -185,59 +185,22 @@ class Obtainium extends StatefulWidget {
 }
 
 class _ObtainiumState extends State<Obtainium> {
-  var _lastUpdateInterval = -1;
-  var _lastEnableBgUpdates = true;
   var _firstRunHandled = false;
   var _launchByNotifChecked = false;
-  var _listenerRegistered = false;
   var _fontLoaded = false;
-  void Function()? _settingsListener;
-  SettingsProvider? _settingsProvider;
 
-  Future<void> _scheduleWorkManager(SettingsProvider settings) async {
-    final interval = settings.updateInterval;
-    final enabled = settings.enableBackgroundUpdates;
-    if (interval == _lastUpdateInterval && enabled == _lastEnableBgUpdates) {
-      return;
-    }
-    _lastUpdateInterval = interval;
-    _lastEnableBgUpdates = enabled;
-
-    final logs = context.read<LogsProvider>();
-    await logs.add(
-      '_scheduleWorkManager: interval=$interval enabled=$enabled',
-      level: LogLevel.info,
-    );
-
-    await Workmanager().cancelAll();
-    if (interval == 0 || !enabled) {
-      await logs.add(
-        '_scheduleWorkManager: background updates disabled, all tasks cancelled',
-        level: LogLevel.info,
-      );
-      return;
-    }
-
+  Future<void> _scheduleWorkManager() async {
     await Workmanager().registerPeriodicTask(
       _workManagerTaskName,
       _workManagerTaskName,
-      frequency: Duration(minutes: interval),
+      frequency: const Duration(minutes: 15),
       constraints: Constraints(
-        networkType: settings.bgUpdatesOnWiFiOnly
-            ? NetworkType.unmetered
-            : NetworkType.connected,
-        requiresCharging: settings.bgUpdatesWhileChargingOnly,
+        networkType: NetworkType.connected,
         requiresBatteryNotLow: false,
         requiresDeviceIdle: false,
         requiresStorageNotLow: false,
       ),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
-    );
-    await logs.add(
-      '_scheduleWorkManager: periodic task registered '
-      '(interval=${interval}min, wifiOnly=${settings.bgUpdatesOnWiFiOnly}, '
-      'chargingOnly=${settings.bgUpdatesWhileChargingOnly})',
-      level: LogLevel.info,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
 
@@ -299,35 +262,22 @@ class _ObtainiumState extends State<Obtainium> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final settingsProvider = context.read<SettingsProvider>();
-      _settingsProvider = settingsProvider;
       final appsProvider = context.read<AppsProvider>();
       final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
 
-      unawaited(_scheduleWorkManager(settingsProvider));
+      unawaited(_scheduleWorkManager());
       _handleFirstRun(settingsProvider, appsProvider, logger, context);
 
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
       }
-
-      if (!_listenerRegistered) {
-        _listenerRegistered = true;
-        _settingsListener = () {
-          unawaited(_scheduleWorkManager(settingsProvider));
-          _handleFirstRun(settingsProvider, appsProvider, logger, context);
-        };
-        settingsProvider.addListener(_settingsListener!);
-      }
     });
   }
 
   @override
   void dispose() {
-    if (_settingsListener != null && _settingsProvider != null) {
-      _settingsProvider!.removeListener(_settingsListener!);
-    }
     LogsProvider.close();
     super.dispose();
   }

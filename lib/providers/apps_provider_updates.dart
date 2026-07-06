@@ -49,17 +49,20 @@ extension AppsProviderUpdates on AppsProvider {
     return newApp.latestVersion != currentApp.latestVersion ? newApp : null;
   }
 
-  /// Returns app IDs sorted by last update check time, oldest first, with optional filters.
+  /// Returns app IDs sorted by last update check time, oldest first.
+  /// Only includes apps whose per-app lastUpdateCheck is older than the
+  /// configured update interval (or null — never checked).
   List<String> getAppsSortedByUpdateCheckTime({
-    DateTime? ignoreAppsCheckedAfter,
     bool onlyCheckInstalledOrTrackOnlyApps = false,
   }) {
+    final minAge = DateTime.now().subtract(
+      Duration(minutes: settingsProvider.updateInterval),
+    );
     final List<String> appIds = apps.values
         .where(
           (app) =>
               app.app.lastUpdateCheck == null ||
-              ignoreAppsCheckedAfter == null ||
-              app.app.lastUpdateCheck!.isBefore(ignoreAppsCheckedAfter),
+              app.app.lastUpdateCheck!.isBefore(minAge),
         )
         .where((app) {
           if (!onlyCheckInstalledOrTrackOnlyApps) {
@@ -84,7 +87,6 @@ extension AppsProviderUpdates on AppsProvider {
   }
 
   Future<List<App>> checkUpdates({
-    DateTime? ignoreAppsCheckedAfter,
     bool throwErrorsForRetry = false,
     List<String>? specificIds,
     SettingsProvider? sp,
@@ -98,53 +100,45 @@ extension AppsProviderUpdates on AppsProvider {
       final List<App> updates = [];
       final MultiAppMultiError errors = MultiAppMultiError();
       List<String> appIds = getAppsSortedByUpdateCheckTime(
-        ignoreAppsCheckedAfter: ignoreAppsCheckedAfter,
         onlyCheckInstalledOrTrackOnlyApps:
             settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
       );
       if (specificIds != null) {
         appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
       }
-      const int maxConcurrent = 8;
-      for (var start = 0; start < appIds.length; start += maxConcurrent) {
-        final end = (start + maxConcurrent < appIds.length)
-            ? start + maxConcurrent
-            : appIds.length;
-        final chunk = appIds.sublist(start, end);
-        final chunkResults = await Future.wait(
-          chunk.map((appId) async {
-            final currentApp = apps[appId]?.app;
-            try {
-              final newApp = await fetchUpdate(appId);
-              if (newApp == null) return null;
-              final isUpdate =
-                  currentApp != null &&
-                  newApp.latestVersion != currentApp.latestVersion;
-              return MapEntry(newApp, isUpdate);
-            } catch (e) {
-              if ((e is RateLimitError || e is SocketException) &&
-                  throwErrorsForRetry) {
-                rethrow;
-              }
-              if (e is RepositoryRenamedError) {
-                await updatePendingRepoRename(appId, e.newUrl);
-                return null;
-              }
-              errors.add(appId, e, appName: apps[appId]?.name);
+      final results = await Future.wait(
+        appIds.map((appId) async {
+          final currentApp = apps[appId]?.app;
+          try {
+            final newApp = await fetchUpdate(appId);
+            if (newApp == null) return null;
+            final isUpdate =
+                currentApp != null &&
+                newApp.latestVersion != currentApp.latestVersion;
+            return MapEntry(newApp, isUpdate);
+          } catch (e) {
+            if ((e is RateLimitError || e is SocketException) &&
+                throwErrorsForRetry) {
+              rethrow;
+            }
+            if (e is RepositoryRenamedError) {
+              await updatePendingRepoRename(appId, e.newUrl);
               return null;
             }
-          }),
-          eagerError: true,
-        );
-        final List<App> chunkFetched = [];
-        for (final r in chunkResults) {
-          if (r == null) continue;
-          chunkFetched.add(r.key);
-          if (r.value) updates.add(r.key);
-        }
-        if (chunkFetched.isNotEmpty) {
-          await saveApps(chunkFetched);
-        }
+            errors.add(appId, e, appName: apps[appId]?.name);
+            return null;
+          }
+        }),
+        eagerError: true,
+      );
+      final List<App> fetched = [];
+      for (final r in results) {
+        if (r == null) continue;
+        fetched.add(r.key);
+        if (r.value) updates.add(r.key);
+      }
+      if (fetched.isNotEmpty) {
+        await saveApps(fetched);
       }
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);

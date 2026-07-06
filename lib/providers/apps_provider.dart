@@ -25,6 +25,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:http/http.dart';
+import 'package:workmanager/workmanager.dart';
 import 'package:obtainium/main.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
@@ -53,7 +54,7 @@ const int _progressUpdateIntervalMs = 500;
 const int _downloadBufferSize = 32 * 1024;
 const int _downloadProgressFallback = 30;
 const int _bgUpdateMaxAttempts = 4;
-const int _bgUpdateMaxRetryWaitSeconds = 5;
+const int _bgUpdateMaxRetryWaitSeconds = 30;
 const int _bgClientExceptionRetryWaitSeconds = 15 * 60;
 
 final packageManager = AndroidPackageManager();
@@ -1052,56 +1053,41 @@ class AppsProvider with ChangeNotifier {
 }
 
 Future<void> _runBGInstallMode(
-  List<MapEntry<String, int>> toInstall,
-  bool networkRestricted,
-  bool chargingRestricted,
+  List<String> appIds,
   AppsProvider appsProvider,
   NotificationsProvider notificationsProvider,
   LogsProvider logs,
 ) async {
-  unawaited(logs.add('BG install task: Started (${toInstall.length}).'));
-  if (toInstall.isEmpty && !networkRestricted && !chargingRestricted) {
-    final temp = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
-    for (var i = 0; i < temp.length; i++) {
-      if (await appsProvider.canInstallSilentlyInBackground(
-        appsProvider.apps[temp[i]]!.app,
-      )) {
-        toInstall.add(MapEntry(temp[i], 0));
-      }
-    }
+  unawaited(logs.add('BG install task: Started.'));
+  if (appIds.isEmpty) {
+    unawaited(logs.add('BG install task: No pending installs.'));
+    return;
   }
-  if (toInstall.isNotEmpty) {
-    final obtainiumEntries = toInstall.where(
-      (element) =>
-          element.key == obtainiumId || element.key == '$obtainiumId.fdroid',
-    );
-    if (obtainiumEntries.isNotEmpty) {
-      final obt = obtainiumEntries.first;
-      toInstall = moveStrToEndMapEntryWithCount(toInstall, obt);
-    }
-    try {
+  unawaited(logs.add(
+    'BG install task: Installing ${appIds.length} apps silently.',
+  ));
+  try {
       await appsProvider.downloadAndInstallLatestApps(
-        toInstall.map((e) => e.key).toList(),
-        null,
-        notificationsProvider: notificationsProvider,
-        forceParallelDownloads: true,
-      );
-    } catch (e) {
-      if (e is MultiAppMultiError) {
-        e.idsByErrorString.forEach((key, value) {
-          unawaited(
-            notificationsProvider.notify(
-              ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
-            ),
-          );
-        });
-      } else {
-        unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));
-        rethrow;
-      }
+      appIds,
+      null,
+      notificationsProvider: notificationsProvider,
+      forceParallelDownloads: true,
+    );
+  } catch (e) {
+    if (e is MultiAppMultiError) {
+      e.idsByErrorString.forEach((key, value) {
+        unawaited(
+          notificationsProvider.notify(
+            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+          ),
+        );
+      });
+    } else {
+      unawaited(logs.add('Fatal error in BG install task: ${e.toString()}'));
+      rethrow;
     }
-    unawaited(logs.add('BG install task: Done installing updates.'));
   }
+  unawaited(logs.add('BG install task: Done installing updates.'));
 }
 
 /// Background update check and installation orchestrator.
@@ -1118,44 +1104,38 @@ Future<void> bgUpdateCheck(
   NotificationsProvider? notifs,
   SettingsProvider? settings,
 }) async {
-  final l = logs ?? LogsProvider();
+  final bgLogs = logs ?? LogsProvider();
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await TranslationLoader.load();
   params ??= {};
-  unawaited(l.add('BG task started $taskId: $params'));
+  unawaited(bgLogs.add('BG task started $taskId: $params'));
 
   final NotificationsProvider notificationsProvider =
       notifs ?? NotificationsProvider();
   final AppsProvider appsProvider = AppsProvider(
     isBg: true,
     settingsProvider: settings,
-    logsProvider: l,
+    logsProvider: bgLogs,
   );
   await appsProvider.loadApps();
-
-  const int maxAttempts = _bgUpdateMaxAttempts;
-  const int maxRetryWaitSeconds = _bgUpdateMaxRetryWaitSeconds;
+  await appsProvider.settingsProvider.initializeSettings();
 
   final netResult = await (Connectivity().checkConnectivity());
   if (netResult.contains(ConnectivityResult.none) ||
       netResult.isEmpty ||
       (netResult.contains(ConnectivityResult.vpn) && netResult.length == 1)) {
-    unawaited(l.add('BG update task: No network.'));
+    unawaited(bgLogs.add('BG update task: No network.'));
     return;
   }
 
-  final bool firstEverUpdateTask =
-      DateTime.fromMillisecondsSinceEpoch(
-        0,
-      ).compareTo(appsProvider.settingsProvider.lastCompletedBGCheckTime) ==
-      0;
-
-  DateTime? ignoreAfter;
-  if (params['toCheck'] == null) {
-    ignoreAfter = firstEverUpdateTask
-        ? null
-        : appsProvider.settingsProvider.lastCompletedBGCheckTime;
+  if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
+      appsProvider.settingsProvider.updateInterval == 0) {
+    unawaited(bgLogs.add(
+      'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
+      'interval=${appsProvider.settingsProvider.updateInterval})',
+    ));
+    return;
   }
 
   final List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
@@ -1169,23 +1149,11 @@ Future<void> bgUpdateCheck(
             .toList() ??
         appsProvider
             .getAppsSortedByUpdateCheckTime(
-              ignoreAppsCheckedAfter: ignoreAfter,
               onlyCheckInstalledOrTrackOnlyApps: appsProvider
                   .settingsProvider
                   .onlyCheckInstalledOrTrackOnlyApps,
             )
             .map((e) => MapEntry(e, 0))),
-  ];
-  final List<MapEntry<String, int>> toInstall = <MapEntry<String, int>>[
-    ...(params['toInstall']
-            ?.map(
-              (entry) => MapEntry<String, int>(
-                entry['key'] as String,
-                entry['value'] as int,
-              ),
-            )
-            .toList() ??
-        (<List<MapEntry<String, int>>>[])),
   ];
 
   final networkRestricted =
@@ -1198,67 +1166,108 @@ Future<void> bgUpdateCheck(
       (await Battery().batteryState) != BatteryState.charging;
 
   if (networkRestricted) {
-    unawaited(l.add('BG update task: Network restriction in effect.'));
+    unawaited(bgLogs.add('BG update task: Network restriction in effect.'));
   }
 
   if (chargingRestricted) {
-    unawaited(l.add('BG update task: Charging restriction in effect.'));
+    unawaited(bgLogs.add('BG update task: Charging restriction in effect.'));
   }
 
+  final canInstall = !networkRestricted && !chargingRestricted;
+  final silentlyInstallable = <String>[];
+
   if (toCheck.isNotEmpty) {
-    // Skip (and leave lastCompletedBGCheckTime untouched) if the update
-    // interval hasn't elapsed since the last completed check. This must gate
-    // the timestamp update below, otherwise every fire resets the clock and
-    // the interval never elapses. Install mode (toCheck empty) is not gated.
-    final enoughTimePassed =
-        appsProvider.settingsProvider.updateInterval != 0 &&
-        appsProvider.settingsProvider.lastCompletedBGCheckTime
-            .add(
-              Duration(minutes: appsProvider.settingsProvider.updateInterval),
-            )
-            .isBefore(DateTime.now());
-    if (!enoughTimePassed) {
-      unawaited(
-        l.add(
-          'BG update task: Too early for another check (last check was ${appsProvider.settingsProvider.lastCompletedBGCheckTime.toIso8601String()}, interval is ${appsProvider.settingsProvider.updateInterval}).',
-        ),
-      );
-      return;
-    }
-    await _bgRunUpdateCheck(
+    final result = await _bgRunUpdateCheck(
       taskId,
       toCheck,
-      toInstall,
-      networkRestricted,
-      chargingRestricted,
-      maxAttempts,
-      maxRetryWaitSeconds,
       appsProvider,
       notificationsProvider,
-      l,
+      bgLogs,
     );
+
+    final List<App> trackOnlyToNotify = [];
+    final List<App> toNotify = [];
+    for (var i = 0; i < result.updates.length; i++) {
+      final willInstallInBackground = await appsProvider
+          .canInstallSilentlyInBackground(result.updates[i]);
+      if (!canInstall || !willInstallInBackground) {
+        if (!result.updates[i].settings.getBool('skipUpdateNotifications')) {
+          unawaited(
+            bgLogs.add(
+              'BG update task notifying for ${result.updates[i].id} (canInstall $canInstall, canInstallSilentlyInBackground $willInstallInBackground).',
+            ),
+          );
+          if (result.updates[i].settings.getBool('trackOnly')) {
+            trackOnlyToNotify.add(result.updates[i]);
+          } else {
+            toNotify.add(result.updates[i]);
+          }
+        }
+      } else {
+        silentlyInstallable.add(result.updates[i].id);
+      }
+    }
+
+    if (toNotify.isNotEmpty) {
+      unawaited(notificationsProvider.notify(UpdateNotification(toNotify)));
+    }
+    if (trackOnlyToNotify.isNotEmpty) {
+      unawaited(
+        notificationsProvider.notify(
+          TrackOnlyUpdateNotification(trackOnlyToNotify),
+        ),
+      );
+    }
+
+    unawaited(bgLogs.add(
+      'BG update task: Notified ${toNotify.length} updates, '
+      '${trackOnlyToNotify.length} track-only, '
+      '${result.toThrow.rawErrors.length} errors',
+    ));
+
+    if (result.toThrow.rawErrors.isNotEmpty && result.errors != null) {
+      for (var element in result.toThrow.idsByErrorString.entries) {
+        unawaited(
+          notificationsProvider.notify(
+            ErrorCheckingUpdatesNotification(
+              result.errors!.errorsAppsString(element.key, element.value),
+              id: errorCheckingUpdatesNotificationId + 100 + Random().nextInt(9900),
+            ),
+          ),
+        );
+      }
+    }
   } else {
-    await _runBGInstallMode(
-      toInstall,
-      networkRestricted,
-      chargingRestricted,
-      appsProvider,
-      notificationsProvider,
-      l,
-    );
+    unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
-  appsProvider.settingsProvider.lastCompletedBGCheckTime = DateTime.now();
+  if (canInstall) {
+    final discovered = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
+    final existing = silentlyInstallable.toSet();
+    for (final id in discovered) {
+      if (existing.contains(id)) continue;
+      if (await appsProvider.canInstallSilentlyInBackground(
+        appsProvider.apps[id]!.app,
+      )) {
+        silentlyInstallable.add(id);
+      }
+    }
+    unawaited(bgLogs.add(
+      'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
+    ));
+  }
+  await _runBGInstallMode(
+    silentlyInstallable,
+    appsProvider,
+    notificationsProvider,
+    bgLogs,
+  );
+  unawaited(bgLogs.add('BG task completed $taskId.'));
   AppsProvider._eventsController.add(null);
 }
 
-Future<void> _bgRunUpdateCheck(
+Future<({List<App> updates, MultiAppMultiError? errors, MultiAppMultiError toThrow})> _bgRunUpdateCheck(
   String taskId,
   List<MapEntry<String, int>> toCheck,
-  List<MapEntry<String, int>> toInstall,
-  bool networkRestricted,
-  bool chargingRestricted,
-  int maxAttempts,
-  int maxRetryWaitSeconds,
   AppsProvider appsProvider,
   NotificationsProvider notificationsProvider,
   LogsProvider logs,
@@ -1266,7 +1275,6 @@ Future<void> _bgRunUpdateCheck(
   unawaited(logs.add('BG update task: Started (${toCheck.length}).'));
 
   List<App> updates = [];
-  final List<App> toNotify = [];
   final List<MapEntry<String, int>> toRetry = [];
   var retryAfterXSeconds = 0;
   MultiAppMultiError? errors;
@@ -1296,15 +1304,15 @@ Future<void> _bgRunUpdateCheck(
           (element) => element.key == key,
           orElse: () => MapEntry(key, 0),
         );
-        if (toCheckApp.value < maxAttempts) {
+        if (toCheckApp.value < _bgUpdateMaxAttempts) {
           toRetry.add(MapEntry(toCheckApp.key, toCheckApp.value + 1));
           int minRetryIntervalForThisApp = err is RateLimitError
               ? (err.remainingMinutes * 60)
               : err is ClientException
               ? (_bgClientExceptionRetryWaitSeconds)
               : (toCheckApp.value + 1);
-          if (minRetryIntervalForThisApp > maxRetryWaitSeconds) {
-            minRetryIntervalForThisApp = maxRetryWaitSeconds;
+          if (minRetryIntervalForThisApp > _bgUpdateMaxRetryWaitSeconds) {
+            minRetryIntervalForThisApp = _bgUpdateMaxRetryWaitSeconds;
           }
           if (minRetryIntervalForThisApp > retryAfterXSeconds) {
             retryAfterXSeconds = minRetryIntervalForThisApp;
@@ -1323,84 +1331,40 @@ Future<void> _bgRunUpdateCheck(
     unawaited(notificationsProvider.cancel(notif.id));
   }
 
-  final List<App> trackOnlyToNotify = [];
-  final List<App> exemptToNotify = [];
-  for (var i = 0; i < updates.length; i++) {
-    final willInstallInBackground = await appsProvider
-        .canInstallSilentlyInBackground(updates[i]);
-    if (networkRestricted || chargingRestricted || !willInstallInBackground) {
-      if (!updates[i].settings.getBool('skipUpdateNotifications')) {
-        unawaited(
-          logs.add(
-            'BG update task notifying for ${updates[i].id} (networkRestricted $networkRestricted, chargingRestricted: $chargingRestricted, canInstallSilentlyInBackground: $willInstallInBackground).',
-          ),
-        );
-        if (updates[i].settings.getBool('trackOnly')) {
-          trackOnlyToNotify.add(updates[i]);
-        } else if (updates[i].settings.getBool('exemptFromBackgroundUpdates')) {
-          exemptToNotify.add(updates[i]);
-        } else {
-          toNotify.add(updates[i]);
-        }
-      }
-    }
-  }
-
-  if (toNotify.isNotEmpty) {
-    unawaited(notificationsProvider.notify(UpdateNotification(toNotify)));
-  }
-  if (trackOnlyToNotify.isNotEmpty) {
-    unawaited(
-      notificationsProvider.notify(
-        TrackOnlyUpdateNotification(trackOnlyToNotify),
-      ),
-    );
-  }
-  if (exemptToNotify.isNotEmpty) {
-    unawaited(notificationsProvider.notify(UpdateNotification(exemptToNotify)));
-  }
-
-  if (toThrow.rawErrors.isNotEmpty) {
-    for (var element in toThrow.idsByErrorString.entries) {
-      unawaited(
-        notificationsProvider.notify(
-          ErrorCheckingUpdatesNotification(
-            (errors ?? toThrow).errorsAppsString(element.key, element.value),
-            id: Random().nextInt(10000),
-          ),
-        ),
-      );
-    }
-  }
-
   unawaited(logs.add('BG update task: Done checking for updates.'));
   if (toRetry.isNotEmpty) {
     unawaited(
       logs.add(
-        'BG update task $taskId: Will retry in $retryAfterXSeconds seconds (${toRetry.length} to retry, ${toInstall.length} to install).',
+        'BG update task $taskId: Scheduling retry in ${retryAfterXSeconds}s '
+        '(${toRetry.length} to retry).',
       ),
     );
-    return await bgUpdateCheck(taskId, {
-      'toCheck': toRetry
-          .map((entry) => {'key': entry.key, 'value': entry.value})
-          .toList(),
-      'toInstall': toInstall
-          .map((entry) => {'key': entry.key, 'value': entry.value})
-          .toList(),
-    });
+    final retryName = 'retry_${taskId}_${Random().nextInt(10000)}';
+    await Workmanager().registerOneOffTask(
+      retryName,
+      retryName,
+      initialDelay: Duration(seconds: retryAfterXSeconds),
+      constraints: Constraints(
+        networkType: appsProvider.settingsProvider.bgUpdatesOnWiFiOnly
+            ? NetworkType.unmetered
+            : NetworkType.connected,
+        requiresCharging:
+            appsProvider.settingsProvider.bgUpdatesWhileChargingOnly,
+        requiresBatteryNotLow: false,
+        requiresDeviceIdle: false,
+        requiresStorageNotLow: false,
+      ),
+      inputData: {
+        'toCheck': toRetry
+            .map((entry) => {'key': entry.key, 'value': entry.value})
+            .toList(),
+      },
+    );
   } else {
-    unawaited(
-      logs.add(
-        'BG update task: Done checking for updates (${toRetry.length} to retry, ${toInstall.length} to install).',
-      ),
-    );
-    return await bgUpdateCheck(taskId, {
-      'toCheck': [],
-      'toInstall': toInstall
-          .map((entry) => {'key': entry.key, 'value': entry.value})
-          .toList(),
-    });
+    unawaited(logs.add('BG update task: No retries needed.'));
   }
+
+  return (updates: updates, errors: errors, toThrow: toThrow);
 }
 
 class CancellationException implements Exception {}

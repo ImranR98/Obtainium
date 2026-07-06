@@ -613,17 +613,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  DateTime get lastCompletedBGCheckTime {
-    final int? temp = _getInt('lastCompletedBGCheckTime');
-    return temp != null
-        ? DateTime.fromMillisecondsSinceEpoch(temp)
-        : DateTime.fromMillisecondsSinceEpoch(0);
-  }
-
-  set lastCompletedBGCheckTime(DateTime val) {
-    prefs?.setInt('lastCompletedBGCheckTime', val.millisecondsSinceEpoch);
-    notifyListeners();
-  }
 
   bool get highlightTouchTargets {
     return _getBool('highlightTouchTargets') ?? false;
