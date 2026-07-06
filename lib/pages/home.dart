@@ -105,11 +105,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> switchToPage(int index) async {
     setIsReversing(index);
     if (index == 0) {
-      await waitUntil(
-        () => appsPageKey.currentState == null,
-        interval: const Duration(milliseconds: 16),
-        maxAttempts: 120,
-      );
       selectedIndexHistory.clear();
     } else if (selectedIndexHistory.isEmpty ||
         selectedIndexHistory.last != index) {
@@ -233,7 +228,8 @@ class _HomePageState extends State<HomePage> {
 
     Future<void> interpretLink(Uri uri) async {
       final action = uri.host;
-      final data = uri.path.length > 1 ? uri.path.substring(1) : '';
+      final data = uri.queryParameters['url'] ??
+          (uri.path.length > 1 ? uri.path.substring(1) : '');
       try {
         if (action == 'add') {
           final AppsProvider ap = appsProvider;
@@ -243,12 +239,19 @@ class _HomePageState extends State<HomePage> {
             maxAttempts: 500,
           );
 
-          final String standardizedUrl = sourceProvider
-              .getSource(data)
-              .standardizeUrl(data);
+          String? standardizedUrl;
+          try {
+            standardizedUrl = sourceProvider
+                .getSource(data)
+                .standardizeUrl(data);
+          } catch (_) {
+            standardizedUrl = null;
+          }
 
           final AppInMemory? existingApp = ap.apps.values
-              .where((AppInMemory a) => a.app.url == standardizedUrl)
+              .where((AppInMemory a) =>
+                  a.app.url == standardizedUrl ||
+                  a.app.url == data)
               .firstOrNull;
 
           if (existingApp != null) {
