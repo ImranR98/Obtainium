@@ -33,6 +33,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   int? androidSdkInt;
   int _installerCheckSeq = 0;
+  bool _isRunningBgCheck = false;
 
   @override
   void initState() {
@@ -43,6 +44,31 @@ class _SettingsPageState extends State<SettingsPage> {
       if (sp.prefs == null) sp.initializeSettings();
       initAndroidSdk();
     });
+  }
+
+  Future<void> _triggerManualBgCheck() async {
+    if (_isRunningBgCheck) return;
+    setState(() => _isRunningBgCheck = true);
+    final logs = context.read<LogsProvider>();
+    await logs.add(
+      'Manual BG update check triggered from settings',
+      level: LogLevel.info,
+    );
+    try {
+      final taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
+      await bgUpdateCheck(taskId, null);
+      await logs.add(
+        'Manual BG update check completed successfully',
+        level: LogLevel.info,
+      );
+    } catch (e, stack) {
+      unawaited(logs.add(
+        'Manual BG update check crashed: $e\n$stack',
+        level: LogLevel.error,
+      ));
+    }
+    if (!mounted) return;
+    setState(() => _isRunningBgCheck = false);
   }
 
   Future<void> initAndroidSdk() async {
@@ -556,11 +582,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         if (showBgSection) ...[
           SettingsToggleRow(
-            label: tr('foregroundServiceExplanation'),
-            value: settingsProvider.useFGService,
-            onChanged: (value) => settingsProvider.useFGService = value,
-          ),
-          SettingsToggleRow(
             label: tr('enableBackgroundUpdates'),
             value: settingsProvider.enableBackgroundUpdates,
             onChanged: (value) =>
@@ -619,12 +640,6 @@ class _SettingsPageState extends State<SettingsPage> {
           label: tr('tactileFeedbackEnabled'),
           value: settingsProvider.tactileFeedbackEnabled,
           onChanged: (value) => settingsProvider.tactileFeedbackEnabled = value,
-        ),
-        SettingsToggleRow(
-          label: tr('showBatteryOptimizationPrompt'),
-          value: settingsProvider.showBatteryOptimizationPrompt,
-          onChanged: (value) =>
-              settingsProvider.showBatteryOptimizationPrompt = value,
         ),
         SettingsToggleRow(
           label: tr('showAppDowngradeError'),
@@ -696,6 +711,24 @@ class _SettingsPageState extends State<SettingsPage> {
           const SettingsTile(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: _ExternalInstallerTile(),
+          ),
+        if (showBgSection && settingsProvider.enableBackgroundUpdates)
+          SettingsTile(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonal(
+                onPressed:
+                    _isRunningBgCheck ? null : _triggerManualBgCheck,
+                child: _isRunningBgCheck
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(tr('runBgCheckNow')),
+              ),
+            ),
           ),
       ],
     );

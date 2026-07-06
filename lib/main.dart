@@ -15,9 +15,8 @@ import 'package:obtainium/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:background_fetch/background_fetch.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:workmanager/workmanager.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('en'), 'English'),
@@ -58,78 +57,33 @@ bool isFdroidBuild = false;
 /// (e.g. tapping a notification).
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
-@pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessEvent event) async {
-  final String taskId = event.taskId;
-  final bool isTimeout = event.timeout;
-  try {
-    if (isTimeout) {
-      unawaited(
-        LogsProvider().add('BG update task timed out.', level: LogLevel.error),
-      );
-      return;
-    }
-    await bgUpdateCheck(taskId, null);
-  } catch (e, stack) {
-    unawaited(
-      LogsProvider().add(
-        'BG headless task crashed: $e\n$stack',
-        level: LogLevel.error,
-      ),
-    );
-  } finally {
-    unawaited(BackgroundFetch.finish(taskId));
-  }
-}
+/// Unique task name used by WorkManager for periodic background update checks.
+const _workManagerTaskName = 'obtainiumBgUpdateCheck';
 
 @pragma('vm:entry-point')
-void startCallback() {
-  FlutterForegroundTask.setTaskHandler(MyTaskHandler());
-}
-
-class MyTaskHandler extends TaskHandler {
-  var _bgUpdateInProgress = false;
-
-  @override
-  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    final logs = LogsProvider();
     try {
-      unawaited(LogsProvider().add('onStart(starter: ${starter.name})'));
-      await bgUpdateCheck('bg_check', null);
+      await logs.add(
+        'WorkManager callback invoked (task: $taskName)',
+        level: LogLevel.info,
+      );
+      final taskId = 'wm_${DateTime.now().millisecondsSinceEpoch}';
+      await bgUpdateCheck(taskId, null);
+      await logs.add(
+        'WorkManager callback completed successfully',
+        level: LogLevel.info,
+      );
+      return true;
     } catch (e, stack) {
-      unawaited(
-        LogsProvider().add(
-          'BG foreground service onStart crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
-      );
+      unawaited(logs.add(
+        'WorkManager callback crashed: $e\n$stack',
+        level: LogLevel.error,
+      ));
+      return false;
     }
-  }
-
-  @override
-  void onRepeatEvent(DateTime timestamp) {
-    if (_bgUpdateInProgress) return;
-    _bgUpdateInProgress = true;
-    bgUpdateCheck('bg_check', null).whenComplete(() {
-      _bgUpdateInProgress = false;
-    }).catchError((e, stack) {
-      unawaited(
-        LogsProvider().add(
-          'BG foreground service onRepeatEvent crashed: $e\n$stack',
-          level: LogLevel.error,
-        ),
-      );
-    });
-  }
-
-  @override
-  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
-    unawaited(
-      LogsProvider().add('Foreground service onDestroy(isTimeout: $isTimeout)'),
-    );
-  }
-
-  @override
-  void onReceiveData(Object data) {}
+  });
 }
 
 void main() async {
@@ -182,7 +136,6 @@ void main() async {
   final np = NotificationsProvider();
   await np.initialize();
 
-
   await initializeDateFormatting();
   await EasyLocalization.ensureInitialized();
   if ((await DeviceInfoPlugin().androidInfo).version.sdkInt >= 29) {
@@ -195,7 +148,13 @@ void main() async {
     );
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
-  FlutterForegroundTask.initCommunicationPort();
+
+  await Workmanager().initialize(callbackDispatcher);
+  await logs.add(
+    'WorkManager initialised',
+    level: LogLevel.info,
+  );
+
   runApp(
     MultiProvider(
       providers: [
@@ -216,7 +175,6 @@ void main() async {
       ),
     ),
   );
-  unawaited(BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask));
 }
 
 class Obtainium extends StatefulWidget {
@@ -227,10 +185,8 @@ class Obtainium extends StatefulWidget {
 }
 
 class _ObtainiumState extends State<Obtainium> {
-  static const _foregroundServiceId = 666;
-  static const _fgTaskRepeatMs = 900000;
   var _lastUpdateInterval = -1;
-  var _lastUseFGService = false;
+  var _lastEnableBgUpdates = true;
   var _firstRunHandled = false;
   var _launchByNotifChecked = false;
   var _listenerRegistered = false;
@@ -238,22 +194,51 @@ class _ObtainiumState extends State<Obtainium> {
   void Function()? _settingsListener;
   SettingsProvider? _settingsProvider;
 
-  Future<void> _manageServices(SettingsProvider settings) async {
+  Future<void> _scheduleWorkManager(SettingsProvider settings) async {
     final interval = settings.updateInterval;
-    final useFG = settings.useFGService;
-    if (interval == _lastUpdateInterval && useFG == _lastUseFGService) return;
-    _lastUpdateInterval = interval;
-    _lastUseFGService = useFG;
-    if (interval == 0) {
-      await stopForegroundService();
-      await BackgroundFetch.stop();
-    } else if (useFG) {
-      await BackgroundFetch.stop();
-      await startForegroundService(false);
-    } else {
-      await stopForegroundService();
-      await BackgroundFetch.start();
+    final enabled = settings.enableBackgroundUpdates;
+    if (interval == _lastUpdateInterval && enabled == _lastEnableBgUpdates) {
+      return;
     }
+    _lastUpdateInterval = interval;
+    _lastEnableBgUpdates = enabled;
+
+    final logs = context.read<LogsProvider>();
+    await logs.add(
+      '_scheduleWorkManager: interval=$interval enabled=$enabled',
+      level: LogLevel.info,
+    );
+
+    await Workmanager().cancelAll();
+    if (interval == 0 || !enabled) {
+      await logs.add(
+        '_scheduleWorkManager: background updates disabled, all tasks cancelled',
+        level: LogLevel.info,
+      );
+      return;
+    }
+
+    await Workmanager().registerPeriodicTask(
+      _workManagerTaskName,
+      _workManagerTaskName,
+      frequency: Duration(minutes: interval),
+      constraints: Constraints(
+        networkType: settings.bgUpdatesOnWiFiOnly
+            ? NetworkType.unmetered
+            : NetworkType.connected,
+        requiresCharging: settings.bgUpdatesWhileChargingOnly,
+        requiresBatteryNotLow: false,
+        requiresDeviceIdle: false,
+        requiresStorageNotLow: false,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+    );
+    await logs.add(
+      '_scheduleWorkManager: periodic task registered '
+      '(interval=${interval}min, wifiOnly=${settings.bgUpdatesOnWiFiOnly}, '
+      'chargingOnly=${settings.bgUpdatesWhileChargingOnly})',
+      level: LogLevel.info,
+    );
   }
 
   void _handleFirstRun(
@@ -312,97 +297,30 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   void initState() {
     super.initState();
-    initPlatformState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      requestNonOptionalPermissions();
       final settingsProvider = context.read<SettingsProvider>();
       _settingsProvider = settingsProvider;
       final appsProvider = context.read<AppsProvider>();
       final logger = context.read<Logger>();
       final notifs = context.read<NotificationsProvider>();
-      unawaited(_manageServices(settingsProvider));
+
+      unawaited(_scheduleWorkManager(settingsProvider));
       _handleFirstRun(settingsProvider, appsProvider, logger, context);
+
       if (!_launchByNotifChecked) {
         _launchByNotifChecked = true;
         notifs.checkLaunchByNotif();
       }
+
       if (!_listenerRegistered) {
         _listenerRegistered = true;
         _settingsListener = () {
-          unawaited(_manageServices(settingsProvider));
+          unawaited(_scheduleWorkManager(settingsProvider));
           _handleFirstRun(settingsProvider, appsProvider, logger, context);
         };
         settingsProvider.addListener(_settingsListener!);
       }
     });
-  }
-
-  Future<void> requestNonOptionalPermissions() async {
-    final settingsProvider = context.read<SettingsProvider>();
-    final NotificationPermission notificationPermission =
-        await FlutterForegroundTask.checkNotificationPermission();
-    if (notificationPermission != NotificationPermission.granted) {
-      await FlutterForegroundTask.requestNotificationPermission();
-    }
-    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-      if (settingsProvider.showBatteryOptimizationPrompt) {
-        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
-      }
-    }
-  }
-
-  var _fgServiceInitialized = false;
-
-  void initForegroundService() {
-    if (_fgServiceInitialized) return;
-    _fgServiceInitialized = true;
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'bg_update',
-        channelName: tr('foregroundService'),
-        channelDescription: tr('foregroundService'),
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(_fgTaskRepeatMs),
-        autoRunOnBoot: true,
-        autoRunOnMyPackageReplaced: true,
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
-    );
-  }
-
-  Future<ServiceRequestResult?> startForegroundService(bool restart) async {
-    initForegroundService();
-    if (await FlutterForegroundTask.isRunningService) {
-      if (restart) {
-        return FlutterForegroundTask.restartService();
-      }
-    } else {
-      return FlutterForegroundTask.startService(
-        serviceTypes: [ForegroundServiceTypes.specialUse],
-        serviceId: _foregroundServiceId,
-        notificationTitle: tr('foregroundService'),
-        notificationText: tr('fgServiceNotice'),
-        notificationIcon: const NotificationIcon(
-          metaDataName: 'dev.imranr.obtainium.service.NOTIFICATION_ICON',
-        ),
-        callback: startCallback,
-      );
-    }
-    return null;
-  }
-
-  Future<ServiceRequestResult?> stopForegroundService() async {
-    if (await FlutterForegroundTask.isRunningService) {
-      return FlutterForegroundTask.stopService();
-    }
-    return null;
   }
 
   @override
@@ -414,116 +332,80 @@ class _ObtainiumState extends State<Obtainium> {
     super.dispose();
   }
 
-  Future<void> initPlatformState() async {
-    final logs = context.read<LogsProvider>();
-    final notifs = context.read<NotificationsProvider>();
-    final settings = context.read<SettingsProvider>();
-    await BackgroundFetch.configure(
-      BackgroundFetchConfig(
-        minimumFetchInterval: 15,
-        stopOnTerminate: false,
-        startOnBoot: true,
-        enableHeadless: true,
-        requiresBatteryNotLow: false,
-        requiresCharging: false,
-        requiresStorageNotLow: false,
-        requiresDeviceIdle: false,
-        requiredNetworkType: NetworkType.ANY,
-      ),
-      (String taskId) async {
-        await bgUpdateCheck(
-          taskId,
-          null,
-          logs: logs,
-          notifs: notifs,
-          settings: settings,
-        );
-        unawaited(BackgroundFetch.finish(taskId));
-      },
-      (String taskId) async {
-        unawaited(logs.add('BG update task timed out.'));
-        unawaited(BackgroundFetch.finish(taskId));
-      },
-    );
-    if (!context.mounted) return;
-  }
-
   @override
   Widget build(BuildContext context) {
     final SettingsProvider settingsProvider = context.watch<SettingsProvider>();
 
-    return WithForegroundTask(
-      child: DynamicColorBuilder(
-        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          ColorScheme lightColorScheme;
-          ColorScheme darkColorScheme;
-          final schemeMode = settingsProvider.colourSchemeMode;
-          if (lightDynamic != null &&
-              darkDynamic != null &&
-              schemeMode == ColourSchemeMode.materialYou) {
-            lightColorScheme = lightDynamic.harmonized();
-            darkColorScheme = darkDynamic.harmonized();
-          } else {
-            final variant = switch (schemeMode) {
-              ColourSchemeMode.vibrant => DynamicSchemeVariant.vibrant,
-              ColourSchemeMode.expressive => DynamicSchemeVariant.expressive,
-              _ => DynamicSchemeVariant.tonalSpot,
-            };
-            lightColorScheme = ColorScheme.fromSeed(
-              seedColor: settingsProvider.themeColor,
-              dynamicSchemeVariant: variant,
-            );
-            darkColorScheme = ColorScheme.fromSeed(
-              seedColor: settingsProvider.themeColor,
-              brightness: Brightness.dark,
-              dynamicSchemeVariant: variant,
-            );
-          }
-
-          if (settingsProvider.useBlackTheme) {
-            darkColorScheme = darkColorScheme
-                .copyWith(surface: Colors.black)
-                .harmonized();
-          }
-
-          if (settingsProvider.useSystemFont && !_fontLoaded) {
-            _fontLoaded = true;
-            unawaited(NativeFeatures.loadSystemFont());
-          }
-
-          return MaterialApp(
-            title: 'Obtainium',
-            navigatorKey: appNavigatorKey,
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            locale: context.locale,
-            debugShowCheckedModeBanner: false,
-            theme: buildObtainiumTheme(
-              settingsProvider.theme == ThemeSettings.dark
-                  ? darkColorScheme
-                  : lightColorScheme,
-              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
-            ),
-            darkTheme: buildObtainiumTheme(
-              settingsProvider.theme == ThemeSettings.light
-                  ? lightColorScheme
-                  : darkColorScheme,
-              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
-            ),
-            home: const HomePage(),
-            builder: (context, child) {
-              setAppLocale(context.locale);
-              return Shortcuts(
-                shortcuts: <LogicalKeySet, Intent>{
-                  LogicalKeySet(LogicalKeyboardKey.select):
-                      const ActivateIntent(),
-                },
-                child: child ?? const SizedBox.shrink(),
-              );
-            },
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        ColorScheme lightColorScheme;
+        ColorScheme darkColorScheme;
+        final schemeMode = settingsProvider.colourSchemeMode;
+        if (lightDynamic != null &&
+            darkDynamic != null &&
+            schemeMode == ColourSchemeMode.materialYou) {
+          lightColorScheme = lightDynamic.harmonized();
+          darkColorScheme = darkDynamic.harmonized();
+        } else {
+          final variant = switch (schemeMode) {
+            ColourSchemeMode.vibrant => DynamicSchemeVariant.vibrant,
+            ColourSchemeMode.expressive => DynamicSchemeVariant.expressive,
+            _ => DynamicSchemeVariant.tonalSpot,
+          };
+          lightColorScheme = ColorScheme.fromSeed(
+            seedColor: settingsProvider.themeColor,
+            dynamicSchemeVariant: variant,
           );
-        },
-      ),
+          darkColorScheme = ColorScheme.fromSeed(
+            seedColor: settingsProvider.themeColor,
+            brightness: Brightness.dark,
+            dynamicSchemeVariant: variant,
+          );
+        }
+
+        if (settingsProvider.useBlackTheme) {
+          darkColorScheme = darkColorScheme
+              .copyWith(surface: Colors.black)
+              .harmonized();
+        }
+
+        if (settingsProvider.useSystemFont && !_fontLoaded) {
+          _fontLoaded = true;
+          unawaited(NativeFeatures.loadSystemFont());
+        }
+
+        return MaterialApp(
+          title: 'Obtainium',
+          navigatorKey: appNavigatorKey,
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
+          debugShowCheckedModeBanner: false,
+          theme: buildObtainiumTheme(
+            settingsProvider.theme == ThemeSettings.dark
+                ? darkColorScheme
+                : lightColorScheme,
+            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+          ),
+          darkTheme: buildObtainiumTheme(
+            settingsProvider.theme == ThemeSettings.light
+                ? lightColorScheme
+                : darkColorScheme,
+            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+          ),
+          home: const HomePage(),
+          builder: (context, child) {
+            setAppLocale(context.locale);
+            return Shortcuts(
+              shortcuts: <LogicalKeySet, Intent>{
+                LogicalKeySet(LogicalKeyboardKey.select):
+                    const ActivateIntent(),
+              },
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+        );
+      },
     );
   }
 }

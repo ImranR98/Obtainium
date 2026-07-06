@@ -520,15 +520,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool get showBatteryOptimizationPrompt {
-    return _getBool('showBatteryOptimizationPrompt') ?? true;
-  }
-
-  set showBatteryOptimizationPrompt(bool show) {
-    prefs?.setBool('showBatteryOptimizationPrompt', show);
-    notifyListeners();
-  }
-
   bool get tactileFeedbackEnabled {
     return _getBool('tactileFeedbackEnabled') ?? true;
   }
@@ -754,15 +745,6 @@ class SettingsProvider with ChangeNotifier {
 
   set shizukuPretendToBeGooglePlay(bool val) {
     prefs?.setBool('shizukuPretendToBeGooglePlay', val);
-    notifyListeners();
-  }
-
-  bool get useFGService {
-    return _getBool('useFGService') ?? false;
-  }
-
-  set useFGService(bool val) {
-    prefs?.setBool('useFGService', val);
     notifyListeners();
   }
 }
