@@ -1248,11 +1248,9 @@ class TypedSettings {
 
 class HttpService {
   static const int maxRedirects = 10;
-  static const Duration connectionTimeout = Duration(seconds: 30);
 
   HttpClient createHttpClient(bool insecure) {
     final client = HttpClient();
-    client.connectionTimeout = connectionTimeout;
     if (insecure) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
