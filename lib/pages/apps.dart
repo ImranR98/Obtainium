@@ -13,6 +13,7 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -55,7 +56,6 @@ class AppsPageState extends State<AppsPage> {
   final AppsFilter neutralFilter = AppsFilter();
   Set<String> selectedAppIds = {};
   Set<String?> collapsedGroups = {};
-  DateTime? refreshingSince;
 
   final TextEditingController searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
@@ -161,21 +161,39 @@ class AppsPageState extends State<AppsPage> {
     return result;
   }
 
-  Future<List<App>> refresh(BuildContext context) {
+  Future<List<App>> refresh() {
+    unawaited(LogsProvider().add(
+      'APPS REFRESH: refresh() called, checkUpdates starting',
+      level: LogLevel.info,
+    ));
     settingsProvider.lightImpact();
-    refreshingSince = DateTime.now();
     setState(() {});
+    final ctx = context;
     return appsProvider
-        .checkUpdates()
+        .checkUpdates(forceAll: true)
+        .then((updates) {
+          unawaited(LogsProvider().add(
+            'APPS REFRESH: checkUpdates returned ${updates.length} updates',
+            level: LogLevel.info,
+          ));
+          return updates;
+        })
         .catchError((e) {
-          if (context.mounted) {
-            showError(e is CheckUpdatesException ? e.errors : e, context);
+          unawaited(LogsProvider().add(
+            'APPS REFRESH: checkUpdates error: ${e.toString()}',
+            level: LogLevel.error,
+          ));
+          if (ctx.mounted) {
+            showError(e is CheckUpdatesException ? e.errors : e, ctx);
           }
           return <App>[];
         })
         .whenComplete(() {
-          refreshingSince = null;
-          if (mounted) setState(() {});
+          unawaited(LogsProvider().add(
+            'APPS REFRESH: whenComplete firing',
+            level: LogLevel.info,
+          ));
+          setState(() {});
         });
   }
 
@@ -1001,28 +1019,6 @@ class AppsPageState extends State<AppsPage> {
                 : tr('noAppsForFilter'),
           ),
         ),
-      if (refreshingSince != null || appsProvider.loadingApps)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
-            child: LinearProgressIndicator(
-              value: appsProvider.loadingApps
-                  ? null
-                  : appsProvider.apps.values
-                            .where(
-                              (element) =>
-                                  !(element.app.lastUpdateCheck?.isBefore(
-                                        refreshingSince!,
-                                      ) ??
-                                      true),
-                            )
-                            .length /
-                        (appsProvider.apps.isNotEmpty
-                            ? appsProvider.apps.length
-                            : 1),
-            ),
-          ),
-        ),
     ];
   }
 
@@ -1044,6 +1040,10 @@ class AppsPageState extends State<AppsPage> {
         settingsProvider.checkOnStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        unawaited(LogsProvider().add(
+          'APPS REFRESH: calling refreshIndicatorKey.currentState?.show()',
+          level: LogLevel.info,
+        ));
         refreshIndicatorKey.currentState?.show();
       });
     }
@@ -1153,7 +1153,7 @@ class AppsPageState extends State<AppsPage> {
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: RefreshIndicator(
             key: refreshIndicatorKey,
-            onRefresh: () => refresh(context),
+            onRefresh: refresh,
             child: Scrollbar(
               interactive: true,
               controller: scrollController,

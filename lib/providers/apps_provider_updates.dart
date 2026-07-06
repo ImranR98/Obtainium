@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
@@ -89,23 +90,49 @@ extension AppsProviderUpdates on AppsProvider {
   Future<List<App>> checkUpdates({
     bool throwErrorsForRetry = false,
     List<String>? specificIds,
+    bool forceAll = false,
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     if (updateCheckCompleter != null) {
+      unawaited(LogsProvider().add(
+        'APPS REFRESH: checkUpdates returning existing completer future',
+        level: LogLevel.info,
+      ));
       return updateCheckCompleter!.future;
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
+    unawaited(LogsProvider().add(
+      'APPS REFRESH: checkUpdates created new completer',
+      level: LogLevel.info,
+    ));
     try {
       final List<App> updates = [];
       final MultiAppMultiError errors = MultiAppMultiError();
-      List<String> appIds = getAppsSortedByUpdateCheckTime(
-        onlyCheckInstalledOrTrackOnlyApps:
-            settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
-      );
+      List<String> appIds;
       if (specificIds != null) {
-        appIds = appIds.where((aId) => specificIds.contains(aId)).toList();
+        appIds = List.from(specificIds);
+      } else if (forceAll) {
+        appIds = apps.values.map((e) => e.app.id).toList();
+        appIds.sort(
+          (a, b) =>
+              (apps[a]!.app.lastUpdateCheck ??
+                      DateTime.fromMicrosecondsSinceEpoch(0))
+                  .compareTo(
+                    apps[b]!.app.lastUpdateCheck ??
+                        DateTime.fromMicrosecondsSinceEpoch(0),
+                  ),
+        );
+      } else {
+        appIds = getAppsSortedByUpdateCheckTime(
+          onlyCheckInstalledOrTrackOnlyApps:
+              settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
+        );
       }
+      unawaited(LogsProvider().add(
+        'APPS REFRESH: checkUpdates checking ${appIds.length} apps (forceAll=$forceAll, specificIds=${specificIds != null})',
+        level: LogLevel.info,
+      ));
       final results = await Future.wait(
         appIds.map((appId) async {
           final currentApp = apps[appId]?.app;
@@ -138,16 +165,32 @@ extension AppsProviderUpdates on AppsProvider {
         if (r.value) updates.add(r.key);
       }
       if (fetched.isNotEmpty) {
+        unawaited(LogsProvider().add(
+          'APPS REFRESH: checkUpdates saving ${fetched.length} fetched apps (${updates.length} have updates)',
+          level: LogLevel.info,
+        ));
         await saveApps(fetched);
       }
       if (errors.idsByErrorString.isNotEmpty) {
+        unawaited(LogsProvider().add(
+          'APPS REFRESH: checkUpdates completed with ${errors.idsByErrorString.length} errors',
+          level: LogLevel.info,
+        ));
         final ex = CheckUpdatesException(updates, errors);
         completer.completeError(ex);
         throw ex;
       }
+      unawaited(LogsProvider().add(
+        'APPS REFRESH: checkUpdates completed successfully',
+        level: LogLevel.info,
+      ));
       completer.complete(updates);
       return updates;
     } catch (e) {
+      unawaited(LogsProvider().add(
+        'APPS REFRESH: checkUpdates caught exception: ${e.toString()}',
+        level: LogLevel.error,
+      ));
       if (!completer.isCompleted) {
         completer.completeError(e);
       }
