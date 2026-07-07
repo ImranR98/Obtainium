@@ -35,7 +35,7 @@ dependencies:
   android_package_manager: # TODO: Submit PR to upstream and switch back when merged
     git:
       url: https://github.com/ImranR98/android_package_manager
-      ref: 18231a8a2343747440b0bfe90f7d56ef7f586099
+      ref: 98661a5824c94ae990ae0f7bf0bdb1478300c4f7
   share_plus: ^13.2.0
   sqflite: ^2.4.3
   easy_localization: ^3.0.8
