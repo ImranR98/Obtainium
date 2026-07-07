@@ -17,7 +17,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// and https://github.com/Coolapk-UWP/Coolapk-UWP
 class CoolApk extends AppSource {
   CoolApk() {
-    name = 'coolApk';
+    name = 'CoolApk';
     hosts = ['coolapk.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;

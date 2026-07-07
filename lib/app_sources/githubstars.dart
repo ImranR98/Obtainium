@@ -13,7 +13,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// repo's URL, full name, and description. Rate limits are checked per page.
 class GitHubStars implements MassAppUrlSource {
   @override
-  String get name => tr('githubStarredRepos');
+  String get name => 'GitHub starred repositories';
 
   @override
   List<String> get requiredArgs => [tr('uname')];

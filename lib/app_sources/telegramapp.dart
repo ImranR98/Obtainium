@@ -6,7 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 class TelegramApp extends AppSource {
   TelegramApp() {
     hosts = ['telegram.org'];
-    name = 'Telegram app';
+    name = 'Telegram App';
   }
 
   @override

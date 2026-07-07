@@ -12,7 +12,7 @@ class FDroidRepo extends AppSource {
   bool _appIdFoundInUrl = false;
 
   FDroidRepo() {
-    name = 'fdroidThirdPartyRepo';
+    name = 'F-Droid third-party repo';
     canSearch = true;
     includeAdditionalOptsInMainSearch = true;
     neverAutoSelect = true;

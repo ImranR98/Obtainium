@@ -311,7 +311,7 @@ class AddAppPageState extends State<AddAppPage> {
     setState(() {});
     final sourceStrings = <String, List<String>>{};
     sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
-      sourceStrings[s.name] = [tr(s.name)];
+      sourceStrings[s.name] = [s.name];
     });
     try {
       final searchSources =
@@ -345,7 +345,7 @@ class AddAppPageState extends State<AddAppPage> {
                       context: context,
                       builder: (BuildContext ctx) {
                         return GeneratedFormModal(
-                          title: tr('searchX', args: [tr(e.name)]),
+                          title: tr('searchX', args: [e.name]),
                           items: [
                             ...e.searchQuerySettingFormItems.map((e) => [e]),
                             [
@@ -475,7 +475,7 @@ class AddAppPageState extends State<AddAppPage> {
               children: sourceProvider.sources.map((e) {
                 return ActionChip(
                   label: Text(
-                    '${tr(e.name)}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
                   ),
                   onPressed: e.hosts.isNotEmpty
                       ? () {
@@ -601,7 +601,7 @@ class AddAppPageState extends State<AddAppPage> {
                                     pickedSource!.sourceIdentifier ==
                                         s.sourceIdentifier),
                           )
-                          .map((s) => MapEntry(s.name, tr(s.name))),
+                          .map((s) => MapEntry(s.name, s.name)),
                     ],
                     label: tr('overrideSource'),
                   ),
@@ -865,7 +865,7 @@ class AddAppPageState extends State<AddAppPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      tr(pickedSource!.name),
+                                      pickedSource!.name,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
