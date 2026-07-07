@@ -252,7 +252,7 @@ class DownloadedNotification extends ObtainiumNotification {
       );
 }
 
-final completeInstallationNotification = ObtainiumNotification(
+ObtainiumNotification get completeInstallationNotification => ObtainiumNotification(
   1,
   tr('completeAppInstallation'),
   tr('obtainiumMustBeOpenToInstallApps'),

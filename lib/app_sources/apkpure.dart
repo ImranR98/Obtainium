@@ -24,25 +24,27 @@ class APKPure extends AppSource {
     allowSubDomains = true;
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;
-    additionalSourceAppSpecificSettingFormItems = [
-      AppSource.fallbackToOlderReleasesFormItem,
-      [
-        GeneratedFormSwitch(
-          'stayOneVersionBehind',
-          label: tr('stayOneVersionBehind'),
-          value: false,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'useFirstApkOfVersion',
-          label: tr('useFirstApkOfVersion'),
-          value: true,
-        ),
-      ],
-    ];
     inferAppIdFromUrlPath = true;
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    AppSource.fallbackToOlderReleasesFormItem,
+    [
+      GeneratedFormSwitch(
+        'stayOneVersionBehind',
+        label: tr('stayOneVersionBehind'),
+        value: false,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'useFirstApkOfVersion',
+        label: tr('useFirstApkOfVersion'),
+        value: true,
+      ),
+    ],
+  ];
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

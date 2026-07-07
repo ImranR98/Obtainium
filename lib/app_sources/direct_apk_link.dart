@@ -11,26 +11,8 @@ class DirectAPKLink extends AppSource {
   final HTML html = HTML();
 
   DirectAPKLink() {
-    name = tr('directAPKLink');
+    name = 'directAPKLink';
     versionDetectionDisallowed = true;
-    additionalSourceAppSpecificSettingFormItems = [
-      ...html.additionalSourceAppSpecificSettingFormItems.where(
-        (element) => element
-            .where((element) => element.key == 'requestHeader')
-            .isNotEmpty,
-      ),
-      [
-        GeneratedFormDropdown(
-          'defaultPseudoVersioningMethod',
-          [
-            MapEntry('partialAPKHash', tr('partialAPKHash')),
-            const MapEntry('ETag', 'ETag'),
-          ],
-          label: tr('defaultPseudoVersioningMethod'),
-          value: 'partialAPKHash',
-        ),
-      ],
-    ];
     excludeCommonSettingKeys = [
       'versionExtractionRegEx',
       'matchGroupToUse',
@@ -40,6 +22,26 @@ class DirectAPKLink extends AppSource {
       'autoApkFilterByArch',
     ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    ...html.additionalSourceAppSpecificSettingFormItems.where(
+      (element) => element
+          .where((element) => element.key == 'requestHeader')
+          .isNotEmpty,
+    ),
+    [
+      GeneratedFormDropdown(
+        'defaultPseudoVersioningMethod',
+        [
+          MapEntry('partialAPKHash', tr('partialAPKHash')),
+          const MapEntry('ETag', 'ETag'),
+        ],
+        label: tr('defaultPseudoVersioningMethod'),
+        value: 'partialAPKHash',
+      ),
+    ],
+  ];
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

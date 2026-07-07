@@ -286,7 +286,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         return DropdownMenuItem(
           value: e2.key,
           enabled: enabled,
-          child: Opacity(opacity: enabled ? 1 : 0.5, child: Text(e2.value)),
+          child: Opacity(opacity: enabled ? 1 : 0.5, child: Text(tr(e2.value))),
         );
       }).toList(),
       onChanged: (value) {

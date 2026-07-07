@@ -20,22 +20,24 @@ class GitLab extends AppSource {
     canSearch = true;
     showReleaseDateAsVersionToggle = true;
     this.hostChanged = hostChanged;
-
-    sourceConfigSettingFormItems = [
-      GeneratedFormTextField(
-        'gitlab-creds',
-        label: tr('gitlabPATLabel'),
-        password: true,
-        required: false,
-        helpUrl:
-            'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
-      ),
-    ];
-
-    additionalSourceAppSpecificSettingFormItems = [
-      AppSource.fallbackToOlderReleasesFormItem,
-    ];
   }
+
+  @override
+  List<GeneratedFormItem> get sourceConfigSettingFormItems => [
+    GeneratedFormTextField(
+      'gitlab-creds',
+      label: tr('gitlabPATLabel'),
+      password: true,
+      required: false,
+      helpUrl:
+          'https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token',
+    ),
+  ];
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    AppSource.fallbackToOlderReleasesFormItem,
+  ];
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

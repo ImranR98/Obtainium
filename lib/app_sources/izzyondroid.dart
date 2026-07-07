@@ -9,10 +9,12 @@ class IzzyOnDroid extends AppSource {
   IzzyOnDroid() {
     name = 'IzzyOnDroid';
     hosts = ['izzysoft.de'];
-    additionalSourceAppSpecificSettingFormItems =
-        List<List<GeneratedFormItem>>.from(fd.additionalSourceAppSpecificSettingFormItems);
     allowSubDomains = true;
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
+      List<List<GeneratedFormItem>>.from(fd.additionalSourceAppSpecificSettingFormItems);
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

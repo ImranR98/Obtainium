@@ -17,23 +17,24 @@ class APKMirror extends AppSource {
     hosts = ['apkmirror.com'];
     enforceTrackOnly = true;
     showReleaseDateAsVersionToggle = true;
-
-    additionalSourceAppSpecificSettingFormItems = [
-      AppSource.fallbackToOlderReleasesFormItem,
-      [
-        GeneratedFormTextField(
-          'filterReleaseTitlesByRegEx',
-          label: tr('filterReleaseTitlesByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    AppSource.fallbackToOlderReleasesFormItem,
+    [
+      GeneratedFormTextField(
+        'filterReleaseTitlesByRegEx',
+        label: tr('filterReleaseTitlesByRegEx'),
+        required: false,
+        additionalValidators: [
+          (value) {
+            return regExValidator(value);
+          },
+        ],
+      ),
+    ],
+  ];
 
   @override
   Future<Map<String, String>?> getRequestHeaders(

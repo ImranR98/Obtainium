@@ -20,131 +20,134 @@ class GitHub extends AppSource {
     this.hostChanged = hostChanged;
     allowIncludeZips = true;
     allowIncludeTarballs = true;
+    canSearch = true;
+  }
 
-    sourceConfigSettingFormItems = [
-      GeneratedFormTextField(
-        'github-creds',
-        label: tr('githubPATLabel'),
-        password: true,
-        required: false,
-        helpUrl:
-            'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
-      ),
-      GeneratedFormTextField(
-        'GHReqPrefix',
-        label: tr('GHReqPrefix'),
-        hint: 'gh-proxy.org',
-        required: false,
-        additionalValidators: [
-          (value) {
-            try {
-              if (value != null && Uri.parse(value).scheme.isNotEmpty) {
-                throw true;
-              }
-              if (value != null) {
-                Uri.parse('https://$value/api.github.com');
-              }
-            } catch (e) {
-              return tr('invalidInput');
+  @override
+  List<GeneratedFormItem> get sourceConfigSettingFormItems => [
+    GeneratedFormTextField(
+      'github-creds',
+      label: tr('githubPATLabel'),
+      password: true,
+      required: false,
+      helpUrl:
+          'https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token',
+    ),
+    GeneratedFormTextField(
+      'GHReqPrefix',
+      label: tr('GHReqPrefix'),
+      hint: 'gh-proxy.org',
+      required: false,
+      additionalValidators: [
+        (value) {
+          try {
+            if (value != null && Uri.parse(value).scheme.isNotEmpty) {
+              throw true;
             }
-            return null;
-          },
-        ],
-        helpUrl: 'https://github.com/sky22333/hubproxy',
-      ),
+            if (value != null) {
+              Uri.parse('https://$value/api.github.com');
+            }
+          } catch (e) {
+            return tr('invalidInput');
+          }
+          return null;
+        },
+      ],
+      helpUrl: 'https://github.com/sky22333/hubproxy',
+    ),
+    GeneratedFormSwitch(
+      'checkRepoRename',
+      label: tr('repoRenamedCheck'),
+      value: false,
+    ),
+  ];
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    [
       GeneratedFormSwitch(
-        'checkRepoRename',
-        label: tr('repoRenamedCheck'),
+        'includePrereleases',
+        label: tr('includePrereleases'),
         value: false,
       ),
-    ];
-
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'includePrereleases',
-          label: tr('includePrereleases'),
-          value: false,
-        ),
-      ],
-      AppSource.fallbackToOlderReleasesFormItem,
-      [
-        GeneratedFormTextField(
-          'filterReleaseTitlesByRegEx',
-          label: tr('filterReleaseTitlesByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-      [
-        GeneratedFormTextField(
-          'filterReleaseNotesByRegEx',
-          label: tr('filterReleaseNotesByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-      [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
-      [
-        GeneratedFormDropdown(
-          'sortMethodChoice',
-          [
-            MapEntry('date', tr('releaseDate')),
-            MapEntry('smartname', tr('smartname')),
-            MapEntry('none', tr('none')),
-            MapEntry(
-              'smartname-datefallback',
-              '${tr('smartname')} x ${tr('releaseDate')}',
-            ),
-            MapEntry('name', tr('name')),
-          ],
-          label: tr('sortMethod'),
-          value: 'date',
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'useLatestAssetDateAsReleaseDate',
-          label: tr('useLatestAssetDateAsReleaseDate'),
-          value: false,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'releaseTitleAsVersion',
-          label: tr('releaseTitleAsVersion'),
-          value: false,
-        ),
-      ],
-    ];
-
-    canSearch = true;
-    searchQuerySettingFormItems = [
+    ],
+    AppSource.fallbackToOlderReleasesFormItem,
+    [
       GeneratedFormTextField(
-        'minStarCount',
-        label: tr('minStarCount'),
-        value: '0',
+        'filterReleaseTitlesByRegEx',
+        label: tr('filterReleaseTitlesByRegEx'),
+        required: false,
         additionalValidators: [
           (value) {
-            try {
-              int.parse(value ?? '0');
-            } catch (e) {
-              return tr('invalidInput');
-            }
-            return null;
+            return regExValidator(value);
           },
         ],
       ),
-    ];
-  }
+    ],
+    [
+      GeneratedFormTextField(
+        'filterReleaseNotesByRegEx',
+        label: tr('filterReleaseNotesByRegEx'),
+        required: false,
+        additionalValidators: [
+          (value) {
+            return regExValidator(value);
+          },
+        ],
+      ),
+    ],
+    [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
+    [
+      GeneratedFormDropdown(
+        'sortMethodChoice',
+        [
+          MapEntry('date', tr('releaseDate')),
+          MapEntry('smartname', tr('smartname')),
+          MapEntry('none', tr('none')),
+          MapEntry(
+            'smartname-datefallback',
+            '${tr('smartname')} x ${tr('releaseDate')}',
+          ),
+          MapEntry('name', tr('name')),
+        ],
+        label: tr('sortMethod'),
+        value: 'date',
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'useLatestAssetDateAsReleaseDate',
+        label: tr('useLatestAssetDateAsReleaseDate'),
+        value: false,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'releaseTitleAsVersion',
+        label: tr('releaseTitleAsVersion'),
+        value: false,
+      ),
+    ],
+  ];
+
+  @override
+  List<GeneratedFormItem> get searchQuerySettingFormItems => [
+    GeneratedFormTextField(
+      'minStarCount',
+      label: tr('minStarCount'),
+      value: '0',
+      additionalValidators: [
+        (value) {
+          try {
+            int.parse(value ?? '0');
+          } catch (e) {
+            return tr('invalidInput');
+          }
+          return null;
+        },
+      ],
+    ),
+  ];
 
   @override
   Future<String?> tryInferringAppId(

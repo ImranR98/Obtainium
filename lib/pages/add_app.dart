@@ -311,7 +311,7 @@ class AddAppPageState extends State<AddAppPage> {
     setState(() {});
     final sourceStrings = <String, List<String>>{};
     sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
-      sourceStrings[s.name] = [s.name];
+      sourceStrings[s.name] = [tr(s.name)];
     });
     try {
       final searchSources =
@@ -601,7 +601,7 @@ class AddAppPageState extends State<AddAppPage> {
                                     pickedSource!.sourceIdentifier ==
                                         s.sourceIdentifier),
                           )
-                          .map((s) => MapEntry(s.name, s.name)),
+                          .map((s) => MapEntry(s.name, tr(s.name))),
                     ],
                     label: tr('overrideSource'),
                   ),

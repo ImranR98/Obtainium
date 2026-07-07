@@ -9,38 +9,41 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroidRepo extends AppSource {
+  bool _appIdFromUrl = false;
+
   FDroidRepo() {
-    name = tr('fdroidThirdPartyRepo');
+    name = 'fdroidThirdPartyRepo';
     canSearch = true;
     includeAdditionalOptsInMainSearch = true;
     neverAutoSelect = true;
     showReleaseDateAsVersionToggle = true;
-
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormTextField(
-          'appIdOrName',
-          label: tr('appIdOrName'),
-          hint: tr('reposHaveMultipleApps'),
-          required: true,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'pickHighestVersionCode',
-          label: tr('pickHighestVersionCode'),
-          value: false,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'trySelectingSuggestedVersionCode',
-          label: tr('trySelectingSuggestedVersionCode'),
-          value: true,
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    [
+      GeneratedFormTextField(
+        'appIdOrName',
+        label: tr('appIdOrName'),
+        hint: tr('reposHaveMultipleApps'),
+        required: !_appIdFromUrl,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'pickHighestVersionCode',
+        label: tr('pickHighestVersionCode'),
+        value: false,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'trySelectingSuggestedVersionCode',
+        label: tr('trySelectingSuggestedVersionCode'),
+        value: true,
+      ),
+    ],
+  ];
 
   String removeQueryParamsFromUrl(String url, {List<String> keep = const []}) {
     final uri = Uri.parse(url);
@@ -103,25 +106,14 @@ class FDroidRepo extends AppSource {
 
   @override
   void runOnAddAppInputChange(String inputUrl) {
-    additionalSourceAppSpecificSettingFormItems =
-        additionalSourceAppSpecificSettingFormItems.map((row) {
-          row = row.map((item) {
-            if (item.key == 'appIdOrName') {
-              try {
-                final appId = Uri.parse(inputUrl).queryParameters['appId'];
-                if (appId != null && item is GeneratedFormTextField) {
-                  item.required = false;
-                }
-              } catch (e) {
-                unawaited(
-                  LogsProvider().add('Failed to parse appId from URL: $e'),
-                );
-              }
-            }
-            return item;
-          }).toList();
-          return row;
-        }).toList();
+    try {
+      final appId = Uri.parse(inputUrl).queryParameters['appId'];
+      _appIdFromUrl = appId != null;
+    } catch (e) {
+      unawaited(
+        LogsProvider().add('Failed to parse appId from URL: $e'),
+      );
+    }
   }
 
   @override

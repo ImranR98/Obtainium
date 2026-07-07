@@ -233,7 +233,7 @@ class HTML extends AppSource {
     }).toList();
   }
 
-  var finalStepFormitems = [
+  List<List<GeneratedFormItem>> get _finalStepFormitems => [
     [
       GeneratedFormTextField(
         'customLinkFilterRegex',
@@ -254,7 +254,8 @@ class HTML extends AppSource {
       ),
     ],
   ];
-  var commonFormItems = [
+
+  List<List<GeneratedFormItem>> get _commonFormItems => [
     [GeneratedFormSwitch('filterByLinkText', label: tr('filterByLinkText'))],
     [
       GeneratedFormSwitch(
@@ -271,7 +272,8 @@ class HTML extends AppSource {
       ),
     ],
   ];
-  var intermediateFormItems = [
+
+  List<List<GeneratedFormItem>> get _intermediateFormItems => [
     [
       GeneratedFormTextField(
         'customLinkFilterRegex',
@@ -289,67 +291,70 @@ class HTML extends AppSource {
       ),
     ],
   ];
+
   HTML() {
     name = 'HTML';
     suppressStandardVersionExtraction = true;
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSubForm('intermediateLink', [
-          ...intermediateFormItems,
-          ...commonFormItems,
-        ], label: tr('intermediateLink')),
-      ],
-      finalStepFormitems[0],
-      ...commonFormItems,
-      ...finalStepFormitems.sublist(1),
-      [
-        GeneratedFormSubForm(
-          'requestHeader',
-          [
-            [
-              GeneratedFormTextField(
-                'requestHeader',
-                label: tr('requestHeader'),
-                required: false,
-                additionalValidators: [
-                  (value) {
-                    if ((value ?? 'empty:valid')
-                            .split(':')
-                            .map((e) => e.trim())
-                            .where((e) => e.isNotEmpty)
-                            .length <
-                        2) {
-                      return tr('invalidInput');
-                    }
-                    return null;
-                  },
-                ],
-              ),
-            ],
-          ],
-          label: tr('requestHeader'),
-          value: [
-            {
-              'requestHeader':
-                  'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-            },
-          ],
-        ),
-      ],
-      [
-        GeneratedFormDropdown(
-          'defaultPseudoVersioningMethod',
-          [
-            MapEntry('partialAPKHash', tr('partialAPKHash')),
-            MapEntry('APKLinkHash', tr('APKLinkHash')),
-            const MapEntry('ETag', 'ETag'),
-          ],
-          label: tr('defaultPseudoVersioningMethod'),
-          value: 'partialAPKHash',
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    [
+      GeneratedFormSubForm('intermediateLink', [
+        ..._intermediateFormItems,
+        ..._commonFormItems,
+      ], label: tr('intermediateLink')),
+    ],
+    _finalStepFormitems[0],
+    ..._commonFormItems,
+    ..._finalStepFormitems.sublist(1),
+    [
+      GeneratedFormSubForm(
+        'requestHeader',
+        [
+          [
+            GeneratedFormTextField(
+              'requestHeader',
+              label: tr('requestHeader'),
+              required: false,
+              additionalValidators: [
+                (value) {
+                  if ((value ?? 'empty:valid')
+                          .split(':')
+                          .map((e) => e.trim())
+                          .where((e) => e.isNotEmpty)
+                          .length <
+                      2) {
+                    return tr('invalidInput');
+                  }
+                  return null;
+                },
+              ],
+            ),
+          ],
+        ],
+        label: tr('requestHeader'),
+        value: [
+          {
+            'requestHeader':
+                'User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+          },
+        ],
+      ),
+    ],
+    [
+      GeneratedFormDropdown(
+        'defaultPseudoVersioningMethod',
+        [
+          MapEntry('partialAPKHash', tr('partialAPKHash')),
+          MapEntry('APKLinkHash', tr('APKLinkHash')),
+          const MapEntry('ETag', 'ETag'),
+        ],
+        label: tr('defaultPseudoVersioningMethod'),
+        value: 'partialAPKHash',
+      ),
+    ],
+  ];
 
   @override
   Future<Map<String, String>?> getRequestHeaders(

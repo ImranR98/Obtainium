@@ -13,24 +13,25 @@ class Farsroid extends AppSource {
   Farsroid() {
     hosts = ['farsroid.com'];
     name = 'Farsroid';
-
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormSwitch(
-          'useFirstApkOfVersion',
-          label: tr('useFirstApkOfVersion'),
-          value: true,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'releaseTitleAsVersion',
-          label: tr('releaseTitleAsVersion'),
-          value: false,
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    [
+      GeneratedFormSwitch(
+        'useFirstApkOfVersion',
+        label: tr('useFirstApkOfVersion'),
+        value: true,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'releaseTitleAsVersion',
+        label: tr('releaseTitleAsVersion'),
+        value: false,
+      ),
+    ],
+  ];
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

@@ -548,7 +548,7 @@ abstract class AppSource {
   }
 
   /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
-  List<List<GeneratedFormItem>> additionalSourceAppSpecificSettingFormItems =
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
       [];
 
   static List<GeneratedFormItem> get fallbackToOlderReleasesFormItem => [
@@ -560,7 +560,7 @@ abstract class AppSource {
   ];
 
   /// Some additional data may be needed for Apps regardless of Source
-  final List<List<GeneratedFormItem>> _commonAppSettingFormItems = [
+  List<List<GeneratedFormItem>> get _commonAppSettingFormItems => [
     [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
     [
       GeneratedFormTextField(
@@ -658,13 +658,9 @@ abstract class AppSource {
   /// Combines per-source form items with the common app-setting form items,
   /// interspersing conditional items (zip/tarball options, version toggles) and
   /// filtering out excluded keys. Cloned so that callers cannot mutate the
-  /// shared (cached) source-owned form items.
-  /// Memoized full result of [combinedAppSpecificSettingFormItems] to avoid
-  /// recomputing clones on every call (especially during rebuilds).
-  List<List<GeneratedFormItem>>? _combinedItemsCache;
-
+  /// shared source-owned form items. Rebuilt on every access so that labels
+  /// pick up the current locale via tr().
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
-    if (_combinedItemsCache != null) return _combinedItemsCache!;
     var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
 
     final versionDetectionIdx = agnosticItems.indexWhere(
@@ -752,7 +748,7 @@ abstract class AppSource {
       }
     }
 
-    return _combinedItemsCache = [
+    return [
       // Clone so callers (e.g. the add-app form pre-filling default values)
       // can't mutate the source-owned items. Sources are now cached/shared, so
       // an in-place edit here would otherwise leak across apps.
@@ -762,23 +758,17 @@ abstract class AppSource {
     ];
   }
 
-  /// Cached emptiness check for [combinedAppSpecificSettingFormItems], used to
-  /// avoid cloning the form-item tree just to test isNotEmpty.
-  bool? _hasAppSpecificSettingsCache;
-  bool get hasAppSpecificSettings => _hasAppSpecificSettingsCache ??=
+  bool get hasAppSpecificSettings =>
       combinedAppSpecificSettingFormItems.isNotEmpty;
 
   /// Flattened, read-only view of [combinedAppSpecificSettingFormItems],
-  /// memoized for callers that only need to enumerate keys without cloning.
-  List<GeneratedFormItem>? _flatCombinedFormItemsCache;
+  /// used by callers that only need to enumerate keys without cloning.
   List<GeneratedFormItem> get flatCombinedFormItemsReadOnly =>
-      _flatCombinedFormItemsCache ??= combinedAppSpecificSettingFormItems
-          .expand((row) => row)
-          .toList();
+      combinedAppSpecificSettingFormItems.expand((row) => row).toList();
 
   /// Source-level additional settings (not specific to Apps) backed by [SettingsProvider].
   /// If the source has been overridden, per-app additional settings take precedence.
-  List<GeneratedFormItem> sourceConfigSettingFormItems = [];
+  List<GeneratedFormItem> get sourceConfigSettingFormItems => [];
   Future<Map<String, String>> getSourceConfigValues(
     Map<String, dynamic> additionalSettings,
     SettingsProvider settingsProvider,
@@ -826,7 +816,7 @@ abstract class AppSource {
 
   bool canSearch = false;
   bool includeAdditionalOptsInMainSearch = false;
-  List<GeneratedFormItem> searchQuerySettingFormItems = [];
+  List<GeneratedFormItem> get searchQuerySettingFormItems => [];
   Future<Map<String, List<String>>> search(
     String query, {
     Map<String, dynamic> querySettings = const {},
@@ -871,8 +861,8 @@ ObtainiumError getObtainiumHttpError(http.Response res) =>
     HttpService().getHttpError(res);
 
 abstract class MassAppUrlSource {
-  late String name;
-  late List<String> requiredArgs;
+  String get name;
+  List<String> get requiredArgs;
   Future<Map<String, List<String>>> getUrlsWithDescriptions(List<String> args);
 }
 

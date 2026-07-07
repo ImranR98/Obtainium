@@ -8,13 +8,15 @@ class Codeberg extends AppSource {
   Codeberg() {
     name = 'Forgejo (Codeberg)';
     hosts = ['codeberg.org'];
-
-    additionalSourceAppSpecificSettingFormItems =
-        List<List<GeneratedFormItem>>.from(_gh.additionalSourceAppSpecificSettingFormItems);
-
     canSearch = true;
-    searchQuerySettingFormItems = _gh.searchQuerySettingFormItems;
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
+      List<List<GeneratedFormItem>>.from(_gh.additionalSourceAppSpecificSettingFormItems);
+
+  @override
+  List<GeneratedFormItem> get searchQuerySettingFormItems => _gh.searchQuerySettingFormItems;
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {

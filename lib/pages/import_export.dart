@@ -222,7 +222,7 @@ class _ImportSectionState extends State<ImportSection> {
           context: context,
           builder: (BuildContext ctx) {
             return GeneratedFormModal(
-              title: tr('importX', args: [source.name]),
+              title: tr('importX', args: [tr(source.name)]),
               items: source.requiredArgs
                   .map((e) => [GeneratedFormTextField(e, label: e)])
                   .toList(),
@@ -317,7 +317,7 @@ class _ImportSectionState extends State<ImportSection> {
               ...context.read<SourceProvider>().massUrlSources.map(
                 (source) => ActionListTile(
                   icon: Icons.cloud_download_outlined,
-                  label: tr('importX', args: [source.name]),
+                  label: tr('importX', args: [tr(source.name)]),
                   onTap: importInProgress
                       ? null
                       : () => runMassSourceImport(source),

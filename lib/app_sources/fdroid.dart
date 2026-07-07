@@ -15,38 +15,40 @@ class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
   FDroid() {
     hosts = ['f-droid.org'];
-    name = tr('fdroid');
+    name = 'fdroid';
     naiveStandardVersionDetection = true;
     canSearch = true;
     inferAppIdFromUrlPath = true;
-    additionalSourceAppSpecificSettingFormItems = [
-      [
-        GeneratedFormTextField(
-          'filterVersionsByRegEx',
-          label: tr('filterVersionsByRegEx'),
-          required: false,
-          additionalValidators: [
-            (value) {
-              return regExValidator(value);
-            },
-          ],
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'trySelectingSuggestedVersionCode',
-          label: tr('trySelectingSuggestedVersionCode'),
-          value: true,
-        ),
-      ],
-      [
-        GeneratedFormSwitch(
-          'autoSelectHighestVersionCode',
-          label: tr('autoSelectHighestVersionCode'),
-        ),
-      ],
-    ];
   }
+
+  @override
+  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+    [
+      GeneratedFormTextField(
+        'filterVersionsByRegEx',
+        label: tr('filterVersionsByRegEx'),
+        required: false,
+        additionalValidators: [
+          (value) {
+            return regExValidator(value);
+          },
+        ],
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'trySelectingSuggestedVersionCode',
+        label: tr('trySelectingSuggestedVersionCode'),
+        value: true,
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'autoSelectHighestVersionCode',
+        label: tr('autoSelectHighestVersionCode'),
+      ),
+    ],
+  ];
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
