@@ -13,7 +13,7 @@ class Codeberg extends AppSource {
 
   @override
   List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
-      List<List<GeneratedFormItem>>.from(_gh.additionalSourceAppSpecificSettingFormItems);
+      _gh.additionalSourceAppSpecificSettingFormItems;
 
   @override
   List<GeneratedFormItem> get searchQuerySettingFormItems => _gh.searchQuerySettingFormItems;

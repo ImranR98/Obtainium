@@ -14,7 +14,7 @@ class IzzyOnDroid extends AppSource {
 
   @override
   List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
-      List<List<GeneratedFormItem>>.from(fd.additionalSourceAppSpecificSettingFormItems);
+      fd.additionalSourceAppSpecificSettingFormItems;
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
