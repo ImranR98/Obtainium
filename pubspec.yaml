@@ -31,7 +31,7 @@ dependencies:
   android_package_installer: # TODO: Upstream PR pending; if not accepted, keep fork maintained
     git:
       url: https://github.com/ImranR98/android_package_installer
-      ref: c9e144fae63231b5d1d7b88af779c314afcb6e83
+      ref: c0a7e4759b20a0c2cd1b4d40a41ff395e5f3d0e4
   android_package_manager: # TODO: Submit PR to upstream and switch back when merged
     git:
       url: https://github.com/ImranR98/android_package_manager

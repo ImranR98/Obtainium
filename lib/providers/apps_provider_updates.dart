@@ -50,10 +50,12 @@ extension AppsProviderUpdates on AppsProvider {
   }
 
   /// Returns app IDs sorted by last update check time, oldest first.
-  /// Only includes apps whose per-app lastUpdateCheck is older than the
-  /// configured update interval (or null — never checked).
+  /// When [forceAll] is false, only includes apps whose per-app lastUpdateCheck
+  /// is older than the configured update interval (or null — never checked).
+  /// When [forceAll] is true, includes all apps regardless of interval.
   List<String> getAppsSortedByUpdateCheckTime({
     bool onlyCheckInstalledOrTrackOnlyApps = false,
+    bool forceAll = false,
   }) {
     final minAge = DateTime.now().subtract(
       Duration(minutes: settingsProvider.updateInterval),
@@ -61,6 +63,7 @@ extension AppsProviderUpdates on AppsProvider {
     final List<String> appIds = apps.values
         .where(
           (app) =>
+              forceAll ||
               app.app.lastUpdateCheck == null ||
               app.app.lastUpdateCheck!.isBefore(minAge),
         )

@@ -1093,6 +1093,7 @@ Future<void> bgUpdateCheck(
   LogsProvider? logs,
   NotificationsProvider? notifs,
   SettingsProvider? settings,
+  bool forceAll = false,
 }) async {
   final bgLogs = logs ?? LogsProvider();
   WidgetsFlutterBinding.ensureInitialized();
@@ -1121,11 +1122,16 @@ Future<void> bgUpdateCheck(
 
   if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
       appsProvider.settingsProvider.updateInterval == 0) {
+    if (!forceAll) {
+      unawaited(bgLogs.add(
+        'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
+        'interval=${appsProvider.settingsProvider.updateInterval})',
+      ));
+      return;
+    }
     unawaited(bgLogs.add(
-      'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
-      'interval=${appsProvider.settingsProvider.updateInterval})',
+      'BG update task: Running manual check despite disabled settings',
     ));
-    return;
   }
 
   final List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
@@ -1142,6 +1148,7 @@ Future<void> bgUpdateCheck(
               onlyCheckInstalledOrTrackOnlyApps: appsProvider
                   .settingsProvider
                   .onlyCheckInstalledOrTrackOnlyApps,
+              forceAll: forceAll,
             )
             .map((e) => MapEntry(e, 0))),
   ];

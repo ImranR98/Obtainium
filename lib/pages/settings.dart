@@ -56,7 +56,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     try {
       final taskId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
-      await bgUpdateCheck(taskId, null);
+      await bgUpdateCheck(taskId, null, forceAll: true);
       await logs.add(
         'Manual BG update check completed successfully',
         level: LogLevel.info,

@@ -23,7 +23,9 @@ class StockInstaller extends Installer {
 
   @override
   Future<bool> canInstallSilently(App app) async {
-    if (app.id == obtainiumId) {
+    if (app.id == obtainiumId ||
+        app.id == '$obtainiumId.fdroid' ||
+        app.id == '$obtainiumId.debug') {
       unawaited(
         LogsProvider().add(
           'App will not be installed silently: Obtainium cannot silently install itself: ${app.id}',
@@ -47,7 +49,9 @@ class StockInstaller extends Installer {
       );
       return false;
     }
-    if (installerPackageName != obtainiumId) {
+    if (installerPackageName != obtainiumId &&
+        installerPackageName != '$obtainiumId.fdroid' &&
+        installerPackageName != '$obtainiumId.debug') {
       // If we did not install the app, silent install is not possible
       unawaited(
         LogsProvider().add(

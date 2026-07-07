@@ -50,7 +50,7 @@ const List<String> _verifiedAppsPackageIds = [
 // platform install API's result never arrives while backgrounded (#896). The
 // session still commits, so we poll (via waitForPackageInstall) for a short
 // window to confirm the install actually landed.
-const int _bgInstallConfirmAttempts = 16;
+const int _bgInstallConfirmAttempts = 20; // 20 × 500ms = 10 seconds
 
 class _InstallResult {
   final String id;
@@ -909,6 +909,7 @@ extension AppsProviderInstall on AppsProvider {
       strB: obtainiumTempId,
     );
     appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.fdroid');
+    appsToInstall = moveStrToEnd(appsToInstall, '$obtainiumId.debug');
 
     List<_InstallResult> downloadResults = [];
     try {
@@ -1115,7 +1116,6 @@ extension AppsProviderInstall on AppsProvider {
       if (downloadedFile != null) {
         if (needBGWorkaround) {
           final baseline = await captureInstallBaseline(id);
-          final prevInstalledVersion = appEntry.app.installedVersion;
           unawaited(
             installApk(
               downloadedFile,
@@ -1131,11 +1131,25 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
-          if (!sayInstalled && apps[id] != null) {
-            apps[id]!.app = apps[id]!.app.copyWith(
-              installedVersion: prevInstalledVersion,
+          unawaited(
+            logs.add(
+              sayInstalled
+                  ? 'BG install confirmed for $id via polling'
+                  : 'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
+              level: sayInstalled ? LogLevel.info : LogLevel.warning,
+            ),
+          );
+          if (!sayInstalled) {
+            final latestInfo = await getInstalledInfo(id);
+            unawaited(
+              logs.add(
+                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+                'baselineUpdateTime=${baseline.updateTime}, '
+                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+                'latestVersion=${appEntry.app.latestVersion}',
+                level: LogLevel.warning,
+              ),
             );
-            notify();
           }
         } else {
           sayInstalled = await installApk(
@@ -1149,7 +1163,6 @@ extension AppsProviderInstall on AppsProvider {
       } else {
         if (needBGWorkaround) {
           final baseline = await captureInstallBaseline(id);
-          final prevInstalledVersion = appEntry.app.installedVersion;
           unawaited(
             installApkDir(downloadedDir!, null, needsBGWorkaround: true),
           );
@@ -1158,11 +1171,25 @@ extension AppsProviderInstall on AppsProvider {
             baseline,
             attempts: _bgInstallConfirmAttempts,
           );
-          if (!sayInstalled && apps[id] != null) {
-            apps[id]!.app = apps[id]!.app.copyWith(
-              installedVersion: prevInstalledVersion,
+          unawaited(
+            logs.add(
+              sayInstalled
+                  ? 'BG install confirmed for $id via polling'
+                  : 'BG install poll timed out for $id after $_bgInstallConfirmAttempts attempts',
+              level: sayInstalled ? LogLevel.info : LogLevel.warning,
+            ),
+          );
+          if (!sayInstalled) {
+            final latestInfo = await getInstalledInfo(id);
+            unawaited(
+              logs.add(
+                'BG install final state for $id: wasInstalled=${baseline.wasInstalled}, '
+                'baselineUpdateTime=${baseline.updateTime}, '
+                'currentUpdateTime=${latestInfo?.lastUpdateTime}, '
+                'latestVersion=${appEntry.app.latestVersion}',
+                level: LogLevel.warning,
+              ),
             );
-            notify();
           }
         } else {
           sayInstalled = await installApkDir(
