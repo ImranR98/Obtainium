@@ -366,7 +366,7 @@ class AppsPageState extends State<AppsPage> {
                 [
                   MapEntry('', tr('none')),
                   ...ctx.read<SourceProvider>().sources.map(
-                    (e) => MapEntry(e.name, e.name),
+                    (e) => MapEntry(e.name, tr(e.name)),
                   ),
                 ],
               ),
@@ -776,7 +776,7 @@ class AppsPageState extends State<AppsPage> {
     final appIndices = grouped[group] ?? [];
     final expanded = !collapsedGroups.contains(group);
     final title = groupBy == GroupByMode.source.name
-        ? (group ?? tr('noSource'))
+        ? (group != null ? tr(group) : tr('noSource'))
         : capitalizeFirst(group ?? tr('noCategory'));
     return AppListGroupSection(
       title: title,

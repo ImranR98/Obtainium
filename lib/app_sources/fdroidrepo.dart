@@ -9,7 +9,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class FDroidRepo extends AppSource {
-  bool _appIdFromUrl = false;
+  bool _appIdFoundInUrl = false;
 
   FDroidRepo() {
     name = 'fdroidThirdPartyRepo';
@@ -26,7 +26,7 @@ class FDroidRepo extends AppSource {
         'appIdOrName',
         label: tr('appIdOrName'),
         hint: tr('reposHaveMultipleApps'),
-        required: !_appIdFromUrl,
+        required: !_appIdFoundInUrl,
       ),
     ],
     [
@@ -108,7 +108,7 @@ class FDroidRepo extends AppSource {
   void runOnAddAppInputChange(String inputUrl) {
     try {
       final appId = Uri.parse(inputUrl).queryParameters['appId'];
-      _appIdFromUrl = appId != null;
+      _appIdFoundInUrl = appId != null;
     } catch (e) {
       unawaited(
         LogsProvider().add('Failed to parse appId from URL: $e'),

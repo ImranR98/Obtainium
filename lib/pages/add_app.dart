@@ -345,7 +345,7 @@ class AddAppPageState extends State<AddAppPage> {
                       context: context,
                       builder: (BuildContext ctx) {
                         return GeneratedFormModal(
-                          title: tr('searchX', args: [e.name]),
+                          title: tr('searchX', args: [tr(e.name)]),
                           items: [
                             ...e.searchQuerySettingFormItems.map((e) => [e]),
                             [
@@ -475,7 +475,7 @@ class AddAppPageState extends State<AddAppPage> {
               children: sourceProvider.sources.map((e) {
                 return ActionChip(
                   label: Text(
-                    '${e.name}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
+                    '${tr(e.name)}${e.enforceTrackOnly ? ' ${tr('trackOnlyInBrackets')}' : ''}${e.canSearch ? ' ${tr('searchableInBrackets')}' : ''}',
                   ),
                   onPressed: e.hosts.isNotEmpty
                       ? () {
@@ -865,7 +865,7 @@ class AddAppPageState extends State<AddAppPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      pickedSource!.name,
+                                      tr(pickedSource!.name),
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
