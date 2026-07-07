@@ -37,6 +37,8 @@ if [ -z "$(which flutter)" ]; then
     export PATH="$PATH:$SCRIPT_DIR/.flutter/bin"
 fi
 
+# flutter pub upgrade --tighten --major-versions
+
 flutter clean
 flutter pub get
 APP_VERSION="$(grep '^version: ' pubspec.yaml | sed 's/version: //; s/+.*//' | head -1)"

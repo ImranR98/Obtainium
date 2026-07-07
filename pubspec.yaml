@@ -18,7 +18,7 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   provider: ^6.1.5+1
   http: ^1.6.0
-  webview_flutter: ^4.14.0
+  webview_flutter: ^4.14.1
   dynamic_system_colors: ^1.9.0
   html: ^0.15.6
   shared_preferences: ^2.5.5
@@ -66,12 +66,12 @@ dependencies:
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.1.0
   flutter_charset_detector: ^6.0.0
-  flutter_markdown_plus: ^1.0.7
+  flutter_markdown_plus: ^1.0.11
   workmanager: ^0.9.0+3
 
 dev_dependencies:
   flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.14.3
+  flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
   android: "ic_launcher"
