@@ -967,6 +967,12 @@ class _UpdateIntervalSliderTileState extends State<_UpdateIntervalSliderTile> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    processIntervalSliderValue(sliderVal);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final settingsProvider = context.read<SettingsProvider>();
     final rawSlider = Slider(
