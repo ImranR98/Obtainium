@@ -69,12 +69,11 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(connectedTileBigRadius);
     return Material(
       color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: RoundedSuperellipseBorder(
-        borderRadius:
-            borderRadius ?? BorderRadius.circular(connectedTileBigRadius),
-      ),
+      borderRadius: effectiveRadius,
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );
@@ -107,41 +106,34 @@ class SettingsToggleRow extends StatelessWidget {
             context.read<SettingsProvider>().selectionClick();
             onChanged!(v);
           };
-    final Widget tileChild = helpWidgets.isEmpty
-        ? SwitchListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            title: Text(label),
-            subtitle: subtitle,
-            value: value,
-            onChanged: hapticOnChanged,
-          )
-        : ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            title: Text(label),
-            subtitle: subtitle,
-            onTap: hapticOnChanged == null
-                ? null
-                : () => hapticOnChanged(!value),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.help_outline),
-                  tooltip: tr('about'),
-                  onPressed: () => showHelpDialog(
-                    context,
-                    title: label,
-                    content: helpWidgets,
-                  ),
-                ),
-                Switch(value: value, onChanged: hapticOnChanged),
-              ],
-            ),
-          );
+    final tileShape = borderRadius != null
+        ? RoundedRectangleBorder(borderRadius: borderRadius!)
+        : null;
     return SettingsTile(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+      padding: EdgeInsets.zero,
       borderRadius: borderRadius,
-      child: tileChild,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        shape: tileShape,
+        title: Text(label),
+        subtitle: subtitle,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (helpWidgets.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: tr('about'),
+                onPressed: () => showHelpDialog(
+                  context,
+                  title: label,
+                  content: helpWidgets,
+                ),
+              ),
+            Switch(value: value, onChanged: hapticOnChanged),
+          ],
+        ),
+      ),
     );
   }
 }

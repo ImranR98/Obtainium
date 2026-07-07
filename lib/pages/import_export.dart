@@ -389,7 +389,10 @@ class _ExportSectionState extends State<ExportSection> {
     return FutureBuilder(
       future: _exportDirFuture,
       builder: (context, snapshot) {
-        return Card(
+        return ConnectedCard(
+          isFirst: true,
+          isLast: true,
+          padding: null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

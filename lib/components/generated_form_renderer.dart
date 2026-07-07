@@ -144,7 +144,7 @@ class _FormSwitchRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(child: Text(item.label)),
+        Flexible(child: Text(tr(item.label))),
         const SizedBox(width: 8),
         Switch(value: value, onChanged: item.disabled ? null : onChanged),
       ],
@@ -200,7 +200,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             });
           },
           decoration: InputDecoration(
-            labelText: formItem.label + (formItem.required ? ' *' : ''),
+            labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
             filled: widget.tileMode ? false : null,
             border: widget.tileMode ? InputBorder.none : null,
@@ -223,7 +223,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     tooltip: tr('about'),
                     onPressed: () => showHelpDialog(
                       context,
-                      title: formItem.label,
+                      title: tr(formItem.label),
                       content: formItem.belowWidgets as List<Widget>,
                     ),
                   )
@@ -233,7 +233,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
           validator: (value) {
             if (formItem.required && (value == null || value.trim().isEmpty)) {
-              return '${formItem.label} ${tr('requiredInBrackets')}';
+              return '${tr(formItem.label)} ${tr('requiredInBrackets')}';
             }
             for (var validator in formItem.additionalValidators) {
               final String? result = validator(value);
@@ -274,7 +274,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     return DropdownButtonFormField(
       decoration: InputDecoration(
-        labelText: formItem.label,
+        labelText: tr(formItem.label),
         filled: widget.tileMode ? false : null,
         border: widget.tileMode ? InputBorder.none : null,
         enabledBorder: widget.tileMode ? InputBorder.none : null,
@@ -410,7 +410,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             if (!compact) const SizedBox(height: 16),
             if (!compact)
               Text(
-                '${item.label} (${i + 1})',
+                '${tr(item.label)} (${i + 1})',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             GeneratedForm(
@@ -450,7 +450,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                           notifyFormChange();
                         }
                       : null,
-                  label: Text('${item.label} (${i + 1})'),
+                  label: Text('${tr(item.label)} (${i + 1})'),
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
               ],
@@ -474,7 +474,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                   notifyFormChange();
                 },
                 icon: const Icon(Icons.add),
-                label: Text(item.label),
+                label: Text(tr(item.label)),
               ),
             ),
           ],

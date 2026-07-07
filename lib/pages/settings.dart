@@ -307,6 +307,9 @@ class _SettingsPageState extends State<SettingsPage> {
     final colorPicker = SettingsTile(
       child: ListTile(
         contentPadding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(connectedTileBigRadius),
+        ),
         title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
         subtitle: Text(
           '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
@@ -663,7 +666,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         SettingsTile(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -709,12 +711,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         if (settingsProvider.installerMode == InstallerMode.external.name)
           const SettingsTile(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: _ExternalInstallerTile(),
           ),
         if (showBgSection && settingsProvider.enableBackgroundUpdates)
           SettingsTile(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.tonal(
@@ -802,7 +802,6 @@ class _SettingsPageState extends State<SettingsPage> {
           onChanged: (value) => settingsProvider.buryNonInstalled = value,
         ),
         SettingsTile(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1388,6 +1387,9 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
         final current = _current(targets, settingsProvider);
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(connectedTileBigRadius),
+          ),
           leading: _targetIcon(current),
           title: Text(tr('chooseExternalInstaller')),
           subtitle: Text(

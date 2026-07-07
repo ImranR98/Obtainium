@@ -858,17 +858,10 @@ class AddAppPageState extends State<AddAppPage> {
                         if (val.data != null && val.data!.isNotEmpty) {
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-                            child: Material(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLow,
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
+                            child: ConnectedCard(
+                              isFirst: true,
+                              isLast: true,
+                              child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
@@ -893,7 +886,6 @@ class AddAppPageState extends State<AddAppPage> {
                                       ),
                                     ),
                                   ],
-                                ),
                               ),
                             ),
                           );

@@ -294,7 +294,8 @@ class ConnectedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: positionalTileShape(isFirst: isFirst, isLast: isLast),
+      borderRadius:
+          positionalTileRadius(isFirst: isFirst, isLast: isLast),
       clipBehavior: Clip.antiAlias,
       child: padding == null ? child : Padding(padding: padding!, child: child),
     );
@@ -318,6 +319,7 @@ class LinkText extends StatelessWidget {
     return Semantics(
       link: true,
       child: InkWell(
+        borderRadius: BorderRadius.circular(4),
         onTap: () => unawaited(
           launchUrlString(url, mode: LaunchMode.externalApplication),
         ),
@@ -338,6 +340,7 @@ class ActionListTile extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
   final bool autoPop;
+  final BorderRadius? borderRadius;
 
   const ActionListTile({
     super.key,
@@ -346,6 +349,7 @@ class ActionListTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.autoPop = false,
+    this.borderRadius,
   });
 
   @override
@@ -355,6 +359,9 @@ class ActionListTile extends StatelessWidget {
       title: Text(label),
       trailing: trailing,
       enabled: onTap != null,
+      shape: borderRadius != null
+          ? RoundedRectangleBorder(borderRadius: borderRadius!)
+          : null,
       onTap: onTap == null
           ? null
           : () {
