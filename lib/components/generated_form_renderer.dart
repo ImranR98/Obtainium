@@ -189,7 +189,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Widget? _buildHelpSuffixIcon(
     String label,
     String? helpUrl,
-    List<Widget> belowWidgets,
+    List<dynamic> belowWidgets,
   ) {
     if (helpUrl != null) {
       return IconButton(
@@ -205,7 +205,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         icon: const Icon(Icons.help_outline),
         tooltip: tr('about'),
         onPressed: () => showHelpDialog(context,
-            title: label, content: belowWidgets),
+            title: label, content: belowWidgets.cast<Widget>()),
       );
     }
     return null;
@@ -255,7 +255,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             suffixIcon: _buildHelpSuffixIcon(
               tr(formItem.label),
               formItem.helpUrl,
-              formItem.belowWidgets as List<Widget>,
+              formItem.belowWidgets,
             ),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
