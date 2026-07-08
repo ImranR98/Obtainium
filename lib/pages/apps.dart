@@ -63,6 +63,15 @@ class AppsPageState extends State<AppsPage> {
 
   Timer? _searchDebounce;
 
+  int? _listDataSig;
+  List<AppInMemory>? _cachedListedApps;
+  List<String>? _cachedExistingUpdateIds;
+  List<String>? _cachedNewInstallIds;
+  List<String>? _cachedTrackOnlyUpdateIds;
+  Map<String?, List<int>>? _cachedGrouped;
+  List<String?>? _cachedListedGroups;
+  Set<App>? _cachedSelectedApps;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -120,6 +129,8 @@ class AppsPageState extends State<AppsPage> {
       settingsProvider.sortOrder.index,
       settingsProvider.pinUpdates,
       settingsProvider.buryNonInstalled,
+      Object.hashAll(selectedAppIds),
+      settingsProvider.groupBy,
       apps.length,
     ];
     for (final a in apps) {
@@ -1006,51 +1017,21 @@ class AppsPageState extends State<AppsPage> {
     ];
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final appsProvider = context.read<AppsProvider>();
-    final settingsProvider = context.watch<SettingsProvider>();
-
-    context.select((AppsProvider p) => p.loadingApps);
-    context.select(
-      (AppsProvider p) => pipelineSignature(p.getAppValues().toList()),
-    );
-
-    var listedApps = appsProvider.getAppValues().toList();
-
-    if (!appsProvider.loadingApps &&
-        appsProvider.apps.isNotEmpty &&
-        settingsProvider.checkJustStarted() &&
-        settingsProvider.checkOnStart) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        refreshIndicatorKey.currentState?.show();
-      });
+  void _computeListData(AppsProvider appsProvider, SettingsProvider settingsProvider) {
+    final apps = appsProvider.getAppValues().toList();
+    final sig = pipelineSignature(apps);
+    if (sig == _listDataSig && _cachedListedApps != null) {
+      return;
     }
+    _listDataSig = sig;
 
-    final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
-    final localSelected = selectedAppIds.where(listedAppIdSet.contains).toSet();
-    if (localSelected.length != selectedAppIds.length) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final freshListedIds = appsProvider
-              .getAppValues()
-              .map((e) => e.app.id)
-              .toSet();
-          setState(() {
-            selectedAppIds = selectedAppIds
-                .where(freshListedIds.contains)
-                .toSet();
-          });
-          widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
-        }
-      });
-    }
-
+    var listedApps = apps;
     final existingUpdates = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
     listedApps = getFilteredAndSortedApps(listedApps, existingUpdates.toSet());
+
+    final listedAppIdSet = listedApps.map((e) => e.app.id).toSet();
 
     var existingUpdateIdsAllOrSelected = existingUpdates
         .where(
@@ -1105,7 +1086,6 @@ class AppsPageState extends State<AppsPage> {
         grouped.putIfAbsent(listedApps[i].sourceType, () => []).add(i);
       }
     }
-    // Groups are ordered alphabetically, with the "none" bucket (null) last.
     final listedGroups = grouped.keys.toList();
     listedGroups.sort((a, b) {
       if (a == null && b == null) return 0;
@@ -1118,6 +1098,67 @@ class AppsPageState extends State<AppsPage> {
         .map((e) => e.app)
         .where((a) => selectedAppIds.contains(a.id))
         .toSet();
+
+    _cachedListedApps = listedApps;
+    _cachedExistingUpdateIds = existingUpdateIdsAllOrSelected;
+    _cachedNewInstallIds = newInstallIdsAllOrSelected;
+    _cachedTrackOnlyUpdateIds = trackOnlyUpdateIdsAllOrSelected;
+    _cachedGrouped = grouped;
+    _cachedListedGroups = listedGroups;
+    _cachedSelectedApps = selectedApps;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appsProvider = context.read<AppsProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
+
+    context.select((AppsProvider p) => p.loadingApps);
+    context.select(
+      (AppsProvider p) => pipelineSignature(p.getAppValues().toList()),
+    );
+
+    if (!appsProvider.loadingApps &&
+        appsProvider.apps.isNotEmpty &&
+        settingsProvider.checkJustStarted() &&
+        settingsProvider.checkOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        refreshIndicatorKey.currentState?.show();
+      });
+    }
+
+    final listedAppIdSet = appsProvider
+        .getAppValues()
+        .map((e) => e.app.id)
+        .toSet();
+    final localSelected = selectedAppIds.where(listedAppIdSet.contains).toSet();
+    if (localSelected.length != selectedAppIds.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final freshListedIds = appsProvider
+              .getAppValues()
+              .map((e) => e.app.id)
+              .toSet();
+          setState(() {
+            selectedAppIds = selectedAppIds
+                .where(freshListedIds.contains)
+                .toSet();
+          });
+          widget.onSelectionChanged?.call(selectedAppIds.isNotEmpty);
+        }
+      });
+    }
+
+    _computeListData(appsProvider, settingsProvider);
+    final listedApps = _cachedListedApps!;
+    final existingUpdateIdsAllOrSelected = _cachedExistingUpdateIds!;
+    final newInstallIdsAllOrSelected = _cachedNewInstallIds!;
+    final trackOnlyUpdateIdsAllOrSelected = _cachedTrackOnlyUpdateIds!;
+    final groupBy = settingsProvider.groupBy;
+    final grouped = _cachedGrouped!;
+    final listedGroups = _cachedListedGroups!;
+    final selectedApps = _cachedSelectedApps!;
 
     return PopScope(
       canPop: selectedAppIds.isEmpty,
@@ -1169,7 +1210,7 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
-        floatingActionButton: selectedAppIds.isNotEmpty
+        floatingActionButton: selectedAppIds.isNotEmpty && widget.onAppSelected == null
             ? FloatingActionButton.extended(
                 onPressed: () {
                   settingsProvider.selectionClick();
@@ -1200,6 +1241,19 @@ class AppsPageState extends State<AppsPage> {
           builder: (BuildContext context) => AppPage(appId: app.app.id),
         ),
       );
+    }
+  }
+
+  void showSelectedAppActions() {
+    if (!mounted) return;
+    final listedApps = _cachedListedApps ??
+        context.read<AppsProvider>().getAppValues().toList();
+    final selectedApps = listedApps
+        .map((e) => e.app)
+        .where((a) => selectedAppIds.contains(a.id))
+        .toSet();
+    if (selectedApps.isNotEmpty) {
+      showMoreOptionsBottomSheet(context, selectedApps);
     }
   }
 }

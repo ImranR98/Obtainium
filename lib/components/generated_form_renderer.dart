@@ -26,10 +26,6 @@ Color generateRandomLightColor() {
   return Color.fromARGB(255, rgbValues[0], rgbValues[1], rgbValues[2]);
 }
 
-bool validateTextField(TextFormField tf) =>
-    tf.key is GlobalKey<FormFieldState> &&
-    (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
-
 typedef OnValueChanges =
     void Function(Map<String, dynamic> values, bool valid, bool isBuilding);
 
@@ -169,6 +165,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   int? _itemsHash;
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
+  final List<GlobalKey<FormFieldState>> _fieldKeys = [];
 
   InputDecoration _fieldDecoration({
     required String labelText,
@@ -214,12 +211,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
   void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
-    for (int r = 0; r < formInputs.length; r++) {
-      for (int i = 0; i < formInputs[r].length; i++) {
-        if (formInputs[r][i] is TextFormField) {
-          valid = valid && validateTextField(formInputs[r][i] as TextFormField);
-        }
-      }
+    for (final key in _fieldKeys) {
+      valid = valid && key.currentState?.isValid == true;
     }
     if (forceInvalid) {
       valid = false;
@@ -230,6 +223,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   Widget _initTextField(GeneratedFormTextField formItem) {
     final formFieldKey = GlobalKey<FormFieldState>();
+    _fieldKeys.add(formFieldKey);
     final ctrl = TextEditingController(text: values[formItem.key]);
     _textControllers.add(ctrl);
     return TypeAheadField<String>(
@@ -367,6 +361,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       c.dispose();
     }
     _textControllers.clear();
+    _fieldKeys.clear();
     values.clear();
     for (var row in widget.items) {
       for (var e in row) {
@@ -422,6 +417,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     for (final c in _textControllers) {
       c.dispose();
     }
+    _fieldKeys.clear();
     super.dispose();
   }
 
