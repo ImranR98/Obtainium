@@ -330,7 +330,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   void _initSubForm(GeneratedFormSubForm formItem) {
     values[formItem.key] = [];
-    for (Map<String, dynamic> v in ((formItem.value ?? []) as List<dynamic>)) {
+    final initValue = formItem.value;
+    if (initValue is! List) return;
+    for (Map<String, dynamic> v in initValue.cast<Map<String, dynamic>>()) {
       final fullDefaults = getDefaultValuesFromFormItems(formItem.items);
       for (var element in v.entries) {
         fullDefaults[element.key] = element.value;
