@@ -19,7 +19,7 @@ should follow when working in this codebase.
 | State management | `provider` (`ChangeNotifier`) |
 | Persistence | One JSON file per app on disk + `SharedPreferences` for settings + `flutter_secure_storage` for credentials + `sqflite` for logs |
 | Localization | `easy_localization` (`assets/translations/*.json`, key-based `tr()` / `plural()`) |
-| Background work | `background_fetch` (headless) and `flutter_foreground_task` (FG service) |
+| Background work | `workmanager` (periodic background tasks, Android-only) |
 | Installation | Installer abstraction (`StockInstaller` / `ShizukuInstaller` / `ExternalInstaller`) backed by `android_package_installer`, `shizuku_apk_installer`, `android_intent_plus` |
 
 ### Entry point: `lib/main.dart`
@@ -37,12 +37,14 @@ should follow when working in this codebase.
   cards/dialogs, `StadiumBorder` pill buttons, emphasized page transitions, Material 3
   expressive sliders/progress indicators). Do not re-style these per widget — extend the theme.
 - `_ObtainiumState` runs **side effects in `initState` (post-frame), not in `build()`**:
-  permission requests, foreground/background service management (`_manageServices`),
+  permission requests, WorkManager scheduling (`_scheduleWorkManager`),
   first-run handling (`_handleFirstRun`), and the launch-by-notification check. Each is
   guarded so it runs once; a `SettingsProvider` listener re-runs service/first-run logic
   on settings changes. **Follow this pattern — never trigger navigation, dialogs, or
   service starts directly from `build()`.**
-- `bgUpdateCheck()` is the headless background entry point (see §6).
+- `callbackDispatcher()` (annotated with `@pragma('vm:entry-point')`) is the headless
+  WorkManager entry point registered via `Workmanager().initialize()`. It catches crashes,
+  logs them, and calls `bgUpdateCheck()` to perform the actual background work.
 
 There is also `main_fdroid.dart` for the F-Droid build flavour (sets `isFdroidBuild = true`).
 
@@ -52,7 +54,7 @@ There is also `main_fdroid.dart` for the F-Droid build flavour (sets `isFdroidBu
 
 ```
 lib/
-├─ main.dart                      App bootstrap, FG/BG service control
+├─ main.dart                      App bootstrap, WorkManager scheduling
 ├─ main_fdroid.dart               F-Droid flavour entry point
 ├─ theme.dart                     Material 3 Expressive ThemeData builder, shapes + motion tokens
 ├─ custom_errors.dart             ObtainiumError + typed errors with codes/stacks/data
@@ -107,23 +109,24 @@ narrowly** to avoid rebuild amplification:
 `url`, `author`, `name`, `installedVersion`, `latestVersion`, `apkUrls`
 (`List<MapEntry<name, url>>`), `preferredApkIndex`, `additionalSettings`
 (`Map<String, dynamic>` — per-app source options), `categories`, `pinned`,
-`overrideSource`, `pendingRepoRenameUrl`, and a `compatVersion` stamp.
+`overrideSource`, `pendingRepoRenameUrl`, and `allowIdChange`.
 
 - `App.toJson()` / `App.fromJson()` serialize to/from disk.
-- `App.fromJson()` runs **`appJSONCompatibilityModifiers()`** — a long chain of one-time
-  schema migrations (legacy → current). It is wrapped in try/catch so a single bad
-  migration can't brick loading. The `compatVersion` constant
-  (`currentAppJSONCompatVersion`) gates the *one-time legacy* migrations so already-migrated
-  apps skip them; default-setting reconciliation still always runs.
+- `App.fromJson()` runs **`appJSONCompatibilityModifiers()`** — a chain of idempotent
+  schema migrations (legacy → current). Every migration is written to be safe to re-run
+  on already-migrated data, so they simply run on every load. It is wrapped in try/catch
+  so a single bad migration can't brick loading. Default-setting reconciliation always runs
+  regardless.
 - `App` is **immutable** — use `App.copyWith(...)` to create a modified copy instead of
   mutating fields directly.
 
 ### `AppInMemory` (`apps_provider.dart`)
 
-Runtime wrapper around `App` that also holds `downloadProgress` (via a `ValueNotifier`
-for efficient per-tile updates), `installedInfo` (`PackageInfo` from the OS), and the
-cached `icon` bytes. `AppsProvider.apps` is a `Map<String, AppInMemory>` kept in sync
-with disk.
+Runtime wrapper around `App` that also holds a `DownloadState` (which wraps `downloadProgress`
+as a `ValueNotifier` for efficient per-tile updates — shared by reference so UI listeners
+survive `saveApps` copy-and-replace), `installedInfo` (`PackageInfo` from the OS), the
+cached `icon` bytes, and a `sourceType` field for tracking which source produced the app.
+`AppsProvider.apps` is a `Map<String, AppInMemory>` kept in sync with disk.
 
 ### Persistence rules (`apps_provider_lifecycle.dart`)
 
@@ -229,6 +232,25 @@ Override the contract methods you need:
 - Only **two tabs** (Apps, Settings). "Add App" is a FAB; Import/Export are folded into
   the Add App page and Settings respectively.
 
+### Deeplink routing (`pages/home.dart`)
+
+`interpretLink(Uri uri)` (line 229) is the single deeplink dispatcher. It parses the
+URI host as the **action** and dispatches accordingly:
+
+| Action (`uri.host`) | Data source | Behaviour |
+| --- | --- | --- |
+| `add` | `uri.queryParameters['url']` or `uri.path.substring(1)` | Standardizes the URL, checks for duplicates, navigates to Add App page |
+| `app` / `apps` | URI-decoded query or path | Shows a confirmation dialog with the raw JSON, then imports via `AppsProvider` |
+
+Inbound links arrive via `AppLinks` (Android App Links / intent filters) — the
+`obtainium://` scheme is registered in `AndroidManifest.xml`. Both `getInitialLink()`
+(cold start) and `uriLinkStream` (warm start) feed into `interpretLink`, with a
+dedup guard so the initial link isn't processed twice.
+
+The **share sheet** (`ACTION_SEND` intent) added in the `MainActivity.kt` native layer
+rewrites shared URLs as `obtainium://add/<url>` before they reach `interpretLink`, so
+the same Dart-side dispatch handles both manual deeplinks and share-target intents.
+
 ### Reusable components (`lib/components/`)
 
 Prefer these over bespoke widgets:
@@ -267,7 +289,7 @@ Prefer these over bespoke widgets:
 - **`category_editor.dart`** — `showCategoryEditor()`, `CategorySelector`,
   `CategoryManager`.
 
-The `LogsDialog` widget lives in `pages/settings.dart` since it's only used from the
+The `LogsPage` widget lives in `pages/settings.dart` since it's only used from the
 settings page.
 
 ### The form engine (`generated_form_model.dart`)
@@ -293,11 +315,24 @@ apps. `tileMode: true` renders fields in the connected-tile settings aesthetic.
 
 ## 6. Background updates & installation
 
-### Background check (`bgUpdateCheck` in `apps_provider.dart`)
+### Background task architecture
 
-Runs headless (no widget tree) via `background_fetch` or the foreground service. It:
+Background work is scheduled via **`workmanager`** (Android periodic tasks). The flow:
+
+1. `_scheduleWorkManager()` (in `lib/main.dart`) registers a periodic task (`obtainiumBgUpdateCheck`)
+   with a 15-minute minimum interval, requiring network connectivity.
+2. When triggered, Android invokes **`callbackDispatcher()`** (`lib/main.dart:64`), a top-level
+   function annotated `@pragma('vm:entry-point')` registered via `Workmanager().initialize()`.
+   It sets up the bare minimum (flush bindings, localization) and delegates to `bgUpdateCheck()`.
+3. **`bgUpdateCheck(taskId, params)`** (`lib/providers/apps_provider.dart:1090`) runs headless
+   (no widget tree), loads apps/settings from disk, and performs the actual check.
+4. On errors, `callbackDispatcher` catches the exception, logs it, and returns `false` so
+   WorkManager knows the task failed.
+
+### `bgUpdateCheck` behaviour
+
 1. Loads translations manually (no `BuildContext` available).
-2. Bails early on no network / restrictions (Wi-Fi-only, charging-only) / too-soon.
+2. Bails early on no network / restrictions (Wi-Fi-only, charging-only) / disabled settings.
 3. **Update mode** (`toCheck` non-empty): checks updates, splits results into
    notify-only vs silently-installable, sends grouped notifications, and **schedules
    retries that actually `await` the retry delay** so rate-limited hosts aren't hammered.
@@ -332,6 +367,29 @@ Runs headless (no widget tree) via `background_fetch` or the foreground service.
 - Installs require the foreground (`waitForUserToReturnToForeground`); the swipe-to-install
   tile stays locked from download start through install handoff.
 
+### Installer abstraction (`lib/installers/`)
+
+The installer layer provides a strategy-pattern abstraction over Android package
+installation methods. The abstract `Installer` class (`installer.dart`) defines:
+
+```dart
+abstract class Installer {
+  Future<InstallResult> installApk(App app, String path, ...);
+  Future<InstallResult> installApkDir(App app, String dir, ...);
+}
+```
+
+Three concrete implementations:
+
+| Installer | Backend | Use case |
+| --- | --- | --- |
+| `StockInstaller` | `android_package_installer` plugin (PackageInstaller session API) | Standard installs; supports silent install via ADB-granted `INSTALL_PACKAGES` |
+| `ShizukuInstaller` | `shizuku_apk_installer` plugin | Self-update of Obtainium itself, or when Shizuku/Dhizuku/Sui is available |
+| `ExternalInstaller` | Native `MethodChannel` bridge (`external_install_bridge.dart` + `MainActivity.kt`) | Hands off to a third-party installer app chosen by the user; lists eligible targets via `listInstallTargets()` and converts file paths to `content://` URIs via `FileProvider` |
+
+The selection logic (in `apps_provider_install.dart`) checks: self-update → `ShizukuInstaller`;
+user has chosen an external installer → `ExternalInstaller`; otherwise → `StockInstaller`.
+
 ### Credentials
 
 Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
@@ -355,14 +413,33 @@ Source credentials (e.g. `github-creds`, `gitlab-creds`) are stored in
   `String`s. Key types: `RateLimitError` (with remaining minutes), `InvalidURLError`,
   `NoReleasesError`, `NoAPKError`, `NoVersionError`, `DowngradeError`, `InstallError`,
   `IDChangedError`, `RepositoryRenamedError`.
+- In source files, wrap the main fetch logic:
+
+  ```dart
+  try {
+    // ... fetch and parse ...
+  } catch (e, stack) {
+    rethrowOrWrapError(e, stack: stack);
+  }
+  ```
+
+  `rethrowOrWrapError()` from `custom_errors.dart` passes through existing
+  `ObtainiumError`s unchanged and wraps raw exceptions with a stack trace.
+- In pages, use the helper functions:
+
+  ```dart
+  try {
+    await appsProvider.downloadAndInstallLatestApps([appId]);
+  } catch (e) {
+    if (!context.mounted) return;
+    showError(e, context);  // logs + shows dialog for unexpected errors
+  }
+  ```
+
 - Errors use **deferred localization**: the code is set at construction time (e.g.
-  `code: 'NO_RELEASES'`) but the user-facing message is resolved via
-  `localizeErrorCode()` only when `message` is read. This lets errors be created in
-  background tasks where no translation context is available.
-- Use `rethrowOrWrapError(e)` (from `custom_errors.dart`) in every source's
-  try/catch block to wrap unexpected errors as `ObtainiumError` with stack traces.
-- Use `showError(dynamic e, BuildContext)` for unexpected/error-level messages (shows a
-  dialog) and `showMessage(...)` for informational messages (shows a snackbar).
+  `RateLimitError(5)`) but the user-facing message
+  is resolved via `localizeErrorCode()` only when `message` is read. This lets errors
+  be created in background tasks where no translation context is available.
 - `MultiAppMultiError` bundles multiple per-app errors for batch operations; use
   `errors.add(appId, error, appName:)` to collect them.
 - Never silently swallow exceptions. Log them via `LogsProvider().add(...)` or the
