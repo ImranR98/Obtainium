@@ -494,7 +494,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
         ),
       ),
     );
-    return Column(children: subformColumn);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(children: subformColumn),
+    );
   }
 
   @override
