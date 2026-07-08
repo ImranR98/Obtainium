@@ -144,7 +144,12 @@ class _FormSwitchRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(child: Text(tr(item.label))),
+        Flexible(
+          child: Text(
+            tr(item.label),
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
         const SizedBox(width: 8),
         Switch(value: value, onChanged: item.disabled ? null : onChanged),
       ],
@@ -411,7 +416,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
             if (!compact)
               Text(
                 '${tr(item.label)} (${i + 1})',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
             GeneratedForm(
               key: internalFormKey,
@@ -541,15 +549,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
       for (var r = 0; r < n; r++) {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
-            : (widget.items[r].isNotEmpty &&
-                  widget.items[r][0] is GeneratedFormSwitch)
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
-            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
         children.add(
           Material(
-            color: isFieldRow(r)
-                ? colorScheme.surfaceContainerHighest
-                : colorScheme.surfaceContainerLow,
+            color: colorScheme.surfaceContainerLow,
             clipBehavior: Clip.antiAlias,
             shape: positionalTileShape(isFirst: r == 0, isLast: r == n - 1),
             child: Padding(padding: padding, child: inputRowWidgets[r]),
@@ -569,11 +572,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     final List<Widget> children = [];
     for (var r = 0; r < inputRowWidgets.length; r++) {
       if (r > 0) {
-        children.add(
-          SizedBox(
-            height: widget.items[r - 1][0] is GeneratedFormSwitch ? 16 : 28,
-          ),
-        );
+        children.add(const SizedBox(height: 24));
       }
       children.add(inputRowWidgets[r]);
     }
