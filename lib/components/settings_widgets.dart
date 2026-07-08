@@ -4,6 +4,17 @@ import 'package:obtainium/theme.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
+class _TileClipper extends CustomClipper<Path> {
+  final ShapeBorder shape;
+  const _TileClipper(this.shape);
+
+  @override
+  Path getClip(Size size) => shape.getOuterPath(Offset.zero & size);
+
+  @override
+  bool shouldReclip(_TileClipper oldClipper) => oldClipper.shape != shape;
+}
+
 Future<void> showHelpDialog(
   BuildContext context, {
   required String title,
@@ -103,11 +114,13 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveRadius =
         borderRadius ?? BorderRadius.circular(connectedTileBigRadius);
-    return Material(
-      color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: RoundedSuperellipseBorder(borderRadius: effectiveRadius),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(padding: padding, child: child),
+    final shape = RoundedSuperellipseBorder(borderRadius: effectiveRadius);
+    return ClipPath(
+      clipper: _TileClipper(shape),
+      child: Material(
+        color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }

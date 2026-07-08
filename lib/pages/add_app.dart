@@ -661,6 +661,13 @@ class AddAppPageState extends State<AddAppPage> {
   Widget _buildSourceSpecificForm(SettingsProvider settingsProvider) {
     final s = pickedSource!;
     final formItems = s.combinedAppSpecificSettingFormItems;
+    for (var row in formItems) {
+      for (var item in row) {
+        if (additionalSettings[item.key] != null) {
+          item.value = additionalSettings[item.key];
+        }
+      }
+    }
     if (settingsProvider.includePrereleasesByDefault ||
         settingsProvider.shizukuPretendToBeGooglePlay) {
       for (var row in formItems) {
