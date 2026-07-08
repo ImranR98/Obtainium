@@ -592,7 +592,7 @@ class AddAppPageState extends State<AddAppPage> {
                                     pickedSource!.sourceIdentifier ==
                                         s.sourceIdentifier),
                           )
-                          .map((s) => MapEntry(s.name, s.name)),
+                          .map((s) => MapEntry(s.sourceIdentifier, s.name)),
                     ],
                     label: tr('overrideSource'),
                   ),
