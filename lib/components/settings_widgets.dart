@@ -1,9 +1,41 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:obtainium/theme.dart';
-import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
+
+Future<void> showHelpDialog(
+  BuildContext context, {
+  required String title,
+  required List<Widget> content,
+}) {
+  return showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: content,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(tr('ok')),
+        ),
+      ],
+    ),
+  );
+}
+
+ValueChanged<bool> hapticSwitchOnChanged(
+  BuildContext context,
+  ValueChanged<bool> onChanged,
+) =>
+    (v) {
+      context.read<SettingsProvider>().selectionClick();
+      onChanged(v);
+    };
 
 bool _isKnownTileType(Widget w) =>
     w is SettingsTile || w is SettingsToggleRow;
@@ -100,12 +132,6 @@ class SettingsToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ValueChanged<bool>? hapticOnChanged = onChanged == null
-        ? null
-        : (v) {
-            context.read<SettingsProvider>().selectionClick();
-            onChanged!(v);
-          };
     final tileShape = borderRadius != null
         ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
         : null;
@@ -130,7 +156,12 @@ class SettingsToggleRow extends StatelessWidget {
                   content: helpWidgets,
                 ),
               ),
-            Switch(value: value, onChanged: hapticOnChanged),
+            Switch(
+              value: value,
+              onChanged: onChanged == null
+                  ? null
+                  : hapticSwitchOnChanged(context, onChanged!),
+            ),
           ],
         ),
       ),

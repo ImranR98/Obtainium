@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/components/generated_form_model.dart';
-import 'package:obtainium/theme.dart';
-import 'package:obtainium/components/ui_widgets.dart';
+import 'package:obtainium/components/settings_widgets.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
@@ -155,10 +154,7 @@ class _FormSwitchRow extends StatelessWidget {
           value: value,
           onChanged: item.disabled
               ? null
-              : (v) {
-                  context.read<SettingsProvider>().selectionClick();
-                  onChanged?.call(v);
-                },
+              : hapticSwitchOnChanged(context, onChanged!),
         ),
       ],
     );
@@ -553,22 +549,20 @@ class _GeneratedFormState extends State<GeneratedForm> {
               widget.items[r][0] is GeneratedFormDropdown);
       final colorScheme = Theme.of(context).colorScheme;
       final n = inputRowWidgets.length;
-      final List<Widget> children = [];
+      final List<Widget> rawTiles = [];
       for (var r = 0; r < n; r++) {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
             : const EdgeInsets.symmetric(horizontal: 20, vertical: 8);
-        children.add(
-          Material(
-            color: isFieldRow(r)
-                ? colorScheme.surfaceContainerHighest
-                : colorScheme.surfaceContainerLow,
-            clipBehavior: Clip.antiAlias,
-            shape: positionalTileShape(isFirst: r == 0, isLast: r == n - 1),
-            child: Padding(padding: padding, child: inputRowWidgets[r]),
-          ),
-        );
+        rawTiles.add(SettingsTile(
+          color: isFieldRow(r)
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surfaceContainerLow,
+          padding: padding,
+          child: inputRowWidgets[r],
+        ));
       }
+      final children = shapeSettingsTiles(rawTiles);
       return Form(
         key: _formKey,
         child: Column(

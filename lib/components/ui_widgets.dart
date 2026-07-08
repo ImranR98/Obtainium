@@ -9,6 +9,7 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:obtainium/components/settings_widgets.dart';
 
 Future<void> copyToClipboard(BuildContext context, String text) async {
   await Clipboard.setData(ClipboardData(text: text));
@@ -191,30 +192,6 @@ class HighlightableButton extends StatelessWidget {
   }
 }
 
-Future<void> showHelpDialog(
-  BuildContext context, {
-  required String title,
-  required List<Widget> content,
-}) {
-  return showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: content,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(tr('ok')),
-        ),
-      ],
-    ),
-  );
-}
-
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String? message;
@@ -292,12 +269,11 @@ class ConnectedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius:
-          positionalTileRadius(isFirst: isFirst, isLast: isLast),
-      clipBehavior: Clip.antiAlias,
-      child: padding == null ? child : Padding(padding: padding!, child: child),
+    return SettingsTile(
+      color: color,
+      padding: padding ?? EdgeInsets.zero,
+      borderRadius: positionalTileRadius(isFirst: isFirst, isLast: isLast),
+      child: child,
     );
   }
 }
