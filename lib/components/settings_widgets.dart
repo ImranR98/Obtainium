@@ -113,7 +113,7 @@ class SettingsToggleRow extends StatelessWidget {
       padding: EdgeInsets.zero,
       borderRadius: borderRadius,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         shape: tileShape,
         title: Text(label),
         subtitle: subtitle,

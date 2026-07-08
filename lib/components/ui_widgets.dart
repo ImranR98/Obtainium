@@ -287,7 +287,7 @@ class ConnectedCard extends StatelessWidget {
     this.isFirst = true,
     this.isLast = true,
     this.color,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
   });
 
   @override

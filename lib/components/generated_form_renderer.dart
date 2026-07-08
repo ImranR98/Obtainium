@@ -549,10 +549,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
       for (var r = 0; r < n; r++) {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+            : const EdgeInsets.symmetric(horizontal: 20, vertical: 8);
         children.add(
           Material(
-            color: colorScheme.surfaceContainerLow,
+            color: isFieldRow(r)
+                ? colorScheme.surfaceContainerHighest
+                : colorScheme.surfaceContainerLow,
             clipBehavior: Clip.antiAlias,
             shape: positionalTileShape(isFirst: r == 0, isLast: r == n - 1),
             child: Padding(padding: padding, child: inputRowWidgets[r]),
