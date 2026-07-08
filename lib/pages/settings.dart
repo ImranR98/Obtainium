@@ -715,6 +715,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         if (showBgSection && settingsProvider.enableBackgroundUpdates)
           SettingsTile(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.tonal(

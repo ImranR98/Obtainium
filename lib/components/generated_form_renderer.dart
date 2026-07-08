@@ -446,6 +446,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                 notifyFormChange(forceInvalid: !valid, isBuilding: isBuilding);
               },
             ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -473,7 +474,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     subformColumn.add(
       Padding(
-        padding: const EdgeInsets.only(bottom: 0, top: 8),
+        padding: const EdgeInsets.only(bottom: 0, top: 12),
         child: Row(
           children: [
             Expanded(
