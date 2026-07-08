@@ -13,7 +13,9 @@ jobs:
 
     steps:
       
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -28,9 +30,8 @@ jobs:
           flutter doctor -v
 
       - name: Check submodule
-        id: check_submodule
         run: |
-          git checkout ${{ inputs.checkout }}
+          git submodule update --init --recursive
 
       - name: Extract Version
         id: extract_version      
@@ -47,11 +48,13 @@ jobs:
           flutter pub get
           # TODO: Remove once Flutter's libdartjni.so no longer embeds a non-reproducible build ID
           sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE:-$HOME/.pub-cache}/hosted/*/jni-*/src/CMakeLists.txt
-          sed -i 's/signingConfig = signingConfigs.getByName("release")//g' android/app/build.gradle.kts
+          # No key.properties exists in CI, so build.gradle.kts already sets
+          # signingConfig = null and produces unsigned APKs (signing happens
+          # separately in the sign.sh script).
           flutter build apk --flavor normal && flutter build apk --split-per-abi --flavor normal
           for file in build/app/outputs/flutter-apk/app-*normal*.apk*; do mv "$file" "${file//-normal/}"; done
           flutter build apk --flavor fdroid -t lib/main_fdroid.dart && flutter build apk --split-per-abi --flavor fdroid -t lib/main_fdroid.dart
-          rm ./build/app/outputs/flutter-apk/*.sha1
+          rm -f ./build/app/outputs/flutter-apk/*.sha1
           cp ./sign.sh ./build/app/outputs/flutter-apk/
           ls -l ./build/app/outputs/flutter-apk/
 

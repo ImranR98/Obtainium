@@ -10,27 +10,16 @@ class RockMods extends AppSource {
     hosts = ['rockmods.net'];
     enforceTrackOnly = true;
     naiveStandardVersionDetection = true;
+    inferAppIdFromUrlPath = true;
   }
 
   @override
   String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://(www\\.)?${getSourceRegex(hosts)}/apps/[^/]+',
-      caseSensitive: false,
+    return standardizeUrlWithRegex(
+      url,
+      subdomainPrefix: r'(www\.)?',
+      pathPattern: r'/apps/[^/]+',
     );
-    RegExpMatch? match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return Uri.parse(standardUrl).pathSegments.last;
   }
 
   @override
@@ -39,7 +28,7 @@ class RockMods extends AppSource {
     Map<String, dynamic> additionalSettings,
   ) async {
     try {
-      var res = await sourceRequest(standardUrl, additionalSettings);
+      final res = await sourceRequest(standardUrl, additionalSettings);
       if (res.statusCode != 200) {
         throw getObtainiumHttpError(res);
       }
@@ -48,14 +37,14 @@ class RockMods extends AppSource {
       String? appVersion;
       String? appAuthor;
 
-      var jsonLdMatches = RegExp(
+      final jsonLdMatches = RegExp(
         '<script type="application/ld\\+json">(.*?)</script>',
         dotAll: true,
       ).allMatches(res.body);
 
       Map<dynamic, dynamic>? appJson;
       for (var m in jsonLdMatches) {
-        var j = jsonDecode(m.group(1)!);
+        final j = jsonDecode(m.group(1)!);
         if (j is Map && j['@type'] == 'SoftwareApplication') {
           appJson = j;
           break;
@@ -65,13 +54,16 @@ class RockMods extends AppSource {
       if (appJson != null) {
         appName = (appJson['name'] as String?)?.trim();
         appVersion = (appJson['softwareVersion'] as String?)?.trim();
-        appAuthor = (appJson['author'] as Map?)?['name'] as String?;
+        final tmpAuthor = appJson['author'];
+        if (tmpAuthor is Map) {
+          appAuthor = tmpAuthor['name'] as String?;
+        }
       }
 
       if (appName == null || appName.isEmpty) {
-        var html = parse(res.body);
-        var h1 = html.querySelector('h1');
-        appName = h1?.text?.trim() ?? standardUrl.split('/').last;
+        final html = parse(res.body);
+        final h1 = html.querySelector('h1');
+        appName = h1?.text.trim() ?? standardUrl.split('/').last;
       }
 
       if (appVersion == null || appVersion.isEmpty) {
@@ -84,8 +76,7 @@ class RockMods extends AppSource {
         AppNames(appAuthor ?? name, appName),
       );
     } catch (e) {
-      if (e is ObtainiumError) rethrow;
-      throw ObtainiumError('RockMods Error: $e');
+      rethrowOrWrapError(e);
     }
   }
 }

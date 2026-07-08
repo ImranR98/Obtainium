@@ -1,0 +1,112 @@
+import 'dart:async';
+
+import 'package:android_package_installer/android_package_installer.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:obtainium/custom_errors.dart';
+import 'package:obtainium/installers/installer.dart';
+import 'package:obtainium/providers/apps_provider.dart';
+import 'package:obtainium/providers/logs_provider.dart';
+import 'package:obtainium/providers/settings_provider.dart';
+import 'package:obtainium/providers/source_provider.dart';
+
+const int _androidApiLevelS = 31;
+
+/// Installs using Android's session-based [AndroidPackageInstaller]. Requires
+/// the `REQUEST_INSTALL_PACKAGES` permission and, for silent installs, that
+/// Obtainium is the installing package on a new enough OS.
+class StockInstaller extends Installer {
+  StockInstaller(super.settingsProvider);
+
+  @override
+  String get modeKey => 'stock';
+
+  @override
+  Future<bool> canInstallSilently(App app) async {
+    if (app.id == obtainiumId ||
+        app.id == '$obtainiumId.fdroid' ||
+        app.id == '$obtainiumId.debug') {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: Obtainium cannot silently install itself: ${app.id}',
+        ),
+      );
+      return false;
+    }
+    final osInfo = await DeviceInfoPlugin().androidInfo;
+    String? installerPackageName;
+    try {
+      installerPackageName = osInfo.version.sdkInt >= 30
+          ? (await packageManager.getInstallSourceInfo(
+              packageName: app.id,
+            ))?.installingPackageName
+          : (await packageManager.getInstallerPackageName(packageName: app.id));
+    } catch (e) {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: failed to get installed package details: ${app.id} (${e.toString()})',
+        ),
+      );
+      return false;
+    }
+    if (installerPackageName != obtainiumId &&
+        installerPackageName != '$obtainiumId.fdroid' &&
+        installerPackageName != '$obtainiumId.debug') {
+      // If we did not install the app, silent install is not possible
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: Obtainium is not the installing package (current installer: ${installerPackageName ?? 'unknown'}): ${app.id}',
+        ),
+      );
+      return false;
+    }
+    if (osInfo.version.sdkInt < _androidApiLevelS) {
+      // The OS must also be new enough
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: Android SDK ${osInfo.version.sdkInt} is too old (requires $_androidApiLevelS+): ${app.id}',
+        ),
+      );
+      return false;
+    }
+    // Session installer silent installs require a recent enough target SDK;
+    // this constraint is specific to the stock installer.
+    // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
+    final int? targetSDK = (await getInstalledInfo(
+      app.id,
+    ))?.applicationInfo?.targetSdkVersion;
+    final int requiredSDK = osInfo.version.sdkInt - 3;
+    if (!(targetSDK != null && targetSDK >= requiredSDK)) {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: currently targets API $targetSDK which is too low (requires API $requiredSDK): ${app.id}',
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  Future<bool> checkPermission() =>
+      settingsProvider.getInstallPermission(enforce: false);
+
+  @override
+  Future<void> ensurePermission() async {
+    if (!(await settingsProvider.getInstallPermission(enforce: false))) {
+      throw ObtainiumError(tr('cancelled'));
+    }
+  }
+
+  @override
+  Future<InstallResult> installApk(
+    List<String> apkFilePaths, {
+    required String appId,
+    Map<String, dynamic> installOptions = const {},
+  }) async {
+    final code = await AndroidPackageInstaller.installApk(
+      apkFilePath: apkFilePaths.join(','),
+    );
+    return InstallResult.fromPlatformCode(code);
+  }
+}
