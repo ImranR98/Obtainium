@@ -32,12 +32,12 @@ class ObtainiumError {
 
   ObtainiumError.withCode(
     this.code, {
-    String message = '',
+    this._message = '',
     this.unexpected = false,
     this.stack,
     this.data = const {},
     this.url,
-  }) : _message = message;
+  });
 
   String get message =>
       code == 'UNKNOWN' ||
