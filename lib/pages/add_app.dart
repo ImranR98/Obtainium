@@ -658,6 +658,46 @@ class AddAppPageState extends State<AddAppPage> {
     ],
   );
 
+  Widget _buildSourceSpecificForm(SettingsProvider settingsProvider) {
+    final s = pickedSource!;
+    final formItems = s.combinedAppSpecificSettingFormItems;
+    if (settingsProvider.includePrereleasesByDefault ||
+        settingsProvider.shizukuPretendToBeGooglePlay) {
+      for (var row in formItems) {
+        for (var item in row) {
+          if (item.key == 'includePrereleases' &&
+              settingsProvider.includePrereleasesByDefault) {
+            item.value = true;
+          }
+          if (item.key == 'shizukuPretendToBeGooglePlay' &&
+              settingsProvider.shizukuPretendToBeGooglePlay) {
+            item.value = true;
+          }
+        }
+      }
+    }
+    return GeneratedForm(
+      tileMode: true,
+      key: Key(
+        '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
+      ),
+      items: [
+        ...formItems,
+        ...(pickedSourceOverride != null
+            ? s.sourceConfigSettingFormItems.map((e) => [e])
+            : []),
+      ],
+      onValueChanges: (values, valid, isBuilding) {
+        if (!isBuilding) {
+          setState(() {
+            additionalSettings = values;
+            additionalSettingsValid = valid;
+          });
+        }
+      },
+    );
+  }
+
   Widget _getAdditionalOptsCol(
     BuildContext context,
     SettingsProvider settingsProvider,
@@ -673,45 +713,7 @@ class AddAppPageState extends State<AddAppPage> {
         ),
       ),
       const SizedBox(height: 16),
-      () {
-        final s = pickedSource!;
-        final formItems = s.combinedAppSpecificSettingFormItems;
-        if (settingsProvider.includePrereleasesByDefault ||
-            settingsProvider.shizukuPretendToBeGooglePlay) {
-          for (var row in formItems) {
-            for (var item in row) {
-              if (item.key == 'includePrereleases' &&
-                  settingsProvider.includePrereleasesByDefault) {
-                item.value = true;
-              }
-              if (item.key == 'shizukuPretendToBeGooglePlay' &&
-                  settingsProvider.shizukuPretendToBeGooglePlay) {
-                item.value = true;
-              }
-            }
-          }
-        }
-        return GeneratedForm(
-          tileMode: true,
-          key: Key(
-            '${s.name}-${s.hostChanged.toString()}-${s.hostIdenticalDespiteAnyChange.toString()}',
-          ),
-          items: [
-            ...formItems,
-            ...(pickedSourceOverride != null
-                ? s.sourceConfigSettingFormItems.map((e) => [e])
-                : []),
-          ],
-          onValueChanges: (values, valid, isBuilding) {
-            if (!isBuilding) {
-              setState(() {
-                additionalSettings = values;
-                additionalSettingsValid = valid;
-              });
-            }
-          },
-        );
-      }(),
+      _buildSourceSpecificForm(settingsProvider),
       const SizedBox(height: 12),
       SettingsTile(
         padding: const EdgeInsets.all(12),

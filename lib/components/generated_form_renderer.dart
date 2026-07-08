@@ -170,6 +170,47 @@ class _GeneratedFormState extends State<GeneratedForm> {
   int _subFormGenerationCount = 0;
   final List<TextEditingController> _textControllers = [];
 
+  InputDecoration _fieldDecoration({
+    required String labelText,
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      filled: widget.tileMode ? false : null,
+      border: widget.tileMode ? InputBorder.none : null,
+      enabledBorder: widget.tileMode ? InputBorder.none : null,
+      focusedBorder: widget.tileMode ? InputBorder.none : null,
+      suffixIcon: suffixIcon,
+    );
+  }
+
+  Widget? _buildHelpSuffixIcon(
+    String label,
+    String? helpUrl,
+    List<Widget> belowWidgets,
+  ) {
+    if (helpUrl != null) {
+      return IconButton(
+        icon: const Icon(Icons.open_in_new),
+        tooltip: tr('about'),
+        onPressed: () => unawaited(
+          launchUrlString(helpUrl, mode: LaunchMode.externalApplication),
+        ),
+      );
+    }
+    if (belowWidgets.isNotEmpty) {
+      return IconButton(
+        icon: const Icon(Icons.help_outline),
+        tooltip: tr('about'),
+        onPressed: () => showHelpDialog(context,
+            title: label, content: belowWidgets),
+      );
+    }
+    return null;
+  }
+
   void notifyFormChange({bool forceInvalid = false, bool isBuilding = false}) {
     final Map<String, dynamic> returnValues = values;
     var valid = true;
@@ -208,35 +249,14 @@ class _GeneratedFormState extends State<GeneratedForm> {
               notifyFormChange();
             });
           },
-          decoration: InputDecoration(
+          decoration: _fieldDecoration(
             labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
             hintText: formItem.hint,
-            filled: widget.tileMode ? false : null,
-            border: widget.tileMode ? InputBorder.none : null,
-            enabledBorder: widget.tileMode ? InputBorder.none : null,
-            focusedBorder: widget.tileMode ? InputBorder.none : null,
-            suffixIcon: formItem.helpUrl != null
-                ? IconButton(
-                    icon: const Icon(Icons.open_in_new),
-                    tooltip: tr('about'),
-                    onPressed: () => unawaited(
-                      launchUrlString(
-                        formItem.helpUrl!,
-                        mode: LaunchMode.externalApplication,
-                      ),
-                    ),
-                  )
-                : formItem.belowWidgets.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.help_outline),
-                    tooltip: tr('about'),
-                    onPressed: () => showHelpDialog(
-                      context,
-                      title: tr(formItem.label),
-                      content: formItem.belowWidgets as List<Widget>,
-                    ),
-                  )
-                : null,
+            suffixIcon: _buildHelpSuffixIcon(
+              tr(formItem.label),
+              formItem.helpUrl,
+              formItem.belowWidgets as List<Widget>,
+            ),
           ),
           minLines: formItem.max <= 1 ? null : formItem.max,
           maxLines: formItem.max <= 1 ? 1 : formItem.max,
@@ -282,34 +302,13 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return Text(tr('dropdownNoOptsError'));
     }
     return DropdownButtonFormField(
-      decoration: InputDecoration(
+      decoration: _fieldDecoration(
         labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
-        filled: widget.tileMode ? false : null,
-        border: widget.tileMode ? InputBorder.none : null,
-        enabledBorder: widget.tileMode ? InputBorder.none : null,
-        focusedBorder: widget.tileMode ? InputBorder.none : null,
-        suffixIcon: formItem.helpUrl != null
-            ? IconButton(
-                icon: const Icon(Icons.open_in_new),
-                tooltip: tr('about'),
-                onPressed: () => unawaited(
-                  launchUrlString(
-                    formItem.helpUrl!,
-                    mode: LaunchMode.externalApplication,
-                  ),
-                ),
-              )
-            : formItem.belowWidgets.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.help_outline),
-                tooltip: tr('about'),
-                onPressed: () => showHelpDialog(
-                  context,
-                  title: tr(formItem.label),
-                  content: formItem.belowWidgets as List<Widget>,
-                ),
-              )
-            : null,
+        suffixIcon: _buildHelpSuffixIcon(
+          tr(formItem.label),
+          formItem.helpUrl,
+          formItem.belowWidgets as List<Widget>,
+        ),
       ),
       initialValue: values[formItem.key],
       items: formItem.opts!.map((e2) {
