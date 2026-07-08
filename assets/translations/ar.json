@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "أظهر أخطاء الرجوع إلى إصدار أقدم من التطبيق",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "اعرض التطبيقات غير المحدثة فقط",
     "showWebInAppView": "عرض صفحة الويب المصدر في عرض التطبيق",
     "skipSort": "تخطي الترتيب",

@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Foutmeldingen weergeven bij afwaarderen",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "Alleen verouderde apps weergeven",
     "showWebInAppView": "Bron-webpagina weergeven in appweergave",
     "skipSort": "Sortering overslaan",

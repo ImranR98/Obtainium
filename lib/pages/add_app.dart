@@ -798,7 +798,9 @@ class AddAppPageState extends State<AddAppPage> {
   );
 
   Widget _getSourcesListWidget(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(16),
+    padding: EdgeInsets.only(
+        left: 16, right: 16, top: 16,
+        bottom: 16 + MediaQuery.of(context).padding.bottom),
     child: Wrap(
       direction: Axis.horizontal,
       alignment: WrapAlignment.spaceBetween,

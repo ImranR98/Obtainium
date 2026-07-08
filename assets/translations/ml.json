@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Show app downgrade errors",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "കാലഹരണപ്പെട്ട ആപ്പുകൾ മാത്രം കാണിക്കുക",
     "showWebInAppView": "ആപ്പ് കാഴ്ചയിൽ ഉറവിട വെബ്പേജ് കാണിക്കുക",
     "skipSort": "സോർട്ടിംഗ് ഒഴിവാക്കുക",

@@ -62,10 +62,12 @@ class _SettingsPageState extends State<SettingsPage> {
         level: LogLevel.info,
       );
     } catch (e, stack) {
-      unawaited(logs.add(
-        'Manual BG update check crashed: $e\n$stack',
-        level: LogLevel.error,
-      ));
+      unawaited(
+        logs.add(
+          'Manual BG update check crashed: $e\n$stack',
+          level: LogLevel.error,
+        ),
+      );
     }
     if (!mounted) return;
     setState(() => _isRunningBgCheck = false);
@@ -628,6 +630,12 @@ class _SettingsPageState extends State<SettingsPage> {
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps = value,
         ),
         SettingsToggleRow(
+          label: tr('showActionBannerForUpdateOnly'),
+          value: settingsProvider.showActionBannerForUpdateOnly,
+          onChanged: (value) =>
+              settingsProvider.showActionBannerForUpdateOnly = value,
+        ),
+        SettingsToggleRow(
           label: tr('removeOnExternalUninstall'),
           value: settingsProvider.removeOnExternalUninstall,
           onChanged: (value) =>
@@ -710,17 +718,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 settingsProvider.shizukuPretendToBeGooglePlay = value,
           ),
         if (settingsProvider.installerMode == InstallerMode.external.name)
-          const SettingsTile(
-            child: _ExternalInstallerTile(),
-          ),
+          const SettingsTile(child: _ExternalInstallerTile()),
         if (showBgSection && settingsProvider.enableBackgroundUpdates)
           SettingsTile(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.tonal(
-                onPressed:
-                    _isRunningBgCheck ? null : _triggerManualBgCheck,
+                onPressed: _isRunningBgCheck ? null : _triggerManualBgCheck,
                 child: _isRunningBgCheck
                     ? const SizedBox(
                         width: 20,

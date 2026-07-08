@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Alkalmazás-visszafejlesztési hibák megjelenítése",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "Csak az elavult alkalmazások megjelenítése",
     "showWebInAppView": "Forrás megjelenítése az alkalmazásnézetben",
     "skipSort": "Rendezés kihagyása",
