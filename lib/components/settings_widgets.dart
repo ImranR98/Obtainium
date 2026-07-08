@@ -62,7 +62,7 @@ class SettingsTile extends StatelessWidget {
   const SettingsTile({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
     this.borderRadius,
     this.color,
   });
@@ -113,7 +113,7 @@ class SettingsToggleRow extends StatelessWidget {
       padding: EdgeInsets.zero,
       borderRadius: borderRadius,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         shape: tileShape,
         title: Text(label),
         subtitle: subtitle,
