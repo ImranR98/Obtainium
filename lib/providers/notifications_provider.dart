@@ -1,12 +1,77 @@
-// Exposes functions that can be used to send notifications to the user
-// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app
+// Exposes functions that can be used to send notifications to the user.
+//
+// Contains a set of pre-defined ObtainiumNotification objects that should be used throughout the app.
+
+import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:obtainium/main.dart';
+import 'package:obtainium/providers/apps_provider.dart' show formatDownloadSize;
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+
+/// Prefix for the download-notification Cancel action id; the app ID is appended
+/// so the tap handler knows which download to stop.
+const String cancelDownloadActionPrefix = 'cancel_download::';
+
+const int updateNotificationId = 2;
+const int silentUpdateNotificationId = 3;
+const int errorCheckingUpdatesNotificationId = 5;
+const int trackOnlyUpdateNotificationId = 7;
+const int silentUpdateAttemptNotificationId = 8;
+const int downloadNotificationBaseId = 100;
+
+/// Size of the ID space for per-download notifications. Kept just under the
+/// 32-bit signed max (minus [downloadNotificationBaseId]) so download IDs stay
+/// positive and clear of the small fixed IDs above, while making collisions
+/// between concurrently downloading apps as unlikely as a raw hashCode.
+const int downloadNotificationIdRange = 2000000000;
+
+/// Name under which the main isolate registers a port to receive download-cancel
+/// requests forwarded from the notification-action background isolate.
+const String _downloadCancelPortName = 'obtainium_download_cancel';
+
+/// The app ID targeted by a download-cancel notification action, or null if
+/// [actionId] isn't a download-cancel action.
+String? _cancelActionAppId(String? actionId) {
+  if (actionId == null || !actionId.startsWith(cancelDownloadActionPrefix)) {
+    return null;
+  }
+  final appId = actionId.substring(cancelDownloadActionPrefix.length);
+  return appId.isEmpty ? null : appId;
+}
+
+/// Runs in a separate isolate when a notification action button is tapped (FLN
+/// routes action taps here, not to the foreground handler). It can't touch app
+/// state, so it forwards the cancel request to the main isolate via a named port.
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) {
+  final appId = _cancelActionAppId(response.actionId);
+  if (appId != null) {
+    IsolateNameServer.lookupPortByName(_downloadCancelPortName)?.send(appId);
+  }
+}
+
+String _buildUpdateMessage(
+  List<App> updates, {
+  String? emptyKey,
+  required String singleKey,
+  required String pluralKey,
+  bool includeVersion = false,
+}) {
+  if (updates.isEmpty) return emptyKey != null ? tr(emptyKey) : '';
+  final name = updates[0].finalName;
+  final version = updates[0].latestVersion;
+  if (updates.length == 1) {
+    final args = includeVersion ? [name, version] : [name];
+    return tr(singleKey, args: args);
+  }
+  final count = updates.length - 1;
+  return plural(pluralKey, count, args: [name, count.toString()]);
+}
 
 class ObtainiumNotification {
   late int id;
@@ -19,6 +84,7 @@ class ObtainiumNotification {
   int? progPercent;
   bool onlyAlertOnce;
   String? payload;
+  List<AndroidNotificationAction>? androidActions;
 
   ObtainiumNotification(
     this.id,
@@ -31,53 +97,44 @@ class ObtainiumNotification {
     this.onlyAlertOnce = false,
     this.progPercent,
     this.payload,
+    this.androidActions,
   });
 }
 
 class UpdateNotification extends ObtainiumNotification {
   UpdateNotification(List<App> updates, {int? id})
     : super(
-        id ?? 2,
+        id ?? updateNotificationId,
         tr('updatesAvailable'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          emptyKey: 'noNewUpdates',
+          singleKey: 'xHasAnUpdate',
+          pluralKey: 'xAndNMoreUpdatesAvailable',
+        ),
         'UPDATES_AVAILABLE',
         tr('updatesAvailableNotifChannel'),
         tr('updatesAvailableNotifDescription'),
         Importance.max,
-      ) {
-    message = updates.isEmpty
-        ? tr('noNewUpdates')
-        : updates.length == 1
-        ? tr('xHasAnUpdate', args: [updates[0].finalName])
-        : plural(
-            'xAndNMoreUpdatesAvailable',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class TrackOnlyUpdateNotification extends ObtainiumNotification {
   TrackOnlyUpdateNotification(List<App> updates, {int? id})
     : super(
-        id ?? 7,
+        id ?? trackOnlyUpdateNotificationId,
         tr('trackOnlyUpdatesAvailable'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          emptyKey: 'noNewUpdates',
+          singleKey: 'xHasAnUpdate',
+          pluralKey: 'xAndNMoreUpdatesAvailable',
+        ),
         'UPDATES_AVAILABLE',
         tr('updatesAvailableNotifChannel'),
         tr('updatesAvailableNotifDescription'),
         Importance.max,
-      ) {
-    message = updates.isEmpty
-        ? tr('noNewUpdates')
-        : updates.length == 1
-        ? tr('xHasAnUpdate', args: [updates[0].finalName])
-        : plural(
-            'xAndNMoreUpdatesAvailable',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class SilentUpdateNotification extends ObtainiumNotification {
@@ -85,51 +142,37 @@ class SilentUpdateNotification extends ObtainiumNotification {
     : super(
         id ?? 3,
         succeeded ? tr('appsUpdated') : tr('appsNotUpdated'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          singleKey: succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
+          pluralKey: succeeded
+              ? 'xAndNMoreUpdatesInstalled'
+              : 'xAndNMoreUpdatesFailed',
+          includeVersion: true,
+        ),
         'APPS_UPDATED',
         tr('appsUpdatedNotifChannel'),
         tr('appsUpdatedNotifDescription'),
         Importance.defaultImportance,
-      ) {
-    message = updates.isEmpty
-        ? ''
-        : updates.length == 1
-        ? tr(
-            succeeded ? 'xWasUpdatedToY' : 'xWasNotUpdatedToY',
-            args: [updates[0].finalName, updates[0].latestVersion],
-          )
-        : plural(
-            succeeded ? 'xAndNMoreUpdatesInstalled' : "xAndNMoreUpdatesFailed",
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class SilentUpdateAttemptNotification extends ObtainiumNotification {
   SilentUpdateAttemptNotification(List<App> updates, {int? id})
     : super(
-        id ?? 3,
+        id ?? 8,
         tr('appsPossiblyUpdated'),
-        '',
+        _buildUpdateMessage(
+          updates,
+          singleKey: 'xWasPossiblyUpdatedToY',
+          pluralKey: 'xAndNMoreUpdatesPossiblyInstalled',
+          includeVersion: true,
+        ),
         'APPS_POSSIBLY_UPDATED',
         tr('appsPossiblyUpdatedNotifChannel'),
         tr('appsPossiblyUpdatedNotifDescription'),
         Importance.defaultImportance,
-      ) {
-    message = updates.isEmpty
-        ? ''
-        : updates.length == 1
-        ? tr(
-            'xWasPossiblyUpdatedToY',
-            args: [updates[0].finalName, updates[0].latestVersion],
-          )
-        : plural(
-            'xAndNMoreUpdatesPossiblyInstalled',
-            updates.length - 1,
-            args: [updates[0].finalName, (updates.length - 1).toString()],
-          );
-  }
+      );
 }
 
 class ErrorCheckingUpdatesNotification extends ObtainiumNotification {
@@ -157,33 +200,49 @@ class AppsRemovedNotification extends ObtainiumNotification {
         tr('appsRemovedNotifDescription'),
         Importance.max,
       ) {
-    message = '';
+    final buffer = StringBuffer();
     for (var r in namedReasons) {
-      message += '${tr('xWasRemovedDueToErrorY', args: [r[0], r[1]])} \n';
+      buffer.writeln(tr('xWasRemovedDueToErrorY', args: [r[0], r[1]]));
     }
-    message = message.trim();
+    message = buffer.toString().trim();
   }
 }
 
 class DownloadNotification extends ObtainiumNotification {
-  DownloadNotification(String appName, int progPercent)
-    : super(
-        appName.hashCode,
-        tr('downloadingX', args: [appName]),
-        '',
-        'APP_DOWNLOADING',
-        tr('downloadingXNotifChannel', args: [tr('app')]),
-        tr('downloadNotifDescription'),
-        Importance.low,
-        onlyAlertOnce: true,
-        progPercent: progPercent,
-      );
+  static const int _baseId = downloadNotificationBaseId;
+  DownloadNotification(
+    String appName,
+    int progPercent, {
+    String? appId,
+    int? receivedBytes,
+    int? totalBytes,
+  }) : super(
+         _baseId + (appName.hashCode.abs() % downloadNotificationIdRange),
+         tr('downloadingX', args: [appName]),
+         formatDownloadSize(receivedBytes, totalBytes) ?? '',
+         'APP_DOWNLOADING',
+         tr('downloadingXNotifChannel', args: [tr('app')]),
+         tr('downloadNotifDescription'),
+         Importance.low,
+         onlyAlertOnce: true,
+         progPercent: progPercent,
+         androidActions: appId != null
+             ? [
+                 AndroidNotificationAction(
+                   '$cancelDownloadActionPrefix$appId',
+                   tr('cancel'),
+                   showsUserInterface: false,
+                   cancelNotification: true,
+                 ),
+               ]
+             : null,
+       );
 }
 
 class DownloadedNotification extends ObtainiumNotification {
   DownloadedNotification(String fileName, String downloadUrl)
     : super(
-        downloadUrl.hashCode,
+        downloadUrl.hashCode.abs(),
         tr('downloadedX', args: [fileName]),
         '',
         'FILE_DOWNLOADED',
@@ -193,7 +252,7 @@ class DownloadedNotification extends ObtainiumNotification {
       );
 }
 
-final completeInstallationNotification = ObtainiumNotification(
+ObtainiumNotification get completeInstallationNotification => ObtainiumNotification(
   1,
   tr('completeAppInstallation'),
   tr('obtainiumMustBeOpenToInstallApps'),
@@ -222,6 +281,9 @@ class NotificationsProvider {
 
   bool isInitialized = false;
 
+  /// Invoked when the user taps a download notification's Cancel action.
+  static void Function(String appId)? onDownloadCancelRequested;
+
   Map<Importance, Priority> importanceToPriority = {
     Importance.defaultImportance: Priority.defaultPriority,
     Importance.high: Priority.high,
@@ -233,16 +295,45 @@ class NotificationsProvider {
   };
 
   Future<void> initialize() async {
+    if (isInitialized) return;
     isInitialized =
         await notifications.initialize(
           settings: const InitializationSettings(
             android: AndroidInitializationSettings('ic_notification'),
           ),
           onDidReceiveNotificationResponse: (NotificationResponse response) {
+            final cancelAppId = _cancelActionAppId(response.actionId);
+            if (cancelAppId != null) {
+              onDownloadCancelRequested?.call(cancelAppId);
+              return;
+            }
             _showNotificationPayload(response.payload);
           },
+          onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
         ) ??
         false;
+  }
+
+  /// Called from the main isolate so that download-cancel requests forwarded by
+  /// [notificationTapBackground] are received and dispatched to
+  /// [onDownloadCancelRequested].
+  static void listenForDownloadCancelFromMain() {
+    final prevPort = IsolateNameServer.lookupPortByName(
+      _downloadCancelPortName,
+    );
+    if (prevPort != null) {
+      IsolateNameServer.removePortNameMapping(_downloadCancelPortName);
+    }
+    final port = ReceivePort();
+    IsolateNameServer.registerPortWithName(
+      port.sendPort,
+      _downloadCancelPortName,
+    );
+    port.listen((message) {
+      if (message is String && message.isNotEmpty) {
+        onDownloadCancelRequested?.call(message);
+      }
+    });
   }
 
   Future<void> checkLaunchByNotif() async {
@@ -258,11 +349,12 @@ class NotificationsProvider {
 
   void _showNotificationPayload(String? payload, {bool doublePop = false}) {
     if (payload?.isNotEmpty == true) {
-      var title = (payload ?? '\n\n').split('\n').first;
-      var content = (payload ?? '\n\n').split('\n').sublist(1).join('\n');
-      globalNavigatorKey.currentState?.push(
+      final lines = payload!.split('\n');
+      final title = lines.first;
+      final content = lines.sublist(1).join('\n');
+      appNavigatorKey.currentState?.push(
         PageRouteBuilder(
-          pageBuilder: (context, _, __) => AlertDialog(
+          pageBuilder: (context, _, _) => AlertDialog(
             title: Text(title),
             content: Text(content),
             actions: [
@@ -301,6 +393,7 @@ class NotificationsProvider {
     int? progPercent,
     bool onlyAlertOnce = false,
     String? payload,
+    List<AndroidNotificationAction>? androidActions,
   }) async {
     if (cancelExisting) {
       await cancel(id);
@@ -318,13 +411,15 @@ class NotificationsProvider {
           channelName,
           channelDescription: channelDescription,
           importance: importance,
-          priority: importanceToPriority[importance]!,
+          priority:
+              importanceToPriority[importance] ?? Priority.defaultPriority,
           groupKey: '$obtainiumId.$channelCode',
           progress: progPercent ?? 0,
           maxProgress: 100,
           showProgress: progPercent != null,
           onlyAlertOnce: onlyAlertOnce,
           indeterminate: progPercent != null && progPercent < 0,
+          actions: androidActions,
         ),
       ),
       payload: payload,
@@ -346,5 +441,6 @@ class NotificationsProvider {
     onlyAlertOnce: notif.onlyAlertOnce,
     progPercent: notif.progPercent,
     payload: notif.payload,
+    androidActions: notif.androidActions,
   );
 }
