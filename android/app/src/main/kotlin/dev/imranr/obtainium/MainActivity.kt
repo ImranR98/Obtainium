@@ -2,6 +2,8 @@ package dev.imranr.obtainium
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -9,15 +11,27 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 /**
- * The native surface for external-installer handoff is intentionally tiny: the
- * two capabilities below have no Flutter-plugin equivalent. Everything else
- * (intent dispatch, foreground tracking, install verification, batching) lives
- * in Dart.
+ * The native surface is intentionally tiny: the capabilities below 
+ * have no Flutter-plugin equivalent. Everything else (intent dispatch, 
+ * foreground tracking, install verification, batching) lives in Dart.
  */
 class MainActivity : FlutterActivity() {
     private companion object {
         const val EXTERNAL_INSTALL_CHANNEL = "dev.imranr.obtainium/external_install"
         const val APK_MIME = "application/vnd.android.package-archive"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        intent?.let {
+            setIntent(transformShareIntent(it))
+        }
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        val newIntent = transformShareIntent(intent)
+        setIntent(newIntent)
+        super.onNewIntent(newIntent)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -74,5 +88,22 @@ class MainActivity : FlutterActivity() {
     private fun contentUriForFile(path: String): String {
         val uri = FileProvider.getUriForFile(this, packageName, File(path))
         return uri.toString()
+    }
+
+    private fun transformShareIntent(intent: Intent): Intent {
+        if (intent.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+            val match = sharedText?.let { """https?://[^\s]+""".toRegex().find(it) } // Extract URL from shared text
+            if (match != null) {
+                val url = match.value.trimEnd('.', ',', ';', '!', '?', ')') // Trim potential trailing punctuation
+                intent.apply { // "Redirect" the intent
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("obtainium://add/${Uri.encode(url)}")
+                }
+            } else {
+                Toast.makeText(this, "No URL found in shared text", Toast.LENGTH_SHORT).show()
+            }
+        }
+        return intent
     }
 }
