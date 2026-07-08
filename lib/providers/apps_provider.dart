@@ -799,9 +799,18 @@ Future<bool> waitForPackageInstall(
   return false;
 }
 
-Future<Directory> getAppStorageDir() async =>
-    await getExternalStorageDirectory() ??
-    await getApplicationDocumentsDirectory();
+Future<Directory> getAppStorageDir() async {
+  try {
+    final extDir = await getExternalStorageDirectory();
+    if (extDir != null) {
+      if (!extDir.existsSync()) {
+        extDir.createSync(recursive: true);
+      }
+      return extDir;
+    }
+  } catch (_) {}
+  return await getApplicationDocumentsDirectory();
+}
 
 class AppsProvider with ChangeNotifier {
   // Static, app-lifetime cross-instance save-notification bus; intentionally
