@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
     Future<void> interpretLink(Uri uri) async {
       final action = uri.host;
       final data = uri.queryParameters['url'] ??
-          (uri.path.length > 1 ? uri.path.substring(1) : '');
+          (uri.path.length > 1 ? Uri.decodeComponent(uri.path.substring(1)) : '');
       try {
         if (action == 'add') {
           final AppsProvider ap = appsProvider;
