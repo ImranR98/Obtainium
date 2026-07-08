@@ -448,7 +448,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     .bodyLarge
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
-            if (!compact) const SizedBox(height: 12),
+            if (!compact) const SizedBox(height: 16),
             GeneratedForm(
               key: internalFormKey,
               items: cloneFormItems(item.items)
