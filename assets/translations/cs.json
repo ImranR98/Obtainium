@@ -352,6 +352,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Show app downgrade errors",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "Zobrazovat pouze zastaralé aplikace",
     "showWebInAppView": "Zobrazit zdrojové webové stránky v zobrazení aplikace",
     "skipSort": "Přeskočit třídění",

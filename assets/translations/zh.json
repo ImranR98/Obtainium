@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Show app downgrade errors",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "只显示待更新应用",
     "showWebInAppView": "应用详情页显示来源网站内容",
     "skipSort": "不进行排序",

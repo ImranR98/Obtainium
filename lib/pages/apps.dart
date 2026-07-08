@@ -924,12 +924,16 @@ class AppsPageState extends State<AppsPage> {
     List<String> newInstallIdsAllOrSelected,
     List<String> trackOnlyUpdateIdsAllOrSelected,
   ) {
-    final onObtain = massObtainCallback(
-      context,
-      existingUpdateIdsAllOrSelected,
-      newInstallIdsAllOrSelected,
-      trackOnlyUpdateIdsAllOrSelected,
-    );
+    final onObtain =
+        (settingsProvider.showActionBannerForUpdateOnly &&
+            existingUpdateIdsAllOrSelected.isEmpty)
+        ? null
+        : massObtainCallback(
+            context,
+            existingUpdateIdsAllOrSelected,
+            newInstallIdsAllOrSelected,
+            trackOnlyUpdateIdsAllOrSelected,
+          );
     final cs = Theme.of(context).colorScheme;
     return SliverToBoxAdapter(
       child: AnimatedSize(

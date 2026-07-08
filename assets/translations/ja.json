@@ -345,6 +345,7 @@
     "externalInstallerUnset": "未選択",
     "externalInstallerRequired": "まず設定で外部インストーラーを選択してください",
     "showAppDowngradeError": "アプリのダウングレードエラーを表示する",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "アップデートが存在するアプリのみ表示する",
     "showWebInAppView": "アプリページにソースのWebページを表示する",
     "skipSort": "ソートをスキップする",

@@ -613,7 +613,6 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-
   bool get highlightTouchTargets {
     return _getBool('highlightTouchTargets') ?? false;
   }
@@ -716,6 +715,15 @@ class SettingsProvider with ChangeNotifier {
 
   set searchDeselected(List<String> list) {
     prefs?.setStringList('searchDeselected', list);
+    notifyListeners();
+  }
+
+  bool get showActionBannerForUpdateOnly {
+    return _getBool('showActionBannerForUpdateOnly') ?? false;
+  }
+
+  set showActionBannerForUpdateOnly(bool val) {
+    prefs?.setBool('showActionBannerForUpdateOnly', val);
     notifyListeners();
   }
 

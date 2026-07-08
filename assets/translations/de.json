@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Fehler beim Downgrade der App anzeigen",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "Nur nicht aktuelle Apps anzeigen",
     "showWebInAppView": "Quellwebseite in der App-Ansicht anzeigen",
     "skipSort": "Sortieren überspringen",

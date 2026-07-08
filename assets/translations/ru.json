@@ -352,6 +352,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Показывать ошибки понижения версии приложения",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "Показывать только устаревшие приложения",
     "showWebInAppView": "Показывать исходную веб-страницу на странице приложения",
     "skipSort": "Пропустить сортировку",

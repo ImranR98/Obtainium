@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "Show app downgrade errors",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "구식 앱만 표시",
     "showWebInAppView": "앱 보기에서 소스 웹페이지 표시",
     "skipSort": "정렬 건너뛰기",

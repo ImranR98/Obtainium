@@ -345,6 +345,7 @@
     "externalInstallerUnset": "None chosen",
     "externalInstallerRequired": "Choose an external installer in Settings first",
     "showAppDowngradeError": "顯示應用程式降級錯誤",
+    "showActionBannerForUpdateOnly": "Show action banner for updates only",
     "showOutdatedOnly": "僅顯示過時的應用程式",
     "showWebInAppView": "在應用程式檢視中顯示來源網頁",
     "skipSort": "略過排序",

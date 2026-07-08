@@ -692,7 +692,11 @@ extension AppsProviderInstall on AppsProvider {
   }
 
   Future<String> getStorageRootPath() async {
-    return '/${(await getAppStorageDir()).uri.pathSegments.sublist(0, 3).join('/')}';
+    try {
+      return '/${(await getAppStorageDir()).uri.pathSegments.sublist(0, 3).join('/')}';
+    } catch (_) {
+      return '/storage/emulated/0';
+    }
   }
 
   Future<void> moveObbFile(File file, String appId) async {
