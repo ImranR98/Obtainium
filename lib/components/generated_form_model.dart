@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart';
+
 enum GeneratedFormItemType { textField, dropdown, switch_, subForm }
 
 class GeneratedFormFieldState {
@@ -25,7 +27,7 @@ class FormFieldDefinition {
   final int max;
   final String? hint;
   final bool password;
-  final dynamic textInputType;
+  final TextInputType? textInputType;
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
   final List<MapEntry<String, String>>? opts;
@@ -192,7 +194,7 @@ class GeneratedFormTextField extends GeneratedFormItem {
   final int max;
   final String? hint;
   final bool password;
-  final dynamic textInputType;
+  final TextInputType? textInputType;
   final List<String>? autoCompleteOptions;
   final String? helpUrl;
 
@@ -238,6 +240,8 @@ class GeneratedFormTextField extends GeneratedFormItem {
 class GeneratedFormDropdown extends GeneratedFormItem {
   final List<MapEntry<String, String>>? opts;
   List<String>? disabledOptKeys;
+  late bool required;
+  final String? helpUrl;
 
   GeneratedFormDropdown(
     super.key,
@@ -246,6 +250,8 @@ class GeneratedFormDropdown extends GeneratedFormItem {
     super.belowWidgets,
     String super.value = '',
     this.disabledOptKeys,
+    this.required = true,
+    this.helpUrl,
     List<String? Function(String? value)> super.additionalValidators = const [],
   });
 
@@ -265,6 +271,8 @@ class GeneratedFormDropdown extends GeneratedFormItem {
       disabledOptKeys: disabledOptKeys != null
           ? List.from(disabledOptKeys!)
           : null,
+      required: required,
+      helpUrl: helpUrl,
       additionalValidators: List.from(additionalValidators),
     );
   }

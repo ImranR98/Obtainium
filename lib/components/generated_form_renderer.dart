@@ -27,6 +27,7 @@ Color generateRandomLightColor() {
 }
 
 bool validateTextField(TextFormField tf) =>
+    tf.key is GlobalKey<FormFieldState> &&
     (tf.key as GlobalKey<FormFieldState>).currentState?.isValid == true;
 
 typedef OnValueChanges =
@@ -162,7 +163,6 @@ class _FormSwitchRow extends StatelessWidget {
 }
 
 class _GeneratedFormState extends State<GeneratedForm> {
-  final _formKey = GlobalKey<FormState>();
   Map<String, dynamic> values = {};
   late List<List<Widget>> formInputs;
   Key? initKey;
@@ -283,11 +283,33 @@ class _GeneratedFormState extends State<GeneratedForm> {
     }
     return DropdownButtonFormField(
       decoration: InputDecoration(
-        labelText: tr(formItem.label),
+        labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),
         filled: widget.tileMode ? false : null,
         border: widget.tileMode ? InputBorder.none : null,
         enabledBorder: widget.tileMode ? InputBorder.none : null,
         focusedBorder: widget.tileMode ? InputBorder.none : null,
+        suffixIcon: formItem.helpUrl != null
+            ? IconButton(
+                icon: const Icon(Icons.open_in_new),
+                tooltip: tr('about'),
+                onPressed: () => unawaited(
+                  launchUrlString(
+                    formItem.helpUrl!,
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+              )
+            : formItem.belowWidgets.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: tr('about'),
+                onPressed: () => showHelpDialog(
+                  context,
+                  title: tr(formItem.label),
+                  content: formItem.belowWidgets as List<Widget>,
+                ),
+              )
+            : null,
       ),
       initialValue: values[formItem.key],
       items: formItem.opts!.map((e2) {
@@ -300,7 +322,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       }).toList(),
       onChanged: (value) {
         setState(() {
-          values[formItem.key] = value ?? formItem.opts!.first.key;
+          values[formItem.key] = value ?? values[formItem.key];
           notifyFormChange();
         });
       },
@@ -436,12 +458,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     }).toList(),
                   )
                   .toList(),
-              onValueChanges: (values, valid, isBuilding) {
-                values = values.map(
+              onValueChanges: (subValues, valid, isBuilding) {
+                final cleaned = subValues.map(
                   (key, value) => MapEntry(key.split(',')[0], value),
                 );
                 if (valid) {
-                  this.values[fieldKey]?[i] = values;
+                  values[fieldKey]?[i] = cleaned;
                 }
                 notifyFormChange(forceInvalid: !valid, isBuilding: isBuilding);
               },
@@ -567,13 +589,10 @@ class _GeneratedFormState extends State<GeneratedForm> {
         ));
       }
       final children = shapeSettingsTiles(rawTiles);
-      return Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 3,
-          children: children,
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 3,
+        children: children,
       );
     }
 
@@ -585,10 +604,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       children.add(inputRowWidgets[r]);
     }
 
-    return Form(
-      key: _formKey,
-      child: Column(children: children),
-    );
+    return Column(children: children);
   }
 }
 

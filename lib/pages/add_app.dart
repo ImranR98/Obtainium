@@ -212,9 +212,8 @@ class AddAppPageState extends State<AddAppPage> {
   }
 
   Future<void> addApp(
-    BuildContext context, {
-    bool resetUserInputAfter = false,
-  }) async {
+    BuildContext context,
+  ) async {
     gettingAppInfo = true;
     setState(() {});
     try {
@@ -288,20 +287,12 @@ class AddAppPageState extends State<AddAppPage> {
         final route = MaterialPageRoute<void>(
           builder: (context) => AppPage(appId: app!.id),
         );
-        final nav = Navigator.of(context);
-        if (resetUserInputAfter) {
-          unawaited(nav.push(route));
-        } else {
-          unawaited(nav.pushReplacement(route));
-        }
+        unawaited(Navigator.of(context).pushReplacement(route));
       }
     } catch (e) {
       if (context.mounted) showError(e, context);
     } finally {
       gettingAppInfo = false;
-      if (resetUserInputAfter) {
-        changeUserInput('', false, true);
-      }
       if (mounted) setState(() {});
     }
   }
@@ -684,7 +675,7 @@ class AddAppPageState extends State<AddAppPage> {
       const SizedBox(height: 16),
       () {
         final s = pickedSource!;
-        final formItems = cloneFormItems(s.combinedAppSpecificSettingFormItems);
+        final formItems = s.combinedAppSpecificSettingFormItems;
         if (settingsProvider.includePrereleasesByDefault ||
             settingsProvider.shizukuPretendToBeGooglePlay) {
           for (var row in formItems) {
