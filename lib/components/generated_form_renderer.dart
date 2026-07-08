@@ -225,6 +225,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
       valid = false;
     }
     widget.onValueChanges(returnValues, valid, isBuilding);
+    setState(() {});
   }
 
   Widget _initTextField(GeneratedFormTextField formItem) {
