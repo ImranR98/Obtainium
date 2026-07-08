@@ -41,7 +41,6 @@ Currently supported App sources:
   - Jenkins Jobs
   - [APKMirror](https://apkmirror.com/) *(Track-Only)*
   - [RockMods](https://rockmods.net/) *(Track-Only)*
-- *Track-Only sources cannot download APKs directly — they only monitor for new releases.*
 - Other - App-Specific:
   - [Telegram App](https://telegram.org/)
   - [Neutron Code](https://neutroncode.com/)
