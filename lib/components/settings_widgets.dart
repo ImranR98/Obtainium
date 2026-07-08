@@ -73,7 +73,7 @@ class SettingsTile extends StatelessWidget {
         borderRadius ?? BorderRadius.circular(connectedTileBigRadius);
     return Material(
       color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: effectiveRadius,
+      shape: RoundedSuperellipseBorder(borderRadius: effectiveRadius),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );
@@ -107,13 +107,13 @@ class SettingsToggleRow extends StatelessWidget {
             onChanged!(v);
           };
     final tileShape = borderRadius != null
-        ? RoundedRectangleBorder(borderRadius: borderRadius!)
+        ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
         : null;
     return SettingsTile(
       padding: EdgeInsets.zero,
       borderRadius: borderRadius,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         shape: tileShape,
         title: Text(label),
         subtitle: subtitle,

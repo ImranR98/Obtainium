@@ -151,7 +151,15 @@ class _FormSwitchRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Switch(value: value, onChanged: item.disabled ? null : onChanged),
+        Switch(
+          value: value,
+          onChanged: item.disabled
+              ? null
+              : (v) {
+                  context.read<SettingsProvider>().selectionClick();
+                  onChanged?.call(v);
+                },
+        ),
       ],
     );
   }
