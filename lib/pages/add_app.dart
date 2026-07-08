@@ -43,6 +43,8 @@ class AddAppPageState extends State<AddAppPage> {
   AppSource? pickedSource;
   Map<String, dynamic> additionalSettings = {};
   bool additionalSettingsValid = true;
+  bool _urlValid = false;
+  bool _prevValid = false;
   bool inferAppIdIfOptional = true;
   List<String> pickedCategories = [];
   int urlInputKey = 0;
@@ -110,15 +112,19 @@ class AddAppPageState extends State<AddAppPage> {
       if (updateUrlInput) {
         urlInputKey++;
       }
+      _urlValid = valid || pickedSourceOverride != null;
       final prevHost = pickedSource?.hosts.isNotEmpty == true
           ? pickedSource?.hosts.first
           : null;
-      final source = valid
-          ? sourceProvider.getSource(
-              userInput,
-              overrideSource: pickedSourceOverride,
-            )
-          : null;
+      AppSource? source;
+      try {
+        source = sourceProvider.getSource(
+          userInput,
+          overrideSource: pickedSourceOverride,
+        );
+      } catch (_) {
+        source = null;
+      }
       if (pickedSource?.sourceIdentifier != source?.sourceIdentifier ||
           overrideChanged ||
           (prevHost != null && prevHost != source?.hosts.firstOrNull)) {
@@ -133,7 +139,10 @@ class AddAppPageState extends State<AddAppPage> {
             ? !sourceProvider.ifRequiredAppSpecificSettingsExist(source)
             : true;
         inferAppIdIfOptional = true;
+      } else if (valid && !updateUrlInput && _prevValid) {
+        return;
       }
+      _prevValid = valid;
       _updateSourceNote();
       if (mounted) setState(() {});
     }
@@ -555,6 +564,7 @@ class AddAppPageState extends State<AddAppPage> {
                 onPressed:
                     doingSomething ||
                         pickedSource == null ||
+                        !_urlValid ||
                         (pickedSource
                                     ?.combinedAppSpecificSettingFormItems
                                     .isNotEmpty ==

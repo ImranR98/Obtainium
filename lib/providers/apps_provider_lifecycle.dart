@@ -335,6 +335,15 @@ extension AppsProviderLifecycle on AppsProvider {
       appsLoadingCompleter = null;
       notify();
     }
+    if (!isBg && apps.isNotEmpty) {
+      unawaited(Future(() async {
+        for (final entry in apps.entries.toList()) {
+          await updateAppIcon(entry.key);
+          await Future<void>.delayed(Duration.zero);
+        }
+        notify();
+      }));
+    }
   }
 
   Future<void> updateAppIcon(String? appId, {bool ignoreCache = false}) async {
