@@ -1210,7 +1210,7 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
-        floatingActionButton: selectedAppIds.isNotEmpty
+        floatingActionButton: selectedAppIds.isNotEmpty && widget.onAppSelected == null
             ? FloatingActionButton.extended(
                 onPressed: () {
                   settingsProvider.selectionClick();
@@ -1241,6 +1241,19 @@ class AppsPageState extends State<AppsPage> {
           builder: (BuildContext context) => AppPage(appId: app.app.id),
         ),
       );
+    }
+  }
+
+  void showSelectedAppActions() {
+    if (!mounted) return;
+    final listedApps = _cachedListedApps ??
+        context.read<AppsProvider>().getAppValues().toList();
+    final selectedApps = listedApps
+        .map((e) => e.app)
+        .where((a) => selectedAppIds.contains(a.id))
+        .toSet();
+    if (selectedApps.isNotEmpty) {
+      showMoreOptionsBottomSheet(context, selectedApps);
     }
   }
 }
