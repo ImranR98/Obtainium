@@ -307,7 +307,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
         suffixIcon: _buildHelpSuffixIcon(
           tr(formItem.label),
           formItem.helpUrl,
-          formItem.belowWidgets as List<Widget>,
+          formItem.belowWidgets,
         ),
       ),
       initialValue: values[formItem.key],
