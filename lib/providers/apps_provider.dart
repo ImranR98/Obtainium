@@ -979,14 +979,19 @@ class AppsProvider with ChangeNotifier {
     }
     () async {
       await this.settingsProvider.initializeSettings();
-      final cacheDirs = await getExternalCacheDirectories();
-      if (cacheDirs?.isNotEmpty ?? false) {
-        _apkDir = cacheDirs!.first;
-        _iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
-        if (!_iconsCacheDir!.existsSync()) {
-          _iconsCacheDir!.createSync();
+      var useExternalCache = false;
+      try {
+        final cacheDirs = await getExternalCacheDirectories();
+        if (cacheDirs?.isNotEmpty ?? false) {
+          _apkDir = cacheDirs!.first;
+          _iconsCacheDir = Directory('${cacheDirs.first.path}/icons');
+          if (!_iconsCacheDir!.existsSync()) {
+            _iconsCacheDir!.createSync();
+          }
+          useExternalCache = true;
         }
-      } else {
+      } catch (_) {}
+      if (!useExternalCache) {
         _apkDir = Directory('${(await getAppStorageDir()).path}/apks');
         if (!_apkDir!.existsSync()) {
           _apkDir!.createSync();
