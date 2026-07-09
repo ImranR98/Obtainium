@@ -11,7 +11,7 @@ class DirectAPKLink extends AppSource {
   final HTML html = HTML();
 
   DirectAPKLink() {
-    name = 'Direct APK link';
+    name = tr('directAPKLink');
     versionDetectionDisallowed = true;
     excludeCommonSettingKeys = [
       'versionExtractionRegEx',

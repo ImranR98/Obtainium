@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Beachten Sie, dass es kurzfristig weiterhin möglich sein kann, \"unverifizierte\" (nicht-konforme) Apps durch einen \"fortgeschrittenen Flow\"-Prozess zu installieren, den Google versprochen hat, nach einem breiten Rückschluss auf ihre Ankündigung umzusetzen, aber sie haben nicht detailliert, wie dies funktioniert, so dass es unklar ist, ob es wirklich Benutzerfreiheiten in praktischer Weise erhalten wird.\n\nIn jedem Fall ist Googles Bewegung ein wesentlicher Schritt zum Ende des kostenlosen, universellen Computers für Einzelpersonen.\n\nNicht zertifizierte Betriebssysteme, wie GrapheneOS, sollten dadurch nicht beeinflusst werden, solange sie weiterhin existieren dürfen.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Weniger offensichtliche Touch-Ziele hervorheben",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} Stunde",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Haptisches Feedback aktivieren",
     "takeFirstLink": "Ersten Link verwenden",
     "tarballedApkFilterRegEx": "APKs im Tarball filtern",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Erscheinungsbild",
     "tooManyRedirects": "Too many redirects",

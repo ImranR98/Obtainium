@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Kısa vadede, Google'ın duyurudan sonra aldığı geniş tepkilerin ardından yapacağına söz verdiği \"gelişmiş akış\" işlemi ile \"doğrulanmamış\" (şartı yerine getirmeyen) uygulamaları yüklemek mümkün olabilir; ancak nasıl çalışacağını detaylandırmadıkları için bunun kullanıcı özgürlüğünü pratik anlamda gerçekten koruyup koruyamayacağı belirsizdir.\n\nHer halükârda Google'ın bu hamlesi; bireyler için ücretsiz, genel amaçlı bilişim hizmetlerinin sonuna doğru atılmış önemli bir adımdır.\n\nVar olmalarına müsaade edildiği sürece, GrapheneOS gibi sertifikasız işletim sistemleri bundan etkilenmemelidir.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Az belirgin olan dokunma hedeflerini vurgula",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} saat",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "İlk bağlantıyı al",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Tema",
     "tooManyRedirects": "Too many redirects",

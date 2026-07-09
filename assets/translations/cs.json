@@ -186,6 +186,7 @@
     "googleVerificationWarningP3": "Všimněte si, že v krátkodobém horizontu může být i nadále možné instalovat \"neověřené\" (nevyhovující) aplikace prostřednictvím procesu \"pokročilého toku\", který Google slíbil implementovat po širokém odporu k jejich oznámení, ale neupřesnili, jak by to mělo fungovat, takže není jasné, zda bude skutečně zachovávat uživatelskou svobodu jakýmkoli praktickým způsobem.\n\nV každém případě je krok společnosti Google významným krokem ke konci volného, všeobecného výpočetní techniky pro jednotlivce.\n\nNecertifikované Osy, jako je GrapheneOS, by tím neměly být ovlivněny, pokud budou nadále existovat.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Zvýraznit méně zjevné cíle dotyku",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} hodina",
@@ -373,6 +374,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Použít první odkaz",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Motiv",
     "tooManyRedirects": "Too many redirects",

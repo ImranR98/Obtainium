@@ -15,7 +15,7 @@ class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
   FDroid() {
     hosts = ['f-droid.org'];
-    name = 'F-Droid official';
+    name = tr('fdroid');
     naiveStandardVersionDetection = true;
     canSearch = true;
     inferAppIdFromUrlPath = true;

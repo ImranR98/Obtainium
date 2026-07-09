@@ -195,6 +195,7 @@
     "googleVerificationWarningP3": "W perspektywie krótkoterminowej nadal będzie możliwa instalacja  \"niezweryfikowanych\" (niezgodnych) aplikacji poprzez proces \"zaawansowanego przepływu\", który Google obiecało wdrożyć po masowej krytyce, nie podano jednak żadnych szczegółów jego działania, więc nie wiadomo, czy w praktyce w ogóle ochroni on wolność użytkowników.\n\nNiezależnie od tego, ruch Google to ogromny krok w stronę końca otwartego, uniwersalnego modelu korzystania z urządzeń przez osoby prywatne.\n\nNiecertyfikowane systemy, takie jak GrapheneOS, powinny pozostać odporne na te zmiany, dopóki pozwolą na to realia.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Podświetlaj mniej oczywiste obszary dotykowe",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} godzina",
@@ -386,6 +387,7 @@
     "tactileFeedbackEnabled": "Włącz reakcję na dotyk",
     "takeFirstLink": "Używaj pierwszego linku",
     "tarballedApkFilterRegEx": "Filtruj pliki APK w archiwach tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Motyw",
     "tooManyRedirects": "Too many redirects",

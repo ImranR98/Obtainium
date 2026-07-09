@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "توجه داشته باشید که در کوتاه مدت، ممکن است همچنان برای نصب برنامه های \"unverified\" (غیر سازگار) از طریق یک فرایند \"advanced Flow\" که گوگل وعده داده است پس از واکنش گسترده به اعلام خود اجرا کند، اما آنها جزئیات چگونگی کار این را به طوری که مشخص نیست که آیا آن واقعا حفظ آزادی های کاربر در هر روش عملی.\n\nدر هر صورت، حرکت گوگل یک گام مهم به سمت پایان محاسبات رایگان و عمومی برای افراد است.\n\nسیستم عامل های غیر گواهی شده، مانند گرافنموس، باید تا زمانی که اجازه دارند به وجود خود ادامه دهند، تحت تاثیر قرار گیرند.",
     "groupBy": "Group by",
     "highlightTouchTargets": "اهداف لمسی کمتر واضح را برجسته کنید",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} ساعت",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "لینک اول را بگیرید",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "فروشگاه اپلیکیشن تنسنت",
     "theme": "تم",
     "tooManyRedirects": "Too many redirects",

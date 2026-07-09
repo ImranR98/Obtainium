@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -17,7 +18,7 @@ import 'package:obtainium/providers/source_provider.dart';
 /// and https://github.com/Coolapk-UWP/Coolapk-UWP
 class CoolApk extends AppSource {
   CoolApk() {
-    name = 'CoolApk';
+    name = tr('coolApk');
     hosts = ['coolapk.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;

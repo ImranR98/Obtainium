@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Tingueu en compte que en el terme curt, pot continuar sent possible instal· lar aplicacions \"inverificats\" (no compatible) mitjançant un procés de flux \"advince\" que Google ha promès implementar després d'una gran reacció al seu anunci, però no han detallat com funcionaria, de manera que és clar si es preservarà realment les llibertats dels usuaris de cap manera pràctica.\n\nEn qualsevol cas, el moviment de Google és un pas significatiu cap al final de la informàtica lliure i general deficient per als individus.\n\nEls SO no validats, com el GraphenOS, no haurien de ser afectats per això sempre que se'ls permeti continuar existint.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Ressalta els elements de selecció menys obvis",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} hora",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Usa el primer enllaç",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Tema",
     "tooManyRedirects": "Too many redirects",

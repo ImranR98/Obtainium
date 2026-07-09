@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "請注意，在短期內，可能仍可透過 Google 承諾在其公告遭到廣泛強烈反對後實作的「進階流程」程序，安裝「未經驗證」（不合規）的應用程式，但他們尚未詳細說明此流程將如何運作，因此尚不清楚它是否能以任何實際方式真正保護使用者的自由。\n\n無論如何，Google 的舉動是終結個人自由、通用運算的重要一步。\n\n未經認證的作業系統（例如 GrapheneOS）只要獲准繼續存在，就不應受到影響。",
     "groupBy": "Group by",
     "highlightTouchTargets": "突顯較不明顯的觸控目標",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} 小時",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "啟用觸覺回饋",
     "takeFirstLink": "取得第一個連結",
     "tarballedApkFilterRegEx": "過濾 Tarball 中的 APK",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "騰訊應用寶",
     "theme": "佈景主題",
     "tooManyRedirects": "Too many redirects",

@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Fontos megjegyezni, hogy rövid távon még lehetséges lehet az „ellenőrizetlen” (nem megfelelő) alkalmazások telepítése egy „speciális folyamaton” keresztül, amelyre a Google ígéretet tett, hogy megvalósít a bejelentésüket követő széles körű felháborodás miatt. Azonban azt nem részletezték, hogy hogyan is működne ez, ezért nem világos, hogy ez gyakorlatilag megőrzi-e a felhasználók szabadsághoz való jogait.\n\nMindenesetre a Google lépése jelentős előrelépés a felhasználók számára elérhető szabad, általános célú alkalmazások megszűnése felé.\n\nA nem tanúsított operációs rendszereket, mint például a GrapheneOS, ez nem érinti mindaddig, amíg működhetnek.",
     "groupBy": "Csoportosítás",
     "highlightTouchTargets": "Kevésbé egyértelmű érintési pontok kiemelése",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} óra",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Érintési visszajelzés engedélyezése",
     "takeFirstLink": "Első megtalált hivatkozás használata",
     "tarballedApkFilterRegEx": "APK-fájlok szűrése a tarball fájlokban",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent alkalmazásáruház",
     "theme": "Téma",
     "tooManyRedirects": "Túl sok átirányítás",

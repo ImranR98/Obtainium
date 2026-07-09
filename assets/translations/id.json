@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Perlu dicatat bahwa dalam jangka pendek, mungkin terus mungkin untuk memasang aplikasi \"belum diverifikasi\" (bukan -compliant) melalui proses \"arus maju\" yang Google janjikan untuk mengimplementasikan setelah reaksi luas terhadap pengumuman mereka, tetapi mereka tidak rinci bagaimana hal ini akan bekerja sehingga tidak jelas apakah itu benar-benar akan menjaga kebebasan pengguna dengan cara praktis.\n\nDalam hal apapun, Google bergerak adalah langkah yang signifikan menuju akhir bebas, tujuan umum komputasi untuk individu.\n\nOS tidak bersertifikat, seperti GrapheneOS, seharusnya tidak terpengaruh oleh hal ini selama mereka diizinkan untuk terus ada.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Sorot target sentuh yang kurang jelas",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} jam",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Ambil tautan pertama",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Tema",
     "tooManyRedirects": "Too many redirects",

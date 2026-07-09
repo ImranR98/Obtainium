@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Si noti che a breve termine, può continuare ad essere possibile installare applicazioni \"non verificate\" (non conformi) attraverso un processo di \"flusso avanzato\" che Google ha promesso di implementare dopo ampio backlash al loro annuncio, ma non hanno dettagliato come questo funzionerebbe in modo da non essere chiaro se veramente preservare le libertà degli utenti in qualsiasi modo pratico.\n\nIn ogni caso, la mossa di Google è un passo significativo verso la fine del free, general-purpose computing per gli individui.\n\nOS non certificati, come GrapheneOS, non dovrebbero essere influenzati da questo per tutto il tempo in cui sono autorizzati a continuare ad esistere.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Evidenzia elementi toccabili meno ovvi",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} ora",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Prendi il primo link",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Tema",
     "tooManyRedirects": "Too many redirects",
