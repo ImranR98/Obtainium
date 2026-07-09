@@ -2,7 +2,7 @@ name: obtainium
 description: Get Android app updates straight from the source.
 publish_to: 'none'
 
-version: 1.6.1+2340
+version: 1.6.2+2341
 
 environment:
   sdk: ^3.12.0
@@ -51,7 +51,7 @@ dependencies:
       ref: 6dbcdf2c2045e326f59c062f542724aedf73cb6e
   crypto: ^3.0.7
   bcrypt: ^1.2.0
-  app_links: ^7.2.0
+  app_links: ^7.2.1
   equations: ^6.0.0
   flex_color_picker: ^3.8.0
   android_system_font: # TODO: Forked dependency; watch upstream for releases
