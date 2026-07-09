@@ -23,6 +23,9 @@ const String obtainiumId = 'dev.imranr.obtainium';
 const String obtainiumUrl = 'https://github.com/ImranR98/Obtainium';
 const Color obtainiumThemeColor = Color(0xFF6438B5);
 
+String lowerCaseUnlessLang(String str, String lang) =>
+    currentLanguageCode == lang ? str : str.toLowerCase();
+
 Locale? tryParseLocale(String? localeString) {
   if (localeString == null) return null;
   final split = localeString.split('-');

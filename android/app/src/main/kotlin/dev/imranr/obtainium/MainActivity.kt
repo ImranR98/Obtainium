@@ -21,7 +21,6 @@ class MainActivity : FlutterActivity() {
         const val APK_MIME = "application/vnd.android.package-archive"
     }
 
-    private var flutterEngineReady = false
     private var pendingShareIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,9 +33,9 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         val newIntent = transformShareIntent(intent)
         setIntent(newIntent)
-        if (flutterEngineReady) {
+        try {
             super.onNewIntent(newIntent)
-        } else {
+        } catch (_: Exception) {
             pendingShareIntent = newIntent
         }
     }
@@ -64,7 +63,6 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
-        flutterEngineReady = true
         pendingShareIntent?.let {
             super.onNewIntent(it)
             pendingShareIntent = null

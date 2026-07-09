@@ -999,6 +999,13 @@ class AppsPageState extends State<AppsPage> {
     List<AppInMemory> listedApps,
   ) {
     return [
+      if (appsProvider.loadingApps && listedApps.isEmpty)
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(32, 0, 32, 8),
+            child: LinearProgressIndicator(),
+          ),
+        ),
       if (listedApps.isEmpty)
         SliverFillRemaining(
           child: EmptyState(
@@ -1017,7 +1024,10 @@ class AppsPageState extends State<AppsPage> {
     ];
   }
 
-  void _computeListData(AppsProvider appsProvider, SettingsProvider settingsProvider) {
+  void _computeListData(
+    AppsProvider appsProvider,
+    SettingsProvider settingsProvider,
+  ) {
     final apps = appsProvider.getAppValues().toList();
     final sig = pipelineSignature(apps);
     if (sig == _listDataSig && _cachedListedApps != null) {
@@ -1195,6 +1205,7 @@ class AppsPageState extends State<AppsPage> {
                       trackOnlyUpdateIdsAllOrSelected,
                     ),
                   ..._getLoadingWidgets(context, appsProvider, listedApps),
+                  const _RefreshProgressBar(),
                   _getDisplayedList(
                     context,
                     listedApps,
@@ -1210,7 +1221,8 @@ class AppsPageState extends State<AppsPage> {
             ),
           ),
         ),
-        floatingActionButton: selectedAppIds.isNotEmpty && widget.onAppSelected == null
+        floatingActionButton:
+            selectedAppIds.isNotEmpty && widget.onAppSelected == null
             ? FloatingActionButton.extended(
                 onPressed: () {
                   settingsProvider.selectionClick();
@@ -1246,7 +1258,8 @@ class AppsPageState extends State<AppsPage> {
 
   void showSelectedAppActions() {
     if (!mounted) return;
-    final listedApps = _cachedListedApps ??
+    final listedApps =
+        _cachedListedApps ??
         context.read<AppsProvider>().getAppValues().toList();
     final selectedApps = listedApps
         .map((e) => e.app)
@@ -1255,5 +1268,25 @@ class AppsPageState extends State<AppsPage> {
     if (selectedApps.isNotEmpty) {
       showMoreOptionsBottomSheet(context, selectedApps);
     }
+  }
+}
+
+class _RefreshProgressBar extends StatelessWidget {
+  const _RefreshProgressBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final refreshProgress = context.select(
+      (AppsProvider p) => p.refreshProgress,
+    );
+    if (refreshProgress == null) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+        child: LinearProgressIndicator(value: refreshProgress),
+      ),
+    );
   }
 }

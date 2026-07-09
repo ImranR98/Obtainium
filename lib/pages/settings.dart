@@ -119,7 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ColorPickerType.wheel: tr('custom'),
       },
       title: Text(
-        tr('selectX', args: [tr('colour').toLowerCase()]),
+        tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
         style: Theme.of(context).textTheme.titleLarge,
       ),
       wheelDiameter: 192,
@@ -312,7 +312,7 @@ class _SettingsPageState extends State<SettingsPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(connectedTileBigRadius),
         ),
-        title: Text(tr('selectX', args: [tr('colour').toLowerCase()])),
+        title: Text(tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')])),
         subtitle: Text(
           '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
           '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',

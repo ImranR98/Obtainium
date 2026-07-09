@@ -15,6 +15,7 @@ import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// App persistence (load/save/remove), icons, and version-detection helpers.
 const _corruptFileSuffix = '.corrupt';
@@ -47,7 +48,17 @@ extension AppsProviderLifecycle on AppsProvider {
       '${(await getAppStorageDir()).path}/app_data',
     );
     if (!appsDir.existsSync()) {
-      appsDir.createSync();
+      try {
+        appsDir.createSync();
+      } catch (_) {
+        final fallbackDir = Directory(
+          '${(await getApplicationDocumentsDirectory()).path}/app_data',
+        );
+        if (!fallbackDir.existsSync()) {
+          fallbackDir.createSync(recursive: true);
+        }
+        return fallbackDir;
+      }
     }
     return appsDir;
   }
