@@ -100,6 +100,17 @@ extension AppsProviderUpdates on AppsProvider {
       return updateCheckCompleter!.future;
     }
     final completer = updateCheckCompleter = Completer<List<App>>();
+    var completed = 0;
+    var total = 0;
+    refreshProgress = 0.0;
+    notify();
+    final progressTimer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) {
+        refreshProgress = total > 0 ? completed / total : 0.0;
+        notify();
+      },
+    );
     try {
       final List<App> updates = [];
       final MultiAppMultiError errors = MultiAppMultiError();
@@ -123,6 +134,7 @@ extension AppsProviderUpdates on AppsProvider {
               settingsProvider.onlyCheckInstalledOrTrackOnlyApps,
         );
       }
+      total = appIds.length;
       final results = await Future.wait(
         appIds.map((appId) async {
           final currentApp = apps[appId]?.app;
@@ -145,7 +157,9 @@ extension AppsProviderUpdates on AppsProvider {
             errors.add(appId, e, appName: apps[appId]?.name);
             return null;
           }
-        }),
+        }).map((f) => f.whenComplete(() {
+              completed++;
+            })),
         eagerError: true,
       );
       final List<App> fetched = [];
@@ -170,7 +184,10 @@ extension AppsProviderUpdates on AppsProvider {
       }
       rethrow;
     } finally {
+      progressTimer.cancel();
       updateCheckCompleter = null;
+      refreshProgress = null;
+      notify();
     }
   }
 

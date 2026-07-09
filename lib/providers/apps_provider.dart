@@ -835,6 +835,7 @@ class AppsProvider with ChangeNotifier {
   /// atomic guard (preventing concurrent batches) and a deduplication
   /// mechanism: subsequent callers receive the existing completer's future.
   Completer<List<App>>? updateCheckCompleter;
+  double? refreshProgress;
   LogsProvider logs = LogsProvider();
 
   // Serializes concurrent loadApps() calls without busy-waiting.
