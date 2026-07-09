@@ -265,6 +265,8 @@ Locale? _appCurrentLocale;
 
 void setAppLocale(Locale? locale) => _appCurrentLocale = locale;
 
+String? get currentLanguageCode => _appCurrentLocale?.languageCode;
+
 bool isEnglish() {
   if (_appCurrentLocale != null) return _appCurrentLocale!.languageCode == 'en';
   return false;
