@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "なお、短期的には、Googleが発表後に広範な反発を受けて実装を約束した「高度なフロー」プロセスを通じて、「未検証」（非準拠）のアプリをインストールし続けることが可能になるかもしれません。しかし、その具体的な仕組みは明らかにされておらず、ユーザーの自由が実質的に保たれるかどうかは不明です。\n\nいずれにせよ、Googleのこの動きは、個人向けの自由な汎用コンピューティングの終焉に向けた大きな一歩です。\n\nGrapheneOSのような非認定OSは、その存在が許される限り、この影響を受けないはずです。",
     "groupBy": "グループ化",
     "highlightTouchTargets": "目立たないタップ可能な対象をハイライトする",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "インポート",
     "hour": {
         "one": "{} 時間",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "触覚フィードバックを有効にする",
     "takeFirstLink": "最初のリンクを取得する",
     "tarballedApkFilterRegEx": "tarball内のAPKをフィルタリングする",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "テーマ",
     "tooManyRedirects": "リダイレクトが多すぎます",

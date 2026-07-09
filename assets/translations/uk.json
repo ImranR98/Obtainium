@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Зауважте, що в короткостроковому терміні вона може продовжувати бути можливою для установки \"необґрунтованих\" (некомпліантних) додатків через процес \"додатковий потік\", який Google обіцяє реалізувати після широкої задньої вії до їх оголошення, але вони не докладно, як це буде працювати так, що це не зрозуміло, чи це буде дійсно зберігати свобод користувачів будь-яким практичним способом.\n\nУ будь-якому випадку, переміщення Google є важливим кроком до кінця безкоштовного, універсального обчислення для фізичних осіб.\n\nНесертифіковані ОС, як GrapheneOS, повинні бути неоцінені цими протягом тривалого часу, щоб вони могли продовжити існування.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Підсвічувати менш очевидні області дотику",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} година",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Вибрати перше посилання",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Тема",
     "tooManyRedirects": "Too many redirects",

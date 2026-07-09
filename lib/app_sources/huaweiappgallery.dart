@@ -1,11 +1,11 @@
-import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class HuaweiAppGallery extends AppSource {
   HuaweiAppGallery() {
-    name = 'Huawei AppGallery';
+    name = tr('huaweiAppGallery');
     hosts = ['appgallery.huawei.com', 'appgallery.cloud.huawei.com'];
     versionDetectionDisallowed = true;
     showReleaseDateAsVersionToggle = true;

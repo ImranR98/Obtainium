@@ -6,7 +6,7 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class Tencent extends AppSource {
   Tencent() {
-    name = 'Tencent App Store';
+    name = tr('tencentAppStore');
     hosts = ['sj.qq.com'];
     naiveStandardVersionDetection = true;
     showReleaseDateAsVersionToggle = true;

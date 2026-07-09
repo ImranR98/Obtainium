@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Ghi chú rằng trong ngắn hạn, nó có thể tiếp tục có thể được tiếp tục để cài đặt các ứng dụng \"không xác định\" thông qua một quá trình \"vô hạn dòng chảy\" mà Google đã hứa sẽ thực hiện sau một hồi quy rộng cho thông báo của họ, nhưng họ không có chi tiết làm thế nào điều này sẽ hoạt động như thế nào vì vậy nó không rõ ràng nó sẽ thực sự bảo tồn tự do cho người dùng theo bất kỳ cách thực tế nào.\n\nTrong bất kỳ trường hợp nào, sự di chuyển của Google là một bước tiến đáng kể tới sự kết thúc của máy tính tự do, mục đích chung cho cá nhân.\n\nCác hệ điều hành không được ghi nhận, giống như GreneOS, nên không bị ảnh hưởng bởi điều này miễn là chúng được cho phép tiếp tục tồn tại.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Đánh dấu các mục tiêu cảm ứng ít rõ ràng hơn",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} giờ",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Lấy liên kết đầu tiên",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Chủ đề",
     "tooManyRedirects": "Too many redirects",

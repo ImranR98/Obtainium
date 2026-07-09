@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "단기적으로는 Google이 발표 이후 거센 반발에 부딪혀 도입하기로 약속한 \"고급 절차\"를 통해 \"인증되지 않은\" 앱을 계속 설치하는 것이 가능할 수도 있습니다. 하지만 Google은 이 방식이 구체적으로 어떻게 작동하는지 밝히지 않았으므로, 이것이 실질적으로 사용자의 자유를 보장할지는 불분명합니다. 결과적으로 Google의 이러한 행보는 개인을 위한 자유롭고 범용적인 컴퓨팅 환경의 종말을 향한 중대한 단계입니다. GrapheneOS와 같은 인증되지 않은 OS는 해당 프로젝트가 유지되는 한 이 조치의 영향을 받지 않습니다.",
     "groupBy": "Group by",
     "highlightTouchTargets": "덜 명확한 터치 대상 강조",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} 시간",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "첫 번째 링크 선택",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "텐센트 앱 스토어",
     "theme": "테마",
     "tooManyRedirects": "Too many redirects",

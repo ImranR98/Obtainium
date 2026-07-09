@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Merk op dat het op korte termijn mogelijk kan blijven om \"niet-geverifieerde\" (niet-conforme) apps te installeren via een \"geavanceerde flow\" proces dat Google heeft beloofd te implementeren na brede backlash naar hun aankondiging, maar ze hebben niet gedetailleerd hoe dit zou werken, dus het is onduidelijk of het echt zal behouden gebruikersvrijheden op enige praktische manier.\n\nIn ieder geval, Google's zet is een belangrijke stap naar het einde van vrije, algemene computer voor individuen.\n\nNiet-gecertificeerde besturingssystemen, zoals GrapheneOS, mogen hierdoor niet worden beïnvloed zolang ze mogen blijven bestaan.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Minder voor de hand liggende aanraakdoelen markeren",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} uur",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Trillen inschakelen",
     "takeFirstLink": "Neem de eerste link",
     "tarballedApkFilterRegEx": "APK's in tar-bestand filteren",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Thema",
     "tooManyRedirects": "Too many redirects",

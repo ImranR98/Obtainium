@@ -181,6 +181,7 @@
     "googleVerificationWarningP3": "Bemærk, at på kort sigt, kan det fortsætte med at være muligt at installere \"uverificerbare\" (ikke-overensstemmende) apps gennem en \"avanceret flow\" proces, som Google har lovet at gennemføre efter bred backlash til deres meddelelse, men de har ikke detaljeret, hvordan dette ville arbejde, så det er uklart, om det virkelig vil bevare brugernes friheder i praksis.\n\nUnder alle omstændigheder er Googles bevægelse et væsentligt skridt i retning af afslutningen af fri, generel-formål computing for enkeltpersoner.\n\nIkke-certificerede OS, som GrapheneOS, bør være upåvirket af dette, så længe de har lov til at fortsætte med at eksistere.",
     "groupBy": "Group by",
     "highlightTouchTargets": "Fremhæv mindre åbenlyse berøringsmål",
+    "huaweiAppGallery": "Huawei AppGallery",
     "import": "Import",
     "hour": {
         "one": "{} time",
@@ -366,6 +367,7 @@
     "tactileFeedbackEnabled": "Enable tactile feedback",
     "takeFirstLink": "Tag første link",
     "tarballedApkFilterRegEx": "Filter APKs inside tarball",
+    "telegramApp": "Telegram App",
     "tencentAppStore": "Tencent App Store",
     "theme": "Tema",
     "tooManyRedirects": "Too many redirects",
