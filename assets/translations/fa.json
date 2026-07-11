@@ -12,6 +12,7 @@
     "all": "همه چیز",
     "allowInsecure": "درخواست های HTTP ناامن را مجاز کنید",
     "alreadyUpToDateQuestion": "برنامه از قبل به روز شده است؟",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "و",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "دستگاه شما از معماری پردازنده {} پشتیبانی میکند",
     "directAPKLink": "لینک مستقیم APK",
     "disablePageTransitions": "غیرفعال کردن انیمیشن های انتقال صفحه",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "غیرفعال کردن تشخیص نسخه",
     "dismiss": "رد کردن",
     "documentationLinksNote": "صفحه GitHub به دست آمده در زیر شامل پیوندهایی با ویدیوها، مقالات، بحث ها و سایر منابع است که به شما کمک می کند تا چگونگی استفاده از برنامه را درک کنید.",

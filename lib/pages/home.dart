@@ -107,8 +107,7 @@ class _HomePageState extends State<HomePage> {
     if (index == 0) {
       selectedIndexHistory.clear();
     } else {
-      if (selectedIndexHistory.isEmpty ||
-          selectedIndexHistory.last != index) {
+      if (selectedIndexHistory.isEmpty || selectedIndexHistory.last != index) {
         final int existingInd = selectedIndexHistory.indexOf(index);
         if (existingInd >= 0) {
           selectedIndexHistory.removeAt(existingInd);
@@ -234,8 +233,11 @@ class _HomePageState extends State<HomePage> {
 
     Future<void> interpretLink(Uri uri) async {
       final action = uri.host;
-      final data = uri.queryParameters['url'] ??
-          (uri.path.length > 1 ? Uri.decodeComponent(uri.path.substring(1)) : '');
+      final data =
+          uri.queryParameters['url'] ??
+          (uri.path.length > 1
+              ? Uri.decodeComponent(uri.path.substring(1))
+              : '');
       try {
         if (action == 'add') {
           final AppsProvider ap = appsProvider;
@@ -255,9 +257,10 @@ class _HomePageState extends State<HomePage> {
           }
 
           final AppInMemory? existingApp = ap.apps.values
-              .where((AppInMemory a) =>
-                  a.app.url == standardizedUrl ||
-                  a.app.url == data)
+              .where(
+                (AppInMemory a) =>
+                    a.app.url == standardizedUrl || a.app.url == data,
+              )
               .firstOrNull;
 
           if (existingApp != null) {
@@ -377,7 +380,8 @@ class _HomePageState extends State<HomePage> {
     ];
 
     final layoutWidth = MediaQuery.sizeOf(context).width;
-    final useRail = isTV || layoutWidth >= 600;
+    final useLargeScreen = isTV || layoutWidth >= 840;
+    final useRail = useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
     final updateCount = context.select<AppsProvider, int>(
       (p) => p.findAppIdsWithPendingUpdates(installedOnly: true).length,
     );
@@ -395,7 +399,7 @@ class _HomePageState extends State<HomePage> {
 
     final currentIndex = this.currentIndex;
 
-    final twoPane = isTV || layoutWidth >= 600;
+    final twoPane = useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
     final useTwoPane = twoPane && currentIndex == 0;
 
     final detailPane =
@@ -511,8 +515,8 @@ class _HomePageState extends State<HomePage> {
                         child: currentIndex != 0
                             ? const SizedBox(width: 56, height: 56)
                             : appsSelecting
-                                ? actionsFab
-                                : createFab,
+                            ? actionsFab
+                            : createFab,
                       ),
                     ),
                   ),

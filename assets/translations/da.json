@@ -12,6 +12,7 @@
     "all": "Alle",
     "allowInsecure": "Tillad usikre HTTP-anmodninger",
     "alreadyUpToDateQuestion": "Er appen allerede opdateret?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "og",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Din enhed understøtter CPU-arkitekturen {}.",
     "directAPKLink": "Direkte APK-link",
     "disablePageTransitions": "Deaktivér sideovergangsanimationer",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Deaktivér versionsregistrering",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Obtainiums GitHub-side, som der linkes til nedenfor, indeholder links til videoer, artikler, diskussioner og andre ressourcer, som kan hjælpe dig med at forstå, hvordan du bruger appen.",

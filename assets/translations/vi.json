@@ -12,6 +12,7 @@
     "all": "Tất cả",
     "allowInsecure": "Cho phép các yêu cầu HTTP không an toàn",
     "alreadyUpToDateQuestion": "Ứng dụng đã được cập nhật?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "và",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Thiết bị của bạn hỗ trợ kiến trúc CPU {}.",
     "directAPKLink": "Liên kết APK trực tiếp",
     "disablePageTransitions": "Tắt hiệu ứng chuyển trang",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Tắt tính năng phát hiện phiên bản",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Trang GitHub của Obtainium được liên kết bên dưới chứa các liên kết đến video, bài viết, thảo luận và các tài nguyên khác sẽ giúp bạn hiểu cách sử dụng ứng dụng.",

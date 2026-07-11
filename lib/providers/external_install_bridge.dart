@@ -77,7 +77,12 @@ class ExternalInstallerBridge {
     try {
       return await packageManager.getApplicationLabel(packageName: package);
     } catch (e) {
-      unawaited(LogsProvider().add('Failed to get label for $package: $e', level: LogLevel.warning));
+      unawaited(
+        LogsProvider().add(
+          'Failed to get label for $package: $e',
+          level: LogLevel.warning,
+        ),
+      );
       return null;
     }
   }
@@ -86,7 +91,12 @@ class ExternalInstallerBridge {
     try {
       return await packageManager.getApplicationIcon(packageName: package);
     } catch (e) {
-      unawaited(LogsProvider().add('Failed to get icon for $package: $e', level: LogLevel.warning));
+      unawaited(
+        LogsProvider().add(
+          'Failed to get icon for $package: $e',
+          level: LogLevel.warning,
+        ),
+      );
       return null;
     }
   }

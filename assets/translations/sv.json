@@ -12,6 +12,7 @@
     "all": "Alla",
     "allowInsecure": "Tillåt osäkra HTTP-förfrågningar",
     "alreadyUpToDateQuestion": "App redan uppdaterad?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "och",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Din enhet stödjer {} CPU-arkiktektur.",
     "directAPKLink": "Direkt APK-länk",
     "disablePageTransitions": "Inaktivera sidövergångsanimationer",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Inaktivera versionsdetektering",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Obtainium GitHub-sidan som länkas nedan innehåller länkar till videor, artiklar, diskussioner och andra resurser som hjälper dig att förstå hur du använder appen.",

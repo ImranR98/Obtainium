@@ -548,8 +548,8 @@ abstract class AppSource {
   }
 
   /// Per-source additional form items (e.g. GitHub's sort method, HTML's version regex).
-  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems =>
-      [];
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [];
 
   static List<GeneratedFormItem> get fallbackToOlderReleasesFormItem => [
     GeneratedFormSwitch(

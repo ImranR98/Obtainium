@@ -20,7 +20,8 @@ class FDroidRepo extends AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
     [
       GeneratedFormTextField(
         'appIdOrName',
@@ -110,9 +111,7 @@ class FDroidRepo extends AppSource {
       final appId = Uri.parse(inputUrl).queryParameters['appId'];
       _appIdFoundInUrl = appId != null;
     } catch (e) {
-      unawaited(
-        LogsProvider().add('Failed to parse appId from URL: $e'),
-      );
+      unawaited(LogsProvider().add('Failed to parse appId from URL: $e'));
     }
   }
 

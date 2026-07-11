@@ -625,6 +625,24 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool get disableSwipeActions {
+    return _getBool('disableSwipeActions') ?? false;
+  }
+
+  set disableSwipeActions(bool val) {
+    prefs?.setBool('disableSwipeActions', val);
+    notifyListeners();
+  }
+
+  bool get alwaysUsePhoneLayout {
+    return _getBool('alwaysUsePhoneLayout') ?? false;
+  }
+
+  set alwaysUsePhoneLayout(bool val) {
+    prefs?.setBool('alwaysUsePhoneLayout', val);
+    notifyListeners();
+  }
+
   Future<Uri?> getExportDir() async {
     final uriString = _getString('exportDir');
     if (uriString != null) {

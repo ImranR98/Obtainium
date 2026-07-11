@@ -744,9 +744,7 @@ Future<List<PackageInfo>> getAllInstalledInfo() async {
       [];
 }
 
-Future<PackageInfo?> getInstalledInfo(
-  String? packageName,
-) async {
+Future<PackageInfo?> getInstalledInfo(String? packageName) async {
   if (packageName != null) {
     try {
       return await packageManager.getPackageInfo(
@@ -785,7 +783,7 @@ Future<bool> waitForPackageInstall(
   Duration interval = const Duration(milliseconds: 500),
 }) async {
   for (var attempt = 0; attempt < attempts; attempt++) {
-  final info = await getInstalledInfo(appId);
+    final info = await getInstalledInfo(appId);
     if (info != null) {
       if (!baseline.wasInstalled) return true;
       final updateTimeAfter = info.lastUpdateTime;
@@ -1068,11 +1066,11 @@ Future<void> _runBGInstallMode(
     unawaited(logs.add('BG install task: No pending installs.'));
     return;
   }
-  unawaited(logs.add(
-    'BG install task: Installing ${appIds.length} apps silently.',
-  ));
+  unawaited(
+    logs.add('BG install task: Installing ${appIds.length} apps silently.'),
+  );
   try {
-      await appsProvider.downloadAndInstallLatestApps(
+    await appsProvider.downloadAndInstallLatestApps(
       appIds,
       null,
       notificationsProvider: notificationsProvider,
@@ -1138,15 +1136,19 @@ Future<void> bgUpdateCheck(
   if (!appsProvider.settingsProvider.enableBackgroundUpdates ||
       appsProvider.settingsProvider.updateInterval == 0) {
     if (!forceAll) {
-      unawaited(bgLogs.add(
-        'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
-        'interval=${appsProvider.settingsProvider.updateInterval})',
-      ));
+      unawaited(
+        bgLogs.add(
+          'BG update task: Skipped (enabled=${appsProvider.settingsProvider.enableBackgroundUpdates}, '
+          'interval=${appsProvider.settingsProvider.updateInterval})',
+        ),
+      );
       return;
     }
-    unawaited(bgLogs.add(
-      'BG update task: Running manual check despite disabled settings',
-    ));
+    unawaited(
+      bgLogs.add(
+        'BG update task: Running manual check despite disabled settings',
+      ),
+    );
   }
 
   final List<MapEntry<String, int>> toCheck = <MapEntry<String, int>>[
@@ -1231,11 +1233,13 @@ Future<void> bgUpdateCheck(
       );
     }
 
-    unawaited(bgLogs.add(
-      'BG update task: Notified ${toNotify.length} updates, '
-      '${trackOnlyToNotify.length} track-only, '
-      '${result.toThrow.rawErrors.length} errors',
-    ));
+    unawaited(
+      bgLogs.add(
+        'BG update task: Notified ${toNotify.length} updates, '
+        '${trackOnlyToNotify.length} track-only, '
+        '${result.toThrow.rawErrors.length} errors',
+      ),
+    );
 
     if (result.toThrow.rawErrors.isNotEmpty && result.errors != null) {
       for (var element in result.toThrow.idsByErrorString.entries) {
@@ -1243,7 +1247,10 @@ Future<void> bgUpdateCheck(
           notificationsProvider.notify(
             ErrorCheckingUpdatesNotification(
               result.errors!.errorsAppsString(element.key, element.value),
-              id: errorCheckingUpdatesNotificationId + 100 + Random().nextInt(9900),
+              id:
+                  errorCheckingUpdatesNotificationId +
+                  100 +
+                  Random().nextInt(9900),
             ),
           ),
         );
@@ -1253,7 +1260,9 @@ Future<void> bgUpdateCheck(
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
   if (canInstall) {
-    final discovered = appsProvider.findAppIdsWithPendingUpdates(installedOnly: true);
+    final discovered = appsProvider.findAppIdsWithPendingUpdates(
+      installedOnly: true,
+    );
     final existing = silentlyInstallable.toSet();
     for (final id in discovered) {
       if (existing.contains(id)) continue;
@@ -1263,9 +1272,11 @@ Future<void> bgUpdateCheck(
         silentlyInstallable.add(id);
       }
     }
-    unawaited(bgLogs.add(
-      'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
-    ));
+    unawaited(
+      bgLogs.add(
+        'BG install task: Found ${silentlyInstallable.length} apps to install (${existing.length} from checks, ${silentlyInstallable.length - existing.length} pre-existing).',
+      ),
+    );
   }
   await _runBGInstallMode(
     silentlyInstallable,
@@ -1277,7 +1288,10 @@ Future<void> bgUpdateCheck(
   AppsProvider._eventsController.add(null);
 }
 
-Future<({List<App> updates, MultiAppMultiError? errors, MultiAppMultiError toThrow})> _bgRunUpdateCheck(
+Future<
+  ({List<App> updates, MultiAppMultiError? errors, MultiAppMultiError toThrow})
+>
+_bgRunUpdateCheck(
   String taskId,
   List<MapEntry<String, int>> toCheck,
   AppsProvider appsProvider,

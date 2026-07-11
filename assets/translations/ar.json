@@ -12,6 +12,7 @@
     "all": "الكل",
     "allowInsecure": "السماح بطلبات HTTP غير الآمنة",
     "alreadyUpToDateQuestion": "التطبيق محدَّث بالفعل؟",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "و",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "جهازك يدعم بنية المعالج {}.",
     "directAPKLink": "رابط APK مباشر",
     "disablePageTransitions": "عطّل انتقالات الصفحات",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "عطّل اكتشاف الإصدار",
     "dismiss": "أهمِل",
     "documentationLinksNote": "تحتوي صفحة Obtainium على GitHub المرتبطة أدناه على روابط لمقاطع فيديو، مقالات، مناقشات وموارد أخرى ستساعدك على فهم كيفية استخدام التطبيق.",

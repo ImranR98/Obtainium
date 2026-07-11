@@ -77,10 +77,12 @@ void callbackDispatcher() {
       );
       return true;
     } catch (e, stack) {
-      unawaited(logs.add(
-        'WorkManager callback crashed: $e\n$stack',
-        level: LogLevel.error,
-      ));
+      unawaited(
+        logs.add(
+          'WorkManager callback crashed: $e\n$stack',
+          level: LogLevel.error,
+        ),
+      );
       return false;
     }
   });
@@ -150,10 +152,7 @@ void main() async {
   }
 
   await Workmanager().initialize(callbackDispatcher);
-  await logs.add(
-    'WorkManager initialised',
-    level: LogLevel.info,
-  );
+  await logs.add('WorkManager initialised', level: LogLevel.info);
 
   runApp(
     MultiProvider(
@@ -223,25 +222,27 @@ class _ObtainiumState extends State<Obtainium> {
         getInstalledInfo(obtainiumId)
             .then((value) {
               if (value?.versionName != null) {
-                unawaited(apps.saveApps([
-                  App(
-                    id: obtainiumId,
-                    url: obtainiumUrl,
-                    author: 'ImranR98',
-                    name: 'Obtainium',
-                    installedVersion: value!.versionName,
-                    latestVersion: value.versionName!,
-                    apkUrls: [],
-                    preferredApkIndex: 0,
-                    additionalSettings: {
-                      'versionDetection': true,
-                      'apkFilterRegEx': 'fdroid',
-                      'invertAPKFilter': true,
-                    },
-                    lastUpdateCheck: null,
-                    pinned: false,
-                  ),
-                ], onlyIfExists: false));
+                unawaited(
+                  apps.saveApps([
+                    App(
+                      id: obtainiumId,
+                      url: obtainiumUrl,
+                      author: 'ImranR98',
+                      name: 'Obtainium',
+                      installedVersion: value!.versionName,
+                      latestVersion: value.versionName!,
+                      apkUrls: [],
+                      preferredApkIndex: 0,
+                      additionalSettings: {
+                        'versionDetection': true,
+                        'apkFilterRegEx': 'fdroid',
+                        'invertAPKFilter': true,
+                      },
+                      lastUpdateCheck: null,
+                      pinned: false,
+                    ),
+                  ], onlyIfExists: false),
+                );
               }
             })
             .catchError((err) {

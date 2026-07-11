@@ -12,6 +12,7 @@
     "all": "Všechny",
     "allowInsecure": "Povolit nezabezpečené požadavků HTTP",
     "alreadyUpToDateQuestion": "Aplikace je již aktualizovaná?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "a",
     "apk": {
         "one": "{} APK",
@@ -135,6 +136,7 @@
     "deviceSupportsXArch": "Vaše zařízení podporuje architekturu CPU {}.",
     "directAPKLink": "Přímý odkaz APK",
     "disablePageTransitions": "Zakázat animace pro přechody stránek",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Deaktivovat detekci verze",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Níže odkazovaná stránka Obtainium GitHub obsahuje odkazy na videa, články, diskuse a další zdroje, které vám pomohou pochopit, jak aplikaci používat.",

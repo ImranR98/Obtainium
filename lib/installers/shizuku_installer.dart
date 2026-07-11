@@ -42,7 +42,8 @@ class ShizukuInstaller extends Installer {
     required String appId,
     Map<String, dynamic> installOptions = const {},
   }) async {
-    final fakeInstallSource = installOptions['shizukuPretendToBeGooglePlay'] == true
+    final fakeInstallSource =
+        installOptions['shizukuPretendToBeGooglePlay'] == true
         ? 'com.android.vending'
         : '';
     final uris = apkFilePaths.map((p) => File(p).uri.toString()).toList();
@@ -53,7 +54,10 @@ class ShizukuInstaller extends Installer {
         fakeInstallSource,
       );
     } else {
-      code = await ShizukuApkInstaller().installAPK(uris.first, fakeInstallSource);
+      code = await ShizukuApkInstaller().installAPK(
+        uris.first,
+        fakeInstallSource,
+      );
     }
     return InstallResult.fromPlatformCode(code);
   }
