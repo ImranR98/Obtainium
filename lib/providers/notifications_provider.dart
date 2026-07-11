@@ -252,15 +252,16 @@ class DownloadedNotification extends ObtainiumNotification {
       );
 }
 
-ObtainiumNotification get completeInstallationNotification => ObtainiumNotification(
-  1,
-  tr('completeAppInstallation'),
-  tr('obtainiumMustBeOpenToInstallApps'),
-  'COMPLETE_INSTALL',
-  tr('completeAppInstallationNotifChannel'),
-  tr('completeAppInstallationNotifDescription'),
-  Importance.max,
-);
+ObtainiumNotification get completeInstallationNotification =>
+    ObtainiumNotification(
+      1,
+      tr('completeAppInstallation'),
+      tr('obtainiumMustBeOpenToInstallApps'),
+      'COMPLETE_INSTALL',
+      tr('completeAppInstallationNotifChannel'),
+      tr('completeAppInstallationNotifDescription'),
+      Importance.max,
+    );
 
 class CheckingUpdatesNotification extends ObtainiumNotification {
   CheckingUpdatesNotification(String appName)

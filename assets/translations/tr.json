@@ -12,6 +12,7 @@
     "all": "Tümü",
     "allowInsecure": "Güvenli olmayan HTTP isteklerine izin ver",
     "alreadyUpToDateQuestion": "Uygulama zaten güncel mi?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "ve",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Cihazınız {} CPU mimarisini destekliyor.",
     "directAPKLink": "Direkt APK bağlantısı",
     "disablePageTransitions": "Sayfa geçiş animasyonlarını devre dışı bırak",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Sürüm algılamasını devre dışı bırak",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Aşağıdaki Obtainium GitHub sayfası bağlantısı; uygulamayı nasıl kullanacağınızı anlamanıza yardımcı olacak video, makale, tartışma ve diğer kaynaklara bağlantılar içerir.",

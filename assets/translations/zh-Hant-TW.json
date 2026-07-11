@@ -12,6 +12,7 @@
     "all": "全部",
     "allowInsecure": "允許不安全的 HTTP 要求",
     "alreadyUpToDateQuestion": "應用程式已是最新版本？",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "和",
     "apk": {
         "one": "{} 個 APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "您的裝置支援 {} CPU 架構。",
     "directAPKLink": "直接的 APK 連結",
     "disablePageTransitions": "停用頁面轉場動畫",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "停用版本偵測",
     "dismiss": "關閉",
     "documentationLinksNote": "下方連結的 Obtainium GitHub 頁面包含影片、文章、討論和其他資源的連結，可幫助您了解如何使用該應用程式。",

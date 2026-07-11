@@ -12,6 +12,7 @@
     "all": "Semua",
     "allowInsecure": "Izinkan permintaan HTTP yang tidak aman",
     "alreadyUpToDateQuestion": "Aplikasi sudah yang terbaru?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "dan",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Perangkat Anda mendukung arsitektur CPU {}.",
     "directAPKLink": "Tautan APK langsung",
     "disablePageTransitions": "Nonaktifkan animasi transisi halaman",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Nonaktifkan pendeteksi versi",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Halaman GitHub Obtainium yang ditautkan di bawah ini berisi tautan ke video, artikel, diskusi, dan sumber daya lain yang akan membantu Anda memahami cara menggunakan aplikasi.",

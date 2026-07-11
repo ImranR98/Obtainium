@@ -12,6 +12,7 @@
     "all": "All",
     "allowInsecure": "Allow insecure HTTP requests",
     "alreadyUpToDateQuestion": "Ĉu la apo estas ĝisdata?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "kaj",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Via disponaĵo taskiĝas la CPU-arkitekturon {}.",
     "directAPKLink": "Rekta APKa ligilo",
     "disablePageTransitions": "Malaktivigi la animaciojn de paĝotransiro",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Malaktivigi la versiodetekto",
     "dismiss": "Dismiss",
     "documentationLinksNote": "The Obtainium GitHub page linked below contains links to videos, articles, discussions, and other resources that will help you understand how to use the app.",

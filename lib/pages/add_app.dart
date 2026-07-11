@@ -220,9 +220,7 @@ class AddAppPageState extends State<AddAppPage> {
         null;
   }
 
-  Future<void> addApp(
-    BuildContext context,
-  ) async {
+  Future<void> addApp(BuildContext context) async {
     gettingAppInfo = true;
     setState(() {});
     try {
@@ -809,8 +807,11 @@ class AddAppPageState extends State<AddAppPage> {
 
   Widget _getSourcesListWidget(BuildContext context) => Padding(
     padding: EdgeInsets.only(
-        left: 16, right: 16, top: 16,
-        bottom: 16 + MediaQuery.of(context).padding.bottom),
+      left: 16,
+      right: 16,
+      top: 16,
+      bottom: 16 + MediaQuery.of(context).padding.bottom,
+    ),
     child: Wrap(
       direction: Axis.horizontal,
       alignment: WrapAlignment.spaceBetween,
@@ -874,30 +875,30 @@ class AddAppPageState extends State<AddAppPage> {
                               isFirst: true,
                               isLast: true,
                               child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      pickedSource!.name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    pickedSource!.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      val.data!,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        val.data!,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
+                                ],
                               ),
                             ),
                           );

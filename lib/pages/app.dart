@@ -1110,7 +1110,7 @@ class _AppPageState extends State<AppPage> {
     );
   }
 
-  Widget _buildActionsSection(
+  Widget _buildActionsContent(
     AppInMemory? app,
     AppsProvider appsProvider,
     SettingsProvider settingsProvider,
@@ -1120,9 +1120,9 @@ class _AppPageState extends State<AppPage> {
     bool trackOnly,
     bool areDownloadsRunning,
   ) {
-    return _buildSection(
-      true,
-      true,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -1140,14 +1140,21 @@ class _AppPageState extends State<AppPage> {
             _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
           ],
         ),
-        if (app?.downloadProgress == null && _probedDownloadSize != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Opacity(
+            opacity: app?.downloadProgress == null &&
+                    _probedDownloadSize != null
+                ? 1.0
+                : 0.0,
             child: Text(
-              '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}',
+              _probedDownloadSize != null
+                  ? '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}'
+                  : '-',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+        ),
         if (app?.downloadProgress != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -1259,51 +1266,66 @@ class _AppPageState extends State<AppPage> {
             )
           : null,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          if (app != null) {
-            await getUpdate(context);
-          }
-        },
-        child: showAppWebpageFinal
-            ? _getAppWebView(context, app)
-            : CustomScrollView(
-                slivers: [
-                  _buildBackButton(),
-                  _buildHeaderSection(app),
-                  ..._buildRepoRenameSection(app, appsProvider),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  ..._buildVersionInfoSections(app),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  ..._buildSourceInfoSections(
-                    app,
-                    appsProvider,
-                    settingsProvider,
-                    certs,
-                    hasAssets,
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  _buildCategorySection(app, appsProvider),
-                  ..._buildAboutSection(app),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  _buildActionsSection(
-                    app,
-                    appsProvider,
-                    settingsProvider,
-                    source,
-                    showAppWebpageFinal,
-                    isVersionDetectionStandard,
-                    trackOnly,
-                    areDownloadsRunning,
-                  ),
-                  SliverPadding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).padding.bottom + 24,
+      body: showAppWebpageFinal
+          ? _getAppWebView(context, app)
+          : Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      if (app != null) {
+                        await getUpdate(context);
+                      }
+                    },
+                    child: CustomScrollView(
+                      slivers: [
+                        _buildBackButton(),
+                        _buildHeaderSection(app),
+                        ..._buildRepoRenameSection(app, appsProvider),
+                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        ..._buildVersionInfoSections(app),
+                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        ..._buildSourceInfoSections(
+                          app,
+                          appsProvider,
+                          settingsProvider,
+                          certs,
+                          hasAssets,
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        _buildCategorySection(app, appsProvider),
+                        ..._buildAboutSection(app),
+                        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                      ],
                     ),
                   ),
-                ],
-              ),
-      ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: SafeArea(
+                    top: false,
+                    child: _buildActionsContent(
+                      app,
+                      appsProvider,
+                      settingsProvider,
+                      source,
+                      showAppWebpageFinal,
+                      isVersionDetectionStandard,
+                      trackOnly,
+                      areDownloadsRunning,
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

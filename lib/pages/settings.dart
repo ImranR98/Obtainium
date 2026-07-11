@@ -312,7 +312,9 @@ class _SettingsPageState extends State<SettingsPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(connectedTileBigRadius),
         ),
-        title: Text(tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')])),
+        title: Text(
+          tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
+        ),
         subtitle: Text(
           '${ColorTools.nameThatColor(settingsProvider.themeColor)} '
           '(${ColorTools.materialNameAndCode(settingsProvider.themeColor)})',
@@ -522,9 +524,9 @@ class _SettingsPageState extends State<SettingsPage> {
       body: CustomScrollView(
         slivers: <Widget>[
           CustomAppBar(title: tr('settings')),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            sliver: SliverToBoxAdapter(
               child: settingsProvider.prefs == null
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 48),
@@ -869,6 +871,16 @@ class _SettingsPageState extends State<SettingsPage> {
           label: tr('highlightTouchTargets'),
           value: settingsProvider.highlightTouchTargets,
           onChanged: (value) => settingsProvider.highlightTouchTargets = value,
+        ),
+        SettingsToggleRow(
+          label: tr('disableSwipeActions'),
+          value: settingsProvider.disableSwipeActions,
+          onChanged: (value) => settingsProvider.disableSwipeActions = value,
+        ),
+        SettingsToggleRow(
+          label: tr('alwaysUsePhoneLayout'),
+          value: settingsProvider.alwaysUsePhoneLayout,
+          onChanged: (value) => settingsProvider.alwaysUsePhoneLayout = value,
         ),
       ],
     );

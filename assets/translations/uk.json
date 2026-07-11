@@ -12,6 +12,7 @@
     "all": "Усе.",
     "allowInsecure": "Дозволити незахищені HTTP-запити",
     "alreadyUpToDateQuestion": "Застосунок вже оновлено?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "та",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Ваш пристрій підтримує архітектуру процесора {}.",
     "directAPKLink": "Пряме посилання на APK",
     "disablePageTransitions": "Вимкнути анімації переходів між сторінками",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Вимкнути визначення версії",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Сторінка Obtainium на GitHub, посилання на яку наведено нижче, містить посилання на відео, статті, дискусії та інші ресурси, які допоможуть вам зрозуміти, як користуватися додатком.",

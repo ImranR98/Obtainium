@@ -104,13 +104,12 @@ extension AppsProviderUpdates on AppsProvider {
     var total = 0;
     refreshProgress = 0.0;
     notify();
-    final progressTimer = Timer.periodic(
-      const Duration(milliseconds: 250),
-      (_) {
-        refreshProgress = total > 0 ? completed / total : 0.0;
-        notify();
-      },
-    );
+    final progressTimer = Timer.periodic(const Duration(milliseconds: 250), (
+      _,
+    ) {
+      refreshProgress = total > 0 ? completed / total : 0.0;
+      notify();
+    });
     try {
       final List<App> updates = [];
       final MultiAppMultiError errors = MultiAppMultiError();
@@ -136,30 +135,34 @@ extension AppsProviderUpdates on AppsProvider {
       }
       total = appIds.length;
       final results = await Future.wait(
-        appIds.map((appId) async {
-          final currentApp = apps[appId]?.app;
-          try {
-            final newApp = await fetchUpdate(appId);
-            if (newApp == null) return null;
-            final isUpdate =
-                currentApp != null &&
-                newApp.latestVersion != currentApp.latestVersion;
-            return MapEntry(newApp, isUpdate);
-          } catch (e) {
-            if ((e is RateLimitError || e is SocketException) &&
-                throwErrorsForRetry) {
-              rethrow;
-            }
-            if (e is RepositoryRenamedError) {
-              await updatePendingRepoRename(appId, e.newUrl);
-              return null;
-            }
-            errors.add(appId, e, appName: apps[appId]?.name);
-            return null;
-          }
-        }).map((f) => f.whenComplete(() {
-              completed++;
-            })),
+        appIds
+            .map((appId) async {
+              final currentApp = apps[appId]?.app;
+              try {
+                final newApp = await fetchUpdate(appId);
+                if (newApp == null) return null;
+                final isUpdate =
+                    currentApp != null &&
+                    newApp.latestVersion != currentApp.latestVersion;
+                return MapEntry(newApp, isUpdate);
+              } catch (e) {
+                if ((e is RateLimitError || e is SocketException) &&
+                    throwErrorsForRetry) {
+                  rethrow;
+                }
+                if (e is RepositoryRenamedError) {
+                  await updatePendingRepoRename(appId, e.newUrl);
+                  return null;
+                }
+                errors.add(appId, e, appName: apps[appId]?.name);
+                return null;
+              }
+            })
+            .map(
+              (f) => f.whenComplete(() {
+                completed++;
+              }),
+            ),
         eagerError: true,
       );
       final List<App> fetched = [];

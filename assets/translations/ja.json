@@ -12,6 +12,7 @@
     "all": "すべて",
     "allowInsecure": "安全でないHTTPリクエストを許可する",
     "alreadyUpToDateQuestion": "アプリはすでに最新ですか？",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "と",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "お使いのデバイスは {} CPUアーキテクチャに対応しています。",
     "directAPKLink": "APKのダイレクトリンク",
     "disablePageTransitions": "ページ遷移アニメーションを無効化する",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "バージョン検出を無効にする",
     "dismiss": "無視",
     "documentationLinksNote": "以下のリンクにあるObtainium GitHubページには、ビデオ、記事、ディスカッション、その他のリソースへのリンクがあり、アプリの使い方を理解するのに役立ちます。",

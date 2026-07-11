@@ -42,7 +42,10 @@ class APKCombo extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    final res = await sourceRequest('$standardUrl/download/apk', additionalSettings);
+    final res = await sourceRequest(
+      '$standardUrl/download/apk',
+      additionalSettings,
+    );
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }

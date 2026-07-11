@@ -12,6 +12,7 @@
     "all": "All",
     "allowInsecure": "Dozvoli nesigurne HTTP zahtjeve",
     "alreadyUpToDateQuestion": "Aplikacija je već ažurirana?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "i",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Vaš uređaj podržava {} arhitekturu procesora.",
     "directAPKLink": "Direktna APK veza",
     "disablePageTransitions": "Ugasite animaciju prijelaza stranice",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Onemogući detekciju verzije",
     "dismiss": "Dismiss",
     "documentationLinksNote": "Stranica Obtainium-a na GitHub-u na linku u nastavku sadrži linkove na videozapise, članke, rasprave i druge resurse koji će vam pomoći da shvatite kako koristiti aplikaciju.",

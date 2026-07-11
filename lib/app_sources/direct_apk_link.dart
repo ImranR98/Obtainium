@@ -24,11 +24,11 @@ class DirectAPKLink extends AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
     ...html.additionalSourceAppSpecificSettingFormItems.where(
-      (element) => element
-          .where((element) => element.key == 'requestHeader')
-          .isNotEmpty,
+      (element) =>
+          element.where((element) => element.key == 'requestHeader').isNotEmpty,
     ),
     [
       GeneratedFormDropdown(

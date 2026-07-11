@@ -201,8 +201,11 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return IconButton(
         icon: const Icon(Icons.help_outline),
         tooltip: tr('about'),
-        onPressed: () => showHelpDialog(context,
-            title: label, content: belowWidgets.cast<Widget>()),
+        onPressed: () => showHelpDialog(
+          context,
+          title: label,
+          content: belowWidgets.cast<Widget>(),
+        ),
       );
     }
     return null;
@@ -440,10 +443,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
             if (!compact)
               Text(
                 '${tr(item.label)} (${i + 1})',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             if (!compact) const SizedBox(height: 16),
             GeneratedForm(
@@ -579,13 +581,15 @@ class _GeneratedFormState extends State<GeneratedForm> {
         final EdgeInsets padding = isFieldRow(r)
             ? EdgeInsets.zero
             : const EdgeInsets.symmetric(horizontal: 20, vertical: 8);
-        rawTiles.add(SettingsTile(
-          color: isFieldRow(r)
-              ? colorScheme.surfaceContainerHighest
-              : colorScheme.surfaceContainerLow,
-          padding: padding,
-          child: inputRowWidgets[r],
-        ));
+        rawTiles.add(
+          SettingsTile(
+            color: isFieldRow(r)
+                ? colorScheme.surfaceContainerHighest
+                : colorScheme.surfaceContainerLow,
+            padding: padding,
+            child: inputRowWidgets[r],
+          ),
+        );
       }
       final children = shapeSettingsTiles(rawTiles);
       return Column(

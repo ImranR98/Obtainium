@@ -63,9 +63,9 @@ class LogsProvider {
       _instance
           .clear(before: DateTime.now().subtract(const Duration(days: 7)))
           .catchError((e) {
-        debugPrint('Failed to clear old logs: $e');
-        return 0;
-      });
+            debugPrint('Failed to clear old logs: $e');
+            return 0;
+          });
     }
     return _instance;
   }
@@ -121,9 +121,9 @@ create table if not exists $logTable (
             'clearedNLogsBeforeXAfterY',
             res,
             namedArgs: {
-            'before': before?.toIso8601String() ?? '...',
-            'after': after?.toIso8601String() ?? '...',
-          },
+              'before': before?.toIso8601String() ?? '...',
+              'after': after?.toIso8601String() ?? '...',
+            },
             name: 'n',
           ),
         ),

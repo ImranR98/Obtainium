@@ -12,6 +12,7 @@
     "all": "Tot",
     "allowInsecure": "Permet les sol·licituds HTTP insegures",
     "alreadyUpToDateQuestion": "Aplicació ja actualitzada?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "i",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "Aquest dispositiu admet l'aquitectura de CPU: {}.",
     "directAPKLink": "Enllaç de l'APK directe",
     "disablePageTransitions": "Inhabilita les animacions de transició de pàgina",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "Desactiva la detecció de versions",
     "dismiss": "Dismiss",
     "documentationLinksNote": "La pàgina GitHub d'Obtainium enllaçada a sota conté enllaços a vídeos, articles, debats i altres recursos que t'ajudaran a entendre com usar l'aplicació.",

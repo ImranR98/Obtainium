@@ -12,6 +12,7 @@
     "all": "모두",
     "allowInsecure": "안전하지 않은 HTTP 요청 허용",
     "alreadyUpToDateQuestion": "앱이 이미 최신 상태입니까?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "그리고",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "장치는 {} CPU 아키텍처를 지원합니다.",
     "directAPKLink": "직접 APK 링크",
     "disablePageTransitions": "페이지 전환 애니메이션 비활성화",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "버전 감지 비활성화",
     "dismiss": "Dismiss",
     "documentationLinksNote": "아래에 링크된 Obtainium 깃허브 페이지에는 앱 사용 방법을 이해하는 데 도움이 되는 동영상, 기사, 토론 및 기타 리소스에 대한 링크가 포함되어 있습니다.",

@@ -12,6 +12,7 @@
     "all": "All",
     "allowInsecure": "സുരക്ഷിതമല്ലാത്ത HTTP അഭ്യർത്ഥനകൾ അനുവദിക്കുക",
     "alreadyUpToDateQuestion": "ആപ്പ് ഇതിനകം ഏറ്റവും പുതിയ പതിപ്പിലാണോ?",
+    "alwaysUsePhoneLayout": "Always use phone layout",
     "and": "കൂടാതെ",
     "apk": {
         "one": "{} APK",
@@ -130,6 +131,7 @@
     "deviceSupportsXArch": "നിങ്ങളുടെ ഉപകരണം {} CPU ആർക്കിടെക്ചറിനെ പിന്തുണയ്ക്കുന്നു.",
     "directAPKLink": "നേരിട്ടുള്ള APK ലിങ്ക്",
     "disablePageTransitions": "പേജ് ട്രാൻസിഷൻ ആനിമേഷനുകൾ പ്രവർത്തനരഹിതമാക്കുക",
+    "disableSwipeActions": "Disable swipe actions on app list",
     "disableVersionDetection": "പതിപ്പ് കണ്ടെത്തൽ പ്രവർത്തനരഹിതമാക്കുക",
     "dismiss": "Dismiss",
     "documentationLinksNote": "താഴെ ലിങ്ക് ചെയ്തിട്ടുള്ള ഒബ്‌റ്റേനിയം GitHub പേജിൽ ആപ്പ് എങ്ങനെ ഉപയോഗിക്കാമെന്ന് മനസ്സിലാക്കാൻ സഹായിക്കുന്ന വീഡിയോകൾ, ലേഖനങ്ങൾ, ചർച്ചകൾ, മറ്റ് വിഭവങ്ങൾ എന്നിവയുടെ ലിങ്കുകൾ അടങ്ങിയിരിക്കുന്നു.",

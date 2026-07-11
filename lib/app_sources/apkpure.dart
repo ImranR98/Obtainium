@@ -28,7 +28,8 @@ class APKPure extends AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
     AppSource.fallbackToOlderReleasesFormItem,
     [
       GeneratedFormSwitch(

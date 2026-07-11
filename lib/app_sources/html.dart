@@ -94,9 +94,7 @@ bool _isDigit(String s) {
 }
 
 List<MapEntry<String, String>> getLinksInLines(String lines) =>
-    RegExp(
-          r'(?:(?:http|https|ftp)://)\S+',
-        )
+    RegExp(r'(?:(?:http|https|ftp)://)\S+')
         .allMatches(lines)
         .map(
           (match) =>
@@ -298,7 +296,8 @@ class HTML extends AppSource {
   }
 
   @override
-  List<List<GeneratedFormItem>> get additionalSourceAppSpecificSettingFormItems => [
+  List<List<GeneratedFormItem>>
+  get additionalSourceAppSpecificSettingFormItems => [
     [
       GeneratedFormSubForm('intermediateLink', [
         ..._intermediateFormItems,
@@ -366,7 +365,8 @@ class HTML extends AppSource {
       return null;
     }
     final settings = Map<String, dynamic>.from(additionalSettings);
-    if (settings['requestHeader'] is! List || (settings['requestHeader'] as List).isEmpty) {
+    if (settings['requestHeader'] is! List ||
+        (settings['requestHeader'] as List).isEmpty) {
       settings['requestHeader'] = [];
     }
     final headers = (settings['requestHeader'] as List)
@@ -394,10 +394,16 @@ class HTML extends AppSource {
       var currentUrl = standardUrl;
       final intermediateLinks =
           ((additionalSettings['intermediateLink'] as List?) ?? <dynamic>[])
-              .where((l) => (l['customLinkFilterRegex'] as String?)?.isNotEmpty == true)
+              .where(
+                (l) =>
+                    (l['customLinkFilterRegex'] as String?)?.isNotEmpty == true,
+              )
               .toList();
       const int maxIntermediateLinkDepth = 10;
-      final int linkCount = intermediateLinks.length.clamp(0, maxIntermediateLinkDepth);
+      final int linkCount = intermediateLinks.length.clamp(
+        0,
+        maxIntermediateLinkDepth,
+      );
       for (int i = 0; i < linkCount; i++) {
         var intLinks = await grabLinksCommonFromRes(
           await sourceRequest(currentUrl, additionalSettings),
@@ -406,8 +412,7 @@ class HTML extends AppSource {
         if (intLinks.isEmpty) {
           throw NoReleasesError(note: currentUrl);
         } else {
-          if (intermediateLinks[i]['autoLinkFilterByArch'] ==
-              true) {
+          if (intermediateLinks[i]['autoLinkFilterByArch'] == true) {
             intLinks = await filterApksByArch(intLinks);
           }
           currentUrl = intLinks.last.key;
