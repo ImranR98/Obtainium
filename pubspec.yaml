@@ -2,7 +2,7 @@ name: obtainium
 description: Get Android app updates straight from the source.
 publish_to: 'none'
 
-version: 1.6.2+2341
+version: 1.6.3+2342
 
 environment:
   sdk: ^3.12.0
@@ -66,7 +66,7 @@ dependencies:
   flutter_typeahead: ^6.0.0
   battery_plus: ^7.1.0
   flutter_charset_detector: ^6.0.0
-  flutter_markdown_plus: ^1.0.11
+  flutter_markdown_plus: ^1.0.12
   workmanager: ^0.9.0+3
 
 dev_dependencies:
