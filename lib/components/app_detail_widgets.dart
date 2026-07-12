@@ -27,6 +27,7 @@ class AppInfoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isTV = context.read<SettingsProvider>().isTV;
     return AlertDialog(
       scrollable: true,
       title: Text(app.name),
@@ -76,6 +77,7 @@ class AppInfoDialog extends StatelessWidget {
       ),
       actions: [
         FilledButton.tonal(
+          autofocus: isTV,
           onPressed: () => Navigator.of(context).pop(),
           child: Text(tr('continue')),
         ),
@@ -107,6 +109,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
 
   @override
   Widget build(BuildContext context) {
+    final isTV = context.read<SettingsProvider>().isTV;
     var urlsToSelectFrom = widget.app.apkUrls;
     if (widget.pickAnyAsset) {
       urlsToSelectFrom = [...urlsToSelectFrom, ...widget.app.otherAssetUrls];
@@ -144,12 +147,27 @@ class _AppFilePickerState extends State<AppFilePicker> {
                         )
                       : const SizedBox.shrink(),
                   const SizedBox(height: 16),
-                  ...urlsToSelectFrom.map(
-                    (u) => RadioListTile<String>(
-                      title: Text(u.key),
-                      value: u.value,
+                  if (isTV)
+                    ...urlsToSelectFrom.asMap().entries.map(
+                      (entry) => ListTile(
+                        autofocus: entry.key == 0,
+                        leading: Radio<String>(value: entry.value.value),
+                        title: Text(entry.value.key),
+                        selected: fileUrl?.value == entry.value.value,
+                        onTap: () {
+                          setState(() {
+                            fileUrl = entry.value;
+                          });
+                        },
+                      ),
+                    )
+                  else
+                    ...urlsToSelectFrom.map(
+                      (u) => RadioListTile<String>(
+                        title: Text(u.key),
+                        value: u.value,
+                      ),
                     ),
-                  ),
                   if (widget.archs != null) const SizedBox(height: 16),
                   if (widget.archs != null)
                     Text(
@@ -175,6 +193,7 @@ class _AppFilePickerState extends State<AppFilePicker> {
           child: Text(tr('cancel')),
         ),
         FilledButton(
+          autofocus: isTV && urlsToSelectFrom.isEmpty,
           onPressed: fileUrl != null
               ? () {
                   context.read<SettingsProvider>().selectionClick();
@@ -207,6 +226,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isTV = context.read<SettingsProvider>().isTV;
     return AlertDialog(
       scrollable: true,
       title: Text(tr('warning')),
@@ -225,6 +245,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
           ),
           const SizedBox(height: 8),
           CheckboxListTile(
+            autofocus: isTV,
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
             value: _dontShowAgain,
@@ -241,6 +262,7 @@ class _APKOriginWarningDialogState extends State<APKOriginWarningDialog> {
           child: Text(tr('cancel')),
         ),
         FilledButton(
+          autofocus: !isTV,
           onPressed: () {
             final sp = context.read<SettingsProvider>();
             sp.selectionClick();

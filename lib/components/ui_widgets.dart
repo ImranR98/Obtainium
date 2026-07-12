@@ -80,6 +80,7 @@ void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
           ),
           actions: [
             FilledButton.tonal(
+              autofocus: context.read<SettingsProvider>().isTV,
               onPressed: () {
                 Navigator.of(context).pop(null);
               },

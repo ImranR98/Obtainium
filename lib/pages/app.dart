@@ -271,6 +271,7 @@ class _AppPageState extends State<AppPage> {
       context,
       title: tr('alreadyUpToDateQuestion'),
       confirmText: tr('yesMarkUpdated'),
+      autofocusConfirm: settingsProvider.isTV,
     );
     if (!confirmed) return;
     settingsProvider.selectionClick();
@@ -1143,8 +1144,8 @@ class _AppPageState extends State<AppPage> {
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Opacity(
-            opacity: app?.downloadProgress == null &&
-                    _probedDownloadSize != null
+            opacity:
+                app?.downloadProgress == null && _probedDownloadSize != null
                 ? 1.0
                 : 0.0,
             child: Text(
