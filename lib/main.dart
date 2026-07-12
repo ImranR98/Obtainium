@@ -32,8 +32,8 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('pl'), 'Polski'),
   MapEntry(Locale('ru'), 'Русский'),
   MapEntry(Locale('bs'), 'Bosanski'),
-  MapEntry(Locale('pt'), 'Português'),
   MapEntry(Locale('pt', 'BR'), 'Brasileiro'),
+  MapEntry(Locale('pt'), 'Português'),
   MapEntry(Locale('cs'), 'Česky'),
   MapEntry(Locale('sv'), 'Svenska'),
   MapEntry(Locale('nl'), 'Nederlands'),
@@ -255,6 +255,8 @@ class _ObtainiumState extends State<Obtainium> {
     if (!supportedLocales.map((e) => e.key).contains(context.locale) ||
         (settings.forcedLocale == null && deviceLang != currentLang)) {
       settings.resetLocaleSafe(context);
+    } else if (settings.forcedLocale != null) {
+      context.setLocale(settings.forcedLocale!);
     }
   }
 
