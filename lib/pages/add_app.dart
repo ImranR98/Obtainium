@@ -384,7 +384,7 @@ class AddAppPageState extends State<AddAppPage> {
                     }
                   }
                   return MapEntry(
-                    e.name,
+                    e.sourceIdentifier,
                     await e.search(searchQuery, querySettings: querySettings),
                   );
                 } catch (err) {
