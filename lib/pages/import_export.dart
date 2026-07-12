@@ -511,6 +511,7 @@ class _ImportErrorDialogState extends State<ImportErrorDialog> {
       ),
       actions: [
         FilledButton.tonal(
+          autofocus: context.read<SettingsProvider>().isTV,
           onPressed: () {
             Navigator.of(context).pop(null);
           },

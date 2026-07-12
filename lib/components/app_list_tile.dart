@@ -487,55 +487,68 @@ class AppListTile extends StatelessWidget {
                   ],
                 ),
         ),
-        child: ListTile(
-          autofocus: autofocus,
-          shape: borderRadius != null
-              ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
-              : null,
-          tileColor: _app.pinned
-              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06)
-              : Colors.transparent,
-          selectedTileColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
-          selected: multiSelected || detailSelected,
-          onLongPress: onToggleSelected,
-          leading: (settingsProvider.isTV)
-              ? Checkbox(
+        child: () {
+          final tile = ListTile(
+            autofocus: autofocus,
+            shape: borderRadius != null
+                ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
+                : null,
+            tileColor: _app.pinned
+                ? Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.06)
+                : Colors.transparent,
+            selectedTileColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
+            selected: multiSelected || detailSelected,
+            leading: settingsProvider.isTV
+                ? null
+                : AppIconWidget(
+                    appId: _app.id,
+                    installed: appInMemory.installedInfo != null,
+                    appsProvider: appsProvider,
+                  ),
+            onLongPress: onToggleSelected,
+            title: Text(
+              maxLines: 1,
+              appInMemory.name,
+              style: TextStyle(
+                overflow: TextOverflow.ellipsis,
+                fontWeight: _app.pinned ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            subtitle: _app.hasPendingRepoRename
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [_authorText(), _repoMovedRow(context)],
+                  )
+                : _authorText(),
+            trailing: appInMemory.downloadProgress != null
+                ? DownloadProgressTrailing(
+                    progress: appInMemory.downloadProgress!,
+                    receivedBytes: appInMemory.downloadReceivedBytes,
+                    totalBytes: appInMemory.downloadTotalBytes,
+                  )
+                : trailingRow,
+            onTap: onTap,
+          );
+          if (settingsProvider.isTV) {
+            return Row(
+              children: [
+                Checkbox(
                   value: multiSelected,
                   onChanged: (_) {
                     onToggleSelected();
                   },
-                )
-              : AppIconWidget(
-                  appId: _app.id,
-                  installed: appInMemory.installedInfo != null,
-                  appsProvider: appsProvider,
                 ),
-          title: Text(
-            maxLines: 1,
-            appInMemory.name,
-            style: TextStyle(
-              overflow: TextOverflow.ellipsis,
-              fontWeight: _app.pinned ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          subtitle: _app.hasPendingRepoRename
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_authorText(), _repoMovedRow(context)],
-                )
-              : _authorText(),
-          trailing: appInMemory.downloadProgress != null
-              ? DownloadProgressTrailing(
-                  progress: appInMemory.downloadProgress!,
-                  receivedBytes: appInMemory.downloadReceivedBytes,
-                  totalBytes: appInMemory.downloadTotalBytes,
-                )
-              : trailingRow,
-          onTap: onTap,
-        ),
+                Expanded(child: tile),
+              ],
+            );
+          }
+          return tile;
+        }(),
       ),
     );
 

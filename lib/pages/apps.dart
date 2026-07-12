@@ -525,6 +525,7 @@ class AppsPageState extends State<AppsPage> {
             fontStyle: FontStyle.italic,
           ),
         ),
+        autofocusConfirm: context.read<SettingsProvider>().isTV,
       );
       if (!confirmed) return;
       settingsProvider.selectionClick();
@@ -895,34 +896,42 @@ class AppsPageState extends State<AppsPage> {
     List<AppInMemory> listedApps,
   ) {
     final isFilterOff = filter.isIdenticalTo(neutralFilter, settingsProvider);
+    final trailing = <Widget>[
+      _getSelectAllButton(context, listedApps),
+      if (!isFilterOff)
+        IconButton(
+          tooltip: '${tr('filter')} - ${tr('remove')}',
+          onPressed: () => clearSearchAndFilter(),
+          icon: const Icon(Icons.filter_alt_off_outlined),
+        ),
+      IconButton(
+        tooltip: tr('filterApps'),
+        onPressed: () => showFilterDialog(context),
+        icon: const Icon(Icons.filter_list_rounded),
+      ),
+    ];
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: SearchBar(
-          controller: searchController,
-          hintText: tr('search'),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 16),
-          ),
-          leading: const Icon(Icons.search_rounded),
-          trailing: [
-            _getSelectAllButton(context, listedApps),
-            if (!isFilterOff)
-              IconButton(
-                tooltip: '${tr('filter')} - ${tr('remove')}',
-                onPressed: () => clearSearchAndFilter(),
-                icon: const Icon(Icons.filter_alt_off_outlined),
+        child: settingsProvider.isTV
+            ? _TVSearchBar(
+                controller: searchController,
+                onChanged: onSearchChanged,
+                trailing: trailing,
+                hintText: tr('search'),
+              )
+            : SearchBar(
+                controller: searchController,
+                hintText: tr('search'),
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(horizontal: 16),
+                ),
+                leading: const Icon(Icons.search_rounded),
+                trailing: trailing,
+                onChanged: (value) {
+                  onSearchChanged(value);
+                },
               ),
-            IconButton(
-              tooltip: tr('filterApps'),
-              onPressed: () => showFilterDialog(context),
-              icon: const Icon(Icons.filter_list_rounded),
-            ),
-          ],
-          onChanged: (value) {
-            onSearchChanged(value);
-          },
-        ),
       ),
     );
   }
@@ -1287,6 +1296,62 @@ class _RefreshProgressBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
         child: LinearProgressIndicator(value: refreshProgress),
       ),
+    );
+  }
+}
+
+class _TVSearchBar extends StatefulWidget {
+  const _TVSearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.trailing,
+    required this.hintText,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final List<Widget> trailing;
+  final String hintText;
+
+  @override
+  State<_TVSearchBar> createState() => _TVSearchBarState();
+}
+
+class _TVSearchBarState extends State<_TVSearchBar> {
+  final FocusNode _textFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _textFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TvTextFieldFocus(
+          textFocusNode: _textFocus,
+          borderRadius: 28,
+          child: TextField(
+            focusNode: _textFocus,
+            controller: widget.controller,
+            onChanged: widget.onChanged,
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              prefixIcon: const Icon(Icons.search_rounded),
+              border: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(28)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: widget.trailing,
+        ),
+      ],
     );
   }
 }

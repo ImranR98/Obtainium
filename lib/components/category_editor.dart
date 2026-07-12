@@ -139,6 +139,7 @@ class _CategoryEditorSheetState extends State<_CategoryEditorSheet> {
       context,
       title: tr('deleteCategoriesQuestion'),
       content: Text(tr('categoryDeleteWarning')),
+      autofocusConfirm: context.read<SettingsProvider>().isTV,
     );
     if (!confirmed) return;
     final cats = Map<String, int>.from(settingsProvider.categories)

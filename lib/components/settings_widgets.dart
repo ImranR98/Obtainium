@@ -31,6 +31,7 @@ Future<void> showHelpDialog(
       ),
       actions: [
         TextButton(
+          autofocus: context.read<SettingsProvider>().isTV,
           onPressed: () => Navigator.of(ctx).pop(),
           child: Text(tr('ok')),
         ),

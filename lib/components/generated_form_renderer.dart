@@ -46,17 +46,23 @@ class GeneratedForm extends StatefulWidget {
   State<GeneratedForm> createState() => _GeneratedFormState();
 }
 
-class _TVTextFieldFocus extends StatefulWidget {
+class TvTextFieldFocus extends StatefulWidget {
   final Widget child;
   final FocusNode textFocusNode;
+  final double borderRadius;
 
-  const _TVTextFieldFocus({required this.child, required this.textFocusNode});
+  const TvTextFieldFocus({
+    super.key,
+    required this.child,
+    required this.textFocusNode,
+    this.borderRadius = 4,
+  });
 
   @override
-  State<_TVTextFieldFocus> createState() => _TVTextFieldFocusState();
+  State<TvTextFieldFocus> createState() => _TvTextFieldFocusState();
 }
 
-class _TVTextFieldFocusState extends State<_TVTextFieldFocus> {
+class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
   final FocusNode _outerFocus = FocusNode();
   bool _activated = false;
 
@@ -67,7 +73,7 @@ class _TVTextFieldFocusState extends State<_TVTextFieldFocus> {
   }
 
   @override
-  void didUpdateWidget(covariant _TVTextFieldFocus oldWidget) {
+  void didUpdateWidget(covariant TvTextFieldFocus oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.textFocusNode != oldWidget.textFocusNode) {
       oldWidget.textFocusNode.removeListener(_onTextFocusChange);
@@ -91,33 +97,43 @@ class _TVTextFieldFocusState extends State<_TVTextFieldFocus> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _outerFocus,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter)) {
-          setState(() => _activated = true);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            widget.textFocusNode.requestFocus();
-          });
-          return KeyEventResult.handled;
+    return PopScope(
+      canPop: !_activated,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _activated) {
+          setState(() => _activated = false);
+          widget.textFocusNode.unfocus();
+          _outerFocus.requestFocus();
         }
-        return KeyEventResult.ignored;
       },
-      child: ListenableBuilder(
-        listenable: _outerFocus,
-        builder: (context, child) => Container(
-          decoration: _outerFocus.hasFocus && !_activated
-              ? BoxDecoration(
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                )
-              : null,
-          child: ExcludeFocus(excluding: !_activated, child: widget.child),
+      child: Focus(
+        focusNode: _outerFocus,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter)) {
+            setState(() => _activated = true);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              widget.textFocusNode.requestFocus();
+            });
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: ListenableBuilder(
+          listenable: _outerFocus,
+          builder: (context, child) => Container(
+            decoration: _outerFocus.hasFocus && !_activated
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
+                  )
+                : null,
+            child: ExcludeFocus(excluding: !_activated, child: widget.child),
+          ),
         ),
       ),
     );
@@ -272,7 +288,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           },
         );
         if (context.read<SettingsProvider>().isTV) {
-          return _TVTextFieldFocus(textFocusNode: focusNode, child: textField);
+          return TvTextFieldFocus(textFocusNode: focusNode, child: textField);
         }
         return textField;
       },
