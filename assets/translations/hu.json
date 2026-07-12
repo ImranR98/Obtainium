@@ -12,7 +12,7 @@
     "all": "Összes",
     "allowInsecure": "Nem biztonságos HTTP-kérések engedélyezése",
     "alreadyUpToDateQuestion": "Már naprakész az alkalmazás?",
-    "alwaysUsePhoneLayout": "Always use phone layout",
+    "alwaysUsePhoneLayout": "Telefonos elrendezés használata",
     "and": "és",
     "apk": {
         "one": "{} APK",
@@ -131,7 +131,7 @@
     "deviceSupportsXArch": "Ez az eszköz támogatja a(z) {} CPU-architektúrát.",
     "directAPKLink": "Közvetlen APK-hivatkozás",
     "disablePageTransitions": "Lapváltási animációk letiltása",
-    "disableSwipeActions": "Disable swipe actions on app list",
+    "disableSwipeActions": "Alkalmazáslista csúsztatási műveleteinek letiltása",
     "disableVersionDetection": "Verziófelismerés letiltása",
     "dismiss": "Eltüntetés",
     "documentationLinksNote": "Az alábbi hivatkozás az Obtainium GitHub oldalára vezet, amely további videók, cikkek, beszélgetések és egyéb források hivatkozásait tartalmazza, amelyek segítenek megérteni az alkalmazás használatát.",
