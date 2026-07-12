@@ -127,6 +127,13 @@ extension AppsProviderUpdates on AppsProvider {
                         DateTime.fromMicrosecondsSinceEpoch(0),
                   ),
         );
+        if (settingsProvider.onlyCheckInstalledOrTrackOnlyApps) {
+          appIds.removeWhere((id) {
+            final a = apps[id]?.app;
+            return a?.installedVersion == null &&
+                a?.settings.getBool('trackOnly') != true;
+          });
+        }
       } else {
         appIds = getAppsSortedByUpdateCheckTime(
           onlyCheckInstalledOrTrackOnlyApps:
