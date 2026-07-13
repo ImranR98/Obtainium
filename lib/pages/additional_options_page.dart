@@ -211,6 +211,22 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     final Map<String, dynamic> appAdditionalSettings =
         Map<String, dynamic>.from(app.additionalSettings);
     syncVersionStringSourceSettings(appAdditionalSettings);
+    // Defensively normalize versionDetection to the string enum the dropdown
+    // expects. App.fromJson normally migrates legacy bool values, but it falls
+    // back to raw JSON if that migration throws — a bool here would crash the
+    // DropdownButton ("no item with value: false"). false→pseudo / true→auto
+    // preserves the app's actual behavior; anything unrecognized → auto.
+    final dynamic vd = appAdditionalSettings['versionDetection'];
+    if (vd == false) {
+      appAdditionalSettings['versionDetection'] = 'pseudo';
+    } else if (vd == true) {
+      appAdditionalSettings['versionDetection'] = 'auto';
+    } else if (vd != 'auto' &&
+        vd != 'standard' &&
+        vd != 'pseudo' &&
+        vd != 'versionCode') {
+      appAdditionalSettings['versionDetection'] = 'auto';
+    }
     if (appAdditionalSettings['versionDetection'] == 'versionCode' ||
         appAdditionalSettings['useVersionCodeAsOSVersion'] == true) {
       appAdditionalSettings['versionDetection'] = 'versionCode';

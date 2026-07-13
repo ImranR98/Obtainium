@@ -293,6 +293,32 @@ List<MapEntry<String, String>> assumed2DlistToStringMapList(
 String ensureAbsoluteUrl(String ambiguousUrl, Uri referenceAbsoluteUrl) =>
     HttpService().ensureAbsoluteUrl(ambiguousUrl, referenceAbsoluteUrl);
 
+/// Tolerant parser for stored date fields (lastUpdateCheck / releaseDate).
+/// Accepts an int (microsecondsSinceEpoch), an ISO-8601 string, or a numeric
+/// string. Returns null for null/unparseable. A raw
+/// `DateTime.fromMicrosecondsSinceEpoch(json[...])` throws a TypeError on a
+/// String value, which aborts the whole import — this restores fork main's
+/// tolerance for string-encoded dates in legacy/third-party backups.
+DateTime? dateTimeFromJsonValue(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is int) {
+    return DateTime.fromMicrosecondsSinceEpoch(value);
+  }
+  if (value is String) {
+    final DateTime? isoDateTime = DateTime.tryParse(value);
+    if (isoDateTime != null) {
+      return isoDateTime;
+    }
+    final int? microsecondsSinceEpoch = int.tryParse(value);
+    if (microsecondsSinceEpoch != null) {
+      return DateTime.fromMicrosecondsSinceEpoch(microsecondsSinceEpoch);
+    }
+  }
+  return null;
+}
+
 class App {
   final String id;
   final String url;
@@ -519,9 +545,7 @@ class App {
         preferredApkIndex: (json['preferredApkIndex'] ?? -1) as int,
         additionalSettings:
             jsonDecode(json['additionalSettings']) as Map<String, dynamic>,
-        lastUpdateCheck: json['lastUpdateCheck'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['lastUpdateCheck']),
+        lastUpdateCheck: dateTimeFromJsonValue(json['lastUpdateCheck']),
         pinned: json['pinned'] ?? false,
         categories: json['categories'] != null
             ? (json['categories'] as List<dynamic>)
@@ -530,9 +554,7 @@ class App {
             : json['category'] != null
             ? [json['category'] as String]
             : [],
-        releaseDate: json['releaseDate'] == null
-            ? null
-            : DateTime.fromMicrosecondsSinceEpoch(json['releaseDate']),
+        releaseDate: dateTimeFromJsonValue(json['releaseDate']),
         changeLog: json['changeLog'] == null
             ? null
             : json['changeLog'] as String,
@@ -729,6 +751,9 @@ abstract class AppSource {
   bool allowOverride = true;
   bool neverAutoSelect = false;
   bool showReleaseDateAsVersionToggle = false;
+  bool showReleaseTitleAsVersionToggle = false;
+  bool showExtractVersionFromAssetNameToggle = false;
+  bool showReleaseCommitShaAsVersionToggle = false;
   bool versionDetectionDisallowed = false;
   bool suppressStandardVersionExtraction = false;
   List<String> excludeCommonSettingKeys = [];
@@ -885,9 +910,50 @@ abstract class AppSource {
     ),
   ];
 
-  /// Some additional data may be needed for Apps regardless of Source
+  /// Some additional data may be needed for Apps regardless of Source.
+  ///
+  /// ORDER + SECTION HEADERS ARE DELIBERATE. The [GeneratedFormSectionHeader]
+  /// rows split the Additional-Options page into separate section cards (the
+  /// renderer groups every header + its following rows into one card when
+  /// `wrapFormSectionsInCards` is set). Do NOT flatten this back into one list
+  /// or drop the headers — that collapses the page into a single giant card
+  /// (matches the fork's `main`). Name / author / notes are intentionally NOT
+  /// here: they are edited via the app detail page's "Edit app info" dialog, not
+  /// this form.
   List<List<GeneratedFormItem>> get _commonAppSettingFormItems => [
+    [
+      GeneratedFormSectionHeader(
+        '__formSectionTracking',
+        label: tr('additionalOptionsSectionTracking'),
+      ),
+    ],
     [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
+    [
+      GeneratedFormSwitch(
+        'onDemandOnly',
+        label: tr('onDemandOnly'),
+        value: false,
+        labelTooltip: tr('onDemandOnlyDescription'),
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'exemptFromBackgroundUpdates',
+        label: tr('exemptFromBackgroundUpdates'),
+      ),
+    ],
+    [
+      GeneratedFormSwitch(
+        'skipUpdateNotifications',
+        label: tr('skipUpdateNotifications'),
+      ),
+    ],
+    [
+      GeneratedFormSectionHeader(
+        '__formSectionVersion',
+        label: tr('additionalOptionsSectionVersion'),
+      ),
+    ],
     [
       GeneratedFormTextField(
         'versionExtractionRegEx',
@@ -905,17 +971,30 @@ abstract class AppSource {
       ),
     ],
     [
-      GeneratedFormSwitch(
+      // Version detection is a THREE-STATE dropdown, not a bool switch. Every
+      // reader (isVersionPseudo, app.dart's isVersionDetectionStandard,
+      // apps_provider_updates/lifecycle, additional_options_page) keys off the
+      // string values 'auto'/'standard'/'pseudo'/'versionCode'. A bool switch
+      // here silently corrupts the value (GeneratedFormSwitch.ensureType coerces
+      // it to a bool on every deserialize) and breaks install/update detection —
+      // do NOT revert to a switch. 'versionCode' subsumes the old separate
+      // useVersionCodeAsOSVersion switch (kept in sync as a derived bool).
+      GeneratedFormDropdown(
         'versionDetection',
-        label: tr('versionDetectionExplanation'),
-        value: true,
+        [
+          MapEntry('auto', tr('versionDetectionModeAuto')),
+          MapEntry('standard', tr('versionDetectionModeStandard')),
+          MapEntry('pseudo', tr('versionDetectionModePseudo')),
+          MapEntry('versionCode', tr('versionDetectionModeVersionCode')),
+        ],
+        label: tr('versionDetection'),
+        value: 'auto',
       ),
     ],
     [
-      GeneratedFormSwitch(
-        'useVersionCodeAsOSVersion',
-        label: tr('useVersionCodeAsOSVersion'),
-        value: false,
+      GeneratedFormSectionHeader(
+        '__formSectionApk',
+        label: tr('additionalOptionsSectionApk'),
       ),
     ],
     [
@@ -944,8 +1023,12 @@ abstract class AppSource {
         value: true,
       ),
     ],
-    [GeneratedFormTextField('appName', label: tr('appName'), required: false)],
-    [GeneratedFormTextField('appAuthor', label: tr('author'), required: false)],
+    [
+      GeneratedFormSectionHeader(
+        '__formSectionAdvanced',
+        label: tr('additionalOptionsSectionAdvanced'),
+      ),
+    ],
     [
       GeneratedFormSwitch(
         'shizukuPretendToBeGooglePlay',
@@ -962,24 +1045,49 @@ abstract class AppSource {
     ],
     [
       GeneratedFormSwitch(
-        'exemptFromBackgroundUpdates',
-        label: tr('exemptFromBackgroundUpdates'),
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'skipUpdateNotifications',
-        label: tr('skipUpdateNotifications'),
-      ),
-    ],
-    [GeneratedFormTextField('about', label: tr('about'), required: false)],
-    [
-      GeneratedFormSwitch(
         'refreshBeforeDownload',
         label: tr('refreshBeforeDownload'),
       ),
     ],
   ];
+
+  /// The choices for the unified "Use as version string" (`versionStringSource`)
+  /// dropdown. 'Default' is always offered; each alternate pseudo-version source
+  /// is added only when the source opted in via its show*Toggle flag. A single
+  /// dropdown here replaces the old scattered per-source boolean switches
+  /// (releaseTitleAsVersion / releaseDateAsVersion / …) — parity with fork main.
+  List<MapEntry<String, String>> get versionStringSourceOptions {
+    final List<MapEntry<String, String>> options = [
+      MapEntry(versionStringSourceDefault, tr('versionStringSourceDefault')),
+    ];
+    if (showReleaseTitleAsVersionToggle) {
+      options.add(
+        MapEntry(
+          versionStringSourceReleaseTitle,
+          tr('versionStringSourceReleaseTitle'),
+        ),
+      );
+    }
+    if (showExtractVersionFromAssetNameToggle) {
+      options.add(
+        MapEntry(versionStringSourceAssetName, tr('versionStringSourceAssetName')),
+      );
+    }
+    if (showReleaseDateAsVersionToggle) {
+      options.add(
+        MapEntry(versionStringSourceReleaseDate, tr('versionStringSourceReleaseDate')),
+      );
+    }
+    if (showReleaseCommitShaAsVersionToggle) {
+      options.add(
+        MapEntry(
+          versionStringSourceReleaseCommitSha,
+          tr('versionStringSourceReleaseCommitSha'),
+        ),
+      );
+    }
+    return options;
+  }
 
   /// Combines per-source form items with the common app-setting form items,
   /// interspersing conditional items (zip/tarball options, version toggles) and
@@ -989,21 +1097,31 @@ abstract class AppSource {
   List<List<GeneratedFormItem>> get combinedAppSpecificSettingFormItems {
     var agnosticItems = cloneFormItems(_commonAppSettingFormItems);
 
-    final versionDetectionIdx = agnosticItems.indexWhere(
-      (row) => row.any((item) => item.key == 'versionDetection'),
-    );
-    if (showReleaseDateAsVersionToggle &&
-        versionDetectionIdx >= 0 &&
+    // Insert the unified versionStringSource dropdown at the top of the Version
+    // section (right after its header) when the source offers any alternate
+    // version-string source. Mirrors fork main; do NOT revert to per-flag
+    // switches (the backend's single source of truth is the versionStringSource
+    // string, kept in sync with the legacy booleans by syncVersionStringSourceSettings).
+    final List<MapEntry<String, String>> versionSourceOptions =
+        versionStringSourceOptions;
+    if (versionSourceOptions.length > 1 &&
         !agnosticItems.any(
-          (row) => row.any((item) => item.key == 'releaseDateAsVersion'),
+          (row) => row.any((item) => item.key == 'versionStringSource'),
         )) {
-      agnosticItems.insert(versionDetectionIdx + 1, [
-        GeneratedFormSwitch(
-          'releaseDateAsVersion',
-          label: '${tr('releaseDateAsVersion')} (${tr('pseudoVersion')})',
-          value: false,
-        ),
-      ]);
+      final int versionSectionHeaderIndex = agnosticItems.indexWhere(
+        (row) => row.length == 1 && row.first.key == '__formSectionVersion',
+      );
+      agnosticItems.insert(
+        versionSectionHeaderIndex >= 0 ? versionSectionHeaderIndex + 1 : 0,
+        [
+          GeneratedFormDropdown(
+            'versionStringSource',
+            versionSourceOptions,
+            label: tr('versionStringSource'),
+            value: versionStringSourceDefault,
+          ),
+        ],
+      );
     }
 
     agnosticItems = agnosticItems
@@ -1065,10 +1183,13 @@ abstract class AppSource {
     }
 
     if (versionDetectionDisallowed) {
-      for (var item in agnosticItems.expand((row) => row)) {
-        if (item.key == 'versionDetection' ||
-            item.key == 'useVersionCodeAsOSVersion') {
-          (item as GeneratedFormSwitch).disabled = true;
+      for (final item in agnosticItems.expand((row) => row)) {
+        // versionDetection is now a dropdown; guard the cast so this can't crash
+        // (mirrors fork main, which only disables switch-typed items here).
+        if ((item.key == 'versionDetection' ||
+                item.key == 'useVersionCodeAsOSVersion') &&
+            item is GeneratedFormSwitch) {
+          item.disabled = true;
           item.value = false;
         }
       }
@@ -1230,7 +1351,11 @@ List<MapEntry<String, String>> filterApks(
 /// Returns true when the app uses pseudo-versioning (track-only or disabled version detection).
 bool isVersionPseudo(App app) =>
     app.settings.getBool('trackOnly') ||
-    (app.installedVersion != null && !app.settings.getBool('versionDetection'));
+    (app.installedVersion != null &&
+        // versionDetection is a string enum, NOT a bool — getBool() would return
+        // false for 'auto'/'standard'/'versionCode' and mark every app pseudo.
+        (app.additionalSettings['versionDetection'] == 'pseudo' ||
+            app.additionalSettings['versionDetection'] == false));
 
 class SourceProvider {
   static final SourceProvider _instance = SourceProvider._();
@@ -1240,34 +1365,45 @@ class SourceProvider {
   // Builds a fresh set of source instances. Adding a source here makes it
   // available via the service. Kept private so callers go through [sources]
   // (cached) or, when per-call mutation is needed, [_buildSources] directly.
+  //
+  // ORDER IS DELIBERATE — host-based sources are listed alphabetically by their
+  // display name (the [name] field, comparing case-insensitively and ignoring
+  // punctuation, so "Farsroid" precedes "F-Droid official"). This order is what
+  // the source-picker lists render (filter-by-source sheet, "Supported sources"
+  // dialog, override-source dropdown), so it must stay alphabetical — do NOT
+  // revert to upstream's arbitrary definition order. The two hostless catch-alls
+  // stay pinned at the end: source matching walks this list in order and these
+  // match by URL *shape* rather than host, so they must be tried only after
+  // every host-based source — DirectAPKLink (only .apk URLs) before HTML (the
+  // universal fallback), so HTML is ALWAYS last.
   static List<AppSource> _buildSources() => [
-    GitHub(),
-    GitLab(),
-    Codeberg(),
-    FDroid(),
-    FDroidRepo(),
-    IzzyOnDroid(),
-    SourceHut(),
+    Apk4Free(),
+    APKCombo(),
+    APKMirror(),
     APKPure(),
     Aptoide(),
-    Uptodown(),
-    ItchIO(),
-    HuaweiAppGallery(),
-    Tencent(),
-    VivoAppStore(),
-    RuStore(),
-    Apk4Free(),
-    Farsroid(),
     CoolApk(),
-    LiteAPKs(),
-    SourceForge(),
+    Farsroid(),
+    FDroid(), // "F-Droid official"
+    FDroidRepo(), // "F-Droid third-party repo"
+    Codeberg(), // "Forgejo (Codeberg)"
+    GitHub(),
+    GitLab(),
+    HuaweiAppGallery(), // "Huawei AppGallery"
+    ItchIO(), // "itch.io"
+    IzzyOnDroid(),
     Jenkins(),
-    APKMirror(),
-    APKCombo(),
-    RockMods(),
-    TelegramApp(),
+    LiteAPKs(),
     NeutronCode(),
-    DirectAPKLink(),
+    RockMods(),
+    RuStore(),
+    SourceForge(),
+    SourceHut(),
+    TelegramApp(), // "Telegram <app>"
+    Tencent(), // "Tencent App Store"
+    Uptodown(),
+    VivoAppStore(), // "vivo App Store (CN)"
+    DirectAPKLink(), // "Direct APK link"
     HTML(), // Must be the last entry — hostless sources are tried in order and HTML is the catch-all fallback
   ];
 
@@ -2008,12 +2144,16 @@ void _migrateAdditionalDataToSettings(
       json['trackOnly'] == 'true' || json['trackOnly'] == true;
   additionalSettings['noVersionDetection'] =
       json['noVersionDetection'] == 'true' ||
-      json['noVersionDetection'] == true;
+      json['noVersionDetection'] == true ||
+      // Ancient additionalData-format apps: track-only implies no version
+      // detection (parity with fork main).
+      json['trackOnly'] == true;
 }
 
 /// Converts legacy booleans `noVersionDetection` / `releaseDateAsVersion`
 /// to the current `versionDetection` string dropdown and back.
 void _migrateVersionDetectionFormat(Map<String, dynamic> additionalSettings) {
+  // Legacy bool-style flags → intermediate dropdown keys.
   if (additionalSettings['noVersionDetection'] == true) {
     additionalSettings['versionDetection'] = 'noVersionDetection';
     if (additionalSettings['releaseDateAsVersion'] == true) {
@@ -2022,13 +2162,30 @@ void _migrateVersionDetectionFormat(Map<String, dynamic> additionalSettings) {
     additionalSettings.remove('noVersionDetection');
     additionalSettings.remove('releaseDateAsVersion');
   }
+  // Old dropdown/boolean values → the three-state string enum that every reader
+  // now expects ('auto'/'standard'/'pseudo'/'versionCode'). This MUST land on a
+  // string, never a bool — a bool value makes every installed app read as
+  // pseudo-versioned (see isVersionPseudo) and breaks update detection.
   if (additionalSettings['versionDetection'] == 'standardVersionDetection') {
-    additionalSettings['versionDetection'] = true;
+    additionalSettings['versionDetection'] = 'auto';
   } else if (additionalSettings['versionDetection'] == 'noVersionDetection') {
-    additionalSettings['versionDetection'] = false;
+    additionalSettings['versionDetection'] = 'pseudo';
   } else if (additionalSettings['versionDetection'] == 'releaseDateAsVersion') {
-    additionalSettings['versionDetection'] = false;
+    additionalSettings['versionDetection'] = 'pseudo';
     additionalSettings['releaseDateAsVersion'] = true;
+  } else if (additionalSettings['versionDetection'] == true) {
+    additionalSettings['versionDetection'] = 'auto';
+  } else if (additionalSettings['versionDetection'] == false) {
+    additionalSettings['versionDetection'] = 'pseudo';
+  }
+  // 'versionCode' is a dropdown option; keep the derived useVersionCodeAsOSVersion
+  // bool in sync (mirrors fork main).
+  if (additionalSettings['versionDetection'] == 'versionCode' ||
+      additionalSettings['useVersionCodeAsOSVersion'] == true) {
+    additionalSettings['versionDetection'] = 'versionCode';
+    additionalSettings['useVersionCodeAsOSVersion'] = true;
+  } else {
+    additionalSettings['useVersionCodeAsOSVersion'] = false;
   }
 }
 
@@ -2222,6 +2379,16 @@ Map<String, dynamic> appJSONCompatibilityModifiers(Map<String, dynamic> json) {
 
   _migrateAdditionalDataToSettings(json, additionalSettings, formItems);
   _migrateVersionDetectionFormat(additionalSettings);
+  // Populate the versionStringSource string from any legacy per-method boolean
+  // flags so the unified dropdown pre-fills correctly (parity with fork main,
+  // which syncs here during deserialization). Prefer an already-configured
+  // string value when the app has one.
+  syncVersionStringSourceSettings(
+    additionalSettings,
+    preferConfiguredSource: originalAdditionalSettings.containsKey(
+      'versionStringSource',
+    ),
+  );
   _migratePseudoVersioningMethod(
     originalAdditionalSettings,
     additionalSettings,

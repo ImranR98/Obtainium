@@ -43,7 +43,12 @@ class GitHub extends AppSource {
     name = 'GitHub';
     hosts = ['github.com'];
     appIdInferIsOptional = true;
+    // All four alternate version-string sources are offered via the unified
+    // versionStringSource dropdown (see SourceProvider.versionStringSourceOptions).
     showReleaseDateAsVersionToggle = true;
+    showReleaseTitleAsVersionToggle = true;
+    showExtractVersionFromAssetNameToggle = true;
+    showReleaseCommitShaAsVersionToggle = true;
     this.hostChanged = hostChanged;
     allowIncludeZips = true;
     allowIncludeTarballs = true;
@@ -110,6 +115,7 @@ class GitHub extends AppSource {
         value: false,
       ),
     ],
+    [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
     AppSource.fallbackToOlderReleasesFormItem,
     [
       GeneratedFormTextField(
@@ -135,7 +141,6 @@ class GitHub extends AppSource {
         ],
       ),
     ],
-    [GeneratedFormSwitch('verifyLatestTag', label: tr('verifyLatestTag'))],
     [
       GeneratedFormDropdown(
         buildVerificationModeKey,
@@ -176,13 +181,9 @@ class GitHub extends AppSource {
         value: false,
       ),
     ],
-    [
-      GeneratedFormSwitch(
-        'releaseTitleAsVersion',
-        label: tr('releaseTitleAsVersion'),
-        value: false,
-      ),
-    ],
+    // 'releaseTitleAsVersion' is now offered through the unified
+    // versionStringSource dropdown (showReleaseTitleAsVersionToggle), not a
+    // standalone switch — syncVersionStringSourceSettings keeps the bool in sync.
   ];
 
   @override
@@ -981,14 +982,73 @@ class GitHub extends AppSource {
         throw NoVersionError();
       }
       final changeLog = (targetRelease['body'] ?? '').toString();
+      final apkUrls =
+          targetRelease['apkUrls'] as List<MapEntry<String, String>>;
+
+      // ── GitHub build-attestation status (fork feature) ──────────────────
+      // Compute the attestation verdict at CHECK time from the preferred
+      // asset's API-provided sha256 `digest`, so the app page can show
+      // Verified / Unsupported / Can't-Check immediately — without waiting for
+      // the APK to be downloaded (the /attestations lookup only needs the
+      // digest, not the bytes). This is what drives the "Security" badge on the
+      // update card; dropping it leaves latestAttestationStatus null, which the
+      // UI renders as "Can't Check". Do NOT remove — attestation is only
+      // otherwise recomputed at install time.
+      final bool shouldCheckAttestation = shouldVerifyAttestations(
+        additionalSettings,
+        settingsProvider,
+      );
+      String? attestationStatus;
+      if (shouldCheckAttestation) {
+        final filteredAssets =
+            (targetRelease['filteredAssets'] as List<dynamic>?) ?? [];
+        Map<String, dynamic>? preferredAsset;
+        if (apkUrls.isNotEmpty) {
+          for (final asset in filteredAssets.whereType<Map<String, dynamic>>()) {
+            final assetName =
+                (asset['final_url'] as MapEntry<String, String>?)?.key;
+            if (assetName == apkUrls.last.key) {
+              preferredAsset = asset;
+              break;
+            }
+          }
+        }
+        final String? preferredAssetDigest =
+            preferredAsset?['digest'] as String?;
+        // Skip the attestation API round-trip when the upstream release is
+        // unchanged and we hold a CONCLUSIVE cached verdict. A GitHub
+        // attestation is produced inside the release workflow run that builds
+        // the asset and bound to its digest, so for an unchanged release both
+        // 'verified' and 'unsupported' (no attestation for this digest) are
+        // stable. Only a cached 'error' is re-checked, since that is a
+        // transient lookup failure, not a real verdict.
+        final App? prevApp = previouslyCheckedApp;
+        final bool canReuseCachedAttestation =
+            prevApp != null &&
+            prevApp.rawLatestVersionFromSource != null &&
+            prevApp.rawLatestVersionFromSource == version &&
+            prevApp.latestAttestationStatus != null &&
+            prevApp.latestAttestationStatus != githubAttestationStatusError;
+        attestationStatus = canReuseCachedAttestation
+            ? prevApp.latestAttestationStatus
+            : preferredAssetDigest != null
+            ? await getAttestationStatusForSha256Digest(
+                standardUrl,
+                preferredAssetDigest,
+                additionalSettings,
+              )
+            : githubAttestationStatusError;
+      }
+
       return APKDetails(
         version,
-        targetRelease['apkUrls'] as List<MapEntry<String, String>>,
+        apkUrls,
         getAppNames(standardUrl),
         releaseDate: releaseDate,
         changeLog: changeLog.isEmpty ? null : changeLog,
         allAssetUrls:
             targetRelease['allAssetUrls'] as List<MapEntry<String, String>>,
+        attestationStatus: attestationStatus,
       );
     } else {
       if (onHttpErrorCode != null) {

@@ -149,7 +149,16 @@ extension AppsProviderLifecycle on AppsProvider {
   ) {
     var modded = false;
     final trackOnly = app.settings.getBool('trackOnly');
-    final versionDetectionIsStandard = app.settings.getBool('versionDetection');
+    // versionDetection is a string enum ('auto'/'standard'/'pseudo'/'versionCode'),
+    // NOT a bool — getBool() would return false for every string value and
+    // suppress install-version reconciliation for all standard apps.
+    final versionDetection = app.additionalSettings['versionDetection'];
+    final versionDetectionIsStandard =
+        versionDetection == 'auto' ||
+        versionDetection == 'standard' ||
+        versionDetection == 'versionCode' ||
+        versionDetection == true ||
+        versionDetection == null;
     final naiveStandardVersionDetection = _getNaiveStandardVersionDetection(
       app,
     );

@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import 'package:obtainium/custom_errors.dart';
 
+import 'package:obtainium/folders/app_folder.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
@@ -20,7 +21,32 @@ extension AppsProviderImportExport on AppsProvider {
   }) {
     final appList = apps.values
         .where((e) => appIds == null || appIds.contains(e.app.id))
-        .map((e) => e.app.toJson())
+        .map((e) {
+          // Inject a folderId→name map so folder membership can be restored
+          // (by name) on a device with different folder IDs. Mirrors fork main.
+          final appJson = e.app.toJson();
+          final Map<String, dynamic> additionalSettings =
+              Map<String, dynamic>.from(
+                jsonDecode(appJson['additionalSettings'] as String),
+              );
+          final List<dynamic>? folderIds =
+              additionalSettings['folderIds'] as List?;
+          if (folderIds != null && folderIds.isNotEmpty) {
+            final Map<String, String> folderNames = {};
+            final existingFolders = settingsProvider.appFolders;
+            for (final folderId in folderIds) {
+              for (final f in existingFolders) {
+                if (f.id == folderId) {
+                  folderNames[folderId as String] = f.name;
+                  break;
+                }
+              }
+            }
+            additionalSettings['folderNames'] = folderNames;
+            appJson['additionalSettings'] = jsonEncode(additionalSettings);
+          }
+          return appJson;
+        })
         .toList();
     int shouldExportSettings = settingsProvider.exportSettings;
     if (overrideExportSettings != null) {
@@ -128,6 +154,17 @@ extension AppsProviderImportExport on AppsProvider {
     } catch (e) {
       throw ObtainiumError('${tr('failedToImport')}: ${e.toString()}');
     }
+    // Resolve the settings map (schema wrapper or legacy top-level 'settings').
+    final Map<String, dynamic>? settingsMap = hasSchemaVersion
+        ? schema!.settings
+        : (decodedJSON is Map
+              ? decodedJSON['settings'] as Map<String, dynamic>?
+              : null);
+
+    // Merge backed-up folders into existing ones (by name) and remap each app's
+    // folder references to the resolved IDs before saving.
+    importedApps = _reconcileImportedFolders(importedApps, settingsMap);
+
     await waitForAppsToLoad();
     for (var i = 0; i < importedApps.length; i++) {
       final a = importedApps[i];
@@ -140,20 +177,130 @@ extension AppsProviderImportExport on AppsProvider {
     }
     await saveApps(importedApps, onlyIfExists: false);
     bool hasSettings = false;
-    if (hasSchemaVersion && schema != null) {
-      if (schema.settings != null) {
-        hasSettings = true;
-        _applyImportedSettings(schema.settings!);
-      }
-    } else if (decodedJSON is! List && decodedJSON['settings'] != null) {
+    if (settingsMap != null) {
       hasSettings = true;
-      _applyImportedSettings(decodedJSON['settings'] as Map<String, Object?>);
+      // 'appFolders' is skipped: already merged/persisted by
+      // _reconcileImportedFolders. Reload settings so the merged folder list
+      // (and everything else) is reflected in memory immediately.
+      _applyImportedSettings(settingsMap, skipKeys: const {'appFolders'});
+      await settingsProvider.initializeSettings();
     }
     return MapEntry<List<App>, bool>(importedApps, hasSettings);
   }
 
-  void _applyImportedSettings(Map<String, dynamic> settingsMap) {
+  /// Merges backed-up folders into the existing folder list (matching by name,
+  /// creating only the missing ones), then returns [importedApps] with each
+  /// app's folderIds / excludedFolderIds / folderNames remapped from backup IDs
+  /// to the resolved target IDs. Mirrors fork main, adapted for the immutable
+  /// [App] (copyWith instead of in-place mutation).
+  List<App> _reconcileImportedFolders(
+    List<App> importedApps,
+    Map<String, dynamic>? settingsMap,
+  ) {
+    final List<AppFolder> existingFolders = List<AppFolder>.from(
+      settingsProvider.appFolders,
+    );
+    final Map<String, String> backupIdToTargetId = {};
+    final List<AppFolder> foldersToCreate = [];
+    final Map<String, String> backupFolderIdToName = {};
+
+    // Names from the backup's own folder list.
+    final dynamic backupFoldersRaw = settingsMap?['appFolders'];
+    if (backupFoldersRaw is String) {
+      try {
+        final list = jsonDecode(backupFoldersRaw) as List<dynamic>;
+        for (final e in list) {
+          final folder = AppFolder.fromJson(e as Map<String, dynamic>);
+          backupFolderIdToName[folder.id] = folder.name;
+        }
+      } catch (_) {}
+    }
+    // Names carried on the apps themselves.
+    for (final app in importedApps) {
+      final Map<dynamic, dynamic>? appFolderNames =
+          app.additionalSettings['folderNames'] as Map?;
+      if (appFolderNames != null) {
+        appFolderNames.forEach((key, val) {
+          if (key is String && val is String) {
+            backupFolderIdToName.putIfAbsent(key, () => val);
+          }
+        });
+      }
+    }
+
+    // Match each backup folder to an existing one by name, else schedule it.
+    backupFolderIdToName.forEach((backupId, name) {
+      AppFolder? match;
+      for (final f in existingFolders) {
+        if (f.name.trim().toLowerCase() == name.trim().toLowerCase()) {
+          match = f;
+          break;
+        }
+      }
+      if (match != null) {
+        backupIdToTargetId[backupId] = match.id;
+      } else {
+        foldersToCreate.add(AppFolder(id: backupId, name: name));
+        backupIdToTargetId[backupId] = backupId;
+      }
+    });
+    if (foldersToCreate.isNotEmpty) {
+      existingFolders.addAll(foldersToCreate);
+      settingsProvider.appFolders = existingFolders;
+    }
+
+    // Remap each app's folder references onto a fresh additionalSettings map.
+    return importedApps.map((app) {
+      final folderIds = folderIdsForApp(app);
+      final excludedIds = excludedFolderIdsForApp(app);
+      if (folderIds.isEmpty && excludedIds.isEmpty) {
+        return app;
+      }
+      final Map<String, dynamic> updated = Map<String, dynamic>.from(
+        app.additionalSettings,
+      );
+      final Map<String, dynamic> updatedFolderNames = {};
+      if (folderIds.isNotEmpty) {
+        final List<String> updatedFolderIds = [];
+        for (final id in folderIds) {
+          final String? targetId = backupIdToTargetId[id];
+          if (targetId != null) {
+            updatedFolderIds.add(targetId);
+            final String? folderName = backupFolderIdToName[id];
+            if (folderName != null) {
+              updatedFolderNames[targetId] = folderName;
+            }
+          } else if (existingFolders.any((f) => f.id == id)) {
+            updatedFolderIds.add(id);
+            updatedFolderNames[id] =
+                existingFolders.firstWhere((f) => f.id == id).name;
+          }
+        }
+        updated['folderIds'] = updatedFolderIds;
+      }
+      if (excludedIds.isNotEmpty) {
+        final List<String> updatedExcludedIds = [];
+        for (final id in excludedIds) {
+          final String? targetId = backupIdToTargetId[id];
+          if (targetId != null) {
+            updatedExcludedIds.add(targetId);
+          } else if (existingFolders.any((f) => f.id == id)) {
+            updatedExcludedIds.add(id);
+          }
+        }
+        updated['excludedFolderIds'] = updatedExcludedIds;
+      }
+      updated['folderNames'] = updatedFolderNames;
+      return app.copyWith(additionalSettings: updated);
+    }).toList();
+  }
+
+  void _applyImportedSettings(
+    Map<String, dynamic> settingsMap, {
+    Set<String> skipKeys = const {},
+  }) {
     settingsMap.forEach((key, value) {
+      if (skipKeys.contains(key)) return;
       if (value is int) {
         settingsProvider.prefs?.setInt(key, value);
       } else if (value is double) {

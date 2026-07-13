@@ -13,6 +13,9 @@ class Farsroid extends AppSource {
   Farsroid() {
     hosts = ['farsroid.com'];
     name = 'Farsroid';
+    // 'releaseTitleAsVersion' is offered via the unified versionStringSource
+    // dropdown, not a standalone switch (parity with fork main).
+    showReleaseTitleAsVersionToggle = true;
   }
 
   @override
@@ -23,13 +26,6 @@ class Farsroid extends AppSource {
         'useFirstApkOfVersion',
         label: tr('useFirstApkOfVersion'),
         value: true,
-      ),
-    ],
-    [
-      GeneratedFormSwitch(
-        'releaseTitleAsVersion',
-        label: tr('releaseTitleAsVersion'),
-        value: false,
       ),
     ],
   ];
