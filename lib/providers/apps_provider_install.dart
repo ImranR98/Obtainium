@@ -42,17 +42,14 @@ import 'package:shared_storage/shared_storage.dart' as saf;
 
 // Named constants for magic numbers and hardcoded values
 const int _androidApiLevelR = 30;
+// downloadProgress sentinels for the busy states the UI renders instead of a
+// percentage: -1 "Installing", -2 "Scanning with VirusTotal", -3 "Flagged"
+// (AppPage's download control reads all three; the list tile reads -1/-2).
 const double _installingProgressSentinel = -1;
+const double _scanningProgressSentinel = -2;
+const double _flaggedProgressSentinel = -3;
 const int _downloadCompleteProgress = 100;
 const int _remainingStepsProgress = 90;
-// Package IDs of "Verified Apps" (formerly AppVerifier) and its known forks
-// that accept a shared APK for verification before installation.
-const List<String> _verifiedAppsPackageIds = [
-  'dev.soupslurpr.appverifier', // AppVerifier (original)
-  'com.roundsalmon4.appverifier', // AppVerifierBG fork
-  'org.privacyguides.verifiedapps', // Privacy Guides "Verified Apps"
-  'org.privacyguides.verifiedapps.play', // Privacy Guides "Verified Apps" (Play)
-];
 
 // A silent background install can't report completion synchronously — the
 // platform install API's result never arrives while backgrounded (#896). The
@@ -838,14 +835,13 @@ extension AppsProviderInstall on AppsProvider {
     BuildContext context,
   ) async {
     if (!settingsProvider.beforeNewInstallsShareToAppVerifier) return;
-    var anyInstalled = false;
-    for (final id in _verifiedAppsPackageIds) {
-      if (await getInstalledInfo(id) != null) {
-        anyInstalled = true;
-        break;
-      }
-    }
-    if (!anyInstalled) return;
+    // Intentionally does NOT gate on whether a known verifier app is installed.
+    // Package-visibility rules (Android 11+) hide those packages from
+    // getInstalledInfo unless each is declared in a <queries> block, so an
+    // installed-check silently suppresses the share sheet for everyone (the
+    // regression this restores). The user already opted in via the setting; the
+    // share sheet itself lets them pick the verifier. Do not reintroduce a
+    // getInstalledInfo()-based gate here.
     final XFile f = XFile(
       file.file.path,
       mimeType: 'application/vnd.android.package-archive',
@@ -856,7 +852,16 @@ extension AppsProviderInstall on AppsProvider {
         toastLength: Toast.LENGTH_LONG,
       ),
     );
-    await SharePlus.instance.share(ShareParams(files: [f]));
+    try {
+      await SharePlus.instance.share(ShareParams(files: [f]));
+      // The share sheet pulls the user out to the verifier app; wait for them to
+      // return before continuing to the actual install prompt.
+      if (context.mounted) {
+        await waitForUserToReturnToForeground(context);
+      }
+    } catch (e) {
+      unawaited(logs.add('Share to App Verifier failed: ${e.toString()}'));
+    }
   }
 
   Future<String> getStorageRootPath() async {
@@ -1282,9 +1287,13 @@ extension AppsProviderInstall on AppsProvider {
     if (appEntry == null) return;
     // Nothing to install (e.g. the download was cancelled): skip silently.
     if (downloadedFile == null && downloadedDir == null) return;
-    // Installation has actually begun: use -1 (installing) so the UI shows an
-    // indeterminate "Installing" indicator rather than a frozen percentage.
-    appEntry.downloadProgress = _installingProgressSentinel;
+    // Installation has actually begun: show an indeterminate busy indicator
+    // rather than a frozen percentage. If a VirusTotal scan will run first, lead
+    // with "Scanning" so the indicator doesn't flash "Installing" before the scan
+    // (the scan step later flips this to "Flagged"/"Installing" as appropriate).
+    appEntry.downloadProgress = willScanApkWithVirusTotal()
+        ? _scanningProgressSentinel
+        : _installingProgressSentinel;
     notify();
     try {
       bool sayInstalled = true;
@@ -1803,7 +1812,14 @@ extension AppsProviderInstall on AppsProvider {
       }
     }
 
-    // VirusTotal malware scan.
+    // VirusTotal malware scan. Surface "Scanning with VirusTotal" while it runs
+    // (the caller set "Installing"/"Scanning" up front, but the scan is the part
+    // that actually takes time), then reflect a flagged/errored result as
+    // "Flagged" before prompting the user to decide.
+    if (willScanApkWithVirusTotal()) {
+      apps[appId]?.downloadProgress = _scanningProgressSentinel;
+      notify();
+    }
     final scan = await scanApkWithVirusTotal(app, primaryFile);
     if (scan.status != null) {
       app = app.copyWith(
@@ -1815,6 +1831,10 @@ extension AppsProviderInstall on AppsProvider {
         apps[appId]!.app = app;
       }
       await saveApps([app]);
+      apps[appId]?.downloadProgress = scan.status != malwareScanStatusClean
+          ? _flaggedProgressSentinel
+          : _installingProgressSentinel;
+      notify();
       final bool proceed = await _handleMalwareScanResult(
         app: app,
         status: scan.status!,
@@ -1825,6 +1845,10 @@ extension AppsProviderInstall on AppsProvider {
       );
       if (!proceed) return false;
     }
+    // Scan cleared (or was skipped) and we're proceeding — hand back to the
+    // installer as "Installing" so a lingering "Scanning"/"Flagged" state clears.
+    apps[appId]?.downloadProgress = _installingProgressSentinel;
+    notify();
     return true;
   }
 }

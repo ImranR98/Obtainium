@@ -274,17 +274,21 @@ class _AppsGroupHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _ZOrderSliverMainAxisGroup extends SliverMainAxisGroup {
-  final double cardRadius;
+  /// Top-corner radius used to clip the scrolling content that tucks under the
+  /// pinned group header. MUST equal the header's own top-corner radius
+  /// ([_AppsGroupHeaderDelegate.collapsedRadius]); otherwise the content leaks
+  /// through the crescent between the two mismatched corner arcs.
+  final double headerTopRadius;
 
   const _ZOrderSliverMainAxisGroup({
     super.key,
     required super.slivers,
-    required this.cardRadius,
+    required this.headerTopRadius,
   });
 
   @override
   RenderSliverMainAxisGroup createRenderObject(BuildContext context) {
-    return _RenderZOrderSliverMainAxisGroup(cardRadius: cardRadius);
+    return _RenderZOrderSliverMainAxisGroup(headerTopRadius: headerTopRadius);
   }
 
   @override
@@ -292,14 +296,14 @@ class _ZOrderSliverMainAxisGroup extends SliverMainAxisGroup {
     BuildContext context,
     covariant _RenderZOrderSliverMainAxisGroup renderObject,
   ) {
-    renderObject.cardRadius = cardRadius;
+    renderObject.headerTopRadius = headerTopRadius;
   }
 }
 
 class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
-  double cardRadius;
+  double headerTopRadius;
 
-  _RenderZOrderSliverMainAxisGroup({required this.cardRadius});
+  _RenderZOrderSliverMainAxisGroup({required this.headerTopRadius});
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -338,8 +342,8 @@ class _RenderZOrderSliverMainAxisGroup extends RenderSliverMainAxisGroup {
 
         final RRect clipRRect = RRect.fromRectAndCorners(
           bounds,
-          topLeft: Radius.circular(cardRadius),
-          topRight: Radius.circular(cardRadius),
+          topLeft: Radius.circular(headerTopRadius),
+          topRight: Radius.circular(headerTopRadius),
         );
 
         context.pushClipRRect(needsCompositing, offset, bounds, clipRRect, (
@@ -3947,106 +3951,98 @@ class AppsPageState extends State<AppsPage> {
       required String title,
       required List<int> matchingIndices,
     }) {
-      bool isExpanded = !_collapsedGroups.contains(groupKey);
-      bool showExpandedBody = isExpanded;
+      final bool isExpanded = !_collapsedGroups.contains(groupKey);
       final theme = Theme.of(context);
-      return StatefulBuilder(
+      return _ZOrderSliverMainAxisGroup(
         key: ValueKey(groupKey),
-        builder: (context, setGroupState) {
-          return _ZOrderSliverMainAxisGroup(
-            cardRadius: appsListGroupCardRadius,
-            slivers: [
-              SliverPersistentHeader(
-                key: ValueKey('${groupKey}_header'),
-                pinned: true,
-                delegate: _AppsGroupHeaderDelegate(
-                  title: title,
-                  count: matchingIndices.length,
-                  isExpanded: isExpanded,
-                  cardRadius: appsListGroupCardRadius,
-                  collapsedRadius: appsListCollapsedHeaderRadius,
-                  colorScheme: theme.colorScheme,
-                  onTap: () {
-                    final bool wasExpanded = isExpanded;
-                    setGroupState(() {
-                      isExpanded = !isExpanded;
-                      if (wasExpanded) {
-                        showExpandedBody = false;
-                        _collapsedGroups.add(groupKey);
-                      } else {
-                        showExpandedBody = false;
-                        _collapsedGroups.remove(groupKey);
-                      }
-                    });
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted) return;
-                      if (!wasExpanded && isExpanded) {
-                        setGroupState(() {
-                          showExpandedBody = true;
-                        });
-                      }
-                      _saveCollapsedGroups([groupKey], add: wasExpanded);
-                    });
-                  },
-                ),
-              ),
-              if (showExpandedBody && matchingIndices.isNotEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-                  sliver: DecoratedSliver(
-                    decoration: BoxDecoration(
-                      color: settingsProvider.useGradientBackground
-                          ? Colors.transparent
-                          : m3eGroupedListBackdropFill(theme.colorScheme),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(appsListGroupCardRadius),
-                      ),
-                      border: Border(
-                        left: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                        right: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                        bottom: m3ePureBlackOutlineSide(
-                          theme.colorScheme,
-                          alpha: 0.22,
-                        ),
-                      ),
+        // Clip the scrolling content to the pinned header's top radius, not
+        // the group card radius — the header sits on top, so its corners are
+        // what the content must tuck under (see field doc).
+        headerTopRadius: appsListCollapsedHeaderRadius,
+        slivers: [
+          SliverPersistentHeader(
+            key: ValueKey('${groupKey}_header'),
+            pinned: true,
+            delegate: _AppsGroupHeaderDelegate(
+              title: title,
+              count: matchingIndices.length,
+              isExpanded: isExpanded,
+              cardRadius: appsListGroupCardRadius,
+              collapsedRadius: appsListCollapsedHeaderRadius,
+              colorScheme: theme.colorScheme,
+              onTap: () {
+                // Expansion state lives solely in [_collapsedGroups] and is read
+                // fresh on every build; toggle it via the page's own setState.
+                // A per-group StatefulBuilder used to hold local isExpanded/
+                // showExpandedBody state that desynced when the whole list
+                // rebuilt (e.g. after a search), leaving headers stuck.
+                final bool wasExpanded = !_collapsedGroups.contains(groupKey);
+                setState(() {
+                  if (wasExpanded) {
+                    _collapsedGroups.add(groupKey);
+                  } else {
+                    _collapsedGroups.remove(groupKey);
+                  }
+                });
+                _saveCollapsedGroups([groupKey], add: wasExpanded);
+              },
+            ),
+          ),
+          if (isExpanded && matchingIndices.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              sliver: DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: settingsProvider.useGradientBackground
+                      ? Colors.transparent
+                      : m3eGroupedListBackdropFill(theme.colorScheme),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(appsListGroupCardRadius),
+                  ),
+                  border: Border(
+                    left: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
                     ),
-                    sliver: SliverPadding(
-                      padding: const EdgeInsets.only(
-                        top: kM3eHeaderToFirstCardGap,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final int tileIndex = index ~/ 2;
-                            if (index.isOdd) {
-                              return const SizedBox(height: kM3eItemGap);
-                            }
-                            return getSingleAppHorizTile(
-                              matchingIndices[tileIndex],
-                              groupPosition: matchingIndices.length == 1
-                                  ? M3eListGroupPosition.only
-                                  : tileIndex == 0
-                                  ? M3eListGroupPosition.first
-                                  : tileIndex == matchingIndices.length - 1
-                                  ? M3eListGroupPosition.last
-                                  : M3eListGroupPosition.middle,
-                            );
-                          },
-                          childCount: matchingIndices.length * 2 - 1,
-                        ),
-                      ),
+                    right: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
+                    ),
+                    bottom: m3ePureBlackOutlineSide(
+                      theme.colorScheme,
+                      alpha: 0.22,
                     ),
                   ),
                 ),
-            ],
-          );
-        },
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.only(
+                    top: kM3eHeaderToFirstCardGap,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final int tileIndex = index ~/ 2;
+                        if (index.isOdd) {
+                          return const SizedBox(height: kM3eItemGap);
+                        }
+                        return getSingleAppHorizTile(
+                          matchingIndices[tileIndex],
+                          groupPosition: matchingIndices.length == 1
+                              ? M3eListGroupPosition.only
+                              : tileIndex == 0
+                              ? M3eListGroupPosition.first
+                              : tileIndex == matchingIndices.length - 1
+                              ? M3eListGroupPosition.last
+                              : M3eListGroupPosition.middle,
+                        );
+                      },
+                      childCount: matchingIndices.length * 2 - 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
     }
 
