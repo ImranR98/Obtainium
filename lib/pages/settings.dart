@@ -16,8 +16,7 @@ import 'package:obtainium/components/app_bottom_sheet.dart';
 import 'package:obtainium/components/app_dropdown_field.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
 import 'package:obtainium/components/themes_settings_section.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/tv_slider_wrapper.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
@@ -26,7 +25,6 @@ import 'package:obtainium/app_sources/gitlab.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/installer_provider.dart' as installer;
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/providers/virustotal_provider.dart';
@@ -3635,7 +3633,7 @@ class _CategoryEditorSelectorState extends State<CategoryEditorSelector> {
             'categories',
             label: tr('categories'),
             emptyMessage: tr('noCategories'),
-            defaultValue: merged,
+            value: merged,
             alignment: widget.alignment,
             deleteConfirmationMessage: MapEntry(
               tr('deleteCategoriesQuestion'),

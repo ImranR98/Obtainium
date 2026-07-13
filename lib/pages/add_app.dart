@@ -7,9 +7,8 @@ import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/app_page_section_title.dart';
 import 'package:obtainium/components/bulk_add_widget.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/version_regex_assist_dialog.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/pages/app.dart';
@@ -534,10 +533,12 @@ class AddAppPageState extends State<AddAppPage> {
               if (apkUrl == null) {
                 throw ObtainiumError(tr('cancelled'));
               }
-              app.preferredApkIndex = app.apkUrls
-                  .map((e) => e.value)
-                  .toList()
-                  .indexOf(apkUrl.value);
+              app = app.copyWith(
+                preferredApkIndex: app.apkUrls
+                    .map((e) => e.value)
+                    .toList()
+                    .indexOf(apkUrl.value),
+              );
               // ignore: use_build_context_synchronously
               var downloadedArtifact = await appsProvider.downloadApp(
                 app,
@@ -551,7 +552,9 @@ class AddAppPageState extends State<AddAppPage> {
               } else {
                 downloadedDir = downloadedArtifact as DownloadedDir;
               }
-              app.id = downloadedFile?.appId ?? downloadedDir!.appId;
+              app = app.copyWith(
+                id: downloadedFile?.appId ?? downloadedDir!.appId,
+              );
             }
           }
           if (appsProvider.apps.containsKey(app.id)) {
@@ -560,7 +563,7 @@ class AddAppPageState extends State<AddAppPage> {
           app.additionalSettings['useVersionCodeAsOSVersion'] =
               app.additionalSettings['versionDetection'] == 'versionCode';
           if (app.additionalSettings['trackOnly'] == true) {
-            app.installedVersion = null;
+            app = app.copyWith(installedVersion: null);
             if (isTempId(app)) {
               app.additionalSettings['trackOnlyTemporaryPackageId'] = true;
               app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
@@ -572,10 +575,13 @@ class AddAppPageState extends State<AddAppPage> {
                 printErr: false,
               );
               if (installedInfo != null) {
-                app.installedVersion =
-                    app.additionalSettings['useVersionCodeAsOSVersion'] == true
-                    ? installedInfo.versionCode.toString()
-                    : installedInfo.versionName;
+                app = app.copyWith(
+                  installedVersion:
+                      app.additionalSettings['useVersionCodeAsOSVersion'] ==
+                          true
+                      ? installedInfo.versionCode.toString()
+                      : installedInfo.versionName,
+                );
                 app.additionalSettings['trackOnlyUndeterminedInstalledVersion'] =
                     false;
               } else {
@@ -585,9 +591,9 @@ class AddAppPageState extends State<AddAppPage> {
             }
           } else if (app.additionalSettings['versionDetection'] == 'pseudo' ||
               app.additionalSettings['versionDetection'] == false) {
-            app.installedVersion = app.latestVersion;
+            app = app.copyWith(installedVersion: app.latestVersion);
           }
-          app.categories = pickedCategories;
+          app = app.copyWith(categories: pickedCategories);
           await appsProvider.saveApps([app], onlyIfExists: false);
           final liveApp = appsProvider.apps[app.id]?.app;
           if (liveApp != null) {
@@ -652,7 +658,7 @@ class AddAppPageState extends State<AddAppPage> {
       if (settingsProvider.includePrereleasesByDefault) {
         for (final GeneratedFormItem item in items.expand((row) => row)) {
           if (item is GeneratedFormSwitch && item.key == 'includePrereleases') {
-            item.defaultValue = true;
+            item.value = true;
           }
         }
       }
@@ -667,14 +673,14 @@ class AddAppPageState extends State<AddAppPage> {
                 GitHub.buildVerificationAudit,
                 GitHub.buildVerificationEnforce,
               ];
-              item.defaultValue = GitHub.buildVerificationOff;
+              item.value = GitHub.buildVerificationOff;
             }
             final String? legacyMode =
                 additionalSettings[GitHub.buildVerificationModeKey]?.toString();
             if (legacyMode == null &&
                 additionalSettings[GitHub.enforceAttestationsKey] == true &&
                 canVerifyGitHubBuild) {
-              item.defaultValue = GitHub.buildVerificationEnforce;
+              item.value = GitHub.buildVerificationEnforce;
             }
           }
         }
@@ -876,7 +882,7 @@ class AddAppPageState extends State<AddAppPage> {
                   [
                     GeneratedFormDropdown(
                       'overrideSource',
-                      defaultValue: pickedSourceOverride ?? '',
+                      value: pickedSourceOverride ?? '',
                       [
                         MapEntry('', tr('none')),
                         ...sourceProvider.sources
@@ -943,7 +949,7 @@ class AddAppPageState extends State<AddAppPage> {
                     GeneratedFormSwitch(
                       'inferAppIdIfOptional',
                       label: tr('tryInferAppIdFromCode'),
-                      defaultValue: inferAppIdIfOptional,
+                      value: inferAppIdIfOptional,
                     ),
                   ],
                 ],
@@ -1152,7 +1158,7 @@ class AddAppPageState extends State<AddAppPage> {
                                         return '${uri.origin}${uri.path}';
                                       }),
                                 ],
-                                defaultValue: e.hosts.isNotEmpty
+                                value: e.hosts.isNotEmpty
                                     ? e.hosts[0]
                                     : '',
                                 required: true,

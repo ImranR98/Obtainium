@@ -23,8 +23,7 @@ import 'package:obtainium/components/bulk_category_editor.dart';
 import 'package:obtainium/components/category_action_chip.dart';
 import 'package:obtainium/layout_breakpoints.dart';
 import 'package:obtainium/components/custom_app_bar.dart';
-import 'package:obtainium/components/generated_form.dart';
-import 'package:obtainium/components/generated_form_modal.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/rippling_wavy_progress/circular.dart';
 import 'package:obtainium/components/rippling_wavy_progress/linear.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -1257,7 +1256,7 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
                 unawaited(
                   provider.logs.add(
                     'Swipe update failed for ${widget.appId}: $e\n$stackTrace',
-                    level: LogLevels.error,
+                    level: LogLevel.error,
                   ),
                 );
                 final errorContext = context.mounted
@@ -1272,7 +1271,7 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
       case SwipeAction.pin:
         if (app != null) {
           provider.saveApps([
-            app..pinned = !widget.isPinned,
+            app.copyWith(pinned: !widget.isPinned),
           ], updateInstalledInfo: false);
         }
       case SwipeAction.appOptions:
@@ -1331,7 +1330,7 @@ class _SwipeableListItemState extends State<_SwipeableListItem>
           }
         }
       case SwipeAction.open:
-        pm.openApp(widget.appId);
+        packageManager.openApp(widget.appId);
       case SwipeAction.appInfo:
         provider.openAppSettings(widget.appId);
       case SwipeAction.none:
@@ -3737,7 +3736,7 @@ class AppsPageState extends State<AppsPage> {
               _AppIconWidget(appId: rowAppId),
           child: _AppIconWidget(appId: rowAppId),
         ),
-        onDoubleTap: () => pm.openApp(rowAppId),
+        onDoubleTap: () => packageManager.openApp(rowAppId),
         onLongPress: () {
           Navigator.push(
             context,
@@ -4178,7 +4177,7 @@ class AppsPageState extends State<AppsPage> {
                         ).toLowerCase(),
                       ],
                     ),
-                    defaultValue: true,
+                    value: true,
                   ),
                 );
               }
@@ -4195,7 +4194,7 @@ class AppsPageState extends State<AppsPage> {
                         ).toLowerCase(),
                       ],
                     ),
-                    defaultValue: existingUpdateIdsAllOrSelected.isEmpty,
+                    value: existingUpdateIdsAllOrSelected.isEmpty,
                   ),
                 );
               }
@@ -4209,7 +4208,7 @@ class AppsPageState extends State<AppsPage> {
                         plural('apps', trackOnlyUpdateIdsAllOrSelected.length),
                       ],
                     ),
-                    defaultValue:
+                    value:
                         existingUpdateIdsAllOrSelected.isEmpty &&
                         newInstallIdsAllOrSelected.isEmpty,
                   ),
@@ -4296,10 +4295,13 @@ class AppsPageState extends State<AppsPage> {
                       );
                   var index = 0;
                   appsProvider.saveApps(
-                    appsToCategorize.map((app) {
-                      app.categories = updatedCategoryLists[index++];
-                      return app;
-                    }).toList(),
+                    appsToCategorize
+                        .map(
+                          (app) => app.copyWith(
+                            categories: updatedCategoryLists[index++],
+                          ),
+                        )
+                        .toList(),
                     updateInstalledInfo: false,
                   );
                 },
@@ -4348,7 +4350,7 @@ class AppsPageState extends State<AppsPage> {
                           !appsProvider.isVersionDetectionPossible(
                             appsProvider.apps[a.id],
                           )) {
-                        a.installedVersion = a.latestVersion;
+                        return a.copyWith(installedVersion: a.latestVersion);
                       }
                       return a;
                     }).toList(),
@@ -4372,10 +4374,7 @@ class AppsPageState extends State<AppsPage> {
     pinSelectedApps() {
       var pinStatus = selectedApps.where((element) => element.pinned).isEmpty;
       appsProvider.saveApps(
-        selectedApps.map((e) {
-          e.pinned = pinStatus;
-          return e;
-        }).toList(),
+        selectedApps.map((e) => e.copyWith(pinned: pinStatus)).toList(),
         updateInstalledInfo: false,
       );
       Navigator.of(context).pop();

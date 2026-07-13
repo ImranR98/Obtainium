@@ -7,19 +7,18 @@ import 'package:obtainium/app_distribution.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:obtainium/theme/app_segmented_button_theme.dart';
-import 'package:obtainium/theme/app_text_button_theme.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:obtainium/theme/app_switch_theme.dart';
+import 'package:obtainium/theme.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/logs_provider.dart';
-import 'package:obtainium/providers/native_provider.dart';
 import 'package:obtainium/providers/notifications_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:background_fetch/background_fetch.dart';
+import 'package:workmanager/workmanager.dart';
 import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/easy_localization_controller.dart';
@@ -83,7 +82,7 @@ void installDiagnosticErrorLogging() {
           context: details.context?.toDescription(),
           library: details.library,
         ),
-        level: LogLevels.error,
+        level: LogLevel.error,
       ),
     );
     if (previousFlutterError != null) {
@@ -97,7 +96,7 @@ void installDiagnosticErrorLogging() {
     unawaited(
       logs.add(
         _diagnosticErrorMessage('Uncaught Dart error', error, stackTrace),
-        level: LogLevels.error,
+        level: LogLevel.error,
       ),
     );
     return previousPlatformError?.call(error, stackTrace) ?? false;
@@ -109,7 +108,7 @@ Future<void> _recordNativeCrashLogIfPresent(LogsProvider logs) async {
   if (nativeCrashLog == null) return;
   await logs.add(
     'Native crash from previous run:\n$nativeCrashLog',
-    level: LogLevels.error,
+    level: LogLevel.error,
   );
 }
 
@@ -160,17 +159,27 @@ Future<void> loadTranslations() async {
   );
 }
 
+/// Unique task name used by WorkManager for periodic background update checks.
+const _workManagerTaskName = 'obtainiumBgUpdateCheck';
+
 @pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessEvent headlessEvent) async {
-  String taskId = headlessEvent.taskId;
-  bool isTimeout = headlessEvent.timeout;
-  if (isTimeout) {
-    debugPrint('BG update task timed out.');
-    BackgroundFetch.finish(taskId);
-    return;
-  }
-  await bgUpdateCheck(taskId, null);
-  BackgroundFetch.finish(taskId);
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    final logs = LogsProvider();
+    try {
+      final taskId = 'wm_${DateTime.now().millisecondsSinceEpoch}';
+      await bgUpdateCheck(taskId, inputData);
+      return true;
+    } catch (e, stack) {
+      unawaited(
+        logs.add(
+          'WorkManager callback crashed: $e\n$stack',
+          level: LogLevel.error,
+        ),
+      );
+      return false;
+    }
+  });
 }
 
 @pragma('vm:entry-point')
@@ -219,11 +228,12 @@ void main() async {
   final np = NotificationsProvider();
   await np.initialize();
   FlutterForegroundTask.initCommunicationPort();
+  await Workmanager().initialize(callbackDispatcher);
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (context) => AppsProvider(sharedSettings: settingsProvider),
+          create: (context) => AppsProvider(settingsProvider: settingsProvider),
         ),
         ChangeNotifierProvider.value(value: settingsProvider),
         Provider(create: (context) => np),
@@ -239,7 +249,6 @@ void main() async {
       ),
     ),
   );
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
 class Obtainium extends StatefulWidget {
@@ -268,10 +277,28 @@ class _ObtainiumState extends State<Obtainium> {
   @override
   void initState() {
     super.initState();
-    initPlatformState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       requestNonOptionalPermissions();
     });
+  }
+
+  Future<void> _scheduleWorkManager() async {
+    await Workmanager().registerPeriodicTask(
+      _workManagerTaskName,
+      _workManagerTaskName,
+      frequency: const Duration(minutes: 15),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+        requiresBatteryNotLow: false,
+        requiresDeviceIdle: false,
+        requiresStorageNotLow: false,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+    );
+  }
+
+  Future<void> _cancelWorkManager() async {
+    await Workmanager().cancelByUniqueName(_workManagerTaskName);
   }
 
   Future<void> requestNonOptionalPermissions() async {
@@ -387,31 +414,6 @@ class _ObtainiumState extends State<Obtainium> {
     super.dispose();
   }
 
-  Future<void> initPlatformState() async {
-    await BackgroundFetch.configure(
-      BackgroundFetchConfig(
-        minimumFetchInterval: 15,
-        stopOnTerminate: false,
-        startOnBoot: true,
-        enableHeadless: true,
-        requiresBatteryNotLow: false,
-        requiresCharging: false,
-        requiresStorageNotLow: false,
-        requiresDeviceIdle: false,
-        requiredNetworkType: NetworkType.ANY,
-      ),
-      (String taskId) async {
-        await bgUpdateCheck(taskId, null);
-        BackgroundFetch.finish(taskId);
-      },
-      (String taskId) async {
-        context.read<LogsProvider>().add('BG update task timed out.');
-        BackgroundFetch.finish(taskId);
-      },
-    );
-    if (!mounted) return;
-  }
-
   /// Builds (or reuses) the boosted light + dark [ColorScheme] pair for the
   /// current accent/palette/black/gradient/shading settings and the supplied
   /// dynamic colour schemes. See [_schemeCacheKey] for why this is cached.
@@ -516,14 +518,14 @@ class _ObtainiumState extends State<Obtainium> {
     NotificationsProvider notifs = context.read<NotificationsProvider>();
     if (settingsProvider.updateInterval == 0) {
       stopForegroundService();
-      BackgroundFetch.stop();
+      unawaited(_cancelWorkManager());
     } else {
       if (settingsProvider.useFGService) {
-        BackgroundFetch.stop();
+        unawaited(_cancelWorkManager());
         startForegroundService(false);
       } else {
         stopForegroundService();
-        BackgroundFetch.start();
+        unawaited(_scheduleWorkManager());
       }
     }
     if (settingsProvider.prefs == null) {
@@ -539,21 +541,21 @@ class _ObtainiumState extends State<Obtainium> {
                 if (value?.versionName != null) {
                   appsProvider.saveApps([
                     App(
-                      obtainiumId,
-                      obtainiumUrl,
-                      'Bikram-Agarwal',
-                      'ObtainX',
-                      value!.versionName,
-                      value.versionName!,
-                      [],
-                      0,
-                      {
+                      id: obtainiumId,
+                      url: obtainiumUrl,
+                      author: 'Bikram-Agarwal',
+                      name: 'ObtainX',
+                      installedVersion: value!.versionName,
+                      latestVersion: value.versionName!,
+                      apkUrls: [],
+                      preferredApkIndex: 0,
+                      additionalSettings: {
                         'versionDetection': true,
                         'apkFilterRegEx': 'fdroid',
                         'invertAPKFilter': true,
                       },
-                      null,
-                      false,
+                      lastUpdateCheck: null,
+                      pinned: false,
                     ),
                   ], onlyIfExists: false);
                 }
@@ -698,52 +700,45 @@ class _ObtainiumState extends State<Obtainium> {
                 child: child ?? const SizedBox.shrink(),
               );
             },
-            theme: ThemeData(
-              useMaterial3: true,
-              colorScheme: themeColorScheme,
+            // Best-of-both M3E theme: upstream's shape/motion tokens
+            // (RoundedSuperellipse cards/dialogs/fields, stadium buttons/chips,
+            // FadeForwards page transitions) via [buildObtainiumTheme], layered
+            // with the fork's boosted colour science (the passed schemes) plus
+            // the fork's vivid surface choices and custom nav/switch/segmented/
+            // tooltip themes via copyWith.
+            theme: buildObtainiumTheme(
+              themeColorScheme,
+              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+            ).copyWith(
               scaffoldBackgroundColor: themeColorScheme.surface,
               canvasColor: themeColorScheme.surface,
               cardColor: themeColorScheme.surfaceContainer,
               focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
               navigationBarTheme: navigationBarThemeFor(themeColorScheme),
               segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
               switchTheme: appSwitchTheme(themeColorScheme),
               tooltipTheme: tooltipThemeFor(themeColorScheme),
-              dialogTheme: appDialogTheme(),
-              textButtonTheme: appTextButtonTheme(),
-              // splashFactory: deliberately NOT overridden. Briefly tried
-              // [InkRipple.splashFactory] for a more visible
-              // expanding-circle ripple, but its longer animation
-              // duration (~1s confirmed expand) made toggles in the view
-              // options sheet feel laggy - the switch's state-change
-              // animation got visually conflated with the slower ripple,
-              // producing a "tap → wait → toggle" perception. Falling
-              // back to Flutter's M3 default ([InkSparkle]) keeps the
-              // snappy feel, at the cost of the ripple looking more like
-              // a quick fade-tint than a classic ripple.
             ),
-            darkTheme: ThemeData(
-              useMaterial3: true,
-              colorScheme: darkThemeColorScheme,
-              scaffoldBackgroundColor: darkThemeColorScheme.surface,
-              canvasColor: darkThemeColorScheme.surface,
-              cardColor: darkThemeColorScheme.surfaceContainer,
-              focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
-              fontFamily: settingsProvider.useSystemFont
-                  ? 'SystemFont'
-                  : 'Montserrat',
-              navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
-              segmentedButtonTheme: appSegmentedButtonTheme(
-                darkThemeColorScheme,
-              ),
-              switchTheme: appSwitchTheme(darkThemeColorScheme),
-              tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
-              dialogTheme: appDialogTheme(),
-              textButtonTheme: appTextButtonTheme(),
-            ),
+            darkTheme:
+                buildObtainiumTheme(
+                  darkThemeColorScheme,
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+                ).copyWith(
+                  scaffoldBackgroundColor: darkThemeColorScheme.surface,
+                  canvasColor: darkThemeColorScheme.surface,
+                  cardColor: darkThemeColorScheme.surfaceContainer,
+                  focusColor: darkThemeColorScheme.primary.withValues(
+                    alpha: 0.24,
+                  ),
+                  navigationBarTheme: navigationBarThemeFor(
+                    darkThemeColorScheme,
+                  ),
+                  segmentedButtonTheme: appSegmentedButtonTheme(
+                    darkThemeColorScheme,
+                  ),
+                  switchTheme: appSwitchTheme(darkThemeColorScheme),
+                  tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
+                ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):

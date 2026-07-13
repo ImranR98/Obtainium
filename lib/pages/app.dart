@@ -104,7 +104,7 @@ void _logApkMirrorSizeDebugFromAppPage(String message) {
     try {
       await LogsProvider(
         runDefaultClear: false,
-      ).add('OBTAINX-APK-SIZE-DEBUG AppPage: $message', level: LogLevels.debug);
+      ).add('OBTAINX-APK-SIZE-DEBUG AppPage: $message', level: LogLevel.debug);
     } catch (_) {}
   }());
 }
@@ -856,7 +856,7 @@ class _AppPageState extends State<AppPage> {
 
   Future<void> _saveEdit(AppInMemory appData, AppsProvider appsProvider) async {
     if (appData.downloadProgress != null || updating) return;
-    final updatedApp =
+    App updatedApp =
         appsProvider.apps[widget.appId]?.app.deepCopy() ??
         appData.app.deepCopy();
     final newName = _nameController.text.trim();
@@ -872,13 +872,12 @@ class _AppPageState extends State<AppPage> {
       updatedApp.additionalSettings['appAuthor'] = newAuthor;
     }
     final newUrl = _urlController.text.trim();
-    updatedApp.url = newUrl;
+    updatedApp = updatedApp.copyWith(url: newUrl);
     final newId = _packageController.text.trim();
     if (newId.isNotEmpty && newId != updatedApp.id) {
-      updatedApp.allowIdChange = true;
-      updatedApp.id = newId;
+      updatedApp = updatedApp.copyWith(allowIdChange: true, id: newId);
     }
-    updatedApp.categories = _editCategories;
+    updatedApp = updatedApp.copyWith(categories: _editCategories);
 
     final String notesText = _notesController.text.trim();
     if (notesText.isEmpty) {
@@ -1018,7 +1017,7 @@ class _AppPageState extends State<AppPage> {
     Provider.of<LogsProvider>(
       hostContext,
       listen: false,
-    ).add(error.toString(), level: LogLevels.error);
+    ).add(error.toString(), level: LogLevel.error);
     Provider.of<AppsProvider>(
       hostContext,
       listen: false,
@@ -1827,7 +1826,7 @@ class _AppPageState extends State<AppPage> {
       // in either case we want to skip the stale write.
       if (freshApp.latestVersion != currentApp.latestVersion) return;
       if (freshApp.apkSizeBytes == resolvedSize) return;
-      final App updated = freshApp.deepCopy()..apkSizeBytes = resolvedSize;
+      final App updated = freshApp.copyWith(apkSizeBytes: resolvedSize);
       await appsProvider.saveApps(
         [updated],
         // No need to re-export to disk just because we filled in a size.
@@ -1881,8 +1880,7 @@ class _AppPageState extends State<AppPage> {
       if (resetVersion) {
         final app = appsProvider.apps[id]?.app;
         if (app != null) {
-          app.installedVersion = null;
-          appsProvider.saveApps([app]);
+          appsProvider.saveApps([app.copyWith(installedVersion: null)]);
         }
       }
     } catch (err) {
@@ -3462,7 +3460,7 @@ class _AppPageState extends State<AppPage> {
         onTap: _editMode
             ? null
             : (app?.installedInfo != null
-                  ? () => pm.openApp(widget.appId)
+                  ? () => packageManager.openApp(widget.appId)
                   : null),
         emptyPlaceholder: Container(
           height: scaledIconSize,
@@ -3760,9 +3758,11 @@ class _AppPageState extends State<AppPage> {
               TextButton(
                 onPressed: () {
                   hapticSelection();
-                  final App? updatedApp = app?.app.deepCopy();
+                  App? updatedApp = app?.app.deepCopy();
                   if (updatedApp != null) {
-                    updatedApp.installedVersion = updatedApp.latestVersion;
+                    updatedApp = updatedApp.copyWith(
+                      installedVersion: updatedApp.latestVersion,
+                    );
                     updatedApp.additionalSettings.remove(
                       'skippedLatestVersion',
                     );
@@ -4273,8 +4273,9 @@ class _AppPageState extends State<AppPage> {
                         onPressed: updating
                             ? null
                             : () {
-                                app.app.installedVersion = null;
-                                appsProvider.saveApps([app.app]);
+                                appsProvider.saveApps([
+                                  app.app.copyWith(installedVersion: null),
+                                ]);
                               },
                         icon: const Icon(Icons.restore_rounded),
                         tooltip: tr('resetInstallStatus'),

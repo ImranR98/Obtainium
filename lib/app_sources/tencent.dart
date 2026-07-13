@@ -12,28 +12,18 @@ class Tencent extends AppSource {
     showReleaseDateAsVersionToggle = true;
     canSearch = true;
     regionalStore = true;
+    // Base flag replaces the old manual `tryInferringAppId` override, which
+    // merely returned the last path segment.
+    inferAppIdFromUrlPath = true;
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) {
-    RegExp standardUrlRegEx = RegExp(
-      '^https?://${getSourceRegex(hosts)}/appdetail/[^/]+',
-      caseSensitive: false,
-    );
-    var match = standardUrlRegEx.firstMatch(url);
-    if (match == null) {
-      throw InvalidURLError(name);
-    }
-    return match.group(0)!;
-  }
-
-  @override
-  Future<String?> tryInferringAppId(
-    String standardUrl, {
-    Map<String, dynamic> additionalSettings = const {},
-  }) async {
-    return Uri.parse(standardUrl).pathSegments.last;
-  }
+  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) =>
+      standardizeUrlWithRegex(
+        url,
+        subdomainPrefix: '',
+        pathPattern: r'/appdetail/[^/]+',
+      );
 
   @override
   Future<APKDetails> getLatestAPKDetails(

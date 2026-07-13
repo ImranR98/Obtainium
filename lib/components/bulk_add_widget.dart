@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:obtainium/app_sources/apkmirror.dart';
 import 'package:obtainium/app_sources/apkpure.dart';
@@ -2267,7 +2268,7 @@ class BulkAddWidgetState extends State<BulkAddWidget> {
             : tr('unexpectedError');
         logsProvider.add(
           'Bulk add failed for ${app.info.name} (${app.info.packageName}): $errMsg',
-          level: LogLevels.error,
+          level: LogLevel.error,
         );
         if (mounted) {
           setState(() {

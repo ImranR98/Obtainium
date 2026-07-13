@@ -10,7 +10,7 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/folders/app_folder.dart';
-import 'package:obtainium/providers/native_provider.dart';
+import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -64,6 +64,16 @@ enum SortOrderSettings { ascending, descending }
 enum AppsListGroupBy { none, category, source, appType }
 
 enum SwipeAction { update, pin, appOptions, delete, open, appInfo, edit, none }
+
+// Enums merged from Obtainium upstream. ObtainX's own grouping/theme models
+// ([AppsListGroupBy] above, plus the accent system in app_theme_accent.dart) are
+// kept; these upstream enums back the upstream-derived getters grafted near the
+// end of the class (see the "Settings merged from Obtainium upstream" block).
+enum InstallerMode { system, shizuku, external }
+
+enum GroupByMode { none, category, source }
+
+enum ColourSchemeMode { standard, vibrant, expressive, materialYou }
 
 /// Order for settings dropdowns: alphabetical by localized action label,
 /// with [SwipeAction.none] ("None") always last.
@@ -119,6 +129,7 @@ class SettingsProvider with ChangeNotifier {
     _migrateSwipeActionPrefs();
     _syncSwipeActionNameStringsIfMissing();
     _migrateThemeAccentPrefs();
+    _migrateGroupBySetting();
     final info = await DeviceInfoPlugin().androidInfo;
     isTV =
         info.systemFeatures.contains('android.hardware.type.television') ||
@@ -188,6 +199,20 @@ class SettingsProvider with ChangeNotifier {
       'appThemePaletteStyle',
       AppThemePaletteStyle.tonalSpot.name,
     );
+  }
+
+  /// Seeds upstream's [groupBy] string pref from ObtainX's existing grouping
+  /// choice ([appsListGroupBy]) so upstream-derived UI reads the user's current
+  /// selection. Runs once; ObtainX's own grouping prefs are left untouched.
+  void _migrateGroupBySetting() {
+    if (prefs == null) return;
+    if (prefs!.getString('groupBy') != null) return;
+    final String mode = switch (appsListGroupBy) {
+      AppsListGroupBy.category => GroupByMode.category.name,
+      AppsListGroupBy.source => GroupByMode.source.name,
+      _ => GroupByMode.none.name,
+    };
+    prefs!.setString('groupBy', mode);
   }
 
   static const String _rightSwipeNameKey = 'rightSwipeActionName';
@@ -1526,6 +1551,140 @@ class SettingsProvider with ChangeNotifier {
   set leftSwipeAction(SwipeAction action) {
     prefs?.setInt('leftSwipeAction', action.index);
     prefs?.setString(_leftSwipeNameKey, action.name);
+    notifyListeners();
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Settings merged from Obtainium upstream.
+  //
+  // ObtainX's own settings (everything above) are kept intact; these adopt
+  // upstream additions that the merged codebase now references. Where upstream
+  // and ObtainX model the same concept differently — grouping via [groupBy]/
+  // [GroupByMode] here vs [appsListGroupBy]/[AppsListGroupBy] above, or theme
+  // accents via [colourSchemeMode]/[ColourSchemeMode] here vs the accent system
+  // ([appAccentColorSource], app_theme_accent.dart) above — BOTH are kept so
+  // neither side of the merge breaks; a future pass can converge them.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Instance-method haptics (upstream API). ObtainX also exposes the top-level
+  // haptic* helpers for call sites that lack a SettingsProvider instance; both
+  // honor [tactileFeedbackEnabled].
+  void lightImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.lightImpact();
+  }
+
+  void heavyImpact() {
+    if (tactileFeedbackEnabled) HapticFeedback.heavyImpact();
+  }
+
+  void selectionClick() {
+    if (tactileFeedbackEnabled) HapticFeedback.selectionClick();
+  }
+
+  bool get alwaysUsePhoneLayout {
+    return prefs?.getBool('alwaysUsePhoneLayout') ?? false;
+  }
+
+  set alwaysUsePhoneLayout(bool val) {
+    prefs?.setBool('alwaysUsePhoneLayout', val);
+    notifyListeners();
+  }
+
+  bool get disableSwipeActions {
+    return prefs?.getBool('disableSwipeActions') ?? false;
+  }
+
+  set disableSwipeActions(bool val) {
+    prefs?.setBool('disableSwipeActions', val);
+    notifyListeners();
+  }
+
+  bool get showActionBannerForUpdateOnly {
+    return prefs?.getBool('showActionBannerForUpdateOnly') ?? false;
+  }
+
+  set showActionBannerForUpdateOnly(bool val) {
+    prefs?.setBool('showActionBannerForUpdateOnly', val);
+    notifyListeners();
+  }
+
+  bool get welcomeShown {
+    return prefs?.getBool('welcomeShown') ?? false;
+  }
+
+  set welcomeShown(bool val) {
+    prefs?.setBool('welcomeShown', val);
+    notifyListeners();
+  }
+
+  bool get googleVerificationWarningShown {
+    return prefs?.getBool('googleVerificationWarningShown') ?? false;
+  }
+
+  set googleVerificationWarningShown(bool val) {
+    prefs?.setBool('googleVerificationWarningShown', val);
+    notifyListeners();
+  }
+
+  String? get externalInstallerPackage {
+    final value = prefs?.getString('externalInstallerPackage');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set externalInstallerPackage(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerPackage');
+    } else {
+      prefs?.setString('externalInstallerPackage', val);
+    }
+    notifyListeners();
+  }
+
+  String? get externalInstallerComponent {
+    final value = prefs?.getString('externalInstallerComponent');
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  set externalInstallerComponent(String? val) {
+    if (val == null || val.isEmpty) {
+      prefs?.remove('externalInstallerComponent');
+    } else {
+      prefs?.setString('externalInstallerComponent', val);
+    }
+    notifyListeners();
+  }
+
+  ColourSchemeMode get colourSchemeMode {
+    final stored = prefs?.getInt('colourSchemeMode');
+    if (stored != null &&
+        stored >= 0 &&
+        stored < ColourSchemeMode.values.length) {
+      return ColourSchemeMode.values[stored];
+    }
+    return (prefs?.getBool('useMaterialYou') ?? false)
+        ? ColourSchemeMode.materialYou
+        : ColourSchemeMode.standard;
+  }
+
+  set colourSchemeMode(ColourSchemeMode mode) {
+    prefs?.setInt('colourSchemeMode', mode.index);
+    prefs?.setBool('useMaterialYou', mode == ColourSchemeMode.materialYou);
+    notifyListeners();
+  }
+
+  String get groupBy {
+    final stored = prefs?.getString('groupBy');
+    if (stored != null && GroupByMode.values.any((m) => m.name == stored)) {
+      return stored;
+    }
+    return GroupByMode.none.name;
+  }
+
+  set groupBy(String mode) {
+    final resolved = GroupByMode.values.any((m) => m.name == mode)
+        ? mode
+        : GroupByMode.none.name;
+    prefs?.setString('groupBy', resolved);
     notifyListeners();
   }
 }

@@ -341,7 +341,12 @@ class MainActivity : FlutterActivity() {
             val duplicateInstallerReply =
                 intent.action == SESSION_API_PACKAGE_INSTALLED_ACTION &&
                     ex.message == "Reply already submitted"
-            if (!duplicateInstallerReply) {
+            // #3018/#3015: super.onNewIntent can throw if the Flutter engine
+            // isn't attached yet. A shared-text intent is replayed via
+            // deliverPendingSharedText() once configureFlutterEngine runs, so
+            // swallow that case rather than crashing.
+            val shareIntentBeforeEngineReady = intent.action == Intent.ACTION_SEND
+            if (!duplicateInstallerReply && !shareIntentBeforeEngineReady) {
                 throw ex
             }
         }
@@ -534,7 +539,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun getSharedTextFromIntent(intent: Intent?): String? {
-        if (intent?.action != Intent.ACTION_SEND || intent?.type != "text/plain") {
+        // Accept any text/* share (matches the manifest's text/* SEND filter and
+        // upstream's broadened handling), not just text/plain.
+        if (intent?.action != Intent.ACTION_SEND ||
+            intent.type?.startsWith("text/") != true
+        ) {
             return null
         }
         return intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
