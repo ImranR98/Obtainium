@@ -40,8 +40,8 @@ List<MapEntry<Locale, String>> supportedLocales = const [
   MapEntry(Locale('pl'), 'Polski'),
   MapEntry(Locale('ru'), 'Русский'),
   MapEntry(Locale('bs'), 'Bosanski'),
-  MapEntry(Locale('pt'), 'Português'),
   MapEntry(Locale('pt', 'BR'), 'Brasileiro'),
+  MapEntry(Locale('pt'), 'Português'),
   MapEntry(Locale('cs'), 'Česky'),
   MapEntry(Locale('sv'), 'Svenska'),
   MapEntry(Locale('nl'), 'Nederlands'),
@@ -569,6 +569,11 @@ class _ObtainiumState extends State<Obtainium> {
           (settingsProvider.forcedLocale == null &&
               context.deviceLocale != context.locale)) {
         settingsProvider.resetLocaleSafe(context);
+      } else if (settingsProvider.forcedLocale != null) {
+        // #3052: re-apply a configured forced locale explicitly so it survives
+        // easy_localization's internal resolution, which can otherwise revert a
+        // country-specific locale (e.g. pt_BR) to a language-only match (pt_PT).
+        context.setLocale(settingsProvider.forcedLocale!);
       }
     }
 

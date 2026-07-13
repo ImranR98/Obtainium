@@ -14,6 +14,7 @@ publish_to: 'none'
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
+# ObtainX uses its own version line, independent of upstream Obtainium's.
 version: 2.9.3+3930
 
 environment:
