@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-const EdgeInsetsGeometry appDropdownFieldContentPadding =
-    EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+const EdgeInsetsGeometry appDropdownFieldContentPadding = EdgeInsets.symmetric(
+  horizontal: 12,
+  vertical: 10,
+);
 
 /// Rounded filled field style used on additional options and app edit screens.
 InputDecoration appPageOutlinedInputDecoration(

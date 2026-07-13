@@ -146,6 +146,15 @@ bool? reproducibleBuildBoolFromStatus(String? status) {
   return null;
 }
 
+/// Whether [value] looks like an Android application id (e.g. `org.example.app`)
+/// rather than a human-readable app name. Used to decide when a source's
+/// readable name should replace a stale package-id-looking stored name.
+bool looksLikeAndroidPackageId(String value) {
+  return RegExp(
+    r'^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$',
+  ).hasMatch(value.trim());
+}
+
 // Version-string-source values (stored in additionalSettings['versionStringSource']).
 const String versionStringSourceDefault = 'default';
 const String versionStringSourceReleaseTitle = 'releaseTitle';
@@ -403,8 +412,23 @@ class App {
       pendingRepoRenameUrl != null && pendingRepoRenameUrl!.isNotEmpty;
 
   String? get overrideName {
-    final n = settings.getStringOrNull('appName');
-    return n != null && n.trim().isNotEmpty ? n : null;
+    final override = settings.getStringOrNull('appName')?.trim();
+    if (override == null || override.isEmpty) {
+      return null;
+    }
+    final String sourceName = name.trim();
+    // Ignore an override that merely restates the package id (either the exact
+    // app id, or anything shaped like a package id) when the source already
+    // provides a readable name.
+    if (override == id && sourceName.isNotEmpty && sourceName != id) {
+      return null;
+    }
+    if (looksLikeAndroidPackageId(override) &&
+        sourceName.isNotEmpty &&
+        sourceName != override) {
+      return null;
+    }
+    return override;
   }
 
   String get finalName {
@@ -1070,12 +1094,18 @@ abstract class AppSource {
     }
     if (showExtractVersionFromAssetNameToggle) {
       options.add(
-        MapEntry(versionStringSourceAssetName, tr('versionStringSourceAssetName')),
+        MapEntry(
+          versionStringSourceAssetName,
+          tr('versionStringSourceAssetName'),
+        ),
       );
     }
     if (showReleaseDateAsVersionToggle) {
       options.add(
-        MapEntry(versionStringSourceReleaseDate, tr('versionStringSourceReleaseDate')),
+        MapEntry(
+          versionStringSourceReleaseDate,
+          tr('versionStringSourceReleaseDate'),
+        ),
       );
     }
     if (showReleaseCommitShaAsVersionToggle) {
@@ -1614,8 +1644,18 @@ class SourceProvider {
         throw NoAPKError()..url = standardUrl;
       }
     }
+    final String sourceName = apk.names.name.trim();
+    // Replace the stored name with the source's readable name when the stored
+    // name is missing, is exactly the app id, or merely looks like a package id
+    // (e.g. 'org.example.app') while the source offers a real display name.
     var name = currentApp != null ? currentApp.name.trim() : '';
-    name = name.isNotEmpty ? name : apk.names.name;
+    if (name.isEmpty ||
+        name == currentApp?.id ||
+        (looksLikeAndroidPackageId(name) &&
+            sourceName.isNotEmpty &&
+            sourceName != name)) {
+      name = sourceName.isNotEmpty ? sourceName : name;
+    }
     // Reuse the previous check's verification/size/icon when the resolved
     // version is unchanged, so a skipped secondary round-trip doesn't clear them.
     final bool sameVersionAsPrevious =
@@ -1625,7 +1665,7 @@ class SourceProvider {
         (apk.isReproducible != null
             ? reproducibleBuildStatusFromBool(apk.isReproducible)
             : sameVersionAsPrevious
-            ? currentApp?.latestReproducibleStatus
+            ? currentApp.latestReproducibleStatus
             : null);
     final App finalApp = App(
       id: await _resolveAppId(
@@ -1663,7 +1703,7 @@ class SourceProvider {
       iconUrl: apk.iconUrl ?? currentApp?.iconUrl,
       apkSizeBytes:
           apk.apkSizeBytes ??
-          (sameVersionAsPrevious ? currentApp?.apkSizeBytes : null),
+          (sameVersionAsPrevious ? currentApp.apkSizeBytes : null),
       rawLatestVersionFromSource: rawLatestVersionFromSource,
       rawApkNamesFromSource: rawApkNamesFromSource,
       rawReleaseTitlesFromSource: rawReleaseTitlesFromSource,
@@ -1673,7 +1713,7 @@ class SourceProvider {
       latestReproducibleStatus: resolvedReproducibleStatus,
       latestAttestationStatus:
           apk.attestationStatus ??
-          (sameVersionAsPrevious ? currentApp?.latestAttestationStatus : null),
+          (sameVersionAsPrevious ? currentApp.latestAttestationStatus : null),
     );
     return source.postProcessApp(finalApp);
   }
@@ -1964,7 +2004,14 @@ class VersionService {
     var outputString = matchGroupString;
     for (final numberMatch in numbers) {
       final number = numberMatch.group(0)!;
-      final matchGroup = match.group(int.parse(number.substring(1))) ?? '';
+      final int matchGroupIndex = int.parse(number.substring(1));
+      // Guard against a replacement referencing a capture group that doesn't
+      // exist — return null (→ caller raises NoVersionError) instead of letting
+      // match.group() throw a RangeError (parity with fork main).
+      if (matchGroupIndex > match.groupCount) {
+        return null;
+      }
+      final matchGroup = match.group(matchGroupIndex) ?? '';
       final isEscaped = outputString.contains('\\$number');
       if (!isEscaped) {
         outputString = outputString.replaceAll(number, matchGroup);

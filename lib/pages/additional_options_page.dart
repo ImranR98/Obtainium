@@ -54,9 +54,7 @@ Future<bool> persistAdditionalOptionsForm({
   } else {
     originalSettings['useVersionCodeAsOSVersion'] = false;
   }
-  app = app.copyWith(
-    additionalSettings: {...originalSettings, ...formValues},
-  );
+  app = app.copyWith(additionalSettings: {...originalSettings, ...formValues});
   syncVersionStringSourceSettings(app.additionalSettings);
   app.additionalSettings['useVersionCodeAsOSVersion'] =
       app.additionalSettings['versionDetection'] == 'versionCode';
@@ -243,7 +241,18 @@ class _AdditionalOptionsPageState extends State<AdditionalOptionsPage> {
     for (final List<GeneratedFormItem> row in _items) {
       for (final GeneratedFormItem element in row) {
         if (appAdditionalSettings[element.key] != null) {
-          element.value = appAdditionalSettings[element.key];
+          final dynamic stored = appAdditionalSettings[element.key];
+          // For a dropdown, never assign a stored value that isn't one of the
+          // current options — DropdownButton asserts ("no item with value X")
+          // and crashes the page. This happens when the source's offered
+          // options change (e.g. versionStringSource after an overrideSource /
+          // URL edit, or a legacy value). Keep the item's default instead.
+          if (element is GeneratedFormDropdown &&
+              element.opts?.any((o) => o.key == stored.toString()) != true) {
+            // leave element.value at its constructor default
+          } else {
+            element.value = stored;
+          }
         }
         if (source is GitHub &&
             element is GeneratedFormDropdown &&

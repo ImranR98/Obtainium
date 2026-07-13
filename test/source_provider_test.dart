@@ -192,54 +192,54 @@ class _StubGitHub extends GitHub {
 
 App _buildCurrentApp({required String latestVersion, int? apkSizeBytes}) {
   return App(
-    'com.example.app',
-    'https://www.apkmirror.com/apk/example/example',
-    'Example',
-    'Example',
-    null, // installedVersion
-    latestVersion,
-    const <MapEntry<String, String>>[],
-    0,
-    {'trackOnly': true, 'appId': 'com.example.app'},
-    DateTime.now(),
-    false,
+    id: 'com.example.app',
+    url: 'https://www.apkmirror.com/apk/example/example',
+    author: 'Example',
+    name: 'Example',
+    installedVersion: null,
+    latestVersion: latestVersion,
+    apkUrls: const <MapEntry<String, String>>[],
+    preferredApkIndex: 0,
+    additionalSettings: {'trackOnly': true, 'appId': 'com.example.app'},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
     apkSizeBytes: apkSizeBytes,
   );
 }
 
 App _buildCurrentNamedApp({required String name}) {
   return App(
-    'org.example.app',
-    'https://example.com/app',
-    'Example Author',
-    name,
-    null,
-    '1.0',
-    const <MapEntry<String, String>>[
+    id: 'org.example.app',
+    url: 'https://example.com/app',
+    author: 'Example Author',
+    name: name,
+    installedVersion: null,
+    latestVersion: '1.0',
+    apkUrls: const <MapEntry<String, String>>[
       MapEntry('example.apk', 'https://example.com/example.apk'),
     ],
-    0,
-    <String, dynamic>{},
-    DateTime.now(),
-    false,
+    preferredApkIndex: 0,
+    additionalSettings: <String, dynamic>{},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
   );
 }
 
 App _buildCurrentTempIdNamedApp({required String name}) {
   return App(
-    '123456789',
-    'https://example.com/app',
-    'Example Author',
-    name,
-    null,
-    '1.0',
-    const <MapEntry<String, String>>[
+    id: '123456789',
+    url: 'https://example.com/app',
+    author: 'Example Author',
+    name: name,
+    installedVersion: null,
+    latestVersion: '1.0',
+    apkUrls: const <MapEntry<String, String>>[
       MapEntry('example.apk', 'https://example.com/example.apk'),
     ],
-    0,
-    <String, dynamic>{},
-    DateTime.now(),
-    false,
+    preferredApkIndex: 0,
+    additionalSettings: <String, dynamic>{},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
   );
 }
 
@@ -640,19 +640,19 @@ void main() {
 
   test('package-id name override is ignored when source name is readable', () {
     final app = App(
-      'org.example.app',
-      'https://example.com/app',
-      'Example Author',
-      'Readable Name',
-      null,
-      '1.0',
-      const <MapEntry<String, String>>[
+      id: 'org.example.app',
+      url: 'https://example.com/app',
+      author: 'Example Author',
+      name: 'Readable Name',
+      installedVersion: null,
+      latestVersion: '1.0',
+      apkUrls: const <MapEntry<String, String>>[
         MapEntry('example.apk', 'https://example.com/example.apk'),
       ],
-      0,
-      <String, dynamic>{'appName': 'org.example.app'},
-      DateTime.now(),
-      false,
+      preferredApkIndex: 0,
+      additionalSettings: <String, dynamic>{'appName': 'org.example.app'},
+      lastUpdateCheck: DateTime.now(),
+      pinned: false,
     );
 
     expect(app.finalName, 'Readable Name');

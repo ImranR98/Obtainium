@@ -70,7 +70,10 @@ class _SmoothRoundedSurfacePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double effectiveRadius = math.min(borderRadius, size.shortestSide / 2);
+    final double effectiveRadius = math.min(
+      borderRadius,
+      size.shortestSide / 2,
+    );
     final Radius radius = Radius.circular(effectiveRadius);
     final RRect background = RRect.fromRectAndRadius(
       Offset.zero & size,

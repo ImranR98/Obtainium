@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:android_package_manager/android_package_manager.dart'
@@ -200,7 +201,7 @@ class SettingsPageState extends State<SettingsPage> {
     context.select<SettingsProvider, int>(_scaffoldSettingsHash);
     final SettingsProvider sp = context.read<SettingsProvider>();
     final ColorScheme cs = Theme.of(context).colorScheme;
-    SourceProvider sourceProvider = SourceProvider();
+    final SourceProvider sourceProvider = SourceProvider();
 
     // One-time initialization guard.
     if (sp.prefs == null) sp.initializeSettings();
@@ -247,10 +248,7 @@ class SettingsPageState extends State<SettingsPage> {
     // every frame). Cached layers just translate rigidly instead.
     Widget settingsCard(List<Widget> children) {
       return RepaintBoundary(
-        child: M3eExpressiveSettingsCard(
-          colorScheme: cs,
-          items: children,
-        ),
+        child: M3eExpressiveSettingsCard(colorScheme: cs, items: children),
       );
     }
 
@@ -302,10 +300,13 @@ class SettingsPageState extends State<SettingsPage> {
                 ? BorderSide.none
                 : m3ePureBlackOutlineSide(cs, alpha: 0.16);
 
-            final double collapsedRadius = SettingsProvider.cardCornerRadiusForScale(
-              SettingsProvider.baseCollapsedHeaderRadius,
-              context.select<SettingsProvider, double>((s) => s.cardCornerScale),
-            );
+            final double collapsedRadius =
+                SettingsProvider.cardCornerRadiusForScale(
+                  SettingsProvider.baseCollapsedHeaderRadius,
+                  context.select<SettingsProvider, double>(
+                    (s) => s.cardCornerScale,
+                  ),
+                );
 
             return AnimatedPadding(
               duration: headerTransitionDuration,
@@ -316,7 +317,9 @@ class SettingsPageState extends State<SettingsPage> {
                 curve: headerTransitionCurve,
                 decoration: BoxDecoration(
                   color: expanded ? Colors.transparent : collapsedHeaderColor,
-                  borderRadius: BorderRadius.circular(expanded ? 8 : collapsedRadius),
+                  borderRadius: BorderRadius.circular(
+                    expanded ? 8 : collapsedRadius,
+                  ),
                   border: outlineSide == BorderSide.none
                       ? null
                       : Border.fromBorderSide(outlineSide),
@@ -325,13 +328,17 @@ class SettingsPageState extends State<SettingsPage> {
                   type: MaterialType.transparency,
                   child: InkWell(
                     onTap: () => setSectionExpanded(key, !expanded),
-                    borderRadius: BorderRadius.circular(expanded ? 8 : collapsedRadius),
+                    borderRadius: BorderRadius.circular(
+                      expanded ? 8 : collapsedRadius,
+                    ),
                     splashFactory: NoSplash.splashFactory,
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     hoverColor: Colors.transparent,
                     child: SizedBox(
-                      height: expanded ? null : SettingsProvider.collapsedHeaderHeight,
+                      height: expanded
+                          ? null
+                          : SettingsProvider.collapsedHeaderHeight,
                       child: AnimatedPadding(
                         duration: headerTransitionDuration,
                         curve: headerTransitionCurve,
@@ -546,8 +553,9 @@ class SettingsPageState extends State<SettingsPage> {
 
       final Color chevronColor = cs.onSurfaceVariant;
 
-      final double categoryTileRadius =
-          sp.cardCornerRadiusFor(SettingsProvider.baseCollapsedHeaderRadius);
+      final double categoryTileRadius = sp.cardCornerRadiusFor(
+        SettingsProvider.baseCollapsedHeaderRadius,
+      );
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
@@ -1217,10 +1225,7 @@ class _UpdatesSection extends StatelessWidget {
         ),
       ),
     ]);
-    return M3eExpressiveSettingsCard(
-      colorScheme: cs,
-      items: rows,
-    );
+    return M3eExpressiveSettingsCard(colorScheme: cs, items: rows);
   }
 }
 
@@ -1631,9 +1636,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
         ),
         SwitchListTile(
           title: Text(tr('GHReqPrefixUseToken')),
-          value:
-              sp.getSettingBool(GitHub.githubReqPrefixUseTokenKey) ??
-              false,
+          value: sp.getSettingBool(GitHub.githubReqPrefixUseTokenKey) ?? false,
           onChanged: (val) {
             sp.setSettingBool(GitHub.githubReqPrefixUseTokenKey, val);
           },
@@ -1676,8 +1679,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
               const SizedBox(width: 8),
               Builder(
                 builder: (context) {
-                  final String enteredText = _gitlabPatController.text
-                      .trim();
+                  final String enteredText = _gitlabPatController.text.trim();
                   final String savedText =
                       sp.getSettingString('gitlab-creds') ?? '';
                   final bool isDirty = enteredText != savedText;
@@ -1716,9 +1718,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                     icon: const Icon(Icons.save_rounded),
                                     onPressed: buttonIsEnabled
                                         ? () async {
-                                            FocusManager
-                                                .instance
-                                                .primaryFocus
+                                            FocusManager.instance.primaryFocus
                                                 ?.unfocus();
                                             if (enteredText.isEmpty) {
                                               sp.setSettingString(
@@ -1730,9 +1730,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                                 context,
                                               ).showSnackBar(
                                                 SnackBar(
-                                                  content: Text(
-                                                    tr('dismiss'),
-                                                  ),
+                                                  content: Text(tr('dismiss')),
                                                 ),
                                               );
                                               setState(() {});
@@ -1763,9 +1761,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                               ).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    tr(
-                                                      'gitlabPATValidated',
-                                                    ),
+                                                    tr('gitlabPATValidated'),
                                                   ),
                                                 ),
                                               );
@@ -1773,9 +1769,7 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(error),
-                                                ),
+                                                SnackBar(content: Text(error)),
                                               );
                                             }
                                           }
@@ -3267,7 +3261,7 @@ class _LogsDialogState extends State<LogsDialog> {
           if (!mounted) return;
           setState(() {
             final chronologicalLogs = logsList.reversed.toList();
-            String joinedLogs = chronologicalLogs
+            final String joinedLogs = chronologicalLogs
                 .map((logEntry) => logEntry.toString())
                 .join('\n\n');
             logString = joinedLogs.isNotEmpty ? joinedLogs : tr('noLogs');
@@ -3285,7 +3279,7 @@ class _LogsDialogState extends State<LogsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    var logsProvider = context.read<LogsProvider>();
+    final logsProvider = context.read<LogsProvider>();
 
     Future<String> getDiagnosticsText() async {
       final buffer = StringBuffer();
@@ -3457,7 +3451,7 @@ class _LogsDialogState extends State<LogsDialog> {
                 children: [
                   TextButton(
                     onPressed: () async {
-                      var cont =
+                      final cont =
                           (await showDialog<Map<String, dynamic>?>(
                             context: context,
                             builder: (BuildContext modalContext) {
@@ -3474,7 +3468,7 @@ class _LogsDialogState extends State<LogsDialog> {
                           )) !=
                           null;
                       if (cont) {
-                        logsProvider.clear();
+                        unawaited(logsProvider.clear());
                         if (!context.mounted) return;
                         Navigator.of(context).pop();
                       }
@@ -3493,10 +3487,12 @@ class _LogsDialogState extends State<LogsDialog> {
                   TextButton(
                     onPressed: () async {
                       final diagnostics = await getDiagnosticsText();
-                      SharePlus.instance.share(
-                        ShareParams(
-                          text: '$diagnostics${logString ?? ''}',
-                          subject: tr('appLogs'),
+                      unawaited(
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text: '$diagnostics${logString ?? ''}',
+                            subject: tr('appLogs'),
+                          ),
                         ),
                       );
                       if (!context.mounted) return;
@@ -3729,8 +3725,9 @@ class _ThirdPartyInstallerSelectorState
 
   Future<void> _showInstallerPicker() async {
     if (_loading) return;
-    final installerApps =
-        await _loadInstallers(showLoading: _installerApps == null);
+    final installerApps = await _loadInstallers(
+      showLoading: _installerApps == null,
+    );
     if (!mounted || installerApps == null || installerApps.isEmpty) {
       return;
     }
@@ -3754,80 +3751,83 @@ class _ThirdPartyInstallerSelectorState
         ? '$currentPkg|$currentAct'
         : null;
 
-    showAppModalSheet<void>(
-      context: context,
-      builder: (sheetContext) {
-        String? selectedValue = currentValue;
-        return StatefulBuilder(
-          builder: (builderContext, setSheetState) {
-            return RadioGroup<String>(
-              groupValue: selectedValue,
-              onChanged: (String? value) {
-                setSheetState(() => selectedValue = value);
-                updateSelectedInstaller(value);
-                Navigator.pop(sheetContext);
-              },
-              child: AppSheetContent(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Center(
-                      child: Text(
-                        tr('thirdPartyInstallerSelect'),
-                        style: Theme.of(builderContext).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+    unawaited(
+      showAppModalSheet<void>(
+        context: context,
+        builder: (sheetContext) {
+          String? selectedValue = currentValue;
+          return StatefulBuilder(
+            builder: (builderContext, setSheetState) {
+              return RadioGroup<String>(
+                groupValue: selectedValue,
+                onChanged: (String? value) {
+                  setSheetState(() => selectedValue = value);
+                  updateSelectedInstaller(value);
+                  Navigator.pop(sheetContext);
+                },
+                child: AppSheetContent(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Center(
+                        child: Text(
+                          tr('thirdPartyInstallerSelect'),
+                          style: Theme.of(builderContext).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
-                  ),
-                  ...installerApps.map((app) {
-                    final radioValue = '${app.packageName}|${app.activityName}';
-                    return RadioListTile<String>(
-                      contentPadding: const EdgeInsetsDirectional.only(
-                        end: 16,
-                      ),
-                      secondary: app.icon != null && app.icon!.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(
-                                app.icon!,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.contain,
-                                // Decode at the rendered size × DPR so a
-                                // 512×512 launcher icon doesn't sit at full
-                                // resolution in the raster cache for a 40-px row.
-                                cacheWidth:
-                                    (40 *
-                                            MediaQuery.devicePixelRatioOf(
-                                              context,
-                                            ))
-                                        .round(),
-                                cacheHeight:
-                                    (40 *
-                                            MediaQuery.devicePixelRatioOf(
-                                              context,
-                                            ))
-                                        .round(),
-                                errorBuilder: (_, _, _) =>
-                                    const Icon(Icons.android, size: 40),
-                              ),
-                            )
-                          : const Icon(Icons.android, size: 40),
-                      title: Text(app.label),
-                      subtitle: Text(
-                        app.packageName,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      value: radioValue,
-                    );
-                  }),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                    ...installerApps.map((app) {
+                      final radioValue =
+                          '${app.packageName}|${app.activityName}';
+                      return RadioListTile<String>(
+                        contentPadding: const EdgeInsetsDirectional.only(
+                          end: 16,
+                        ),
+                        secondary: app.icon != null && app.icon!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  app.icon!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.contain,
+                                  // Decode at the rendered size × DPR so a
+                                  // 512×512 launcher icon doesn't sit at full
+                                  // resolution in the raster cache for a 40-px row.
+                                  cacheWidth:
+                                      (40 *
+                                              MediaQuery.devicePixelRatioOf(
+                                                context,
+                                              ))
+                                          .round(),
+                                  cacheHeight:
+                                      (40 *
+                                              MediaQuery.devicePixelRatioOf(
+                                                context,
+                                              ))
+                                          .round(),
+                                  errorBuilder: (_, _, _) =>
+                                      const Icon(Icons.android, size: 40),
+                                ),
+                              )
+                            : const Icon(Icons.android, size: 40),
+                        title: Text(app.label),
+                        subtitle: Text(
+                          app.packageName,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        value: radioValue,
+                      );
+                    }),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -3838,8 +3838,7 @@ class _ThirdPartyInstallerSelectorState
     final selectedApp = (_installerApps ?? [])
         .where(
           (app) =>
-              app.packageName == selectedPkg &&
-              app.activityName == selectedAct,
+              app.packageName == selectedPkg && app.activityName == selectedAct,
         )
         .firstOrNull;
 

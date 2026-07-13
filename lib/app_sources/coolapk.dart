@@ -233,13 +233,13 @@ class CoolApk extends AppSource {
         '&pageParam='
         '&page=1'
         '&showAnonymous=-1';
-    var res = await sourceRequest(searchUrl, querySettings);
+    final res = await sourceRequest(searchUrl, querySettings);
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var json = jsonDecode(res.body);
-    Map<String, List<String>> urlsWithDescriptions = {};
-    var dataList = json['data'] as List<dynamic>?;
+    final json = jsonDecode(res.body);
+    final Map<String, List<String>> urlsWithDescriptions = {};
+    final dataList = json['data'] as List<dynamic>?;
     if (dataList != null) {
       for (var item in dataList) {
         if (item['entityType'] != 'apk' || item['url'] == null) continue;
@@ -252,8 +252,8 @@ class CoolApk extends AppSource {
         } catch (_) {
           continue;
         }
-        String name = item['title']?.toString() ?? '';
-        String desc =
+        final String name = item['title']?.toString() ?? '';
+        final String desc =
             item['originData']?['shortDesc']?.toString() ??
             item['developername']?.toString() ??
             item['description']?.toString() ??

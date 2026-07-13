@@ -313,8 +313,9 @@ class _CustomColorSliderPanelState extends State<CustomColorSliderPanel> {
     final ThemeData theme = Theme.of(context);
     final ColorScheme scheme = theme.colorScheme;
     final SettingsProvider settings = context.watch<SettingsProvider>();
-    final double cardRadius =
-        settings.cardCornerRadiusFor(SettingsProvider.baseCardRadius);
+    final double cardRadius = settings.cardCornerRadiusFor(
+      SettingsProvider.baseCardRadius,
+    );
 
     return Container(
       width: double.infinity,
@@ -923,10 +924,7 @@ class _AccentSourceSwatch extends StatelessWidget {
           child: Container(
             width: _kAccentSwatchSize,
             height: _kAccentSwatchSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: haloColor,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: haloColor),
             alignment: Alignment.center,
             child: _AccentCircleContent(source: source),
           ),
@@ -1051,10 +1049,7 @@ class _CustomHexSwatch extends StatelessWidget {
           child: Container(
             width: _kAccentSwatchSize,
             height: _kAccentSwatchSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: haloColor,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: haloColor),
             alignment: Alignment.center,
             child: ClipOval(
               child: Container(

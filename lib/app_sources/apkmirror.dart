@@ -159,7 +159,7 @@ Future<String?> iconUrlFromApkMirrorAppPageHtml(
   String pageUrl,
 ) async {
   final doc = await parseHtmlOffIsolate(html);
-  String? raw =
+  final String? raw =
       doc.querySelector('meta[property="og:image"]')?.attributes['content'] ??
       doc.querySelector('meta[name="twitter:image"]')?.attributes['content'] ??
       doc
@@ -574,7 +574,7 @@ class APKMirror extends AppSource {
     String standardUrl, {
     Map<String, dynamic> additionalSettings = const {},
   }) async {
-    Response res = await sourceRequest(standardUrl, additionalSettings);
+    final Response res = await sourceRequest(standardUrl, additionalSettings);
     if (res.statusCode != 200) return null;
     const packagePattern = r'com(?:\.[a-zA-Z0-9_]+){2,}';
     final packageFullMatch = RegExp('^$packagePattern\$');
@@ -597,15 +597,15 @@ class APKMirror extends AppSource {
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    bool fallbackToOlderReleases =
+    final bool fallbackToOlderReleases =
         additionalSettings['fallbackToOlderReleases'] == true;
-    String? regexFilter =
+    final String? regexFilter =
         (additionalSettings['filterReleaseTitlesByRegEx'] as String?)
                 ?.isNotEmpty ==
             true
         ? additionalSettings['filterReleaseTitlesByRegEx']
         : null;
-    Response res = await sourceRequest(
+    final Response res = await sourceRequest(
       '$standardUrl/feed/',
       additionalSettings,
     );
@@ -758,8 +758,8 @@ class APKMirror extends AppSource {
   }
 
   AppNames getAppNames(String standardUrl) {
-    String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
-    List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
+    final String temp = standardUrl.substring(standardUrl.indexOf('://') + 3);
+    final List<String> names = temp.substring(temp.indexOf('/') + 1).split('/');
     return AppNames(names[1], names[2]);
   }
 
@@ -800,9 +800,10 @@ class APKMirror extends AppSource {
       }
       // Best-effort: a release page often lists the picked APK's size
       // directly without us having to walk the per-variant download pages.
-      int? releasePageSize = await apkSizeBytesFromApkMirrorReleasePageHtml(
-        releasePageResponse.body,
-      );
+      final int? releasePageSize =
+          await apkSizeBytesFromApkMirrorReleasePageHtml(
+            releasePageResponse.body,
+          );
       final downloadPageEntries =
           await _apkMirrorDownloadPageUrlEntriesFromReleasePageHtml(
             releasePageResponse.body,

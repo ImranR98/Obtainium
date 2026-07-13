@@ -1,5 +1,6 @@
 // Exposes functions used to save/load app settings
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -10,7 +11,6 @@ import 'package:obtainium/app_sources/github.dart';
 import 'package:obtainium/main.dart';
 import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/folders/app_folder.dart';
-import 'package:obtainium/providers/apps_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -734,7 +734,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool checkAndFlipFirstRun() {
-    bool result = prefs?.getBool('firstRun') ?? true;
+    final bool result = prefs?.getBool('firstRun') ?? true;
     if (result) {
       prefs?.setBool('firstRun', false);
     }
@@ -752,9 +752,11 @@ class SettingsProvider with ChangeNotifier {
   Future<bool> getInstallPermission({bool enforce = false}) async {
     while (!(await Permission.requestInstallPackages.isGranted)) {
       // Explicit request as InstallPlugin request sometimes bugged
-      Fluttertoast.showToast(
-        msg: tr('pleaseAllowInstallPerm'),
-        toastLength: Toast.LENGTH_LONG,
+      unawaited(
+        Fluttertoast.showToast(
+          msg: tr('pleaseAllowInstallPerm'),
+          toastLength: Toast.LENGTH_LONG,
+        ),
       );
       if ((await Permission.requestInstallPackages.request()) ==
           PermissionStatus.granted) {
@@ -876,7 +878,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String? getSettingString(String settingId) {
-    String? str = prefs?.getString(settingId);
+    final String? str = prefs?.getString(settingId);
     return str?.isNotEmpty == true ? str : null;
   }
 
@@ -943,7 +945,7 @@ class SettingsProvider with ChangeNotifier {
           ? added.first
           : null;
 
-      List<App> changedApps = appsProvider
+      final List<App> changedApps = appsProvider
           .getAppValues()
           .map((a) {
             bool changed = false;
@@ -1098,11 +1100,12 @@ class SettingsProvider with ChangeNotifier {
       _setFolderViewField(id, 'groupUpdatesSeparately', v);
 
   Locale? get forcedLocale {
-    var flSegs = prefs?.getString('forcedLocale')?.split('-');
-    var fl = flSegs != null && flSegs.isNotEmpty
+    final flSegs = prefs?.getString('forcedLocale')?.split('-');
+    final fl = flSegs != null && flSegs.isNotEmpty
         ? Locale(flSegs[0], flSegs.length > 1 ? flSegs[1] : null)
         : null;
-    var set = supportedLocales.where((element) => element.key == fl).isNotEmpty
+    final set =
+        supportedLocales.where((element) => element.key == fl).isNotEmpty
         ? fl
         : null;
     return set;
@@ -1213,7 +1216,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   DateTime get lastCompletedBGCheckTime {
-    int? temp = prefs?.getInt('lastCompletedBGCheckTime');
+    final int? temp = prefs?.getInt('lastCompletedBGCheckTime');
     return temp != null
         ? DateTime.fromMillisecondsSinceEpoch(temp)
         : DateTime.fromMillisecondsSinceEpoch(0);
@@ -1274,7 +1277,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> pickExportDir({bool remove = false}) async {
     if (remove) {
       final String? saved = prefs?.getString('exportDir');
-      prefs?.remove('exportDir');
+      unawaited(prefs?.remove('exportDir'));
       notifyListeners();
       if (saved != null && saved.isNotEmpty) {
         try {
@@ -1300,7 +1303,7 @@ class SettingsProvider with ChangeNotifier {
       return;
     }
 
-    prefs?.setString('exportDir', newUriString);
+    unawaited(prefs?.setString('exportDir', newUriString));
     notifyListeners();
 
     if (previousExportDirString != null && previousExportDirString.isNotEmpty) {
@@ -1342,7 +1345,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> pickApkSaveDir({bool remove = false}) async {
     if (remove) {
       final String? saved = prefs?.getString('apkSaveDir');
-      prefs?.remove('apkSaveDir');
+      unawaited(prefs?.remove('apkSaveDir'));
       notifyListeners();
       if (saved != null && saved.isNotEmpty) {
         try {
@@ -1368,7 +1371,7 @@ class SettingsProvider with ChangeNotifier {
       return;
     }
 
-    prefs?.setString('apkSaveDir', newUriString);
+    unawaited(prefs?.setString('apkSaveDir', newUriString));
     notifyListeners();
 
     if (previousApkSaveDirString != null &&
@@ -1460,7 +1463,7 @@ class SettingsProvider with ChangeNotifier {
       return prefs?.getInt('exportSettings') ??
           1; // 0 for no, 1 for yes but no secrets, 2 for everything
     } catch (e) {
-      var val = prefs?.getBool('exportSettings') == true ? 1 : 0;
+      final val = prefs?.getBool('exportSettings') == true ? 1 : 0;
       prefs?.setInt('exportSettings', val);
       return val;
     }

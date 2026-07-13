@@ -148,7 +148,7 @@ String buildVerificationEnforcedBlockedMessage(
 
 /// Sanitizes a proposed display name for a saved APK copy (SAF createFile).
 String sanitizeApkSaveDisplayName(String raw) {
-  var name = raw.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+  final name = raw.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
   if (name.isEmpty) {
     return 'download.apk';
   }
@@ -649,7 +649,7 @@ extension AppsProviderInstall on AppsProvider {
             );
             await saveApps([apps[dir.appId]!.app]);
           }
-          unawaited(dir.file.delete());
+          unawaited(_disposeDownloadedBundle(dir, somethingInstalled));
         } catch (e) {
           unawaited(
             logs.add(
@@ -683,9 +683,12 @@ extension AppsProviderInstall on AppsProvider {
               .toList(),
           // Container already verified/scanned above.
           skipMalwareScan: true,
+          // The bundle itself is what gets saved (below); don't also persist
+          // the extracted primary APK under the same release asset name.
+          skipApkSaveFolderPersistForPrimaryApk: true,
         );
         somethingInstalled = somethingInstalled || wasInstalled;
-        unawaited(dir.file.delete());
+        unawaited(_disposeDownloadedBundle(dir, somethingInstalled));
       } catch (e) {
         unawaited(
           logs.add(
@@ -720,11 +723,29 @@ extension AppsProviderInstall on AppsProvider {
     /// verified/scanned once, so re-running per part would waste effort and the
     /// VirusTotal rate limit.
     bool skipMalwareScan = false,
+
+    /// Set by [installApkDir] for the extracted primary split APK: the outer
+    /// bundle ([DownloadedDir.file]) is what gets persisted to the save folder,
+    /// so the extracted APK must not be copied again under the same asset name.
+    bool skipApkSaveFolderPersistForPrimaryApk = false,
   }) async {
+    // Resolve the "Save downloaded APK copies" target once, up front (matches
+    // main). Only touched when the feature is on and this isn't the extracted
+    // primary of a bundle install; feature-off leaves this null (no behavior
+    // change, no extra SAF access).
+    final bool saveApkCopiesRequested =
+        settingsProvider.saveDownloadedApkCopies &&
+        !skipApkSaveFolderPersistForPrimaryApk;
+    final Uri? apkSaveTreeUri = (Platform.isAndroid && saveApkCopiesRequested)
+        ? await settingsProvider.getApkSaveDir(warnIfInaccessible: true)
+        : null;
     if (!skipMalwareScan) {
       final bool proceed = await _runPreInstallVerification(
         appId: file.appId,
         primaryFile: file.file,
+        // Resolving the APK save dir above is an async gap; _runPreInstallVerification
+        // guards context.mounted internally (via _handleMalwareScanResult).
+        // ignore: use_build_context_synchronously
         malwareScanContext: malwareScanContext,
         cleanupOnSkip: () {
           try {
@@ -738,6 +759,11 @@ extension AppsProviderInstall on AppsProvider {
       if (!proceed) return false;
     }
     if (firstTimeWithContext != null) {
+      // _shareWithVerifiedApps guards its only BuildContext use with an internal
+      // context.mounted check; a call-site guard would wrongly skip the
+      // user-opted share sheet (which doesn't need a live context) if the widget
+      // was disposed during the preceding verification await.
+      // ignore: use_build_context_synchronously
       await _shareWithVerifiedApps(file, firstTimeWithContext);
     }
     final newInfo = await packageManager.getPackageArchiveInfo(
@@ -822,7 +848,22 @@ extension AppsProviderInstall on AppsProvider {
       apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
         installedVersion: apps[file.appId]!.app.latestVersion,
       );
-      unawaited(file.file.delete(recursive: true));
+      // Feature ON: copy the installed APK into the save folder BEFORE deleting
+      // it, and only delete once the copy succeeded (mirrors main's
+      // _disposeInstalledApkFilesAfterSession, installReportedOk == true here).
+      // Feature OFF: delete inline exactly as before.
+      if (saveApkCopiesRequested && apkSaveTreeUri != null) {
+        unawaited(
+          _saveInstalledApkCopyThenMaybeDelete(
+            appId: file.appId,
+            primaryFile: file.file,
+            installReportedOk: true,
+            apkSaveTreeUri: apkSaveTreeUri,
+          ),
+        );
+      } else {
+        unawaited(file.file.delete(recursive: true));
+      }
     }
     // Cancelled or already-installed/pending: keep the file so a retry can
     // reuse it without re-downloading (matches main).
@@ -1030,10 +1071,9 @@ extension AppsProviderInstall on AppsProvider {
         await checkUpdate(apps[id]!.app.id);
       }
       if (!trackOnly) {
-        // ignore: use_build_context_synchronously
         apkUrl = await confirmAppFileUrl(
           apps[id]!.app,
-          context,
+          context != null && context.mounted ? context : null,
           false,
           dialogTheme: dialogTheme,
         );
@@ -1568,7 +1608,9 @@ extension AppsProviderInstall on AppsProvider {
         app.additionalSettings,
       );
     } catch (e) {
-      logs.add('Error verifying GitHub attestation: ${e.toString()}');
+      unawaited(
+        logs.add('Error verifying GitHub attestation: ${e.toString()}'),
+      );
     }
     return githubAttestationStatusError;
   }
@@ -1627,7 +1669,9 @@ extension AppsProviderInstall on AppsProvider {
         reportUrl: result.reportUrl,
       );
     } catch (e) {
-      logs.add('Error scanning APK with VirusTotal: ${e.toString()}');
+      unawaited(
+        logs.add('Error scanning APK with VirusTotal: ${e.toString()}'),
+      );
       return (
         status: malwareScanStatusError,
         detail: tr('virusTotalErrorGeneric', args: [e.toString()]),
@@ -1653,8 +1697,10 @@ extension AppsProviderInstall on AppsProvider {
   }) async {
     if (status == malwareScanStatusClean) {
       if (malwareScanContext != null && malwareScanContext.mounted) {
-        Fluttertoast.showToast(
-          msg: tr('malwareScanCleanToast', args: [app.finalName]),
+        unawaited(
+          Fluttertoast.showToast(
+            msg: tr('malwareScanCleanToast', args: [app.finalName]),
+          ),
         );
       }
       return true;
@@ -1759,6 +1805,130 @@ extension AppsProviderInstall on AppsProvider {
     return true;
   }
 
+  /// Bundle SAF copy + delete for XAPK/ZIP/tarball installs (off the critical
+  /// path). Ports main's `_finalizeDownloadedDirDisposition` bundle handling to
+  /// this branch's split-file [installApkDir]: when "Save downloaded APK copies"
+  /// is on and a folder resolves, [DownloadedDir.file] is copied to the save
+  /// folder BEFORE it is deleted, and the delete is gated on a successful copy.
+  /// When the feature is off, the bundle is deleted exactly as before.
+  /// ([DownloadedDir.extracted] is disposed separately by [installApkDir]'s
+  /// finally.)
+  Future<void> _disposeDownloadedBundle(
+    DownloadedDir dir,
+    bool somethingInstalled,
+  ) async {
+    // Feature OFF (or non-Android): delete inline, unchanged behavior.
+    if (!Platform.isAndroid || !settingsProvider.saveDownloadedApkCopies) {
+      unawaited(dir.file.delete());
+      return;
+    }
+    try {
+      final App? appForSave = apps[dir.appId]?.app;
+      final Uri? resolvedApkSaveUri = await settingsProvider.getApkSaveDir(
+        warnIfInaccessible: true,
+      );
+      var bundleCopiedOk = false;
+      if (appForSave != null &&
+          resolvedApkSaveUri != null &&
+          dir.file.existsSync()) {
+        try {
+          bundleCopiedOk = await _chunkedCopyApkToSafTree(
+            dir.file,
+            resolvedApkSaveUri,
+            storeFacingDownloadDisplayNameForApp(appForSave),
+          );
+        } catch (exception, stackTrace) {
+          unawaited(
+            logs.add(
+              'APK save folder copy failed: ${exception.toString()}\n$stackTrace',
+              level: LogLevel.error,
+            ),
+          );
+          unawaited(Fluttertoast.showToast(msg: tr('apkSaveFolderCopyFailed')));
+        }
+      }
+      final bool skipLatest =
+          appForSave != null && isSkipActiveForCurrentLatest(appForSave);
+      final bool hasSaveFolder = resolvedApkSaveUri != null;
+      final bool shouldDeleteBundle;
+      if (hasSaveFolder && appForSave != null && dir.file.existsSync()) {
+        // A configured, reachable save folder: only delete once the copy landed.
+        shouldDeleteBundle =
+            bundleCopiedOk && (somethingInstalled || skipLatest);
+      } else if (resolvedApkSaveUri == null) {
+        // Feature on but folder unreachable: keep the bundle after a successful
+        // install (so the user can still recover it), delete only when skipped.
+        shouldDeleteBundle = somethingInstalled ? false : skipLatest;
+      } else {
+        shouldDeleteBundle = somethingInstalled || skipLatest;
+      }
+      if (shouldDeleteBundle && dir.file.existsSync()) {
+        try {
+          dir.file.deleteSync();
+        } catch (_) {}
+      }
+    } catch (exception, stackTrace) {
+      unawaited(
+        logs.add(
+          'Post-install bundle disposition failed: ${exception.toString()}\n$stackTrace',
+          level: LogLevel.error,
+        ),
+      );
+    }
+  }
+
+  /// Per-APK SAF copy + delete after a successful single-APK install (off the
+  /// critical path). Ports main's `_disposeInstalledApkFilesAfterSession`
+  /// primary-file handling: the installed APK is copied to the save folder
+  /// BEFORE it is deleted, and the delete is gated on a successful copy. Only
+  /// invoked when the save-copies feature is on and a folder resolved; the
+  /// feature-off delete happens inline at the call site, unchanged.
+  Future<void> _saveInstalledApkCopyThenMaybeDelete({
+    required String appId,
+    required File primaryFile,
+    required bool installReportedOk,
+    required Uri apkSaveTreeUri,
+  }) async {
+    try {
+      final App? appRef = apps[appId]?.app;
+      final bool skipLatest =
+          appRef != null && isSkipActiveForCurrentLatest(appRef);
+      var copiedOk = false;
+      if (appRef != null && primaryFile.existsSync()) {
+        try {
+          copiedOk = await _chunkedCopyApkToSafTree(
+            primaryFile,
+            apkSaveTreeUri,
+            storeFacingDownloadDisplayNameForApp(appRef),
+          );
+        } catch (exception, stackTrace) {
+          unawaited(
+            logs.add(
+              'APK save folder copy failed: ${exception.toString()}\n$stackTrace',
+              level: LogLevel.error,
+            ),
+          );
+          unawaited(Fluttertoast.showToast(msg: tr('apkSaveFolderCopyFailed')));
+        }
+      }
+      // hasSaveFolder is always true here (caller only invokes with a resolved
+      // save URI), so mirror main's hasSaveFolder branch directly.
+      final bool deletePrimary = copiedOk && (installReportedOk || skipLatest);
+      if (deletePrimary && primaryFile.existsSync()) {
+        try {
+          primaryFile.deleteSync();
+        } catch (_) {}
+      }
+    } catch (exception, stackTrace) {
+      unawaited(
+        logs.add(
+          'Post-install APK disposition failed: ${exception.toString()}\n$stackTrace',
+          level: LogLevel.error,
+        ),
+      );
+    }
+  }
+
   /// Runs the pre-install verification gauntlet for [appId]: reproducible-build
   /// enforcement, GitHub attestation verify/enforce, and VirusTotal scanning.
   /// Persists attestation/malware status via copyWith + saveApps. Returns true
@@ -1840,6 +2010,11 @@ extension AppsProviderInstall on AppsProvider {
         status: scan.status!,
         detail: scan.detail,
         reportUrl: scan.reportUrl,
+        // _handleMalwareScanResult must run for every context state: it guards
+        // its context.mounted internally and, when malwareScanContext is null
+        // (background), throws MalwareScanBlockedError. A call-site mounted guard
+        // would break that background path, so intentionally pass it through.
+        // ignore: use_build_context_synchronously
         malwareScanContext: malwareScanContext,
         cleanupOnSkip: cleanupOnSkip,
       );

@@ -49,8 +49,7 @@ Future<List<InstallerAppInfo>> getApkInstallerApps() async {
 }
 
 bool _isSelectableInstallerActivity(InstallerAppInfo app) {
-  if (app.packageName.toLowerCase() !=
-      'io.github.muntashirakon.appmanager') {
+  if (app.packageName.toLowerCase() != 'io.github.muntashirakon.appmanager') {
     return true;
   }
   return app.activityName.toLowerCase().endsWith('packageinstalleractivity') ||

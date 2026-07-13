@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io' show SocketException;
-import 'dart:ui' show Locale;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:android_package_installer/android_package_installer.dart';

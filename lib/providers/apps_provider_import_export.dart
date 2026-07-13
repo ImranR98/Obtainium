@@ -272,8 +272,9 @@ extension AppsProviderImportExport on AppsProvider {
             }
           } else if (existingFolders.any((f) => f.id == id)) {
             updatedFolderIds.add(id);
-            updatedFolderNames[id] =
-                existingFolders.firstWhere((f) => f.id == id).name;
+            updatedFolderNames[id] = existingFolders
+                .firstWhere((f) => f.id == id)
+                .name;
           }
         }
         updated['folderIds'] = updatedFolderIds;

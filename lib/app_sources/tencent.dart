@@ -18,21 +18,23 @@ class Tencent extends AppSource {
   }
 
   @override
-  String sourceSpecificStandardizeURL(String url, {bool forSelection = false}) =>
-      standardizeUrlWithRegex(
-        url,
-        subdomainPrefix: '',
-        pathPattern: r'/appdetail/[^/]+',
-      );
+  String sourceSpecificStandardizeURL(
+    String url, {
+    bool forSelection = false,
+  }) => standardizeUrlWithRegex(
+    url,
+    subdomainPrefix: '',
+    pathPattern: r'/appdetail/[^/]+',
+  );
 
   @override
   Future<APKDetails> getLatestAPKDetails(
     String standardUrl,
     Map<String, dynamic> additionalSettings,
   ) async {
-    String appId = (await tryInferringAppId(standardUrl))!;
+    final String appId = (await tryInferringAppId(standardUrl))!;
 
-    var res = await sourceRequest(
+    final res = await sourceRequest(
       'https://sj.qq.com/appdetail/$appId',
       additionalSettings,
     );
@@ -41,13 +43,13 @@ class Tencent extends AppSource {
       throw getObtainiumHttpError(res);
     }
 
-    var nextDataPrefix = '<script id="__NEXT_DATA__"';
-    var idx = res.body.indexOf(nextDataPrefix);
+    const nextDataPrefix = '<script id="__NEXT_DATA__"';
+    final idx = res.body.indexOf(nextDataPrefix);
     if (idx == -1) throw NoReleasesError();
-    var tagStart = res.body.indexOf('>', idx);
-    var tagEnd = res.body.indexOf('</script>', tagStart);
+    final tagStart = res.body.indexOf('>', idx);
+    final tagEnd = res.body.indexOf('</script>', tagStart);
     if (tagStart == -1 || tagEnd == -1) throw NoReleasesError();
-    var jsonStr = res.body.substring(tagStart + 1, tagEnd).trim();
+    final jsonStr = res.body.substring(tagStart + 1, tagEnd).trim();
 
     dynamic json;
     try {
@@ -56,23 +58,23 @@ class Tencent extends AppSource {
       throw NoReleasesError();
     }
 
-    dynamic appDetail = _findAppDetail(json, appId);
+    final dynamic appDetail = _findAppDetail(json, appId);
     if (appDetail == null) throw NoReleasesError();
 
-    var version = appDetail['version_name']?.toString();
-    var apkUrl = appDetail['download_url']?.toString();
+    final version = appDetail['version_name']?.toString();
+    final apkUrl = appDetail['download_url']?.toString();
     if (version == null || apkUrl == null || apkUrl.isEmpty) {
       throw NoAPKError();
     }
-    var appName = appDetail['name']?.toString() ?? appId;
-    var author = appDetail['developer']?.toString() ?? '';
-    var apkName =
+    final appName = appDetail['name']?.toString() ?? appId;
+    final author = appDetail['developer']?.toString() ?? '';
+    final apkName =
         Uri.parse(apkUrl).queryParameters['fsname'] ?? '${appId}_$version.apk';
 
-    var iconUrl = appDetail['icon']?.toString();
+    final iconUrl = appDetail['icon']?.toString();
     int? apkSizeBytes;
     try {
-      var rawSize = appDetail['apk_size']?.toString();
+      final rawSize = appDetail['apk_size']?.toString();
       if (rawSize != null) {
         apkSizeBytes = int.parse(rawSize);
       }
@@ -80,7 +82,7 @@ class Tencent extends AppSource {
 
     DateTime? releaseDate;
     try {
-      var rawTime = appDetail['update_time']?.toString();
+      final rawTime = appDetail['update_time']?.toString();
       if (rawTime != null) {
         releaseDate = DateTime.fromMillisecondsSinceEpoch(
           int.parse(rawTime) * 1000,
@@ -105,12 +107,12 @@ class Tencent extends AppSource {
         return node;
       }
       for (var value in node.values) {
-        var result = _findAppDetail(value, pkgName);
+        final result = _findAppDetail(value, pkgName);
         if (result != null) return result;
       }
     } else if (node is List) {
       for (var item in node) {
-        var result = _findAppDetail(item, pkgName);
+        final result = _findAppDetail(item, pkgName);
         if (result != null) return result;
       }
     }
@@ -134,7 +136,7 @@ class Tencent extends AppSource {
     String query, {
     Map<String, dynamic> querySettings = const {},
   }) async {
-    var body = {
+    final body = {
       'head': {
         'cmd': 'dc_pcyyb_official',
         'authInfo': {'businessId': 'AuthName'},
@@ -159,7 +161,7 @@ class Tencent extends AppSource {
         'layout': 'yybn_search_result_list',
       },
     };
-    var res = await sourceRequest(
+    final res = await sourceRequest(
       'https://yybadaccess.3g.qq.com/v2/dc_pcyyb_official',
       querySettings,
       postBody: body,
@@ -167,17 +169,17 @@ class Tencent extends AppSource {
     if (res.statusCode != 200) {
       throw getObtainiumHttpError(res);
     }
-    var json = jsonDecode(res.body);
+    final json = jsonDecode(res.body);
     if (json['ret'] != 0) {
       throw NoReleasesError();
     }
-    Map<String, List<String>> results = {};
-    var components = json['data']?['components'] as List<dynamic>?;
+    final Map<String, List<String>> results = {};
+    final components = json['data']?['components'] as List<dynamic>?;
     if (components != null && components.isNotEmpty) {
-      var itemData = components[0]?['data']?['itemData'] as List<dynamic>?;
+      final itemData = components[0]?['data']?['itemData'] as List<dynamic>?;
       if (itemData != null) {
         for (var item in itemData) {
-          var pkgName = item['pkg_name']?.toString();
+          final pkgName = item['pkg_name']?.toString();
           if (pkgName == null || pkgName.isEmpty) continue;
           var url = 'https://sj.qq.com/appdetail/$pkgName';
           try {
@@ -185,8 +187,8 @@ class Tencent extends AppSource {
           } catch (_) {
             continue;
           }
-          var name = item['name']?.toString() ?? '';
-          var desc = item['developer']?.toString() ?? tr('noDescription');
+          final name = item['name']?.toString() ?? '';
+          final desc = item['developer']?.toString() ?? tr('noDescription');
           results[url] = [name, desc];
         }
       }

@@ -13,7 +13,6 @@ import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:obtainium/providers/source_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 Map<String, dynamic>? _jsonObjectFromResponseBody(String responseBody) {
   try {
@@ -369,7 +368,10 @@ class GitHub extends AppSource {
     return sha256.convert(utf8.encode(token)).toString();
   }
 
-  static bool hasValidatedPAT(String? creds, SettingsProvider settingsProvider) {
+  static bool hasValidatedPAT(
+    String? creds,
+    SettingsProvider settingsProvider,
+  ) {
     final String? fingerprint = patFingerprint(creds);
     if (fingerprint == null) {
       return false;
@@ -1004,7 +1006,8 @@ class GitHub extends AppSource {
             (targetRelease['filteredAssets'] as List<dynamic>?) ?? [];
         Map<String, dynamic>? preferredAsset;
         if (apkUrls.isNotEmpty) {
-          for (final asset in filteredAssets.whereType<Map<String, dynamic>>()) {
+          for (final asset
+              in filteredAssets.whereType<Map<String, dynamic>>()) {
             final assetName =
                 (asset['final_url'] as MapEntry<String, String>?)?.key;
             if (assetName == apkUrls.last.key) {

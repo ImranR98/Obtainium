@@ -785,7 +785,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
   // If any value changes, call this to update the parent with value and validity
   void someValueChanged({bool isBuilding = false, bool forceInvalid = false}) {
-    Map<String, dynamic> returnValues = values;
+    final Map<String, dynamic> returnValues = values;
     var valid = true;
     if (!isBuilding) {
       valid = _formKey.currentState?.validate() ?? true;
@@ -829,7 +829,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
     // Dynamically create form inputs
     formInputs = widget.items.asMap().entries.map((row) {
       return row.value.asMap().entries.map((e) {
-        var formItem = e.value;
+        final formItem = e.value;
         if (formItem is GeneratedFormSectionHeader) {
           return const SizedBox.shrink();
         } else if (formItem is GeneratedFormTextField) {
@@ -908,7 +908,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                     return '${formItem.label} ${tr('requiredInBrackets')}';
                   }
                   for (var validator in formItem.additionalValidators) {
-                    String? result = validator(value);
+                    final String? result = validator(value);
                     if (result != null) {
                       return result;
                     }
@@ -982,7 +982,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           values[formItem.key] = [];
           for (Map<String, dynamic> v
               in ((formItem.value ?? []) as List<dynamic>)) {
-            var fullDefaults = getDefaultValuesFromFormItems(formItem.items);
+            final fullDefaults = getDefaultValuesFromFormItems(formItem.items);
             for (var element in v.entries) {
               fullDefaults[element.key] = element.value;
             }
@@ -1021,7 +1021,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
   Widget build(BuildContext context) {
     for (var r = 0; r < formInputs.length; r++) {
       for (var e = 0; e < formInputs[r].length; e++) {
-        String fieldKey = widget.items[r][e].key;
+        final String fieldKey = widget.items[r][e].key;
         if (widget.items[r][e] is GeneratedFormSectionHeader) {
           final GeneratedFormSectionHeader header =
               widget.items[r][e] as GeneratedFormSectionHeader;
@@ -1144,7 +1144,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
           // close over the for-loop variables r and e, which have stale
           // (final-iteration) values by the time the closures are invoked.
           final tagInput = widget.items[r][e] as GeneratedFormTagInput;
-          onAddPressed() async {
+          Future<void> onAddPressed() async {
             // ignore: use_build_context_synchronously
             final result = await showCategorySheet(
               context,
@@ -1298,9 +1298,9 @@ class _GeneratedFormState extends State<GeneratedForm> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: IconButton(
                               onPressed: () {
-                                fn() {
+                                void fn() {
                                   setState(() {
-                                    var temp =
+                                    final temp =
                                         values[fieldKey]
                                             as Map<String, MapEntry<int, bool>>;
                                     temp.removeWhere(
@@ -1313,7 +1313,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
 
                                 if (tagInput.deleteConfirmationMessage !=
                                     null) {
-                                  var message =
+                                  final message =
                                       tagInput.deleteConfirmationMessage!;
                                   showDialog<Map<String, dynamic>?>(
                                     context: context,
@@ -1371,12 +1371,12 @@ class _GeneratedFormState extends State<GeneratedForm> {
             ],
           );
         } else if (widget.items[r][e] is GeneratedFormSubForm) {
-          List<Widget> subformColumn = [];
-          var compact =
+          final List<Widget> subformColumn = [];
+          final compact =
               (widget.items[r][e] as GeneratedFormSubForm).items.length == 1 &&
               (widget.items[r][e] as GeneratedFormSubForm).items[0].length == 1;
           for (int i = 0; i < values[fieldKey].length; i++) {
-            var internalFormKey = ValueKey(
+            final internalFormKey = ValueKey(
               generateDeterministicId(
                 values[fieldKey].length,
                 seed2: i,
@@ -1436,7 +1436,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
                         ),
                         onPressed: (values[fieldKey].length > 0)
                             ? () {
-                                var temp = List.from(values[fieldKey]);
+                                final temp = List.from(values[fieldKey]);
                                 temp.removeAt(i);
                                 values[fieldKey] = List.from(temp);
                                 forceUpdateKeyCount++;
@@ -1495,7 +1495,7 @@ class _GeneratedFormState extends State<GeneratedForm> {
             : (widget.outlinedInputFields ? 12 : 25);
         rows.add([SizedBox(height: gapAfterPreviousRow)]);
       }
-      List<Widget> rowItems = [];
+      final List<Widget> rowItems = [];
       rowInputs.value.asMap().entries.forEach((rowInput) {
         if (rowInput.key > 0) {
           rowItems.add(const SizedBox(width: 20));

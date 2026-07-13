@@ -71,12 +71,7 @@ class AppSegmentedButton<T> extends StatelessWidget {
                       ),
                     )
                   else
-                    _buildSegment(
-                      index,
-                      segmentPadding,
-                      selectedFill,
-                      enabled,
-                    ),
+                    _buildSegment(index, segmentPadding, selectedFill, enabled),
                 ],
               ],
             ),

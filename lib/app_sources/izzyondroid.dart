@@ -282,7 +282,6 @@ class IzzyOnDroid extends AppSource {
     );
   }
 
-  @override
   App endOfGetAppChanges(App app) {
     String? appId = isTempId(app) ? null : app.id;
     final Uri uri = Uri.parse(app.url);

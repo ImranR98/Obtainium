@@ -21,16 +21,15 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    - always_declare_return_types
-    - avoid_print
-    - cancel_subscriptions
-    - close_sinks
-    - prefer_const_constructors
-    - prefer_const_declarations
-    - prefer_final_locals
-    - prefer_single_quotes
-    - unawaited_futures
-    - use_build_context_synchronously
+    always_declare_return_types: true
+    avoid_print: true
+    cancel_subscriptions: true
+    close_sinks: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    unawaited_futures: true
+    use_build_context_synchronously: true
 
     # ── Performance-oriented rules ──────────────────────────────────────
     # Each missed `const` allocates a new widget tree on every parent
@@ -43,7 +42,7 @@ linter:
     # `Container()` with only `child:` should be the child directly. Saves
     # a layer in the widget tree and one element in the diff phase.
     avoid_unnecessary_containers: true
-    # Children should be the last named arg in a widget constructor —
+    # Children should be the last named arg in a widget constructor -
     # makes diff hunks cleaner and matches Flutter convention.
     sort_child_properties_last: true
 

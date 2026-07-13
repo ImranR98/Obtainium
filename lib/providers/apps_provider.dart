@@ -180,7 +180,7 @@ MapEntry<bool, String>? reconcileVersionDifferences(
   // Returns null if the versions don't share a common standard format
   // Returns <true, comparisonVersion> if they share a common format and are equal
   // Returns <false, templateVersion> if they share a common format but are not equal
-  var templateVersionFormats = findStandardFormatsForVersion(
+  final templateVersionFormats = findStandardFormatsForVersion(
     templateVersion,
     true,
   );
@@ -194,7 +194,7 @@ MapEntry<bool, String>? reconcileVersionDifferences(
       false,
     );
   }
-  var commonStandardFormats = templateVersionFormats.intersection(
+  final commonStandardFormats = templateVersionFormats.intersection(
     comparisonVersionFormats,
   );
   if (commonStandardFormats.isEmpty) {
@@ -1664,14 +1664,14 @@ class NativeFeatures {
   }
 
   static Future<ByteData> _readFileBytes(String path) async {
-    var bytes = await File(path).readAsBytes();
+    final bytes = await File(path).readAsBytes();
     return ByteData.view(bytes.buffer);
   }
 
   static Future<void> loadSystemFont() async {
     if (_systemFontLoaded) return;
-    var fontLoader = FontLoader('SystemFont');
-    var fontFilePath = await AndroidSystemFont().getFilePath();
+    final fontLoader = FontLoader('SystemFont');
+    final fontFilePath = await AndroidSystemFont().getFilePath();
     fontLoader.addFont(_readFileBytes(fontFilePath!));
     await fontLoader.load();
     _systemFontLoaded = true;

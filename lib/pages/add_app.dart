@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expressive_loading_indicator/expressive_loading_indicator.dart';
 import 'package:flutter/material.dart';
@@ -246,16 +248,16 @@ class AddAppPageState extends State<AddAppPage> {
         if (overrideSource != null) {
           pickedSourceOverride = overrideSource;
         }
-        bool overrideChanged =
+        final bool overrideChanged =
             pickedSourceOverride != previousPickedSourceOverride;
         previousPickedSourceOverride = pickedSourceOverride;
         if (updateUrlInput) {
           _urlFieldController.text = input;
         }
-        var prevHost = pickedSource?.hosts.isNotEmpty == true
+        final prevHost = pickedSource?.hosts.isNotEmpty == true
             ? pickedSource?.hosts[0]
             : null;
-        var source = valid
+        final source = valid
             ? sourceProvider.getSource(
                 userInput,
                 overrideSource: pickedSourceOverride,
@@ -314,7 +316,7 @@ class AddAppPageState extends State<AddAppPage> {
 
   @override
   Widget build(BuildContext context) {
-    AppsProvider appsProvider = context.read<AppsProvider>();
+    final AppsProvider appsProvider = context.read<AppsProvider>();
     // Narrow subscription to only the settings this page actually reads
     // in build. The previous broad watch rebuilt the (long, expensive)
     // add-app form on every settings notify, including ones unrelated to
@@ -333,11 +335,11 @@ class AddAppPageState extends State<AddAppPage> {
         s.getSettingString(GitHub.validatedPATFingerprintKey),
       ),
     );
-    SettingsProvider settingsProvider = context.read<SettingsProvider>();
-    NotificationsProvider notificationsProvider = context
+    final SettingsProvider settingsProvider = context.read<SettingsProvider>();
+    final NotificationsProvider notificationsProvider = context
         .read<NotificationsProvider>();
 
-    bool doingSomething = gettingAppInfo || searching;
+    final bool doingSomething = gettingAppInfo || searching;
     // The nested Scaffold inherits bottom padding from the home Scaffold when
     // the blurred bottom nav extends underneath it. Place this FAB from the
     // actual screen bottom chrome instead of letting the default endFloat
@@ -364,11 +366,12 @@ class AddAppPageState extends State<AddAppPage> {
       bool userPickedTrackOnly, {
       bool ignoreHideSetting = false,
     }) async {
-      var useTrackOnly = userPickedTrackOnly || pickedSource!.enforceTrackOnly;
+      final useTrackOnly =
+          userPickedTrackOnly || pickedSource!.enforceTrackOnly;
       if (useTrackOnly &&
           (!settingsProvider.hideTrackOnlyWarning || ignoreHideSetting)) {
         // ignore: use_build_context_synchronously
-        var values = await showDialog(
+        final values = await showDialog(
           context: context,
           builder: (BuildContext ctx) {
             return GeneratedFormModal(
@@ -396,7 +399,7 @@ class AddAppPageState extends State<AddAppPage> {
       }
     }
 
-    getReleaseDateAsVersionConfirmationIfNeeded(
+    Future<bool> getReleaseDateAsVersionConfirmationIfNeeded(
       bool userPickedTrackOnly,
     ) async {
       return (!(getVersionStringSource(additionalSettings) ==
@@ -450,7 +453,7 @@ class AddAppPageState extends State<AddAppPage> {
 
     // ── Add app (URL mode) ─────────────────────────────────────────────
 
-    addApp({bool resetUserInputAfter = false}) async {
+    Future<void> addApp({bool resetUserInputAfter = false}) async {
       bool appWasAdded = false;
       setState(() {
         gettingAppInfo = true;
@@ -488,7 +491,7 @@ class AddAppPageState extends State<AddAppPage> {
             throw ObtainiumError(tr('cancelled'));
           }
         }
-        var userPickedTrackOnly = additionalSettings['trackOnly'] == true;
+        final userPickedTrackOnly = additionalSettings['trackOnly'] == true;
         App? app;
         if ((await getTrackOnlyConfirmationIfNeeded(userPickedTrackOnly)) &&
             (await getReleaseDateAsVersionConfirmationIfNeeded(
@@ -504,7 +507,8 @@ class AddAppPageState extends State<AddAppPage> {
             }
             additionalSettings[GitHub.enforceAttestationsKey] = false;
           }
-          var trackOnly = pickedSource!.enforceTrackOnly || userPickedTrackOnly;
+          final trackOnly =
+              pickedSource!.enforceTrackOnly || userPickedTrackOnly;
           app = await sourceProvider.getApp(
             pickedSource!,
             userInput.trim(),
@@ -515,7 +519,7 @@ class AddAppPageState extends State<AddAppPage> {
           );
           // Only download the APK here if you need to for the package ID
           if (isTempId(app) && app.additionalSettings['trackOnly'] != true) {
-            var packageIdDetectionChoice =
+            final packageIdDetectionChoice =
                 await getPackageIdDetectionConfirmation();
             if (packageIdDetectionChoice == null) {
               throw ObtainiumError(tr('cancelled'));
@@ -525,7 +529,7 @@ class AddAppPageState extends State<AddAppPage> {
               app.additionalSettings['trackOnly'] = true;
             } else {
               if (!context.mounted) return;
-              var apkUrl = await appsProvider.confirmAppFileUrl(
+              final apkUrl = await appsProvider.confirmAppFileUrl(
                 app,
                 context,
                 false,
@@ -540,7 +544,7 @@ class AddAppPageState extends State<AddAppPage> {
                     .indexOf(apkUrl.value),
               );
               // ignore: use_build_context_synchronously
-              var downloadedArtifact = await appsProvider.downloadApp(
+              final downloadedArtifact = await appsProvider.downloadApp(
                 app,
                 globalNavigatorKey.currentContext,
                 notificationsProvider: notificationsProvider,
@@ -608,11 +612,13 @@ class AddAppPageState extends State<AddAppPage> {
           final homeState = context.findAncestorStateOfType<HomePageState>();
           if (isLargeScreen && homeState != null) {
             _resetUrlModeInput();
-            homeState.switchToAppsTabAndOpenApp(app.id);
+            unawaited(homeState.switchToAppsTabAndOpenApp(app.id));
           } else {
-            Navigator.push(
-              globalNavigatorKey.currentContext ?? context,
-              heroFriendlyAppPageRoute((_) => AppPage(appId: app!.id)),
+            unawaited(
+              Navigator.push(
+                globalNavigatorKey.currentContext ?? context,
+                heroFriendlyAppPageRoute((_) => AppPage(appId: app!.id)),
+              ),
             );
           }
         }
@@ -902,7 +908,7 @@ class AddAppPageState extends State<AddAppPage> {
                   ],
                 ],
                 onValueChanges: (values, valid, isBuilding) {
-                  fn() {
+                  void fn() {
                     pickedSourceOverride =
                         (values['overrideSource'] == null ||
                             values['overrideSource'] == '')
@@ -1070,7 +1076,7 @@ class AddAppPageState extends State<AddAppPage> {
 
     // ── Inline search runner ───────────────────────────────────────────
 
-    runInlineSearch({
+    Future<void> runInlineSearch({
       required AppsProvider appsProvider,
       required SettingsProvider settingsProvider,
     }) async {
@@ -1118,7 +1124,7 @@ class AddAppPageState extends State<AddAppPage> {
           throw ObtainiumError(tr('noResults'));
         }
 
-        List<MapEntry<String, Map<String, List<String>>>?>
+        final List<MapEntry<String, Map<String, List<String>>>?>
         results = (await Future.wait(
           sourceProvider.sources
               .where((e) => selectedSourceNames.contains(e.name))
@@ -1154,13 +1160,11 @@ class AddAppPageState extends State<AddAppPage> {
                                             e.runtimeType,
                                       )
                                       .map((a) {
-                                        var uri = Uri.parse(a.app.url);
+                                        final uri = Uri.parse(a.app.url);
                                         return '${uri.origin}${uri.path}';
                                       }),
                                 ],
-                                value: e.hosts.isNotEmpty
-                                    ? e.hosts[0]
-                                    : '',
+                                value: e.hosts.isNotEmpty ? e.hosts[0] : '',
                                 required: true,
                               ),
                             ],
@@ -1190,16 +1194,16 @@ class AddAppPageState extends State<AddAppPage> {
         )).where((a) => a != null).toList();
 
         // Interleave results from multiple sources
-        Map<String, MapEntry<String, List<String>>> res = {};
+        final Map<String, MapEntry<String, List<String>>> res = {};
         var si = 0;
         var done = false;
         while (!done) {
           done = true;
           for (var r in results) {
-            var sourceName = r!.key;
+            final sourceName = r!.key;
             if (r.value.length > si) {
               done = false;
-              var singleRes = r.value.entries.elementAt(si);
+              final singleRes = r.value.entries.elementAt(si);
               res[singleRes.key] = MapEntry(sourceName, singleRes.value);
             }
           }
@@ -1575,8 +1579,9 @@ class AddAppPageState extends State<AddAppPage> {
       final Color iconColor = selected ? cs.primary : cs.onSurfaceVariant;
       final Color chevronColor = cs.onSurfaceVariant;
 
-      final double modeTileRadius = settingsProvider
-          .cardCornerRadiusFor(SettingsProvider.baseCollapsedHeaderRadius);
+      final double modeTileRadius = settingsProvider.cardCornerRadiusFor(
+        SettingsProvider.baseCollapsedHeaderRadius,
+      );
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8.0),

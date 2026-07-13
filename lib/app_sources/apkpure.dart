@@ -147,7 +147,9 @@ class APKPure extends AppSource {
       apkUrls = [apkUrls.first];
     }
 
-    int? apkSizeBytes = apkUrls.isNotEmpty ? sizeByName[apkUrls.last.key] : null;
+    int? apkSizeBytes = apkUrls.isNotEmpty
+        ? sizeByName[apkUrls.last.key]
+        : null;
     if (apkUrls.isNotEmpty) {
       try {
         final responseWithClient = await sourceRequestStreamResponse(

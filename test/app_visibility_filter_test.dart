@@ -8,17 +8,17 @@ App _buildFilterApp({
   bool trackOnly = false,
 }) {
   return App(
-    'com.example.app',
-    'https://example.com/app',
-    'Author',
-    'Example App',
-    installedVersion,
-    latestVersion,
-    const <MapEntry<String, String>>[],
-    0,
-    trackOnly ? const {'trackOnly': true} : const {},
-    DateTime.now(),
-    false,
+    id: 'com.example.app',
+    url: 'https://example.com/app',
+    author: 'Author',
+    name: 'Example App',
+    installedVersion: installedVersion,
+    latestVersion: latestVersion,
+    apkUrls: const <MapEntry<String, String>>[],
+    preferredApkIndex: 0,
+    additionalSettings: trackOnly ? const {'trackOnly': true} : const {},
+    lastUpdateCheck: DateTime.now(),
+    pinned: false,
   );
 }
 

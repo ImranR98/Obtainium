@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:android_intent_plus/android_intent.dart';
@@ -127,6 +126,17 @@ extension AppsProviderLifecycle on AppsProvider {
                 .getStringOrNull('versionExtractionRegEx')
                 ?.isNotEmpty !=
             true);
+    // A commit-sha-like token in either the real or latest version (or the
+    // explicit releaseCommitShaAsVersion setting) means detection IS possible —
+    // don't auto-disable just because such versions can't be standardized
+    // (parity with fork main).
+    final bool hasCommitSha =
+        (realInstalledVersion != null &&
+            commitHashLikeTokensFromVersion(realInstalledVersion).isNotEmpty) ||
+        commitHashLikeTokensFromVersion(app.app.latestVersion).isNotEmpty;
+    final bool releaseCommitShaAsVersion = app.app.settings.getBool(
+      'releaseCommitShaAsVersion',
+    );
     return !app.app.settings.getBool('trackOnly') &&
         !app.app.settings.getBool('releaseDateAsVersion') &&
         !isHTMLWithNoVersionDetection &&
@@ -138,7 +148,9 @@ extension AppsProviderLifecycle on AppsProvider {
                   app.app.installedVersion!,
                 ) !=
                 null ||
-            naiveStandardVersionDetection);
+            naiveStandardVersionDetection ||
+            hasCommitSha ||
+            releaseCommitShaAsVersion);
   }
 
   /// Reconciles reported vs. real installed/latest versions for [app].
@@ -171,7 +183,14 @@ extension AppsProviderLifecycle on AppsProvider {
       app = app.copyWith(installedVersion: null);
       modded = true;
     } else if (realInstalledVersion != null && app.installedVersion == null) {
-      app = app.copyWith(installedVersion: realInstalledVersion);
+      // With detection disabled (non-standard), the device manifest version
+      // isn't the source/release version, so mark installed = latest rather
+      // than the manifest version (parity with fork main).
+      app = app.copyWith(
+        installedVersion: versionDetectionIsStandard
+            ? realInstalledVersion
+            : app.latestVersion,
+      );
       modded = true;
     }
     // 2. Reconcile differences between reported and real installed versions.
@@ -212,14 +231,30 @@ extension AppsProviderLifecycle on AppsProvider {
       }
     }
     // 4. Disable version detection if versions are not standardizable.
-    if (installedInfo != null &&
+    // Guards (parity with fork main): only auto-disable plain auto-detection
+    // (not versionCode mode or an already-non-standard mode), never for
+    // track-only, and NOT when the real device version is effectively equal to
+    // latest (e.g. same commit hash / sha-like) — those are reconcilable, not
+    // failures. The disabled value is the string enum 'pseudo', never bool false.
+    final bool realInstalledVersionMatchesLatest =
+        realInstalledVersion != null &&
+        versionsEffectivelyEqual(realInstalledVersion, app.latestVersion);
+    final bool canAutoDisable =
+        app.additionalSettings['useVersionCodeAsOSVersion'] != true &&
+        (versionDetection == 'auto' ||
+            versionDetection == true ||
+            versionDetection == null);
+    if (canAutoDisable &&
+        !trackOnly &&
+        installedInfo != null &&
         versionDetectionIsStandard &&
+        !realInstalledVersionMatchesLatest &&
         !isVersionDetectionPossible(
           AppInMemory(app, null, installedInfo, null),
         )) {
       app = app.copyWith(
         additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
-          ..['versionDetection'] = false,
+          ..['versionDetection'] = 'pseudo',
         installedVersion: app.latestVersion,
       );
       unawaited(logs.add('Could not reconcile version formats for: ${app.id}'));
@@ -475,11 +510,11 @@ extension AppsProviderLifecycle on AppsProvider {
           await entity.copy(destination.path);
           await entity.delete();
         } catch (e) {
-          logs.add('User icon migrate $fileName: $e');
+          unawaited(logs.add('User icon migrate $fileName: $e'));
         }
       }
     } catch (e) {
-      logs.add('User icon migrate: $e');
+      unawaited(logs.add('User icon migrate: $e'));
     }
   }
 
@@ -502,7 +537,7 @@ extension AppsProviderLifecycle on AppsProvider {
       codec.dispose();
       if (byteData != null) return byteData.buffer.asUint8List();
     } catch (e) {
-      logs.add('Icon resize failed, keeping original: $e');
+      unawaited(logs.add('Icon resize failed, keeping original: $e'));
     }
     return bytes;
   }
@@ -517,7 +552,7 @@ extension AppsProviderLifecycle on AppsProvider {
       if (!_bytesLookLikeRasterImage(bytes)) return null;
       return bytes;
     } catch (e) {
-      logs.add('Icon fetch failed for $url: $e');
+      unawaited(logs.add('Icon fetch failed for $url: $e'));
       return null;
     }
   }
@@ -532,7 +567,9 @@ extension AppsProviderLifecycle on AppsProvider {
     try {
       return await applicationInfo.getAppIcon();
     } catch (e) {
-      logs.add('App icon unavailable for $appId (clearing stale info): $e');
+      unawaited(
+        logs.add('App icon unavailable for $appId (clearing stale info): $e'),
+      );
       final AppInMemory? existing = apps[appId];
       if (existing != null && existing.installedInfo != null) {
         apps.update(
@@ -570,7 +607,7 @@ extension AppsProviderLifecycle on AppsProvider {
           return;
         }
       } catch (e) {
-        logs.add('User icon load failed for $appId: $e');
+        unawaited(logs.add('User icon load failed for $appId: $e'));
       }
     }
 
@@ -637,7 +674,7 @@ extension AppsProviderLifecycle on AppsProvider {
       try {
         return await cachedIcon.readAsBytes();
       } catch (e) {
-        logs.add('loadIconPreviewExcludingUserOverride cache: $e');
+        unawaited(logs.add('loadIconPreviewExcludingUserOverride cache: $e'));
       }
     }
     Uint8List? icon = await _getInstalledAppIconSafely(appId);
@@ -669,7 +706,7 @@ extension AppsProviderLifecycle on AppsProvider {
       notify();
       return null;
     } catch (e) {
-      logs.add('applyUserAppIconPngBytes: $e');
+      unawaited(logs.add('applyUserAppIconPngBytes: $e'));
       return tr('unexpectedError');
     }
   }
@@ -688,7 +725,7 @@ extension AppsProviderLifecycle on AppsProvider {
       final Uint8List bytes = await sourceFile.readAsBytes();
       return applyUserAppIconPngBytes(appId, bytes);
     } catch (e) {
-      logs.add('setUserAppIconFromPngPath: $e');
+      unawaited(logs.add('setUserAppIconFromPngPath: $e'));
       return tr('unexpectedError');
     }
   }

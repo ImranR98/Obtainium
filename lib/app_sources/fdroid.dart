@@ -149,25 +149,20 @@ class FDroid extends AppSource {
         throw NoReleasesError();
       }
       final String host = Uri.parse(standardUrl).host;
-      // Hoist the packages API request so the raw JSON is available both to
-      // getAPKUrlsFromFDroidPackagesAPIResponse (which re-decodes it) and to the
-      // fork's icon / APK-size / display-name logic below, without fetching it
-      // twice.
+      // Fetch the packages API response and hand it to
+      // getAPKUrlsFromFDroidPackagesAPIResponse, which owns all parsing
+      // (version selection, name/icon/APK-size resolution).
       final Response packagesResponse = await sourceRequest(
         'https://$host/api/v1/packages/$appId',
         additionalSettings,
       );
-      final details = getAPKUrlsFromFDroidPackagesAPIResponse(
+      final details = await getAPKUrlsFromFDroidPackagesAPIResponse(
         packagesResponse,
         'https://$host/repo/$appId',
         standardUrl,
         name,
         additionalSettings: additionalSettings,
       );
-      // Reaching this point means the packages API returned 200 (the call above
-      // throws otherwise), so the body is valid JSON safe to reuse.
-      final Map<String, dynamic> response =
-          jsonDecode(packagesResponse.body) as Map<String, dynamic>;
       // Fork addition (reproducible-build verification): skip the per-refresh
       // fdroiddata metadata YAML fetch (gitlab.com) only when the upstream
       // release is unchanged AND the cached verdict is the terminal 'verified'
@@ -218,7 +213,9 @@ class FDroid extends AppSource {
           }
           if (res.statusCode == 200) {
             final lines = res.body.split('\n');
-            final authorLines = lines.where((l) => l.startsWith('AuthorName: '));
+            final authorLines = lines.where(
+              (l) => l.startsWith('AuthorName: '),
+            );
             if (authorLines.isNotEmpty) {
               details.names.author = authorLines.first
                   .split(': ')
@@ -295,13 +292,14 @@ class FDroid extends AppSource {
           details.changeLog = '${cl.substring(0, end)}...';
         }
       }
-      // Fork addition (icon / APK size / display name): populate these on a
-      // fresh version, or reuse the previous check's values on a no-op refresh.
-      // Gated on versionUnchanged alone (see above) so the network round-trips
-      // are skipped whenever the version has not moved.
+      // Fork addition (icon / APK size / display name): on a fresh version
+      // these are resolved inside getAPKUrlsFromFDroidPackagesAPIResponse above;
+      // on a no-op refresh (version unchanged) that method skips the network, so
+      // reuse the previous check's values here instead of clobbering them with
+      // nulls. Gated on versionUnchanged alone (see above).
       if (versionUnchanged) {
         // Reuse — never clobber a good previous value with null.
-        if (prevApp!.iconUrl != null) {
+        if (prevApp.iconUrl != null) {
           details.iconUrl = prevApp.iconUrl;
         }
         if (prevApp.apkSizeBytes != null) {
@@ -309,117 +307,6 @@ class FDroid extends AppSource {
         }
         if (prevApp.name.trim().isNotEmpty) {
           details.names.name = prevApp.name;
-        }
-      } else {
-        // APK size: a cheap HEAD gives the download's content length. Optional,
-        // so any failure is swallowed and update detection still succeeds.
-        int? apkSizeBytes;
-        if (details.apkUrls.isNotEmpty) {
-          try {
-            final headers = await getRequestHeaders(
-              additionalSettings,
-              details.apkUrls.last.value,
-              forAPKDownload: true,
-            );
-            final responseWithClient = await sourceRequestStreamResponse(
-              'HEAD',
-              details.apkUrls.last.value,
-              headers,
-              additionalSettings,
-            );
-            final headResponse = responseWithClient.value.value;
-            final contentLength = headResponse.contentLength;
-            if (headResponse.statusCode >= 200 &&
-                headResponse.statusCode < 300 &&
-                contentLength >= 0) {
-              apkSizeBytes = contentLength;
-            }
-            responseWithClient.value.key.close();
-          } catch (_) {
-            // File size is optional; update detection should still succeed.
-          }
-        }
-        // Icon + display name: derive a package label, then (for official
-        // f-droid.org pages) fetch the package page for a nicer name and icon.
-        String? iconUrl;
-        final String packageLabel;
-        final Object? rawPackageName = response['packageName'];
-        if (rawPackageName is String && rawPackageName.trim().isNotEmpty) {
-          packageLabel = rawPackageName.trim();
-        } else {
-          final String? queryAppId = Uri.parse(
-            standardUrl,
-          ).queryParameters['appId']?.trim();
-          if (queryAppId != null && queryAppId.isNotEmpty) {
-            packageLabel = queryAppId;
-          } else {
-            packageLabel = Uri.parse(standardUrl).pathSegments.last;
-          }
-        }
-        String appName = _fdroidDisplayString(response['name']) ?? packageLabel;
-        final String pageHost = Uri.parse(standardUrl).host;
-        final bool canUseOfficialPackagePage =
-            !hostChanged ||
-            hostIdenticalDespiteAnyChange ||
-            pageHost == 'f-droid.org' ||
-            pageHost == 'www.f-droid.org';
-        if (canUseOfficialPackagePage) {
-          try {
-            final pkgName = packageLabel;
-            if (pageHost == 'f-droid.org' || pageHost == 'www.f-droid.org') {
-              final pageRes = await sourceRequest(
-                'https://$pageHost/packages/$pkgName/',
-                additionalSettings,
-              );
-              if (pageRes.statusCode == 200) {
-                final String? htmlTitleName = _fdroidDisplayNameFromHtml(
-                  pageRes.body,
-                );
-                if (htmlTitleName?.isNotEmpty == true) {
-                  appName = htmlTitleName!;
-                }
-                final doc = await parseHtmlOffIsolate(pageRes.body);
-                iconUrl =
-                    doc
-                        .querySelector('meta[property="og:image"]')
-                        ?.attributes['content'] ??
-                    doc.querySelector('img.package-icon')?.attributes['src'];
-                final String? parsedName =
-                    doc.querySelector('h1.package-name')?.text.trim() ??
-                    doc.querySelector('h3.package-name')?.text.trim() ??
-                    doc.querySelector('.package-title h1')?.text.trim() ??
-                    doc.querySelector('.package-title h3')?.text.trim();
-                if (parsedName != null && parsedName.isNotEmpty) {
-                  appName = parsedName;
-                } else if (htmlTitleName?.isNotEmpty != true) {
-                  final String? titleText =
-                      doc
-                          .querySelector('meta[property="og:title"]')
-                          ?.attributes['content']
-                          ?.trim() ??
-                      doc.querySelector('title')?.text.trim();
-                  if (titleText != null && titleText.isNotEmpty) {
-                    final parts = titleText.split('|');
-                    if (parts.isNotEmpty) {
-                      final String nameFromTitle = parts.first.trim();
-                      if (nameFromTitle.isNotEmpty) {
-                        appName = nameFromTitle;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            // Icon is optional
-          }
-        }
-        details.names.name = appName;
-        if (iconUrl != null) {
-          details.iconUrl = iconUrl;
-        }
-        if (apkSizeBytes != null) {
-          details.apkSizeBytes = apkSizeBytes;
         }
       }
       return details;
@@ -462,13 +349,13 @@ class FDroid extends AppSource {
     }
   }
 
-  APKDetails getAPKUrlsFromFDroidPackagesAPIResponse(
+  Future<APKDetails> getAPKUrlsFromFDroidPackagesAPIResponse(
     Response res,
     String apkUrlPrefix,
     String standardUrl,
     String sourceName, {
     Map<String, dynamic> additionalSettings = const {},
-  }) {
+  }) async {
     final autoSelectHighestVersionCode =
         additionalSettings['autoSelectHighestVersionCode'] == true;
     final trySelectingSuggestedVersionCode =
@@ -498,6 +385,19 @@ class FDroid extends AppSource {
       if (releases.isEmpty) {
         throw NoReleasesError();
       }
+      // Deduped release version-name candidates for the RegEx-assist feature
+      // (rawReleaseTitlesFromSource). Coerced to String — the F-Droid API
+      // normally returns versionName as a string, but guard against numbers.
+      final List<String> rawVersionNameCandidates = <String>[];
+      for (final release in releases) {
+        final String? versionName = release['versionName']?.toString().trim();
+        if (versionName == null ||
+            versionName.isEmpty ||
+            rawVersionNameCandidates.contains(versionName)) {
+          continue;
+        }
+        rawVersionNameCandidates.add(versionName);
+      }
       String? version;
       Iterable<dynamic> releaseChoices = [];
       // Grab the versionCode suggested if the user chose to do that
@@ -505,13 +405,15 @@ class FDroid extends AppSource {
       if (trySelectingSuggestedVersionCode &&
           response['suggestedVersionCode'] != null &&
           filterVersionsByRegEx == null) {
+        final String suggestedVersionCodeText = response['suggestedVersionCode']
+            .toString();
         final suggestedReleases = releases.where(
           (element) =>
-              element['versionCode'] == response['suggestedVersionCode'],
+              element['versionCode'].toString() == suggestedVersionCodeText,
         );
         if (suggestedReleases.isNotEmpty) {
           releaseChoices = suggestedReleases;
-          version = suggestedReleases.first['versionName'];
+          version = suggestedReleases.first['versionName']?.toString();
         }
       }
       // Apply the release filter if any
@@ -520,8 +422,10 @@ class FDroid extends AppSource {
         releaseChoices = [];
         final versionFilter = RegExp(filterVersionsByRegEx!);
         for (var i = 0; i < releases.length; i++) {
-          if (versionFilter.hasMatch(releases[i]['versionName'])) {
-            version = releases[i]['versionName'];
+          if (versionFilter.hasMatch(
+            releases[i]['versionName']?.toString() ?? '',
+          )) {
+            version = releases[i]['versionName']?.toString();
             break;
           }
         }
@@ -530,14 +434,14 @@ class FDroid extends AppSource {
         }
       }
       // Default to the highest version
-      version ??= releases[0]['versionName'];
+      version ??= releases[0]['versionName']?.toString();
       if (version == null || version.isEmpty) {
         throw NoVersionError();
       }
       // If a suggested release was not already picked, pick all those with the selected version
       if (releaseChoices.isEmpty) {
         releaseChoices = releases.where(
-          (element) => element['versionName'] == version,
+          (element) => element['versionName']?.toString() == version,
         );
       }
       // For the remaining releases, use the toggles to auto-select one if possible
@@ -546,9 +450,11 @@ class FDroid extends AppSource {
           releaseChoices = [releaseChoices.first];
         } else if (trySelectingSuggestedVersionCode &&
             response['suggestedVersionCode'] != null) {
+          final String suggestedVersionCodeText =
+              response['suggestedVersionCode'].toString();
           final suggestedReleases = releaseChoices.where(
             (element) =>
-                element['versionCode'] == response['suggestedVersionCode'],
+                element['versionCode'].toString() == suggestedVersionCodeText,
           );
           if (suggestedReleases.isNotEmpty) {
             releaseChoices = suggestedReleases;
@@ -561,6 +467,7 @@ class FDroid extends AppSource {
       final List<String> apkUrls = releaseChoices
           .map((e) => '${apkUrlPrefix}_${e['versionCode']}.apk')
           .toList();
+      final List<String> uniqueApkUrls = apkUrls.toSet().toList();
       // Fork addition (reproducible-build verification): derive an initial
       // status from the F-Droid packages API. A `binaries` field on the
       // response or the selected release indicates a reproducible build; this
@@ -573,10 +480,125 @@ class FDroid extends AppSource {
       final String reproducibleStatus = hasBinaries
           ? reproducibleBuildStatusVerified
           : reproducibleBuildStatusNoData;
+      // Skip the per-check APK-size HEAD and the package-page fetch (icon/name)
+      // when the upstream version is unchanged since the last check. getApp()
+      // reuses the previous apkSizeBytes / iconUrl / name in that case, so these
+      // network round-trips would just be wasted work on a no-op refresh.
+      final App? prevApp = previouslyCheckedApp;
+      final bool versionUnchanged =
+          prevApp != null &&
+          prevApp.rawLatestVersionFromSource != null &&
+          prevApp.rawLatestVersionFromSource == version;
+      int? apkSizeBytes;
+      if (uniqueApkUrls.isNotEmpty && !versionUnchanged) {
+        try {
+          final headers = await getRequestHeaders(
+            additionalSettings,
+            uniqueApkUrls.last,
+            forAPKDownload: true,
+          );
+          final responseWithClient = await sourceRequestStreamResponse(
+            'HEAD',
+            uniqueApkUrls.last,
+            headers,
+            additionalSettings,
+          );
+          final headResponse = responseWithClient.value.value;
+          final contentLength = headResponse.contentLength;
+          if (headResponse.statusCode >= 200 &&
+              headResponse.statusCode < 300 &&
+              contentLength >= 0) {
+            apkSizeBytes = contentLength;
+          }
+          responseWithClient.value.key.close();
+        } catch (_) {
+          // File size is optional; update detection should still succeed.
+        }
+      }
+      // Display name resolution (readable-app-name): prefer the localized name
+      // from the packages API, then the official package page's parsed/title
+      // name; fall back to the package id last. Icon is picked up from the same
+      // package page when available.
+      String? iconUrl;
+      final String packageLabel;
+      final Object? rawPackageName = response['packageName'];
+      if (rawPackageName is String && rawPackageName.trim().isNotEmpty) {
+        packageLabel = rawPackageName.trim();
+      } else {
+        final String? queryAppId = Uri.parse(
+          standardUrl,
+        ).queryParameters['appId']?.trim();
+        if (queryAppId != null && queryAppId.isNotEmpty) {
+          packageLabel = queryAppId;
+        } else {
+          packageLabel = Uri.parse(standardUrl).pathSegments.last;
+        }
+      }
+      String appName = _fdroidDisplayString(response['name']) ?? packageLabel;
+      final String pageHost = Uri.parse(standardUrl).host;
+      final bool canUseOfficialPackagePage =
+          !hostChanged ||
+          hostIdenticalDespiteAnyChange ||
+          pageHost == 'f-droid.org' ||
+          pageHost == 'www.f-droid.org';
+      if (canUseOfficialPackagePage && !versionUnchanged) {
+        try {
+          final pkgName = packageLabel;
+          if (pageHost == 'f-droid.org' || pageHost == 'www.f-droid.org') {
+            final pageRes = await sourceRequest(
+              'https://$pageHost/packages/$pkgName/',
+              additionalSettings,
+            );
+            if (pageRes.statusCode == 200) {
+              final String? htmlTitleName = _fdroidDisplayNameFromHtml(
+                pageRes.body,
+              );
+              if (htmlTitleName?.isNotEmpty == true) {
+                appName = htmlTitleName!;
+              }
+              final doc = await parseHtmlOffIsolate(pageRes.body);
+              iconUrl =
+                  doc
+                      .querySelector('meta[property="og:image"]')
+                      ?.attributes['content'] ??
+                  doc.querySelector('img.package-icon')?.attributes['src'];
+              final String? parsedName =
+                  doc.querySelector('h1.package-name')?.text.trim() ??
+                  doc.querySelector('h3.package-name')?.text.trim() ??
+                  doc.querySelector('.package-title h1')?.text.trim() ??
+                  doc.querySelector('.package-title h3')?.text.trim();
+              if (parsedName != null && parsedName.isNotEmpty) {
+                appName = parsedName;
+              } else if (htmlTitleName?.isNotEmpty != true) {
+                final String? titleText =
+                    doc
+                        .querySelector('meta[property="og:title"]')
+                        ?.attributes['content']
+                        ?.trim() ??
+                    doc.querySelector('title')?.text.trim();
+                if (titleText != null && titleText.isNotEmpty) {
+                  final parts = titleText.split('|');
+                  if (parts.isNotEmpty) {
+                    final String nameFromTitle = parts.first.trim();
+                    if (nameFromTitle.isNotEmpty) {
+                      appName = nameFromTitle;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Icon is optional
+        }
+      }
       return APKDetails(
         version,
-        getApkUrlsFromUrls(apkUrls.toSet().toList()),
-        AppNames(sourceName, Uri.parse(standardUrl).pathSegments.last),
+        getApkUrlsFromUrls(uniqueApkUrls),
+        AppNames(sourceName, appName),
+        iconUrl: iconUrl,
+        rawReleaseTitleCandidates: rawVersionNameCandidates,
+        apkSizeBytes: apkSizeBytes,
         isReproducible: reproducibleBuildBoolFromStatus(reproducibleStatus),
         reproducibleStatus: reproducibleStatus,
       );

@@ -135,9 +135,9 @@ String _diagnosticErrorMessage(
 Future<void> loadTranslations() async {
   // See easy_localization/issues/210
   await EasyLocalizationController.initEasyLocation();
-  var s = SettingsProvider();
+  final s = SettingsProvider();
   await s.initializeSettings();
-  var forceLocale = s.forcedLocale;
+  final forceLocale = s.forcedLocale;
   final controller = EasyLocalizationController(
     saveLocale: true,
     forceLocale: forceLocale,
@@ -193,7 +193,7 @@ class MyTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     debugPrint('onStart(starter: ${starter.name})');
-    bgUpdateCheck('bg_check', null);
+    unawaited(bgUpdateCheck('bg_check', null));
   }
 
   @override
@@ -218,7 +218,7 @@ void main() async {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(systemNavigationBarColor: Colors.transparent),
     );
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
   }
   final SettingsProvider settingsProvider = SettingsProvider();
   await settingsProvider.initializeSettings();
@@ -512,10 +512,10 @@ class _ObtainiumState extends State<Obtainium> {
         s.appUiScale,
       ),
     );
-    SettingsProvider settingsProvider = context.read<SettingsProvider>();
-    AppsProvider appsProvider = context.read<AppsProvider>();
-    LogsProvider logs = context.read<LogsProvider>();
-    NotificationsProvider notifs = context.read<NotificationsProvider>();
+    final SettingsProvider settingsProvider = context.read<SettingsProvider>();
+    final AppsProvider appsProvider = context.read<AppsProvider>();
+    final LogsProvider logs = context.read<LogsProvider>();
+    final NotificationsProvider notifs = context.read<NotificationsProvider>();
     if (settingsProvider.updateInterval == 0) {
       stopForegroundService();
       unawaited(_cancelWorkManager());
@@ -531,7 +531,7 @@ class _ObtainiumState extends State<Obtainium> {
     if (settingsProvider.prefs == null) {
       settingsProvider.initializeSettings();
     } else {
-      bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
+      final bool isFirstRun = settingsProvider.checkAndFlipFirstRun();
       if (isFirstRun) {
         logs.add('This is the first ever run of ObtainX.');
         // If this is the first run, add ObtainX to the Apps list
@@ -711,19 +711,22 @@ class _ObtainiumState extends State<Obtainium> {
             // with the fork's boosted colour science (the passed schemes) plus
             // the fork's vivid surface choices and custom nav/switch/segmented/
             // tooltip themes via copyWith.
-            theme: buildObtainiumTheme(
-              themeColorScheme,
-              settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
-            ).copyWith(
-              scaffoldBackgroundColor: themeColorScheme.surface,
-              canvasColor: themeColorScheme.surface,
-              cardColor: themeColorScheme.surfaceContainer,
-              focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-              navigationBarTheme: navigationBarThemeFor(themeColorScheme),
-              segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
-              switchTheme: appSwitchTheme(themeColorScheme),
-              tooltipTheme: tooltipThemeFor(themeColorScheme),
-            ),
+            theme:
+                buildObtainiumTheme(
+                  themeColorScheme,
+                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+                ).copyWith(
+                  scaffoldBackgroundColor: themeColorScheme.surface,
+                  canvasColor: themeColorScheme.surface,
+                  cardColor: themeColorScheme.surfaceContainer,
+                  focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
+                  navigationBarTheme: navigationBarThemeFor(themeColorScheme),
+                  segmentedButtonTheme: appSegmentedButtonTheme(
+                    themeColorScheme,
+                  ),
+                  switchTheme: appSwitchTheme(themeColorScheme),
+                  tooltipTheme: tooltipThemeFor(themeColorScheme),
+                ),
             darkTheme:
                 buildObtainiumTheme(
                   darkThemeColorScheme,

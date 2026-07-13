@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -38,7 +39,7 @@ String apkSaveTreeUriDisplayLabel(Uri uri) {
 
 /// Display path for SAF tree URIs, with `primary:` storage prefix removed.
 String folderDisplayPathFromTreeUri(Uri uri) {
-  String label = apkSaveTreeUriDisplayLabel(uri);
+  final String label = apkSaveTreeUriDisplayLabel(uri);
   const String primaryPrefix = 'primary:';
   if (label.startsWith(primaryPrefix)) {
     return label.substring(primaryPrefix.length);
@@ -58,14 +59,14 @@ class _ImportExportPageState extends State<ImportExportPage> {
 
   @override
   Widget build(BuildContext context) {
-    SourceProvider sourceProvider = SourceProvider();
+    final SourceProvider sourceProvider = SourceProvider();
     // [appsProvider] is intentionally a broad watch — this page lists
     // every tracked app to drive the export selection, and any add /
     // remove / rename should refresh the list. The expensive cost is
     // [settingsProvider] which used to broad-watch and rebuild this
     // long page on every unrelated settings change. Narrow it to only
     // the four fields actually read in build.
-    var appsProvider = context.watch<AppsProvider>();
+    final appsProvider = context.watch<AppsProvider>();
     context.select<SettingsProvider, int>(
       (s) => Object.hash(
         s.useGradientBackground,
@@ -74,9 +75,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
         s.autoExportOnChanges,
       ),
     );
-    var settingsProvider = context.read<SettingsProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
 
-    var outlineButtonStyle = ButtonStyle(
+    final outlineButtonStyle = ButtonStyle(
       foregroundColor: WidgetStateProperty.all(
         Theme.of(context).colorScheme.onSurface,
       ),
@@ -90,7 +91,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
       ),
     );
 
-    urlListImport({String? initValue, bool overrideInitValid = false}) {
+    void urlListImport({String? initValue, bool overrideInitValid = false}) {
       showDialog<Map<String, dynamic>?>(
         context: context,
         builder: (BuildContext ctx) {
@@ -107,7 +108,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   additionalValidators: [
                     (dynamic value) {
                       if (value != null && value.isNotEmpty) {
-                        var lines = value.trim().split('\n');
+                        final lines = value.trim().split('\n');
                         for (int i = 0; i < lines.length; i++) {
                           try {
                             sourceProvider.getSource(lines[i]);
@@ -126,7 +127,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
         },
       ).then((values) {
         if (values != null) {
-          var urls = (values['appURLList'] as String).split('\n');
+          final urls = (values['appURLList'] as String).split('\n');
           setState(() {
             importInProgress = true;
           });
@@ -167,25 +168,27 @@ class _ImportExportPageState extends State<ImportExportPage> {
       });
     }
 
-    runObtainiumExport({bool pickOnly = false}) async {
+    Future<void> runObtainiumExport({bool pickOnly = false}) async {
       hapticSelection();
-      appsProvider
-          .export(
-            pickOnly:
-                pickOnly || (await settingsProvider.getExportDir()) == null,
-            sp: settingsProvider,
-          )
-          .then((String? result) {
-            if (!context.mounted) return;
-            if (result != null) {
-              showMessage(tr('exportedTo', args: [result]), context);
-            }
-            setState(() {});
-          })
-          .catchError((e) {
-            if (!context.mounted) return;
-            showError(e, context);
-          });
+      unawaited(
+        appsProvider
+            .export(
+              pickOnly:
+                  pickOnly || (await settingsProvider.getExportDir()) == null,
+              sp: settingsProvider,
+            )
+            .then((String? result) {
+              if (!context.mounted) return;
+              if (result != null) {
+                showMessage(tr('exportedTo', args: [result]), context);
+              }
+              setState(() {});
+            })
+            .catchError((e) {
+              if (!context.mounted) return;
+              showError(e, context);
+            }),
+      );
     }
 
     Future<void> importObtainiumBackupData(String backupData) async {
@@ -196,7 +199,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
       }
       final importResult = await appsProvider.import(backupData);
       if (!context.mounted) return;
-      var cats = settingsProvider.categories;
+      final cats = settingsProvider.categories;
       appsProvider.apps.forEach((key, appInMemory) {
         for (var category in appInMemory.app.categories) {
           if (!cats.containsKey(category)) {
@@ -254,7 +257,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
       return File(result.files.single.path!).readAsString();
     }
 
-    runObtainiumImport() async {
+    Future<void> runObtainiumImport() async {
       hapticSelection();
       var importStarted = false;
       try {
@@ -279,7 +282,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
       }
     }
 
-    runUrlImport() async {
+    Future<void> runUrlImport() async {
       final FilePickerResult? result;
       try {
         result = await FilePicker.pickFiles();
@@ -315,9 +318,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
       }
     }
 
-    runSourceSearch(AppSource source) {
+    void runSourceSearch(AppSource source) {
       () async {
-            var values = await showDialog<Map<String, dynamic>?>(
+            final values = await showDialog<Map<String, dynamic>?>(
               context: context,
               builder: (BuildContext ctx) {
                 return GeneratedFormModal(
@@ -337,9 +340,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                         label: source.hosts.isNotEmpty
                             ? tr('overrideSource')
                             : plural('url', 1).substring(2),
-                        value: source.hosts.isNotEmpty
-                            ? source.hosts[0]
-                            : '',
+                        value: source.hosts.isNotEmpty ? source.hosts[0] : '',
                         required: true,
                       ),
                     ],
@@ -357,13 +358,13 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   overrideSource: source.runtimeType.toString(),
                 );
               }
-              var urlsWithDescriptions = await source.search(
+              final urlsWithDescriptions = await source.search(
                 values['searchQuery'] as String,
                 querySettings: values,
               );
               if (urlsWithDescriptions.isNotEmpty) {
                 if (!context.mounted) return;
-                var selectedUrls = await showDialog<List<String>?>(
+                final selectedUrls = await showDialog<List<String>?>(
                   context: context,
                   builder: (BuildContext ctx) {
                     return SelectionModal(
@@ -373,7 +374,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                   },
                 );
                 if (selectedUrls != null && selectedUrls.isNotEmpty) {
-                  var errors = await appsProvider.addAppsByURL(
+                  final errors = await appsProvider.addAppsByURL(
                     selectedUrls,
                     sourceOverride: source,
                   );
@@ -389,14 +390,16 @@ class _ImportExportPageState extends State<ImportExportPage> {
                       context,
                     );
                   } else {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext ctx) {
-                        return ImportErrorDialog(
-                          urlsLength: selectedUrls.length,
-                          errors: errors,
-                        );
-                      },
+                    unawaited(
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext ctx) {
+                          return ImportErrorDialog(
+                            urlsLength: selectedUrls.length,
+                            errors: errors,
+                          );
+                        },
+                      ),
                     );
                   }
                 }
@@ -416,9 +419,9 @@ class _ImportExportPageState extends State<ImportExportPage> {
           });
     }
 
-    runMassSourceImport(MassAppUrlSource source) {
+    void runMassSourceImport(MassAppUrlSource source) {
       () async {
-            var values = await showDialog<Map<String, dynamic>?>(
+            final values = await showDialog<Map<String, dynamic>?>(
               context: context,
               builder: (BuildContext ctx) {
                 return GeneratedFormModal(
@@ -433,18 +436,18 @@ class _ImportExportPageState extends State<ImportExportPage> {
               setState(() {
                 importInProgress = true;
               });
-              var urlsWithDescriptions = await source.getUrlsWithDescriptions(
+              final urlsWithDescriptions = await source.getUrlsWithDescriptions(
                 values.values.map((e) => e.toString()).toList(),
               );
               if (!context.mounted) return;
-              var selectedUrls = await showDialog<List<String>?>(
+              final selectedUrls = await showDialog<List<String>?>(
                 context: context,
                 builder: (BuildContext ctx) {
                   return SelectionModal(entries: urlsWithDescriptions);
                 },
               );
               if (selectedUrls != null) {
-                var errors = await appsProvider.addAppsByURL(selectedUrls);
+                final errors = await appsProvider.addAppsByURL(selectedUrls);
                 if (!context.mounted) return;
                 if (errors.isEmpty) {
                   showMessage(
@@ -455,14 +458,16 @@ class _ImportExportPageState extends State<ImportExportPage> {
                     context,
                   );
                 } else {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext ctx) {
-                      return ImportErrorDialog(
-                        urlsLength: selectedUrls.length,
-                        errors: errors,
-                      );
-                    },
+                  unawaited(
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext ctx) {
+                        return ImportErrorDialog(
+                          urlsLength: selectedUrls.length,
+                          errors: errors,
+                        );
+                      },
+                    ),
                   );
                 }
               }
@@ -479,7 +484,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
           });
     }
 
-    var sourceStrings = <String, List<String>>{};
+    final sourceStrings = <String, List<String>>{};
     sourceProvider.sources.where((e) => e.canSearch).forEach((s) {
       sourceStrings[s.name] = [s.name];
     });
@@ -589,7 +594,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
         onPressed: importInProgress
             ? null
             : () async {
-                var searchSourceName =
+                final searchSourceName =
                     await showDialog<List<String>?>(
                       context: context,
                       builder: (BuildContext ctx) {
@@ -606,7 +611,7 @@ class _ImportExportPageState extends State<ImportExportPage> {
                       },
                     ) ??
                     [];
-                var searchSource = sourceProvider.sources
+                final searchSource = sourceProvider.sources
                     .where((e) => searchSourceName.contains(e.name))
                     .toList();
                 if (searchSource.isNotEmpty) {
@@ -1243,11 +1248,13 @@ class _SelectionModalState extends State<SelectionModal> {
       }
       filteredEntryKeys = matches;
     }
-    getSelectAllButton() {
+    Widget getSelectAllButton() {
       if (widget.onlyOneSelectionAllowed) {
         return const SizedBox.shrink();
       }
-      var noneSelected = entrySelections.values.where((v) => v == true).isEmpty;
+      final noneSelected = entrySelections.values
+          .where((v) => v == true)
+          .isEmpty;
       return noneSelected
           ? TextButton(
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
@@ -1301,7 +1308,7 @@ class _SelectionModalState extends State<SelectionModal> {
         : null;
 
     Widget buildEntryTile(MapEntry<String, List<String>> entry) {
-      selectThis(bool? value) {
+      void selectThis(bool? value) {
         setState(() {
           value ??= false;
           if (value! && widget.onlyOneSelectionAllowed) {
@@ -1312,7 +1319,7 @@ class _SelectionModalState extends State<SelectionModal> {
         });
       }
 
-      var urlLink = GestureDetector(
+      final urlLink = GestureDetector(
         onTap: !widget.titlesAreLinks
             ? null
             : () {
@@ -1346,7 +1353,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       );
 
-      var descriptionText = entry.value.length <= 1
+      final descriptionText = entry.value.length <= 1
           ? const SizedBox.shrink()
           : Text(
               entry.value[1].length > 128
@@ -1355,11 +1362,11 @@ class _SelectionModalState extends State<SelectionModal> {
               style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
             );
 
-      var selectedEntries = entrySelections.entries
+      final selectedEntries = entrySelections.entries
           .where((e) => e.value)
           .toList();
 
-      var singleSelectTile = RadioGroup<String>(
+      final singleSelectTile = RadioGroup<String>(
         groupValue: selectedEntries.isEmpty
             ? null
             : selectedEntries.first.key.key,
@@ -1393,7 +1400,7 @@ class _SelectionModalState extends State<SelectionModal> {
         ),
       );
 
-      var multiSelectTile = SwitchListTile(
+      final multiSelectTile = SwitchListTile(
         title: GestureDetector(
           onTap: widget.titlesAreLinks
               ? null

@@ -131,7 +131,7 @@ bool isPlausibleVersionDateTokenYYYYMMDD(String token) {
   return true;
 }
 
-Set<String> _commitHashLikeTokensFromVersion(String version) {
+Set<String> commitHashLikeTokensFromVersion(String version) {
   final hexPattern = RegExp(r'[0-9a-fA-F]{6,}');
   final result = <String>{};
   for (final Match match in hexPattern.allMatches(version)) {
@@ -175,8 +175,8 @@ bool versionsEffectivelyEqual(String installed, String latest) {
   if (_oneVersionStringContainsOtherAsBoundedSubstring(installed, latest)) {
     return true;
   }
-  final installedHashes = _commitHashLikeTokensFromVersion(installed);
-  final latestHashes = _commitHashLikeTokensFromVersion(latest);
+  final installedHashes = commitHashLikeTokensFromVersion(installed);
+  final latestHashes = commitHashLikeTokensFromVersion(latest);
   if (installedHashes.intersection(latestHashes).isNotEmpty) {
     return true;
   }
@@ -242,19 +242,19 @@ bool _dotSeparatedNumericPrefixThenIncomparableHashRemainder(
       continue;
     }
     if (installedNumeric != latestNumeric) {
-      final bool hashInstalled = _commitHashLikeTokensFromVersion(
+      final bool hashInstalled = commitHashLikeTokensFromVersion(
         installedSegment,
       ).isNotEmpty;
-      final bool hashLatest = _commitHashLikeTokensFromVersion(
+      final bool hashLatest = commitHashLikeTokensFromVersion(
         latestSegment,
       ).isNotEmpty;
       if (hashInstalled || hashLatest) return true;
       return false;
     }
-    final bool hashInstalled = _commitHashLikeTokensFromVersion(
+    final bool hashInstalled = commitHashLikeTokensFromVersion(
       installedSegment,
     ).isNotEmpty;
-    final bool hashLatest = _commitHashLikeTokensFromVersion(
+    final bool hashLatest = commitHashLikeTokensFromVersion(
       latestSegment,
     ).isNotEmpty;
     if (hashInstalled || hashLatest) return true;
@@ -274,7 +274,7 @@ bool _dotSeparatedNumericPrefixThenIncomparableHashRemainder(
         int.parse(tailSegment) == 0) {
       continue;
     }
-    if (_commitHashLikeTokensFromVersion(tailSegment).isNotEmpty) return true;
+    if (commitHashLikeTokensFromVersion(tailSegment).isNotEmpty) return true;
   }
   return false;
 }

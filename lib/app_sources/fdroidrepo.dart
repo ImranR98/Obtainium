@@ -19,7 +19,7 @@ Future<Response> fdroidRepoRequestIndexWithVariants(
   String normalizedRepoBaseUrl,
   Map<String, dynamic> additionalSettings,
 ) async {
-  String url = normalizedRepoBaseUrl;
+  final String url = normalizedRepoBaseUrl;
   Response res = await doSourceRequest(
     '$url${url.endsWith('/index.xml') ? '' : '/index.xml'}',
     additionalSettings,
@@ -151,7 +151,7 @@ class FDroidRepo extends AppSource {
     Future<String?> Function(String appId, int versionCode, String? apkSha256)?
     reproducibleReleaseStatus,
   }) async {
-    var body = await parseHtmlOffIsolate(indexXmlResponse.body);
+    final body = await parseHtmlOffIsolate(indexXmlResponse.body);
     var foundApps = body.querySelectorAll('application').where((element) {
       return element.attributes['id'] == appIdOrName;
     }).toList();
@@ -176,8 +176,8 @@ class FDroidRepo extends AppSource {
     }
     var authorName =
         body.querySelector('repo')?.attributes['name'] ?? authorFallback;
-    String appId = foundApps[0].attributes['id']!;
-    var appName = foundApps[0].querySelector('name')?.innerHtml ?? appId;
+    final String appId = foundApps[0].attributes['id']!;
+    final appName = foundApps[0].querySelector('name')?.innerHtml ?? appId;
     List<dynamic> releases = foundApps[0].querySelectorAll('package').toList();
     releases = releases.where((release) {
       return release.querySelector('apkname') != null;
@@ -216,15 +216,19 @@ class FDroidRepo extends AppSource {
       }
     }
 
-    String? changeLog = foundApps[0].querySelector('changelog')?.innerHtml;
-    String? latestVersion = releases[0].querySelector('version')?.innerHtml;
+    final String? changeLog = foundApps[0]
+        .querySelector('changelog')
+        ?.innerHtml;
+    final String? latestVersion = releases[0]
+        .querySelector('version')
+        ?.innerHtml;
     if (latestVersion == null) {
       throw NoVersionError();
     }
-    String? marketvercodeStr = foundApps[0]
+    final String? marketvercodeStr = foundApps[0]
         .querySelector('marketvercode')
         ?.innerHtml;
-    int? marketvercode = int.tryParse(marketvercodeStr ?? '');
+    final int? marketvercode = int.tryParse(marketvercodeStr ?? '');
     List selectedReleases = [];
     final bool trySelectingSuggestedVersionCode =
         additionalSettings['trySelectingSuggestedVersionCode'] != false;
@@ -241,7 +245,9 @@ class FDroidRepo extends AppSource {
           )
           .toList();
     }
-    String? appAuthorName = foundApps[0].querySelector('author')?.innerHtml;
+    final String? appAuthorName = foundApps[0]
+        .querySelector('author')
+        ?.innerHtml;
     if (appAuthorName != null) {
       authorName = appAuthorName;
     }
@@ -262,14 +268,14 @@ class FDroidRepo extends AppSource {
         selectedReleases = [selectedReleases[0]];
       }
     }
-    String? selectedVersion = selectedReleases[0]
+    final String? selectedVersion = selectedReleases[0]
         .querySelector('version')
         ?.innerHtml;
     if (selectedVersion == null) {
       throw NoVersionError();
     }
-    String? added = selectedReleases[0].querySelector('added')?.innerHtml;
-    DateTime? releaseDate = added != null ? DateTime.parse(added) : null;
+    final String? added = selectedReleases[0].querySelector('added')?.innerHtml;
+    final DateTime? releaseDate = added != null ? DateTime.parse(added) : null;
     final repoBase = indexXmlResponse.request!.url
         .toString()
         .split('/')
@@ -278,14 +284,17 @@ class FDroidRepo extends AppSource {
         .sublist(1)
         .reversed
         .join('/');
-    List<String> apkUrls = selectedReleases
+    final List<String> apkUrls = selectedReleases
         .map((e) => '$repoBase/${e.querySelector('apkname')!.innerHtml}')
         .toList();
     final String? apkSizeText = selectedReleases.isNotEmpty
         ? selectedReleases.last.querySelector('size')?.innerHtml
         : null;
     final int? apkSizeBytes = int.tryParse(apkSizeText ?? '');
-    String? iconFile = foundApps[0].querySelector('icon')?.innerHtml.trim();
+    final String? iconFile = foundApps[0]
+        .querySelector('icon')
+        ?.innerHtml
+        .trim();
     String? iconUrl;
     if (iconFile != null && iconFile.isNotEmpty) {
       iconUrl = '$repoBase/icons/$iconFile';
