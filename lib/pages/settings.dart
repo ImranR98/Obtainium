@@ -1523,7 +1523,15 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                     ),
                                   ),
                                 )
-                              : (GitHub.hasValidatedPAT(enteredText, sp)
+                              // Show the validated shield only when the PAT is
+                              // BOTH validated AND actually saved (!isDirty).
+                              // Keying the shield on the stored fingerprint
+                              // alone hid the save button when a matching
+                              // fingerprint existed without saved creds (e.g.
+                              // validated via the add-app form), stranding the
+                              // field dirty with no way to persist it.
+                              : (GitHub.hasValidatedPAT(enteredText, sp) &&
+                                        !isDirty
                                     ? Tooltip(
                                         message: tr('githubPATValidated'),
                                         child: Icon(
@@ -1706,7 +1714,9 @@ class _SourceSpecificSectionState extends State<_SourceSpecificSection> {
                                 ),
                               ),
                             )
-                          : (GitLab.hasValidatedPAT(enteredText, sp)
+                          // Shield only when validated AND saved (see the GitHub
+                          // field above for why fingerprint-alone is wrong).
+                          : (GitLab.hasValidatedPAT(enteredText, sp) && !isDirty
                                 ? Tooltip(
                                     message: tr('gitlabPATValidated'),
                                     child: Icon(
@@ -2600,7 +2610,8 @@ class _IntegrationsSectionState extends State<_IntegrationsSection>
                                 ),
                               ),
                             )
-                          : (isValidated
+                          // Shield only when validated AND saved (see GitHub PAT).
+                          : (isValidated && !isDirty
                                 ? Tooltip(
                                     message: tr('virusTotalKeyValidated'),
                                     child: Icon(

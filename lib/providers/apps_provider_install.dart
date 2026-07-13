@@ -189,7 +189,9 @@ extension AppsProviderInstall on AppsProvider {
     switch (settingsProvider.installerMode) {
       case 'shizuku':
         return ShizukuInstaller(settingsProvider);
-      case 'external':
+      // The third-party installer's stored mode value is 'legacy' (what the
+      // settings UI writes, and what fork main uses); do NOT check 'external'.
+      case 'legacy':
         return ExternalInstaller(settingsProvider);
       default:
         return StockInstaller(settingsProvider);

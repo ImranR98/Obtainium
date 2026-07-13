@@ -906,6 +906,21 @@ extension AppsProviderLifecycle on AppsProvider {
   }
 
   Future<void> openAppSettings(String appId) async {
+    // When enabled, open the app's info in the App Manager app instead of the
+    // system settings screen (parity with fork main). Falls back to system
+    // settings if App Manager isn't installed or the launch fails.
+    if (settingsProvider.openAppInfoInAppManager) {
+      try {
+        final AndroidIntent intent = AndroidIntent(
+          action: 'android.intent.action.VIEW',
+          data: 'app-manager://details?id=$appId',
+        );
+        await intent.launch();
+        return;
+      } catch (_) {
+        // Fall through to standard settings below.
+      }
+    }
     final AndroidIntent intent = AndroidIntent(
       action: 'action_application_details_settings',
       data: 'package:$appId',
