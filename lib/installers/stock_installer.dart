@@ -34,6 +34,15 @@ class StockInstaller extends Installer {
       return false;
     }
     final osInfo = await DeviceInfoPlugin().androidInfo;
+    final installedInfo = await getInstalledInfo(app.id);
+    if (installedInfo == null) {
+      unawaited(
+        LogsProvider().add(
+          'App will not be installed silently: target package is not installed: ${app.id}',
+        ),
+      );
+      return false;
+    }
     String? installerPackageName;
     try {
       installerPackageName = osInfo.version.sdkInt >= 30
@@ -72,9 +81,7 @@ class StockInstaller extends Installer {
     // Session installer silent installs require a recent enough target SDK;
     // this constraint is specific to the stock installer.
     // https://developer.android.com/reference/android/content/pm/PackageInstaller.SessionParams#setRequireUserAction(int)
-    final int? targetSDK = (await getInstalledInfo(
-      app.id,
-    ))?.applicationInfo?.targetSdkVersion;
+    final int? targetSDK = installedInfo.applicationInfo?.targetSdkVersion;
     final int requiredSDK = osInfo.version.sdkInt - 3;
     if (!(targetSDK != null && targetSDK >= requiredSDK)) {
       unawaited(

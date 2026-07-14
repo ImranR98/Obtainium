@@ -1455,8 +1455,15 @@ class SourceProvider {
   /// only need the source's type or its (type-level) flags/form items — e.g.
   /// JSON compatibility migration and version-detection checks. Callers MUST
   /// NOT mutate the returned instance.
-  AppSource getSourceTemplate(String url, {String? overrideSource}) =>
-      getSource(url, overrideSource: overrideSource);
+  AppSource getSourceTemplate(String url, {String? overrideSource}) {
+    if (overrideSource != null) {
+      return getSource(url, overrideSource: overrideSource);
+    }
+    // Read-only resolution against the cached source set (callers MUST NOT
+    // mutate the returned instance). Unlike [getSource] this does not build a
+    // fresh instance, keeping version-detection / JSON-compat checks cheap.
+    return _selectSourceForUrl(preStandardizeUrl(url), sources);
+  }
 
   // `naiveStandardVersionDetection` depends only on the resolved source (a
   // function of host + overrideSource), so cache it per host to avoid a
@@ -1495,12 +1502,19 @@ class SourceProvider {
       }
       return res;
     }
-    // The non-override path is read-only, so reuse the cached source set.
-    final allSources = sources;
+    // The result may be mutated by the caller (getApp stores per-check state
+    // such as previouslyCheckedApp on it), so return a FRESH instance to avoid
+    // cross-app races during concurrent update checks (parity with fork main).
+    // Read-only callers should use [getSourceTemplate], which reuses the cache.
+    return _selectSourceForUrl(url, _buildSources());
+  }
+
+  /// Resolves the [AppSource] whose host/URL rules accept [url] from
+  /// [allSources]. A non-match is expected control flow during auto-detection,
+  /// so failures are intentionally not logged (they are just noise).
+  AppSource _selectSourceForUrl(String url, List<AppSource> allSources) {
     AppSource? source;
     for (var s in allSources.where((element) => element.hosts.isNotEmpty)) {
-      // A non-match here is expected control flow during source auto-detection,
-      // so failures are intentionally not logged (they are just noise).
       try {
         if (RegExp(
           '^${s.allowSubDomains ? '([^\\.]+\\.)*' : '(www\\.)?'}(${getSourceRegex(s.hosts)})\$',
@@ -1516,8 +1530,8 @@ class SourceProvider {
       for (var s in allSources.where(
         (element) => element.hosts.isEmpty && !element.neverAutoSelect,
       )) {
-        // As above, hostless sources are tried in order until one accepts the
-        // URL; a rejection is normal and must not be logged as an error.
+        // Hostless sources are tried in order until one accepts the URL; a
+        // rejection is normal and must not be logged as an error.
         try {
           s.sourceSpecificStandardizeURL(url, forSelection: true);
           source = s;
@@ -1589,6 +1603,12 @@ class SourceProvider {
       additionalSettings['trackOnly'] = true;
     }
     final trackOnly = additionalSettings['trackOnly'] == true;
+    // Populate the derived per-source version-string booleans (releaseTitle/
+    // assetName/releaseDate/commitSha) from the unified versionStringSource
+    // dropdown BEFORE the source reads them — otherwise a freshly-added app's
+    // selection is silently ignored on its first check (it only self-heals
+    // after save + reload). Parity with fork main.
+    syncVersionStringSourceSettings(additionalSettings);
     final String standardUrl;
     try {
       standardUrl = source.standardizeUrl(url);
@@ -1628,7 +1648,10 @@ class SourceProvider {
 
     if (additionalSettings['releaseDateAsVersion'] == true &&
         apk.releaseDate != null) {
-      apk.version = apk.releaseDate!.microsecondsSinceEpoch.toString();
+      // ISO-8601 (parity with fork main): a readable, stable string. Upstream's
+      // microsecondsSinceEpoch renders as an opaque integer and, on upgrade,
+      // recomputes to a different value → a one-time spurious "update".
+      apk.version = apk.releaseDate!.toUtc().toIso8601String();
     }
     apk.apkUrls = filterApks(
       apk.apkUrls,

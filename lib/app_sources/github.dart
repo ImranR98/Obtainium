@@ -763,6 +763,66 @@ class GitHub extends AppSource {
     }
   }
 
+  /// Resolves the commit SHA a release's tag points at (following annotated
+  /// tags to their underlying commit), for "release commit SHA as version"
+  /// mode. Returns null if it can't be determined.
+  Future<String?> getReleaseCommitSha(
+    dynamic release,
+    String standardUrl,
+    Map<String, dynamic> additionalSettings,
+  ) async {
+    final String? tagName = release['tag_name'] as String?;
+    if (tagName == null || tagName.trim().isEmpty) {
+      return null;
+    }
+    final String apiUrl = await convertStandardUrlToAPIUrl(
+      standardUrl,
+      additionalSettings,
+    );
+    final Response refResponse = await sourceRequest(
+      '$apiUrl/git/ref/tags/${Uri.encodeComponent(tagName)}',
+      additionalSettings,
+    );
+    if (refResponse.statusCode != 200) {
+      return null;
+    }
+    final Map<String, dynamic>? refBody = _jsonObjectFromResponseBody(
+      refResponse.body,
+    );
+    final dynamic refObject = refBody?['object'];
+    if (refObject is! Map<String, dynamic>) {
+      return null;
+    }
+    final String? objectSha = refObject['sha'] as String?;
+    final String? objectType = refObject['type'] as String?;
+    if (objectSha == null || objectSha.isEmpty) {
+      return null;
+    }
+    if (objectType == 'commit') {
+      return objectSha;
+    }
+    if (objectType != 'tag') {
+      return null;
+    }
+    final Response tagResponse = await sourceRequest(
+      '$apiUrl/git/tags/$objectSha',
+      additionalSettings,
+    );
+    if (tagResponse.statusCode != 200) {
+      return null;
+    }
+    final Map<String, dynamic>? tagBody = _jsonObjectFromResponseBody(
+      tagResponse.body,
+    );
+    final dynamic tagObject = tagBody?['object'];
+    if (tagObject is! Map<String, dynamic>) {
+      return null;
+    }
+    final String? commitSha = tagObject['sha'] as String?;
+    final String? commitType = tagObject['type'] as String?;
+    return commitType == 'commit' ? commitSha : null;
+  }
+
   dynamic _selectGitHubTargetRelease({
     required List<dynamic> releases,
     required bool fallbackToOlderReleases,
@@ -841,10 +901,23 @@ class GitHub extends AppSource {
       final targetRelease = releases[i];
       targetRelease['apkUrls'] = filteredApkUrls;
       targetRelease['filteredAssets'] = filteredApks;
+      // Resolve the version string per the selected version-string source.
+      // Asset-name + release-title are resolvable synchronously here; the
+      // commit-SHA source needs an async API lookup + standardUrl, so it is
+      // resolved by the caller (_fetchReleaseDetails) after selection.
+      String? selectedVersionSource;
+      if (additionalSettings['extractVersionFromAssetName'] == true) {
+        if (filteredApkUrls.isEmpty) {
+          throw NoVersionError();
+        }
+        selectedVersionSource = filteredApkUrls.last.key;
+      } else if (additionalSettings['releaseTitleAsVersion'] == true) {
+        selectedVersionSource = nameToFilter;
+      }
       targetRelease['version'] =
-          additionalSettings['releaseTitleAsVersion'] == true
-          ? nameToFilter
-          : targetRelease['tag_name'] ?? targetRelease['name'];
+          selectedVersionSource ??
+          targetRelease['tag_name'] ??
+          targetRelease['name'];
       if (targetRelease['tarball_url'] != null) {
         allAssetUrls.add(
           MapEntry(
@@ -974,6 +1047,20 @@ class GitHub extends AppSource {
       );
       if (targetRelease == null) {
         throw NoReleasesError();
+      }
+      // Resolve commit-SHA-as-version here: it needs an async ref/tag API
+      // lookup and standardUrl, so it can't run inside the sync release
+      // selector. Overrides the tag-based version chosen there.
+      if (additionalSettings['releaseCommitShaAsVersion'] == true) {
+        final String? commitSha = await getReleaseCommitSha(
+          targetRelease,
+          standardUrl,
+          additionalSettings,
+        );
+        if (commitSha == null) {
+          throw NoVersionError();
+        }
+        targetRelease['version'] = commitSha;
       }
       final String? version = targetRelease['version'];
       final DateTime? releaseDate = _getReleaseDateFromRelease(

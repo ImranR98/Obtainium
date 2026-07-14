@@ -848,17 +848,18 @@ Future<PackageInfo?> getInstalledInfo(
     if (kDebugMode && includeOwnDebugBuild && packageName == obtainiumId) {
       namesToTry.insert(0, '$obtainiumId.debug');
     }
-    for (final String name in namesToTry) {
-      try {
-        final info = await packageManager.getPackageInfo(
-          packageName: name,
-          flags: packageInfoFlags,
-        );
-        if (info != null) return info;
-      } catch (e) {
-        if (printErr) {
-          debugPrint('getInstalledInfo($name): $e');
+    try {
+      final List<PackageInfo> installedPackages = await getAllInstalledInfo();
+      for (final String name in namesToTry) {
+        for (final PackageInfo info in installedPackages) {
+          if (info.packageName == name) {
+            return info;
+          }
         }
+      }
+    } catch (e) {
+      if (printErr) {
+        debugPrint('getInstalledInfo($packageName): $e');
       }
     }
   }

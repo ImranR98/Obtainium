@@ -282,7 +282,8 @@ class IzzyOnDroid extends AppSource {
     );
   }
 
-  App endOfGetAppChanges(App app) {
+  @override
+  App postProcessApp(App app) {
     String? appId = isTempId(app) ? null : app.id;
     final Uri uri = Uri.parse(app.url);
     appId ??= uri.queryParameters['appId']?.trim();

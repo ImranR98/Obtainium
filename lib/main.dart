@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/app_distribution.dart';
 import 'package:obtainium/pages/home.dart';
+import 'package:obtainium/custom_errors.dart' show setAppLocale;
 import 'package:obtainium/theme/app_dialog_theme.dart';
 import 'package:obtainium/theme/app_segmented_button_theme.dart';
+import 'package:obtainium/theme/app_text_button_theme.dart';
 import 'package:obtainium/theme/app_theme_accent.dart';
 import 'package:obtainium/theme/app_switch_theme.dart';
 import 'package:obtainium/theme.dart';
@@ -672,6 +674,19 @@ class _ObtainiumState extends State<Obtainium> {
             );
           }
 
+          // Keep the locale-aware English detection in custom_errors.dart in
+          // sync (drives lowerCaseIfEnglish / list2FriendlyString). Without
+          // this, isEnglish() is stuck false and English strings never get
+          // lowercased — parity with fork main.
+          setAppLocale(context.locale);
+          final ThemeData lightBaseTheme = buildObtainiumTheme(
+            themeColorScheme,
+            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+          );
+          final ThemeData darkBaseTheme = buildObtainiumTheme(
+            darkThemeColorScheme,
+            settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
+          );
           return MaterialApp(
             title: 'ObtainX',
             scrollBehavior: const AppScrollBehavior(),
@@ -711,42 +726,46 @@ class _ObtainiumState extends State<Obtainium> {
             // with the fork's boosted colour science (the passed schemes) plus
             // the fork's vivid surface choices and custom nav/switch/segmented/
             // tooltip themes via copyWith.
-            theme:
-                buildObtainiumTheme(
-                  themeColorScheme,
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
-                ).copyWith(
-                  scaffoldBackgroundColor: themeColorScheme.surface,
-                  canvasColor: themeColorScheme.surface,
-                  cardColor: themeColorScheme.surfaceContainer,
-                  focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
-                  navigationBarTheme: navigationBarThemeFor(themeColorScheme),
-                  segmentedButtonTheme: appSegmentedButtonTheme(
-                    themeColorScheme,
-                  ),
-                  switchTheme: appSwitchTheme(themeColorScheme),
-                  tooltipTheme: tooltipThemeFor(themeColorScheme),
+            theme: lightBaseTheme.copyWith(
+              scaffoldBackgroundColor: themeColorScheme.surface,
+              canvasColor: themeColorScheme.surface,
+              cardColor: themeColorScheme.surfaceContainer,
+              focusColor: themeColorScheme.primary.withValues(alpha: 0.12),
+              navigationBarTheme: navigationBarThemeFor(themeColorScheme),
+              segmentedButtonTheme: appSegmentedButtonTheme(themeColorScheme),
+              switchTheme: appSwitchTheme(themeColorScheme),
+              tooltipTheme: tooltipThemeFor(themeColorScheme),
+              // Fork: tighten dialog action padding + text-button tap target
+              // (the "dead space under the dialog action row" fix), while
+              // keeping buildObtainiumTheme's M3E shapes.
+              dialogTheme: appDialogTheme().copyWith(
+                shape: lightBaseTheme.dialogTheme.shape,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: appTextButtonTheme().style!.merge(
+                  lightBaseTheme.textButtonTheme.style,
                 ),
-            darkTheme:
-                buildObtainiumTheme(
-                  darkThemeColorScheme,
-                  settingsProvider.useSystemFont ? 'SystemFont' : 'Montserrat',
-                ).copyWith(
-                  scaffoldBackgroundColor: darkThemeColorScheme.surface,
-                  canvasColor: darkThemeColorScheme.surface,
-                  cardColor: darkThemeColorScheme.surfaceContainer,
-                  focusColor: darkThemeColorScheme.primary.withValues(
-                    alpha: 0.24,
-                  ),
-                  navigationBarTheme: navigationBarThemeFor(
-                    darkThemeColorScheme,
-                  ),
-                  segmentedButtonTheme: appSegmentedButtonTheme(
-                    darkThemeColorScheme,
-                  ),
-                  switchTheme: appSwitchTheme(darkThemeColorScheme),
-                  tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
+              ),
+            ),
+            darkTheme: darkBaseTheme.copyWith(
+              scaffoldBackgroundColor: darkThemeColorScheme.surface,
+              canvasColor: darkThemeColorScheme.surface,
+              cardColor: darkThemeColorScheme.surfaceContainer,
+              focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
+              navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
+              segmentedButtonTheme: appSegmentedButtonTheme(darkThemeColorScheme),
+              switchTheme: appSwitchTheme(darkThemeColorScheme),
+              tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
+              // Fork: see light theme above.
+              dialogTheme: appDialogTheme().copyWith(
+                shape: darkBaseTheme.dialogTheme.shape,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: appTextButtonTheme().style!.merge(
+                  darkBaseTheme.textButtonTheme.style,
                 ),
+              ),
+            ),
             home: Shortcuts(
               shortcuts: <LogicalKeySet, Intent>{
                 LogicalKeySet(LogicalKeyboardKey.select):
