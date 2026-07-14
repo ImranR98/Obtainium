@@ -1336,8 +1336,9 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
   ) {
     final pkg = settingsProvider.externalInstallerPackage;
     if (pkg == null) return null;
+    final activity = settingsProvider.externalInstallerComponent;
     for (final target in targets) {
-      if (target.package == pkg) return target;
+      if (target.package == pkg && target.activity == activity) return target;
     }
     return null;
   }
@@ -1355,39 +1356,113 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
     SettingsProvider settingsProvider,
   ) async {
     if (targets.isEmpty) return;
+    final grouped = <String, List<InstallerTarget>>{};
+    for (final t in targets) {
+      grouped.putIfAbsent(t.package, () => []).add(t);
+    }
+    // Deduplicate intents with identical activity names
+    for (final entry in grouped.entries) {
+      final seen = <String>{};
+      entry.value.removeWhere((t) => !seen.add(t.activity));
+    }
+    grouped.removeWhere((_, v) => v.isEmpty);
+    int expandedIndex = -1;
+    final entries = grouped.entries.toList();
     final picked = await showDialog<InstallerTarget>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(tr('chooseExternalInstaller')),
-        children: [
-          for (final target in targets)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(target),
-              child: Row(
-                children: [
-                  _targetIcon(target, size: 32),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(target.label),
-                        Text(
-                          target.package,
-                          style: const TextStyle(fontSize: 12),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          scrollable: true,
+          title: Text(tr('chooseExternalInstaller')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              for (var i = 0; i < entries.length; i++)
+                ConnectedCard(
+                  isFirst: true,
+                  isLast: true,
+                  padding: null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        onTap: () {
+                          final entry = entries[i];
+                          if (entry.value.length == 1) {
+                            Navigator.of(ctx).pop(entry.value.first);
+                          } else {
+                            setDialogState(() {
+                              expandedIndex = expandedIndex == i ? -1 : i;
+                            });
+                          }
+                        },
+                        shape: RoundedSuperellipseBorder(
+                          borderRadius:
+                              BorderRadius.circular(connectedTileBigRadius),
                         ),
-                      ],
-                    ),
+                        leading: _targetIcon(entries[i].value.first, size: 36),
+                        title: Text(
+                          entries[i].value.first.label,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        trailing: entries[i].value.length > 1
+                            ? AnimatedRotation(
+                                turns: expandedIndex == i ? 0.5 : 0,
+                                duration: ExpressiveMotion.short,
+                                child: const Icon(Icons.expand_more),
+                              )
+                            : null,
+                      ),
+                      if (expandedIndex == i)
+                        ...entries[i].value.map(
+                          (target) => ListTile(
+                            onTap: () => Navigator.of(ctx).pop(target),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(
+                                connectedTileBigRadius,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 2,
+                            ),
+                            minTileHeight: 36,
+                            visualDensity: VisualDensity.compact,
+                            title: Text(
+                              _shortActivityName(target, entries[i].value),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-        ],
+                ),
+            ],
+          ),
+        ),
       ),
     );
     if (picked == null) return;
     settingsProvider.externalInstallerPackage = picked.package;
     settingsProvider.externalInstallerComponent = picked.activity;
+    if (mounted) setState(() {});
+  }
+
+  String _shortActivityName(
+    InstallerTarget target,
+    List<InstallerTarget> siblings,
+  ) {
+    final short = target.activity.split('.').last;
+    final duplicates = siblings.where(
+      (s) => s.activity.split('.').last == short && s != target,
+    );
+    if (duplicates.isNotEmpty) {
+      return target.activity;
+    }
+    return short;
   }
 
   @override
@@ -1409,6 +1484,16 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
         }
         final targets = snapshot.data ?? const <InstallerTarget>[];
         final current = _current(targets, settingsProvider);
+        final intentCount = targets
+            .where((t) => t.package == current?.package)
+            .map((t) => t.activity)
+            .toSet()
+            .length;
+        final subtitle = current != null
+            ? intentCount > 1
+                ? '${current.label} · ${current.activity.split('.').last}'
+                : current.label
+            : settingsProvider.externalInstallerPackage ?? tr('externalInstallerUnset');
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           shape: RoundedRectangleBorder(
@@ -1416,11 +1501,7 @@ class _ExternalInstallerTileState extends State<_ExternalInstallerTile> {
           ),
           leading: _targetIcon(current),
           title: Text(tr('chooseExternalInstaller')),
-          subtitle: Text(
-            current?.label ??
-                settingsProvider.externalInstallerPackage ??
-                tr('externalInstallerUnset'),
-          ),
+          subtitle: Text(subtitle),
           trailing: const Icon(Icons.arrow_drop_down),
           onTap: () => _choose(targets, settingsProvider),
         );

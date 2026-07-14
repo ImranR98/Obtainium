@@ -70,12 +70,11 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * One entry per app able to handle an APK install intent. Apps that expose
-     * several install-capable activities are collapsed to a single entry (the
-     * first match, preferring ACTION_VIEW), so the picker shows each app once.
+     * One entry per install-capable activity across all apps. Apps that expose
+     * several install-capable activities return all of them so the user can
+     * pick the specific intent they want.
      */
     private fun listInstallTargets(): List<Map<String, String>> {
-        val seenPackages = HashSet<String>()
         val targets = ArrayList<Map<String, String>>()
         val probe = Uri.parse("content://dev.imranr.obtainium.probe/sample.apk")
         val actions = listOf(Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE)
@@ -87,7 +86,6 @@ class MainActivity : FlutterActivity() {
                 val pkg = info.packageName ?: continue
                 if (pkg == packageName) continue
                 val activity = info.name ?: continue
-                if (!seenPackages.add(pkg)) continue
                 targets.add(mapOf("package" to pkg, "activity" to activity))
             }
         }
