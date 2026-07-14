@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/apps_provider.dart';
@@ -152,6 +153,30 @@ extension AppsProviderUpdates on AppsProvider {
                     currentApp != null &&
                     newApp.latestVersion != currentApp.latestVersion;
                 return MapEntry(newApp, isUpdate);
+              } on HandshakeException {
+                // Concurrent TLS handshakes to the same host can fail on
+                // certain devices/networks. Retry up to 5 times with
+                // staggered random delays to avoid all retries colliding.
+                const maxRetries = 5;
+                final rng = Random();
+                for (var attempt = 0; attempt < maxRetries; attempt++) {
+                  await Future.delayed(
+                    Duration(
+                      milliseconds: 250 + rng.nextInt(501),
+                    ),
+                  );
+                  try {
+                    final newApp = await fetchUpdate(appId);
+                    if (newApp == null) return null;
+                    final isUpdate =
+                        currentApp != null &&
+                        newApp.latestVersion != currentApp.latestVersion;
+                    return MapEntry(newApp, isUpdate);
+                  } on HandshakeException {
+                    if (attempt == maxRetries - 1) rethrow;
+                  }
+                }
+                return null;
               } catch (e) {
                 if ((e is RateLimitError || e is SocketException) &&
                     throwErrorsForRetry) {
