@@ -25,13 +25,13 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         intent?.let {
-            setIntent(transformShareIntent(it))
+            setIntent(markTrustedIfPrivileged(transformShareIntent(it)))
         }
         super.onCreate(savedInstanceState)
     }
 
     override fun onNewIntent(intent: Intent) {
-        val newIntent = transformShareIntent(intent)
+        val newIntent = markTrustedIfPrivileged(transformShareIntent(intent))
         setIntent(newIntent)
         try {
             super.onNewIntent(newIntent)
@@ -98,6 +98,25 @@ class MainActivity : FlutterActivity() {
     private fun contentUriForFile(path: String): String {
         val uri = FileProvider.getUriForFile(this, packageName, File(path))
         return uri.toString()
+    }
+
+    /**
+     * Marks obtainium:// intents from privileged callers (ADB shell, system)
+     * with confirmedBy=system so the Dart side can distinguish trusted
+     * launches from browser-based phishing links.  A null referrer means
+     * the activity was launched by the ActivityManager directly (e.g.
+     * `adb shell am start`) — regular apps and browsers always set a
+     * non-null referrer.
+     */
+    private fun markTrustedIfPrivileged(intent: Intent): Intent {
+        val uri = intent.data ?: return intent
+        if (uri.scheme != "obtainium") return intent
+        if (referrer != null) return intent
+
+        val builder = uri.buildUpon()
+        builder.appendQueryParameter("confirmedBy", "system")
+        intent.data = builder.build()
+        return intent
     }
 
     private fun transformShareIntent(intent: Intent): Intent {
