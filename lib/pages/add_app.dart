@@ -655,9 +655,7 @@ class AddAppPageState extends State<AddAppPage> {
         child: searching
             ? const Center(child: CircularProgressIndicator())
             : FilledButton(
-                onPressed: searchQuery.isEmpty || doingSomething
-                    ? null
-                    : () {
+                onPressed: doingSomething ? null : () {
                         runSearch(context);
                       },
                 child: Text(tr('search')),
