@@ -768,28 +768,6 @@ class _AppPageState extends State<AppPage> {
     ];
   }
 
-  Widget _buildBackButton() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          8,
-          MediaQuery.of(context).padding.top + 8,
-          0,
-          0,
-        ),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: _closePage,
-              icon: Icon(
-                widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildAppIcon(AppInMemory? app) {
     final icon = AppIcon(bytes: app?.icon, size: 56, radius: 14);
@@ -1125,65 +1103,45 @@ class _AppPageState extends State<AppPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            ..._getSecondaryActions(
-              context,
-              app,
-              source,
-              appsProvider,
-              settingsProvider,
-              showAppWebpageFinal,
-              isVersionDetectionStandard,
-              trackOnly,
-            ),
-            const Spacer(),
-            _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Opacity(
-            opacity:
-                app?.downloadProgress == null && _probedDownloadSize != null
-                ? 1.0
-                : 0.0,
-            child: Text(
-              _probedDownloadSize != null
-                  ? '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}'
-                  : '-',
-              style: Theme.of(context).textTheme.bodySmall,
+        if (app?.downloadProgress == null && _probedDownloadSize != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '${tr('downloadSize')}: ${formatBytes(_probedDownloadSize!)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           ),
-        ),
         if (app?.downloadProgress != null)
           Padding(
-            padding: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
-              children: [
-                Expanded(
-                  child: Semantics(
-                    label: app!.downloadProgress! >= 0
-                        ? tr(
-                            'percentProgress',
-                            args: [app.downloadProgress!.toInt().toString()],
-                          )
-                        : tr('installing'),
-                    child: LinearProgressIndicator(
-                      value: app.downloadProgress! >= 0
-                          ? app.downloadProgress! / 100
-                          : null,
-                    ),
+            children: [
+              Expanded(
+                child: Semantics(
+                  label: app!.downloadProgress! >= 0
+                      ? tr(
+                          'percentProgress',
+                          args: [app.downloadProgress!.toInt().toString()],
+                        )
+                      : tr('installing'),
+                  child: LinearProgressIndicator(
+                    value: app.downloadProgress! >= 0
+                        ? app.downloadProgress! / 100
+                        : null,
                   ),
                 ),
-                if (app.downloadProgress! >= 0) ...[
-                  const SizedBox(width: 8),
-                  DownloadCancelButton(
-                    onPressed: () => appsProvider.cancelDownload(widget.appId),
-                  ),
-                ],
+              ),
+              if (app.downloadProgress! >= 0) ...[
+                const SizedBox(width: 8),
+                DownloadCancelButton(
+                  onPressed: () => appsProvider.cancelDownload(widget.appId),
+                ),
               ],
-            ),
+            ],
+          ),
           ),
         if (app?.downloadProgress != null &&
             app!.downloadProgress! >= 0 &&
@@ -1198,6 +1156,25 @@ class _AppPageState extends State<AppPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              ..._getSecondaryActions(
+                context,
+                app,
+                source,
+                appsProvider,
+                settingsProvider,
+                showAppWebpageFinal,
+                isVersionDetectionStandard,
+                trackOnly,
+              ),
+              const Spacer(),
+              _getPrimaryButton(context, app, appsProvider, areDownloadsRunning),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1280,7 +1257,11 @@ class _AppPageState extends State<AppPage> {
                     },
                     child: CustomScrollView(
                       slivers: [
-                        _buildBackButton(),
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: MediaQuery.of(context).padding.top + 8,
+                          ),
+                        ),
                         _buildHeaderSection(app),
                         ..._buildRepoRenameSection(app, appsProvider),
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),

@@ -1001,6 +1001,8 @@ class AppsProvider with ChangeNotifier {
         }
       }
       if (!isBg) {
+        loadingApps = true;
+        notify();
         await loadApps();
         final cutoff = DateTime.now().subtract(const Duration(days: 7));
         await for (var entity in apkDir.list()) {

@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:animations/animations.dart';
 import 'package:app_links/app_links.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:obtainium/components/generated_form_renderer.dart';
 import 'package:obtainium/components/ui_widgets.dart';
 import 'package:obtainium/custom_errors.dart';
@@ -26,22 +24,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class NavigationPageItem {
-  late String title;
-  late IconData icon;
-  late IconData? selectedIcon;
-  late Widget widget;
-
-  NavigationPageItem(this.title, this.icon, this.widget, {this.selectedIcon});
-}
-
 class _HomePageState extends State<HomePage> {
   late final SourceProvider sourceProvider;
   late final SettingsProvider settingsProvider;
   late final AppsProvider appsProvider;
 
-  List<int> selectedIndexHistory = [];
-  bool isReversing = false;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -63,9 +50,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  int get currentIndex =>
-      selectedIndexHistory.isEmpty ? 0 : selectedIndexHistory.last;
-
   void selectApp(String appId) {
     selectedAppId = appId;
     setState(() {});
@@ -78,14 +62,6 @@ class _HomePageState extends State<HomePage> {
 
   void setAppsSelecting(bool has) {
     appsSelecting = has;
-    setState(() {});
-  }
-
-  void setIsReversing(int targetIndex) {
-    final bool reversing =
-        selectedIndexHistory.isNotEmpty &&
-        selectedIndexHistory.last > targetIndex;
-    isReversing = reversing;
     setState(() {});
   }
 
@@ -102,41 +78,15 @@ class _HomePageState extends State<HomePage> {
     return true;
   }
 
-  Future<void> switchToPage(int index) async {
-    setIsReversing(index);
-    if (index == 0) {
-      selectedIndexHistory.clear();
-    } else {
-      if (selectedIndexHistory.isEmpty || selectedIndexHistory.last != index) {
-        final int existingInd = selectedIndexHistory.indexOf(index);
-        if (existingInd >= 0) {
-          selectedIndexHistory.removeAt(existingInd);
-        }
-        selectedIndexHistory.add(index);
-      }
-      if (appsSelecting) {
-        appsSelecting = false;
-        appsPageKey.currentState?.clearSelected();
-      }
-    }
-    if (mounted) setState(() {});
-  }
-
-  void handlePop(bool useTwoPane) {
-    if (useTwoPane && selectedAppId != null) {
-      clearSelectedApp();
-    } else {
-      setIsReversing(0);
-      if (selectedIndexHistory.isNotEmpty) {
-        selectedIndexHistory.removeLast();
-      }
-      setState(() {});
-    }
-  }
-
   void pushAddApp({String? initialUrl}) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => AddAppPage(initialUrl: initialUrl)),
+    );
+  }
+
+  void pushSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SettingsPage()),
     );
   }
 
@@ -217,12 +167,10 @@ class _HomePageState extends State<HomePage> {
     _appLinks = AppLinks();
 
     Future<void> goToAddApp(String data) async {
-      await switchToPage(0);
       if (context.mounted) pushAddApp(initialUrl: data);
     }
 
     Future<void> goToExistingApp(String appId) async {
-      await switchToPage(0);
       await waitUntil(
         () => appsPageKey.currentState != null,
         interval: const Duration(milliseconds: 100),
@@ -249,9 +197,7 @@ class _HomePageState extends State<HomePage> {
 
           String? standardizedUrl;
           try {
-            standardizedUrl = sourceProvider
-                .getSource(data)
-                .standardizeUrl(data);
+            standardizedUrl = sourceProvider.getSource(data).standardizeUrl(data);
           } catch (_) {
             standardizedUrl = null;
           }
@@ -364,43 +310,10 @@ class _HomePageState extends State<HomePage> {
     final settingsProvider = context.watch<SettingsProvider>();
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
 
-    final pages = <NavigationPageItem>[
-      NavigationPageItem(
-        tr('appsString'),
-        Icons.apps_outlined,
-        const SizedBox.shrink(),
-        selectedIcon: Icons.apps,
-      ),
-      NavigationPageItem(
-        tr('settings'),
-        Icons.settings_outlined,
-        const SettingsPage(),
-        selectedIcon: Icons.settings,
-      ),
-    ];
-
     final layoutWidth = MediaQuery.sizeOf(context).width;
     final useLargeScreen = isTV || layoutWidth >= 840;
-    final useRail = useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
-    final updateCount = context.select<AppsProvider, int>(
-      (p) => p.findAppIdsWithPendingUpdates(installedOnly: true).length,
-    );
-
-    Widget destIcon(NavigationPageItem e, {bool selected = false}) {
-      final icon = Icon(selected ? (e.selectedIcon ?? e.icon) : e.icon);
-      if (e.title == tr('appsString') && updateCount > 0) {
-        return Semantics(
-          label: '$updateCount ${tr('updates')}',
-          child: Badge(label: Text('$updateCount'), child: icon),
-        );
-      }
-      return icon;
-    }
-
-    final currentIndex = this.currentIndex;
-
-    final twoPane = useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
-    final useTwoPane = twoPane && currentIndex == 0;
+    final useTwoPane =
+        useLargeScreen && !settingsProvider.alwaysUsePhoneLayout;
 
     final detailPane =
         selectedAppId != null &&
@@ -417,43 +330,27 @@ class _HomePageState extends State<HomePage> {
             message: tr('selectAppForDetails'),
           );
 
+    final appsPage = AppsPage(
+      key: appsPageKey,
+      onAppSelected: useTwoPane ? selectApp : null,
+      selectedAppId: selectedAppId,
+      onSelectionChanged: setAppsSelecting,
+    );
+
     final Widget content;
     if (useTwoPane) {
       content = Row(
         children: [
           Expanded(
             flex: 2,
-            child: AppsPage(
-              key: appsPageKey,
-              onAppSelected: selectApp,
-              selectedAppId: selectedAppId,
-              onSelectionChanged: setAppsSelecting,
-            ),
+            child: appsPage,
           ),
           const VerticalDivider(width: 1),
           Expanded(flex: 3, child: detailPane),
         ],
       );
     } else {
-      content = PageTransitionSwitcher(
-        duration: Duration(
-          milliseconds: settingsProvider.disablePageTransitions ? 0 : 300,
-        ),
-        reverse: settingsProvider.reversePageTransitions
-            ? !isReversing
-            : isReversing,
-        transitionBuilder: (child, animation, secondaryAnimation) {
-          return SharedAxisTransition(
-            animation: animation,
-            secondaryAnimation: secondaryAnimation,
-            transitionType: SharedAxisTransitionType.horizontal,
-            child: child,
-          );
-        },
-        child: currentIndex == 0
-            ? AppsPage(key: appsPageKey, onSelectionChanged: setAppsSelecting)
-            : pages.elementAt(currentIndex).widget,
-      );
+      content = appsPage;
     }
 
     void onAddPressed() {
@@ -461,13 +358,6 @@ class _HomePageState extends State<HomePage> {
       pushAddApp();
     }
 
-    // Compact FAB for the rail trailing (an extended FAB would overflow it);
-    // an expressive extended FAB for the bottom layout's primary action.
-    final createFab = FloatingActionButton(
-      onPressed: onAddPressed,
-      tooltip: tr('addApp'),
-      child: const Icon(Icons.add),
-    );
     final actionsFab = FloatingActionButton(
       onPressed: () {
         settingsProvider.selectionClick();
@@ -483,97 +373,29 @@ class _HomePageState extends State<HomePage> {
       label: Text(tr('add')),
     );
 
+    final loadingApps = context.select<AppsProvider, bool>((p) => p.loadingApps);
+
     return PopScope(
-      canPop: currentIndex == 0,
+      canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          handlePop(useTwoPane);
+        if (!didPop && selectedAppId != null) {
+          clearSelectedApp();
         }
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: useRail
-            ? Row(
-                children: [
-                  FocusTraversalGroup(
-                    child: NavigationRail(
-                      groupAlignment: isTV ? -1.0 : 0.0,
-                      destinations: pages
-                          .map(
-                            (e) => NavigationRailDestination(
-                              icon: destIcon(e),
-                              selectedIcon: destIcon(e, selected: true),
-                              label: Text(e.title),
-                            ),
-                          )
-                          .toList(),
-                      selectedIndex: currentIndex,
-                      onDestinationSelected: switchToPage,
-                      labelType: NavigationRailLabelType.all,
-                      trailing: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: currentIndex != 0
-                            ? const SizedBox(width: 56, height: 56)
-                            : appsSelecting
-                            ? actionsFab
-                            : createFab,
-                      ),
-                    ),
-                  ),
-                  const VerticalDivider(thickness: 1, width: 1),
-                  Expanded(
-                    child: useTwoPane
-                        ? content
-                        : Align(
-                            alignment: Alignment.topCenter,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 720),
-                              child: content,
-                            ),
-                          ),
-                  ),
-                ],
-              )
-            : content,
-        floatingActionButton: useRail || currentIndex != 0 || appsSelecting
-            ? null
-            : createFabExtended,
-        bottomNavigationBar: useRail
-            ? null
-            : FocusTraversalGroup(
-                child: Focus(
-                  onKeyEvent: (node, event) {
-                    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-                    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                      switchToPage((currentIndex + 1) % pages.length);
-                      return KeyEventResult.handled;
-                    }
-                    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                      switchToPage(
-                        (currentIndex - 1 + pages.length) % pages.length,
-                      );
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  },
-                  child: NavigationBar(
-                    destinations: pages
-                        .map(
-                          (e) => NavigationDestination(
-                            icon: destIcon(e),
-                            selectedIcon: destIcon(e, selected: true),
-                            label: e.title,
-                          ),
-                        )
-                        .toList(),
-                    onDestinationSelected: (int index) async {
-                      settingsProvider.selectionClick();
-                      unawaited(switchToPage(index));
-                    },
-                    selectedIndex: currentIndex,
-                  ),
+        body: useTwoPane
+            ? content
+            : Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: content,
                 ),
               ),
+    floatingActionButton: loadingApps || useTwoPane || appsSelecting
+        ? (appsSelecting ? actionsFab : null)
+        : createFabExtended,
       ),
     );
   }

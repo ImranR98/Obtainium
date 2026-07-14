@@ -142,17 +142,22 @@ extension AppsProviderUpdates on AppsProvider {
         );
       }
       total = appIds.length;
-      final results = await Future.wait(
+      final List<App> fetched = [];
+      var batchCount = 0;
+      const batchSize = 4;
+      await Future.wait(
         appIds
             .map((appId) async {
               final currentApp = apps[appId]?.app;
+              MapEntry<App, bool>? result;
               try {
                 final newApp = await fetchUpdate(appId);
-                if (newApp == null) return null;
-                final isUpdate =
-                    currentApp != null &&
-                    newApp.latestVersion != currentApp.latestVersion;
-                return MapEntry(newApp, isUpdate);
+                if (newApp != null) {
+                  final isUpdate =
+                      currentApp != null &&
+                      newApp.latestVersion != currentApp.latestVersion;
+                  result = MapEntry(newApp, isUpdate);
+                }
               } on HandshakeException {
                 // Concurrent TLS handshakes to the same host can fail on
                 // certain devices/networks. Retry up to 5 times with
@@ -167,16 +172,17 @@ extension AppsProviderUpdates on AppsProvider {
                   );
                   try {
                     final newApp = await fetchUpdate(appId);
-                    if (newApp == null) return null;
-                    final isUpdate =
-                        currentApp != null &&
-                        newApp.latestVersion != currentApp.latestVersion;
-                    return MapEntry(newApp, isUpdate);
+                    if (newApp != null) {
+                      final isUpdate =
+                          currentApp != null &&
+                          newApp.latestVersion != currentApp.latestVersion;
+                      result = MapEntry(newApp, isUpdate);
+                      break;
+                    }
                   } on HandshakeException {
                     if (attempt == maxRetries - 1) rethrow;
                   }
                 }
-                return null;
               } catch (e) {
                 if ((e is RateLimitError || e is SocketException) &&
                     throwErrorsForRetry) {
@@ -184,11 +190,23 @@ extension AppsProviderUpdates on AppsProvider {
                 }
                 if (e is RepositoryRenamedError) {
                   await updatePendingRepoRename(appId, e.newUrl);
-                  return null;
+                } else {
+                  errors.add(appId, e, appName: apps[appId]?.name);
                 }
-                errors.add(appId, e, appName: apps[appId]?.name);
-                return null;
               }
+              // Save in batches to give the user a sense of progress
+              // without hammering the UI with per-app rebuilds.
+              if (result != null) {
+                fetched.add(result.key);
+                if (result.value) updates.add(result.key);
+              }
+              batchCount++;
+              if (batchCount % batchSize == 0 && fetched.isNotEmpty) {
+                final batch = List<App>.from(fetched);
+                fetched.clear();
+                await saveApps(batch);
+              }
+              return result;
             })
             .map(
               (f) => f.whenComplete(() {
@@ -197,12 +215,6 @@ extension AppsProviderUpdates on AppsProvider {
             ),
         eagerError: true,
       );
-      final List<App> fetched = [];
-      for (final r in results) {
-        if (r == null) continue;
-        fetched.add(r.key);
-        if (r.value) updates.add(r.key);
-      }
       if (fetched.isNotEmpty) {
         await saveApps(fetched);
       }

@@ -350,17 +350,18 @@ class ActionListTile extends StatelessWidget {
 }
 
 class CustomAppBar extends StatelessWidget {
-  const CustomAppBar({super.key, required this.title});
+  const CustomAppBar({super.key, required this.title, this.actions});
 
   final String title;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
-    // M3 Expressive large app bar (pinned, does not collapse on scroll).
     return SliverAppBar.large(
       pinned: true,
-      automaticallyImplyLeading: true,
+      automaticallyImplyLeading: false,
       title: Text(title),
+      actions: actions,
     );
   }
 }
