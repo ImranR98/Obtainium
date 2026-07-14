@@ -446,7 +446,7 @@ extension AppsProviderLifecycle on AppsProvider {
     appsLoadingCompleter = Completer<void>();
     loadingApps = true;
     notify();
-    // Commit any deferred "remove from Obtainium" whose in-memory deferral was
+    // Commit any deferred "remove from ObtainX" whose in-memory deferral was
     // lost (e.g. process restart) before re-reading the app JSON dir.
     await _purgeStalePendingRemovalFilesWithoutLiveDeferral();
     try {
@@ -993,7 +993,7 @@ extension AppsProviderLifecycle on AppsProvider {
                   [
                     GeneratedFormSwitch(
                       'rmAppEntry',
-                      label: tr('removeFromObtainium'),
+                      label: tr('removeFromObtainX'),
                       value: true,
                     ),
                   ],

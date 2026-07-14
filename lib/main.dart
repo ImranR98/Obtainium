@@ -753,7 +753,9 @@ class _ObtainiumState extends State<Obtainium> {
               cardColor: darkThemeColorScheme.surfaceContainer,
               focusColor: darkThemeColorScheme.primary.withValues(alpha: 0.24),
               navigationBarTheme: navigationBarThemeFor(darkThemeColorScheme),
-              segmentedButtonTheme: appSegmentedButtonTheme(darkThemeColorScheme),
+              segmentedButtonTheme: appSegmentedButtonTheme(
+                darkThemeColorScheme,
+              ),
               switchTheme: appSwitchTheme(darkThemeColorScheme),
               tooltipTheme: tooltipThemeFor(darkThemeColorScheme),
               // Fork: see light theme above.

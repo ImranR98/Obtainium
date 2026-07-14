@@ -18,7 +18,12 @@ extension AppsProviderImportExport on AppsProvider {
   Map<String, dynamic> generateExportJSON({
     List<String>? appIds,
     int? overrideExportSettings,
+    SettingsProvider? sp,
   }) {
+    // Build from the caller-provided provider (the UI's instance) rather than
+    // the extension getter, so the export reflects the intended settings
+    // (parity with fork main).
+    final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
     final appList = apps.values
         .where((e) => appIds == null || appIds.contains(e.app.id))
         .map((e) {
@@ -82,7 +87,9 @@ extension AppsProviderImportExport on AppsProvider {
     SettingsProvider? sp,
   }) async {
     final SettingsProvider settingsProvider = sp ?? this.settingsProvider;
-    var exportDir = await settingsProvider.getExportDir();
+    var exportDir = await settingsProvider.getExportDir(
+      warnIfInaccessible: true,
+    );
     if (isAuto) {
       if (!settingsProvider.autoExportOnChanges) {
         return null;
@@ -102,7 +109,7 @@ extension AppsProviderImportExport on AppsProvider {
     }
     if (exportDir == null || pickOnly) {
       await settingsProvider.pickExportDir();
-      exportDir = await settingsProvider.getExportDir();
+      exportDir = await settingsProvider.getExportDir(warnIfInaccessible: true);
     }
     if (exportDir == null) {
       return null;
@@ -110,7 +117,9 @@ extension AppsProviderImportExport on AppsProvider {
     String? returnPath;
     if (!pickOnly) {
       const encoder = JsonEncoder.withIndent('    ');
-      final Map<String, dynamic> finalExport = generateExportJSON();
+      final Map<String, dynamic> finalExport = generateExportJSON(
+        sp: settingsProvider,
+      );
       final result = await saf.createFile(
         exportDir,
         displayName:

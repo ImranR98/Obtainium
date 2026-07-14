@@ -85,6 +85,13 @@ create table if not exists $logTable (
   $timestampColumn integer not null)
 ''');
       },
+      onOpen: (Database db) async {
+        // Index the timestamp column so the logs-viewer date-range queries
+        // don't full-scan (parity with fork main).
+        await db.execute(
+          'create index if not exists idx_logs_timestamp on $logTable ($timestampColumn)',
+        );
+      },
     );
     return _db!;
   }
@@ -116,7 +123,8 @@ create table if not exists $logTable (
 
   Future<int> clear({DateTime? before, DateTime? after}) async {
     final where = getWhereDates(before: before, after: after);
-    final res = await (await getDB()).delete(
+    final database = await getDB();
+    final res = await database.delete(
       logTable,
       where: where.key,
       whereArgs: where.value,
@@ -135,6 +143,18 @@ create table if not exists $logTable (
           ),
         ),
       );
+    }
+    // SQLite reclaims free pages on DELETE but doesn't shrink the file; without
+    // VACUUM a large debug-log run leaves logs.db multi-megabyte even when it's
+    // mostly tombstones. Only VACUUM on a meaningful delete — running it on the
+    // every-startup constructor cleanup would be wasted I/O. Parity with main.
+    if (res >= 100) {
+      try {
+        await database.execute('VACUUM');
+      } catch (_) {
+        // VACUUM can fail on a locked/mid-write DB; the file just stays
+        // oversized until the next successful prune.
+      }
     }
     return res;
   }

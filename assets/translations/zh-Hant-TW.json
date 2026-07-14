@@ -225,7 +225,6 @@
     "storagePermissionDenied": "存取權限被拒絕",
     "selectedCategorizeWarning": "這將替換選取應用程式的任何現有類別設定。",
     "filterAPKsByRegEx": "用正則表達式過濾 APK",
-    "removeFromObtainium": "從 Obtainium 移除",
     "uninstallFromDevice": "從裝置解除安裝",
     "onlyWorksWithNonVersionDetectApps": "僅適用於停用版本偵測的應用程式。",
     "releaseDateAsVersion": "使用發佈日期作為版本字串",

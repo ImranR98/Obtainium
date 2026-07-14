@@ -225,7 +225,6 @@
     "storagePermissionDenied": "已拒绝授予存储权限",
     "selectedCategorizeWarning": "这将覆盖选中应用当前的类别设置。",
     "filterAPKsByRegEx": "筛选 APK 文件的正则表达式",
-    "removeFromObtainium": "从 Obtainium 中删除",
     "uninstallFromDevice": "从设备中卸载",
     "onlyWorksWithNonVersionDetectApps": "仅适用于禁用版本检测的应用。",
     "releaseDateAsVersion": "将发行日期作为版本号",

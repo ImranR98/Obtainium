@@ -225,7 +225,6 @@
     "storagePermissionDenied": "ストレージ権限が拒否されました",
     "selectedCategorizeWarning": "これにより、選択したアプリの既存のカテゴリ設定がすべて置き換えられます。",
     "filterAPKsByRegEx": "正規表現でAPKをフィルタリングする",
-    "removeFromObtainium": "Obtainiumから削除する",
     "uninstallFromDevice": "デバイスからアンインストールする",
     "onlyWorksWithNonVersionDetectApps": "バージョン検出を無効にしているアプリにのみ動作します。",
     "releaseDateAsVersion": "リリース日をバージョンとして使用する",

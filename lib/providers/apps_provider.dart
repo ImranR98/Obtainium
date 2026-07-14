@@ -984,7 +984,7 @@ class AppsProvider with ChangeNotifier {
   final Map<String, DateTime> lastDetailPageAutoCheckStartedAt =
       <String, DateTime>{};
 
-  // Deferred "remove from Obtainium" (no uninstall) bookkeeping. The JSON is
+  // Deferred "remove from ObtainX" (no uninstall) bookkeeping. The JSON is
   // stashed under app_data/pending_removal, the UI updates immediately, and the
   // disk purge fires after a short delay unless the user undoes it. Public so
   // the lifecycle extension can reach them across library files.

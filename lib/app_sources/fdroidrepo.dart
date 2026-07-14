@@ -409,8 +409,10 @@ class FDroidRepo extends AppSource {
       standardUrl = removeQueryParamsFromUrl(standardUrl);
       final bool pickHighestVersionCode =
           additionalSettings['pickHighestVersionCode'] == true;
+      // Default enabled when the key is absent (parity with fork main and the
+      // other index-parsing path above; the form default is also true).
       final bool trySelectingSuggestedVersionCode =
-          additionalSettings['trySelectingSuggestedVersionCode'] == true;
+          additionalSettings['trySelectingSuggestedVersionCode'] != false;
       if (appIdOrName == null) {
         throw NoReleasesError();
       }

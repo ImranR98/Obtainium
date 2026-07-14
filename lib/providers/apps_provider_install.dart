@@ -833,42 +833,42 @@ extension AppsProviderInstall on AppsProvider {
       appId: file.appId,
       installOptions: installOptions,
     );
-    bool installed = false;
-    if (result.isError) {
-      try {
-        deleteFile(file.file);
-      } catch (e) {
-        unawaited(
-          logs.add(
-            'Failed to delete APK after failed install: ${e.toString()}',
-          ),
-        );
-      }
-      throw InstallError(result.errorCode!);
-    } else if (result.isSuccess) {
-      installed = true;
+    final bool installed = result.isSuccess;
+    if (installed) {
       apps[file.appId]!.app = apps[file.appId]!.app.copyWith(
         installedVersion: apps[file.appId]!.app.latestVersion,
       );
-      // Feature ON: copy the installed APK into the save folder BEFORE deleting
-      // it, and only delete once the copy succeeded (mirrors main's
-      // _disposeInstalledApkFilesAfterSession, installReportedOk == true here).
-      // Feature OFF: delete inline exactly as before.
-      if (saveApkCopiesRequested && apkSaveTreeUri != null) {
-        unawaited(
-          _saveInstalledApkCopyThenMaybeDelete(
-            appId: file.appId,
-            primaryFile: file.file,
-            installReportedOk: true,
-            apkSaveTreeUri: apkSaveTreeUri,
-          ),
-        );
-      } else {
-        unawaited(file.file.delete(recursive: true));
+    }
+    // Dispose the downloaded APK for EVERY outcome (parity with main's
+    // _disposeInstalledApkFilesAfterSession): copy it into the save folder if
+    // that feature is on (regardless of success — so a cancelled/pending
+    // install still yields a saved copy), then delete only when the install
+    // succeeded or the version was skipped. A failed/cancelled/pending install
+    // with no skip keeps the file so a retry can reuse it without re-download.
+    if (saveApkCopiesRequested && apkSaveTreeUri != null) {
+      await _saveInstalledApkCopyThenMaybeDelete(
+        appId: file.appId,
+        primaryFile: file.file,
+        installReportedOk: installed,
+        apkSaveTreeUri: apkSaveTreeUri,
+      );
+    } else {
+      final App? appRef = apps[file.appId]?.app;
+      final bool skipLatest =
+          appRef != null && isSkipActiveForCurrentLatest(appRef);
+      if (installed || skipLatest) {
+        try {
+          await file.file.delete(recursive: true);
+        } catch (e) {
+          unawaited(
+            logs.add('Failed to delete APK after install: ${e.toString()}'),
+          );
+        }
       }
     }
-    // Cancelled or already-installed/pending: keep the file so a retry can
-    // reuse it without re-downloading (matches main).
+    if (result.isError) {
+      throw InstallError(result.errorCode!);
+    }
     await saveApps([apps[file.appId]!.app]);
     return installed;
   }
@@ -1819,9 +1819,16 @@ extension AppsProviderInstall on AppsProvider {
     DownloadedDir dir,
     bool somethingInstalled,
   ) async {
-    // Feature OFF (or non-Android): delete inline, unchanged behavior.
+    // Feature OFF (or non-Android): keep the bundle after a failed install so a
+    // retry can reuse it — delete only when something installed or the version
+    // was skipped (parity with main's !saveApkCopies branch).
     if (!Platform.isAndroid || !settingsProvider.saveDownloadedApkCopies) {
-      unawaited(dir.file.delete());
+      final App? appForSave = apps[dir.appId]?.app;
+      final bool skipLatest =
+          appForSave != null && isSkipActiveForCurrentLatest(appForSave);
+      if (somethingInstalled || skipLatest) {
+        unawaited(dir.file.delete());
+      }
       return;
     }
     try {

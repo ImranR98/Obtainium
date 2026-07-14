@@ -951,7 +951,13 @@ abstract class AppSource {
         label: tr('additionalOptionsSectionTracking'),
       ),
     ],
-    [GeneratedFormSwitch('trackOnly', label: tr('trackOnly'))],
+    [
+      GeneratedFormSwitch(
+        'trackOnly',
+        label: tr('trackOnly'),
+        labelTooltip: tr('trackOnlyAppDescription'),
+      ),
+    ],
     [
       GeneratedFormSwitch(
         'onDemandOnly',

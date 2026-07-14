@@ -225,7 +225,6 @@
     "storagePermissionDenied": "Отказано в доступе к хранилищу",
     "selectedCategorizeWarning": "Это заменит все текущие настройки категорий для выбранных приложений",
     "filterAPKsByRegEx": "Фильтровать APK-файлы\n(регулярное выражение)",
-    "removeFromObtainium": "Удалить из Obtainium",
     "uninstallFromDevice": "Удалить с устройства",
     "onlyWorksWithNonVersionDetectApps": "Работает только для приложений с отключённым определением версии",
     "releaseDateAsVersion": "Использовать дату выпуска в качестве версии",

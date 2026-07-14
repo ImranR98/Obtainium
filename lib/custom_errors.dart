@@ -159,7 +159,11 @@ class InstallError extends ObtainiumError {
         'INSTALL_FAILED',
         data: {
           'errorCode': code,
-          'message': PackageInstallerStatus.byCode(code).name,
+          // Strip the enum's 'STATUS_' prefix so messages read
+          // 'FAILURE_ABORTED', not 'STATUS_FAILURE_ABORTED' (parity with main).
+          'message': PackageInstallerStatus.byCode(
+            code,
+          ).name.replaceFirst('STATUS_', ''),
         },
       );
 }

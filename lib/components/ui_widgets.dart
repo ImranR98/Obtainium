@@ -3,13 +3,9 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obtainium/theme.dart';
-import 'package:obtainium/custom_errors.dart';
-import 'package:obtainium/providers/logs_provider.dart';
 import 'package:obtainium/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:obtainium/components/settings_widgets.dart';
 
 Future<void> copyToClipboard(BuildContext context, String text) async {
   await Clipboard.setData(ClipboardData(text: text));
@@ -49,53 +45,10 @@ Future<bool> showConfirmDialog(
   return confirmed ?? false;
 }
 
-void showMessage(dynamic e, BuildContext context, {bool isError = false}) {
-  context.read<LogsProvider>().add(
-    e.toString(),
-    level: isError ? LogLevel.error : LogLevel.info,
-  );
-  if (e is String || (e is ObtainiumError && !e.unexpected)) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(e.toString())));
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          scrollable: true,
-          title: Text(
-            e is MultiAppMultiError
-                ? tr(isError ? 'someErrors' : 'updates')
-                : tr(isError ? 'unexpectedError' : 'unknown'),
-          ),
-          content: GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: e.toString()));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(tr('copiedToClipboard'))));
-            },
-            child: Text(e.toString()),
-          ),
-          actions: [
-            FilledButton.tonal(
-              autofocus: context.read<SettingsProvider>().isTV,
-              onPressed: () {
-                Navigator.of(context).pop(null);
-              },
-              child: Text(tr('ok')),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-void showError(dynamic e, BuildContext context) {
-  showMessage(e, context, isError: true);
-}
+// showMessage / showError intentionally live ONLY in custom_errors.dart (the
+// themed versions, with a SnackBar duration and a dialog Theme wrapper).
+// Callers that need them should import custom_errors.dart directly; a local
+// copy here previously shadowed those and silently dropped dialog theming.
 
 class AppIcon extends StatelessWidget {
   final Uint8List? bytes;
@@ -248,33 +201,6 @@ class DownloadCancelButton extends StatelessWidget {
         context.read<SettingsProvider>().lightImpact();
         onPressed();
       },
-    );
-  }
-}
-
-class ConnectedCard extends StatelessWidget {
-  final Widget child;
-  final bool isFirst;
-  final bool isLast;
-  final Color? color;
-  final EdgeInsetsGeometry? padding;
-
-  const ConnectedCard({
-    super.key,
-    required this.child,
-    this.isFirst = true,
-    this.isLast = true,
-    this.color,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SettingsTile(
-      color: color,
-      padding: padding ?? EdgeInsets.zero,
-      borderRadius: positionalTileRadius(isFirst: isFirst, isLast: isLast),
-      child: child,
     );
   }
 }
