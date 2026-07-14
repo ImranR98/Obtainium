@@ -740,7 +740,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   bool get showActionBannerForUpdateOnly {
-    return _getBool('showActionBannerForUpdateOnly') ?? false;
+    return _getBool('showActionBannerForUpdateOnly') ?? true;
   }
 
   set showActionBannerForUpdateOnly(bool val) {
