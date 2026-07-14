@@ -56,6 +56,7 @@
   "author": "Author",
   "authorName": "Author/name",
   "autoApkFilterByArch": "Attempt to filter APKs by CPU architecture if possible",
+  "autoExportFileName": "Auto-export file name (leave blank for a timestamped name)",
   "autoExportOnChanges": "Automatically export on changes",
   "autoLinkFilterByArch": "Attempt to filter links by CPU architecture if possible",
   "autoSelectHighestVersionCode": "Auto-select highest versionCode APK",

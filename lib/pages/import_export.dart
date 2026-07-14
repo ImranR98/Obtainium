@@ -425,6 +425,15 @@ class _ExportSectionState extends State<ExportSection> {
                         ),
                       ],
                       [
+                        GeneratedFormTextField(
+                          'autoExportFileName',
+                          label: tr('autoExportFileName'),
+                          required: false,
+                          hint: tr('obtainiumExportHyphenatedLowercase'),
+                          value: settingsProvider.autoExportFileName ?? '',
+                        ),
+                      ],
+                      [
                         GeneratedFormDropdown(
                           'exportSettings',
                           [
@@ -442,6 +451,10 @@ class _ExportSectionState extends State<ExportSection> {
                         if (value['autoExportOnChanges'] != null) {
                           settingsProvider.autoExportOnChanges =
                               value['autoExportOnChanges'] == true;
+                        }
+                        if (value['autoExportFileName'] != null) {
+                          settingsProvider.autoExportFileName =
+                              value['autoExportFileName']?.toString();
                         }
                         if (value['exportSettings'] != null) {
                           settingsProvider.exportSettings =

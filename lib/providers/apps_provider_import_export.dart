@@ -85,10 +85,15 @@ extension AppsProviderImportExport on AppsProvider {
     if (!pickOnly) {
       const encoder = JsonEncoder.withIndent('    ');
       final Map<String, dynamic> finalExport = generateExportJSON();
+      final customName = settingsProvider.autoExportFileName;
+      // A custom name keeps the auto-export file name fixed so it's overwritten
+      // each time instead of accumulating timestamped copies.
+      final displayName = (isAuto && customName != null && customName.isNotEmpty)
+          ? '$customName-auto.json'
+          : '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json';
       final result = await saf.createFile(
         exportDir,
-        displayName:
-            '${tr('obtainiumExportHyphenatedLowercase')}-${DateTime.now().toIso8601String().replaceAll(':', '-')}${isAuto ? '-auto' : ''}.json',
+        displayName: displayName,
         mimeType: 'application/json',
         bytes: Uint8List.fromList(utf8.encode(encoder.convert(finalExport))),
       );
