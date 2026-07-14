@@ -447,61 +447,73 @@ class _HomePageState extends State<HomePage> {
           }
         } else if (action == 'app' || action == 'apps') {
           final dataStr = Uri.decodeComponent(data);
-          if (!context.mounted) return;
-          if (await showDialog(
-                context: context,
-                builder: (BuildContext ctx) {
-                  return GeneratedFormModal(
-                    title: tr(
-                      'importX',
-                      args: [
-                        (action == 'app' ? tr('app') : tr('appsString'))
-                            .toLowerCase(),
-                      ],
-                    ),
-                    items: const [],
-                    additionalWidgets: [
-                      ExpansionTile(
-                        title: Text(tr('rawJson')),
-                        children: [
-                          Text(
-                            dataStr,
-                            style: const TextStyle(fontFamily: 'monospace'),
-                          ),
+          final autoConfirm =
+              uri.queryParameters['confirm'] == 'true';
+          final importHeadless = uri.queryParameters['headless'] == 'true' ||
+              uri.queryParameters['exit'] == 'true';
+
+          if (!autoConfirm) {
+            if (!context.mounted) return;
+            if (await showDialog(
+                  context: context,
+                  builder: (BuildContext ctx) {
+                    return GeneratedFormModal(
+                      title: tr(
+                        'importX',
+                        args: [
+                          (action == 'app' ? tr('app') : tr('appsString'))
+                              .toLowerCase(),
                         ],
                       ),
-                    ],
-                  );
-                },
-              ) !=
-              null) {
-            if (!context.mounted) return;
-            final ap = appsProvider;
-            dynamic parsedData;
-            try {
-              parsedData = jsonDecode(dataStr);
-            } catch (e) {
-              unawaited(
-                LogsProvider().add(
-                  'Failed to decode deep-link JSON: $e',
-                  level: LogLevel.error,
-                ),
-              );
-              throw ObtainiumError(tr('invalidInput'));
+                      items: const [],
+                      additionalWidgets: [
+                        ExpansionTile(
+                          title: Text(tr('rawJson')),
+                          children: [
+                            Text(
+                              dataStr,
+                              style: const TextStyle(fontFamily: 'monospace'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ) ==
+                null) {
+              return;
             }
-            final importPayload = jsonEncode(<String, dynamic>{
-              'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
-            });
-            final result = await ap.import(importPayload);
-            if (mounted) {
-              showMessage(
-                tr(
-                  'importedX',
-                  args: [plural('apps', result.key.length).toLowerCase()],
-                ),
-                context,
-              );
-            }
+          }
+
+          if (!context.mounted) return;
+          final ap = appsProvider;
+          dynamic parsedData;
+          try {
+            parsedData = jsonDecode(dataStr);
+          } catch (e) {
+            unawaited(
+              LogsProvider().add(
+                'Failed to decode deep-link JSON: $e',
+                level: LogLevel.error,
+              ),
+            );
+            throw ObtainiumError(tr('invalidInput'));
+          }
+          final importPayload = jsonEncode(<String, dynamic>{
+            'apps': action == 'app' ? <dynamic>[parsedData] : parsedData,
+          });
+          final result = await ap.import(importPayload);
+          if (mounted) {
+            showMessage(
+              tr(
+                'importedX',
+                args: [plural('apps', result.key.length).toLowerCase()],
+              ),
+              context,
+            );
+          }
+          if (importHeadless) {
+            await maybeExit(uri);
           }
         } else if (action == 'update') {
           await handleUpdateLink(uri);
