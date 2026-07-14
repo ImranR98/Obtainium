@@ -1259,7 +1259,7 @@ Future<void> bgUpdateCheck(
   } else {
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
-  if (canInstall) {
+  if (canInstall && params['toCheck'] == null) {
     final discovered = appsProvider.findAppIdsWithPendingUpdates(
       installedOnly: true,
     );
@@ -1278,12 +1278,14 @@ Future<void> bgUpdateCheck(
       ),
     );
   }
-  await _runBGInstallMode(
-    silentlyInstallable,
-    appsProvider,
-    notificationsProvider,
-    bgLogs,
-  );
+  if (params['toCheck'] == null) {
+    await _runBGInstallMode(
+      silentlyInstallable,
+      appsProvider,
+      notificationsProvider,
+      bgLogs,
+    );
+  }
   unawaited(bgLogs.add('BG task completed $taskId.'));
   AppsProvider._eventsController.add(null);
 }
