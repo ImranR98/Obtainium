@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
 
 List<MapEntry<Locale, String>> supportedLocales = const [
@@ -218,6 +219,9 @@ class _ObtainiumState extends State<Obtainium> {
     final isFirstRun = settings.checkAndFlipFirstRun();
     if (isFirstRun) {
       logger.info('This is the first ever run of Obtainium.');
+      if (!settings.isTV) {
+        unawaited(Permission.notification.request());
+      }
       if (!isFdroidBuild) {
         getInstalledInfo(obtainiumId)
             .then((value) {
