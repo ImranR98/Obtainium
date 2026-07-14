@@ -453,145 +453,154 @@ class AppListTile extends StatelessWidget {
           )
         : null;
 
-    final tileChild = Semantics(
-      customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
-        if (canInstall || canUpdate)
-          CustomSemanticsAction(
-            label: canUpdate ? tr('update') : tr('install'),
-          ): () {
-            if (!appsProvider.areDownloadsRunning()) {
-              appsProvider.downloadAndInstallLatestApps([
-                appId,
-              ], appNavigatorKey.currentContext);
-            }
-          },
-        CustomSemanticsAction(label: tr('remove')): () {
-          appsProvider.removeAppsWithModal(context, [_app]);
-        },
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: categories.isEmpty
-              ? null
-              : LinearGradient(
-                  stops: stops,
-                  begin: const Alignment(-1, 0),
-                  end: const Alignment(-0.97, 0),
-                  colors: [
-                    ...categories.map(
-                      (e) => Color(
-                        settingsProvider.categories[e] ?? transparent,
-                      ).withAlpha(255),
-                    ),
-                    Color(transparent),
-                  ],
-                ),
-        ),
-        child: () {
-          final tile = ListTile(
-            autofocus: autofocus,
-            shape: borderRadius != null
-                ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
-                : null,
-            tileColor: _app.pinned
-                ? Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.06)
-                : Colors.transparent,
-            selectedTileColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: _app.pinned ? 0.2 : 0.1),
-            selected: multiSelected || detailSelected,
-            leading: settingsProvider.isTV
-                ? null
-                : AppIconWidget(
-                    appId: _app.id,
-                    installed: appInMemory.installedInfo != null,
-                    appsProvider: appsProvider,
-                  ),
-            onLongPress: onToggleSelected,
-            title: Text(
-              maxLines: 1,
-              appInMemory.name,
-              style: TextStyle(
-                overflow: TextOverflow.ellipsis,
-                fontWeight: _app.pinned ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            subtitle: _app.hasPendingRepoRename
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [_authorText(), _repoMovedRow(context)],
-                  )
-                : _authorText(),
-            trailing: appInMemory.downloadProgress != null
-                ? DownloadProgressTrailing(
-                    progress: appInMemory.downloadProgress!,
-                    receivedBytes: appInMemory.downloadReceivedBytes,
-                    totalBytes: appInMemory.downloadTotalBytes,
-                  )
-                : trailingRow,
-            onTap: onTap,
-          );
-          if (settingsProvider.isTV) {
-            return Row(
-              children: [
-                Checkbox(
-                  value: multiSelected,
-                  onChanged: (_) {
-                    onToggleSelected();
-                  },
-                ),
-                Expanded(child: tile),
-              ],
-            );
-          }
-          return tile;
-        }(),
-      ),
-    );
-
     return ValueListenableBuilder<double?>(
       valueListenable: appInMemory.downloadProgressNotifier,
-      builder: (context, downloadProgress, child) =>
-          disableSwipe || downloadProgress != null
-          ? tileChild
-          : Dismissible(
-              key: ValueKey(appId),
-              direction: DismissDirection.horizontal,
-              background: swipeBackground ?? const SizedBox.shrink(),
-              secondaryBackground: Container(
-                color: cs.errorContainer,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 24),
-                child: Icon(Icons.delete_outline, color: cs.onErrorContainer),
-              ),
-              confirmDismiss: (direction) async {
-                if (direction == DismissDirection.startToEnd) {
-                  if ((canInstall || canUpdate) &&
-                      !appsProvider.areDownloadsRunning()) {
-                    settingsProvider.heavyImpact();
-                    unawaited(
-                      appsProvider
-                          .downloadAndInstallLatestApps([
-                            appId,
-                          ], appNavigatorKey.currentContext)
-                          .catchError((e) {
-                            if (context.mounted) showError(e, context);
-                            return <String>[];
-                          }),
-                    );
-                  }
-                  return false;
-                } else {
-                  settingsProvider.lightImpact();
-                  return appsProvider.removeAppsWithModal(context, [_app]);
+      builder: (context, downloadProgress, child) {
+        final tileChild = Semantics(
+          customSemanticsActions: <CustomSemanticsAction, VoidCallback>{
+            if (canInstall || canUpdate)
+              CustomSemanticsAction(
+                label: canUpdate ? tr('update') : tr('install'),
+              ): () {
+                if (!appsProvider.areDownloadsRunning()) {
+                  appsProvider.downloadAndInstallLatestApps([
+                    appId,
+                  ], appNavigatorKey.currentContext);
                 }
               },
-              onDismissed: (direction) {},
-              child: tileChild,
+            CustomSemanticsAction(label: tr('remove')): () {
+              appsProvider.removeAppsWithModal(context, [_app]);
+            },
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: categories.isEmpty
+                  ? null
+                  : LinearGradient(
+                      stops: stops,
+                      begin: const Alignment(-1, 0),
+                      end: const Alignment(-0.97, 0),
+                      colors: [
+                        ...categories.map(
+                          (e) => Color(
+                            settingsProvider.categories[e] ?? transparent,
+                          ).withAlpha(255),
+                        ),
+                        Color(transparent),
+                      ],
+                    ),
             ),
+            child: () {
+              final tile = ListTile(
+                autofocus: autofocus,
+                shape: borderRadius != null
+                    ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
+                    : null,
+                tileColor: _app.pinned
+                    ? Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.06)
+                    : Colors.transparent,
+                selectedTileColor: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: _app.pinned ? 0.2 : 0.1),
+                selected: multiSelected || detailSelected,
+                leading: settingsProvider.isTV
+                    ? null
+                    : AppIconWidget(
+                        appId: _app.id,
+                        installed: appInMemory.installedInfo != null,
+                        appsProvider: appsProvider,
+                      ),
+                onLongPress: onToggleSelected,
+                title: Text(
+                  maxLines: 1,
+                  appInMemory.name,
+                  style: TextStyle(
+                    overflow: TextOverflow.ellipsis,
+                    fontWeight: _app.pinned
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+                subtitle: _app.hasPendingRepoRename
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _authorText(),
+                          _repoMovedRow(context),
+                        ],
+                      )
+                    : _authorText(),
+                trailing: downloadProgress != null
+                    ? DownloadProgressTrailing(
+                        progress: downloadProgress,
+                        receivedBytes: appInMemory.downloadReceivedBytes,
+                        totalBytes: appInMemory.downloadTotalBytes,
+                      )
+                    : trailingRow,
+                onTap: onTap,
+              );
+              if (settingsProvider.isTV) {
+                return Row(
+                  children: [
+                    Checkbox(
+                      value: multiSelected,
+                      onChanged: (_) {
+                        onToggleSelected();
+                      },
+                    ),
+                    Expanded(child: tile),
+                  ],
+                );
+              }
+              return tile;
+            }(),
+          ),
+        );
+
+        return disableSwipe || downloadProgress != null
+            ? tileChild
+            : Dismissible(
+                key: ValueKey(appId),
+                direction: DismissDirection.horizontal,
+                background: swipeBackground ?? const SizedBox.shrink(),
+                secondaryBackground: Container(
+                  color: cs.errorContainer,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 24),
+                  child: Icon(Icons.delete_outline,
+                      color: cs.onErrorContainer),
+                ),
+                confirmDismiss: (direction) async {
+                  if (direction == DismissDirection.startToEnd) {
+                    if ((canInstall || canUpdate) &&
+                        !appsProvider.areDownloadsRunning()) {
+                      settingsProvider.heavyImpact();
+                      unawaited(
+                        appsProvider
+                            .downloadAndInstallLatestApps([
+                              appId,
+                            ], appNavigatorKey.currentContext)
+                            .catchError((e) {
+                              if (context.mounted) showError(e, context);
+                              return <String>[];
+                            }),
+                      );
+                    }
+                    return false;
+                  } else {
+                    settingsProvider.lightImpact();
+                    return appsProvider.removeAppsWithModal(context, [_app]);
+                  }
+                },
+                onDismissed: (direction) {},
+                child: tileChild,
+              );
+      },
     );
   }
 }
