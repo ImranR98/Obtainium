@@ -261,7 +261,13 @@ extension AppsProviderInstall on AppsProvider {
     NotificationsProvider? notificationsProvider,
     bool useExisting = true,
   }) async {
-    final notifId = DownloadNotification(app.finalName, 0).id;
+    final initialNotification = DownloadNotification(
+      app.finalName,
+      0,
+      appId: app.id,
+    );
+    final notifId = initialNotification.id;
+    var nativeDownloadServiceStarted = false;
     final cancellationToken = registerDownloadCancellation(app.id);
     try {
       if (apps[app.id] != null) {
@@ -290,11 +296,24 @@ extension AppsProviderInstall on AppsProvider {
         app.url,
         additionalSettingsPlusSourceConfig,
       );
-      var notif = DownloadNotification(
-        app.finalName,
-        _downloadCompleteProgress,
-      );
-      unawaited(notificationsProvider?.cancel(notif.id));
+      if (notificationsProvider != null) {
+        await notificationsProvider.cancel(notifId);
+      }
+      nativeDownloadServiceStarted =
+          await NativeFeatures.startDownloadForegroundService(
+            id: initialNotification.id,
+            appId: app.id,
+            title: initialNotification.title,
+            message: initialNotification.message,
+            channelCode: initialNotification.channelCode,
+            channelName: initialNotification.channelName,
+            channelDescription: initialNotification.channelDescription,
+            cancelLabel: tr('cancel'),
+          );
+      var notif = initialNotification;
+      if (!nativeDownloadServiceStarted) {
+        unawaited(notificationsProvider?.notify(notif));
+      }
       int? prevProg;
       var fileNameNoExt = '${app.id}-${downloadUrl.hashCode}';
       if (source.urlsAlwaysHaveExtension) {
@@ -335,7 +354,23 @@ extension AppsProviderInstall on AppsProvider {
             totalBytes: total,
           );
           if (prog != null && prevProg != prog) {
-            unawaited(notificationsProvider?.notify(notif));
+            if (nativeDownloadServiceStarted) {
+              unawaited(
+                NativeFeatures.showDownloadProgressNotification(
+                  id: notif.id,
+                  appId: app.id,
+                  title: notif.title,
+                  message: notif.message,
+                  channelCode: notif.channelCode,
+                  progressPercent: prog,
+                  indeterminate: false,
+                  cancelLabel: tr('cancel'),
+                  shortCriticalText: '$prog%',
+                ),
+              );
+            } else {
+              unawaited(notificationsProvider?.notify(notif));
+            }
           }
           prevProg = prog;
         },
@@ -349,7 +384,22 @@ extension AppsProviderInstall on AppsProvider {
         apps[app.id]!.downloadProgress = _remainingStepsProgress.toDouble();
         notify();
         notif = DownloadNotification(app.finalName, _remainingStepsProgress);
-        unawaited(notificationsProvider?.notify(notif));
+        if (nativeDownloadServiceStarted) {
+          unawaited(
+            NativeFeatures.showDownloadProgressNotification(
+              id: notif.id,
+              appId: app.id,
+              title: notif.title,
+              message: notif.message,
+              channelCode: notif.channelCode,
+              progressPercent: _remainingStepsProgress,
+              indeterminate: true,
+              cancelLabel: tr('cancel'),
+            ),
+          );
+        } else {
+          unawaited(notificationsProvider?.notify(notif));
+        }
       }
       PackageInfo? newInfo;
       final originalAssetName = app.apkUrls[app.preferredApkIndex].key
@@ -464,6 +514,9 @@ extension AppsProviderInstall on AppsProvider {
       }
     } finally {
       clearDownloadCancellation(app.id);
+      if (nativeDownloadServiceStarted) {
+        await NativeFeatures.stopDownloadForegroundService();
+      }
       unawaited(notificationsProvider?.cancel(notifId));
       if (apps[app.id] != null) {
         apps[app.id]!.downloadProgress = null;
@@ -594,6 +647,7 @@ extension AppsProviderInstall on AppsProvider {
     BuildContext? firstTimeWithContext, {
     bool needsBGWorkaround = false,
     Map<String, dynamic> installOptions = const {},
+    bool skipPreInstallVerification = false,
 
     /// See [installApk]'s param of the same name. Verification/scanning runs
     /// once here against the container before any split part is installed.
@@ -601,20 +655,22 @@ extension AppsProviderInstall on AppsProvider {
   }) async {
     // Verify + scan the container once up front; the split-APK installApk calls
     // below pass skipMalwareScan so it is not repeated per part.
-    final bool proceedAfterVerification = await _runPreInstallVerification(
-      appId: dir.appId,
-      primaryFile: dir.file,
-      malwareScanContext: malwareScanContext,
-      cleanupOnSkip: () {
-        try {
-          if (dir.file.existsSync()) dir.file.deleteSync();
-          if (dir.extracted.existsSync()) {
-            dir.extracted.deleteSync(recursive: true);
-          }
-        } catch (_) {}
-      },
-    );
-    if (!proceedAfterVerification) return false;
+    if (!skipPreInstallVerification) {
+      final bool proceedAfterVerification = await _runPreInstallVerification(
+        appId: dir.appId,
+        primaryFile: dir.file,
+        malwareScanContext: malwareScanContext,
+        cleanupOnSkip: () {
+          try {
+            if (dir.file.existsSync()) dir.file.deleteSync();
+            if (dir.extracted.existsSync()) {
+              dir.extracted.deleteSync(recursive: true);
+            }
+          } catch (_) {}
+        },
+      );
+      if (!proceedAfterVerification) return false;
+    }
     // Try installing all APKs; succeed if at least one installed.
     var somethingInstalled = false;
     final installer = getInstaller();
@@ -1132,6 +1188,8 @@ extension AppsProviderInstall on AppsProvider {
 
     final MultiAppMultiError errors = MultiAppMultiError();
     final List<String> installedIds = [];
+    final List<({String appName, String status, String? detail})>
+    malwareScanSkips = [];
 
     // Move Obtainium to the end of the line (let all other apps update first)
     appsToInstall = moveStrToEnd(
@@ -1144,9 +1202,7 @@ extension AppsProviderInstall on AppsProvider {
 
     List<_InstallResult> downloadResults = [];
     try {
-      // Background tasks (forceParallelDownloads) run serially like main,
-      // otherwise the parallelDownloads setting controls concurrency.
-      if (forceParallelDownloads || !settingsProvider.parallelDownloads) {
+      if (!forceParallelDownloads && !settingsProvider.parallelDownloads) {
         for (var id in appsToInstall) {
           downloadResults.add(
             await _downloadAppForInstall(
@@ -1186,6 +1242,13 @@ extension AppsProviderInstall on AppsProvider {
               context,
               notificationsProvider,
             );
+          } on MalwareScanBlockedError catch (e) {
+            final id = res.id;
+            malwareScanSkips.add((
+              appName: apps[id]?.name ?? id,
+              status: e.status,
+              detail: e.detail,
+            ));
           } catch (e) {
             final id = res.id;
             errors.add(id, e, appName: apps[id]?.name);
@@ -1199,6 +1262,14 @@ extension AppsProviderInstall on AppsProvider {
         apps[id]?.downloadProgress = null;
       }
       notify();
+    }
+
+    if (malwareScanSkips.isNotEmpty && notificationsProvider != null) {
+      unawaited(
+        notificationsProvider.notify(
+          MalwareScanSkippedNotification(malwareScanSkips),
+        ),
+      );
     }
 
     if (errors.idsByErrorString.isNotEmpty) {
@@ -1352,6 +1423,20 @@ extension AppsProviderInstall on AppsProvider {
           appEntry.app.settings.getBool('shizukuPretendToBeGooglePlay');
       if (downloadedFile != null) {
         if (needBGWorkaround) {
+          final bool proceedAfterVerification =
+              await _runPreInstallVerification(
+                appId: id,
+                primaryFile: downloadedFile.file,
+                malwareScanContext: null,
+                cleanupOnSkip: () {
+                  try {
+                    if (downloadedFile!.file.existsSync()) {
+                      downloadedFile.file.deleteSync();
+                    }
+                  } catch (_) {}
+                },
+              );
+          if (!proceedAfterVerification) return;
           final baseline = await captureInstallBaseline(id);
           unawaited(
             installApk(
@@ -1361,6 +1446,7 @@ extension AppsProviderInstall on AppsProvider {
               installOptions: {
                 'shizukuPretendToBeGooglePlay': shizukuPretendToBeGooglePlay,
               },
+              skipMalwareScan: true,
             ),
           );
           sayInstalled = await waitForPackageInstall(
@@ -1401,9 +1487,31 @@ extension AppsProviderInstall on AppsProvider {
         }
       } else {
         if (needBGWorkaround) {
+          final bool proceedAfterVerification =
+              await _runPreInstallVerification(
+                appId: id,
+                primaryFile: downloadedDir!.file,
+                malwareScanContext: null,
+                cleanupOnSkip: () {
+                  try {
+                    if (downloadedDir.file.existsSync()) {
+                      downloadedDir.file.deleteSync();
+                    }
+                    if (downloadedDir.extracted.existsSync()) {
+                      downloadedDir.extracted.deleteSync(recursive: true);
+                    }
+                  } catch (_) {}
+                },
+              );
+          if (!proceedAfterVerification) return;
           final baseline = await captureInstallBaseline(id);
           unawaited(
-            installApkDir(downloadedDir!, null, needsBGWorkaround: true),
+            installApkDir(
+              downloadedDir,
+              null,
+              needsBGWorkaround: true,
+              skipPreInstallVerification: true,
+            ),
           );
           sayInstalled = await waitForPackageInstall(
             id,

@@ -138,6 +138,26 @@ class _StubIzzyOnDroid extends IzzyOnDroid {
   }
 }
 
+class _StubFDroidRepo extends FDroidRepo {
+  _StubFDroidRepo(this.indexXml);
+
+  final String indexXml;
+
+  @override
+  Future<Response> sourceRequest(
+    String url,
+    Map<String, dynamic> additionalSettings, {
+    bool followRedirects = true,
+    Object? postBody,
+  }) async {
+    return Response(
+      indexXml,
+      200,
+      request: Request('GET', Uri.parse(url)),
+    );
+  }
+}
+
 class _StubGitHub extends GitHub {
   @override
   Future<Response> sourceRequest(
@@ -522,6 +542,46 @@ void main() {
       expect(details.version, '3.0');
       expect(details.isReproducible, isNull);
       expect(details.reproducibleStatus, reproducibleBuildStatusNoData);
+    },
+  );
+
+  test(
+    'F-Droid repo source uses shared parser for valid releases and metadata',
+    () async {
+      final details = await _StubFDroidRepo('''
+<fdroid><repo name="Example Repo"/><application id="org.example.app">
+  <name>Example App</name>
+  <icon>example.png</icon>
+  <marketvercode>3</marketvercode>
+  <package>
+    <version>4.0</version>
+    <versioncode>4</versioncode>
+  </package>
+  <package>
+    <version>3.0</version>
+    <versioncode>3</versioncode>
+    <apkname>org.example.app_3.apk</apkname>
+    <size>12345</size>
+    <binaries>org.example.app_3.apk</binaries>
+  </package>
+</application></fdroid>
+''').getLatestAPKDetails(
+        'https://repo.example/fdroid/repo',
+        <String, dynamic>{'appIdOrName': 'org.example.app'},
+      );
+
+      expect(details.version, '3.0');
+      expect(details.names.name, 'Example App');
+      expect(details.apkSizeBytes, 12345);
+      expect(
+        details.iconUrl,
+        'https://repo.example/fdroid/repo/icons/example.png',
+      );
+      expect(details.reproducibleStatus, reproducibleBuildStatusVerified);
+      expect(
+        details.apkUrls.single.value,
+        'https://repo.example/fdroid/repo/org.example.app_3.apk',
+      );
     },
   );
 

@@ -498,6 +498,40 @@ Future<File> downloadFile(
   LogsProvider? logs,
   CancellationToken? cancellationToken,
 }) async {
+  final bool keepAwakeAcquired =
+      await NativeFeatures.acquireDownloadKeepAwake();
+  try {
+    return await _downloadFile(
+      url,
+      fileName,
+      fileNameHasExt,
+      onProgress,
+      destDir,
+      useExisting: useExisting,
+      headers: headers,
+      allowInsecure: allowInsecure,
+      logs: logs,
+      cancellationToken: cancellationToken,
+    );
+  } finally {
+    if (keepAwakeAcquired) {
+      await NativeFeatures.releaseDownloadKeepAwake();
+    }
+  }
+}
+
+Future<File> _downloadFile(
+  String url,
+  String fileName,
+  bool fileNameHasExt,
+  Function? onProgress,
+  String destDir, {
+  bool useExisting = true,
+  Map<String, String>? headers,
+  bool allowInsecure = false,
+  LogsProvider? logs,
+  CancellationToken? cancellationToken,
+}) async {
   final reqHeaders = headers ?? {};
   final headersClient = IOClient(createHttpClient(allowInsecure));
 
@@ -1175,6 +1209,7 @@ class AppsProvider with ChangeNotifier {
       });
       // Let the download notification's Cancel action reach this provider,
       // including taps routed through the FLN background isolate.
+      NativeFeatures.registerDownloadCancelHandler(cancelDownload);
       NotificationsProvider.onDownloadCancelRequested = cancelDownload;
       NotificationsProvider.listenForDownloadCancelFromMain();
     }
@@ -1282,6 +1317,43 @@ Future<void> _runBGInstallMode(
     unawaited(logs.add('BG install task: No pending installs.'));
     return;
   }
+  if (await NativeFeatures.isDeviceInteractive()) {
+    unawaited(
+      logs.add(
+        'BG install task: Device is active (screen on). Postponing background installations.',
+      ),
+    );
+    final retryName =
+        'interactive_retry_${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      await Workmanager().registerOneOffTask(
+        retryName,
+        retryName,
+        initialDelay: const Duration(minutes: 15),
+        constraints: Constraints(
+          networkType: appsProvider.settingsProvider.bgUpdatesOnWiFiOnly
+              ? NetworkType.unmetered
+              : NetworkType.connected,
+          requiresCharging:
+              appsProvider.settingsProvider.bgUpdatesWhileChargingOnly,
+          requiresBatteryNotLow: false,
+          requiresDeviceIdle: false,
+          requiresStorageNotLow: false,
+        ),
+      );
+      unawaited(
+        logs.add('BG install task: Scheduled $retryName in 15 minutes.'),
+      );
+    } catch (e) {
+      unawaited(
+        logs.add(
+          'BG install task: Could not schedule interactive retry: $e',
+          level: LogLevel.warning,
+        ),
+      );
+    }
+    return;
+  }
   unawaited(
     logs.add('BG install task: Installing ${appIds.length} apps silently.'),
   );
@@ -1297,7 +1369,7 @@ Future<void> _runBGInstallMode(
       e.idsByErrorString.forEach((key, value) {
         unawaited(
           notificationsProvider.notify(
-            ErrorCheckingUpdatesNotification(e.errorsAppsString(key, value)),
+            ErrorInstallingUpdatesNotification(e.errorsAppsString(key, value)),
           ),
         );
       });
@@ -1476,8 +1548,9 @@ Future<void> bgUpdateCheck(
     unawaited(bgLogs.add('BG update task: No apps due for checking.'));
   }
   if (canInstall && params['toCheck'] == null) {
-    final discovered = appsProvider.findAppIdsWithPendingUpdates(
+    final discovered = appsProvider.findExistingUpdates(
       installedOnly: true,
+      excludeOnDemandOnly: true,
     );
     final existing = silentlyInstallable.toSet();
     for (final id in discovered) {
@@ -1494,7 +1567,7 @@ Future<void> bgUpdateCheck(
       ),
     );
   }
-  if (params['toCheck'] == null) {
+  if (canInstall) {
     await _runBGInstallMode(
       silentlyInstallable,
       appsProvider,
@@ -1836,7 +1909,7 @@ class NativeFeatures {
     }
   }
 
-  static Future<void> startDownloadForegroundService({
+  static Future<bool> startDownloadForegroundService({
     required int id,
     required String appId,
     required String title,
@@ -1846,23 +1919,28 @@ class NativeFeatures {
     required String channelDescription,
     required String cancelLabel,
   }) async {
-    if (!Platform.isAndroid) return;
+    if (!Platform.isAndroid) return false;
     try {
-      await _notificationsChannel
-          .invokeMethod('startDownloadForegroundService', <String, Object?>{
-            'id': id,
-            'appId': appId,
-            'title': title,
-            'message': message,
-            'channelCode': channelCode,
-            'channelName': channelName,
-            'channelDescription': channelDescription,
-            'cancelLabel': cancelLabel,
-          });
+      return await _notificationsChannel.invokeMethod<bool>(
+            'startDownloadForegroundService',
+            <String, Object?>{
+              'id': id,
+              'appId': appId,
+              'title': title,
+              'message': message,
+              'channelCode': channelCode,
+              'channelName': channelName,
+              'channelDescription': channelDescription,
+              'cancelLabel': cancelLabel,
+            },
+          ) ??
+          false;
     } on PlatformException {
       // The download can still proceed; wake locks and progress notification remain best effort.
+      return false;
     } on MissingPluginException {
       // Non-Android builds and older runners do not provide this channel.
+      return false;
     }
   }
 

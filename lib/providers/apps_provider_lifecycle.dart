@@ -344,6 +344,12 @@ extension AppsProviderLifecycle on AppsProvider {
       modded = true;
     }
 
+    final App normalizedApp = normalizeSkippedLatestVersion(app);
+    if (!identical(normalizedApp, app)) {
+      app = normalizedApp;
+      modded = true;
+    }
+
     return modded ? app : null;
   }
 
@@ -1009,6 +1015,7 @@ extension AppsProviderLifecycle on AppsProvider {
           if (attemptToCorrectInstallStatus) {
             app = getCorrectedInstallStatusAppIfPossible(app, info) ?? app;
           }
+          app = normalizeSkippedLatestVersion(app);
           if (!onlyIfExists || this.apps.containsKey(app.id)) {
             final String filePath = '${appsDirectory.path}/${app.id}.json';
             await File(

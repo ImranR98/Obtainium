@@ -307,6 +307,28 @@ bool isSkipActiveForCurrentLatest(App app) {
   return skipped == app.latestVersion;
 }
 
+/// Removes a saved skip once it is stale or the installed app is already at
+/// or ahead of the skipped release.
+App normalizeSkippedLatestVersion(App app) {
+  final dynamic skipped = app.additionalSettings['skippedLatestVersion'];
+  if (skipped is! String || skipped.isEmpty) return app;
+
+  var shouldRemove = skipped != app.latestVersion;
+  final String? installed = app.installedVersion;
+  if (!shouldRemove && installed != null && installed.isNotEmpty) {
+    shouldRemove =
+        installed == app.latestVersion ||
+        versionsEffectivelyEqual(installed, app.latestVersion) ||
+        compareVersionsByNumericSegments(installed, app.latestVersion) == 1;
+  }
+  if (!shouldRemove) return app;
+
+  return app.copyWith(
+    additionalSettings: Map<String, dynamic>.from(app.additionalSettings)
+      ..remove('skippedLatestVersion'),
+  );
+}
+
 /// Installed app should show update affordances and count in update lists
 /// (unless skipped).
 bool appHasActionableUpdate(App app) {

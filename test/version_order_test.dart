@@ -1004,4 +1004,93 @@ This app description should not be included.
       expect(versionOrderUncertainUpdate(appUncertain), true);
     },
   );
+
+  test('skip normalization removes stale and redundant skip state', () {
+    final activeSkip = App(
+      id: 'app.example',
+      url: 'https://github.com/example/example',
+      author: 'example',
+      name: 'example',
+      installedVersion: '1.0',
+      latestVersion: '2.0',
+      apkUrls: const <MapEntry<String, String>>[],
+      preferredApkIndex: 0,
+      additionalSettings: const {'skippedLatestVersion': '2.0'},
+      lastUpdateCheck: DateTime.now(),
+      pinned: false,
+    );
+
+    expect(
+      normalizeSkippedLatestVersion(
+        activeSkip.copyWith(
+          additionalSettings: const {'skippedLatestVersion': '1.5'},
+        ),
+      ).additionalSettings.containsKey('skippedLatestVersion'),
+      false,
+    );
+    expect(
+      normalizeSkippedLatestVersion(
+        activeSkip.copyWith(installedVersion: '2.0'),
+      ).additionalSettings.containsKey('skippedLatestVersion'),
+      false,
+    );
+    expect(
+      normalizeSkippedLatestVersion(
+        activeSkip.copyWith(installedVersion: '3.0'),
+      ).additionalSettings.containsKey('skippedLatestVersion'),
+      false,
+    );
+    expect(
+      normalizeSkippedLatestVersion(activeSkip)
+          .additionalSettings['skippedLatestVersion'],
+      '2.0',
+    );
+  });
+
+  test(
+    'background candidate selection excludes skipped, on-demand, and newer apps',
+    () {
+      final appsProvider = AppsProvider(isBg: true);
+      addTearDown(appsProvider.dispose);
+      final actionable = App(
+        id: 'actionable',
+        url: 'https://github.com/example/actionable',
+        author: 'example',
+        name: 'actionable',
+        installedVersion: '1.0',
+        latestVersion: '2.0',
+        apkUrls: const <MapEntry<String, String>>[],
+        preferredApkIndex: 0,
+        additionalSettings: const <String, dynamic>{},
+        lastUpdateCheck: DateTime.now(),
+        pinned: false,
+      );
+      final skipped = actionable.copyWith(
+        id: 'skipped',
+        additionalSettings: const {'skippedLatestVersion': '2.0'},
+      );
+      final onDemand = actionable.copyWith(
+        id: 'on-demand',
+        additionalSettings: const {'onDemandOnly': true},
+      );
+      final installedNewer = actionable.copyWith(
+        id: 'installed-newer',
+        installedVersion: '3.0',
+      );
+      appsProvider.apps.addAll({
+        actionable.id: AppInMemory(actionable, null, null, null),
+        skipped.id: AppInMemory(skipped, null, null, null),
+        onDemand.id: AppInMemory(onDemand, null, null, null),
+        installedNewer.id: AppInMemory(installedNewer, null, null, null),
+      });
+
+      expect(
+        appsProvider.findExistingUpdates(
+          installedOnly: true,
+          excludeOnDemandOnly: true,
+        ),
+        <String>['actionable'],
+      );
+    },
+  );
 }
