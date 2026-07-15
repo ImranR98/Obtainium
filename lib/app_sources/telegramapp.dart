@@ -5,9 +5,11 @@ import 'package:obtainium/custom_errors.dart';
 import 'package:obtainium/providers/source_provider.dart';
 
 class TelegramApp extends AppSource {
+  @override
+  String get name => tr('telegramApp');
+
   TelegramApp() {
     hosts = ['telegram.org'];
-    name = tr('telegramApp');
   }
 
   @override

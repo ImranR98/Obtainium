@@ -11,8 +11,10 @@ import 'package:obtainium/providers/source_provider.dart';
 class FDroidRepo extends AppSource {
   bool _appIdFoundInUrl = false;
 
+  @override
+  String get name => tr('fdroidThirdPartyRepo');
+
   FDroidRepo() {
-    name = tr('fdroidThirdPartyRepo');
     canSearch = true;
     includeAdditionalOptsInMainSearch = true;
     neverAutoSelect = true;

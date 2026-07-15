@@ -852,7 +852,7 @@ class AddAppPageState extends State<AddAppPage> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 16,
-                MediaQuery.of(context).padding.top,
+                0,
                 16,
                 MediaQuery.of(context).padding.bottom,
               ),

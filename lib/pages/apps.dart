@@ -323,7 +323,7 @@ class AppsPageState extends State<AppsPage> {
                 [
                   MapEntry('', tr('none')),
                   ...ctx.read<SourceProvider>().sources.map(
-                    (e) => MapEntry(e.name, e.name),
+                    (e) => MapEntry(e.sourceIdentifier, e.name),
                   ),
                 ],
               ),
@@ -1038,6 +1038,7 @@ class AppsPageState extends State<AppsPage> {
   Widget build(BuildContext context) {
     final appsProvider = context.watch<AppsProvider>();
     final settingsProvider = context.watch<SettingsProvider>();
+    final sourceProvider = context.read<SourceProvider>();
 
     if (!appsProvider.loadingApps &&
         appsProvider.apps.isNotEmpty &&
@@ -1128,8 +1129,15 @@ class AppsPageState extends State<AppsPage> {
         }
       }
     } else if (groupBy == GroupByMode.source.name) {
+      final sourceNames = {
+        for (final s in sourceProvider.sources)
+          s.sourceIdentifier: s.name,
+      };
       for (var i = 0; i < listedApps.length; i++) {
-        grouped.putIfAbsent(listedApps[i].sourceType, () => []).add(i);
+        final label = sourceNames[listedApps[i].sourceType] ??
+            listedApps[i].sourceType ??
+            tr('noSource');
+        grouped.putIfAbsent(label, () => []).add(i);
       }
     }
     final listedGroups = grouped.keys.toList();
