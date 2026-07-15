@@ -9,12 +9,14 @@ import 'package:obtainium/providers/logs_provider.dart';
 class InstallerTarget {
   final String package;
   final String activity;
+  final String? activityLabel;
   final String label;
   final Uint8List? icon;
 
   const InstallerTarget({
     required this.package,
     required this.activity,
+    required this.activityLabel,
     required this.label,
     this.icon,
   });
@@ -56,12 +58,16 @@ class ExternalInstallerBridge {
       final package = map['package']?.toString();
       final activity = map['activity']?.toString();
       if (package == null || activity == null) continue;
+      final String? activityLabel = map['activityLabel']?.toString().trim();
       final label = await _labelFor(package);
       final icon = await _iconFor(package);
       targets.add(
         InstallerTarget(
           package: package,
           activity: activity,
+          activityLabel: activityLabel == null || activityLabel.isEmpty
+              ? null
+              : activityLabel,
           label: label ?? package,
           icon: icon,
         ),
