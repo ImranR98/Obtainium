@@ -4,6 +4,7 @@ import 'dart:ui' show PlatformDispatcher, PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obtainium/app_distribution.dart';
+import 'package:obtainium/app_ui_scaling.dart';
 import 'package:obtainium/pages/home.dart';
 import 'package:obtainium/custom_errors.dart' show setAppLocale;
 import 'package:obtainium/theme/app_dialog_theme.dart';
@@ -701,25 +702,19 @@ class _ObtainiumState extends State<Obtainium> {
             scaffoldMessengerKey: scaffoldMessengerKey,
             debugShowCheckedModeBanner: false,
             themeAnimationDuration: Duration.zero,
-            // App-wide UI scale. The user controls scaling via the
-            // [SettingsProvider.appUiScale] slider in the Settings page.
-            // When the slider is at the default 1.0 we return the child
-            // unwrapped, so the OS-reported MediaQuery (including any
-            // non-linear textScaler curve) flows through untouched. When
-            // the slider is off-default we multiply the OS scaler by the
-            // user's factor and replace it with a linear approximation.
+            // Cap the system scaler globally before applying the in-app UI
+            // scale. The default preserves Flutter's non-linear curve; a
+            // custom app scale uses a bounded linear approximation.
             builder: (BuildContext context, Widget? child) {
-              final double userScale = settingsProvider.appUiScale;
-              if (userScale == 1.0) {
-                return child ?? const SizedBox.shrink();
-              }
               final MediaQueryData mq = MediaQuery.of(context);
-              const double referenceSize = 14.0;
-              final double systemFactor =
-                  mq.textScaler.scale(referenceSize) / referenceSize;
               return MediaQuery(
                 data: mq.copyWith(
-                  textScaler: TextScaler.linear(systemFactor * userScale),
+                  textScaler: cappedAppTextScaler(
+                    systemTextScaler: mq.textScaler,
+                    userScale: settingsProvider.appUiScale,
+                    minimumEffectiveScale: SettingsProvider.appUiScaleMin,
+                    maximumEffectiveScale: SettingsProvider.appUiScaleMax,
+                  ),
                 ),
                 child: child ?? const SizedBox.shrink(),
               );

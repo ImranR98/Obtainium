@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -22,6 +23,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.system.Os
+import android.util.DisplayMetrics
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -30,6 +32,7 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.UUID
+import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 
 private const val CHANNEL = "dev.imranr.obtainium/installer"
@@ -51,6 +54,7 @@ private const val APK_MIME = "application/vnd.android.package-archive"
 private const val RELEASE_DIR = "releases"
 private const val INSTALL_TIMEOUT_MS = 120_000L
 private const val INSTALL_BROADCAST_BATCH_CONTINUE_DELAY_MS = 200L
+private const val MAX_SYSTEM_DISPLAY_SCALE = 1.2f
 private const val OPEN_PERSISTED_DOCUMENT_TREE_REQUEST_CODE = 5107
 /// Ignore focus regain if it arrived within this window of the FIRST focus loss (transition bounce).
 /// Only the first loss is recorded; subsequent oscillations during TPI teardown are ignored.
@@ -72,7 +76,24 @@ private const val FOCUS_REGAIN_SETTLE_MS = 500L
 /// complete the session after this fallback rather than waiting the full 120s timeout.
 private const val BROADCAST_CONFIRMED_INTERACTIVE_FALLBACK_MS = 5_000L
 
+private fun Context.withCappedDisplayScale(): Context {
+    val currentDensityDpi = resources.configuration.densityDpi
+    val maximumDensityDpi =
+        (DisplayMetrics.DENSITY_DEVICE_STABLE * MAX_SYSTEM_DISPLAY_SCALE).roundToInt()
+    if (currentDensityDpi <= maximumDensityDpi) return this
+
+    return createConfigurationContext(
+        Configuration().apply {
+            densityDpi = maximumDensityDpi
+        },
+    )
+}
+
 class MainActivity : FlutterActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase.withCappedDisplayScale())
+    }
+
     companion object {
         private var notificationsMethodChannel: MethodChannel? = null
         private val downloadCancelLock = Any()

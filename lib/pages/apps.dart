@@ -684,59 +684,54 @@ class _AppListItem extends StatelessWidget {
 
     final Widget? trailingRow = (hideVersionAndChangelog && !hasTrailingWidgets)
         ? null
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (!hideVersionAndChangelog)
-                GestureDetector(
-                  onTap: showChangesFn,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: highlightTouchTargets && showChangesFn != null
-                          ? (theme.brightness == Brightness.light
-                                    ? theme.primaryColor
-                                    : theme.primaryColorLight)
-                                .withAlpha(
-                                  theme.brightness == Brightness.light
-                                      ? 20
-                                      : 40,
-                                )
-                          : null,
-                    ),
-                    padding: highlightTouchTargets
-                        ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
-                        : const EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              constraints: BoxConstraints(
-                                maxWidth: MediaQuery.sizeOf(context).width / 4,
-                              ),
-                              child: Text(
-                                versionText,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.end,
-                                style: isVersionPseudo(app.app)
-                                    ? const TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ],
+        : ConstrainedBox(
+            // ListTile measures trailing before title/subtitle. Bound the
+            // secondary version/date column so app and developer names keep
+            // the larger share of the row and truncate last.
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.32),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (!hideVersionAndChangelog)
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: showChangesFn,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: highlightTouchTargets && showChangesFn != null
+                              ? (theme.brightness == Brightness.light
+                                        ? theme.primaryColor
+                                        : theme.primaryColorLight)
+                                    .withAlpha(
+                                      theme.brightness == Brightness.light
+                                          ? 20
+                                          : 40,
+                                    )
+                              : null,
                         ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                        padding: highlightTouchTargets
+                            ? const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 0)
+                            : EdgeInsets.zero,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
+                              versionText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: isVersionPseudo(app.app)
+                                  ? const TextStyle(fontStyle: FontStyle.italic)
+                                  : null,
+                            ),
+                            Text(
                               changesButtonString,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 decoration: showChangesFn != null
@@ -746,17 +741,17 @@ class _AppListItem extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              if (!hideVersionAndChangelog && hasTrailingWidgets)
-                const SizedBox(width: 5),
-              if (skipActive) buildSkippedVersionIcon(),
-              if (!skipActive && hasUpdate) buildUpdateButton(),
-              if (!skipActive && !hasUpdate && hasUncertainUpdate)
-                buildUncertainUpdateButton(),
-            ],
+                if (!hideVersionAndChangelog && hasTrailingWidgets)
+                  const SizedBox(width: 5),
+                if (skipActive) buildSkippedVersionIcon(),
+                if (!skipActive && hasUpdate) buildUpdateButton(),
+                if (!skipActive && !hasUpdate && hasUncertainUpdate)
+                  buildUncertainUpdateButton(),
+              ],
+            ),
           );
 
     Widget buildDownloadProgressControl() {
@@ -986,6 +981,7 @@ class _AppListItem extends StatelessWidget {
                     start: isLargeScreen ? 12 : 16,
                     end: hasTrailingWidgets ? 4 : (isLargeScreen ? 12 : 16),
                   ),
+                  horizontalTitleGap: 8,
                   leading: leadingWidget,
                   title: Row(
                     children: [
@@ -5176,20 +5172,31 @@ class AppsPageState extends State<AppsPage> {
                                                         .id] ??
                                                     0;
                                                 if (upd > 0) {
-                                                  return Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
+                                                  return Stack(
+                                                    clipBehavior: Clip.none,
+                                                    alignment:
+                                                        AlignmentDirectional.centerStart,
                                                     children: [
+                                                      const Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 4,
+                                                            height: 16,
+                                                          ),
+                                                          SizedBox(width: 6),
+                                                          Icon(
+                                                            Icons.folder_outlined,
+                                                          ),
+                                                        ],
+                                                      ),
                                                       Badge(
                                                         label: Text('$upd'),
                                                         child: const SizedBox(
                                                           width: 4,
                                                           height: 16,
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      const Icon(
-                                                        Icons.folder_outlined,
                                                       ),
                                                     ],
                                                   );
