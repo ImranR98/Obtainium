@@ -655,7 +655,9 @@ class AddAppPageState extends State<AddAppPage> {
         child: searching
             ? const Center(child: CircularProgressIndicator())
             : FilledButton(
-                onPressed: doingSomething ? null : () {
+                onPressed: doingSomething
+                    ? null
+                    : () {
                         runSearch(context);
                       },
                 child: Text(tr('search')),
@@ -808,7 +810,7 @@ class AddAppPageState extends State<AddAppPage> {
       left: 16,
       right: 16,
       top: 16,
-      bottom: 16 + MediaQuery.of(context).padding.bottom,
+      bottom: MediaQuery.of(context).padding.bottom,
     ),
     child: Wrap(
       direction: Axis.horizontal,
