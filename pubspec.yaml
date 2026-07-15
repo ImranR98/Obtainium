@@ -29,6 +29,7 @@ dependencies:
   path_provider: ^2.1.6
   flutter_fgbg: ^0.8.0
   flutter_local_notifications: ^22.0.1
+  flutter_svg: ^2.3.0
   provider: ^6.1.5+1
   http: ^1.6.0
   webview_flutter: ^4.14.1

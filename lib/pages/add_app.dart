@@ -1990,12 +1990,7 @@ class AddAppPageState extends State<AddAppPage> {
   Widget _searchSourceIcon(String sourceName) {
     final String? assetPath = storeSourceAssetPathForClassName(sourceName);
     if (assetPath == null) return const Icon(Icons.store_rounded, size: 20);
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    Widget img = StoreSourceIconImage(assetPath: assetPath, size: 20);
-    if (iconNeedsInversion(assetPath, isDark)) {
-      img = ColorFiltered(colorFilter: invertColorFilter, child: img);
-    }
-    return img;
+    return StoreSourceIconImage(assetPath: assetPath, size: 20);
   }
 }
 

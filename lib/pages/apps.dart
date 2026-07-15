@@ -2702,7 +2702,7 @@ class AppsPageState extends State<AppsPage> {
     // We still call [context.read] below for non-reactive access to
     // every other setting the page references (folder rule lookups,
     // setter calls, etc.).
-    final String? watchedFolderId = widget.folderId;
+    final String? watchedViewSettingsId = _viewSettingsId;
     context.select<SettingsProvider, int>(
       (s) => Object.hashAll([
         s.showFolderedAppsOnMainPage,
@@ -2728,19 +2728,19 @@ class AppsPageState extends State<AppsPage> {
         s.rightSwipeAction,
         s.alwaysUsePhoneLayout,
         s.appFolders.length,
-        // Folder-scoped overrides: only relevant when this page is a
-        // folder view; a hash-as-zero collapse for the main-page case.
-        watchedFolderId == null
+        // Per-view overrides: relevant for real folders and the synthetic
+        // On-Demand Only view; a hash-as-zero collapse for the main page.
+        watchedViewSettingsId == null
             ? 0
             : Object.hash(
-                s.folderPinUpdates(watchedFolderId),
-                s.folderBuryNonInstalled(watchedFolderId),
-                s.folderSortColumn(watchedFolderId).index,
-                s.folderSortOrder(watchedFolderId).index,
-                s.folderGroupBy(watchedFolderId).index,
-                s.folderGroupNonInstalledSeparately(watchedFolderId),
-                s.folderGroupTrackOnlySeparately(watchedFolderId),
-                s.folderGroupUpdatesSeparately(watchedFolderId),
+                s.folderPinUpdates(watchedViewSettingsId),
+                s.folderBuryNonInstalled(watchedViewSettingsId),
+                s.folderSortColumn(watchedViewSettingsId).index,
+                s.folderSortOrder(watchedViewSettingsId).index,
+                s.folderGroupBy(watchedViewSettingsId).index,
+                s.folderGroupNonInstalledSeparately(watchedViewSettingsId),
+                s.folderGroupTrackOnlySeparately(watchedViewSettingsId),
+                s.folderGroupUpdatesSeparately(watchedViewSettingsId),
               ),
       ]),
     );

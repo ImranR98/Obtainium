@@ -1915,7 +1915,7 @@ class _AppPageState extends State<AppPage> {
     });
   }
 
-  static const double _storeSourceIconSize = 40;
+  static const double _storeSourceIconSize = 32;
 
   Widget _buildStoreSourceLaunchIcon({
     required BuildContext iconContext,
@@ -1944,7 +1944,7 @@ class _AppPageState extends State<AppPage> {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          padding: const EdgeInsets.all(8),
           child: picture,
         ),
       ),
