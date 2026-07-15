@@ -1246,7 +1246,11 @@ class AppsPageState extends State<AppsPage> {
                     settingsProvider,
                     appsProvider,
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 88)),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: MediaQuery.of(context).padding.bottom + 96,
+                    ),
+                  ),
                 ],
               ),
             ),
