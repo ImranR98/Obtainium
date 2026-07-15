@@ -267,18 +267,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             IconButton(
               onPressed: () {
-                unawaited(
-                  launchUrlString(
-                    'https://apps.obtainium.imranr.dev/',
-                    mode: LaunchMode.externalApplication,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.apps_rounded),
-              tooltip: tr('crowdsourcedConfigsLabel'),
-            ),
-            IconButton(
-              onPressed: () {
                 context.read<LogsProvider>().get().then((logs) {
                   if (!context.mounted) return;
                   if (logs.isEmpty) {

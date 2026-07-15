@@ -13,9 +13,11 @@ import 'package:obtainium/providers/source_provider.dart';
 
 class FDroid extends AppSource {
   static const _maxChangeLogCodeUnits = 2048;
+  @override
+  String get name => tr('fdroid');
+
   FDroid() {
     hosts = ['f-droid.org'];
-    name = tr('fdroid');
     naiveStandardVersionDetection = true;
     canSearch = true;
     inferAppIdFromUrlPath = true;

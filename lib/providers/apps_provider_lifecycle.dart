@@ -275,7 +275,7 @@ extension AppsProviderLifecycle on AppsProvider {
                     app.url,
                     overrideSource: app.overrideSource,
                   );
-                  final sourceType = src.name;
+                  final sourceType = src.sourceIdentifier;
                   // If the app is installed, grab its OS data and reconcile install statuses
                   final PackageInfo? installedInfo = installedAppsMap[app.id];
                   // Reconcile differences between the installed and recorded install info
