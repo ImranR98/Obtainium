@@ -1024,6 +1024,7 @@ class AppsProvider with ChangeNotifier {
   Directory? _apkDir;
   Directory? _iconsCacheDir;
   Directory? _userAppIconsDir;
+  Directory? cachedAppsDir;
 
   // Per-app-detail-page transient error banners, keyed by app ID. Populated by
   // [setAppPageError]/[clearAppPageError]; read by the app detail page.

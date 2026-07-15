@@ -2186,7 +2186,6 @@ class AppsPageState extends State<AppsPage> {
   );
   Set<String> selectedAppIds = {};
   DateTime? refreshingSince;
-  bool initialAppLoadCompleted = false;
 
   bool clearSelected() {
     if (selectedAppIds.isNotEmpty) {
@@ -2553,11 +2552,11 @@ class AppsPageState extends State<AppsPage> {
     );
   }
 
-  /// Returns the human-readable display name for a source given its
-  /// runtimeType string (the value stored in [AppsFilter.sourceFilter]).
+  /// Returns the human-readable display name for a source identifier (the
+  /// stable value stored in [AppsFilter.sourceFilter]).
   String _getSourceName(String sourceKey) {
     for (final s in sourceProvider.sourceTemplates) {
-      if (s.runtimeType.toString() == sourceKey) return s.name;
+      if (s.sourceIdentifier == sourceKey) return s.name;
     }
     return sourceKey;
   }
@@ -2755,10 +2754,6 @@ class AppsPageState extends State<AppsPage> {
     final double appsListItemInnerRadius = settingsProvider.cardCornerRadiusFor(
       kM3eInnerRadius,
     );
-    if (!initialAppLoadCompleted && !appsProvider.loadingApps) {
-      initialAppLoadCompleted = true;
-    }
-
     Future<void> backgroundScanStoreAvailability() async {
       late final List<String> idsForStoreHintScan;
       if (widget.onDemandOnlyList) {
@@ -2998,8 +2993,7 @@ class AppsPageState extends State<AppsPage> {
                       app.app.url,
                       overrideSource: app.app.overrideSource,
                     )
-                    .runtimeType
-                    .toString() !=
+                    .sourceIdentifier !=
                 filter.sourceFilter) {
           return false;
         }
@@ -3366,8 +3360,7 @@ class AppsPageState extends State<AppsPage> {
                       e.app.url,
                       overrideSource: e.app.overrideSource,
                     )
-                    .runtimeType
-                    .toString(),
+                    .sourceIdentifier,
               )
               .toSet()
               .toList();
@@ -3404,8 +3397,7 @@ class AppsPageState extends State<AppsPage> {
                       row.app.url,
                       overrideSource: row.app.overrideSource,
                     )
-                    .runtimeType
-                    .toString() ==
+                    .sourceIdentifier ==
                 sourceKey) {
               indices.add(listingIndex);
             }
@@ -3546,15 +3538,26 @@ class AppsPageState extends State<AppsPage> {
         .toSet();
 
     List<Widget> getLoadingWidgets() {
+      if (appsProvider.loadingApps && appsProvider.apps.isEmpty) {
+        return [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Semantics(
+                label: tr('pleaseWait'),
+                child: const CircularRipplingWavyProgressIndicator(),
+              ),
+            ),
+          ),
+        ];
+      }
       return [
         if (listedApps.isEmpty)
           SliverFillRemaining(
             child: Center(
               child: Text(
                 appsProvider.apps.isEmpty
-                    ? appsProvider.loadingApps
-                          ? tr('pleaseWait')
-                          : tr('noApps')
+                    ? tr('noApps')
                     : widget.onDemandOnlyList && onDemandOnlyAppCount == 0
                     ? tr('onDemandOnlyEmpty')
                     : tr('noAppsForFilter'),
@@ -3563,16 +3566,9 @@ class AppsPageState extends State<AppsPage> {
               ),
             ),
           ),
-        // Show the bar only for explicit user-initiated refreshes
-        // ([refreshingSince] != null) OR for the first app-load before this
-        // page has seen loading complete. Silent foreground reloads also set
-        // [loadingApps], and the app list can legitimately be empty then; the
-        // one-shot guard prevents that empty-library edge case from flashing
-        // the progress bar.
-        if (refreshingSince != null ||
-            (!initialAppLoadCompleted &&
-                appsProvider.loadingApps &&
-                appsProvider.apps.isEmpty))
+        // Initial empty-library loading uses the centered M3E indicator above.
+        // Keep this compact bar for explicit user-initiated refreshes only.
+        if (refreshingSince != null)
           SliverToBoxAdapter(
             // Top padding pushes the bar clear of the [CustomAppBar] blur
             // overlay's bottom edge - sitting flush against it produced a
@@ -3969,8 +3965,7 @@ class AppsPageState extends State<AppsPage> {
                         appInMem.app.url,
                         overrideSource: appInMem.app.overrideSource,
                       )
-                      .runtimeType
-                      .toString() ==
+                      .sourceIdentifier ==
                   sourceKey,
             )
           : listedApps[matchingIndices.first];
@@ -4430,7 +4425,7 @@ class AppsPageState extends State<AppsPage> {
               final sourceItems = [
                 MapEntry('', tr('none')),
                 ...sourceProvider.sourceTemplates.map(
-                  (e) => MapEntry(e.runtimeType.toString(), e.name),
+                  (e) => MapEntry(e.sourceIdentifier, e.name),
                 ),
               ];
 

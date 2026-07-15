@@ -10,8 +10,10 @@ import 'package:obtainium/providers/source_provider.dart';
 class DirectAPKLink extends AppSource {
   final HTML html = HTML();
 
+  @override
+  String get name => tr('directAPKLink');
+
   DirectAPKLink() {
-    name = tr('directAPKLink');
     versionDetectionDisallowed = true;
     excludeCommonSettingKeys = [
       'versionExtractionRegEx',

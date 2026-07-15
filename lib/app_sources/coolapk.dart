@@ -17,8 +17,10 @@ import 'package:obtainium/providers/source_provider.dart';
 /// Token generation adapted from https://github.com/XiaoMengXinX/FuckCoolapkTokenV2
 /// and https://github.com/Coolapk-UWP/Coolapk-UWP
 class CoolApk extends AppSource {
+  @override
+  String get name => tr('coolApk');
+
   CoolApk() {
-    name = tr('coolApk');
     hosts = ['coolapk.com'];
     allowSubDomains = true;
     naiveStandardVersionDetection = true;

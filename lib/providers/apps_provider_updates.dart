@@ -656,10 +656,10 @@ extension AppsProviderUpdates on AppsProvider {
         );
       }
       total = appIds.length;
-      final List<_FetchedAppUpdate?> results = List<_FetchedAppUpdate?>.filled(
-        total,
-        null,
-      );
+      final List<_FetchedAppUpdate> pendingResults = [];
+      DateTime lastSaveTime = DateTime.now();
+      bool saveInProgress = false;
+      const Duration saveInterval = Duration(seconds: 3);
       int nextIndex = 0;
       final int workerCount = min(
         total,
@@ -691,15 +691,45 @@ extension AppsProviderUpdates on AppsProvider {
         }
       }
 
+      Future<void> flushFetchedResults({bool force = false}) async {
+        if (saveInProgress || pendingResults.isEmpty) return;
+        final DateTime now = DateTime.now();
+        if (!force && now.difference(lastSaveTime) < saveInterval) return;
+
+        saveInProgress = true;
+        final List<_FetchedAppUpdate> batch = List.from(pendingResults);
+        pendingResults.clear();
+        try {
+          final List<App> fetched = [];
+          for (final _FetchedAppUpdate result in batch) {
+            final App? mergedApp = mergeFetchedUpdateWithLiveState(
+              requestedApp: result.requestedApp,
+              liveApp: apps[result.requestedApp.id]?.app,
+              fetchedApp: result.fetchedApp,
+            );
+            if (mergedApp == null) continue;
+            fetched.add(mergedApp);
+            if (mergedApp.latestVersion != result.requestedApp.latestVersion) {
+              updates.add(mergedApp);
+            }
+          }
+          if (fetched.isNotEmpty) {
+            await saveApps(fetched, updateInstalledInfo: false);
+          }
+        } finally {
+          lastSaveTime = DateTime.now();
+          saveInProgress = false;
+        }
+      }
+
       Future<void> runWorker() async {
         while (nextIndex < total) {
-          final int resultIndex = nextIndex++;
-          final String appId = appIds[resultIndex];
+          final String appId = appIds[nextIndex++];
           try {
             final _FetchedAppUpdate? update =
                 await fetchUpdateWithHandshakeRetry(appId);
             if (update != null) {
-              results[resultIndex] = update;
+              pendingResults.add(update);
             }
           } catch (e) {
             if ((e is RateLimitError ||
@@ -717,28 +747,13 @@ extension AppsProviderUpdates on AppsProvider {
             completed++;
             reportProgress();
           }
+          await flushFetchedResults();
         }
       }
 
       await Future.wait(List.generate(workerCount, (_) => runWorker()));
       reportProgress(force: true);
-      final List<App> fetched = [];
-      for (final _FetchedAppUpdate? result in results) {
-        if (result == null) continue;
-        final App? mergedApp = mergeFetchedUpdateWithLiveState(
-          requestedApp: result.requestedApp,
-          liveApp: apps[result.requestedApp.id]?.app,
-          fetchedApp: result.fetchedApp,
-        );
-        if (mergedApp == null) continue;
-        fetched.add(mergedApp);
-        if (mergedApp.latestVersion != result.requestedApp.latestVersion) {
-          updates.add(mergedApp);
-        }
-      }
-      if (fetched.isNotEmpty) {
-        await saveApps(fetched);
-      }
+      await flushFetchedResults(force: true);
       if (errors.idsByErrorString.isNotEmpty) {
         final ex = CheckUpdatesException(updates, errors);
         completer.completeError(ex);
