@@ -1268,7 +1268,7 @@ class _LogsPageState extends State<LogsPage> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                SliverAppBar.large(pinned: true, title: Text(tr('appLogs'))),
+                SliverAppBar.large(pinned: true, automaticallyImplyLeading: false, title: Text(tr('appLogs'))),
                 if (_loading)
                   const SliverFillRemaining(
                     hasScrollBody: false,

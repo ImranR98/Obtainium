@@ -316,6 +316,7 @@ class _AppPageState extends State<AppPage> {
               slivers: [
                 SliverAppBar.large(
                   pinned: true,
+                  automaticallyImplyLeading: false,
                   title: Text(
                     tr('additionalOptsFor', args: [app?.name ?? tr('app')]),
                   ),
@@ -324,7 +325,7 @@ class _AppPageState extends State<AppPage> {
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
                       16,
-                      MediaQuery.of(context).padding.top,
+                      0,
                       16,
                       MediaQuery.of(context).padding.bottom,
                     ),
@@ -521,12 +522,13 @@ class _AppPageState extends State<AppPage> {
   }
 
   AppBar _appScreenAppBar() => AppBar(
-    leading: IconButton(
-      icon: Icon(
-        widget.onClose != null ? Icons.close_rounded : Icons.arrow_back,
-      ),
-      onPressed: _closePage,
-    ),
+    automaticallyImplyLeading: false,
+    leading: widget.onClose != null
+        ? IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: _closePage,
+          )
+        : null,
   );
 
   Widget _getPrimaryButton(
